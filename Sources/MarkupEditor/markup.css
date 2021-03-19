@@ -1,0 +1,108 @@
+/**
+ * Copyright © 2021 Steven Harris. All rights reserved.
+ * Copyright (C) 2015 Wasabeef
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@charset "UTF-8";
+
+:root {
+    color-scheme: light dark;
+}
+
+body {
+    overflow: auto;
+    margin: 8px;
+    font-family: -apple-system;
+    font: -apple-system-body;
+    background-color: #F2F2F7;
+}
+
+@media (prefers-color-scheme: dark) {
+    body, #editor, code, blockquote {
+        background-color: rgb(38,38,41);
+        color: white;
+    }
+}
+
+#editor {
+    overflow: auto;
+    cursor: text;
+}
+
+#editor:focus {
+    outline: none !important;
+}
+
+.placeholder[placeholder]:after {
+    content: attr(placeholder);
+    position: absolute;
+    margin-top: 0px;
+    color: #ccc;
+}
+
+/* TODO:- Templatize the font sizes */
+
+/* Not sure why this has no effect, as I would like it to be clearer in dark mode but doesn't do anything ever */
+/* Values below are garbage to see if they have any effect */
+::selection {
+  color: #00ff00;
+  background-color: #FFA500;
+}
+
+code {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+}
+
+blockquote {
+    font-style: italic
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol {
+     margin: 0px;
+     margin-right: 8px;
+}
+
+h1 {
+    font-size: 26px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 22px;
+}
+
+h4 {
+    font-size: 20px;
+}
+
+h5 {
+    font-size: 18px;
+}
+
+h6 {
+    font-size: 16px;
+}
+
+p {
+    font-size: 14px;
+}
+
+a:hover   {
+    cursor: grab;
+}
