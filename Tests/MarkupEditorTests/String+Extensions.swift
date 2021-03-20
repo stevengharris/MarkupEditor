@@ -5,8 +5,8 @@
 //  Created by Steven Harris on 3/5/21.
 //
 
-import MarkupFramework
 import Foundation
+import MarkupEditor
 
 extension String {
     

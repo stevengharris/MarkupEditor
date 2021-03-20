@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import MarkupFramework
+import MarkupEditor
 
 struct HtmlTest {
     var startHtml: String
@@ -54,11 +54,11 @@ struct HtmlTest {
     
 }
 
-class SwiftMarkupEditorTests: XCTestCase, MarkupEventDelegate, MarkupStateHolder {
+class MarkupEditorTests: XCTestCase, MarkupEventDelegate, MarkupStateHolder {
     var selectedWebView: MarkupWKWebView?
     var selectionState: SelectionState = SelectionState()
     var webView: MarkupWKWebView!
-    var coordinator: MarkupCoordinator<SwiftMarkupEditorTests>!
+    var coordinator: MarkupCoordinator<MarkupEditorTests>!
     var loadedExpectation: XCTestExpectation = XCTestExpectation(description: "Loaded")
     
     override func setUpWithError() throws {
