@@ -136,15 +136,6 @@ MU.rangeSelectionExists = function() {
     return false;
 };
 
-MU.rangeOrCaretSelectionExists = function() {
-    //!! coerces a null to bool
-    var sel = document.getSelection();
-    if (sel && (sel.type == 'Range' || sel.type == 'Caret')) {
-        return true;
-    }
-    return false;
-};
-
 /// Return the first tag the selection is inside of
 MU.selectionTag = function() {
     var sel = window.getSelection();
@@ -723,21 +714,25 @@ MU.prepareInsert = function() {
     MU.backupRange();
 };
 
+/// Insert the image at url with alt text, signaling updateHeight when done loading.
+/// We leave the selection where it was (right in front of the image) rather
+/// than surrounding the selection. The operation will cause a selectionChange
+/// event. On the Swift side, we can do whatever is appropriate when we find
+/// the SelectionState points to an image, which it will when the selection changes.
 MU.insertImage = function(url, alt) {
-    var img = document.createElement('img');
-    img.setAttribute('src', url);
-    img.setAttribute('alt', alt);
-    img.onload = MU.updateHeight;
-
-    MU.insertHTML(img.outerHTML);
+    MU.restoreRange();
+    var sel = document.getSelection();
+    var el = document.createElement('img');
+    el.setAttribute('src', url);
+    if (alt) { el.setAttribute('alt', alt) };
+    el.onload = MU.updateHeight;
+    var range = sel.getRangeAt(0).cloneRange();
+    range.insertNode(el);
     _callback('input');
 };
 
-MU.insertHTML = function(html) {
-    MU.restoreRange();
-    document.execCommand('insertHTML', false, html);
-};
-
+/// Insert a link to url. The selection has to be across a range.
+/// When done, re-select the range.
 MU.insertLink = function(url) {
     MU.restoreRange();
     var sel = document.getSelection();
@@ -997,9 +992,12 @@ var _getSelectionState = function() {
     if (!document.getSelection()) {
         return state;
     }
-    var hrefAndLink = _getHrefAndLinkAtSelection();
+    var hrefAndLink = _getLinkAtSelection();
     state['href'] = hrefAndLink['href'];
     state['link'] = hrefAndLink['link'];
+    var srcAndAlt = _getImageAtSelection();
+    state['src'] = srcAndAlt['src'];
+    state['alt'] = srcAndAlt['alt'];
     state['style'] = _getSelectionStyle();
     state['selection'] = _getSelectionText();
     var formatTags = _getFormatTags();
@@ -1084,55 +1082,47 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
 //MARK:- Links
 
 /**
- * Walk up the element tree from selection to find href and link if present
- * The selection might be embedded in a formatting or other element
+ * If the current selection's parent is an A tag, get the href and text.
+ * @returns dictionary with href and link as keys; empty if not a link
  */
-var _getHrefAndLinkAtSelection = function() {
-    var hrefAndLink = {};
+var _getLinkAtSelection = function() {
+    var link = {};
     var sel = document.getSelection();
-    if (!sel || !sel.anchorNode) {
-        return '';
-    };
-    var parentElement = sel.anchorNode.parentElement;
-    while (parentElement) {
-        var href = parentElement.getAttribute('href');
-        if (href) {
-            hrefAndLink['href'] = href;
-            hrefAndLink['link'] = parentElement.text;
-            return hrefAndLink;
-        } else {
-            parentElement = parentElement.parentElement;
+    if (sel) {
+        var element = sel.anchorNode.parentElement;
+        if ('A' === element.nodeName) {
+            link['href'] = element.getAttribute('href');
+            link['link'] = element.text;
         }
     }
-    return hrefAndLink;
+    return link;
 };
 
+//MARK:- Images
+
 /**
- * If the current selection's parent is an anchor tag, get the href.
- * @returns {string}
+ * If the current selection's parent is an IMG tag, get the src and alt.
+ * @returns dictionary with src and alt as keys; empty if not an image
  */
-MU.getSelectedHref = function() {
-    var href, sel;
-    href = '';
-    sel = window.getSelection();
-    if (!MU.rangeOrCaretSelectionExists()) {
-        return null;
-    }
-    var tags = _getAnchorTagsInNode(sel.anchorNode);
-    //if more than one link is there, return null
-    if (tags.length > 1) {
-        return null;
-    } else if (tags.length == 1) {
-        href = tags[0];
-    } else {
-        var node = _findNodeByNameInContainer(sel.anchorNode.parentElement, 'A', 'editor');
-        if (node == null) {
-            return null;     // There is no existing href
-        } else {
-            href = node.href;
-        }
-    }
-    return href ? href : null;
+var _getImageAtSelection = function() {
+    var image = {};
+    var sel = document.getSelection();
+    if (sel) {
+        var node = sel.anchorNode;
+        if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
+            if (sel.anchorOffset === node.textContent.length) {
+                // We have selected the end of a text element, which might be next to an IMG
+                if (node.nextSibling.nodeType === Node.ELEMENT_NODE) {
+                    var element = node.nextSibling;
+                    if (element.nodeName === 'IMG') {
+                        image['src'] = element.getAttribute('src');
+                        image['alt'] = element.getAttribute('alt');
+                    };
+                };
+            };
+        };
+    };
+    return image;
 };
 
 /**
@@ -1147,22 +1137,6 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
         }
         _findNodeByNameInContainer(element.parentElement, nodeName, rootElementId);
     }
-};
-
-var _isAnchorNode = function(node) {
-    return ('A' == node.nodeName);
-};
-
-var _getAnchorTagsInNode = function(node) {
-    var links = [];
-
-    while (node.nextSibling !== null && node.nextSibling !== undefined) {
-        node = node.nextSibling;
-        if (_isAnchorNode(node)) {
-            links.push(node.getAttribute('href'));
-        }
-    }
-    return links;
 };
 
 //MARK:- Common private functions

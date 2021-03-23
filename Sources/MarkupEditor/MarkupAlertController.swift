@@ -45,7 +45,7 @@ struct MarkupAlertController<Content: View>: UIViewControllerRepresentable {
             var alert = self.alert
             alert.action = {
                 self.item = nil
-                self.alert.action($0)
+                self.alert.action($0, $1)
             }
             context.coordinator.alertController = UIAlertController(alert: alert)
             uiViewController.present(context.coordinator.alertController!, animated: true)
@@ -60,25 +60,31 @@ struct MarkupAlertController<Content: View>: UIViewControllerRepresentable {
 /// Holds the contents + action that will be set up in the UIAlertController that is available in SwiftUI as a MarkupAlertController
 public struct TextAlert {
     public var title: String
-    public var action: (String?)->()
-    public var placeholder: String?
+    public var action: (String?, String?)->()
+    public var placeholder1: String?
+    public var placeholder2: String?
     public var message: String?
-    public var text: String?
+    public var text1: String?
+    public var text2: String?
     public var accept: String
     public var cancel: String
     
     public init(
         title: String,
-        action: @escaping (String?)->(),
-        placeholder: String? = nil,
+        action: @escaping (String?, String?)->(),
+        placeholder1: String? = nil,
+        placeholder2: String? = nil,
         message: String? = nil,
-        text: String? = nil,
+        text1: String? = nil,
+        text2: String? = nil,
         accept: String = "OK",
         cancel: String = "Cancel") {
         self.title = title
         self.action = action
-        self.placeholder = placeholder
-        self.text = text
+        self.placeholder1 = placeholder1
+        self.placeholder2 = placeholder2
+        self.text1 = text1
+        self.text2 = text2
         self.accept = accept
         self.cancel = cancel
     }
@@ -90,19 +96,35 @@ extension UIAlertController {
     /// Create a UIAlertController whose contents is specified in a TextAlert
     public convenience init(alert: TextAlert) {
         self.init(title: alert.title, message: alert.message, preferredStyle: .alert)
-        // If there is no text or placeholder, then don't add a text field
-        if alert.text != nil || alert.placeholder != nil {
+        // If there is no text1 or placeholder1, then don't add any text fields
+        var textFieldCount = 0
+        if alert.text1 != nil || alert.placeholder1 != nil {
+            textFieldCount += 1
             addTextField { textField in
-                textField.text = alert.text
-                textField.placeholder = alert.placeholder
+                textField.text = alert.text1
+                textField.placeholder = alert.placeholder1
+            }
+            // THe 2nd text field is optional
+            if alert.text2 != nil || alert.placeholder2 != nil {
+                textFieldCount += 1
+                addTextField { textField in
+                    textField.text = alert.text2
+                    textField.placeholder = alert.placeholder2
+                }
             }
         }
-        let textField = textFields?.first
         let acceptAction = UIAlertAction(title: alert.accept, style: .destructive) { _ in
-            alert.action(textField?.text)
+            switch textFieldCount {
+            case 1:
+                alert.action(self.textFields?[0].text, nil)
+            case 2:
+                alert.action(self.textFields?[0].text, self.textFields?[1].text)
+            default:
+                alert.action(nil, nil)
+            }
         }
         let cancelAction = UIAlertAction(title: alert.cancel, style: .default) { _ in
-            alert.action(nil)
+            alert.action(nil, nil)
         }
         addAction(acceptAction)
         addAction(cancelAction)

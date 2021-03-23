@@ -87,6 +87,12 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
                         }
                         .disabled(!selectionState.isLinkable)
                         Button(action: {
+                            showAlert(type: .image)
+                        }) {
+                            Image(systemName: "photo")
+                        }
+                        .disabled(!selectionState.isInsertable && !selectionState.isInImage)
+                        Button(action: {
                             showAlert(type: .line)
                         }) {
                             Image(systemName: "line.horizontal.3")
@@ -96,12 +102,6 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
                             showAlert(type: .table)
                         }) {
                             Image(systemName: "tablecells")
-                        }
-                        .disabled(!selectionState.isInsertable)
-                        Button(action: {
-                            showAlert(type: .image)
-                        }) {
-                            Image(systemName: "photo")
                         }
                         .disabled(!selectionState.isInsertable)
                         Button(action: {
@@ -277,7 +277,7 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
     
     private func createTextAlert() -> TextAlert {
         guard let delegate = markupUIDelegate, let type = markupAlert?.type else {
-            return TextAlert(title: "Error", action: { response in } )
+            return TextAlert(title: "Error", action: { _, _ in } )
         }
         return delegate.markupTextAlert(selectedWebView, type: type, selectionState: selectionState)
     }

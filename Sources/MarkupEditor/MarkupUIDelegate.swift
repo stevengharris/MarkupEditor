@@ -77,26 +77,45 @@ extension MarkupUIDelegate {
                 href = selectionState.href
                 title = href == nil ? "Add Link" : "Edit Link"
                 placeholder = "Enter URL"
-                message = "Link to text: \"\(selection!)\""
+                message = "Link to text: \"\(selection!)\". Clear the URL to remove the link."
             } else {
                 title = "Error: No text was selected to link to."
             }
             return TextAlert(
                 title: title,
-                action: { text in
-                    if let href = text, !href.isEmpty {
+                action: { link, alt in
+                    if let href = link, !href.isEmpty {
                         view?.insertLink(href)
                     }
                 },
-                placeholder: placeholder,
+                placeholder1: placeholder,
                 message: message,
-                text: href,
+                text1: href,
                 accept: "Link"
+            )
+        case .image:
+            let src = selectionState.src
+            let alt = selectionState.alt
+            let title = src == nil ? "Add Image" : "Edit Image"
+            let message = "Enter the URL for the image and a description. Clear the URL to remove the image."
+            let placeholder1 = "Enter URL"
+            let placeholder2 = "Enter description"
+            return TextAlert(
+                title: title,
+                action: { src, alt in
+                    view?.insertImage(src: src, alt: alt)
+                },
+                placeholder1: placeholder1,
+                placeholder2: placeholder2,
+                message: message,
+                text1: src,
+                text2: alt,
+                accept: "Insert"
             )
         default:
             return TextAlert(
                 title: "Implement \(type) alert!",
-                action: { text in
+                action: { text, alt in
                 }
             )
         }

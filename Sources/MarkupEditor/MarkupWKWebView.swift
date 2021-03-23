@@ -162,8 +162,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func insertLink(_ href: String) {
-        self.evaluateJavaScript("MU.insertLink('\(href.escaped)')")
+    public func insertLink(_ href: String?) {
+        if href == nil {
+            evaluateJavaScript("MU.removeLink()")
+        } else {
+            evaluateJavaScript("MU.insertLink('\(href!.escaped)')")
+        }
+    }
+    
+    public func insertImage(src: String?, alt: String?) {
+        if src == nil {
+            evaluateJavaScript("MU.removeImage()")
+        } else {
+            var args = "'\(src!.escaped)'"
+            if alt != nil {
+                args += ", '\(alt!.escaped)'"
+            }
+            evaluateJavaScript("MU.insertImage(\(args))")
+        }
     }
     
     private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
@@ -268,6 +284,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         selectionState.href = state["href"] as? String
         selectionState.link = state["link"] as? String
+        selectionState.src = state["src"] as? String
+        selectionState.alt = state["alt"] as? String
         if let selectedText = state["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
         } else {

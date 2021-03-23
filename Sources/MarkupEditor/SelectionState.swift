@@ -14,6 +14,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var selection: String? = nil
     @Published public var href: String? = nil
     @Published public var link: String? = nil
+    @Published public var src: String? = nil
+    @Published public var alt: String? = nil
     @Published public var bold: Bool = false
     @Published public var italic: Bool = false
     @Published public var underline: Bool = false
@@ -50,6 +52,9 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         // However, isInList can be true and li false
         isInList && li
     }
+    public var isInImage: Bool {
+        src != nil  // Possible missing alt
+    }
     public var description: String {
         """
         selection: \(selection ?? "none")
@@ -58,6 +63,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           list: \(listString())
           quote: \(quote)
           link: \(linkString())
+          image: \(imageString())
         """
     }
     
@@ -72,6 +78,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         selection = selectionState?.selection
         href = selectionState?.href
         link = selectionState?.link
+        src = selectionState?.src
+        alt = selectionState?.alt
         bold = selectionState?.bold ?? false
         italic = selectionState?.italic ?? false
         underline = selectionState?.underline ?? false
@@ -107,6 +115,11 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     func linkString() -> String {
         guard let href = href, let link = link else { return "none" }
         return "\(href) linksTo: \(link)"
+    }
+    
+    func imageString() -> String {
+        guard let src = src else { return "none" }
+        return "\(src), alt: \(alt ?? "none")"
     }
     
 }
