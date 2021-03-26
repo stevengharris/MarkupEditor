@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "MarkupEditor",
+        "repositoryURL": "https://github.com/stevengharris/MarkupEditor.git",
+        "state": {
+          "branch": null,
+          "revision": "d94edacac7029272e42d5f10c217f35268123d35",
+          "version": "0.1.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

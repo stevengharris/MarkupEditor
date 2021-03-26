@@ -24,9 +24,12 @@ let package = Package(
         .target(
             name: "MarkupEditor",
             dependencies: [],
+            path: "MarkupEditor",
             resources: [.process("Resources")]),
         .testTarget(
             name: "MarkupEditorTests",
-            dependencies: ["MarkupEditor"]),
+            dependencies: ["MarkupEditor"],
+            path: "MarkupEditorTests"
+            )
     ]
 )

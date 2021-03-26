@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 /// The state of the selection in a LogEntryView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
