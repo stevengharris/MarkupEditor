@@ -103,6 +103,6 @@ p {
     font-size: 14px;
 }
 
-a:hover   {
-    cursor: grab;
+a:hover {
+    cursor: pointer;
 }

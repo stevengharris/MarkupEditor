@@ -16,6 +16,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var link: String? = nil
     @Published public var src: String? = nil
     @Published public var alt: String? = nil
+    @Published public var scale: Int? = nil  // Percent
+    @Published public var frame: CGRect? = nil
     @Published public var bold: Bool = false
     @Published public var italic: Bool = false
     @Published public var underline: Bool = false
@@ -29,8 +31,11 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     public var isLinkable: Bool {
         return link != nil || selection != nil
     }
-    public var isFollowable: Bool {
-        return link != nil && href != nil && selection == nil
+    public var isFollowable: Bool { // Whether selecting will follow the link
+         isInLink && selection == nil
+    }
+    public var isInLink: Bool {
+        return link != nil && href != nil
     }
     public var isInsertable: Bool {
         return selection == nil || selection?.isEmpty ?? true
@@ -54,6 +59,9 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     }
     public var isInImage: Bool {
         src != nil  // Possible missing alt
+    }
+    public var isInTable: Bool {
+        return false    // TODO!
     }
     public var description: String {
         """
@@ -80,6 +88,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         link = selectionState?.link
         src = selectionState?.src
         alt = selectionState?.alt
+        scale = selectionState?.scale ?? 100
+        frame = selectionState?.frame
         bold = selectionState?.bold ?? false
         italic = selectionState?.italic ?? false
         underline = selectionState?.underline ?? false
@@ -119,7 +129,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     func imageString() -> String {
         guard let src = src else { return "none" }
-        return "\(src), alt: \(alt ?? "none")"
+        return "\(src), alt: \(alt ?? "none"), scale: \(scale ?? 100)%, frame: \(frame ?? CGRect.zero)"
     }
     
 }

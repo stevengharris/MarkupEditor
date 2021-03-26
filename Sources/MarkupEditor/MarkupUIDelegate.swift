@@ -26,6 +26,8 @@ public protocol MarkupUIDelegate {
     func markupTextAlert(_ view: MarkupWKWebView?, type: MarkupAlertType, selectionState: SelectionState) -> TextAlert
     /// Take action when the user selects a link
     func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: (()->Void)?)
+    /// Take action when the user selectd an image
+    func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
 
 }
 
@@ -96,21 +98,26 @@ extension MarkupUIDelegate {
         case .image:
             let src = selectionState.src
             let alt = selectionState.alt
-            let title = src == nil ? "Add Image" : "Edit Image"
             let message = "Enter the URL for the image and a description. Clear the URL to remove the image."
             let placeholder1 = "Enter URL"
             let placeholder2 = "Enter description"
             return TextAlert(
-                title: title,
-                action: { src, alt in
-                    view?.insertImage(src: src, alt: alt)
+                title: src == nil ? "Add Image" : "Edit Image",
+                action: { newSrc, newAlt in
+                    if newSrc == nil {
+                        view?.modifyImage(src: newSrc, alt: nil, scale: nil)
+                    } else if src == nil {
+                        view?.insertImage(src: newSrc, alt: newAlt)
+                    } else {
+                        view?.modifyImage(src: newSrc, alt: newAlt, scale: selectionState.scale)
+                    }
                 },
                 placeholder1: placeholder1,
                 placeholder2: placeholder2,
                 message: message,
                 text1: src,
                 text2: alt,
-                accept: "Insert"
+                accept: src == nil ? "Insert" : "Modify"
             )
         default:
             return TextAlert(
@@ -133,5 +140,7 @@ extension MarkupUIDelegate {
             UIApplication.shared.canOpenURL(url) else { return }
         UIApplication.shared.open(url)
     }
+    
+    public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) { }
     
 }

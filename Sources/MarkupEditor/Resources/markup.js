@@ -731,6 +731,35 @@ MU.insertImage = function(url, alt) {
     _callback('input');
 };
 
+/// Modify the attributes of the image at selection.
+/// If url is null, then remove the image.
+/// Scale is a percentage like '80' where null means 100%
+MU.modifyImage = function(src, alt, scale) {
+    MU.restoreRange();
+    var el = _getImageAtSelection()
+    if (el) {
+        if (src) {
+            el.setAttribute('src', src);
+            if (alt) {
+                el.setAttribute('alt', alt);
+            } else {
+                el.removeAttribute('alt');
+            }
+            if (scale) {
+                el.setAttribute('width', el.naturalWidth * scale / 100);
+                el.setAttribute('height', el.naturalHeight * scale / 100);
+            } else {
+                el.removeAttribute('width');
+                el.removeAttribute('height');
+            }
+            MU.restoreRange()
+        } else {
+            el.parentNode.removeChild(el);
+        }
+        _callback('input');
+    }
+}
+
 /// Insert a link to url. The selection has to be across a range.
 /// When done, re-select the range.
 MU.insertLink = function(url) {
@@ -992,12 +1021,14 @@ var _getSelectionState = function() {
     if (!document.getSelection()) {
         return state;
     }
-    var hrefAndLink = _getLinkAtSelection();
-    state['href'] = hrefAndLink['href'];
-    state['link'] = hrefAndLink['link'];
-    var srcAndAlt = _getImageAtSelection();
-    state['src'] = srcAndAlt['src'];
-    state['alt'] = srcAndAlt['alt'];
+    var linkAttributes = _getLinkAttributesAtSelection();
+    state['href'] = linkAttributes['href'];
+    state['link'] = linkAttributes['link'];
+    var imageAttributes = _getImageAttributesAtSelection();
+    state['src'] = imageAttributes['src'];
+    state['alt'] = imageAttributes['alt'];
+    state['scale'] = imageAttributes['scale'];
+    state['frame'] = imageAttributes['frame'];
     state['style'] = _getSelectionStyle();
     state['selection'] = _getSelectionText();
     var formatTags = _getFormatTags();
@@ -1085,7 +1116,7 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
  * If the current selection's parent is an A tag, get the href and text.
  * @returns dictionary with href and link as keys; empty if not a link
  */
-var _getLinkAtSelection = function() {
+var _getLinkAttributesAtSelection = function() {
     var link = {};
     var sel = document.getSelection();
     if (sel) {
@@ -1101,11 +1132,31 @@ var _getLinkAtSelection = function() {
 //MARK:- Images
 
 /**
- * If the current selection's parent is an IMG tag, get the src and alt.
+ * If the current selection's anchorNode is an IMG tag, get the src and alt.
  * @returns dictionary with src and alt as keys; empty if not an image
  */
+
+var _getImageAttributesAtSelection = function() {
+    var attributes = {};
+    var element = _getImageAtSelection();
+    if (element) {
+        attributes['src'] = element.getAttribute('src');
+        attributes['alt'] = element.getAttribute('alt');
+        attributes['scale'] = element.getAttribute('width');    //  A string like "100%" with height=auto
+        var rect = element.getBoundingClientRect();
+        let rectDict = {
+            'x' : rect.left,
+            'y' : rect.top,
+            'width' : rect.width,
+            'height' : rect.height
+        }
+        attributes['frame'] = rectDict
+    }
+    return attributes;
+};
+
+
 var _getImageAtSelection = function() {
-    var image = {};
     var sel = document.getSelection();
     if (sel) {
         var node = sel.anchorNode;
@@ -1115,15 +1166,20 @@ var _getImageAtSelection = function() {
                 if (node.nextSibling.nodeType === Node.ELEMENT_NODE) {
                     var element = node.nextSibling;
                     if (element.nodeName === 'IMG') {
-                        image['src'] = element.getAttribute('src');
-                        image['alt'] = element.getAttribute('alt');
+                        return element;
                     };
                 };
             };
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // We selected some element (like <P>) and its first child might be an IMG
+            var firstChild = node.firstChild;
+            if (firstChild.nodeName === 'IMG') {
+                return firstChild;
+            };
         };
     };
-    return image;
-};
+    return null;
+}
 
 /**
  * Recursively search element ancestors to find a element nodeName e.g. A

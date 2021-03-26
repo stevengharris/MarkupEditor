@@ -41,9 +41,10 @@ public class MarkupCoordinator<StateHolder>: NSObject, WKScriptMessageHandler wh
     public var webView: MarkupWKWebView!
     public var markupEventDelegate: MarkupEventDelegate?
     
-    public init(markupStateHolder: StateHolder, markupEventDelegate: MarkupEventDelegate? = nil) {
+    public init(markupStateHolder: StateHolder, markupEventDelegate: MarkupEventDelegate? = nil, webView: MarkupWKWebView? = nil) {
         self.markupStateHolder = markupStateHolder
         self.markupEventDelegate = markupEventDelegate
+        self.webView = webView
         super.init()
     }
     

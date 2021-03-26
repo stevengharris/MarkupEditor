@@ -172,7 +172,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func insertImage(src: String?, alt: String?) {
         if src == nil {
-            evaluateJavaScript("MU.removeImage()")
+            modifyImage(src: nil, alt: nil, scale: nil)
         } else {
             var args = "'\(src!.escaped)'"
             if alt != nil {
@@ -186,6 +186,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
             handler(result as? Int ?? 0)
         }
+    }
+    
+    //MARK:- Image editing
+    
+    public func modifyImage(src: String?, alt: String?, scale: Int?) {
+        // If src is nil, then no arguments are passed and the image will be removed
+        // Otherwise, the src, alt, and scale will be applied to the selected image
+        // (or removed if alt or scale are nil)
+        var args = ""
+        if let src = src {
+            args += "'\(src)'"
+            if let alt = alt {
+                args += ", '\(alt)'"
+            } else {
+                args += ", null"
+            }
+            if let scale = scale {
+                args += ", \(scale)"
+            } else {
+                args += ", null"
+            }
+        }
+        evaluateJavaScript("MU.modifyImage(\(args))")
     }
     
     //MARK:- Autosizing
@@ -286,6 +309,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.link = state["link"] as? String
         selectionState.src = state["src"] as? String
         selectionState.alt = state["alt"] as? String
+        selectionState.scale = scaleFromString(state["scale"] as? String)
+        selectionState.frame = rectFromFrame(state["frame"] as? [String : CGFloat])
         if let selectedText = state["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
         } else {
@@ -306,6 +331,21 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.li = state["li"] as? Bool ?? false
         selectionState.quote = state["quote"] as? Bool ?? false
         return selectionState
+    }
+    
+    private func scaleFromString(_ scaleString: String?) -> Int? {
+        guard let scaleString = scaleString, scaleString.suffix(1) == "%" else { return nil }
+        return Int(scaleString.prefix(scaleString.count - 1))
+    }
+    
+    private func rectFromFrame(_ frameDict: [String : CGFloat]?) -> CGRect? {
+        guard let frameDict = frameDict else { return nil }
+        guard
+            let x = frameDict["x"],
+            let y = frameDict["y"],
+            let width = frameDict["width"],
+            let height = frameDict["height"] else { return nil }
+            return CGRect(origin: CGPoint(x: x, y: y), size: CGSize(width: width, height: height))
     }
     
     //MARK:- Styling
