@@ -35,6 +35,10 @@ struct MarkupTextField: UIViewRepresentable {
     @Binding var endedEditing: Bool
     var placeholder: String?
     var isFirstResponder: Bool = false
+    
+    static func dismantleUIView(_ uiView: UITextField, coordinator: Coordinator) {
+        uiView.resignFirstResponder()
+    }
 
     func makeUIView(context: UIViewRepresentableContext<MarkupTextField>) -> UITextField {
         let textField = UITextField(frame: .zero)

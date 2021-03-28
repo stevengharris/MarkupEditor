@@ -170,7 +170,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func insertImage(src: String?, alt: String?) {
+    public func insertImage(src: String?, alt: String?, handler: (()->Void)? = nil) {
         if src == nil {
             modifyImage(src: nil, alt: nil, scale: nil)
         } else {
@@ -178,7 +178,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             if alt != nil {
                 args += ", '\(alt!.escaped)'"
             }
-            evaluateJavaScript("MU.insertImage(\(args))")
+            evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
         }
     }
     

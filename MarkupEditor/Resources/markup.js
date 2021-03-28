@@ -707,36 +707,53 @@ MU.decreaseQuoteLevel = function() {
 
 //MARK:- Insert operations
 
-/// All insert operations that involve user interaction outside of JavaScript
-/// need to be preceded by prepareInsert so that range can be restored prior
-/// to the insert* operation
+/**
+ * Back up the current range so we can restore it duing an insert operation.
+ * All insert operations that involve user interaction outside of JavaScript
+ * need to be preceded by prepareInsert so that range can be restored prior
+ * to the insert* operation
+ */
 MU.prepareInsert = function() {
     MU.backupRange();
 };
 
-/// Insert the image at url with alt text, signaling updateHeight when done loading.
-/// We leave the selection where it was (right in front of the image) rather
-/// than surrounding the selection. The operation will cause a selectionChange
-/// event. On the Swift side, we can do whatever is appropriate when we find
-/// the SelectionState points to an image, which it will when the selection changes.
+/**
+ * Insert the image at url with alt text, signaling updateHeight when done loading.
+ * We leave the selection after the inserted image.
+ * The operation will cause a selectionChange event.
+ */
 MU.insertImage = function(url, alt) {
     MU.restoreRange();
     var sel = document.getSelection();
+    var range = sel.getRangeAt(0).cloneRange();
+    var p = document.createElement('p');
     var el = document.createElement('img');
+    el.onload = MU.updateHeight();
     el.setAttribute('src', url);
     if (alt) { el.setAttribute('alt', alt) };
-    el.onload = MU.updateHeight;
-    var range = sel.getRangeAt(0).cloneRange();
-    range.insertNode(el);
-    _callback('input');
+    p.appendChild(el);
+    range.insertNode(p);
+    var nextSib = p.nextSibling;
+    if (nextSib) {
+        var firstTextChild = _findFirstTextChild(nextSib);
+        if (firstTextChild) {
+            var newRange = document.createRange();
+            newRange.setStart(firstTextChild, 0);
+            newRange.setEnd(firstTextChild,0);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+        };
+    };
 };
 
-/// Modify the attributes of the image at selection.
-/// If url is null, then remove the image.
-/// Scale is a percentage like '80' where null means 100%
+/**
+ * Modify the attributes of the image at selection.
+ * If url is null, then remove the image.
+ * Scale is a percentage like '80' where null means 100%
+ */
 MU.modifyImage = function(src, alt, scale) {
     MU.restoreRange();
-    var el = _getImageAtSelection()
+    var el = _getImageAtSelection();
     if (el) {
         if (src) {
             el.setAttribute('src', src);
@@ -755,13 +772,15 @@ MU.modifyImage = function(src, alt, scale) {
             MU.restoreRange()
         } else {
             el.parentNode.removeChild(el);
-        }
+        };
         _callback('input');
-    }
-}
+    };
+};
 
-/// Insert a link to url. The selection has to be across a range.
-/// When done, re-select the range.
+/**
+ * Insert a link to url. The selection has to be across a range.
+ * When done, re-select the range.
+ */
 MU.insertLink = function(url) {
     MU.restoreRange();
     var sel = document.getSelection();
@@ -1133,9 +1152,8 @@ var _getLinkAttributesAtSelection = function() {
 
 /**
  * If the current selection's anchorNode is an IMG tag, get the src and alt.
- * @returns dictionary with src and alt as keys; empty if not an image
+ * @returns {Dictionary} with src and alt as keys; empty if not an image
  */
-
 var _getImageAttributesAtSelection = function() {
     var attributes = {};
     var element = _getImageAtSelection();
@@ -1155,7 +1173,9 @@ var _getImageAttributesAtSelection = function() {
     return attributes;
 };
 
-
+/**
+ * Get the image element at the selection point if one exists
+ */
 var _getImageAtSelection = function() {
     var sel = document.getSelection();
     if (sel) {
@@ -1197,8 +1217,10 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
 
 //MARK:- Common private functions
 
+/**
+ * Put the tag around the current selection, even if range.collapsed
+ */
 var _setTag = function(type, sel) {
-    // Put the tag around the current selection, even if range.collapsed
     var el = document.createElement(type);
     var range = sel.getRangeAt(0).cloneRange();
     if (range.collapsed) {
@@ -1251,14 +1273,15 @@ var _setTag = function(type, sel) {
     sel.addRange(range);
 };
 
+/**
+ * Remove the tag from the oldElement. The oldSelection startContainer might or might not be
+ * the oldElement passed-in. In all cases, though, oldSelection starts at some offset into text.
+ * The element passed-in has the tag we are removing, so replacing outerHTML with inner removes
+ * the outermost in place. A simple reassignment still leaves references the element type
+ * unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
+ * So, we need to do a proper replace.
+ */
 var _unsetTag = function(oldElement, oldSelection) {
-    // Remove the tag from the oldElement. The oldSelection startContainer might or might not be
-    // the oldElement passed-in. In all cases, though, oldSelection starts at some offset into text.
-    // The element passed-in has the tag we are removing, so replacing outerHTML with inner removes
-    // the outermost in place. A simple reassignment still leaves references the element type
-    // unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
-    // So, we need to do a proper replace.
-    //
     // First, hold onto the old range so we can put it back in place when done
     var oldRange = oldSelection.getRangeAt(0).cloneRange();
     // Note: I thought cloneRange() does copy by value.
@@ -1329,6 +1352,9 @@ var _unsetTag = function(oldElement, oldSelection) {
     selection.addRange(range);
 }
 
+/**
+ * Given an element with a tag, replace its tag with the new tagName
+ */
 var _replaceTag = function(tagName, element) {
     MU.backupRange();
     var newElement = document.createElement(tagName);
@@ -1338,6 +1364,9 @@ var _replaceTag = function(tagName, element) {
     return newElement;
 };
 
+/**
+ * Return the count of the element's children that have the tagName
+ */
 var _childrenWithTagNameCount = function(element, tagName) {
     var count = 0;
     var children = element.children;
@@ -1347,6 +1376,9 @@ var _childrenWithTagNameCount = function(element, tagName) {
     return count;
 }
 
+/**
+ * Find the first child of element whose textContent matches the container passed-in
+ */
 var _firstChildMatchingContainer = function(element, container) {
     // Sure, might be obvious to you, but just for the record...
     // The children property returns a collection of an element's child
@@ -1372,6 +1404,9 @@ var _firstChildMatchingContainer = function(element, container) {
     return null;
 }
 
+/**
+ * Return the first child within element that is a textNode using depth-first traversal
+ */
 var _firstTextNodeChild = function(element) {
     let childNodes = element.childNodes;
     for (let i = 0; i < childNodes.length; i++) {
@@ -1401,9 +1436,28 @@ var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames)
             return parentElement;
         } else {
             return _findFirstParentElementInTagNames(parentElement, matchNames, excludeNames);
-        }
-    }
+        };
+    };
 };
+                                
+/// Do a depth-first traversal from node to find the first text node in it.
+/// If node is a TEXT_NODE, return it immediately
+var _findFirstTextChild = function(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+        return node;
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+        var children = node.children
+        if (children.length > 0) {
+            for (let i=0; i < children.length; i++) {
+                var child = _findFirstTextChild(childen[i]);
+                if (child) {
+                    return child;
+                };
+            };
+        };
+    };
+};
+
 
 //MARK:- Unused?
 

@@ -176,6 +176,12 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
                 MarkupImageToolbar(selectedWebView: $markupStateHolder.selectedWebView, selectionState: $markupStateHolder.selectionState, showImageToolbar: $showImageToolbar)
+                    .onDisappear(perform: {
+                        selectedWebView?.getSelectionState() { selectionState in
+                            markupStateHolder.selectionState = selectionState
+                            selectedWebView?.becomeFirstResponder()
+                        }
+                    })
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(idealHeight: 50, maxHeight: 50)
                     .padding([.leading, .trailing], 8)

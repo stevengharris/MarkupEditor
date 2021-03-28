@@ -81,11 +81,7 @@ public class MarkupCoordinator<StateHolder>: NSObject, WKScriptMessageHandler wh
             loadInitialHtml()
             markupEventDelegate?.markupDidLoad(webView)
         case "input":
-            webView.getHtml { contents in
-                guard let contents = contents else { return }
-                self.markupEventDelegate?.markup(webView, contentDidChange: contents)
-                self.updateHeight()
-            }
+            updateHeight()
         case "updateHeight":
             updateHeight()
         case "blur":
@@ -97,9 +93,15 @@ public class MarkupCoordinator<StateHolder>: NSObject, WKScriptMessageHandler wh
             markupStateHolder.selectedWebView = webView
             markupEventDelegate?.markupTookFocus(webView)
         case "selectionChange":
-            webView.getSelectionState() { selectionState in
-                self.markupStateHolder.selectionState = selectionState
-                self.markupEventDelegate?.markupSelectionChanged(webView, selectionState: selectionState)
+            // If this webView does not have focus, we ignore selectionChange.
+            // So, for example, if we select some other view or a TextField becomes first responder, we
+            // don't want to modify selectionState. There may be other implications, such a programmatically
+            // doing something to change selection in the WKWebView.
+            if webView.hasFocus {
+                webView.getSelectionState() { selectionState in
+                    self.markupStateHolder.selectionState = selectionState
+                    self.markupEventDelegate?.markupSelectionChanged(webView, selectionState: selectionState)
+                }
             }
         default:
             // Try to decode a complex JSON stringified message

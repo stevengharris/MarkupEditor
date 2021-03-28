@@ -24,6 +24,7 @@ public struct MarkupImageToolbar: View {
     private var argScale: Int? { actualScale == 100 ? nil : scale }
     // Since scale=nil means 100%, actualScale always gives us an Int when we need it
     private var actualScale: Int { scale ?? 100 }
+    @State private var saving: Bool = false
     @State private var previewed: Bool = false
     @State private var endedEditing: Bool = false
     
@@ -113,10 +114,13 @@ public struct MarkupImageToolbar: View {
     }
     
     private func preview() {
+        // The onChange event can fire and cause preview during the save operation.
+        // So, if we are saving, then never preview.
+        if saving { return }
         selectedWebView?.prepareInsert { error in
             if error == nil {
+                previewed = true
                 if !previewed {
-                    previewed = true
                     selectedWebView?.insertImage(src: src, alt: alt)
                 } else {
                     selectedWebView?.modifyImage(src: src, alt: alt, scale: argScale)
@@ -126,15 +130,21 @@ public struct MarkupImageToolbar: View {
     }
     
     private func save() {
-        selectedWebView?.prepareInsert { error in
-            if error == nil {
-                if initialSrc == nil {
-                    selectedWebView?.insertImage(src: src, alt: alt)
+        saving = true
+        if !previewed {
+            selectedWebView?.prepareInsert { error in
+                if error == nil {
+                    if initialSrc == nil {
+                        selectedWebView?.insertImage(src: src, alt: alt)
+                    } else {
+                        selectedWebView?.modifyImage(src: src, alt: alt, scale: argScale)
+                    }
+                    withAnimation { showImageToolbar.toggle() }
                 } else {
-                    selectedWebView?.modifyImage(src: src, alt: alt, scale: argScale)
+                    // If we don't close the toolbar because of an error, then reset saving
+                    saving = false
                 }
             }
-            withAnimation { showImageToolbar.toggle() }
         }
     }
     
