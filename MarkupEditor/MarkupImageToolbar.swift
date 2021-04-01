@@ -10,7 +10,7 @@ import SwiftUI
 public struct MarkupImageToolbar: View {
     @Binding var showImageToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
-    @Binding private var selectionState: SelectionState
+    @ObservedObject private var selectionState: SelectionState
     private var markupUIDelegate: MarkupUIDelegate?
     private var initialSrc: String?
     private var initialAlt: String?
@@ -71,13 +71,13 @@ public struct MarkupImageToolbar: View {
         .frame(idealHeight: 50, maxHeight: 50)
     }
     
-    public init(selectedWebView: Binding<MarkupWKWebView?>, selectionState: Binding<SelectionState>, showImageToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showImageToolbar: Binding<Bool>) {
+        self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _selectionState = selectionState
         _showImageToolbar = showImageToolbar
-        initialSrc = self.selectionState.src
-        initialAlt = self.selectionState.alt
-        initialScale = self.selectionState.scale
+        initialSrc = selectionState.src
+        initialAlt = selectionState.alt
+        initialScale = selectionState.scale
         _src = State(initialValue: initialSrc)
         _alt = State(initialValue: initialAlt)
         _scale = State(initialValue: initialScale)
@@ -160,6 +160,6 @@ struct MarkupImageToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
         // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        MarkupImageToolbar(selectedWebView: .constant(nil), selectionState: .constant(SelectionState()), showImageToolbar: .constant(true))
+        MarkupImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(true))
     }
 }

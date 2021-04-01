@@ -58,7 +58,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     private func setupForEditing() {
         // The markup.html loads the css and js scripts itself
-        if let filePath = Bundle.module.path(forResource: "markup", ofType: "html") {
+        // TODO:- This may have to be Bundle.module instead of Bundler(for:) when
+        // loaded from a Swift package
+        if let filePath = Bundle(for: MarkupWKWebView.self).path(forResource: "markup", ofType: "html") {
             let url = URL(fileURLWithPath: filePath, isDirectory: false)
             loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }

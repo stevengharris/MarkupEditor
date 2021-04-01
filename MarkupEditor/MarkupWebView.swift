@@ -16,33 +16,34 @@ import WebKit
 ///
 /// The Coordinator will be a WKScriptMessageHandler and handle callbacks that come in from calls in markup.js to
 /// window.webkit.messageHandlers.markup.postMessage(message);
-public struct MarkupWebView<StateHolder> : UIViewRepresentable where StateHolder: MarkupStateHolder {
+public struct MarkupWebView: UIViewRepresentable {
     public typealias Coordinator = MarkupCoordinator
+    @ObservedObject private var selectionState: SelectionState
+    @Binding private var selectedWebView: MarkupWKWebView?
     /// The initial HTML content to be shown in the MarkupWKWebView.
     private var initialContent: String
-    /// An instance that holds onto the selectedWebView, selectionState, and markupEventDelegate.
-    /// Typically ContentView or @main App for SwiftUI, perhaps a UIViewController for UIKit.
-    public var markupStateHolder: StateHolder
     public var markupEventDelegate: MarkupEventDelegate?
     public var markupUIDelegate: MarkupUIDelegate?
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     
     public init(
-        markupStateHolder: StateHolder,
+        selectionState: SelectionState,
+        selectedWebView: Binding<MarkupWKWebView?>,
         markupEventDelegate: MarkupEventDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         initialContent: String? = nil) {
-        self.markupStateHolder = markupStateHolder
+        self.selectionState = selectionState
+        _selectedWebView = selectedWebView
         self.markupEventDelegate = markupEventDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate
         self.initialContent = initialContent ?? ""
     }
 
-    public func makeCoordinator() -> Coordinator<StateHolder> {
-        return Coordinator(markupStateHolder: markupStateHolder, markupEventDelegate: markupEventDelegate)
+    public func makeCoordinator() -> Coordinator {
+        return Coordinator(selectionState: selectionState, markupEventDelegate: markupEventDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {

@@ -10,21 +10,13 @@ import MarkupEditor
 
 struct ContentView: View {
    
-    class MockStateHolder: MarkupStateHolder {
-        @Published var selectedWebView: MarkupWKWebView? = nil
-        @Published var selectionState: SelectionState = SelectionState()
-    }
-
-    private var mockStateHolder: MockStateHolder
+    @StateObject var selectionState = SelectionState()
+    @State var selectedWebView: MarkupWKWebView?
     var body: some View {
         VStack(spacing: 0) {
-            MarkupToolbar(markupStateHolder: mockStateHolder, markupUIDelegate: self)
-            MarkupWebView(markupStateHolder: mockStateHolder, markupEventDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
+            MarkupToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: self)
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
         }
-    }
-    
-    init() {
-        mockStateHolder = MockStateHolder()
     }
     
 }
@@ -38,6 +30,10 @@ struct ContentView_Previews: PreviewProvider {
 }
 
 extension ContentView: MarkupEventDelegate {
+    
+    func markupTookFocus(_ view: MarkupWKWebView) {
+        selectedWebView = view
+    }
     
     func markupSelectionChanged(_ view: MarkupWKWebView, selectionState: SelectionState) {
         // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.

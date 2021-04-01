@@ -7,10 +7,9 @@
 
 import SwiftUI
 
-public struct MarkupInsertToolbar<StateHolder>: View where StateHolder: MarkupStateHolder {
-    @ObservedObject private var markupStateHolder: StateHolder
-    private var selectedWebView: MarkupWKWebView? { markupStateHolder.selectedWebView }
-    private var selectionState: SelectionState { markupStateHolder.selectionState }
+public struct MarkupInsertToolbar: View {
+    @ObservedObject private var selectionState: SelectionState
+    @Binding private var selectedWebView: MarkupWKWebView?
     private var markupUIDelegate: MarkupUIDelegate?
     @Binding public var showImageToolbar: Bool
     public var body: some View {
@@ -63,8 +62,9 @@ public struct MarkupInsertToolbar<StateHolder>: View where StateHolder: MarkupSt
         }
     }
     
-    public init(markupStateHolder: StateHolder, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>) {
-        self.markupStateHolder = markupStateHolder
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>) {
+        self.selectionState = selectionState
+        _selectedWebView = selectedWebView
         self.markupUIDelegate = markupUIDelegate
         _showImageToolbar = showImageToolbar
     }
@@ -73,13 +73,8 @@ public struct MarkupInsertToolbar<StateHolder>: View where StateHolder: MarkupSt
 
 struct MarkupInsertToolbar_Previews: PreviewProvider {
     
-    private class MockStateHolder: MarkupStateHolder {
-        var selectedWebView: MarkupWKWebView? = nil
-        var selectionState: SelectionState = SelectionState()
-    }
-    
     static var previews: some View {
-        MarkupInsertToolbar(markupStateHolder: MockStateHolder(), showImageToolbar: .constant(false))
+        MarkupInsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false))
     }
     
 }

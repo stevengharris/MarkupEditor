@@ -9,7 +9,7 @@
 import SwiftUI
 import WebKit
 
-/// Coordinates between a single MarkupWKWebView and the MarkupStateHolder, informing the MarkupEventDelegate of what happened.
+/// Tracks changes to a single MarkupWKWebView, updating the selectionState and informing the MarkupEventDelegate of what happened.
 ///
 /// Communication between the MarkupWKWebView and MarkupCoordinator is done using a UserContentController.
 /// The MarkupCoordinator functions as the WKScriptMessageHandler, receiving userContentController(_:didReceive:)
@@ -26,23 +26,22 @@ import WebKit
 ///
 /// While the SwiftMarkupEditor is designed to handle multiple MarkupWKWebViews with a single MarkupToolbar,
 /// a MarkupCoordinator is coordinating between a single UIKit MarkupWKWebView and something that holds onto
-/// the state of the app that is using the MarkupEditor. That state is held by some kind of MarkupStateHolder, which
-/// can be a SwiftUI View or App, or a UIKit UIViewController or AppDelegate (or whatever else is appropriate) and
-/// will be around to handle the coordination between the MarkupWKWebView and the MarkupToolbar.
+/// the state of the app that is using the MarkupEditor. That state is held in the SelectionState, which needs to be
+/// held in the top-level View for SwiftUI as StateObject or in an instance variable of something that will be present
+/// for the proper lifetime in a UIKit app (e.g., the top-level UIViewController).
 ///
 /// As events arrive here in the MarkupCoordinator, it takes various steps to ensure our knowledge in Swift of
 /// what is in the MarkupWKWebView is maintained properly. Its other function is to inform the MarkupEventDelegate
-/// of what's gone on, so the MarkupEventDelegate can do whatever is needed.  So, for example, a focus event
-/// received by this MarkupCoordinator has to reset the selectedWebView being held by the markupStateHolder,
-/// which publishes to the MarkupToolbar so it can display the state properly, and then it notifies the
-/// MarkupEventDelegate, which might want to take some other action as the focus changes.
-public class MarkupCoordinator<StateHolder>: NSObject, WKScriptMessageHandler where StateHolder: MarkupStateHolder {
-    private var markupStateHolder: StateHolder
+/// of what's gone on, so the MarkupEventDelegate can do whatever is needed.  So, for example, when a focus event
+/// is received by this MarkupCoordinator, it notifies the MarkupEventDelegate, which might want to take some other
+/// action as the focus changes, such as updating the selectedWebView.
+public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
+    @Published private var selectionState: SelectionState
     public var webView: MarkupWKWebView!
     public var markupEventDelegate: MarkupEventDelegate?
     
-    public init(markupStateHolder: StateHolder, markupEventDelegate: MarkupEventDelegate? = nil, webView: MarkupWKWebView? = nil) {
-        self.markupStateHolder = markupStateHolder
+    public init(selectionState: SelectionState, markupEventDelegate: MarkupEventDelegate? = nil, webView: MarkupWKWebView? = nil) {
+        self.selectionState = selectionState
         self.markupEventDelegate = markupEventDelegate
         self.webView = webView
         super.init()
@@ -90,17 +89,21 @@ public class MarkupCoordinator<StateHolder>: NSObject, WKScriptMessageHandler wh
             webView.cleanUpHtml(notifying: markupEventDelegate)
         case "focus":
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
-            markupStateHolder.selectedWebView = webView
+            // NOTE: Just because the webView her has focus does not mean it becomes the
+            // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
+            // Use markupEventDelegate.markupTookFocus to reset selectedWebView if needed, since
+            // it will have logic specific to your application.
             markupEventDelegate?.markupTookFocus(webView)
         case "selectionChange":
             // If this webView does not have focus, we ignore selectionChange.
             // So, for example, if we select some other view or a TextField becomes first responder, we
             // don't want to modify selectionState. There may be other implications, such a programmatically
             // doing something to change selection in the WKWebView.
+            // Note that selectionState remains the same object; just the state it holds onto is updated.
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
-                    self.markupStateHolder.selectionState = selectionState
-                    self.markupEventDelegate?.markupSelectionChanged(webView, selectionState: selectionState)
+                    self.selectionState.reset(from: selectionState)
+                    self.markupEventDelegate?.markupSelectionChanged(webView)
                 }
             }
         default:

@@ -8,21 +8,20 @@
 
 import SwiftUI
 
-/// The MarkupToolbar acts on the selectedWebView and shows the current selectionState for it.
+/// The MarkupToolbar acts on the selectedWebView and shows the current selectionState.
 ///
-/// The MarkupToolbar observes the markupStateHolder so that its display reflects the current state.
+/// The MarkupToolbar observes the selectionState so that its display reflects the current state.
 /// For example, when selectedWebView is nil, the toolbar is disabled, and when the selectionState shows
 /// that the selection is inside of a bolded element, then the bold (B) button is active and filled-in.
 ///
 /// An additional section of the toolbar is presented only when built in Debug mode.
-public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHolder {
+public struct MarkupToolbar: View {
     
     typealias DisplayFormat = MarkupWKWebView.DisplayFormat
     
     private let isDebug = _isDebugAssertConfiguration()
-    @ObservedObject private var markupStateHolder: StateHolder
-    private var selectedWebView: MarkupWKWebView? { markupStateHolder.selectedWebView }
-    private var selectionState: SelectionState { markupStateHolder.selectionState }
+    @Binding public var selectedWebView: MarkupWKWebView?
+    @ObservedObject private var selectionState: SelectionState
     private var markupUIDelegate: MarkupUIDelegate?
     // Note that the selectedFormat is kept locally here as @State, but can be set as
     // a result of the selectedWebView changing externally or as a result of the
@@ -34,7 +33,7 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                    MarkupInsertToolbar(markupStateHolder: markupStateHolder, showImageToolbar: $showImageToolbar)
+                MarkupInsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar)
                         .disabled(selectedFormat == .Raw)
                     Divider()
                     VStack(spacing: 2) {
@@ -175,12 +174,9 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
                 .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
-                MarkupImageToolbar(selectedWebView: $markupStateHolder.selectedWebView, selectionState: $markupStateHolder.selectionState, showImageToolbar: $showImageToolbar)
+                MarkupImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar)
                     .onDisappear(perform: {
-                        selectedWebView?.getSelectionState() { selectionState in
-                            markupStateHolder.selectionState = selectionState
-                            selectedWebView?.becomeFirstResponder()
-                        }
+                        selectedWebView?.becomeFirstResponder()
                     })
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(idealHeight: 50, maxHeight: 50)
@@ -192,9 +188,10 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
         .background(Color(UIColor.systemBackground))
     }
     
-    public init(markupStateHolder: StateHolder, markupUIDelegate: MarkupUIDelegate? = nil) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil) {
+        self.selectionState = selectionState
+        _selectedWebView = selectedWebView
         // Note if markupUIDelegate is not specified, no insert operation alerts will be shown
-        self.markupStateHolder = markupStateHolder
         self.markupUIDelegate = markupUIDelegate
     }
     
@@ -219,13 +216,8 @@ public struct MarkupToolbar<StateHolder>: View where StateHolder: MarkupStateHol
 
 struct MarkupToolbar_Previews: PreviewProvider {
     
-    private class MockStateHolder: MarkupStateHolder {
-        var selectedWebView: MarkupWKWebView? = nil
-        var selectionState: SelectionState = SelectionState()
-    }
-    
     static var previews: some View {
-        MarkupToolbar(markupStateHolder: MockStateHolder())
+        MarkupToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
     }
 }
 

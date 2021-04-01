@@ -78,10 +78,6 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     public init() {}
     
-    public func reset() {
-        reset(from: nil)
-    }
-    
     public func reset(from selectionState: SelectionState?) {
         style = selectionState?.style ?? StyleContext.Undefined
         selection = selectionState?.selection

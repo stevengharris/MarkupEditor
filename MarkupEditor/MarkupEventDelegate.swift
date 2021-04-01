@@ -35,7 +35,7 @@ public protocol MarkupEventDelegate {
     func markup(_ view: MarkupWKWebView, handle action: String)
     
     /// Called when the selection changes in the webView
-    func markupSelectionChanged(_ view: MarkupWKWebView, selectionState: SelectionState)
+    func markupSelectionChanged(_ view: MarkupWKWebView)
     
 }
 
@@ -46,6 +46,6 @@ extension MarkupEventDelegate {
     public func markupLostFocus(_ view: MarkupWKWebView) {}
     public func markupDidLoad(_ view: MarkupWKWebView) {}
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
-    public func markupSelectionChanged(_ view: MarkupWKWebView, selectionState: SelectionState) {}
+    public func markupSelectionChanged(_ view: MarkupWKWebView) {}
     
 }

@@ -54,16 +54,15 @@ struct HtmlTest {
     
 }
 
-class MarkupEditorTests: XCTestCase, MarkupEventDelegate, MarkupStateHolder {
-    var selectedWebView: MarkupWKWebView?
+class MarkupEditorTests: XCTestCase, MarkupEventDelegate {
     var selectionState: SelectionState = SelectionState()
     var webView: MarkupWKWebView!
-    var coordinator: MarkupCoordinator<MarkupEditorTests>!
+    var coordinator: MarkupCoordinator!
     var loadedExpectation: XCTestExpectation = XCTestExpectation(description: "Loaded")
     
     override func setUpWithError() throws {
         webView = MarkupWKWebView()
-        coordinator = MarkupCoordinator(markupStateHolder: self, markupEventDelegate: self)    // We pass self as the MarkupStateHolder
+        coordinator = MarkupCoordinator(selectionState: selectionState, markupEventDelegate: self)
         coordinator.webView = webView
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
