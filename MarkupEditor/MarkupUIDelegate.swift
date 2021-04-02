@@ -28,6 +28,8 @@ public protocol MarkupUIDelegate {
     func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: (()->Void)?)
     /// Take action when the user selectd an image
     func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
+    func markupImageToolbarAppeared()
+    func markupImageToolbarDisappeared()
 
 }
 
@@ -141,6 +143,8 @@ extension MarkupUIDelegate {
         UIApplication.shared.open(url)
     }
     
-    public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) { }
+    public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) {}
+    public func markupImageToolbarAppeared() {}
+    public func markupImageToolbarDisappeared() {}
     
 }

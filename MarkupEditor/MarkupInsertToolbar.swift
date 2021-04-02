@@ -25,7 +25,9 @@ public struct MarkupInsertToolbar: View {
                 .buttonStyle(ToolbarImageButtonStyle(active: selectionState.isInLink))
                 .disabled(!selectionState.isLinkable)
                 Button(action: {
-                    withAnimation { showImageToolbar.toggle() }
+                    // TODO: The animation causes problems in UIKit. Need to figure it out
+                    showImageToolbar.toggle()
+                    //withAnimation { showImageToolbar.toggle() }
                 }) {
                     Image(systemName: "photo")
                 }

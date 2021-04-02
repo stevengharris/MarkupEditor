@@ -175,14 +175,16 @@ public struct MarkupToolbar: View {
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
                 MarkupImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar)
+                    .transition(.move(edge: .bottom))
+                    .onAppear(perform: {
+                        markupUIDelegate?.markupImageToolbarAppeared()
+                    })
                     .onDisappear(perform: {
+                        markupUIDelegate?.markupImageToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
                     })
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(idealHeight: 50, maxHeight: 50)
                     .padding([.leading, .trailing], 8)
                     .padding([.top], 2)
-                Divider()           // Horizontal at the bottom
             }
         }
         .background(Color(UIColor.systemBackground))

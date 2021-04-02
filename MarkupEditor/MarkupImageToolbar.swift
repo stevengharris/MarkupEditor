@@ -29,38 +29,41 @@ public struct MarkupImageToolbar: View {
     @State private var endedEditing: Bool = false
     
     public var body: some View {
-        HStack {
-            VStack(spacing: 2) {
-                Text("Image URL")
-                    .font(.system(size: 10, weight: .light))
-                MarkupTextField(text: $src, endedEditing: $endedEditing, placeholder: "Enter URL", isFirstResponder: true)
-                    .onChange(of: endedEditing, perform: { value in if value { preview() }})
-                    .background(Color(UIColor.systemGray6))
-            }
-            VStack(spacing: 2) {
-                Text("Description")
-                    .font(.system(size: 10, weight: .light))
-                MarkupTextField(text: $alt, endedEditing: $endedEditing, placeholder: "Enter Description")
-                    .onChange(of: endedEditing, perform: { value in if value { preview() }})
-                    .background(Color(UIColor.systemGray6))
-            }
-            Divider()
-            VStack(spacing: 2) {
-                Text("Scale")
-                    .font(.system(size: 10, weight: .light))
-                Stepper(onIncrement: incrementScale, onDecrement: decrementScale) { Text("\(actualScale)%").frame(width: 50) }
-            }
-            .scaledToFit()
-            Divider()
-            VStack(spacing: 2) {
-                Spacer()
-                HStack(alignment: .center) {
-                    Button(action: { self.save() }) { Text("Save").frame(width: 80) }
-                    Button(action: { self.cancel() }) { Text("Cancel").frame(width: 80) }
+        VStack(spacing: 2) {
+            HStack {
+                VStack(spacing: 2) {
+                    Text("Image URL")
+                        .font(.system(size: 10, weight: .light))
+                    MarkupTextField(text: $src, endedEditing: $endedEditing, placeholder: "Enter URL", isFirstResponder: true)
+                        .onChange(of: endedEditing, perform: { value in if value { preview() }})
+                        .background(Color(UIColor.systemGray6))
                 }
-                .buttonStyle(ToolbarTextButtonStyle())
+                VStack(spacing: 2) {
+                    Text("Description")
+                        .font(.system(size: 10, weight: .light))
+                    MarkupTextField(text: $alt, endedEditing: $endedEditing, placeholder: "Enter Description")
+                        .onChange(of: endedEditing, perform: { value in if value { preview() }})
+                        .background(Color(UIColor.systemGray6))
+                }
+                Divider()
+                VStack(spacing: 2) {
+                    Text("Scale")
+                        .font(.system(size: 10, weight: .light))
+                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) { Text("\(actualScale)%").frame(width: 50) }
+                }
+                .scaledToFit()
+                Divider()
+                VStack(spacing: 2) {
+                    Spacer()
+                    HStack(alignment: .center) {
+                        Button(action: { self.save() }) { Text("Save").frame(width: 80) }
+                        Button(action: { self.cancel() }) { Text("Cancel").frame(width: 80) }
+                    }
+                    .buttonStyle(ToolbarTextButtonStyle())
+                }
+                Spacer()
             }
-            Spacer()
+            Divider()
         }
         .onChange(of: selectionState.src, perform: { value in
             src = selectionState.src
@@ -139,7 +142,9 @@ public struct MarkupImageToolbar: View {
                     } else {
                         selectedWebView?.modifyImage(src: src, alt: alt, scale: argScale)
                     }
-                    withAnimation { showImageToolbar.toggle() }
+                    // TODO: The animation causes problems in UIKit. Need to figure it out
+                    showImageToolbar.toggle()
+                    //withAnimation { showImageToolbar.toggle() }
                 } else {
                     // If we don't close the toolbar because of an error, then reset saving
                     saving = false
@@ -150,8 +155,9 @@ public struct MarkupImageToolbar: View {
     
     private func cancel() {
         selectedWebView?.modifyImage(src: initialSrc, alt: initialAlt, scale: initialScale)
-        withAnimation { showImageToolbar.toggle() }
-        
+        // TODO: The animation causes problems in UIKit. Need to figure it out
+        showImageToolbar.toggle()
+        //withAnimation { showImageToolbar.toggle() }
     }
     
 }

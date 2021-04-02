@@ -17,6 +17,7 @@ class ViewController: UIViewController {
     private var coordinator: MarkupCoordinator!
     /// The MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
     private var toolbar: MarkupToolbar!
+    private let toolbarHeight: CGFloat = 53
     private let minWebViewHeight: CGFloat = 30
     private var webViewHeightConstraint: NSLayoutConstraint!
     /// The state of the selection in the MarkupWKWebView, shown in the toolbar
@@ -35,6 +36,7 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        toolbarHeightConstraint.constant = toolbarHeight
         initializeWebView()
         toolbar = MarkupToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupUIDelegate: self)
         add(swiftUIView: toolbar, to: toolbarHolder)
@@ -51,6 +53,8 @@ class ViewController: UIViewController {
         webView = MarkupWKWebView()
         view.addSubview(webView)
         webView.translatesAutoresizingMaskIntoConstraints = false
+        // To illustrate auto-height adjustment as content changes, define webViewHeightConstraint here and then
+        // adjuat it in the heightDidChange callback received by MarkupEventDelegate
         webViewHeightConstraint = webView.heightAnchor.constraint(equalToConstant: minWebViewHeight)
         NSLayoutConstraint.activate([
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
@@ -62,14 +66,14 @@ class ViewController: UIViewController {
         coordinator = MarkupCoordinator(selectionState: selectionState, markupEventDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
     }
-    
-    func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {
-        webViewHeightConstraint.constant = CGFloat(height)
-    }
 
 }
 
 extension ViewController: MarkupEventDelegate {
+    
+    func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {
+        webViewHeightConstraint.constant = CGFloat(height)
+    }
     
     func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
@@ -81,7 +85,7 @@ extension ViewController: MarkupEventDelegate {
         if selectionState.isFollowable {
             markupLinkSelected(view, selectionState: selectionState)
         }
-        // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.
+        // If the selection is in an image, then let the markupUIDelegate decide what to do.
         // The default behavior is to do nothing
         if selectionState.isInImage {
             markupImageSelected(view, selectionState: selectionState)
@@ -91,5 +95,13 @@ extension ViewController: MarkupEventDelegate {
 }
 
 extension ViewController: MarkupUIDelegate {
+    
+    func markupImageToolbarAppeared() {
+        self.toolbarHeightConstraint.constant = toolbarHeight * 2 + 1       // 1 for the Divider?
+    }
+    
+    func markupImageToolbarDisappeared() {
+        self.toolbarHeightConstraint.constant = toolbarHeight
+    }
     
 }
