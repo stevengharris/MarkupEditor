@@ -17,23 +17,11 @@
 
 @charset "UTF-8";
 
-:root {
-    color-scheme: light dark;
-}
-
 body {
     overflow: auto;
     margin: 8px;
     font-family: -apple-system;
     font: -apple-system-body;
-    background-color: #F2F2F7;
-}
-
-@media (prefers-color-scheme: dark) {
-    body, #editor, code, blockquote {
-        background-color: rgb(38,38,41);
-        color: white;
-    }
 }
 
 #editor {
@@ -45,21 +33,15 @@ body {
     outline: none !important;
 }
 
-.placeholder[placeholder]:after {
-    content: attr(placeholder);
-    position: absolute;
-    margin-top: 0px;
-    color: #ccc;
-}
-
 /* TODO:- Templatize the font sizes */
 
 /* Not sure why this has no effect, as I would like it to be clearer in dark mode but doesn't do anything ever */
-/* Values below are garbage to see if they have any effect */
+/* Values below are garbage to see if they have any effect
 ::selection {
   color: #00ff00;
   background-color: #FFA500;
 }
+ */
 
 code {
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;

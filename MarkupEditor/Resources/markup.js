@@ -105,7 +105,7 @@ var _callback = function(message) {
 /// Can be negative if it is above what is visible
 MU.getRelativeCaretYPosition = function() {
     var y = 0;
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     if (sel.rangeCount) {
         var range = sel.getRangeAt(0);
         var needsWorkAround = (range.startOffset == 0)
@@ -138,7 +138,7 @@ MU.rangeSelectionExists = function() {
 
 /// Return the first tag the selection is inside of
 MU.selectionTag = function() {
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     if (sel) {
         if (sel.type === 'None') {
             return '';
@@ -167,7 +167,7 @@ var _firstSelectionTagMatching = function(matchNames, excludeNames) {
 
 /// Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames
 var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     if (sel) {
         if (sel.type === 'None') {
             return null;
@@ -186,7 +186,7 @@ var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
 
 /// Return the all tags in tagNames that the selection is inside of
 var _selectionTagsMatching = function(tagNames) {
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     var tags = [];
     if (sel) {
         if (sel.type === 'None') {
@@ -207,17 +207,44 @@ var _selectionTagsMatching = function(tagNames) {
 
 //MARK:- Event listeners
 
+/**
+ * We don't want to hear about the selection changing as the mouse moves during
+ * a drag-select. We track when the mouse is down. If mouse movement occurs
+ * while down, we note that. Then, when the mouse comes back up, if movement
+ * has occurred, we make the callback that the selectionChanged, even though
+ * we have ignored any selectionChanged events happening while it was down.
+ * The net effect is to get one selectionChange event when the mouse comes back
+ * up after a drag-select, and avoid any selectionChange events while the
+ * mouse is down.
+ */
+var mouseUp;
+var moved;
+
+document.addEventListener('mousedown', function() {
+    mouseUp = false;
+});
+
+document.addEventListener('mousemove', function() {
+    if (!mouseUp) { moved = true };
+});
+
+document.addEventListener('mouseup', function() {
+    mouseUp = true;
+    if (moved) { _callback('selectionChange') };
+    moved = false;
+});
+
 document.addEventListener('selectionchange', function() {
-    _callback('selectionChange');
+    if (mouseUp) { _callback('selectionChange') };
 });
 
 MU.editor.addEventListener('input', function() {
-    MU.updatePlaceholder();
     MU.backupRange();
     _callback('input');
 });
 
 MU.editor.addEventListener('focus', function() {
+    MU.restoreRange();
     _callback('focus');
 });
 
@@ -332,7 +359,6 @@ MU.setHTML = function(contents) {
         images[i].onload = MU.updateHeight;
     }
     MU.editor.innerHTML = tempWrapper.innerHTML;
-    MU.updatePlaceholder();
 };
 
 /**
@@ -341,18 +367,6 @@ MU.setHTML = function(contents) {
  */
 MU.getHTML = function() {
     return MU.editor.innerHTML;
-};
-
-MU.setPlaceholderText = function(text) {
-    MU.editor.setAttribute('placeholder', text);
-};
-
-MU.updatePlaceholder = function() {
-    if (MU.editor.innerHTML.indexOf('img') !== -1 || MU.editor.innerHTML.length > 0) {
-        MU.editor.classList.remove('placeholder');
-    } else {
-        MU.editor.classList.add('placeholder');
-    }
 };
 
 MU.setFontSize = function(size) {
@@ -435,21 +449,18 @@ var _toggleFormat = function(type) {
 // really can't.
 
 MU.showRaw = function() {
-    // Just replace the innerHTML without the callback.
+    // Just replace the innerHTML with the "raw" equivalent
     // Remove all ranges to avoid potential problems.
     // The expectation is the the editor prevents editing in this state.
-    let sel = document.getSelection();
-    if (sel) { sel.removeAllRanges() };
+    //document.getSelection().removeAllRanges();
     MU.editor.innerHTML = MU.editor.innerHTML.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
 MU.showFormatted = function(html) {
-    // Just replace the innerHTML with html and notify of the input
-    // Remove all ranges to avoid potential problems.
-    let sel = document.getSelection();
-    if (sel) { sel.removeAllRanges() };
+    // Just replace the innerHTML with html
     MU.editor.innerHTML = html;
-    _callback('input');
+    _consoleLog(MU.editor.innerHTML);
+    //MU.restoreRange();
 };
 
 //MARK:- Styling
@@ -819,16 +830,31 @@ MU.backupRange = function() {
             'endContainer': range.endContainer,
             'endOffset': range.endOffset
         };
+    } else {
+        MU.currentSelection = {};
     }
+    //_consoleLog(
+    //    'backedUp\n' +
+    //    ' startContainer: ' + MU.currentSelection.startContainer.textContent + '\n' +
+    //    ' startOffset: ' + MU.currentSelection.startOffset + '\n' +
+    //    ' endContainer: ' + MU.currentSelection.endContainer.textContent + '\n' +
+    //    ' endOffset: ' + MU.currentSelection.endOffset);
 };
 
 MU.restoreRange = function() {
+    if (MU.currentSelection.length === 0) { return };
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
     range.setStart(MU.currentSelection.startContainer, MU.currentSelection.startOffset);
     range.setEnd(MU.currentSelection.endContainer, MU.currentSelection.endOffset);
     selection.addRange(range);
+    //_consoleLog(
+    //    'restored\n' +
+    //    ' startContainer: ' + MU.currentSelection.startContainer.textContent + '\n' +
+    //    ' startOffset: ' + MU.currentSelection.startOffset + '\n' +
+    //    ' endContainer: ' + MU.currentSelection.endContainer.textContent + '\n' +
+    //    ' endOffset: ' + MU.currentSelection.endOffset);
 };
 
 MU.addRangeToSelection = function(selection, range) {
@@ -842,7 +868,7 @@ MU.addRangeToSelection = function(selection, range) {
 MU.selectElementContents = function(el) {
     var range = document.createRange();
     range.selectNodeContents(el);
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     // this.createSelectionFromRange sel, range
     MU.addRangeToSelection(sel, range);
 };
@@ -853,7 +879,7 @@ MU.focus = function() {
     var range = document.createRange();
     range.selectNodeContents(MU.editor);
     range.collapse(false);
-    var selection = window.getSelection();
+    var selection = document.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
     MU.editor.focus();
@@ -861,7 +887,7 @@ MU.focus = function() {
 
 MU.focusAtPoint = function(x, y) {
     var range = document.caretRangeFromPoint(x, y) || document.createRange();
-    var selection = window.getSelection();
+    var selection = document.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
     MU.editor.focus();
@@ -1088,7 +1114,7 @@ var _getFormatTags = function() {
 }
 
 var _getSelectionText = function() {
-    var sel = window.getSelection();
+    var sel = document.getSelection();
     if (sel) {
         return sel.toString();
     }

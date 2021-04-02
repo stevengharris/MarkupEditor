@@ -60,8 +60,11 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         // We need to initialize the selection/range for immediate double or
         // triple clicks to be detected. We still have to deal with selection
         // ourselves, but at least we consistently receive double and triple
-        // clicks if the selection is initialized.
-        // webView.initializeRange()
+        // clicks if the selection is initialized. Not having range initialized
+        // also causes problems on the initial focus. When we blur, we backupRange,
+        // and when we focus, we restoreRange. But, if there is no initialRange,
+        // then we never focus properly.
+        webView.initializeRange()
     }
     
     /// Take action based on the message body received from JavaScript via the userContentController.
@@ -89,7 +92,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             webView.cleanUpHtml(notifying: markupEventDelegate)
         case "focus":
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
-            // NOTE: Just because the webView her has focus does not mean it becomes the
+            // NOTE: Just because the webView here has focus does not mean it becomes the
             // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
             // Use markupEventDelegate.markupTookFocus to reset selectedWebView if needed, since
             // it will have logic specific to your application.

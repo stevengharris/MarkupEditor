@@ -38,8 +38,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     public var html: String?
-    /// Text to show when the webView is empty
-    public var placeholder: String?
     
     public init() {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
@@ -64,6 +62,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             let url = URL(fileURLWithPath: filePath, isDirectory: false)
             loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
+        // Resolving the tintColor in this way lets the WKWebView
+        // handle dark mode without any explicit settings in css
+        tintColor = tintColor.resolvedColor(with: .current)
     }
     
     //MARK:- Responder Handling
@@ -83,6 +84,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         switch format {
         case .Formatted:
             if let rawHtml = rawHtml {
+                becomeFirstResponder()
                 evaluateJavaScript("MU.showFormatted('\(rawHtml.escaped)')") { result, error in
                     self.selectedFormat = .Formatted
                     self.rawHtml = nil
@@ -91,6 +93,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         case .Raw:
             getHtml { contents in
                 guard let contents = contents else { return }
+                self.resignFirstResponder()
                 self.rawHtml = contents
                 self.evaluateJavaScript("MU.showRaw()") { result, error in
                     self.selectedFormat = .Raw
@@ -152,10 +155,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             guard error == nil else { return }
             delegate?.markupLostFocus(self)
         }
-    }
-    
-    public func setPlaceholderText(_ html: String) {
-        evaluateJavaScript("MU.setPlaceholderText('\(html.escaped)')")
     }
     
     public func prepareInsert(handler: ((Error?)->Void)?) {
