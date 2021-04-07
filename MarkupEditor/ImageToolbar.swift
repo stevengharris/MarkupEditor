@@ -34,17 +34,25 @@ public struct ImageToolbar: View {
     
     public var body: some View {
             HStack(alignment: .bottom) {
-                ToolbarTextField(
-                    label: "Image URL",
-                    placeholder: "Enter URL",
-                    text: $src,
-                    commitHandler: { save() },
-                    validationHandler: { src.isValidURL }
-                )
-                ToolbarTextField(
-                    label: "Description",
-                    placeholder: "Enter Description",
-                    text: $alt)
+                GeometryReader { geometry in
+                    HStack {
+                        ToolbarTextField(
+                            label: "Image URL",
+                            placeholder: "Enter URL",
+                            text: $src,
+                            commitHandler: { save() },
+                            validationHandler: { src.isValidURL }
+                        )
+                        .frame(width: geometry.size.width * 0.7)
+                        ToolbarTextField(
+                            label: "Description",
+                            placeholder: "Enter Description",
+                            text: $alt
+                        )
+                        .frame(width: geometry.size.width * 0.3)
+                    }
+                }
+                .padding([.trailing], 8)
                 //
                 //VStack(spacing: 2) {
                 //    Text("Image URL")
