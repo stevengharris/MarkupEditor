@@ -150,16 +150,21 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func cleanUpHtml(notifying delegate: MarkupEventDelegate?) {
+    public func cleanUpHtml(handler: ((Error?)->Void)?) {
         evaluateJavaScript("MU.cleanUpHTML()") { result, error in
-            guard error == nil else { return }
-            delegate?.markupLostFocus(self)
+            handler?(error)
         }
     }
     
-    public func prepareInsert(handler: ((Error?)->Void)?) {
-        evaluateJavaScript("MU.prepareInsert()") { result, error in
-            handler?(error)
+    public func backupRange(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.backupRange()") { result, error in
+            handler?()
+        }
+    }
+    
+    public func restoreRange(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.restoreRange()") { result, error in
+            handler?()
         }
     }
     

@@ -16,29 +16,27 @@ public struct MarkupInsertToolbar: View {
         VStack(spacing: 2) {
             Text("Insert")
                 .font(.system(size: 10, weight: .light))
-            HStack {
-                Button(action: {
-                    print("Show link toolbar")
-                }) {
-                    Image(systemName: "link")
-                }
-                .buttonStyle(ToolbarImageButtonStyle(active: selectionState.isInLink))
+            HStack(alignment: .bottom) {
+                ToolbarImageButton(
+                    image:  Image(systemName: "link"),
+                    action: { print("Show link toolbar") },
+                    active: selectionState.isInLink
+                )
+                .id(UUID())
                 .disabled(!selectionState.isLinkable)
-                Button(action: {
-                    // TODO: The animation causes problems in UIKit. Need to figure it out
-                    showImageToolbar.toggle()
-                    //withAnimation { showImageToolbar.toggle() }
-                }) {
-                    Image(systemName: "photo")
-                }
-                .buttonStyle(ToolbarImageButtonStyle(active: selectionState.isInImage))
+                ToolbarImageButton(
+                    image: Image(systemName: "photo"),
+                    action: { showImageToolbar.toggle() },
+                    active: selectionState.isInImage
+                )
+                .id(UUID())
                 .disabled(!selectionState.isInsertable && !selectionState.isInImage)
-                Button(action: {
-                    print("Show table toolbar")
-                }) {
-                    Image(systemName: "tablecells")
-                }
-                .buttonStyle(ToolbarImageButtonStyle(active: selectionState.isInTable))
+                ToolbarImageButton(
+                    image:  Image(systemName: "tablecells"),
+                    action: { print("Show table toolbar") },
+                    active: selectionState.isInTable
+                )
+                .id(UUID())
                 .disabled(!selectionState.isInsertable)
                 /*
                 Button(action: {
@@ -62,6 +60,7 @@ public struct MarkupInsertToolbar: View {
                 */
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>) {

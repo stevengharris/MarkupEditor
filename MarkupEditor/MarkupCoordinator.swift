@@ -88,8 +88,15 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             updateHeight()
         case "blur":
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
+            markupEventDelegate?.markupLostFocus(webView)
+            // TODO:- Determine whether to clean up HTML or perhaps leave that to a markupEventDelegate
             // For now, we clean up the HTML when we lose focus
-            webView.cleanUpHtml(notifying: markupEventDelegate)
+            //webView.cleanUpHtml() { error in
+            //    if error != nil {
+            //        print("Error cleaning up html: \(error!.localizedDescription)")
+            //    }
+            //    self.markupEventDelegate?.markupLostFocus(webView)
+            //}
         case "focus":
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
             // NOTE: Just because the webView here has focus does not mean it becomes the

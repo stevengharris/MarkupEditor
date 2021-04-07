@@ -12,11 +12,11 @@ struct MarkupTextField: UIViewRepresentable {
 
     class Coordinator: NSObject, UITextFieldDelegate {
 
-        @Binding var text: String?
+        @Binding var text: String
         @Binding var endedEditing: Bool
         var didBecomeFirstResponder = false
 
-        init(text: Binding<String?>, endedEditing: Binding<Bool>) {
+        init(text: Binding<String>, endedEditing: Binding<Bool>) {
             _text = text
             _endedEditing = endedEditing
         }
@@ -31,23 +31,16 @@ struct MarkupTextField: UIViewRepresentable {
 
     }
 
-    @Binding var text: String?
+    @Binding var text: String
     @Binding var endedEditing: Bool
     var placeholder: String?
     var isFirstResponder: Bool = false
-    
-    static func dismantleUIView(_ uiView: UITextField, coordinator: Coordinator) {
-        uiView.resignFirstResponder()
-    }
 
     func makeUIView(context: UIViewRepresentableContext<MarkupTextField>) -> UITextField {
         let textField = UITextField(frame: .zero)
+        textField.borderStyle = .roundedRect
         // The following is set so that the text sticks within the bounds of the UITextField
         textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        // Pad the left so it doesn't look so crowded
-        let leftView = UIView(frame: CGRect(origin: .zero, size: CGSize(width: 8, height: 0)))
-        leftView.backgroundColor = textField.backgroundColor
-        textField.leftView = leftView
         textField.leftViewMode = .always
         textField.autocorrectionType = .no
         textField.delegate = context.coordinator

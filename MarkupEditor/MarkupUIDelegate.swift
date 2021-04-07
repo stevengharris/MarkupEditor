@@ -37,7 +37,7 @@ extension MarkupUIDelegate {
     
     /// Execute the handler with a MarkupError if view and selectionState are not in the proper condition, else with nil
     public func markupInsert(_ view: MarkupWKWebView?, type: MarkupAlertType, selectionState: SelectionState, handler: @escaping (MarkupError?)->Void) {
-        guard let view = view else {
+        guard view != nil else {
             handler(.prepareInsert)
             return
         }
@@ -52,15 +52,6 @@ extension MarkupUIDelegate {
             // The selection is between two characters, not on a range
             if !selectionState.isInsertable {
                 handler(.notInsertable)
-            }
-        }
-        // Prepare for the insert by setting the selection properly in the view.
-        // This ensures the selection is properly restored in the view when the alert goes away.
-        view.prepareInsert() { error in
-            if error == nil {
-                handler(nil)
-            } else {
-                handler(.prepareInsert)
             }
         }
     }

@@ -719,17 +719,10 @@ MU.decreaseQuoteLevel = function() {
 //MARK:- Insert operations
 
 /**
- * Back up the current range so we can restore it duing an insert operation.
- * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by prepareInsert so that range can be restored prior
- * to the insert* operation
- */
-MU.prepareInsert = function() {
-    MU.backupRange();
-};
-
-/**
  * Insert the image at url with alt text, signaling updateHeight when done loading.
+ * All insert operations that involve user interaction outside of JavaScript
+ * need to be preceded by backupRange so that range can be restored prior
+ * to the insert* operation.
  * We leave the selection after the inserted image.
  * The operation will cause a selectionChange event.
  */
@@ -737,13 +730,12 @@ MU.insertImage = function(url, alt) {
     MU.restoreRange();
     var sel = document.getSelection();
     var range = sel.getRangeAt(0).cloneRange();
-    var p = document.createElement('p');
     var el = document.createElement('img');
-    el.onload = MU.updateHeight();
     el.setAttribute('src', url);
     if (alt) { el.setAttribute('alt', alt) };
-    p.appendChild(el);
-    range.insertNode(p);
+    el.onload = MU.updateHeight;
+    var range = sel.getRangeAt(0).cloneRange();
+    range.insertNode(el);
     var nextSib = p.nextSibling;
     if (nextSib) {
         var firstTextChild = _findFirstTextChild(nextSib);
@@ -832,6 +824,8 @@ MU.backupRange = function() {
         };
     } else {
         MU.currentSelection = {};
+        _consoleLog("Backed up empty range");
+        new Error("Backed up empty range")
     }
     //_consoleLog(
     //    'backedUp\n' +
@@ -842,7 +836,11 @@ MU.backupRange = function() {
 };
 
 MU.restoreRange = function() {
-    if (MU.currentSelection.length === 0) { return };
+    if ((MU.currentSelection.length === 0) || (!MU.currentSelection.startContainer)) {
+        _consoleLog("Restoring invalid range");
+        new Error("Restoring invalid range");
+        return
+    };
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
