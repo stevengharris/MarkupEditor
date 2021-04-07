@@ -459,7 +459,6 @@ MU.showRaw = function() {
 MU.showFormatted = function(html) {
     // Just replace the innerHTML with html
     MU.editor.innerHTML = html;
-    _consoleLog(MU.editor.innerHTML);
     //MU.restoreRange();
 };
 

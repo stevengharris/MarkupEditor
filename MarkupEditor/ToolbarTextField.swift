@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LabeledTextField: View {
+struct ToolbarTextField: View {
     var label: String!
     var placeholder: String!
     @Binding var text: String
@@ -29,8 +29,8 @@ struct LabeledTextField: View {
     }
 }
 
-struct LabeledTextField_Previews: PreviewProvider {
+struct ToolbarTextField_Previews: PreviewProvider {
     static var previews: some View {
-        LabeledTextField(text: .constant("This is a preview"))
+        ToolbarTextField(text: .constant("This is a preview"))
     }
 }

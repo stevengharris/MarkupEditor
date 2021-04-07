@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct MarkupImageToolbar: View {
+public struct ImageToolbar: View {
     @Binding var showImageToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
@@ -34,8 +34,8 @@ public struct MarkupImageToolbar: View {
     
     public var body: some View {
             HStack(alignment: .bottom) {
-                LabeledTextField(label: "Image URL", placeholder: "Enter URL", text: $src, commitHandler: { save() }, isEditingHandler: { isEditing in })
-                LabeledTextField(label: "Description", placeholder: "Enter Description", text: $alt)
+                ToolbarTextField(label: "Image URL", placeholder: "Enter URL", text: $src, commitHandler: { save() }, isEditingHandler: { isEditing in })
+                ToolbarTextField(label: "Description", placeholder: "Enter Description", text: $alt)
                 //
                 //VStack(spacing: 2) {
                 //    Text("Image URL")
@@ -182,10 +182,10 @@ public struct MarkupImageToolbar: View {
     
 }
 
-struct MarkupImageToolbar_Previews: PreviewProvider {
+struct ImageToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
         // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        MarkupImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(true))
+        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(true))
     }
 }

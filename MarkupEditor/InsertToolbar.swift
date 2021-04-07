@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct MarkupInsertToolbar: View {
+public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     private var markupUIDelegate: MarkupUIDelegate?
@@ -72,10 +72,10 @@ public struct MarkupInsertToolbar: View {
     
 }
 
-struct MarkupInsertToolbar_Previews: PreviewProvider {
+struct InsertToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
-        MarkupInsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false))
+        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false))
     }
     
 }
