@@ -29,11 +29,12 @@ public struct MarkupToolbar: View {
     @State private var selectedFormat: DisplayFormat = .Formatted
     //@State private var markupAlert: MarkupAlert?
     @State private var showImageToolbar: Bool = false
+    @State private var showLinkToolbar: Bool = false
     
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar)
+                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar, showLinkToolbar: $showLinkToolbar)
                     .disabled(selectedFormat == .Raw)
                 Divider()
                 UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
@@ -57,7 +58,7 @@ public struct MarkupToolbar: View {
             .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
-                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar)
+                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
@@ -65,6 +66,17 @@ public struct MarkupToolbar: View {
                     })
                     .onDisappear(perform: {
                         markupUIDelegate?.markupImageToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    })
+            } else if showLinkToolbar {
+                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
+                    //.transition(.move(edge: .bottom))
+                    .onAppear(perform: {
+                        selectedWebView?.backupRange()
+                        markupUIDelegate?.markupLinkToolbarAppeared()
+                    })
+                    .onDisappear(perform: {
+                        markupUIDelegate?.markupLinkToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
                     })
             }

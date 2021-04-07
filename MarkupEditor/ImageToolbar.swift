@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct ImageToolbar: View {
-    @Binding var showImageToolbar: Bool
+    @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var markupUIDelegate: MarkupUIDelegate?
@@ -34,8 +34,17 @@ public struct ImageToolbar: View {
     
     public var body: some View {
             HStack(alignment: .bottom) {
-                ToolbarTextField(label: "Image URL", placeholder: "Enter URL", text: $src, commitHandler: { save() }, isEditingHandler: { isEditing in })
-                ToolbarTextField(label: "Description", placeholder: "Enter Description", text: $alt)
+                ToolbarTextField(
+                    label: "Image URL",
+                    placeholder: "Enter URL",
+                    text: $src,
+                    commitHandler: { save() },
+                    validationHandler: { src.isValidURL }
+                )
+                ToolbarTextField(
+                    label: "Description",
+                    placeholder: "Enter Description",
+                    text: $alt)
                 //
                 //VStack(spacing: 2) {
                 //    Text("Image URL")
@@ -84,10 +93,10 @@ public struct ImageToolbar: View {
             Divider()
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showImageToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showImageToolbar = showImageToolbar
+        _showToolbar = showToolbar
         initialSrc = selectionState.src
         initialAlt = selectionState.alt
         initialScale = selectionState.scale
@@ -162,7 +171,7 @@ public struct ImageToolbar: View {
         saving = true
         insertOrModify() {
             // TODO: The animation causes problems in UIKit. Need to figure it out
-            showImageToolbar.toggle()
+            showToolbar.toggle()
             //withAnimation { showImageToolbar.toggle() }
         }
     }
@@ -175,7 +184,7 @@ public struct ImageToolbar: View {
         scale = initialScale ?? 100
         insertOrModify() {
             // TODO: The animation causes problems in UIKit. Need to figure it out
-            showImageToolbar.toggle()
+            showToolbar.toggle()
             //withAnimation { showImageToolbar.toggle() }
         }
     }
@@ -186,6 +195,6 @@ struct ImageToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
         // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(true))
+        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbar: .constant(true))
     }
 }

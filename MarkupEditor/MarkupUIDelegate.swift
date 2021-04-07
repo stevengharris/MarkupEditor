@@ -30,6 +30,8 @@ public protocol MarkupUIDelegate {
     func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
     func markupImageToolbarAppeared()
     func markupImageToolbarDisappeared()
+    func markupLinkToolbarAppeared()
+    func markupLinkToolbarDisappeared()
 
 }
 
@@ -137,5 +139,7 @@ extension MarkupUIDelegate {
     public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) {}
     public func markupImageToolbarAppeared() {}
     public func markupImageToolbarDisappeared() {}
+    public func markupLinkToolbarAppeared() {}
+    public func markupLinkToolbarDisappeared() {}
     
 }

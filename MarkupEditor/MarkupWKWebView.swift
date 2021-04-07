@@ -168,11 +168,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func insertLink(_ href: String?) {
+    public func insertLink(_ href: String?, handler: (()->Void)? = nil) {
         if href == nil {
-            evaluateJavaScript("MU.removeLink()")
+            evaluateJavaScript("MU.removeLink()") { result, error in handler?() }
         } else {
-            evaluateJavaScript("MU.insertLink('\(href!.escaped)')")
+            evaluateJavaScript("MU.insertLink('\(href!.escaped)')") { result, error in handler?() }
         }
     }
     

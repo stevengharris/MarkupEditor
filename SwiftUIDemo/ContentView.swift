@@ -35,13 +35,13 @@ extension ContentView: MarkupEventDelegate {
         selectedWebView = view
     }
     
-    func markupSelectionChanged(_ view: MarkupWKWebView, selectionState: SelectionState) {
+    func markupClicked(_ view: MarkupWKWebView) {
         // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.
         // The default behavior for the markupUIDelegate is to open the href in selectionState.
         if selectionState.isFollowable {
             markupLinkSelected(view, selectionState: selectionState)
         }
-        // Call markupImageSelected in any event, to clear the scaleStepper if needed
+        // Call markupImageSelected in any event
         markupImageSelected(view, selectionState: selectionState)
     }
 

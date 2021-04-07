@@ -116,6 +116,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                     self.markupEventDelegate?.markupSelectionChanged(webView)
                 }
             }
+        case "click":
+            markupEventDelegate?.markupClicked(webView)
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {

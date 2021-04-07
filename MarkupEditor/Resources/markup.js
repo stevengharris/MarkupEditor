@@ -254,10 +254,14 @@ MU.editor.addEventListener('blur', function() {
 });
 
 MU.editor.addEventListener('click', function(event) {
+    // Notify on single-click (e.g., for following links)
     // Handle the case of multiple clicks being received without
-    // doing selection.
-    if (event.detail > 1) {
-        _multiClickSelect(event.detail);
+    // doing selection
+    let nclicks = event.detail;
+    if (nclicks === 1) {
+        _callback('click');
+    } else {
+        _multiClickSelect(nclicks);
     }
 });
 
@@ -744,6 +748,7 @@ MU.insertImage = function(url, alt) {
             newRange.setEnd(firstTextChild,0);
             sel.removeAllRanges();
             sel.addRange(newRange);
+            MU.backupRange();
         };
     };
 };
@@ -781,7 +786,7 @@ MU.modifyImage = function(src, alt, scale) {
 
 /**
  * Insert a link to url. The selection has to be across a range.
- * When done, re-select the range.
+ * When done, re-select the range and back it up.
  */
 MU.insertLink = function(url) {
     MU.restoreRange();
@@ -794,9 +799,12 @@ MU.insertLink = function(url) {
             range.surroundContents(el);
             sel.removeAllRanges();
             sel.addRange(range);
+            // Note because the selection is changing while the view is not focused,
+            // we need to backupRange() so we can get it back when we come back
+            // into focus later.
+            MU.backupRange();
         }
     }
-    _callback('input');
 };
 
 //MARK:- Range operations

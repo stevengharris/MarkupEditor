@@ -13,6 +13,7 @@ struct ToolbarTextField: View {
     @Binding var text: String
     var commitHandler: (()->Void)? = nil
     var isEditingHandler: ((Bool)->Void)? = nil
+    var validationHandler: (()->Bool)? = nil
     var body: some View {
         VStack(spacing: 2) {
             Text(label)
@@ -23,8 +24,11 @@ struct ToolbarTextField: View {
                 onEditingChanged: isEditingHandler ?? { _ in },
                 onCommit: commitHandler ?? { }
             )
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .background(Color(UIColor.systemGray6))
+            .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
+            .autocapitalization(.none)
+            .disableAutocorrection(true)
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .background(Color(UIColor.systemGray6))
         }
     }
 }

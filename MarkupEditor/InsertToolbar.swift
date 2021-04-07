@@ -12,6 +12,7 @@ public struct InsertToolbar: View {
     @Binding private var selectedWebView: MarkupWKWebView?
     private var markupUIDelegate: MarkupUIDelegate?
     @Binding public var showImageToolbar: Bool
+    @Binding public var showLinkToolbar: Bool
     public var body: some View {
         VStack(spacing: 2) {
             Text("Insert")
@@ -19,18 +20,18 @@ public struct InsertToolbar: View {
             HStack(alignment: .bottom) {
                 ToolbarImageButton(
                     image:  Image(systemName: "link"),
-                    action: { print("Show link toolbar") },
+                    action: { showLinkToolbar.toggle() },
                     active: selectionState.isInLink
                 )
                 .id(UUID())
-                .disabled(!selectionState.isLinkable)
+                .disabled(showImageToolbar || !selectionState.isLinkable)
                 ToolbarImageButton(
                     image: Image(systemName: "photo"),
                     action: { showImageToolbar.toggle() },
                     active: selectionState.isInImage
                 )
                 .id(UUID())
-                .disabled(!selectionState.isInsertable && !selectionState.isInImage)
+                .disabled(showLinkToolbar || (!selectionState.isInsertable && !selectionState.isInImage))
                 ToolbarImageButton(
                     image:  Image(systemName: "tablecells"),
                     action: { print("Show table toolbar") },
@@ -63,11 +64,12 @@ public struct InsertToolbar: View {
         .fixedSize(horizontal: false, vertical: true)
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>, showLinkToolbar: Binding<Bool>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         self.markupUIDelegate = markupUIDelegate
         _showImageToolbar = showImageToolbar
+        _showLinkToolbar = showLinkToolbar
     }
     
 }
@@ -75,7 +77,7 @@ public struct InsertToolbar: View {
 struct InsertToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
-        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false))
+        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false), showLinkToolbar: .constant(false))
     }
     
 }

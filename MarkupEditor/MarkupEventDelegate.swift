@@ -37,6 +37,10 @@ public protocol MarkupEventDelegate {
     /// Called when the selection changes in the webView
     func markupSelectionChanged(_ view: MarkupWKWebView)
     
+    /// Called when user clicks in the view
+    /// Used to differentiate clicking on a link from selectionChange
+    func markupClicked(_ view: MarkupWKWebView)
+    
 }
 
 extension MarkupEventDelegate {
@@ -47,5 +51,6 @@ extension MarkupEventDelegate {
     public func markupDidLoad(_ view: MarkupWKWebView) {}
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
     public func markupSelectionChanged(_ view: MarkupWKWebView) {}
+    public func markupClicked(_ view: MarkupWKWebView) {}
     
 }

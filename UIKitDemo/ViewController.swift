@@ -79,7 +79,7 @@ extension ViewController: MarkupEventDelegate {
         selectedWebView = view
     }
     
-    func markupSelectionChanged(_ view: MarkupWKWebView, selectionState: SelectionState) {
+    func markupSelectionChanged(_ view: MarkupWKWebView) {
         // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.
         // The default behavior for the markupUIDelegate is to open the href in selectionState.
         if selectionState.isFollowable {

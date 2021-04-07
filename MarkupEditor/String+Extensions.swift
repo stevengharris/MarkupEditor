@@ -29,4 +29,10 @@ extension String {
         return newString
     }
     
+    var isValidURL: Bool {
+        let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let matches = detector.matches(in: self, options: [], range: NSRange(location: 0, length: utf16.count))
+        return matches.count == 1 && matches[0].range.length == utf16.count
+    }
+    
 }
