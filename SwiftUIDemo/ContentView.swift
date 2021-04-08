@@ -41,8 +41,10 @@ extension ContentView: MarkupEventDelegate {
         if selectionState.isFollowable {
             markupLinkSelected(view, selectionState: selectionState)
         }
-        // Call markupImageSelected in any event
-        markupImageSelected(view, selectionState: selectionState)
+        // If the selection is in an image, let the markupUIDelegate decide what to do
+        if selectionState.isInImage {
+            markupImageSelected(view, selectionState: selectionState)
+        }
     }
 
 }

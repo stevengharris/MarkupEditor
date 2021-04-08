@@ -27,7 +27,6 @@ public struct MarkupToolbar: View {
     // a result of the selectedWebView changing externally or as a result of the
     // Picker being used in this View
     @State private var selectedFormat: DisplayFormat = .Formatted
-    //@State private var markupAlert: MarkupAlert?
     @State private var showImageToolbar: Bool = false
     @State private var showLinkToolbar: Bool = false
     
@@ -92,21 +91,6 @@ public struct MarkupToolbar: View {
         // Note if markupUIDelegate is not specified, no insert operation alerts will be shown
         self.markupUIDelegate = markupUIDelegate
     }
-    
-    //private func showAlert(type: MarkupAlertType) {
-    //    guard let delegate = markupUIDelegate else { return }
-    //    delegate.markupInsert(selectedWebView, type: type, selectionState: selectionState) { error in
-    //        guard error == nil else { return }
-    //        markupAlert = MarkupAlert(type: type)
-    //    }
-    //}
-    
-    //private func createTextAlert() -> TextAlert {
-    //    guard let delegate = markupUIDelegate, let type = markupAlert?.type else {
-    //        return TextAlert(title: "Error", action: { _, _ in } )
-    //    }
-    //    return delegate.markupTextAlert(selectedWebView, type: type, selectionState: selectionState)
-    //}
     
 }
 
