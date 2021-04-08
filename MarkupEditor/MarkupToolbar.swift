@@ -32,13 +32,19 @@ public struct MarkupToolbar: View {
     // a result of the selectedWebView changing externally or as a result of the
     // Picker being used in this View
     @State private var selectedFormat: DisplayFormat = .Formatted
-    @State private var showImageToolbar: Bool = false
-    @State private var showLinkToolbar: Bool = false
+    @State private var showToolbarByType: [ToolbarType : Bool] = [
+        .image : false,
+        .link: false,
+        .table: false
+    ]
+    private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
+    private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
+    private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
     
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showImageToolbar: $showImageToolbar, showLinkToolbar: $showLinkToolbar)
+                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType) //showImageToolbar: $showImageToolbar, showLinkToolbar: $showLinkToolbar)
                     .disabled(selectedFormat == .Raw)
                 Divider()
                 UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
@@ -61,7 +67,7 @@ public struct MarkupToolbar: View {
             .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
-                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
+                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .image))
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
@@ -73,7 +79,19 @@ public struct MarkupToolbar: View {
                     })
             }
             if showLinkToolbar {
-                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
+                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .link))
+                    //.transition(.move(edge: .bottom))
+                    .onAppear(perform: {
+                        selectedWebView?.backupRange()
+                        markupUIDelegate?.markupToolbarAppeared(type: .link)
+                    })
+                    .onDisappear(perform: {
+                        markupUIDelegate?.markupToolbarDisappeared(type: .link)
+                        selectedWebView?.becomeFirstResponder()
+                    })
+            }
+            if showTableToolbar {
+                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .table))
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
@@ -92,8 +110,11 @@ public struct MarkupToolbar: View {
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        // Note if markupUIDelegate is not specified, no insert operation alerts will be shown
         self.markupUIDelegate = markupUIDelegate
+    }
+    
+    private func showToolbarBinding(type: ToolbarType) -> Binding<Bool> {
+        return Binding(get: {showToolbarByType[type] ?? false}, set: { showToolbarByType[type] = $0 })
     }
     
 }

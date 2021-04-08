@@ -11,8 +11,10 @@ public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     private var markupUIDelegate: MarkupUIDelegate?
-    @Binding public var showImageToolbar: Bool
-    @Binding public var showLinkToolbar: Bool
+    @Binding private var showToolbarByType: [MarkupToolbar.ToolbarType : Bool]
+    private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
+    private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
+    private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
     public var body: some View {
         VStack(spacing: 2) {
             Text("Insert")
@@ -20,27 +22,25 @@ public struct InsertToolbar: View {
             HStack(alignment: .bottom) {
                 ToolbarImageButton(
                     image:  Image(systemName: "link"),
-                    action: { withAnimation { showLinkToolbar.toggle() } },
+                    action: { toggleToolbar(type: .link) },
                     active: selectionState.isInLink
                 )
                 .id(UUID())
-                // Always enabled if we are showing this toolbar, so we can hide it again.
-                .disabled(!showLinkToolbar && (showImageToolbar || !selectionState.isLinkable))
+                .disabled(!enabledToolbar(type: .link))
                 ToolbarImageButton(
                     image: Image(systemName: "photo"),
-                    action: { withAnimation { showImageToolbar.toggle() } },
+                    action: { toggleToolbar(type: .image) },
                     active: selectionState.isInImage
                 )
                 .id(UUID())
-                // Always enabled if we are showing this toolbar, so we can hide it again.
-                .disabled(!showImageToolbar && (showLinkToolbar || (!selectionState.isInsertable && !selectionState.isInImage)))
+                .disabled(!enabledToolbar(type: .image))
                 ToolbarImageButton(
                     image:  Image(systemName: "tablecells"),
-                    action: { print("Show table toolbar") },
+                    action: { toggleToolbar(type: .table) },
                     active: selectionState.isInTable
                 )
                 .id(UUID())
-                .disabled(!selectionState.isInsertable)
+                .disabled(!enabledToolbar(type: .table))
                 /*
                 Button(action: {
                     showAlert(type: .line)
@@ -65,20 +65,45 @@ public struct InsertToolbar: View {
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>, showLinkToolbar: Binding<Bool>) {
+    private func toggleToolbar(type: MarkupToolbar.ToolbarType) {
+        withAnimation {
+            showToolbarByType[type] = !(showToolbarByType[type] ?? false)
+        }
+    }
+    
+    private func enabledToolbar(type: MarkupToolbar.ToolbarType) -> Bool {
+        // The disabled logic is too hard to wrap my head around, so this is the enabled logic.
+        // Always enabled if we are showing this type of toolbar, so we can hide it again.
+        // Otherwise, enabled if we are not showing one of the other toolbars and the selectionState is proper
+        switch type {
+        case .image:
+            return showImageToolbar || (!(showLinkToolbar || showTableToolbar) && selectionState.isInsertable)
+        case .link:
+            return showLinkToolbar || (!(showImageToolbar || showTableToolbar) && selectionState.isLinkable)
+        case .table:
+            return showTableToolbar || (!(showLinkToolbar || showImageToolbar) && selectionState.isInsertable)
+        }
+    }
+    
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showToolbarByType: Binding<[MarkupToolbar.ToolbarType : Bool]>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         self.markupUIDelegate = markupUIDelegate
-        _showImageToolbar = showImageToolbar
-        _showLinkToolbar = showLinkToolbar
+        _showToolbarByType = showToolbarByType
     }
     
 }
 
 struct InsertToolbar_Previews: PreviewProvider {
     
+    static let showToolbarByType: [MarkupToolbar.ToolbarType : Bool] = [
+        .image : false,
+        .link : false,
+        .table : false
+    ]
+    
     static var previews: some View {
-        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showImageToolbar: .constant(false), showLinkToolbar: .constant(false))
+        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbarByType: .constant(showToolbarByType))
     }
     
 }
