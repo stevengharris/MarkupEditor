@@ -51,10 +51,10 @@ public struct MarkupToolbar: View {
                 Divider()       // Vertical on the right
                 Spacer()
             }
-            .padding([.leading, .trailing], 8)
-            .padding([.top], 2)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(idealHeight: 54, maxHeight: 54)
+            .frame(idealHeight: 47, maxHeight: 47)
+            .padding([.leading, .trailing], 8)
+            .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
             if showImageToolbar {
@@ -68,7 +68,8 @@ public struct MarkupToolbar: View {
                         markupUIDelegate?.markupImageToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
                     })
-            } else if showLinkToolbar {
+            }
+            if showLinkToolbar {
                 LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {

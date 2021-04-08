@@ -33,72 +33,54 @@ public struct ImageToolbar: View {
     @State private var endedEditing: Bool = false
     
     public var body: some View {
-            HStack(alignment: .bottom) {
-                GeometryReader { geometry in
-                    HStack {
-                        ToolbarTextField(
-                            label: "Image URL",
-                            placeholder: "Enter URL",
-                            text: $src,
-                            commitHandler: { save() },
-                            validationHandler: { src.isValidURL }
-                        )
-                        .frame(width: geometry.size.width * 0.7)
-                        ToolbarTextField(
-                            label: "Description",
-                            placeholder: "Enter Description",
-                            text: $alt
-                        )
-                        .frame(width: geometry.size.width * 0.3)
-                    }
+        HStack(alignment: .bottom) {
+            GeometryReader { geometry in
+                HStack {
+                    ToolbarTextField(
+                        label: "Image URL",
+                        placeholder: "Enter URL",
+                        text: $src,
+                        commitHandler: { save() },
+                        validationHandler: { src.isValidURL }
+                    )
+                    .frame(width: geometry.size.width * 0.7)
+                    ToolbarTextField(
+                        label: "Description",
+                        placeholder: "Enter Description",
+                        text: $alt
+                    )
+                    .frame(width: geometry.size.width * 0.3)
                 }
-                .padding([.trailing], 8)
-                //
-                //VStack(spacing: 2) {
-                //    Text("Image URL")
-                //        .font(.system(size: 10, weight: .light))
-                //    //TextField("Enter URL", text: $src, onCommit: { preview() })
-                //    //    .textFieldStyle(RoundedBorderTextFieldStyle())
-                //    MarkupTextField(text: $src, endedEditing: $endedEditing, placeholder: "Enter URL") //, isFirstResponder: true)
-                //        .onChange(of: endedEditing, perform: { value in if value { preview() }})
-                //}
-                //VStack(spacing: 2) {
-                //    Text("Description")
-                //        .font(.system(size: 10, weight: .light))
-                //    //TextField("Enter Description", text: $alt, onCommit: { preview() })
-                //    //    .textFieldStyle(RoundedBorderTextFieldStyle())
-                //    MarkupTextField(text: $alt, endedEditing: $endedEditing, placeholder: "Enter Description")
-                //        .onChange(of: endedEditing, perform: { value in if value { preview() }})
-                //}
-                Divider()
-                VStack(spacing: 2) {
-                    Text("Scale")
-                        .font(.system(size: 10, weight: .light))
-                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                        Text("\(scale)%")
-                            .frame(width: 50, alignment: .trailing)
-                    }
-                    .scaledToFit()
-                }
-                Divider()
-                HStack(alignment: .bottom) {
-                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                }
+                .padding([.top], 2)
             }
-            .onChange(of: selectionState.src, perform: { value in
-                src = selectionState.src ?? ""
-                alt = selectionState.alt ?? ""
-                scale = selectionState.scale ?? 100
-                previewedSrc = src
-                previewedAlt = alt
-                previewedScale = scale
-            })
-            .padding([.leading, .trailing], 8)
-            .padding([.top], 2)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(idealHeight: 54, maxHeight: 54)
+            .padding([.trailing], 8)
             Divider()
+            VStack(spacing: 2) {
+                Text("Scale")
+                    .font(.system(size: 10, weight: .light))
+                Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
+                    Text("\(scale)%")
+                        .frame(width: 50, alignment: .trailing)
+                }
+                .scaledToFit()
+            }
+            Divider()
+            ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                .disabled(!src.isEmpty && !src.isValidURL)
+            ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+        }
+        .onChange(of: selectionState.src, perform: { value in
+            src = selectionState.src ?? ""
+            alt = selectionState.alt ?? ""
+            scale = selectionState.scale ?? 100
+            previewedSrc = src
+            previewedAlt = alt
+            previewedScale = scale
+        })
+        .frame(height: 47)
+        .padding([.leading, .trailing], 8)
+        .padding([.top, .bottom], 2)
+        Divider()
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
@@ -179,8 +161,7 @@ public struct ImageToolbar: View {
         saving = true
         insertOrModify() {
             // TODO: The animation causes problems in UIKit. Need to figure it out
-            showToolbar.toggle()
-            //withAnimation { showImageToolbar.toggle() }
+            withAnimation { showToolbar.toggle() }
         }
     }
     
@@ -192,8 +173,7 @@ public struct ImageToolbar: View {
         scale = initialScale ?? 100
         insertOrModify() {
             // TODO: The animation causes problems in UIKit. Need to figure it out
-            showToolbar.toggle()
-            //withAnimation { showImageToolbar.toggle() }
+            withAnimation { showToolbar.toggle() }
         }
     }
     

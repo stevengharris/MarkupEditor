@@ -24,11 +24,15 @@ struct ToolbarTextField: View {
                 onEditingChanged: isEditingHandler ?? { _ in },
                 onCommit: commitHandler ?? { }
             )
+            .textFieldStyle(PlainTextFieldStyle())
+            .padding([.leading, .trailing], 8)
+            .frame(height: 30)
+            .cornerRadius(6)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(UIColor.systemGray5)))
             .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
             .autocapitalization(.none)
             .disableAutocorrection(true)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .background(Color(UIColor.systemGray6))
+            .background(Color(UIColor.systemBackground))
         }
     }
 }

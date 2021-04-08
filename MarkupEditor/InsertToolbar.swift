@@ -20,18 +20,20 @@ public struct InsertToolbar: View {
             HStack(alignment: .bottom) {
                 ToolbarImageButton(
                     image:  Image(systemName: "link"),
-                    action: { showLinkToolbar.toggle() },
+                    action: { withAnimation { showLinkToolbar.toggle() } },
                     active: selectionState.isInLink
                 )
                 .id(UUID())
-                .disabled(showImageToolbar || !selectionState.isLinkable)
+                // Always enabled if we are showing this toolbar, so we can hide it again.
+                .disabled(!showLinkToolbar && (showImageToolbar || !selectionState.isLinkable))
                 ToolbarImageButton(
                     image: Image(systemName: "photo"),
-                    action: { showImageToolbar.toggle() },
+                    action: { withAnimation { showImageToolbar.toggle() } },
                     active: selectionState.isInImage
                 )
                 .id(UUID())
-                .disabled(showLinkToolbar || (!selectionState.isInsertable && !selectionState.isInImage))
+                // Always enabled if we are showing this toolbar, so we can hide it again.
+                .disabled(!showImageToolbar && (showLinkToolbar || (!selectionState.isInsertable && !selectionState.isInImage)))
                 ToolbarImageButton(
                     image:  Image(systemName: "tablecells"),
                     action: { print("Show table toolbar") },
