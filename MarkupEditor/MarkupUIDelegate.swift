@@ -24,10 +24,9 @@ public protocol MarkupUIDelegate {
     /// Take action when the user selects an image
     func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
     
-    func markupImageToolbarAppeared()
-    func markupImageToolbarDisappeared()
-    func markupLinkToolbarAppeared()
-    func markupLinkToolbarDisappeared()
+    /// Take action when a toolbar appeared
+    func markupToolbarAppeared(type: MarkupToolbar.ToolbarType)
+    func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType)
 
 }
 
@@ -47,9 +46,7 @@ extension MarkupUIDelegate {
     }
     
     public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) {}
-    public func markupImageToolbarAppeared() {}
-    public func markupImageToolbarDisappeared() {}
-    public func markupLinkToolbarAppeared() {}
-    public func markupLinkToolbarDisappeared() {}
+    public func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {}
+    public func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {}
     
 }

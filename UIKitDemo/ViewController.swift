@@ -96,12 +96,20 @@ extension ViewController: MarkupEventDelegate {
 
 extension ViewController: MarkupUIDelegate {
     
-    func markupImageToolbarAppeared() {
-        self.toolbarHeightConstraint.constant = toolbarHeight * 2 + 1       // 1 for the Divider?
+    func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {
+        toolbarHolder.layoutIfNeeded()
+        //UIView.animate(withDuration: 0.2) {
+            self.toolbarHeightConstraint.constant = self.toolbarHeight * 2 + 2
+            //self.toolbarHolder.layoutIfNeeded()
+        //}
     }
     
-    func markupImageToolbarDisappeared() {
-        self.toolbarHeightConstraint.constant = toolbarHeight
+    func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {
+        //toolbarHolder.layoutIfNeeded()
+        //UIView.animate(withDuration: 0.2) {
+            self.toolbarHeightConstraint.constant = self.toolbarHeight
+            self.toolbarHolder.layoutIfNeeded()
+        //}
     }
     
 }

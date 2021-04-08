@@ -63,7 +63,6 @@ public struct InsertToolbar: View {
                 */
             }
         }
-        .fixedSize(horizontal: false, vertical: true)
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showImageToolbar: Binding<Bool>, showLinkToolbar: Binding<Bool>) {

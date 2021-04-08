@@ -28,6 +28,7 @@ struct DebugToolbar: View {
                             Text($0.rawValue)
                         }
                     }
+                    .scaledToFit()
                     .pickerStyle(SegmentedPickerStyle())
                     .onChange(of: selectedFormat, perform: { format in
                         selectedWebView?.showAs(format)
@@ -36,7 +37,6 @@ struct DebugToolbar: View {
                         selectedFormat = selectedWebView?.selectedFormat ?? .Formatted
                     })
                 }
-                .scaledToFit()
             }
         }
     }

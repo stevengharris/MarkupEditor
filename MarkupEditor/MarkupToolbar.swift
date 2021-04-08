@@ -18,6 +18,11 @@ import SwiftUI
 public struct MarkupToolbar: View {
     
     typealias DisplayFormat = MarkupWKWebView.DisplayFormat
+    public enum ToolbarType {
+        case image
+        case link
+        case table
+    }
     
     private let isDebug = _isDebugAssertConfiguration()
     @Binding public var selectedWebView: MarkupWKWebView?
@@ -50,8 +55,7 @@ public struct MarkupToolbar: View {
                 Divider()       // Vertical on the right
                 Spacer()
             }
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(idealHeight: 47, maxHeight: 47)
+            .frame(height: 47)
             .padding([.leading, .trailing], 8)
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
@@ -61,10 +65,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupUIDelegate?.markupImageToolbarAppeared()
+                        markupUIDelegate?.markupToolbarAppeared(type: .image)
                     })
                     .onDisappear(perform: {
-                        markupUIDelegate?.markupImageToolbarDisappeared()
+                        markupUIDelegate?.markupToolbarDisappeared(type: .image)
                         selectedWebView?.becomeFirstResponder()
                     })
             }
@@ -73,10 +77,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupUIDelegate?.markupLinkToolbarAppeared()
+                        markupUIDelegate?.markupToolbarAppeared(type: .link)
                     })
                     .onDisappear(perform: {
-                        markupUIDelegate?.markupLinkToolbarDisappeared()
+                        markupUIDelegate?.markupToolbarDisappeared(type: .link)
                         selectedWebView?.becomeFirstResponder()
                     })
             }
