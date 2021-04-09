@@ -56,9 +56,20 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     private func setupForEditing() {
         // The markup.html loads the css and js scripts itself
-        // TODO:- This may have to be Bundle.module instead of Bundler(for:) when
-        // loaded from a Swift package
-        if let filePath = Bundle(for: MarkupWKWebView.self).path(forResource: "markup", ofType: "html") {
+        // The MarkupEditor.framework is built with USEFRAMEWORK in its build settings.
+        // If you use the framework as a dependency, the bundle can be identified from
+        // the place where MarkupWKWebView is found. If you use the Swift package as a
+        // dependency, it does some BundleFinder hocus pocus behind the scenes to allow
+        // Bundle to respond to module. Unfortunately, you cannot even compile
+        // "Bundle.module" without the package as a dependency, so I am forced into this
+        // build time hackery.
+        var bundle: Bundle
+        #if USEFRAMEWORK
+        bundle = Bundle(for: MarkupWKWebView.self)
+        #else
+        bundle = Bundle.module
+        #endif
+        if let filePath = bundle.path(forResource: "markup", ofType: "html") {
             let url = URL(fileURLWithPath: filePath, isDirectory: false)
             loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
