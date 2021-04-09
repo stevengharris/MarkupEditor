@@ -83,6 +83,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             loadInitialHtml()
             markupEventDelegate?.markupDidLoad(webView)
         case "input":
+            markupEventDelegate?.markupInput(webView)
             updateHeight()
         case "updateHeight":
             updateHeight()

@@ -395,16 +395,16 @@ MU.redo = function() {
 
 //MARK:- Formatting
 // Note:
-// 1. Formats (B, I, U, DEL, SUB, SUP) are toggled off and on
+// 1. Formats (STRONG, EM, U, DEL, SUB, SUP) are toggled off and on
 // 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
 
 MU.toggleBold = function() {
-    _toggleFormat('b');
+    _toggleFormat('strong');
     _callback('input');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormat('i');
+    _toggleFormat('em');
     _callback('input');
 };
 
@@ -464,6 +464,27 @@ MU.showFormatted = function(html) {
     // Just replace the innerHTML with html
     MU.editor.innerHTML = html;
     //MU.restoreRange();
+};
+
+MU.showMarkdown = function() {
+    var turndownService = new TurndownService();
+    var markdown = turndownService.turndown(MU.editor.innerHTML);
+    MU.editor.innerHTML = markdown;
+};
+
+MU.getPrettyHTML = function() {
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').trim(); //.replace(/<br/g, '\n<br').trim();
+}
+
+MU.getMarkdown = function() {
+    return new TurndownService().turndown(MU.editor.innerHTML)
+};
+
+MU.getRoundTrip = function() {
+    var markdown = MU.getMarkdown();
+    var converter = new showdown.Converter();
+    converter.setOption('noHeaderId', true);
+    return converter.makeHtml(markdown);
 };
 
 //MARK:- Styling
@@ -1082,8 +1103,8 @@ var _getSelectionState = function() {
     state['style'] = _getSelectionStyle();
     state['selection'] = _getSelectionText();
     var formatTags = _getFormatTags();
-    state['bold'] = formatTags.includes('B');
-    state['italic'] = formatTags.includes('I');
+    state['bold'] = formatTags.includes('STRONG');
+    state['italic'] = formatTags.includes('EM');
     state['underline'] = formatTags.includes('U');
     state['strike'] = formatTags.includes('DEL');
     state['sub'] = formatTags.includes('SUB');
@@ -1115,7 +1136,7 @@ var _getSelectionStyle = function() {
 }
 
 var _getFormatTags = function() {
-    return _selectionTagsMatching(['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
+    return _selectionTagsMatching(['STRONG', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
 }
 
 var _getSelectionText = function() {

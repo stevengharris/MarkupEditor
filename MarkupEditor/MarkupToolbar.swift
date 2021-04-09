@@ -44,20 +44,24 @@ public struct MarkupToolbar: View {
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType) //showImageToolbar: $showImageToolbar, showLinkToolbar: $showLinkToolbar)
+                FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: markupUIDelegate)
+                Divider()
+                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
                     .disabled(selectedFormat == .Raw)
                 Divider()
                 UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     .disabled(selectedFormat == .Raw)
                 Divider()
-                StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    .disabled(selectedFormat == .Raw)
-                Divider()
-                FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    .disabled(selectedFormat == .Raw)
-                if isDebug {
-                    DebugToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, selectedFormat: $selectedFormat)
+                Group {
+                    StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        .disabled(selectedFormat == .Raw)
+                    Divider()
+                    FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        .disabled(selectedFormat == .Raw)
                 }
+                //if isDebug {
+                //    DebugToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, selectedFormat: $selectedFormat)
+                //}
                 Divider()       // Vertical on the right
                 Spacer()
             }

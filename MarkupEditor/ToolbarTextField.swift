@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct ToolbarTextField: View {
+public struct ToolbarTextField: View {
     var label: String!
     var placeholder: String!
     @Binding var text: String
     var commitHandler: (()->Void)? = nil
     var isEditingHandler: ((Bool)->Void)? = nil
     var validationHandler: (()->Bool)? = nil
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 2) {
             Text(label)
                 .font(.system(size: 10, weight: .light))

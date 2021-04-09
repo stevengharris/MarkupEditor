@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct StyleToolbar: View {
+public struct StyleToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 2) {
             Text("Style")
                 .font(.system(size: 10, weight: .light))

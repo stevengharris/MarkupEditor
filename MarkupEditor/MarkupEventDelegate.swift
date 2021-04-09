@@ -13,6 +13,9 @@ import Foundation
 /// Default implementations of MarkupEventDelegate methods are provided, so all are optional.
 public protocol MarkupEventDelegate {
     
+    /// Called whenever input is received in the view (e.g., typing)
+    func markupInput(_ view: MarkupWKWebView)
+    
     /// Called when the inner height of the text being displayed changes
     /// Can be used to update the UI
     func markup(_ view: MarkupWKWebView, heightDidChange height: Int)
@@ -44,6 +47,7 @@ public protocol MarkupEventDelegate {
 }
 
 extension MarkupEventDelegate {
+    public func markupInput(_ view: MarkupWebView) {}
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markup(_ view: MarkupWKWebView, contentDidChange content: String) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}

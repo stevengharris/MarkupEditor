@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LinkToolbar: View {
+public struct LinkToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState

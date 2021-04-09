@@ -7,16 +7,16 @@
 
 import SwiftUI
 
-struct DebugToolbar: View {
+public struct DebugToolbar: View {
     
-    typealias DisplayFormat = MarkupWKWebView.DisplayFormat
+    public typealias DisplayFormat = MarkupWKWebView.DisplayFormat
     
     
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     @Binding private var selectedFormat: DisplayFormat
     
-    var body: some View {
+    public var body: some View {
         HStack {
             Divider()
             VStack(spacing: 2) {

@@ -33,6 +33,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public enum DisplayFormat: String, CaseIterable {
         case Formatted
         case Raw
+        case Markdown
     }
     @Published public var selectedFormat: DisplayFormat = .Formatted
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
@@ -110,6 +111,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     self.selectedFormat = .Raw
                 }
             }
+        case .Markdown:
+            getHtml { contents in
+                guard let contents = contents else { return }
+                self.resignFirstResponder()
+                self.rawHtml = contents
+                self.evaluateJavaScript("MU.showMarkdown()") { result, error in
+                    self.selectedFormat = .Markdown
+                }
+            }
         }
     }
     
@@ -139,6 +149,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func getHtml(_ handler: ((String?)->Void)?) {
         evaluateJavaScript("MU.getHTML()") { result, error in
+            handler?(result as? String)
+        }
+    }
+    
+    public func getPrettyHtml(_ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getPrettyHTML()") { result, error in
+            handler?(result as? String)
+        }
+    }
+    
+    public func getMarkdown(_ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getMarkdown()") { result, error in
+            handler?(result as? String)
+        }
+    }
+    
+    public func getRoundTrip(_ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getRoundTrip()") { result, error in
             handler?(result as? String)
         }
     }

@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct ToolbarTextButton: View {
+public struct ToolbarTextButton: View {
     let title: String
     let action: ()->Void
     let width: CGFloat?
-    var body: some View {
+    public var body: some View {
             Button(action: action, label: {
                 Text(title)
                     .frame(width: width, height: 30)
@@ -36,11 +36,11 @@ struct ToolbarTextButton: View {
 /// MarkupImageToolbar would cease responding to clicks except in Buttons. So, for example,
 /// the TextFields could not obtain focus, and even the MarkupWKWebView would stop responding
 /// to selection.
-struct ToolbarImageButton: View {
+public struct ToolbarImageButton: View {
     let image: Image
     let action: ()->Void
     var active: Bool = false
-    var body: some View {
+    public var body: some View {
         Button(action: action, label: {
             image
                 .frame(width: 30, height: 30)
