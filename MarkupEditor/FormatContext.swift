@@ -14,8 +14,8 @@ public class FormatContext: ObservableObject, Identifiable, Hashable, Equatable,
         return lhs.tag == rhs.tag
     }
     
-    public static let B = FormatContext(tag: "STRONG")
-    public static let I = FormatContext(tag: "EM")
+    public static let B = FormatContext(tag: "B")
+    public static let I = FormatContext(tag: "I")
     public static let U = FormatContext(tag: "U")
     public static let STRIKE = FormatContext(tag: "DEL")
     public static let SUB = FormatContext(tag: "SUB")

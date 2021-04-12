@@ -18,7 +18,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             MarkupToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: self)
-            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, initialContent: "<p>Hello <strong>bold</strong> <em>SwiftUI</em> world!</p>")
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
             Divider()
             TextView(text: $rawText)
                 .font(Font.system(size: StyleContext.H4.fontSize))

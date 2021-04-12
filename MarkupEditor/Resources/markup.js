@@ -395,16 +395,16 @@ MU.redo = function() {
 
 //MARK:- Formatting
 // Note:
-// 1. Formats (STRONG, EM, U, DEL, SUB, SUP) are toggled off and on
+// 1. Formats (B, I, U, DEL, SUB, SUP) are toggled off and on
 // 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
 
 MU.toggleBold = function() {
-    _toggleFormat('strong');
+    _toggleFormat('b');
     _callback('input');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormat('em');
+    _toggleFormat('i');
     _callback('input');
 };
 
@@ -1104,8 +1104,8 @@ var _getSelectionState = function() {
     state['style'] = _getSelectionStyle();
     state['selection'] = _getSelectionText();
     var formatTags = _getFormatTags();
-    state['bold'] = formatTags.includes('STRONG');
-    state['italic'] = formatTags.includes('EM');
+    state['bold'] = formatTags.includes('B');
+    state['italic'] = formatTags.includes('I');
     state['underline'] = formatTags.includes('U');
     state['strike'] = formatTags.includes('DEL');
     state['sub'] = formatTags.includes('SUB');
@@ -1137,7 +1137,7 @@ var _getSelectionStyle = function() {
 }
 
 var _getFormatTags = function() {
-    return _selectionTagsMatching(['STRONG', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
+    return _selectionTagsMatching(['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
 }
 
 var _getSelectionText = function() {
