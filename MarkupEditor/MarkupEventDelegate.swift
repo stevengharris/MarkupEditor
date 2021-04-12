@@ -47,7 +47,7 @@ public protocol MarkupEventDelegate {
 }
 
 extension MarkupEventDelegate {
-    public func markupInput(_ view: MarkupWebView) {}
+    public func markupInput(_ view: MarkupWKWebView) {}
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markup(_ view: MarkupWKWebView, contentDidChange content: String) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}

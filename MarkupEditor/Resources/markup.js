@@ -448,43 +448,42 @@ var _toggleFormat = function(type) {
 }
 
 //MARK:- Raw and formatted text
-// Showing raw is meant to be "temporary" in the sense that we just replace the innertHTML
-// with HTML that displays &, <, and >. It might look like you could edit it, but you
-// really can't.
 
-MU.showRaw = function() {
-    // Just replace the innerHTML with the "raw" equivalent
-    // Remove all ranges to avoid potential problems.
-    // The expectation is the the editor prevents editing in this state.
-    //document.getSelection().removeAllRanges();
-    MU.editor.innerHTML = MU.editor.innerHTML.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-};
+//var _configureTurndownService = function() {
+//    var gfm = turndownPluginGfm.gfm;
+//    var turndownService = new TurndownService();
+//    turndownService.use(gfm);
+//    turndownService.addRule('strikethrough', {
+//      filter: ['del', 's', 'strike'],
+//      replacement: function (content) {
+//        return '~~' + content + '~~'
+//      }
+//    })
+//    return turndownService;
+//};
+//
+//const _turndownService = _configureTurndownService();
+//
+//var _configureShowdownService = function() {
+//    var converter = new showdown.Converter();
+//    converter.setOption('noHeaderId', true);
+//    converter.setOption('strikethrough', true);
+//    converter.setOption('parseImgDimensions', true);
+//    return converter;
+//}
+//
+//const _showdownService = _configureShowdownService();
 
-MU.showFormatted = function(html) {
-    // Just replace the innerHTML with html
-    MU.editor.innerHTML = html;
-    //MU.restoreRange();
-};
-
-MU.showMarkdown = function() {
-    var turndownService = new TurndownService();
-    var markdown = turndownService.turndown(MU.editor.innerHTML);
-    MU.editor.innerHTML = markdown;
-};
+//MU.getMarkdown = function() {
+//    return _turndownService.turndown(MU.editor.innerHTML);
+//};
+//
+//MU.getRoundTrip = function() {
+//    return _showdownService(MU.getMarkdown());
+//};
 
 MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').trim(); //.replace(/<br/g, '\n<br').trim();
-}
-
-MU.getMarkdown = function() {
-    return new TurndownService().turndown(MU.editor.innerHTML)
-};
-
-MU.getRoundTrip = function() {
-    var markdown = MU.getMarkdown();
-    var converter = new showdown.Converter();
-    converter.setOption('noHeaderId', true);
-    return converter.makeHtml(markdown);
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').trim();
 };
 
 //MARK:- Styling
@@ -608,7 +607,7 @@ MU.toggleListItem = function(newListType) {
         sel.addRange(range);
     }
     _callback('input');
-}
+};
 
 var _replaceNodeWithList = function(newListType, selNode) {
     // Create a newListType list, place selNode's contents in it, and replace selNode with the new list
@@ -623,7 +622,7 @@ var _replaceNodeWithList = function(newListType, selNode) {
     newListElement.appendChild(newListItemElement);
     selNode.replaceWith(newListElement);
     return newListItemElement;
-}
+};
 
 var _replaceNodeWithListItem = function(selNode) {
     // Create a newListItem containing selNode's contents, and replace selNode it
@@ -636,7 +635,7 @@ var _replaceNodeWithListItem = function(selNode) {
     }
     selNode.replaceWith(newListItemElement);
     return newListItemElement;
-}
+};
 
 MU.replaceList = function(oldList, newList) {
     // Find/verify the oldList for the selection and replace it with newList
@@ -770,6 +769,7 @@ MU.insertImage = function(url, alt) {
             sel.removeAllRanges();
             sel.addRange(newRange);
             MU.backupRange();
+            _callback('input');
         };
     };
 };
@@ -824,6 +824,7 @@ MU.insertLink = function(url) {
             // we need to backupRange() so we can get it back when we come back
             // into focus later.
             MU.backupRange();
+            _callback('input');
         }
     }
 };

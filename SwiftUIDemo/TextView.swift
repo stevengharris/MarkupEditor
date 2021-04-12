@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TextView: UIViewRepresentable {
-    @Binding var text: NSMutableAttributedString
+    @Binding var text: NSAttributedString
 
     func makeUIView(context: Context) -> UITextView {
         UITextView()

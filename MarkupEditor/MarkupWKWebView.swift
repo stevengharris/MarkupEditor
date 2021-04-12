@@ -29,13 +29,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
     private var editorHeight: Int = 0
-    private var rawHtml: String?
-    public enum DisplayFormat: String, CaseIterable {
-        case Formatted
-        case Raw
-        case Markdown
-    }
-    @Published public var selectedFormat: DisplayFormat = .Formatted
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     public var html: String?
@@ -89,40 +82,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return !hasFocus
     }
     
-    //MARK:- Showing raw html and restoring
-    
-    public func showAs(_ format: DisplayFormat) {
-        guard format != selectedFormat else { return }
-        switch format {
-        case .Formatted:
-            if let rawHtml = rawHtml {
-                becomeFirstResponder()
-                evaluateJavaScript("MU.showFormatted('\(rawHtml.escaped)')") { result, error in
-                    self.selectedFormat = .Formatted
-                    self.rawHtml = nil
-                }
-            }
-        case .Raw:
-            getHtml { contents in
-                guard let contents = contents else { return }
-                self.resignFirstResponder()
-                self.rawHtml = contents
-                self.evaluateJavaScript("MU.showRaw()") { result, error in
-                    self.selectedFormat = .Raw
-                }
-            }
-        case .Markdown:
-            getHtml { contents in
-                guard let contents = contents else { return }
-                self.resignFirstResponder()
-                self.rawHtml = contents
-                self.evaluateJavaScript("MU.showMarkdown()") { result, error in
-                    self.selectedFormat = .Markdown
-                }
-            }
-        }
-    }
-    
     //MARK:- Testing support
     
     public func setTestHtml(value: String, handler: (() -> Void)? = nil) {
@@ -159,17 +118,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func getMarkdown(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getMarkdown()") { result, error in
-            handler?(result as? String)
-        }
-    }
-    
-    public func getRoundTrip(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getRoundTrip()") { result, error in
-            handler?(result as? String)
-        }
-    }
+//    public func getMarkdown(_ handler: ((String?)->Void)?) {
+//        evaluateJavaScript("MU.getMarkdown()") { result, error in
+//            handler?(result as? String)
+//        }
+//    }
+//
+//    public func getRoundTrip(_ handler: ((String?)->Void)?) {
+//        evaluateJavaScript("MU.getRoundTrip()") { result, error in
+//            handler?(result as? String)
+//        }
+//    }
     
     public func setHtml(_ html: String, notifying delegate: MarkupEventDelegate?) {
         let contents = html.escaped

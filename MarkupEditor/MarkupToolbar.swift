@@ -13,25 +13,17 @@ import SwiftUI
 /// The MarkupToolbar observes the selectionState so that its display reflects the current state.
 /// For example, when selectedWebView is nil, the toolbar is disabled, and when the selectionState shows
 /// that the selection is inside of a bolded element, then the bold (B) button is active and filled-in.
-///
-/// An additional section of the toolbar is presented only when built in Debug mode.
 public struct MarkupToolbar: View {
     
-    typealias DisplayFormat = MarkupWKWebView.DisplayFormat
     public enum ToolbarType {
         case image
         case link
         case table
     }
     
-    private let isDebug = _isDebugAssertConfiguration()
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var markupUIDelegate: MarkupUIDelegate?
-    // Note that the selectedFormat is kept locally here as @State, but can be set as
-    // a result of the selectedWebView changing externally or as a result of the
-    // Picker being used in this View
-    @State private var selectedFormat: DisplayFormat = .Formatted
     @State private var showToolbarByType: [ToolbarType : Bool] = [
         .image : false,
         .link: false,
@@ -47,22 +39,15 @@ public struct MarkupToolbar: View {
                 FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: markupUIDelegate)
                 Divider()
                 InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
-                    .disabled(selectedFormat == .Raw)
                 Divider()
                 UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    .disabled(selectedFormat == .Raw)
                 Divider()
-                Group {
+                Group { // Too many items in the HStack unless we Group something together. Ugh.
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                        .disabled(selectedFormat == .Raw)
                     Divider()
                     FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                        .disabled(selectedFormat == .Raw)
+                    Divider()       // Vertical on the right
                 }
-                //if isDebug {
-                //    DebugToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, selectedFormat: $selectedFormat)
-                //}
-                Divider()       // Vertical on the right
                 Spacer()
             }
             .frame(height: 47)
