@@ -351,6 +351,22 @@ var _consoleLog = function(string) {
     _callback(message);
 }
 
+MU.emptyDocument = function() {
+    while (MU.editor.firstChild) {
+        MU.editor.removeChild(MU.editor.firstChild);
+    };
+    var p = document.createElement('p');
+    p.appendChild(document.createElement('br'));
+    MU.editor.appendChild(p);
+    var sel = document.getSelection();
+    var range = document.createRange();
+    range.setStart(p, 1);
+    range.setEnd(p, 1);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    MU.backupRange();
+}
+
 /**
  * Set the contents of the editor element
  * @param {String} contents The HTML for the editor element

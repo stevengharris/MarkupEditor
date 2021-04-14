@@ -130,6 +130,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 //        }
 //    }
     
+    public func emptyDocument(handler: (()->Void)?) {
+        evaluateJavaScript("MU.emptyDocument()") { result, error in
+            handler?()
+        }
+    }
+    
     public func setHtml(_ html: String, handler: ((String)->Void)?) {
         let contents = html.escaped
         evaluateJavaScript("MU.setHTML('\(contents)')") { result, error in

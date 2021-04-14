@@ -45,9 +45,9 @@ public struct MarkupToolbar: View {
                     Divider()
                 }
                 Group {
-                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
-                    Divider()
                     UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    Divider()
+                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
                     Divider()
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()

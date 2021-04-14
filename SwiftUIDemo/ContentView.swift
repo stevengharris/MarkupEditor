@@ -105,8 +105,17 @@ extension ContentView: MarkupUIDelegate {}
 
 extension ContentView: FileToolbarDelegate {
     
-    func newDocument(handler: ((URL?)->Void)? = nil) {}
-    func existingDocument(handler: ((URL?)->Void)? = nil) { pickerShowing.toggle() }
+    func newDocument(handler: ((URL?)->Void)? = nil) {
+        fileUrl = nil
+        selectedWebView?.emptyDocument() {
+            setRawText()
+        }
+    }
+    
+    func existingDocument(handler: ((URL?)->Void)? = nil) {
+        pickerShowing.toggle()
+    }
+    
     func saveDocument() {}
     
 }
