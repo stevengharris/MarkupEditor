@@ -6,40 +6,42 @@
 //
 
 import SwiftUI
+import MarkupEditor
 
-public struct FileToolbar: View {
+struct FileToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
-    private var markupUIDelegate: MarkupUIDelegate?
+    private var fileToolbarDelegate: FileToolbarDelegate?
     
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 2) {
             Text("File")
                 .font(.system(size: 10, weight: .light))
             HStack(alignment: .bottom) {
                 ToolbarImageButton(
                     image: Image(systemName: "plus"),
-                    action: { markupUIDelegate?.markupNewDocument() }
+                    action: { fileToolbarDelegate?.newDocument(handler: nil) }
                 )
                 .id(UUID())
                 ToolbarImageButton(
                     image: Image(systemName: "newspaper"),
-                    action: { markupUIDelegate?.markupExistingDocument() }
+                    action: {
+                        fileToolbarDelegate?.existingDocument(handler: nil) }
                 )
                 .id(UUID())
                 ToolbarImageButton(
                     image:  Image(systemName: "square.and.arrow.down"),
-                    action: { markupUIDelegate?.markupSaveDocument() }
+                    action: { fileToolbarDelegate?.saveDocument() }
                 )
                 .id(UUID())
             }
         }
     }
 
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil) {
+    init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, fileToolbarDelegate: FileToolbarDelegate? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        self.markupUIDelegate = markupUIDelegate
+        self.fileToolbarDelegate = fileToolbarDelegate
     }
     
 }

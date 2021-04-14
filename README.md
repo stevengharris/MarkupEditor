@@ -2,19 +2,45 @@
 
 WYSIWYG editing for SwiftUI and UIKit apps
 
-Copyright © 2021 Steven Harris. All rights reserved.
+Copyright © 2021 Steven G. Harris. All rights reserved.
 
 Jealous of those JavaScript coders with their WYSIWYG text editors, but just can't stomach the idea of immersing yourself in JavaScript when you're enjoying the comfort and joy of Swift? Yeah, me too. So when I was forced to do it, I thought I'd share what I did as a way to help others avoid it.
 
-## HTML As An Intermediate Form
+## HTML And JavaScript In The Back, Swift in the Front
 
-The MarkupEditor is presenting an HTML document to you as you edit. It uses the capabilities of HTML, CSS, and JavaScript to change the underlying DOM as you edit. In iOS or on the Mac, this is presented to you natively as a MarkupWKWebView, a subclass of WKWebView. The MarkupEditor does not know how to save your document or transform it to some other format. This is something your application that consumes the MarkupEditor will need to do. The MarkupEditor will let your MarkupDelegate know as the underlying document changes state, and you can take advantage of those notifications to save and potentially transform the HTML into another form. If you're going to do that, then you should make sure the round-tripping also works flawlessly. Otherwise, you are using a "What You See Is Not What You Get" editor, which is both less pronounceable and much less useful to your end users.
+The MarkupEditor is presenting an HTML document to you as you edit. It uses the capabilities of HTML, CSS, and JavaScript to change the underlying DOM as you edit. In iOS or on the Mac, this is presented to you natively as a MarkupWKWebView, a subclass of WKWebView. The MarkupEditor does not know how to save your document or transform it to some other format. This is something your application that consumes the MarkupEditor will need to do. The MarkupEditor will let your MarkupDelegate know as the underlying document changes state, and you can take advantage of those notifications to save and potentially transform the HTML into another form. If you're going to do that, then you should make sure that round-tripping back into HTML also works flawlessly. Otherwise, you are using a "What You See Is Not What You Get" editor, which is both less pronounceable and much less useful to your end users.
 
-### Markdown As The Source Of Truth
+### Markup Editor Goals and Non-Goals
 
-My goal in creating the MarkupEditor was to provide WYSIWYG editing for Markdown. You might find yourself asking: "Does that even make sense?" I wanted to do this because I want my users to have a great editing experience, but I don't want them to have to learn Markdown and look at all the Markdown cruft as they write. The choice of Markdown as source of truth is something I want, but which my users will generally not be aware of. I want the documents they are editing and creating to be captured in Markdown so that they will still end up with a reasonable text file that they can use if they're not using my tool. 
+I am working on a larger project that requires embeded support "rich text" editing. I felt like WYSIWYG editing was a must-have requirement. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen. It's a lot better than editing raw HTML, but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of preview mode to make sure what you are writing will be presented like you expect feels like CI/CD for writing. 
 
-What does it mean to use Markdown as the source of truth? If you don't support arbitrary HTML insertion into the Markdown, then it means a lot of what you can do is a subset of what you might expect in a general WYSIWYG editor. For example, Markdown doesn't have a way for you to say "My H1 is 30 points, and H2 is 24 points." The choice of how to display a header is up to the html and css styling in your browser or your Markdown renderer. You can't change character sizes in the middle of a paragraph in Markdown, but you can certainly do that in HTML. There is no native Markdown way to specify colored text. If you're just authoring text - which is what Markdown is for - then that stuff is all a distraction. What this means from a UX standpoint in the MarkupEditor is that it is restricted to Markdown-type functionality. For example, the toolbar provides no way to select colors or font sizes.
+Still, I wanted an editing experience that didn't get in the way. I wanted something with the feature-simplicity of Markdown, but presented in a clean, what-you-see-is-what-you-get manner that supported the basics people expect:
+
+1. Styling
+    * Present a paragraph or header with a predefined font size
+    * Support bulleted and numbered lists
+    * Support indenting
+2. Formatting
+    * Bold, italic, underline, strikethrough, sub- and super-scripting
+3. Embedding
+    * Images
+    * Tables
+    * Links
+4. Undo/redo
+
+As you might expect, then, this feature set is pretty darned close to Markdown - or at least a GitHub flavor of Markdown. It doesn't include a lot of things you might expect from your favorite word processor:
+
+* Colored text
+* Highlighting
+* Font size changes (except as implied by identifying something as a paragraph or header)
+* Centering
+* Copy/paste preserving formatting of rich text or HTML
+
+If you want a richer feature set, you can extend the MarkupEditor to do these yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for saving what you edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
+
+## Consuming the MarkupEditor
+
+## Code Structure
 
 ## Status
 
