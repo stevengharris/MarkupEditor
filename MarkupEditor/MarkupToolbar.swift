@@ -40,9 +40,11 @@ public struct MarkupToolbar: View {
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                leftToolbar
-                Group {
+                if leftToolbar != nil {
+                    leftToolbar
                     Divider()
+                }
+                Group {
                     InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
                     Divider()
                     UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
@@ -50,9 +52,12 @@ public struct MarkupToolbar: View {
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
                     FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    Divider()           // Vertical on the right
                 }
-                Divider()           // Vertical on the right
-                rightToolbar
+                if rightToolbar != nil {
+                    rightToolbar
+                    Divider()
+                }
                 Spacer()            // Push everything to the left
             }
             .frame(height: 47)

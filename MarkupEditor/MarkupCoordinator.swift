@@ -48,14 +48,20 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     }
     
     private func updateHeight() {
-        webView.updateHeight(notifying: markupEventDelegate)
+        webView.updateHeight() { height in
+            self.markupEventDelegate?.markup(self.webView, heightDidChange: height)
+        }
     }
     
     private func loadInitialHtml() {
         if let html = webView.html {
-            webView.setHtml(html, notifying: markupEventDelegate)
+            webView.setHtml(html) { content in
+                self.markupEventDelegate?.markup(self.webView, contentDidChange: content)
+            }
         } else {
-            webView.setHtml("", notifying: markupEventDelegate)
+            webView.setHtml("") { content in
+                self.markupEventDelegate?.markup(self.webView, contentDidChange: content)
+            }
         }
         // We need to initialize the selection/range for immediate double or
         // triple clicks to be detected. We still have to deal with selection

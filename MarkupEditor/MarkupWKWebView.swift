@@ -130,20 +130,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 //        }
 //    }
     
-    public func setHtml(_ html: String, notifying delegate: MarkupEventDelegate?) {
+    public func setHtml(_ html: String, handler: ((String)->Void)?) {
         let contents = html.escaped
         evaluateJavaScript("MU.setHTML('\(contents)')") { result, error in
             guard error == nil else { return }
-            delegate?.markup(self, contentDidChange: contents)
-            self.updateHeight(notifying: delegate)
+            handler?(contents)
         }
     }
     
-    public func updateHeight(notifying delegate: MarkupEventDelegate?) {
+    public func updateHeight(handler: ((Int)->Void)?) {
         getClientHeight() { clientHeight in
             if self.editorHeight != clientHeight {
                 self.editorHeight = clientHeight
-                delegate?.markup(self, heightDidChange: self.contentHeight(from: clientHeight))
+                handler?(self.contentHeight(from: clientHeight))
             }
         }
     }

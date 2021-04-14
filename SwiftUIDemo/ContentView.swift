@@ -53,7 +53,9 @@ struct ContentView: View {
         do {
             let html = try String(contentsOf: url, encoding: .utf8)
             fileUrl = url
-            selectedWebView?.setHtml(html, notifying: nil)
+            selectedWebView?.setHtml(html) { content in
+                self.setRawText()
+            }
         } catch let error {
             print("Error loading html: \(error.localizedDescription)")
         }
