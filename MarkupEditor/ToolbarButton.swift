@@ -57,6 +57,13 @@ public struct ToolbarImageButton: View {
             .background(active ? Color.accentColor : Color(UIColor.systemBackground))
         )
     }
+    
+    public init(image: Image, action:  @escaping ()->Void, active: Bool = false) {
+        self.image = image
+        self.action = action
+        self.active = active
+    }
+    
 }
 
 struct ToolbarButton_Previews: PreviewProvider {

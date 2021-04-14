@@ -32,23 +32,28 @@ public struct MarkupToolbar: View {
     private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
     private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
     private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
+    /// User-supplied view to be shown on the left side of the default MarkupToolbar
+    private var leftToolbar: AnyView?
+    /// User-supplied view to be shown on the right side of the default MarkupToolbar
+    private var rightToolbar: AnyView?
     
     public var body: some View {
         VStack(spacing: 2) {
             HStack(alignment: .bottom) {
-                FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: markupUIDelegate)
-                Divider()
-                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
-                Divider()
-                UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                Divider()
-                Group { // Too many items in the HStack unless we Group something together. Ugh.
+                leftToolbar
+                Group {
+                    Divider()
+                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
+                    Divider()
+                    UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    Divider()
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
                     FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    Divider()       // Vertical on the right
                 }
-                Spacer()
+                Divider()           // Vertical on the right
+                rightToolbar
+                Spacer()            // Push everything to the left
             }
             .frame(height: 47)
             .padding([.leading, .trailing], 8)
@@ -96,10 +101,12 @@ public struct MarkupToolbar: View {
         .background(Color(UIColor.systemBackground))
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         self.markupUIDelegate = markupUIDelegate
+        self.leftToolbar = leftToolbar
+        self.rightToolbar = rightToolbar
     }
     
     private func showToolbarBinding(type: ToolbarType) -> Binding<Bool> {

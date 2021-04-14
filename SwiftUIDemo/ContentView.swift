@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MarkupEditor
+import UniformTypeIdentifiers
 
 struct ContentView: View {
 
@@ -15,15 +16,25 @@ struct ContentView: View {
     
     @State private var rawText = NSAttributedString(string: "")
     
+    @State private var pickerShowing: Bool = false
+    @State private var fileUrl: URL?
+    
     var body: some View {
         VStack(spacing: 0) {
-            MarkupToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupUIDelegate: self)
+            // Use the standard MarkupToolbar with a FileToolbar on the left side
+            MarkupToolbar(
+                selectionState: selectionState,
+                selectedWebView: $selectedWebView,
+                markupUIDelegate: self,
+                leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, fileToolbarDelegate: self))
+            )
             MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
             Divider()
             TextView(text: $rawText)
-                .font(Font.system(size: StyleContext.H4.fontSize))
+                .font(Font.system(size: StyleContext.P.fontSize))
                 .padding([.top, .bottom, .leading, .trailing], 8)
         }
+        .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
     }
     
     private func setRawText() {
@@ -36,6 +47,16 @@ struct ContentView: View {
         let font = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
         let attributes = [NSAttributedString.Key.font: font]
         return NSAttributedString(string: string, attributes: attributes)
+    }
+    
+    private func openExistingDocument(url: URL) {
+        do {
+            let html = try String(contentsOf: url, encoding: .utf8)
+            fileUrl = url
+            selectedWebView?.setHtml(html, notifying: nil)
+        } catch let error {
+            print("Error loading html: \(error.localizedDescription)")
+        }
     }
     
     
@@ -78,10 +99,14 @@ extension ContentView: MarkupEventDelegate {
 
 }
 
-extension ContentView: MarkupUIDelegate {
+extension ContentView: MarkupUIDelegate {}
+
+extension ContentView: FileToolbarDelegate {
     
-    func markupNewDocument(handler: ((URL?)->Void)? = nil) {}
-    func markupExistingDocument(handler: ((URL?)->Void)? = nil) {}
-    func markupSaveDocument() {}
+    func newDocument(handler: ((URL?)->Void)? = nil) {}
+    func existingDocument(handler: ((URL?)->Void)? = nil) { pickerShowing.toggle() }
+    func saveDocument() {}
     
 }
+
+

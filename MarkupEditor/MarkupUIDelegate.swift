@@ -24,17 +24,10 @@ public protocol MarkupUIDelegate {
     /// Take action when the user selects an image
     func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
     
-    /// Take action when the user wants to create a new document
-    func markupNewDocument(handler: ((URL?)->Void)?)
-    
-    /// Take action when the user wants to edit an existing document
-    func markupExistingDocument(handler: ((URL?)->Void)?)
-    
-    /// Take action when the user wants to save the document
-    func markupSaveDocument()
-    
     /// Take action when a toolbar appeared
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType)
+    
+    /// Take action when a toolbar disappeared
     func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType)
 
 }
@@ -55,11 +48,6 @@ extension MarkupUIDelegate {
     }
     
     public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) {}
-    
-    public func markupNewDocument(handler: ((URL?)->Void)? = nil) {}
-    public func markupExistingDocument(handler: ((URL?)->Void)? = nil) {}
-    public func markupSaveDocument() {}
-    
     public func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {}
     public func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {}
     
