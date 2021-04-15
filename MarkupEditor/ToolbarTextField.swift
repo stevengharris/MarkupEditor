@@ -14,6 +14,7 @@ public struct ToolbarTextField: View {
     var commitHandler: (()->Void)? = nil
     var isEditingHandler: ((Bool)->Void)? = nil
     var validationHandler: (()->Bool)? = nil
+    
     public var body: some View {
         VStack(spacing: 2) {
             Text(label)
@@ -35,10 +36,20 @@ public struct ToolbarTextField: View {
             .background(Color(UIColor.systemBackground))
         }
     }
+    
+    public init(label: String, placeholder: String, text: Binding<String>, commitHandler: (()->Void)? = nil, isEditingHandler: ((Bool)->Void)? = nil, validationHandler: (()->Bool)? = nil) {
+        self.label = label
+        _text = text
+        self.placeholder = placeholder
+        self.commitHandler = commitHandler
+        self.isEditingHandler = isEditingHandler
+        self.validationHandler = validationHandler
+    }
+    
 }
 
 struct ToolbarTextField_Previews: PreviewProvider {
     static var previews: some View {
-        ToolbarTextField(text: .constant("This is a preview"))
+        ToolbarTextField(label: "Test Field", placeholder: "Enter some text", text: .constant(""))
     }
 }

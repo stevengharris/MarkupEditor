@@ -81,6 +81,7 @@ public struct StyleToolbar: View {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
     }
+    
 }
 
 struct StyleToolbar_Previews: PreviewProvider {

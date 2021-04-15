@@ -26,6 +26,13 @@ public struct ToolbarTextButton: View {
                     )
             })
     }
+    
+    public init(title: String, action: @escaping ()->Void, width: CGFloat? = nil) {
+        self.title = title
+        self.action = action
+        self.width = width
+    }
+    
 }
 
 /// A 30x30 button typically used with a system image in the toolbar.
