@@ -31,19 +31,21 @@ public struct MarkupWebView: UIViewRepresentable {
         selectionState: SelectionState,
         selectedWebView: Binding<MarkupWKWebView?>,
         markupEventDelegate: MarkupEventDelegate? = nil,
+        markupUIDelegate: MarkupUIDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         initialContent: String? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         self.markupEventDelegate = markupEventDelegate
+        self.markupUIDelegate = markupUIDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate
         self.initialContent = initialContent ?? ""
     }
 
     public func makeCoordinator() -> Coordinator {
-        return Coordinator(selectionState: selectionState, markupEventDelegate: markupEventDelegate)
+        return Coordinator(selectionState: selectionState, markupEventDelegate: markupEventDelegate, markupUIDelegate: markupUIDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {

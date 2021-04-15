@@ -39,10 +39,12 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     @Published private var selectionState: SelectionState
     public var webView: MarkupWKWebView!
     public var markupEventDelegate: MarkupEventDelegate?
+    public var markupUIDelegate: MarkupUIDelegate?
     
-    public init(selectionState: SelectionState, markupEventDelegate: MarkupEventDelegate? = nil, webView: MarkupWKWebView? = nil) {
+    public init(selectionState: SelectionState, markupEventDelegate: MarkupEventDelegate? = nil, markupUIDelegate: MarkupUIDelegate? = nil, webView: MarkupWKWebView? = nil) {
         self.selectionState = selectionState
         self.markupEventDelegate = markupEventDelegate
+        self.markupUIDelegate = markupUIDelegate
         self.webView = webView
         super.init()
     }
@@ -124,7 +126,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 }
             }
         case "click":
-            markupEventDelegate?.markupClicked(webView)
+            markupEventDelegate?.markupClicked(webView, uiDelegate: markupUIDelegate)
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {

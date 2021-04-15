@@ -28,7 +28,7 @@ struct ContentView: View {
                 markupUIDelegate: self,
                 leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, fileToolbarDelegate: self))
             )
-            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, markupUIDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
             Divider()
             TextView(text: $rawText)
                 .font(Font.system(size: StyleContext.P.fontSize))
@@ -85,18 +85,6 @@ extension ContentView: MarkupEventDelegate {
     
     func markup(_ view: MarkupWKWebView, contentDidChange content: String) {
         rawText = attributedString(from: content)
-    }
-    
-    func markupClicked(_ view: MarkupWKWebView) {
-        // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.
-        // The default behavior for the markupUIDelegate is to open the href in selectionState.
-        if selectionState.isFollowable {
-            markupLinkSelected(view, selectionState: selectionState)
-        }
-        // If the selection is in an image, let the markupUIDelegate decide what to do
-        if selectionState.isInImage {
-            markupImageSelected(view, selectionState: selectionState)
-        }
     }
 
 }

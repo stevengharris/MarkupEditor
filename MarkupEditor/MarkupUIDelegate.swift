@@ -19,10 +19,13 @@ import UIKit
 public protocol MarkupUIDelegate {
     
     /// Take action when the user selects a link
-    func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: (()->Void)?)
+    func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
     
     /// Take action when the user selects an image
-    func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)?)
+    func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
+    
+    /// Take action when the user selects a table
+    func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
     
     /// Take action when a toolbar appeared
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType)
@@ -34,11 +37,14 @@ public protocol MarkupUIDelegate {
 
 extension MarkupUIDelegate {
     
-    /// Open the href specified in selectionState. Override if a different behavior is needed.
+    /// We know a link was selected, and selectionState contains information about it.
+    /// The default behavior is to open the href specified in selectionState. Override if a different behavior is needed.
+    ///
+    /// The default behavior in the MarkupEventDelegate is to invoke this method when a link is clicked-on.
     /// This function is used by UIKit and SwiftUI apps, but we just use the UIApplication.shared here for simplicity.
     /// This does, however, force us to import UIKit.
-    /// The view and handler are provided to help when overriding the default method.
-    public func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: (()->Void)? = nil) {
+    /// The view is provided to help when overriding the default method.
+    public func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {
         // If no handler is provided, the default action is to open the url at href if it can be opened
         guard
             let href = selectionState.href,
@@ -47,7 +53,21 @@ extension MarkupUIDelegate {
         UIApplication.shared.open(url)
     }
     
-    public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState, handler: ((CGRect?)->Void)? = nil) {}
+    /// We know an image was selected, and selectionState contains information about it.
+    /// Default behavior is to do nothing. Override if a different behavior is needed.
+    ///
+    /// The default behavior in the MarkupEventDelegate is to invoke this method when an image is clicked-on.
+    /// The view is provided to help when overriding the default method.
+    public func markupImageSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {}
+    
+    
+    /// We know a table was selected, and selectionState contains information about it.
+    /// Default behavior is to do nothing. Override if a different behavior is needed.
+    ///
+    /// The default behavior in the MarkupEventDelegate is to invoke this method when a table is clicked-on.
+    /// The view is provided to help when overriding the default method.
+    public func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {}
+
     public func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {}
     public func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {}
     

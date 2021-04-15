@@ -41,8 +41,8 @@ public protocol MarkupEventDelegate {
     func markupSelectionChanged(_ view: MarkupWKWebView)
     
     /// Called when user clicks in the view
-    /// Used to differentiate clicking on a link from selectionChange
-    func markupClicked(_ view: MarkupWKWebView)
+    /// Used to differentiate clicking on a link, image, table from selectionChange
+    func markupClicked(_ view: MarkupWKWebView, uiDelegate: MarkupUIDelegate?)
     
 }
 
@@ -55,6 +55,30 @@ extension MarkupEventDelegate {
     public func markupDidLoad(_ view: MarkupWKWebView) {}
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
     public func markupSelectionChanged(_ view: MarkupWKWebView) {}
-    public func markupClicked(_ view: MarkupWKWebView) {}
+    
+    /// The user clicked on something. Get the selectionState and then let the uiDelegate decide how to handle the situation.
+    ///
+    /// This default behavior means the uiDelegate will be notified of a specific type of selection having occurred.
+    /// This allows the MarkupUIDelegate behavior to be overridden as one path. Or, this MarkupEventDelegate
+    /// default behavior can be overridden/customized.
+    /// Note that an image can be linked, so the uiDelegate may receive multiple messages.
+    public func markupClicked(_ view: MarkupWKWebView, uiDelegate: MarkupUIDelegate?) {
+        guard let uiDelegate = uiDelegate else { return }
+        view.getSelectionState() { selectionState in
+            // If the selection is a followable link, then let the markupUIDelegate decide what to do.
+            // The default behavior for the markupUIDelegate is to open the href found in selectionState.
+            if selectionState.isFollowable {
+                uiDelegate.markupLinkSelected(view, selectionState: selectionState)
+            }
+            // If the selection is in an image, let the markupUIDelegate decide what to do
+            if selectionState.isInImage {
+                uiDelegate.markupImageSelected(view, selectionState: selectionState)
+            }
+            // If the selection is in a table, let the markupUIDelegate decide what to do
+            if selectionState.isInTable {
+                uiDelegate.markupTableSelected(view, selectionState: selectionState)
+            }
+        }
+    }
     
 }

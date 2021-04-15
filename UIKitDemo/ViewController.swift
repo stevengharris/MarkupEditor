@@ -63,7 +63,7 @@ class ViewController: UIViewController {
             webViewHeightConstraint
         ])
         webView.html = "<p>Hello <b>bold</b> <i>UIKit</i> world!"
-        coordinator = MarkupCoordinator(selectionState: selectionState, markupEventDelegate: self, webView: webView)
+        coordinator = MarkupCoordinator(selectionState: selectionState, markupEventDelegate: self, markupUIDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
     }
 
