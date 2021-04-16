@@ -38,7 +38,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         toolbarHeightConstraint.constant = toolbarHeight
         initializeWebView()
-        toolbar = MarkupToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupUIDelegate: self)
+        toolbar = MarkupToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupDelegate: self)
         add(swiftUIView: toolbar, to: toolbarHolder)
     }
     
@@ -54,7 +54,7 @@ class ViewController: UIViewController {
         view.addSubview(webView)
         webView.translatesAutoresizingMaskIntoConstraints = false
         // To illustrate auto-height adjustment as content changes, define webViewHeightConstraint here and then
-        // adjuat it in the heightDidChange callback received by MarkupEventDelegate
+        // adjuat it in the heightDidChange callback received by MarkupDelegate
         webViewHeightConstraint = webView.heightAnchor.constraint(equalToConstant: minWebViewHeight)
         NSLayoutConstraint.activate([
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
@@ -63,13 +63,13 @@ class ViewController: UIViewController {
             webViewHeightConstraint
         ])
         webView.html = "<p>Hello <b>bold</b> <i>UIKit</i> world!"
-        coordinator = MarkupCoordinator(selectionState: selectionState, markupEventDelegate: self, markupUIDelegate: self, webView: webView)
+        coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
     }
 
 }
 
-extension ViewController: MarkupEventDelegate {
+extension ViewController: MarkupDelegate {
     
     func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {
         webViewHeightConstraint.constant = CGFloat(height)
@@ -78,23 +78,6 @@ extension ViewController: MarkupEventDelegate {
     func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
     }
-    
-    func markupSelectionChanged(_ view: MarkupWKWebView) {
-        // If the selection is in a link and not across multiple characters, then let the markupUIDelegate decide what to do.
-        // The default behavior for the markupUIDelegate is to open the href in selectionState.
-        if selectionState.isFollowable {
-            markupLinkSelected(view, selectionState: selectionState)
-        }
-        // If the selection is in an image, then let the markupUIDelegate decide what to do.
-        // The default behavior is to do nothing
-        if selectionState.isInImage {
-            markupImageSelected(view, selectionState: selectionState)
-        }
-    }
-    
-}
-
-extension ViewController: MarkupUIDelegate {
     
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {
         toolbarHolder.layoutIfNeeded()

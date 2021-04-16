@@ -10,7 +10,6 @@ import SwiftUI
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
-    private var markupUIDelegate: MarkupUIDelegate?
     @Binding private var showToolbarByType: [MarkupToolbar.ToolbarType : Bool]
     private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
     private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
@@ -85,10 +84,9 @@ public struct InsertToolbar: View {
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showToolbarByType: Binding<[MarkupToolbar.ToolbarType : Bool]>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbarByType: Binding<[MarkupToolbar.ToolbarType : Bool]>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        self.markupUIDelegate = markupUIDelegate
         _showToolbarByType = showToolbarByType
     }
     

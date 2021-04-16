@@ -22,30 +22,27 @@ public struct MarkupWebView: UIViewRepresentable {
     @Binding private var selectedWebView: MarkupWKWebView?
     /// The initial HTML content to be shown in the MarkupWKWebView.
     private var initialContent: String
-    public var markupEventDelegate: MarkupEventDelegate?
-    public var markupUIDelegate: MarkupUIDelegate?
+    public var markupDelegate: MarkupDelegate?
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     
     public init(
         selectionState: SelectionState,
         selectedWebView: Binding<MarkupWKWebView?>,
-        markupEventDelegate: MarkupEventDelegate? = nil,
-        markupUIDelegate: MarkupUIDelegate? = nil,
+        markupDelegate: MarkupDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         initialContent: String? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        self.markupEventDelegate = markupEventDelegate
-        self.markupUIDelegate = markupUIDelegate
+        self.markupDelegate = markupDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate
         self.initialContent = initialContent ?? ""
     }
 
     public func makeCoordinator() -> Coordinator {
-        return Coordinator(selectionState: selectionState, markupEventDelegate: markupEventDelegate, markupUIDelegate: markupUIDelegate)
+        return Coordinator(selectionState: selectionState, markupDelegate: markupDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {

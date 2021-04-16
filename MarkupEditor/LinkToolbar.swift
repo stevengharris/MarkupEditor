@@ -11,7 +11,6 @@ public struct LinkToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
-    private var markupUIDelegate: MarkupUIDelegate?
     private var initialHref: String?
     // The href and link are the state for the toolbar
     @State private var href: String
@@ -70,10 +69,9 @@ public struct LinkToolbar: View {
         return (!href.isEmpty && href.isValidURL) || (href.isEmpty && initialHref != nil)
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, showToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        self.markupUIDelegate = markupUIDelegate
         _showToolbar = showToolbar
         initialHref = selectionState.href
         _previewedHref = State(initialValue: selectionState.href ?? "")

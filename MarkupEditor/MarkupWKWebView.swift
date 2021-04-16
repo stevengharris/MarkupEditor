@@ -136,7 +136,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func setHtml(_ html: String, handler: ((String)->Void)?) {
+    public func setHtml(_ html: String, handler: ((String)->Void)? = nil) {
         let contents = html.escaped
         evaluateJavaScript("MU.setHTML('\(contents)')") { result, error in
             guard error == nil else { return }

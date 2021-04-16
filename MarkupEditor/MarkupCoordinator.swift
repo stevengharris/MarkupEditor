@@ -9,7 +9,7 @@
 import SwiftUI
 import WebKit
 
-/// Tracks changes to a single MarkupWKWebView, updating the selectionState and informing the MarkupEventDelegate of what happened.
+/// Tracks changes to a single MarkupWKWebView, updating the selectionState and informing the MarkupDelegate of what happened.
 ///
 /// Communication between the MarkupWKWebView and MarkupCoordinator is done using a UserContentController.
 /// The MarkupCoordinator functions as the WKScriptMessageHandler, receiving userContentController(_:didReceive:)
@@ -26,43 +26,41 @@ import WebKit
 ///
 /// While the SwiftMarkupEditor is designed to handle multiple MarkupWKWebViews with a single MarkupToolbar,
 /// a MarkupCoordinator is coordinating between a single UIKit MarkupWKWebView and something that holds onto
-/// the state of the app that is using the MarkupEditor. That state is held in the SelectionState, which needs to be
-/// held in the top-level View for SwiftUI as StateObject or in an instance variable of something that will be present
+/// the state of the app that is using the MarkupEditor. The SelectionState and selectedWebView are need to be
+/// held in the top-level View for SwiftUI as StateObject or as properties of something that will be present
 /// for the proper lifetime in a UIKit app (e.g., the top-level UIViewController).
 ///
 /// As events arrive here in the MarkupCoordinator, it takes various steps to ensure our knowledge in Swift of
-/// what is in the MarkupWKWebView is maintained properly. Its other function is to inform the MarkupEventDelegate
-/// of what's gone on, so the MarkupEventDelegate can do whatever is needed.  So, for example, when a focus event
-/// is received by this MarkupCoordinator, it notifies the MarkupEventDelegate, which might want to take some other
+/// what is in the MarkupWKWebView is maintained properly. Its other function is to inform the MarkupDelegate
+/// of what's gone on, so the MarkupDelegate can do whatever is needed.  So, for example, when a focus event
+/// is received by this MarkupCoordinator, it notifies the MarkupDelegate, which might want to take some other
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     @Published private var selectionState: SelectionState
     public var webView: MarkupWKWebView!
-    public var markupEventDelegate: MarkupEventDelegate?
-    public var markupUIDelegate: MarkupUIDelegate?
+    public var markupDelegate: MarkupDelegate?
     
-    public init(selectionState: SelectionState, markupEventDelegate: MarkupEventDelegate? = nil, markupUIDelegate: MarkupUIDelegate? = nil, webView: MarkupWKWebView? = nil) {
+    public init(selectionState: SelectionState, markupDelegate: MarkupDelegate? = nil, webView: MarkupWKWebView? = nil) {
         self.selectionState = selectionState
-        self.markupEventDelegate = markupEventDelegate
-        self.markupUIDelegate = markupUIDelegate
+        self.markupDelegate = markupDelegate
         self.webView = webView
         super.init()
     }
     
     private func updateHeight() {
         webView.updateHeight() { height in
-            self.markupEventDelegate?.markup(self.webView, heightDidChange: height)
+            self.markupDelegate?.markup(self.webView, heightDidChange: height)
         }
     }
     
     private func loadInitialHtml() {
         if let html = webView.html {
             webView.setHtml(html) { content in
-                self.markupEventDelegate?.markup(self.webView, contentDidChange: content)
+                self.markupDelegate?.markup(self.webView, contentDidChange: content)
             }
         } else {
             webView.setHtml("") { content in
-                self.markupEventDelegate?.markup(self.webView, contentDidChange: content)
+                self.markupDelegate?.markup(self.webView, contentDidChange: content)
             }
         }
         // We need to initialize the selection/range for immediate double or
@@ -89,30 +87,30 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         switch messageBody {
         case "ready":
             loadInitialHtml()
-            markupEventDelegate?.markupDidLoad(webView)
+            markupDelegate?.markupDidLoad(webView)
         case "input":
-            markupEventDelegate?.markupInput(webView)
+            markupDelegate?.markupInput(webView)
             updateHeight()
         case "updateHeight":
             updateHeight()
         case "blur":
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
-            markupEventDelegate?.markupLostFocus(webView)
-            // TODO:- Determine whether to clean up HTML or perhaps leave that to a markupEventDelegate
+            markupDelegate?.markupLostFocus(webView)
+            // TODO:- Determine whether to clean up HTML or perhaps leave that to a markupDelegate
             // For now, we clean up the HTML when we lose focus
             //webView.cleanUpHtml() { error in
             //    if error != nil {
             //        print("Error cleaning up html: \(error!.localizedDescription)")
             //    }
-            //    self.markupEventDelegate?.markupLostFocus(webView)
+            //    self.markupDelegate?.markupLostFocus(webView)
             //}
         case "focus":
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
             // NOTE: Just because the webView here has focus does not mean it becomes the
             // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
-            // Use markupEventDelegate.markupTookFocus to reset selectedWebView if needed, since
-            // it will have logic specific to your application.
-            markupEventDelegate?.markupTookFocus(webView)
+            // Use markupDelegate.markupTookFocus to reset selectedWebView if needed, since
+            // it will have logic specific to the application.
+            markupDelegate?.markupTookFocus(webView)
         case "selectionChange":
             // If this webView does not have focus, we ignore selectionChange.
             // So, for example, if we select some other view or a TextField becomes first responder, we
@@ -122,11 +120,11 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
                     self.selectionState.reset(from: selectionState)
-                    self.markupEventDelegate?.markupSelectionChanged(webView)
+                    self.markupDelegate?.markupSelectionChanged(webView)
                 }
             }
         case "click":
-            markupEventDelegate?.markupClicked(webView, uiDelegate: markupUIDelegate)
+            markupDelegate?.markupClicked(webView)
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {

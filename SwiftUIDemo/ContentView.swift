@@ -17,7 +17,7 @@ struct ContentView: View {
     @State private var rawText = NSAttributedString(string: "")
     
     @State private var pickerShowing: Bool = false
-    @State private var fileUrl: URL?
+    @State private var rawShowing: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -25,14 +25,22 @@ struct ContentView: View {
             MarkupToolbar(
                 selectionState: selectionState,
                 selectedWebView: $selectedWebView,
-                markupUIDelegate: self,
+                markupDelegate: self,
                 leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, fileToolbarDelegate: self))
             )
-            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupEventDelegate: self, markupUIDelegate: self, initialContent: "<p>Hello <b>bold</b> <i>SwiftUI</i> world!</p>")
-            Divider()
-            TextView(text: $rawText)
-                .font(Font.system(size: StyleContext.P.fontSize))
-                .padding([.top, .bottom, .leading, .trailing], 8)
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self)
+            if rawShowing {
+                Divider()
+                HStack {
+                    Spacer()
+                    Text("Document HTML")
+                    Spacer()
+                }.background(Color(UIColor.systemGray5))
+                Spacer()
+                TextView(text: $rawText)
+                    .font(Font.system(size: StyleContext.P.fontSize))
+                    .padding([.top, .bottom, .leading, .trailing], 8)
+            }
         }
         .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
     }
@@ -44,15 +52,16 @@ struct ContentView: View {
     }
     
     private func attributedString(from string: String) -> NSAttributedString {
-        let font = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
-        let attributes = [NSAttributedString.Key.font: font]
+        // Return a monospaced attributed string for the rawText that is expecting to be a good dark/light mode citizen
+        var attributes = [NSAttributedString.Key: AnyObject]()
+        attributes[.foregroundColor] = UIColor.label
+        attributes[.font] = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
         return NSAttributedString(string: string, attributes: attributes)
     }
     
     private func openExistingDocument(url: URL) {
         do {
             let html = try String(contentsOf: url, encoding: .utf8)
-            fileUrl = url
             selectedWebView?.setHtml(html) { content in
                 self.setRawText()
             }
@@ -61,7 +70,17 @@ struct ContentView: View {
         }
     }
     
-    
+    private func openableURL(from url: URL) -> URL? {
+        do {
+            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            var isStale = false
+            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            return isStale ? nil : scopedUrl
+        } catch let error {
+            print("Error getting openableURL: \(error.localizedDescription)")
+            return nil
+        }
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -72,7 +91,21 @@ struct ContentView_Previews: PreviewProvider {
     
 }
 
-extension ContentView: MarkupEventDelegate {
+extension ContentView: MarkupDelegate {
+    
+    func markupDidLoad(_ view: MarkupWKWebView) {
+        guard
+            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
+            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
+            let html = try? String(contentsOf: url) else {
+            view.setHtml("<p>Could not find demo.html</p>")
+            return
+        }
+        view.setHtml(html) { contents in
+            selectedWebView = view
+            setRawText()
+        }
+    }
     
     func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
@@ -89,12 +122,9 @@ extension ContentView: MarkupEventDelegate {
 
 }
 
-extension ContentView: MarkupUIDelegate {}
-
 extension ContentView: FileToolbarDelegate {
     
     func newDocument(handler: ((URL?)->Void)? = nil) {
-        fileUrl = nil
         selectedWebView?.emptyDocument() {
             setRawText()
         }
@@ -104,7 +134,9 @@ extension ContentView: FileToolbarDelegate {
         pickerShowing.toggle()
     }
     
-    func saveDocument() {}
+    func rawDocument() {
+        withAnimation { rawShowing.toggle()}
+    }
     
 }
 

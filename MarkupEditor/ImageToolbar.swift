@@ -11,7 +11,6 @@ public struct ImageToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
-    private var markupUIDelegate: MarkupUIDelegate?
     private var initialSrc: String?
     private var initialAlt: String?
     private var initialScale: Int?

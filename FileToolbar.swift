@@ -30,8 +30,8 @@ struct FileToolbar: View {
                 )
                 .id(UUID())
                 ToolbarImageButton(
-                    image:  Image(systemName: "square.and.arrow.down"),
-                    action: { fileToolbarDelegate?.saveDocument() }
+                    image:  Image(systemName: "chevron.left.slash.chevron.right"),
+                    action: { fileToolbarDelegate?.rawDocument() }
                 )
                 .id(UUID())
             }

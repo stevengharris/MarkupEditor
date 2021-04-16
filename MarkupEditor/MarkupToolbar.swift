@@ -23,7 +23,7 @@ public struct MarkupToolbar: View {
     
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
-    private var markupUIDelegate: MarkupUIDelegate?
+    private var markupDelegate: MarkupDelegate?
     @State private var showToolbarByType: [ToolbarType : Bool] = [
         .image : false,
         .link: false,
@@ -70,10 +70,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupUIDelegate?.markupToolbarAppeared(type: .image)
+                        markupDelegate?.markupToolbarAppeared(type: .image)
                     })
                     .onDisappear(perform: {
-                        markupUIDelegate?.markupToolbarDisappeared(type: .image)
+                        markupDelegate?.markupToolbarDisappeared(type: .image)
                         selectedWebView?.becomeFirstResponder()
                     })
             }
@@ -82,10 +82,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupUIDelegate?.markupToolbarAppeared(type: .link)
+                        markupDelegate?.markupToolbarAppeared(type: .link)
                     })
                     .onDisappear(perform: {
-                        markupUIDelegate?.markupToolbarDisappeared(type: .link)
+                        markupDelegate?.markupToolbarDisappeared(type: .link)
                         selectedWebView?.becomeFirstResponder()
                     })
             }
@@ -94,10 +94,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupUIDelegate?.markupToolbarAppeared(type: .link)
+                        markupDelegate?.markupToolbarAppeared(type: .link)
                     })
                     .onDisappear(perform: {
-                        markupUIDelegate?.markupToolbarDisappeared(type: .link)
+                        markupDelegate?.markupToolbarDisappeared(type: .link)
                         selectedWebView?.becomeFirstResponder()
                     })
             }
@@ -106,10 +106,10 @@ public struct MarkupToolbar: View {
         .background(Color(UIColor.systemBackground))
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupUIDelegate: MarkupUIDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        self.markupUIDelegate = markupUIDelegate
+        self.markupDelegate = markupDelegate
         self.leftToolbar = leftToolbar
         self.rightToolbar = rightToolbar
     }
