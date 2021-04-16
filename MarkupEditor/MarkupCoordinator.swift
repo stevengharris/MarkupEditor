@@ -54,15 +54,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     }
     
     private func loadInitialHtml() {
-        if let html = webView.html {
-            webView.setHtml(html) { content in
-                self.markupDelegate?.markup(self.webView, contentDidChange: content)
-            }
-        } else {
-            webView.setHtml("") { content in
-                self.markupDelegate?.markup(self.webView, contentDidChange: content)
-            }
-        }
         // We need to initialize the selection/range for immediate double or
         // triple clicks to be detected. We still have to deal with selection
         // ourselves, but at least we consistently receive double and triple
@@ -70,7 +61,17 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         // also causes problems on the initial focus. When we blur, we backupRange,
         // and when we focus, we restoreRange. But, if there is no initialRange,
         // then we never focus properly.
-        webView.initializeRange()
+        if let html = webView.html {
+            webView.setHtml(html) { content in
+                self.webView.initializeRange()
+                self.markupDelegate?.markup(self.webView, contentDidChange: content)
+            }
+        } else {
+            webView.setHtml("") { content in
+                self.webView.initializeRange()
+                self.markupDelegate?.markup(self.webView, contentDidChange: content)
+            }
+        }
     }
     
     /// Take action based on the message body received from JavaScript via the userContentController.
