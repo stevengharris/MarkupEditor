@@ -1304,19 +1304,15 @@ var _getImageAtSelection = function() {
         if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
             if (sel.anchorOffset === node.textContent.length) {
                 // We have selected the end of a text element, which might be next to an IMG
-                if (node.nextSibling.nodeType === Node.ELEMENT_NODE) {
-                    var element = node.nextSibling;
-                    if (element.nodeName === 'IMG') {
-                        return element;
-                    };
+                var nextSibling = node.nextSibling;
+                if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
+                    return (nextSibling.nodeName === 'IMG') ? nextSibling : null;
                 };
             };
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             // We selected some element (like <P>) and its first child might be an IMG
             var firstChild = node.firstChild;
-            if (firstChild.nodeName === 'IMG') {
-                return firstChild;
-            };
+            return (firstChild && firstChild.nodeName === 'IMG') ? firstChild : null;
         };
     };
     return null;
@@ -1351,11 +1347,14 @@ var _setTag = function(type, sel) {
         // on the same location, which is a bit of a drag. See ancient WebKit discussion at:
         // https://bugs.webkit.org/show_bug.cgi?id=15256. This would lead you to think it
         // was fixed after 5 agonizing years, but it would appear not to me.
+        // We select the empty text character so that as soon as we type, it gets replaced.
+        // If we create the empty node (e.g., <b></b> but don't start typing to replace
+        // the empty text character, then we can "see" it show up when we select even tho
+        // it doesn't have any visibility on the screen.
         var emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
         range.insertNode(el);
-        range.setStart(el, 1);  // If set to zero, the caret doesn't show
-        range.setEnd(el, 1);
+        range.selectNode(emptyTextNode);
     } else {
         // Why not just range.surroundContents(el)?
         // Because for selections that span elements, it doesn't work.
