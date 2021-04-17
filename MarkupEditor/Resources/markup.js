@@ -817,7 +817,8 @@ MU.insertImage = function(url, alt) {
 /**
  * Modify the attributes of the image at selection.
  * If url is null, then remove the image.
- * Scale is a percentage like '80' where null means 100%
+ * Scale is a percentage like '80' where null means 100%.
+ * Scale is always expressed relative to full scale.
  */
 MU.modifyImage = function(src, alt, scale) {
     MU.restoreRange();
@@ -1281,7 +1282,10 @@ var _getImageAttributesAtSelection = function() {
     if (element) {
         attributes['src'] = element.getAttribute('src');
         attributes['alt'] = element.getAttribute('alt');
-        attributes['scale'] = element.getAttribute('width');    //  A string like "100%" with height=auto
+        var width = element.getAttribute('width');
+        if (width) {
+            attributes['scale'] = width / element.naturalWidth * 100; //  A percentage of naturalWidth or null
+        };
         var rect = element.getBoundingClientRect();
         let rectDict = {
             'x' : rect.left,

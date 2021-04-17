@@ -318,7 +318,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.link = state["link"] as? String
         selectionState.src = state["src"] as? String
         selectionState.alt = state["alt"] as? String
-        selectionState.scale = scaleFromString(state["scale"] as? String)
+        selectionState.scale = state["scale"] as? Int
         selectionState.frame = rectFromFrame(state["frame"] as? [String : CGFloat])
         if let selectedText = state["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
@@ -340,11 +340,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.li = state["li"] as? Bool ?? false
         selectionState.quote = state["quote"] as? Bool ?? false
         return selectionState
-    }
-    
-    private func scaleFromString(_ scaleString: String?) -> Int? {
-        guard let scaleString = scaleString, scaleString.suffix(1) == "%" else { return nil }
-        return Int(scaleString.prefix(scaleString.count - 1))
     }
     
     private func rectFromFrame(_ frameDict: [String : CGFloat]?) -> CGRect? {
