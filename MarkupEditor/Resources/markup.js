@@ -270,7 +270,9 @@ MU.editor.addEventListener('keyup', function(event) {
     if ((key === 'Backspace') || (key === 'Delete')) {
         _cleanUpSpans();
         _cleanUpAttributes('style');
-    }
+    } else if (key === 'Enter') {
+        _replaceDivIfNeeded();
+    };
 });
 
 /* Here is some experimentation on using the EventListener
@@ -340,7 +342,7 @@ MU.customAction = function(action) {
 
 MU.updateHeight = function() {
     _callback('updateHeight');
-}
+};
 
 var _consoleLog = function(string) {
     let messageDict = {
@@ -349,7 +351,7 @@ var _consoleLog = function(string) {
     }
     var message = JSON.stringify(messageDict);
     _callback(message);
-}
+};
 
 MU.emptyDocument = function() {
     while (MU.editor.firstChild) {
@@ -499,8 +501,30 @@ var _toggleFormat = function(type) {
 //};
 
 MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+    return _prettify(MU.editor.innerHTML);
+    //return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
+
+var _prettify = function(html) {
+    // From https://stackoverflow.com/a/60338028/8968411
+    var tab = '\t';
+    var result = '';
+    var indent= '';
+
+    html.split(/>\s*</).forEach(function(element) {
+        if (element.match( /^\/\w/ )) {
+            indent = indent.substring(tab.length);
+        }
+
+        result += indent + '<' + element + '>\n\n';
+
+        if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith("input")  ) {
+            indent += tab;
+        }
+    });
+
+    return result.substring(1, result.length-3);
+}
 
 //MARK:- Styling
 // 1. Styles (P, H1-H6) are applied to blocks
@@ -940,7 +964,7 @@ MU.blurFocus = function() {
     MU.editor.blur();
 };
 
-//MARK:- Selection
+//MARK:- Clean up of weird things to avoid ugly HTML
 
 MU.cleanUpHTML = function() {
     // Due to the presence of "-webkit-text-size-adjust: 100%;" in normalize.css,
@@ -1026,6 +1050,32 @@ var _cleanUpAttributesWithin = function(attribute, node) {
     };
     return attributesRemoved;
 };
+                                
+/**
+ * If selection is in a DIV and the previousSibling is an ElementNode, then
+ * replace the DIV with a tag of the same type as previousSibling. We use this
+ * to prevent DIVs from being inserted when Enter is pressed.
+ */
+var _replaceDivIfNeeded = function() {
+    var sel = document.getSelection();
+    var selNode = (sel) ? sel.focusNode : null;
+    if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.tagName === 'DIV')) {
+        var prevSib = selNode.previousSibling;
+        if (prevSib.nodeType === Node.ELEMENT_NODE) {
+            var range = sel.getRangeAt(0).cloneRange();
+            var newElement = document.createElement(prevSib.tagName);
+            newElement.appendChild(document.createElement('br'));
+            selNode.replaceWith(newElement);
+            range.setStart(newElement, 0);
+            range.setEnd(newElement, 0);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            _callback('input');
+        };
+    };
+};
+                                
+//MARK:- Explicit handling of multi-click
 
 /**
  * We received a double or triple click event.
@@ -1090,6 +1140,8 @@ var _tripleClickSelect = function(sel) {
 var _isWhiteSpace = function(s) {
     return /\s/g.test(s);
 };
+                                
+//MARK:- Selection
 
 /**
  * Populate a dictionary of properties about the current selection

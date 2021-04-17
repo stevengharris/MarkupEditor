@@ -13,14 +13,12 @@ struct ContentView: View {
 
     @StateObject var selectionState = SelectionState()
     @State var selectedWebView: MarkupWKWebView?
-    
     @State private var rawText = NSAttributedString(string: "")
-    
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 4) {
             // Use the standard MarkupToolbar with a FileToolbar on the left side
             MarkupToolbar(
                 selectionState: selectionState,
@@ -101,6 +99,7 @@ extension ContentView: MarkupDelegate {
             view.setHtml("<p>Could not find demo.html</p>")
             return
         }
+        url.stopAccessingSecurityScopedResource()
         view.setHtml(html) { contents in
             selectedWebView = view
             setRawText()
