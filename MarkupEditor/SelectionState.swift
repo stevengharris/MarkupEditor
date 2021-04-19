@@ -11,14 +11,29 @@ import UIKit
 
 /// The state of the selection in a LogEntryView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
-    @Published public var style: StyleContext = StyleContext.Undefined
+    // Selected text
     @Published public var selection: String? = nil
+    // Links
     @Published public var href: String? = nil
     @Published public var link: String? = nil
+    // Images
     @Published public var src: String? = nil
     @Published public var alt: String? = nil
     @Published public var scale: Int? = nil  // Percent
     @Published public var frame: CGRect? = nil
+    // Tables
+    @Published public var table: Bool = false
+    @Published public var thead: Bool = false
+    @Published public var tbody: Bool = false
+    @Published public var tr: Bool = false
+    @Published public var th: Bool = false
+    @Published public var td: Bool = false
+    // Styles
+    @Published public var style: StyleContext = StyleContext.Undefined
+    @Published public var list: ListContext = ListContext.Undefined
+    @Published public var li: Bool = false
+    @Published public var quote: Bool = false
+    // Formates
     @Published public var bold: Bool = false
     @Published public var italic: Bool = false
     @Published public var underline: Bool = false
@@ -26,9 +41,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var sub: Bool = false
     @Published public var sup: Bool = false
     @Published public var code: Bool = false
-    @Published public var list: ListContext = ListContext.Undefined
-    @Published public var li: Bool = false
-    @Published public var quote: Bool = false
+    
+    // Selection state queries
     public var isLinkable: Bool {
         return link != nil || selection != nil
     }
@@ -62,8 +76,10 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         src != nil  // Possible missing alt
     }
     public var isInTable: Bool {
-        return false    // TODO!
+        return table
     }
+    
+    // CustomStringConvertible conformance
     public var description: String {
         """
         selection: \(selection ?? "none")
@@ -73,13 +89,13 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           quote: \(quote)
           link: \(linkString())
           image: \(imageString())
+          table: \(tableString())
         """
     }
     
     public init() {}
     
     public func reset(from selectionState: SelectionState?) {
-        style = selectionState?.style ?? StyleContext.Undefined
         selection = selectionState?.selection
         href = selectionState?.href
         link = selectionState?.link
@@ -87,6 +103,16 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         alt = selectionState?.alt
         scale = selectionState?.scale ?? 100
         frame = selectionState?.frame
+        table = selectionState?.table ?? false
+        thead = selectionState?.thead ?? false
+        tbody = selectionState?.tbody ?? false
+        tr = selectionState?.tr ?? false
+        th = selectionState?.th ?? false
+        td = selectionState?.td ?? false
+        style = selectionState?.style ?? StyleContext.Undefined
+        list = selectionState?.list ?? ListContext.Undefined
+        li = selectionState?.li ?? false
+        quote = selectionState?.quote ?? false
         bold = selectionState?.bold ?? false
         italic = selectionState?.italic ?? false
         underline = selectionState?.underline ?? false
@@ -94,9 +120,6 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         sub = selectionState?.sub ?? false
         sup = selectionState?.sup ?? false
         code = selectionState?.code ?? false
-        list = selectionState?.list ?? ListContext.Undefined
-        li = selectionState?.li ?? false
-        quote = selectionState?.quote ?? false
     }
     
     func formatString() -> String {
@@ -127,6 +150,17 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     func imageString() -> String {
         guard let src = src else { return "none" }
         return "\(src), alt: \(alt ?? "none"), scale: \(scale ?? 100)%, frame: \(frame ?? CGRect.zero)"
+    }
+    
+    func tableString() -> String {
+        guard table else { return "none" }
+        if thead && tr && th {
+            return "in a header cell"
+        } else if tbody && tr && td {
+            return "in a body cell"
+        } else {
+            return "inconsistent thead: \(thead), tbody: \(tbody), tr: \(tr), th: \(th), td: \(td)"
+        }
     }
     
 }

@@ -1170,6 +1170,13 @@ var _getSelectionState = function() {
     state['alt'] = imageAttributes['alt'];
     state['scale'] = imageAttributes['scale'];
     state['frame'] = imageAttributes['frame'];
+    var tableTags = _getTableTags();
+    state['table'] = tableTags.includes('TABLE');
+    state['thead'] = tableTags.includes('THEAD');
+    state['tbody'] = tableTags.includes('TBODY');
+    state['td'] = tableTags.includes('TD');
+    state['tr'] = tableTags.includes('TR');
+    state['th'] = tableTags.includes('TH');
     state['style'] = _getSelectionStyle();
     state['selection'] = _getSelectionText();
     var formatTags = _getFormatTags();
@@ -1203,11 +1210,15 @@ var _getSelectionState = function() {
 
 var _getSelectionStyle = function() {
     return _firstSelectionTagMatching(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
-}
+};
 
 var _getFormatTags = function() {
     return _selectionTagsMatching(['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
-}
+};
+                                
+var _getTableTags = function() {
+    return _selectionTagsMatching(['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'])
+};
 
 var _getSelectionText = function() {
     var sel = document.getSelection();

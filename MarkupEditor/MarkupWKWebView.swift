@@ -309,29 +309,33 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             print("State decoded from JSON was nil")
             return selectionState
         }
-        if let tag = state["style"] as? String {
-            selectionState.style = StyleContext.with(tag: tag)
-        } else {
-            selectionState.style = StyleContext.Undefined
-        }
-        selectionState.href = state["href"] as? String
-        selectionState.link = state["link"] as? String
-        selectionState.src = state["src"] as? String
-        selectionState.alt = state["alt"] as? String
-        selectionState.scale = state["scale"] as? Int
-        selectionState.frame = rectFromFrame(state["frame"] as? [String : CGFloat])
+        // Selected text
         if let selectedText = state["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
         } else {
             selectionState.selection = nil
         }
-        selectionState.bold = state["bold"] as? Bool ?? false
-        selectionState.italic = state["italic"] as? Bool ?? false
-        selectionState.underline = state["underline"] as? Bool ?? false
-        selectionState.strike = state["strike"] as? Bool ?? false
-        selectionState.sub = state["sub"] as? Bool ?? false
-        selectionState.sup = state["sup"] as? Bool ?? false
-        selectionState.code = state["code"] as? Bool ?? false
+        // Links
+        selectionState.href = state["href"] as? String
+        selectionState.link = state["link"] as? String
+        // Images
+        selectionState.src = state["src"] as? String
+        selectionState.alt = state["alt"] as? String
+        selectionState.scale = state["scale"] as? Int
+        selectionState.frame = rectFromFrame(state["frame"] as? [String : CGFloat])
+        // Tables
+        selectionState.table = state["table"] as? Bool ?? false
+        selectionState.thead = state["thead"] as? Bool ?? false
+        selectionState.tbody = state["tbody"] as? Bool ?? false
+        selectionState.tr = state["tr"] as? Bool ?? false
+        selectionState.th = state["th"] as? Bool ?? false
+        selectionState.td = state["td"] as? Bool ?? false
+        // Styles
+        if let tag = state["style"] as? String {
+            selectionState.style = StyleContext.with(tag: tag)
+        } else {
+            selectionState.style = StyleContext.Undefined
+        }
         if let tag = state["list"] as? String {
             selectionState.list = ListContext.with(tag: tag)
         } else {
@@ -339,6 +343,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         selectionState.li = state["li"] as? Bool ?? false
         selectionState.quote = state["quote"] as? Bool ?? false
+        // Formats
+        selectionState.bold = state["bold"] as? Bool ?? false
+        selectionState.italic = state["italic"] as? Bool ?? false
+        selectionState.underline = state["underline"] as? Bool ?? false
+        selectionState.strike = state["strike"] as? Bool ?? false
+        selectionState.sub = state["sub"] as? Bool ?? false
+        selectionState.sup = state["sup"] as? Bool ?? false
+        selectionState.code = state["code"] as? Bool ?? false
         return selectionState
     }
     
