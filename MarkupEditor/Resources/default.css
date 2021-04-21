@@ -61,6 +61,14 @@ h1 + p, h2 + p, h3 + p {
     margin-top: 10px;
 }
 
+table {
+    border: 1px solid #DDD;
+}
+
+table thead tr th {
+    border-bottom: 1px solid #DDD;
+}
+
 code {
     background-color: #F8F8F8;
     border-radius: 3px;

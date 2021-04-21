@@ -94,10 +94,10 @@ public struct MarkupToolbar: View {
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
                         selectedWebView?.backupRange()
-                        markupDelegate?.markupToolbarAppeared(type: .link)
+                        markupDelegate?.markupToolbarAppeared(type: .table)
                     })
                     .onDisappear(perform: {
-                        markupDelegate?.markupToolbarDisappeared(type: .link)
+                        markupDelegate?.markupToolbarDisappeared(type: .table)
                         selectedWebView?.becomeFirstResponder()
                     })
             }

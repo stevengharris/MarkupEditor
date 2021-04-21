@@ -822,7 +822,7 @@ MU.insertImage = function(url, alt) {
  */
 MU.modifyImage = function(src, alt, scale) {
     MU.restoreRange();
-    var el = _getImageAtSelection();
+    var el = _getElementAtSelection('IMG');
     if (el) {
         if (src) {
             el.setAttribute('src', src);
@@ -832,8 +832,10 @@ MU.modifyImage = function(src, alt, scale) {
                 el.removeAttribute('alt');
             }
             if (scale) {
-                el.setAttribute('width', el.naturalWidth * scale / 100);
-                el.setAttribute('height', el.naturalHeight * scale / 100);
+                let width = _percentInt(scale, el.naturalWidth);
+                let height = _percentInt(scale, el.naturalHeight);
+                el.setAttribute('width', width);
+                el.setAttribute('height', height);
             } else {
                 el.removeAttribute('width');
                 el.removeAttribute('height');
@@ -868,6 +870,44 @@ MU.insertLink = function(url) {
             _callback('input');
         }
     }
+};
+                                
+/**
+ * Insert an empty table with the specified number of rows and cols.
+ * All insert operations that involve user interaction outside of JavaScript
+ * need to be preceded by backupRange so that range can be restored prior
+ * to the insert* operation.
+ * We leave the selection in the first cell of the first row.
+ * The operation will cause a selectionChange event.
+ */
+MU.insertTable = function(rows, cols) {
+    MU.restoreRange();
+    var sel = document.getSelection();
+    var range = sel.getRangeAt(0).cloneRange();
+    var table = document.createElement('table');
+    var tbody = document.createElement('tbody');
+    var firstRow;
+    for (let row = 0; row < rows; row++) {
+        var tr = document.createElement('tr');
+        if (row === 0) { firstRow = tr };
+        for (let col = 0; col < cols; col++) {
+            var td = document.createElement('td');
+            tr.appendChild(td);
+        };
+        tbody.appendChild(tr);
+    };
+    table.appendChild(tbody);
+    var range = sel.getRangeAt(0).cloneRange();
+    range.insertNode(table);
+    if (firstRow) {
+        var newRange = document.createRange();
+        newRange.setStart(firstRow, 0);
+        newRange.setEnd(firstRow, 0)
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        MU.backupRange();
+    };
+    _callback('input');
 };
 
 //MARK:- Range operations
@@ -1162,31 +1202,30 @@ var _getSelectionState = function() {
     if (!document.getSelection()) {
         return state;
     }
+    // Selected text
+    state['selection'] = _getSelectionText();
+    // Link
     var linkAttributes = _getLinkAttributesAtSelection();
     state['href'] = linkAttributes['href'];
     state['link'] = linkAttributes['link'];
+    // Image
     var imageAttributes = _getImageAttributesAtSelection();
     state['src'] = imageAttributes['src'];
     state['alt'] = imageAttributes['alt'];
     state['scale'] = imageAttributes['scale'];
     state['frame'] = imageAttributes['frame'];
-    var tableTags = _getTableTags();
-    state['table'] = tableTags.includes('TABLE');
-    state['thead'] = tableTags.includes('THEAD');
-    state['tbody'] = tableTags.includes('TBODY');
-    state['td'] = tableTags.includes('TD');
-    state['tr'] = tableTags.includes('TR');
-    state['th'] = tableTags.includes('TH');
+    // Table
+    var tableAttributes = _getTableAttributesAtSelection();
+    state['table'] = tableAttributes['table'];
+    state['thead'] = tableAttributes['thead'];
+    state['tbody'] = tableAttributes['tbody'];
+    state['colspan'] = tableAttributes['colspan'];
+    state['rows'] = tableAttributes['rows'];
+    state['cols'] = tableAttributes['cols'];
+    state['row'] = tableAttributes['row'];
+    state['col'] = tableAttributes['col'];
+    // Style
     state['style'] = _getSelectionStyle();
-    state['selection'] = _getSelectionText();
-    var formatTags = _getFormatTags();
-    state['bold'] = formatTags.includes('B');
-    state['italic'] = formatTags.includes('I');
-    state['underline'] = formatTags.includes('U');
-    state['strike'] = formatTags.includes('DEL');
-    state['sub'] = formatTags.includes('SUB');
-    state['sup'] = formatTags.includes('SUP');
-    state['code'] = formatTags.includes('CODE');
     state['list'] = _firstSelectionTagMatching(['UL', 'OL']);
     if (state['list']) {
         // If we are in a list, then we might or might not be in a list item
@@ -1196,6 +1235,15 @@ var _getSelectionState = function() {
         state['li'] = false;
     }
     state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
+    // Format
+    var formatTags = _getFormatTags();
+    state['bold'] = formatTags.includes('B');
+    state['italic'] = formatTags.includes('I');
+    state['underline'] = formatTags.includes('U');
+    state['strike'] = formatTags.includes('DEL');
+    state['sub'] = formatTags.includes('SUB');
+    state['sup'] = formatTags.includes('SUP');
+    state['code'] = formatTags.includes('CODE');
     // DEBUGGING
     //var focusNode = document.getSelection().focusNode;
     //if (focusNode) {
@@ -1289,13 +1337,13 @@ var _getLinkAttributesAtSelection = function() {
  */
 var _getImageAttributesAtSelection = function() {
     var attributes = {};
-    var element = _getImageAtSelection();
+    var element = _getElementAtSelection('IMG');
     if (element) {
         attributes['src'] = element.getAttribute('src');
         attributes['alt'] = element.getAttribute('alt');
-        var width = element.getAttribute('width');
-        if (width) {
-            attributes['scale'] = width / element.naturalWidth * 100; //  A percentage of naturalWidth or null
+        var scale = _imgScale(element);
+        if (scale) {
+            attributes['scale'] = scale;
         };
         var rect = element.getBoundingClientRect();
         let rectDict = {
@@ -1308,30 +1356,6 @@ var _getImageAttributesAtSelection = function() {
     }
     return attributes;
 };
-
-/**
- * Get the image element at the selection point if one exists
- */
-var _getImageAtSelection = function() {
-    var sel = document.getSelection();
-    if (sel) {
-        var node = sel.anchorNode;
-        if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
-            if (sel.anchorOffset === node.textContent.length) {
-                // We have selected the end of a text element, which might be next to an IMG
-                var nextSibling = node.nextSibling;
-                if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
-                    return (nextSibling.nodeName === 'IMG') ? nextSibling : null;
-                };
-            };
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-            // We selected some element (like <P>) and its first child might be an IMG
-            var firstChild = node.firstChild;
-            return (firstChild && firstChild.nodeName === 'IMG') ? firstChild : null;
-        };
-    };
-    return null;
-}
 
 /**
  * Recursively search element ancestors to find a element nodeName e.g. A
@@ -1347,7 +1371,196 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
     }
 };
 
+//MARK:- Tables
+
+/*
+ * If the selection is inside a TABLE, populate attributes with the information
+ * about the table and what is selected in it.
+ * Note that the table likely has empty #text elements in it depending on how the
+ * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
+ */
+var _getTableAttributesAtSelection = function() {
+    var attributes = {};
+    var elements = _getTableElementsAtSelection();
+    attributes['table'] = elements['table'] != null;
+    if (!attributes['table']) { return attributes };
+    attributes['thead'] = elements['thead'] != null;
+    attributes['tbody'] = elements['tbody'] != null;
+    attributes['colspan'] = elements['colspan'] != null;
+    attributes['cols'] = elements['cols'];
+    attributes['rows'] = elements['rows'];
+    attributes['row'] = elements['row'];
+    attributes['col'] = elements['col'];
+    return attributes;
+};
+
+/**
+ * Return all the table elements at the selection.
+ * The selection has to be in a TD or TH element. Then, we
+ * walk up the parent chain to TABLE, populating elements
+ * as we go. We compute the row and col of the selection, too.
+ * If anything is unexpected along the way, we return an empty
+ * dictionary.
+ */
+var _getTableElementsAtSelection = function() {
+    var elements = {};
+    var cell = _firstSelectionNodeMatching(['TD', 'TH']);
+    if (cell) {
+        var _cell = cell;
+        var colCount = 1;
+        while (_cell.previousSibling) {
+            _cell = _cell.previousSibling;
+            if (_cell.nodeType === cell.nodeType) { colCount++; };
+        };
+        elements['col'] = colCount;
+        if (cell.nodeName === 'TD') {
+            elements['td'] = cell;
+        } else {
+            elements['th'] = cell;
+        }
+        var row = cell.parentNode;
+        if (row.nodeName === 'TR') {
+            elements['tr'] = row;
+        } else {
+            return {};
+        }
+        var section = row.parentNode;
+        if (section.nodeName === 'TBODY') {
+            elements['tbody'] = section;
+            var _row = row;
+            var rowCount = 1;
+            while (_row.previousSibling) {
+                _row = _row.previousSibling;
+                if (_row.nodeType === row.nodeType) { rowCount++; };
+            };
+            elements['row'] = rowCount;
+        } else if (section.nodeName === 'THEAD') {
+            elements['thead'] = section;
+            elements['row'] = 0;
+        } else {
+            return {};
+        };
+        var table = section.parentNode;
+        if (table.nodeName === 'TABLE') {
+            elements['table'] = table;
+        } else {
+            return {};
+        }
+        const [rows, cols, colspan] = _getRowsCols(table);
+        elements['rows'] = rows;
+        elements['cols'] = cols;
+        elements['colspan'] = colspan;
+    };
+    return elements;
+};
+
+/**
+ * Since we might select an element in the header or the body of table, we need a single
+ * way to get the size of the table body in terms rows and cols regardless of what was
+ * selected. The header always has one row that is not counted in terms of the table size.
+ * When we have a TBODY, it always defines rowCount and colCount. If we have a THEAD and
+ * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
+ * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
+ * is zero. The colspan value is returned so we know if the header spans columns.
+ */
+var _getRowsCols = function(table) {
+    var rowCount = 0;
+    var colCount = 0;
+    var colspan = null;
+    var children = table.children;
+    for (let i=0; i<children.length; i++) {
+        var section = children[i];
+        var rows = section.children;
+        if (rows.length > 0) {
+            var row = rows[0];
+            var cols = row.children;
+            if (section.nodeName === 'TBODY') {
+                rowCount = rows.length;
+                colCount = cols.length;
+            } else if (section.nodeName === 'THEAD') {
+                if (cols.length > 0) {
+                    colspan = _numberAttribute(cols[0], 'colspan');
+                };
+                if (colspan && (colCount === 0)) {
+                    colCount = colspan;
+                } else if (colCount === 0) {
+                    colCount = cols.length;
+                };
+            };
+        };
+    };
+    let colSpanExists = colspan != null;
+    return [ rowCount, colCount, colSpanExists ];
+}
+
+
+
+var _addRowBelow = function() {
+    var tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    // There will always be a table and tr and either/both a tbody and thead
+    var table = tableElements['table'];
+    var tr = tableElements['tr'];
+    var tbody = tableElements['tbody'];
+    var thead = tableElements['thead'];
+    // Create an empty row with the right number of elements
+    var newRow = document.createElement('tr');
+    for (let i=0; i<attributes['cols']; i++) {
+        newRow.appendChild(document.createElement('td'));
+    }
+    // For reference, form of insertNode is...
+    //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
+    if (thead && tbody && (tbody.children.length > 0)) {
+        // A row below the header is the first row of the body
+        var firstRow = tbody.children[0];
+        tbody.insertBefore(newRow, firstRow);
+    } else if (tbody) {
+        tbody.insertBefore(newRow, tr);
+    } else if (thead && !tbody) {
+        tbody = document.createElement('tbody');
+        tbody.appendChild(tr);
+        table.appendChild(tbody)
+    };
+    _callback('input');
+};
+
 //MARK:- Common private functions
+
+/*
+ * Return a number that is what is actually specified in the attribute.
+ * Since all attributes are strings, using them in raw form can cause weird
+ * JavaScript autoconversion issues, especially when adding things to them
+ */
+var _numberAttribute = function(element, attribute) {
+    var number = Number(element.getAttribute(attribute));
+    return isNaN(number) ? null : number
+};
+
+/**
+ * Get the element with nodeName at the selection point if one exists
+ */
+var _getElementAtSelection = function(nodeName) {
+    var sel = document.getSelection();
+    if (sel) {
+        var node = sel.anchorNode;
+        if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
+            if (sel.anchorOffset === node.textContent.length) {
+                // We have selected the end of a text element, which might be next
+                // to an element we're looking for
+                var nextSibling = node.nextSibling;
+                if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
+                    return (nextSibling.nodeName === nodeName) ? nextSibling : null;
+                };
+            };
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // We selected some element (like <P>) and its first child might be an element we're looking for
+            var firstChild = node.firstChild;
+            return (firstChild && firstChild.nodeName === nodeName) ? firstChild : null;
+        };
+    };
+    return null;
+}
+
 
 /**
  * Put the tag around the current selection, even if range.collapsed
@@ -1657,4 +1870,25 @@ MU.setJustifyCenter = function() {
 MU.setJustifyRight = function() {
     document.execCommand('justifyRight', false, null);
 };
+
+/**
+ * This is so pathetic, I cannot believe I am doing it.
+ * But, wherever the / shows up in JavaScript, XCode messes
+ * up all subsequent formatting and it becomes pretty unbearable
+ * to deal with the indentation it forces on you.
+ * So, I'm putting the only methods where I divide at the bottom of the file.
+ */
+
+var _imgScale = function(element) {
+    var width = _numberAttribute(element, 'width')
+    if (width) {
+        return 100 * width / element.naturalWidth;
+    } else {
+        return null;
+    }
+}
+
+var _percentInt = function(percent, int) {
+    return int * percent / 100;
+}
 

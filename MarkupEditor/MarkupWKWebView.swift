@@ -191,6 +191,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
+        evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
+    }
+    
     private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
         evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
             handler(result as? Int ?? 0)
@@ -327,9 +331,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.table = state["table"] as? Bool ?? false
         selectionState.thead = state["thead"] as? Bool ?? false
         selectionState.tbody = state["tbody"] as? Bool ?? false
-        selectionState.tr = state["tr"] as? Bool ?? false
-        selectionState.th = state["th"] as? Bool ?? false
-        selectionState.td = state["td"] as? Bool ?? false
+        selectionState.colspan = state["colspan"] as? Bool ?? false
+        selectionState.rows = state["rows"] as? Int ?? 0
+        selectionState.cols = state["cols"] as? Int ?? 0
+        selectionState.row = state["row"] as? Int ?? 0
+        selectionState.col = state["col"] as? Int ?? 0
         // Styles
         if let tag = state["style"] as? String {
             selectionState.style = StyleContext.with(tag: tag)

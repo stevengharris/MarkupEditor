@@ -25,9 +25,11 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var table: Bool = false
     @Published public var thead: Bool = false
     @Published public var tbody: Bool = false
-    @Published public var tr: Bool = false
-    @Published public var th: Bool = false
-    @Published public var td: Bool = false
+    @Published public var colspan: Bool = false
+    @Published public var rows: Int = 0
+    @Published public var cols: Int = 0
+    @Published public var row: Int = 0
+    @Published public var col: Int = 0
     // Styles
     @Published public var style: StyleContext = StyleContext.Undefined
     @Published public var list: ListContext = ListContext.Undefined
@@ -106,9 +108,11 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         table = selectionState?.table ?? false
         thead = selectionState?.thead ?? false
         tbody = selectionState?.tbody ?? false
-        tr = selectionState?.tr ?? false
-        th = selectionState?.th ?? false
-        td = selectionState?.td ?? false
+        colspan = selectionState?.colspan ?? false
+        rows = selectionState?.rows ?? 0
+        cols = selectionState?.cols ?? 0
+        row = selectionState?.row ?? 0
+        col = selectionState?.col ?? 0
         style = selectionState?.style ?? StyleContext.Undefined
         list = selectionState?.list ?? ListContext.Undefined
         li = selectionState?.li ?? false
@@ -154,12 +158,16 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     func tableString() -> String {
         guard table else { return "none" }
-        if thead && tr && th {
-            return "in a header cell"
-        } else if tbody && tr && td {
-            return "in a body cell"
+        let tableSize = "\(rows)x\(cols)"
+        let headerType = colspan ? "spanning header" : "non-spanning header"
+        if tbody {
+            return "in body row \(row), col \(col) of \(tableSize) table with \(headerType)"
         } else {
-            return "inconsistent thead: \(thead), tbody: \(tbody), tr: \(tr), th: \(th), td: \(td)"
+            if colspan {
+                return "in \(headerType) of \(tableSize) table"
+            } else {
+                return "in col \(col) of \(headerType) of \(tableSize) table"
+            }
         }
     }
     

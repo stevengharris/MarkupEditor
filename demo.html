@@ -5,7 +5,7 @@
 <p>A style applies to a block of text. The MarkupEditor supports the standard HTML styles of <i>P</i>, <i>H1</i>, <i>H2</i>, <i>H3</i>, <i>H4</i>, <i>H5</i>, and <i>H6</i>. Styles cannot contain other styles. So, for example, you can't embed an <i>H3</i> style in an <i>H1</i> style header.</p>
 <p>The toolbar refers to <i>P</i> style as "Normal". The notion of a style is not native to HTML (even if it is to CSS), but it's pretty well understood by every person who has ever used a word processor, spreadsheet, or even the most primitive text editing tool these days.</p>
 <h4>Lists</h4>
-<p>The MarkupEditor supports both numbered and bulleted style lists. The should behave like you would expect, maintaining the list style and progressing through the proper markers on sub-lists. You can switch styles using the toolbar and interchange styles within lists.</p>
+<p>The MarkupEditor supports both numbered and bulleted style lists. The should behave like you would expect, maintaining the list style and progressing through the proper markers on sub-lists. You can switch styles using the toolbar and change styles within lists.</p>
 <ul>
     <li>Here is a bulleted list.</li>
         <ol>
@@ -20,12 +20,12 @@
 <h2>Formats</h2>
 <p>Text can be formatted to present as <b>bold</b>, <i>italic</i>, <u>underline</u>, <code>code</code>, <del>strikethrough</del>, <sub>subscript</sub>, or <sup>superscript</sup>. Unlike styles, formats can be combined, so for example, a <b><i><u>bold, italic, underlined</u></i></b> section of text works just fine.</p>
 <h2>Inserted Elements</h2>
-<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor exposes an additional element-type-specific toolbar for each of these elements when you create them. To edit one of these elements, select an existing link, image, or table, and then expose the toolbar for that element.</p>
+<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor exposes an additional element-type-specific toolbar for each of these elements when you create or edit them. To edit one of these elements, select an existing link, image, or table, and then expose the toolbar for that element.</p>
 <h4>Links</h4>
 <p>To insert a <a href="https://github.com/stevengharris/MarkupEditor">link</a>, you need to start by selecting some text to link-to. When you've done that, the link button is enabled, and when you select it, the link toolbar appears below. Enter a URL and <i>Save</i>. <i>Cancel</i> just closes the toolbar, leaving the original text/element unchanged. You can leave the toolbar open as you select other elements in the text, which allows you to view and/or edit existing elements more easily. To delete an existing link, clear out the URL and press Save.</p>
 <h4>Images</h4>
 <p>Images have to be inserted at a point in some text, or at the beginning or end of some text. If you have text selected (i.e., one or more characters of text), the image button is disabled. When you have the cursor at a point in text, press the image button to expose the image toolbar. To insert an image in this version of the MarkupEditor, you need to specify a URL. You can (and should!) provide additional descriptive text to go along with it, which is the right thing to do for people with visual impairment. You can scale the image to make it smaller and fit better in your document.</p>
-<p>Here is an inline image: <img src="https://www.jenkins.io/images/sponsors/cloudbees.png", alt="Markup > Markdown">. Select it and then press the image button to see its URL, alt text, and scale settings.</p>
+<p>Here is an inline image: <img src="https://www.jenkins.io/images/sponsors/cloudbees.png" alt="Markup > Markdown">. Select it and then press the image button to see its URL, alt text, and scale settings.</p>
 <p>Again, you can Save your changes or Cancel, closing the toolbar. You can leave the toolbar open to view other image elements. To delete an image, you can clear out the URL and press Save.</p>
 <h4>Tables</h4>
 <p>Tables as currently TBD. However, here is a placeholder straight from the <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/table">HTML docs</a> so it's easy to play with.</p>
