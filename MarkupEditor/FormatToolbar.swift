@@ -12,55 +12,42 @@ public struct FormatToolbar: View {
     @Binding private var selectedWebView: MarkupWKWebView?
     
     public var body: some View {
-        VStack(spacing: 2) {
-            Text("Format")
-                .font(.system(size: 10, weight: .light))
-            HStack(alignment: .bottom) {
-                Group {
-                    ToolbarImageButton(
-                        image: Image(systemName: "bold"),
-                        action: { selectedWebView?.bold() },
-                        active: selectionState.bold
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "italic"),
-                        action: { selectedWebView?.italic() },
-                        active: selectionState.italic
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "underline"),
-                        action: { selectedWebView?.underline() },
-                        active: selectionState.underline
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "curlybraces"),
-                        action: { selectedWebView?.code() },
-                        active: selectionState.code
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "strikethrough"),
-                        action: { selectedWebView?.strike() },
-                        active: selectionState.strike
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "textformat.subscript"),
-                        action: { selectedWebView?.subscriptText() },
-                        active: selectionState.sub
-                    )
-                    .id(UUID())
-                    ToolbarImageButton(
-                        image: Image(systemName: "textformat.superscript"),
-                        action: { selectedWebView?.superscript() },
-                        active: selectionState.sup
-                    )
-                    .id(UUID())
-                }
-            }
+        LabeledToolbar(label: Text("Format").font(.system(size: 10, weight: .light))) {
+                ToolbarImageButton(
+                    image: Image(systemName: "bold"),
+                    action: { selectedWebView?.bold() },
+                    active: selectionState.bold
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "italic"),
+                    action: { selectedWebView?.italic() },
+                    active: selectionState.italic
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "underline"),
+                    action: { selectedWebView?.underline() },
+                    active: selectionState.underline
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "curlybraces"),
+                    action: { selectedWebView?.code() },
+                    active: selectionState.code
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "strikethrough"),
+                    action: { selectedWebView?.strike() },
+                    active: selectionState.strike
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "textformat.subscript"),
+                    action: { selectedWebView?.subscriptText() },
+                    active: selectionState.sub
+                )
+                ToolbarImageButton(
+                    image: Image(systemName: "textformat.superscript"),
+                    action: { selectedWebView?.superscript() },
+                    active: selectionState.sup
+                )
         }
     }
     

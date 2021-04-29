@@ -32,7 +32,11 @@ public protocol MarkupDelegate {
     
     /// Called when the MarkupWKWebView has become ready to receive input.
     /// More concretely, is called when the internal WKWebView loads for the first time, and contentHtml is set.
-    func markupDidLoad(_ view: MarkupWKWebView)
+    ///
+    /// Be sure to execute the handler if you override. The default behavior is to do nothing other than
+    /// execute the handler. The MarkupCoordinator uses the handler to have the MarkupWKWebView
+    /// becomeFirstResponder.
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?)
     
     /// Called when custom actions are called by callbacks in the JS.
     /// By default, this method is not used unless called by some custom JS that you add.
@@ -58,7 +62,7 @@ public protocol MarkupDelegate {
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType)
     
     /// Take action when a toolbar disappeared.
-    func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType)
+    func markupToolbarDisappeared()
     
 }
 
@@ -68,7 +72,7 @@ extension MarkupDelegate {
     public func markup(_ view: MarkupWKWebView, contentDidChange content: String) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
-    public func markupDidLoad(_ view: MarkupWKWebView) {}
+    public func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) { handler?() }
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
     public func markupSelectionChanged(_ view: MarkupWKWebView) {}
     
@@ -115,6 +119,6 @@ extension MarkupDelegate {
     public func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {}
 
     public func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {}
-    public func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {}
+    public func markupToolbarDisappeared() {}
     
 }

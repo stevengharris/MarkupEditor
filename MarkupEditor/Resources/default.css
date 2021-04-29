@@ -1,10 +1,31 @@
 body {
     font-family: -apple-system;
     font: -apple-system-body;
-    word-wrap: break-word;
+    /* word-wrap: break-word; */
+    caret-color: red;
     line-height: 1.7;
     padding: 0 20px 20px 20px;
 }
+
+#editor {
+    caret-color: blue;
+    overflow: auto;
+    cursor: text;
+}
+
+#editor:focus {
+    outline: none !important;
+}
+
+/*
+#editor {
+    -webkit-user-select: auto !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    overflow: auto;
+    display: table-cell;
+    height: 100%;
+}
+*/
 
 a {
     text-decoration: none;

@@ -12,21 +12,15 @@ public struct UndoRedoToolbar: View {
     @Binding private var selectedWebView: MarkupWKWebView?
     
     public var body: some View {
-        VStack(spacing: 2) {
-            Text("Undo/Redo")
-                .font(.system(size: 10, weight: .light))
-            HStack(alignment: .bottom) {
-                ToolbarImageButton(
-                    image: Image(systemName: "arrow.uturn.backward"),
-                    action: { print("markupView?.undo()") }
-                )
-                .id(UUID())
-                ToolbarImageButton(
-                    image:  Image(systemName: "arrow.uturn.forward"),
-                    action: { print("markupView?.redo()") }
-                )
-                .id(UUID())
-            }
+        LabeledToolbar(label: Text("Undo/Redo").font(.system(size: 10, weight: .light))) {
+            ToolbarImageButton(
+                image: Image(systemName: "arrow.uturn.backward"),
+                action: { print("markupView?.undo()") }
+            )
+            ToolbarImageButton(
+                image:  Image(systemName: "arrow.uturn.forward"),
+                action: { print("markupView?.redo()") }
+            )
         }
     }
 

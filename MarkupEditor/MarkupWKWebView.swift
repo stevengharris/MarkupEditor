@@ -72,7 +72,27 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         tintColor = tintColor.resolvedColor(with: .current)
     }
     
+    //public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    //    guard let event = event else { return nil }
+    //    switch event.type {
+    //    case .touches:
+    //        print("WKWebView was hit with: \(event.description)")
+    //        return super.hitTest(point, with: event)
+    //    default:
+    //        return super.hitTest(point, with: event)
+    //    }
+    //}
+    
     //MARK:- Responder Handling
+    
+    //@discardableResult override public func becomeFirstResponder() -> Bool {
+    //    print(">becomeFirstResponder")
+    //    if canBecomeFirstResponder {
+    //        return super.becomeFirstResponder()
+    //    } else {
+    //        return false
+    //    }
+    //}
     
     public override var canBecomeFirstResponder: Bool {
         return hasFocus
@@ -102,9 +122,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.setLineHeight('\(lineHeight ?? Self.DefaultInnerLineHeight)px')")
     }
     
-    public func initializeRange() {
-        evaluateJavaScript("MU.initializeRange()")
-    }
+    //public func initializeRange() {
+    //    evaluateJavaScript("MU.initializeRange()")
+    //}
     
     public func getHtml(_ handler: ((String?)->Void)?) {
         evaluateJavaScript("MU.getHTML()") { result, error in
@@ -191,15 +211,33 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
-        evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
-    }
-    
     private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
         evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
             handler(result as? Int ?? 0)
         }
     }
+    
+    //MARK:- Table editing
+    
+    public enum TableDir {
+        case before
+        case after
+    }
+    
+    public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
+        evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
+    }
+    
+    public func addRow(_ tableDir: TableDir, handler: (()->Void)?) {
+        switch tableDir {
+        case .before:
+            evaluateJavaScript("MU.addRowBefore()") { result, error in handler?() }
+        case .after:
+            evaluateJavaScript("MU.addRowAfter()") { result, error in handler?() }
+        }
+    }
+    
+    
     
     //MARK:- Image editing
     

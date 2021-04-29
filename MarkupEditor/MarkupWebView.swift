@@ -51,8 +51,6 @@ public struct MarkupWebView: UIViewRepresentable {
         // during initialization of MarkupWebView.
         webView.navigationDelegate = wkNavigationDelegate
         webView.uiDelegate = wkUIDelegate
-        // Set the html, which will be loaded after the "ready" message is received
-        webView.html = initialContent
         // The coordinator acts as the WKScriptMessageHandler and will receive callbacks
         // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>);
         let coordinator = context.coordinator
@@ -61,7 +59,9 @@ public struct MarkupWebView: UIViewRepresentable {
         return webView
     }
 
-    public func updateUIView(_ uiView: MarkupWKWebView, context: Context) {
+    public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
+        // Set the html, which will be loaded after the "ready" message is received
+        webView.html = initialContent
     }
     
 }

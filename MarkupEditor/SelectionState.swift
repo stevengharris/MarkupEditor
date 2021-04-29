@@ -84,11 +84,11 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     // CustomStringConvertible conformance
     public var description: String {
         """
-        selection: \(selection ?? "none")
+          selection: \(selection ?? "none")
           style: \(style.tag)
           formats: \(formatString())
           list: \(listString())
-          quote: \(quote)
+          quote: \(quote ? "true" : "none")
           link: \(linkString())
           image: \(imageString())
           table: \(tableString())

@@ -14,27 +14,20 @@ struct FileToolbar: View {
     private var fileToolbarDelegate: FileToolbarDelegate?
     
     var body: some View {
-        VStack(spacing: 2) {
-            Text("File")
-                .font(.system(size: 10, weight: .light))
-            HStack(alignment: .bottom) {
-                ToolbarImageButton(
-                    image: Image(systemName: "plus"),
-                    action: { fileToolbarDelegate?.newDocument(handler: nil) }
-                )
-                .id(UUID())
-                ToolbarImageButton(
-                    image: Image(systemName: "newspaper"),
-                    action: {
-                        fileToolbarDelegate?.existingDocument(handler: nil) }
-                )
-                .id(UUID())
-                ToolbarImageButton(
-                    image:  Image(systemName: "chevron.left.slash.chevron.right"),
-                    action: { fileToolbarDelegate?.rawDocument() }
-                )
-                .id(UUID())
-            }
+        LabeledToolbar(label: Text("File").font(.system(size: 10, weight: .light))) {
+            ToolbarImageButton(
+                image: Image(systemName: "plus"),
+                action: { fileToolbarDelegate?.newDocument(handler: nil) }
+            )
+            ToolbarImageButton(
+                image: Image(systemName: "newspaper"),
+                action: {
+                    fileToolbarDelegate?.existingDocument(handler: nil) }
+            )
+            ToolbarImageButton(
+                image:  Image(systemName: "chevron.left.slash.chevron.right"),
+                action: { fileToolbarDelegate?.rawDocument() }
+            )
         }
     }
 

@@ -15,7 +15,7 @@ import SwiftUI
 /// that the selection is inside of a bolded element, then the bold (B) button is active and filled-in.
 public struct MarkupToolbar: View {
     
-    public enum ToolbarType {
+    public enum ToolbarType: CaseIterable {
         case image
         case link
         case table
@@ -29,9 +29,6 @@ public struct MarkupToolbar: View {
         .link: false,
         .table: false
     ]
-    private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
-    private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
-    private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
     /// User-supplied view to be shown on the right side of the default MarkupToolbar
@@ -63,9 +60,19 @@ public struct MarkupToolbar: View {
             .frame(height: 47)
             .padding([.leading, .trailing], 8)
             .padding([.top, .bottom], 2)
-            .disabled(selectedWebView == nil)
+            //.disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
-            if showImageToolbar {
+            SecondaryToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
+                .onAppear(perform: {
+                    selectedWebView?.backupRange()
+                    markupDelegate?.markupToolbarAppeared(type: toolbarTypeShowing())
+                })
+                .onDisappear(perform: {
+                    markupDelegate?.markupToolbarDisappeared()
+                    selectedWebView?.becomeFirstResponder()
+                })
+            /*
+            if showToolbarByType[.image] ?? false {
                 ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .image))
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
@@ -76,8 +83,9 @@ public struct MarkupToolbar: View {
                         markupDelegate?.markupToolbarDisappeared(type: .image)
                         selectedWebView?.becomeFirstResponder()
                     })
+                    .id(UUID())
             }
-            if showLinkToolbar {
+            if showToolbarByType[.link] ?? false {
                 LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .link))
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
@@ -88,8 +96,9 @@ public struct MarkupToolbar: View {
                         markupDelegate?.markupToolbarDisappeared(type: .link)
                         selectedWebView?.becomeFirstResponder()
                     })
+                    .id(UUID())
             }
-            if showTableToolbar {
+            if showToolbarByType[.table] ?? false {
                 TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .table))
                     //.transition(.move(edge: .bottom))
                     .onAppear(perform: {
@@ -100,7 +109,9 @@ public struct MarkupToolbar: View {
                         markupDelegate?.markupToolbarDisappeared(type: .table)
                         selectedWebView?.becomeFirstResponder()
                     })
+                    .id(UUID())
             }
+            */
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))
@@ -116,6 +127,13 @@ public struct MarkupToolbar: View {
     
     private func showToolbarBinding(type: ToolbarType) -> Binding<Bool> {
         return Binding(get: {showToolbarByType[type] ?? false}, set: { showToolbarByType[type] = $0 })
+    }
+    
+    private func toolbarTypeShowing() -> ToolbarType {
+        // Return the first element of showToolbarByType that has true as its value; else nil
+        // There should be only one and only one or there is an error.
+        // This method is only used for onAppear and onDisappear, so something either appeared or disappeared
+        return showToolbarByType.first(where: {(key, value) in value })!.key
     }
     
 }

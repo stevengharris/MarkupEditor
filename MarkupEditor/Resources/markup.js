@@ -208,35 +208,71 @@ var _selectionTagsMatching = function(tagNames) {
 //MARK:- Event listeners
 
 /**
- * We don't want to hear about the selection changing as the mouse moves during
- * a drag-select. We track when the mouse is down. If mouse movement occurs
- * while down, we note that. Then, when the mouse comes back up, if movement
- * has occurred, we make the callback that the selectionChanged, even though
- * we have ignored any selectionChanged events happening while it was down.
- * The net effect is to get one selectionChange event when the mouse comes back
- * up after a drag-select, and avoid any selectionChange events while the
- * mouse is down.
+ * The selectionChange callback is expensive on the Swift side, because it
+ * tells us we need to getSelectionState to update the toolbar. This is okay
+ * when we're clicking-around a document, but we need to mute the callback
+ * in two situations:
+ *
+ * 1. We don't want to hear about the selection changing as the mouse moves
+ *    during a drag-select. We track when the mouse is down. If mouse movement
+ *    occurs while down, we mute. Then, when the mouse comes back up, we
+ *    unmute. The net effect is to get one selectionChange event when the mouse
+ *    comes back up after a drag-select, and avoid any selectionChange events while
+ *    the mouse is down.
+ *
+ * 2. We purposely set the selection at many points; for example, after an insert
+ *    operation of some kind. From here: https://developer.mozilla.org/en-US/docs/Web/API/Selection,
+ *    it's clear that the selectionChanged occurs multiple times as we do things like
+ *    Range.setStart(), Range.setEnd(), and Selection.setRange(). So, whenever we're
+ *    setting the selection, we try to encapsulate it so that we can mute the
+ *    selectionChange callback until it matters.
+ *
  */
-var mouseUp;
-var moved;
+var mouseDown = false;
+var _muteChanges = false;
+var muteChanges = function() { _setMuteChanges(true) };
+var unmuteChanges = function() { _setMuteChanges(false) };
+var _setMuteChanges = function(bool) { _muteChanges = bool };
 
 document.addEventListener('mousedown', function() {
-    mouseUp = false;
+    mouseDown = true;
+    unmuteChanges();
 });
 
 document.addEventListener('mousemove', function() {
-    if (!mouseUp) { moved = true };
+    if (mouseDown) {
+        muteChanges();
+    } else {
+        unmuteChanges();
+    };
 });
 
 document.addEventListener('mouseup', function() {
-    mouseUp = true;
-    if (moved) { _callback('selectionChange') };
-    moved = false;
+    // TODO:- I don't think this is needed so have commented it out.
+    //if (moving && mouseDown) { _callback('selectionChange') };
+    mouseDown = false;
+    unmuteChanges();
 });
 
 document.addEventListener('selectionchange', function() {
-    if (mouseUp) { _callback('selectionChange') };
+    if (!_muteChanges) {
+        _consoleLog("selection changed"); // + _selectionString());
+        MU.backupRange();
+        _callback('selectionChange');
+    } else {
+        _consoleLog("selection muted");
+    }
 });
+
+var _selectionString = function() {
+    var sel = document.getSelection();
+    var range = sel.getRangeAt(0).cloneRange();
+    var sc = range.startContainer;
+    var so = range.startOffset;
+    var ec = range.endContainer;
+    var eo = range.endOffset;
+    return 'start: "' + sc.textContent + '" at ' + so + ', end: "' + ec.textContent + '" at ' + eo
+}
 
 MU.editor.addEventListener('input', function() {
     MU.backupRange();
@@ -244,11 +280,13 @@ MU.editor.addEventListener('input', function() {
 });
 
 MU.editor.addEventListener('focus', function() {
+    //_consoleLog("focus>restoreRange");
     MU.restoreRange();
     _callback('focus');
 });
 
 MU.editor.addEventListener('blur', function() {
+    //_consoleLog("blur>backupRange");
     MU.backupRange();
     _callback('blur');
 });
@@ -261,7 +299,7 @@ MU.editor.addEventListener('click', function(event) {
     if (nclicks === 1) {
         _callback('click');
     } else {
-        _multiClickSelect(nclicks);
+        //_multiClickSelect(nclicks);
     }
 });
 
@@ -362,9 +400,11 @@ MU.emptyDocument = function() {
     MU.editor.appendChild(p);
     var sel = document.getSelection();
     var range = document.createRange();
+    muteChanges();
     range.setStart(p, 1);
     range.setEnd(p, 1);
     sel.removeAllRanges();
+    unmuteChanges();
     sel.addRange(range);
     MU.backupRange();
 }
@@ -381,6 +421,7 @@ MU.setHTML = function(contents) {
         images[i].onload = MU.updateHeight;
     }
     MU.editor.innerHTML = tempWrapper.innerHTML;
+    _initializeRange()
 };
 
 /**
@@ -418,37 +459,30 @@ MU.redo = function() {
 
 MU.toggleBold = function() {
     _toggleFormat('b');
-    _callback('input');
 };
 
 MU.toggleItalic = function() {
     _toggleFormat('i');
-    _callback('input');
 };
 
 MU.toggleUnderline = function() {
     _toggleFormat('u');
-    _callback('input');
 };
 
 MU.toggleStrike = function() {
     _toggleFormat('del');
-    _callback('input');
 };
 
 MU.toggleCode = function() {
     _toggleFormat('code');
-    _callback('input');
 };
 
 MU.toggleSubscript = function() {
     _toggleFormat('sub');
-    _callback('input');
 };
 
 MU.toggleSuperscript = function() {
     _toggleFormat('sup');
-    _callback('input');
 };
 
 var _toggleFormat = function(type) {
@@ -799,20 +833,42 @@ MU.insertImage = function(url, alt) {
     el.onload = MU.updateHeight;
     var range = sel.getRangeAt(0).cloneRange();
     range.insertNode(el);
-    var nextSib = p.nextSibling;
-    if (nextSib) {
-        var firstTextChild = _findFirstTextChild(nextSib);
-        if (firstTextChild) {
-            var newRange = document.createRange();
-            newRange.setStart(firstTextChild, 0);
-            newRange.setEnd(firstTextChild,0);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-            MU.backupRange();
-            _callback('input');
-        };
-    };
+    _selectNextTextNode(el);
 };
+
+/**
+ * Select and return the first text child that is a sibling of element,
+ * or element itself if it is a TEXT_NODE
+ */
+var _selectNextTextNode = function(element) {
+    var nextTextNode = _getFirstOfType(element, Node.TEXT_NODE);
+    if (nextTextNode) {
+        var newRange = document.createRange();
+        newRange.setStart(nextTextNode, 0);
+        newRange.setEnd(nextTextNode,0);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        MU.backupRange();
+        _callback('input');
+        return nextTextNode;
+    };
+    return null;
+}
+
+/**
+ * Return the first node of nodeType within node, doing a depthwise traversal
+ */
+var _getFirstOfType = function(node, nodeType) {
+    if (node.nodeType === nodeType) {
+        _consoleLog("node.parentNode.outerHTML: " + node.parentNode.outerHTML)
+        return node
+    };
+    var childNodes = node.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        return _getFirstOfType(childNodes[i], nodeType);
+    };
+    return null;
+}
 
 /**
  * Modify the attributes of the image at selection.
@@ -912,14 +968,33 @@ MU.insertTable = function(rows, cols) {
 
 //MARK:- Range operations
 
-MU.initializeRange = function() {
+/**
+ * Make sure selection is set to something reasonable when starting
+ * or setting HTML.
+ * Something reasonable here means the front of the first text node,
+ * and creating that element in an empty document if it doesn't exist.
+ * We make the contentEditable editor have focus when done. From a
+ * the iOS perspective, this doesn't mean we becomeFirstResponder.
+ * This should be done at the application level when the MarkupDelegate
+ * signals contentDidLoad, because with more than one MarkupWKWebView,
+ * the application has to decide when to becomeFirstResponder.
+ */
+var _initializeRange = function() {
+    var firstTextNode = _getFirstOfType(MU.editor, Node.TEXT_NODE);
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
-    range.setStart(MU.editor.firstChild, 0);
-    range.setEnd(MU.editor.firstChild, 0);
-    selection.addRange(range);
-    MU.backupRange();
+    if (firstTextNode) {
+        muteChanges();
+        range.setStart(firstTextNode, 0);
+        range.setEnd(firstTextNode, 0);
+        unmuteChanges();
+        selection.addRange(range);
+        MU.backupRange();
+    } else {
+        MU.emptyDocument()
+    }
+    MU.editor.focus();
 }
 
 MU.backupRange = function() {
@@ -951,11 +1026,13 @@ MU.restoreRange = function() {
         new Error("Restoring invalid range");
         return
     };
+    muteChanges();
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
     range.setStart(MU.currentSelection.startContainer, MU.currentSelection.startOffset);
     range.setEnd(MU.currentSelection.endContainer, MU.currentSelection.endOffset);
+    unmuteChanges();
     selection.addRange(range);
     //_consoleLog(
     //    'restored\n' +
@@ -983,27 +1060,27 @@ MU.selectElementContents = function(el) {
 
 //MARK:- Focus and blur
 
-MU.focus = function() {
-    var range = document.createRange();
-    range.selectNodeContents(MU.editor);
-    range.collapse(false);
-    var selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    MU.editor.focus();
-};
-
-MU.focusAtPoint = function(x, y) {
-    var range = document.caretRangeFromPoint(x, y) || document.createRange();
-    var selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    MU.editor.focus();
-};
-
-MU.blurFocus = function() {
-    MU.editor.blur();
-};
+//MU.focus = function() {
+//    var range = document.createRange();
+//    range.selectNodeContents(MU.editor);
+//    range.collapse(false);
+//    var selection = document.getSelection();
+//    selection.removeAllRanges();
+//    selection.addRange(range);
+//    MU.editor.focus();
+//};
+//
+//MU.focusAtPoint = function(x, y) {
+//    var range = document.caretRangeFromPoint(x, y) || document.createRange();
+//    var selection = document.getSelection();
+//    selection.removeAllRanges();
+//    selection.addRange(range);
+//    MU.editor.focus();
+//};
+//
+//MU.blurFocus = function() {
+//    MU.editor.blur();
+//};
 
 //MARK:- Clean up of weird things to avoid ugly HTML
 
@@ -1407,26 +1484,31 @@ var _getTableElementsAtSelection = function() {
     var cell = _firstSelectionNodeMatching(['TD', 'TH']);
     if (cell) {
         var _cell = cell;
+        // Track the cell the selection is in
+        if (cell.nodeName === 'TD') {
+            elements['td'] = cell;
+        } else {
+            elements['th'] = cell;
+        }
+        // Find the column the selection is in, since we know it immediately
         var colCount = 1;
         while (_cell.previousSibling) {
             _cell = _cell.previousSibling;
             if (_cell.nodeType === cell.nodeType) { colCount++; };
         };
         elements['col'] = colCount;
-        if (cell.nodeName === 'TD') {
-            elements['td'] = cell;
-        } else {
-            elements['th'] = cell;
-        }
+        // Track the row the selection is in
         var row = cell.parentNode;
         if (row.nodeName === 'TR') {
             elements['tr'] = row;
         } else {
             return {};
         }
+        // Track whether we are in the header or body
         var section = row.parentNode;
         if (section.nodeName === 'TBODY') {
             elements['tbody'] = section;
+            // If the selection is in the body, then we can find the row
             var _row = row;
             var rowCount = 1;
             while (_row.previousSibling) {
@@ -1436,16 +1518,17 @@ var _getTableElementsAtSelection = function() {
             elements['row'] = rowCount;
         } else if (section.nodeName === 'THEAD') {
             elements['thead'] = section;
-            elements['row'] = 0;
         } else {
             return {};
         };
+        // Track the selected table
         var table = section.parentNode;
         if (table.nodeName === 'TABLE') {
             elements['table'] = table;
         } else {
             return {};
         }
+        // Track the size of the table and whether the header spans columns
         const [rows, cols, colspan] = _getRowsCols(table);
         elements['rows'] = rows;
         elements['cols'] = cols;
@@ -1493,34 +1576,66 @@ var _getRowsCols = function(table) {
     return [ rowCount, colCount, colSpanExists ];
 }
 
+/**
+ * Return the named section of the table (e.g., name === 'THEAD' or 'TBODY')
+ */
+var _getSection = function(table, name) {
+    var children = table.children;
+    for (let i=0; i<children.length; i++) {
+        var section = children[i];
+        if (section.nodeName === name) {
+            return section;
+        };
+    };
+    return null;
+};
 
 
-var _addRowBelow = function() {
+/**
+ * Add a row below the current selection, whether it's in the header or body
+ */
+MU.addRowAfter = function() {
+    MU.backupRange();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
-    // There will always be a table and tr and either/both a tbody and thead
+    // There will always be a table and tr and either tbody or thead
     var table = tableElements['table'];
     var tr = tableElements['tr'];
     var tbody = tableElements['tbody'];
     var thead = tableElements['thead'];
+    var rows = tableElements['rows'];
+    var cols = tableElements['cols'];
     // Create an empty row with the right number of elements
     var newRow = document.createElement('tr');
-    for (let i=0; i<attributes['cols']; i++) {
+    for (let i=0; i<cols; i++) {
         newRow.appendChild(document.createElement('td'));
-    }
+    };
     // For reference, form of insertNode is...
     //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
-    if (thead && tbody && (tbody.children.length > 0)) {
+    if (thead) {
+        // We are in the header
         // A row below the header is the first row of the body
-        var firstRow = tbody.children[0];
-        tbody.insertBefore(newRow, firstRow);
-    } else if (tbody) {
-        tbody.insertBefore(newRow, tr);
-    } else if (thead && !tbody) {
-        tbody = document.createElement('tbody');
-        tbody.appendChild(tr);
-        table.appendChild(tbody)
-    };
+        if (rows > 0) {
+            // There is at least one row in the body, so put the new one first
+            var body = _getSection(table, 'TBODY');
+            if (body) {
+                var firstRow = body.children[0];
+                body.insertBefore(newRow, firstRow);
+            }
+        } else {
+            // The body doesn't exist because rows === 0
+            // Create it and put the new row in it
+            var body = document.createElement('tbody');
+            body.appendChild(tr);
+            table.appendChild(body)
+        }
+    } else if (tbody && tr.nextSibling) {
+        // We are in the body, so tr is the selected row
+        tbody.insertBefore(newRow, tr.nextSibling);
+    } else {
+        _consoleLog("Could not add row after");
+    }
+    MU.restoreRange();
     _callback('input');
 };
 
@@ -1566,6 +1681,7 @@ var _getElementAtSelection = function(nodeName) {
  * Put the tag around the current selection, even if range.collapsed
  */
 var _setTag = function(type, sel) {
+    //_consoleLog("type: " + type + ", sel: " + sel);
     var el = document.createElement(type);
     var range = sel.getRangeAt(0).cloneRange();
     if (range.collapsed) {
@@ -1581,8 +1697,7 @@ var _setTag = function(type, sel) {
         // it doesn't have any visibility on the screen.
         var emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
-        range.insertNode(el);
-        range.selectNode(emptyTextNode);
+        //range.selectNode(emptyTextNode);
     } else {
         // Why not just range.surroundContents(el)?
         // Because for selections that span elements, it doesn't work.
@@ -1592,8 +1707,28 @@ var _setTag = function(type, sel) {
         // The extractContents-appendChild-insertNode for italic operation produces:
         //      <p><b>Hel<i>lo</b> wo</i>rld<p>
         el.appendChild(range.extractContents());
-        range.insertNode(el);
     }
+    range.insertNode(el);
+    //_selectTag(el);
+    var newRange = document.createRange();
+    var textNode = _getFirstOfType(el, Node.TEXT_NODE);
+    //_consoleLog("textNode.textContent: " + textNode.textContent);
+    //_consoleLog("textNode.parentNode.outerHTML: " + textNode.parentNode.outerHTML);
+    if (textNode) {
+        newRange.selectNode(textNode);
+    } else {
+        _consoleLog('* Error')
+        newRange.selectNode(el);   // A backup
+    }
+    var newSel = document.getSelection();
+    if (newSel) {
+        newSel.removeAllRanges();
+        newSel.addRange(newRange);
+        MU.backupRange();
+    } else {
+        _consoleLog("** Error");
+    };
+    /*
     // Check if the insertion left an empty element preceding or following
     // the inserted el. Unfortunately, when starting/ending the selection at
     // the beginning/end of an element in the multinode selection - for example:
@@ -1619,6 +1754,24 @@ var _setTag = function(type, sel) {
     }
     sel.removeAllRanges();
     sel.addRange(range);
+    */
+};
+
+var _selectTag = function(nodeToSelect) {
+    var elementRange = document.createRange();
+    if (nodeToSelect.firstChild.nodeType === Node.TEXT_NODE) {
+        elementRange.setStart(nodeToSelect.firstChild, 0);
+    } else {
+        elementRange.setStart(nodeToSelect, 0);
+    }
+    if (nodeToSelect.lastChild.nodeType === Node.TEXT_NODE) {
+        elementRange.setEnd(nodeToSelect.lastChild, nodeToSelect.lastChild.textContent.length);
+    } else {
+        elementRange.setEnd(nodeToSelect, nodeToSelect.childNodes.length - 1);
+    }
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(elementRange);
 };
 
 /**
@@ -1787,25 +1940,6 @@ var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames)
         };
     };
 };
-                                
-/// Do a depth-first traversal from node to find the first text node in it.
-/// If node is a TEXT_NODE, return it immediately
-var _findFirstTextChild = function(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-        return node;
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-        var children = node.children
-        if (children.length > 0) {
-            for (let i=0; i < children.length; i++) {
-                var child = _findFirstTextChild(childen[i]);
-                if (child) {
-                    return child;
-                };
-            };
-        };
-    };
-};
-
 
 //MARK:- Unused?
 

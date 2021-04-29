@@ -54,9 +54,7 @@ public struct ImageToolbar: View {
             }
             .padding([.trailing], 8)
             Divider()
-            VStack(spacing: 2) {
-                Text("Scale")
-                    .font(.system(size: 10, weight: .light))
+            LabeledToolbar(label: Text("Scale")) {
                 Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
                     Text("\(scale)%")
                         .frame(width: 50, alignment: .trailing)

@@ -18,25 +18,20 @@ public struct TableToolbar: View {
     public var body: some View {
         HStack(alignment: .bottom) {
             Group {
-                VStack(spacing: 2) {
-                    Text("Rows")
-                        .font(.system(size: 10, weight: .light))
+                LabeledToolbar(label: Text("Rows")) {
                     Stepper(onIncrement: incrementRows, onDecrement: decrementRows) {
                         Text("\(rows)")
                             .frame(width: 20, alignment: .trailing)
                     }
                     .scaledToFit()
                 }
-                VStack(spacing: 2) {
-                    Text("Columns")
-                        .font(.system(size: 10, weight: .light))
+                LabeledToolbar(label: Text("Columns")) {
                     Stepper(onIncrement: incrementCols, onDecrement: decrementCols) {
                         Text("\(cols)")
                             .frame(width: 20, alignment: .trailing)
                     }
                     .scaledToFit()
                 }
-                //ToolbarTextButton(title: "Create", action: { self.create() }, width: 80)
             }
             .disabled(selectionState.isInTable)
             Divider()
@@ -65,11 +60,14 @@ public struct TableToolbar: View {
     }
     
     private func addRow() {
-        
+        selectedWebView?.addRow(.after) {
+            print("woohoo")
+        }
     }
     
     private func incrementRows() {
         // Rows and columns both must always be > 0 when either is > 0
+        print("incrementRows")
         rows += 1
         if rows == 1 {
             cols = 1

@@ -15,52 +15,24 @@ public struct InsertToolbar: View {
     private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
     private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
     public var body: some View {
-        VStack(spacing: 2) {
-            Text("Insert")
-                .font(.system(size: 10, weight: .light))
-            HStack(alignment: .bottom) {
-                ToolbarImageButton(
-                    image:  Image(systemName: "link"),
-                    action: { toggleToolbar(type: .link) },
-                    active: selectionState.isInLink
-                )
-                .id(UUID())
-                .disabled(!enabledToolbar(type: .link))
-                ToolbarImageButton(
-                    image: Image(systemName: "photo"),
-                    action: { toggleToolbar(type: .image) },
-                    active: selectionState.isInImage
-                )
-                .id(UUID())
-                .disabled(!enabledToolbar(type: .image))
-                ToolbarImageButton(
-                    image:  Image(systemName: "tablecells"),
-                    action: { toggleToolbar(type: .table) },
-                    active: selectionState.isInTable
-                )
-                .id(UUID())
-                .disabled(!enabledToolbar(type: .table))
-                /*
-                Button(action: {
-                    showAlert(type: .line)
-                }) {
-                    Image(systemName: "line.horizontal.3")
-                }
-                .disabled(!selectionState.isInsertable)
-                Button(action: {
-                    showAlert(type: .sketch)
-                }) {
-                    Image(systemName: "scribble")
-                }
-                .disabled(!selectionState.isInsertable)
-                Button(action: {
-                    showAlert(type: .codeblock)
-                }) {
-                    Image(systemName: "curlybraces")
-                }
-                .disabled(!selectionState.isInsertable)
-                */
-            }
+        LabeledToolbar(label: Text("Insert")) {
+            ToolbarImageButton(
+                image:  Image(systemName: "link"),
+                action: { toggleToolbar(type: .link) },
+                active: selectionState.isInLink
+            )
+            //.disabled(!enabledToolbar(type: .link))
+            ToolbarImageButton(
+                image: Image(systemName: "photo"),
+                action: { toggleToolbar(type: .image) },
+                active: selectionState.isInImage
+            )
+            //.disabled(!enabledToolbar(type: .image))
+            ToolbarImageButton(
+                image:  Image(systemName: "tablecells"),
+                action: { toggleToolbar(type: .table) },
+                active: selectionState.isInTable
+            )
         }
     }
     

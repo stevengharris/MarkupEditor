@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-public struct ToolbarTextButton: View {
+public struct ToolbarTextButton: View, Identifiable {
+    public let id = UUID()
     let title: String
     let action: ()->Void
     let width: CGFloat?
@@ -43,7 +44,8 @@ public struct ToolbarTextButton: View {
 /// MarkupImageToolbar would cease responding to clicks except in Buttons. So, for example,
 /// the TextFields could not obtain focus, and even the MarkupWKWebView would stop responding
 /// to selection.
-public struct ToolbarImageButton: View {
+public struct ToolbarImageButton: View, Identifiable {
+    public let id = UUID()
     let image: Image
     let action: ()->Void
     var active: Bool = false
@@ -64,13 +66,13 @@ public struct ToolbarImageButton: View {
             .background(active ? Color.accentColor : Color(UIColor.systemBackground))
         )
     }
-    
+
     public init(image: Image, action:  @escaping ()->Void, active: Bool = false) {
         self.image = image
         self.action = action
         self.active = active
     }
-    
+
 }
 
 struct ToolbarButton_Previews: PreviewProvider {

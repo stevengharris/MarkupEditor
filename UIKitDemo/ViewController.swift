@@ -17,9 +17,10 @@ class ViewController: UIViewController {
     private var coordinator: MarkupCoordinator!
     /// The MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
     private var toolbar: MarkupToolbar!
-    private let toolbarHeight: CGFloat = 53
-    private let minWebViewHeight: CGFloat = 30
-    private var webViewHeightConstraint: NSLayoutConstraint!
+    private let toolbarHeight: CGFloat = 54
+    /// To see the raw HTML
+    private var rawTextView: UITextView!
+    private var bottomStack: UIStackView!
     /// The state of the selection in the MarkupWKWebView, shown in the toolbar
     @Published var selectionState: SelectionState = SelectionState()
     @Published var selectedWebView: MarkupWKWebView?
@@ -37,46 +38,113 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         toolbarHeightConstraint.constant = toolbarHeight
-        initializeWebView()
-        toolbar = MarkupToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupDelegate: self)
+        initializeStackView()
+        toolbar = MarkupToolbar(
+            selectionState: selectionState,
+            selectedWebView: selectedWebViewBinding,
+            markupDelegate: self,
+            leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
+            )
         add(swiftUIView: toolbar, to: toolbarHolder)
     }
     
-    func initializeWebView() {
-        // Subclassing WKWebView sure doesn't work well in storyboards.
-        // This is because the init(coder: Coder) that is invoked
-        // can't provide access to the frame to be able to invoke
-        // the proper designated initializer, super.init(frame:configuration:).
-        // As a result, there seems to be no way to extract the frame properly
-        // from the coder and pass it to the superclass, and we have to
-        // set constraints manually here.
-        webView = MarkupWKWebView()
-        view.addSubview(webView)
-        webView.translatesAutoresizingMaskIntoConstraints = false
-        // To illustrate auto-height adjustment as content changes, define webViewHeightConstraint here and then
-        // adjuat it in the heightDidChange callback received by MarkupDelegate
-        webViewHeightConstraint = webView.heightAnchor.constraint(equalToConstant: minWebViewHeight)
+    func initializeStackView() {
+        // Create a vertical stack to hold the webView and rawTextView
+        let stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.distribution = .fillEqually
+        view.addSubview(stack)
         NSLayoutConstraint.activate([
-            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
-            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
-            webView.topAnchor.constraint(equalTo: toolbarHolder.bottomAnchor),
-            webViewHeightConstraint
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: toolbarHolder.bottomAnchor, constant: 4),
+            stack.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
-        webView.html = "<p>Hello <b>bold</b> <i>UIKit</i> world!"
+        webView = MarkupWKWebView()
+        stack.addArrangedSubview(webView)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
+        webView.html = demoContent()
+        bottomStack = UIStackView()
+        bottomStack.isHidden = true
+        bottomStack.axis = .vertical
+        let label = UILabel()
+        label.text = "Document HTML"
+        label.textAlignment = .center
+        label.backgroundColor = UIColor.systemGray5
+        bottomStack.addArrangedSubview(label)
+        rawTextView = UITextView()
+        rawTextView.contentInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+        bottomStack.addArrangedSubview(rawTextView)
+        stack.addArrangedSubview(bottomStack)
+    }
+    
+    private func setRawText(_ handler: (()->Void)? = nil) {
+        selectedWebView?.getPrettyHtml { html in
+            self.rawTextView.attributedText = self.attributedString(from: html ?? "")
+            handler?()
+        }
+    }
+    
+    private func attributedString(from string: String) -> NSAttributedString {
+        // Return a monospaced attributed string for the rawText that is expecting to be a good dark/light mode citizen
+        var attributes = [NSAttributedString.Key: AnyObject]()
+        attributes[.foregroundColor] = UIColor.label
+        attributes[.font] = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
+        return NSAttributedString(string: string, attributes: attributes)
+    }
+    
+    private func openExistingDocument(url: URL) {
+        do {
+            let html = try String(contentsOf: url, encoding: .utf8)
+            selectedWebView?.setHtml(html) { content in
+                self.setRawText()
+            }
+        } catch let error {
+            print("Error loading html: \(error.localizedDescription)")
+        }
+    }
+    
+    private func openableURL(from url: URL) -> URL? {
+        do {
+            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            var isStale = false
+            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            return isStale ? nil : scopedUrl
+        } catch let error {
+            print("Error getting openableURL: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    private func demoContent() -> String? {
+        guard
+            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
+            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
+            let html = try? String(contentsOf: url) else {
+            return nil
+        }
+        url.stopAccessingSecurityScopedResource()
+        return html
     }
 
 }
 
 extension ViewController: MarkupDelegate {
     
-    func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {
-        webViewHeightConstraint.constant = CGFloat(height)
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        setRawText(handler)
     }
     
     func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
+    }
+    
+    func markupInput(_ view: MarkupWKWebView) {
+        // This is way too heavyweight, but it suits the purposes of the demo
+        setRawText()
     }
     
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {
@@ -87,12 +155,36 @@ extension ViewController: MarkupDelegate {
         //}
     }
     
-    func markupToolbarDisappeared(type: MarkupToolbar.ToolbarType) {
+    func markupToolbarDisappeared() {
         //toolbarHolder.layoutIfNeeded()
         //UIView.animate(withDuration: 0.2) {
             self.toolbarHeightConstraint.constant = self.toolbarHeight
             self.toolbarHolder.layoutIfNeeded()
         //}
+    }
+    
+}
+
+extension ViewController: FileToolbarDelegate {
+    
+    func newDocument(handler: ((URL?)->Void)? = nil) {
+        selectedWebView?.emptyDocument() {
+            self.setRawText()
+        }
+    }
+    
+    func existingDocument(handler: ((URL?)->Void)? = nil) {
+        
+    }
+    
+    func rawDocument() {
+        //UIView.animate(
+        //    withDuration: 0.1,
+        //    delay: 0.0,
+        //    animations: {
+                self.bottomStack.isHidden = !self.bottomStack.isHidden
+        //        self.bottomStack.alpha = self.bottomStack.isHidden ? 0.0 : 1.0
+        //})
     }
     
 }

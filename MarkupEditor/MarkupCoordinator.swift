@@ -61,15 +61,14 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         // also causes problems on the initial focus. When we blur, we backupRange,
         // and when we focus, we restoreRange. But, if there is no initialRange,
         // then we never focus properly.
-        if let html = webView.html {
-            webView.setHtml(html) { content in
-                self.webView.initializeRange()
-                self.markupDelegate?.markup(self.webView, contentDidChange: content)
-            }
-        } else {
-            webView.setHtml("") { content in
-                self.webView.initializeRange()
-                self.markupDelegate?.markup(self.webView, contentDidChange: content)
+        let initialContent = webView.html ?? ""
+        webView.setHtml(initialContent) { content in
+            self.markupDelegate?.markupDidLoad(self.webView) {
+                if self.webView.becomeFirstResponder() {
+                    print("becameFirstResponder")
+                } else {
+                    print("did not becomeFirstResponder")
+                }
             }
         }
     }
@@ -87,14 +86,15 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
         switch messageBody {
         case "ready":
+            print("ready")
             loadInitialHtml()
-            markupDelegate?.markupDidLoad(webView)
         case "input":
             markupDelegate?.markupInput(webView)
             updateHeight()
         case "updateHeight":
             updateHeight()
         case "blur":
+            //print("* blur")
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
             markupDelegate?.markupLostFocus(webView)
             // TODO:- Determine whether to clean up HTML or perhaps leave that to a markupDelegate
@@ -106,7 +106,9 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //    self.markupDelegate?.markupLostFocus(webView)
             //}
         case "focus":
+            print("* focus")
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
+            //webView.becomeFirstResponder()
             // NOTE: Just because the webView here has focus does not mean it becomes the
             // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
             // Use markupDelegate.markupTookFocus to reset selectedWebView if needed, since
@@ -120,11 +122,16 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             // Note that selectionState remains the same object; just the state it holds onto is updated.
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
+                    //webView.becomeFirstResponder()
                     self.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
+            } else {
+                print("no focus")
             }
         case "click":
+            print("click")
+            webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
         default:
             // Try to decode a complex JSON stringified message

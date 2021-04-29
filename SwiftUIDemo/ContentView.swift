@@ -26,7 +26,7 @@ struct ContentView: View {
                 markupDelegate: self,
                 leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, fileToolbarDelegate: self))
             )
-            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self)
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
             if rawShowing {
                 Divider()
                 HStack {
@@ -43,9 +43,10 @@ struct ContentView: View {
         .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
     }
     
-    private func setRawText() {
+    private func setRawText(_ handler: (()->Void)? = nil) {
         selectedWebView?.getPrettyHtml { html in
             rawText = attributedString(from: html ?? "")
+            handler?()
         }
     }
     
@@ -79,6 +80,18 @@ struct ContentView: View {
             return nil
         }
     }
+    
+    private func demoContent() -> String? {
+        guard
+            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
+            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
+            let html = try? String(contentsOf: url) else {
+            return nil
+        }
+        url.stopAccessingSecurityScopedResource()
+        return html
+    }
+    
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -91,19 +104,8 @@ struct ContentView_Previews: PreviewProvider {
 
 extension ContentView: MarkupDelegate {
     
-    func markupDidLoad(_ view: MarkupWKWebView) {
-        guard
-            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
-            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
-            let html = try? String(contentsOf: url) else {
-            view.setHtml("<p>Could not find demo.html</p>")
-            return
-        }
-        url.stopAccessingSecurityScopedResource()
-        view.setHtml(html) { contents in
-            selectedWebView = view
-            setRawText()
-        }
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        setRawText(handler)
     }
     
     func markupTookFocus(_ view: MarkupWKWebView) {
