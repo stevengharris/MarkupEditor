@@ -7,77 +7,92 @@
 
 import SwiftUI
 
-public struct ToolbarTextButton: View, Identifiable {
-    public let id = UUID()
-    let title: String
-    let action: ()->Void
-    let width: CGFloat?
-    public var body: some View {
-            Button(action: action, label: {
-                Text(title)
-                    .frame(width: width, height: 30)
-                    .padding([.leading, .trailing], 8)
-                    .background(
-                        RoundedRectangle(
-                            cornerRadius: 3,
-                            style: .continuous
-                        )
-                        .stroke(Color.accentColor)
-                        .background(Color(UIColor.systemGray6))
-                    )
-            })
-    }
-    
-    public init(title: String, action: @escaping ()->Void, width: CGFloat? = nil) {
-        self.title = title
-        self.action = action
-        self.width = width
-    }
-    
-}
-
 /// A 30x30 button typically used with a system image in the toolbar.
 ///
-/// It's important for users of these buttons to specify a proper id for them, or they can randomly
-/// cause bad behavior in other areas. Specifically, when using these buttons in the MarkupToolbar
-/// and TextFields in the MarkupImageToolbar below it that would appear/disappear, the entire
-/// MarkupImageToolbar would cease responding to clicks except in Buttons. So, for example,
-/// the TextFields could not obtain focus, and even the MarkupWKWebView would stop responding
-/// to selection.
-public struct ToolbarImageButton: View, Identifiable {
-    public let id = UUID()
-    let image: Image
+/// These RoundedRect buttons show text and outline in activeColor (.accentColor by default), with the
+/// backgroundColor of UIColor.systemBackground. When active, the text and background switch.
+/// The buttons should look nearly identical on for UIDevice.current.userInterfaceIdiom == .mac and .pad,
+/// but the Image passed-in using ViewBuilder should be set using Image.forToolbar() to have the image
+/// sizes match.
+public struct ToolbarImageButton<Content: View>: View {
+    let image: Content
     let action: ()->Void
-    var active: Bool = false
+    @Binding var active: Bool
+    let activeColor: Color
+    
     public var body: some View {
         Button(action: action, label: {
             image
                 .frame(width: 30, height: 30)
-                .contentShape(RoundedRectangle(cornerRadius: 3))
         })
-        .cornerRadius(3)
-        .foregroundColor(active ? Color(UIColor.systemBackground) : Color.accentColor)
-        .background(
-            RoundedRectangle(
-                cornerRadius: 3,
-                style: .continuous
-            )
-            .stroke(Color.accentColor)
-            .background(active ? Color.accentColor : Color(UIColor.systemBackground))
-        )
+        // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
+        // fixes from flaky problems in surrpunding SwiftUI views that are presented
+        // below this one, altho AFAICT not in ones adjacent horizontally.
+        // Ref: https://stackoverflow.com/a/67377002/8968411
+        .contentShape(RoundedRectangle(cornerRadius: 3))
+        .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
     }
 
-    public init(image: Image, action:  @escaping ()->Void, active: Bool = false) {
-        self.image = image
+    public init(action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, @ViewBuilder content: ()->Content) {
+        self.image = content()
         self.action = action
-        self.active = active
+        _active = active
+        self.activeColor = activeColor
     }
 
 }
 
-struct ToolbarButton_Previews: PreviewProvider {
-    static var previews: some View {
-        ToolbarTextButton(title: "Test", action: { print("Test Text Button") }, width: nil)
-        ToolbarImageButton(image: Image(systemName: "photo"), action: { print("Test Image Button") })
+public struct ToolbarTextButton: View {
+    let title: String
+    let action: ()->Void
+    let width: CGFloat?
+    @Binding var active: Bool
+    let activeColor: Color
+    
+    public var body: some View {
+        Button(action: action, label: {
+            Text(title)
+                .frame(width: width, height: 30)
+                .padding([.leading, .trailing], 8)
+                .background(
+                    RoundedRectangle(
+                        cornerRadius: 3,
+                        style: .continuous
+                    )
+                    .stroke(Color.accentColor)
+                    .background(Color(UIColor.systemGray6))
+                )
+        })
+        .contentShape(RoundedRectangle(cornerRadius: 3))
+        .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
+    }
+    
+    public init(title: String, action: @escaping ()->Void, width: CGFloat? = nil, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor) {
+        self.title = title
+        self.action = action
+        self.width = width
+        _active = active
+        self.activeColor = activeColor
+    }
+    
+}
+
+struct ToolbarButtonStyle: ButtonStyle {
+    @Binding var active: Bool
+    let activeColor: Color
+    
+    func makeBody(configuration: Self.Configuration) -> some View {
+        configuration.label
+            .cornerRadius(3)
+            .foregroundColor(active ? Color(UIColor.systemBackground) : activeColor)
+            .background(
+                RoundedRectangle(
+                    cornerRadius: 3,
+                    style: .continuous
+                )
+                .stroke(Color.accentColor)
+                .background(active ? activeColor: Color(UIColor.systemBackground))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 3))
     }
 }

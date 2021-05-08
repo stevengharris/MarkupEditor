@@ -10,35 +10,26 @@ import SwiftUI
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
-    @Binding private var showToolbarByType: [MarkupToolbar.ToolbarType : Bool]
-    private var showLinkToolbar: Bool { showToolbarByType[.link] ?? false }
-    private var showImageToolbar: Bool { showToolbarByType[.image] ?? false }
-    private var showTableToolbar: Bool { showToolbarByType[.table] ?? false }
+    @Binding private var showLinkToolbar: Bool
+    @Binding private var showImageToolbar: Bool
+    @Binding private var showTableToolbar: Bool
     public var body: some View {
         LabeledToolbar(label: Text("Insert")) {
             ToolbarImageButton(
-                image:  Image(systemName: "link"),
-                action: { toggleToolbar(type: .link) },
-                active: selectionState.isInLink
-            )
-            //.disabled(!enabledToolbar(type: .link))
+                action: { showLinkToolbar.toggle() },
+                active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 })
+            ) { Image.forToolbar(systemName: "link") }
+            .disabled(!enabledToolbar(type: .link))
             ToolbarImageButton(
-                image: Image(systemName: "photo"),
-                action: { toggleToolbar(type: .image) },
-                active: selectionState.isInImage
-            )
-            //.disabled(!enabledToolbar(type: .image))
+                action: { showImageToolbar.toggle() },
+                active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 })
+            ) { Image.forToolbar(systemName: "photo") }
+            .disabled(!enabledToolbar(type: .image))
             ToolbarImageButton(
-                image:  Image(systemName: "tablecells"),
-                action: { toggleToolbar(type: .table) },
-                active: selectionState.isInTable
-            )
-        }
-    }
-    
-    private func toggleToolbar(type: MarkupToolbar.ToolbarType) {
-        withAnimation {
-            showToolbarByType[type] = !(showToolbarByType[type] ?? false)
+                action: { showTableToolbar.toggle() },
+                active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
+            ) { Image.forToolbar(systemName: "tablecells") }
+            .disabled(!enabledToolbar(type: .table))
         }
     }
     
@@ -47,33 +38,21 @@ public struct InsertToolbar: View {
         // Always enabled if we are showing this type of toolbar, so we can hide it again.
         // Otherwise, enabled if we are not showing one of the other toolbars and the selectionState is proper
         switch type {
-        case .image:
-            return showImageToolbar || (!(showLinkToolbar || showTableToolbar) && selectionState.isInsertable)
         case .link:
             return showLinkToolbar || (!(showImageToolbar || showTableToolbar) && selectionState.isLinkable)
+        case .image:
+            return showImageToolbar || (!(showLinkToolbar || showTableToolbar) && selectionState.isInsertable)
         case .table:
             return showTableToolbar || (!(showLinkToolbar || showImageToolbar) && selectionState.isInsertable)
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbarByType: Binding<[MarkupToolbar.ToolbarType : Bool]>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showLinkToolbar: Binding<Bool>, showImageToolbar: Binding<Bool>, showTableToolbar: Binding<Bool>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showToolbarByType = showToolbarByType
-    }
-    
-}
-
-struct InsertToolbar_Previews: PreviewProvider {
-    
-    static let showToolbarByType: [MarkupToolbar.ToolbarType : Bool] = [
-        .image : false,
-        .link : false,
-        .table : false
-    ]
-    
-    static var previews: some View {
-        InsertToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbarByType: .constant(showToolbarByType))
+        _showLinkToolbar = showLinkToolbar
+        _showImageToolbar = showImageToolbar
+        _showTableToolbar = showTableToolbar
     }
     
 }

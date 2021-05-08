@@ -64,11 +64,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         let initialContent = webView.html ?? ""
         webView.setHtml(initialContent) { content in
             self.markupDelegate?.markupDidLoad(self.webView) {
-                if self.webView.becomeFirstResponder() {
-                    print("becameFirstResponder")
-                } else {
-                    print("did not becomeFirstResponder")
-                }
+                self.webView.becomeFirstResponder()
             }
         }
     }
@@ -86,7 +82,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
         switch messageBody {
         case "ready":
-            print("ready")
+            //print("ready")
             loadInitialHtml()
         case "input":
             markupDelegate?.markupInput(webView)
@@ -106,7 +102,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //    self.markupDelegate?.markupLostFocus(webView)
             //}
         case "focus":
-            print("* focus")
+            //print("* focus")
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
             //webView.becomeFirstResponder()
             // NOTE: Just because the webView here has focus does not mean it becomes the
@@ -126,11 +122,11 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                     self.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
-            } else {
-                print("no focus")
+            //} else {
+            //    print("no focus")
             }
         case "click":
-            print("click")
+            //print("click")
             webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
         default:

@@ -256,11 +256,11 @@ document.addEventListener('mouseup', function() {
 
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
-        _consoleLog("selection changed"); // + _selectionString());
+        //_consoleLog("selection changed"); // + _selectionString());
         MU.backupRange();
         _callback('selectionChange');
-    } else {
-        _consoleLog("selection muted");
+    //} else {
+    //    _consoleLog("selection muted");
     }
 });
 
@@ -860,7 +860,7 @@ var _selectNextTextNode = function(element) {
  */
 var _getFirstOfType = function(node, nodeType) {
     if (node.nodeType === nodeType) {
-        _consoleLog("node.parentNode.outerHTML: " + node.parentNode.outerHTML)
+        //_consoleLog("node.parentNode.outerHTML: " + node.parentNode.outerHTML)
         return node
     };
     var childNodes = node.childNodes;

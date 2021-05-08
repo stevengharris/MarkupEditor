@@ -8,12 +8,12 @@
 import SwiftUI
 
 public struct ToolbarTextField: View {
-    var label: String!
-    var placeholder: String!
+    let label: String!
+    let placeholder: String!
     @Binding var text: String
-    var commitHandler: (()->Void)? = nil
-    var isEditingHandler: ((Bool)->Void)? = nil
-    var validationHandler: (()->Bool)? = nil
+    let commitHandler: (()->Void)?
+    let isEditingHandler: ((Bool)->Void)?
+    let validationHandler: (()->Bool)?
     
     public var body: some View {
         VStack(spacing: 2) {
@@ -46,10 +46,4 @@ public struct ToolbarTextField: View {
         self.validationHandler = validationHandler
     }
     
-}
-
-struct ToolbarTextField_Previews: PreviewProvider {
-    static var previews: some View {
-        ToolbarTextField(label: "Test Field", placeholder: "Enter some text", text: .constant(""))
-    }
 }

@@ -108,6 +108,7 @@ class ViewController: UIViewController {
     }
     
     private func openableURL(from url: URL) -> URL? {
+        #if targetEnvironment(macCatalyst)
         do {
             let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             var isStale = false
@@ -117,6 +118,9 @@ class ViewController: UIViewController {
             print("Error getting openableURL: \(error.localizedDescription)")
             return nil
         }
+        #else
+        return url
+        #endif
     }
     
     private func demoContent() -> String? {

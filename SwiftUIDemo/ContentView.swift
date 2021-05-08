@@ -18,14 +18,16 @@ struct ContentView: View {
     @State private var rawShowing: Bool = false
     
     var body: some View {
-        VStack(spacing: 4) {
-            // Use the standard MarkupToolbar with a FileToolbar on the left side
+        VStack {
             MarkupToolbar(
                 selectionState: selectionState,
                 selectedWebView: $selectedWebView,
                 markupDelegate: self,
-                leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, fileToolbarDelegate: self))
-            )
+                leftToolbar: AnyView(
+                    FileToolbar(
+                        selectionState: selectionState,
+                        selectedWebView: $selectedWebView,
+                        fileToolbarDelegate: self)))
             MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
             if rawShowing {
                 Divider()
@@ -70,6 +72,7 @@ struct ContentView: View {
     }
     
     private func openableURL(from url: URL) -> URL? {
+        #if targetEnvironment(macCatalyst)
         do {
             let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             var isStale = false
@@ -79,6 +82,9 @@ struct ContentView: View {
             print("Error getting openableURL: \(error.localizedDescription)")
             return nil
         }
+        #else
+        return url
+        #endif
     }
     
     private func demoContent() -> String? {
@@ -90,14 +96,6 @@ struct ContentView: View {
         }
         url.stopAccessingSecurityScopedResource()
         return html
-    }
-    
-}
-
-struct ContentView_Previews: PreviewProvider {
-    
-    static var previews: some View {
-        ContentView()
     }
     
 }

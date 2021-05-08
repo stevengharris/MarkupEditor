@@ -15,19 +15,15 @@ struct FileToolbar: View {
     
     var body: some View {
         LabeledToolbar(label: Text("File").font(.system(size: 10, weight: .light))) {
-            ToolbarImageButton(
-                image: Image(systemName: "plus"),
-                action: { fileToolbarDelegate?.newDocument(handler: nil) }
-            )
-            ToolbarImageButton(
-                image: Image(systemName: "newspaper"),
-                action: {
-                    fileToolbarDelegate?.existingDocument(handler: nil) }
-            )
-            ToolbarImageButton(
-                image:  Image(systemName: "chevron.left.slash.chevron.right"),
-                action: { fileToolbarDelegate?.rawDocument() }
-            )
+            ToolbarImageButton(action: { fileToolbarDelegate?.newDocument(handler: nil) } ) {
+                Image.forToolbar(systemName: "plus")
+            }
+            ToolbarImageButton(action: { fileToolbarDelegate?.existingDocument(handler: nil) } ) {
+                Image.forToolbar(systemName: "newspaper")
+            }
+            ToolbarImageButton(action: { fileToolbarDelegate?.rawDocument() } ) {
+                Image.forToolbar(systemName: "chevron.left.slash.chevron.right")
+            }
         }
     }
 

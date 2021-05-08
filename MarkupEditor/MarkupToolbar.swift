@@ -24,11 +24,9 @@ public struct MarkupToolbar: View {
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var markupDelegate: MarkupDelegate?
-    @State private var showToolbarByType: [ToolbarType : Bool] = [
-        .image : false,
-        .link: false,
-        .table: false
-    ]
+    @State private var showLinkToolbar: Bool = false
+    @State private var showImageToolbar: Bool = false
+    @State private var showTableToolbar: Bool = false
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
     /// User-supplied view to be shown on the right side of the default MarkupToolbar
@@ -44,7 +42,7 @@ public struct MarkupToolbar: View {
                 Group {
                     UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
-                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
+                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showLinkToolbar: $showLinkToolbar, showImageToolbar: $showImageToolbar, showTableToolbar: $showTableToolbar)
                     Divider()
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
@@ -60,58 +58,38 @@ public struct MarkupToolbar: View {
             .frame(height: 47)
             .padding([.leading, .trailing], 8)
             .padding([.top, .bottom], 2)
-            //.disabled(selectedWebView == nil)
+            .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
-            SecondaryToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbarByType: $showToolbarByType)
+            LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
+                .isHidden(!showLinkToolbar, remove: !showLinkToolbar)
                 .onAppear(perform: {
                     selectedWebView?.backupRange()
-                    markupDelegate?.markupToolbarAppeared(type: toolbarTypeShowing())
+                    markupDelegate?.markupToolbarAppeared(type: .link)
                 })
                 .onDisappear(perform: {
                     markupDelegate?.markupToolbarDisappeared()
                     selectedWebView?.becomeFirstResponder()
                 })
-            /*
-            if showToolbarByType[.image] ?? false {
-                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .image))
-                    //.transition(.move(edge: .bottom))
-                    .onAppear(perform: {
-                        selectedWebView?.backupRange()
-                        markupDelegate?.markupToolbarAppeared(type: .image)
-                    })
-                    .onDisappear(perform: {
-                        markupDelegate?.markupToolbarDisappeared(type: .image)
-                        selectedWebView?.becomeFirstResponder()
-                    })
-                    .id(UUID())
-            }
-            if showToolbarByType[.link] ?? false {
-                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .link))
-                    //.transition(.move(edge: .bottom))
-                    .onAppear(perform: {
-                        selectedWebView?.backupRange()
-                        markupDelegate?.markupToolbarAppeared(type: .link)
-                    })
-                    .onDisappear(perform: {
-                        markupDelegate?.markupToolbarDisappeared(type: .link)
-                        selectedWebView?.becomeFirstResponder()
-                    })
-                    .id(UUID())
-            }
-            if showToolbarByType[.table] ?? false {
-                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: showToolbarBinding(type: .table))
-                    //.transition(.move(edge: .bottom))
-                    .onAppear(perform: {
-                        selectedWebView?.backupRange()
-                        markupDelegate?.markupToolbarAppeared(type: .table)
-                    })
-                    .onDisappear(perform: {
-                        markupDelegate?.markupToolbarDisappeared(type: .table)
-                        selectedWebView?.becomeFirstResponder()
-                    })
-                    .id(UUID())
-            }
-            */
+            ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
+                    .isHidden(!showImageToolbar, remove: !showImageToolbar)
+                .onAppear(perform: {
+                    selectedWebView?.backupRange()
+                    markupDelegate?.markupToolbarAppeared(type: .image)
+                })
+                .onDisappear(perform: {
+                    markupDelegate?.markupToolbarDisappeared()
+                    selectedWebView?.becomeFirstResponder()
+                })
+            TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
+                .isHidden(!showTableToolbar, remove: !showTableToolbar)
+                .onAppear(perform: {
+                    selectedWebView?.backupRange()
+                    markupDelegate?.markupToolbarAppeared(type: .table)
+                })
+                .onDisappear(perform: {
+                    markupDelegate?.markupToolbarDisappeared()
+                    selectedWebView?.becomeFirstResponder()
+                })
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))
@@ -123,17 +101,6 @@ public struct MarkupToolbar: View {
         self.markupDelegate = markupDelegate
         self.leftToolbar = leftToolbar
         self.rightToolbar = rightToolbar
-    }
-    
-    private func showToolbarBinding(type: ToolbarType) -> Binding<Bool> {
-        return Binding(get: {showToolbarByType[type] ?? false}, set: { showToolbarByType[type] = $0 })
-    }
-    
-    private func toolbarTypeShowing() -> ToolbarType {
-        // Return the first element of showToolbarByType that has true as its value; else nil
-        // There should be only one and only one or there is an error.
-        // This method is only used for onAppear and onDisappear, so something either appeared or disappeared
-        return showToolbarByType.first(where: {(key, value) in value })!.key
     }
     
 }

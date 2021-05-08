@@ -7,12 +7,11 @@
 //
 
 import SwiftUI
-import UIKit
 import UniformTypeIdentifiers
 
 extension View {
     
-    /// Present an UIDocumentVIewController, toggling isPresented when done
+    /// Present a UIDocumentVIewController, toggling isPresented when done
     public func pick(isPresented: Binding<Bool>, documentTypes: [UTType], onPicked: ((URL)->Void)?, onCancel: (()->Void)?) -> some View {
         DocumentPicker(isPresented: isPresented, content: self, documentTypes: documentTypes, onPicked: onPicked, onCancel: onCancel)
     }

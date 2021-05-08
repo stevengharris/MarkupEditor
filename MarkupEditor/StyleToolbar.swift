@@ -17,24 +17,25 @@ public struct StyleToolbar: View {
             // AFAICT, Apple is doing something aggressive to prevent that from happening.
             // Maybe it messes something up on MacOS. OTOH, I see it on OneNote as a kind of
             // tooltip-looking thing. I suppose the only way to work around it for now would
-            // be to build it myself and not use Menu. OTOH, even labels with icons don't work
-            // on Catalyst, so it just seems too much like fighting a battle.
-            // Currently this menu right-justifies in a fixed width.
-            // The build needs to use "Scale Interface to Match iPad" for the menu to appear
-            // properly. If "Optimize Interface for Mac" is used, then the Menu has a drop-down
-            // arrow next to it and ends up with a weird outline-within-outline look because of
-            // the ToolbarMenuStyle.
+            // be to build it myself and not use Menu. I might do this using a drop-down toolbar
+            // like I did for insert operations.
+            // Note that the "Optimize Interface for Mac" deployment choice looks the same
+            // as "Scale Interface from iPad" due to the BorderlessButtonMenuStyle.
+            // Like other uses of Button, I added contentShape here try to prevent responsiveness
+            // problems per https://stackoverflow.com/a/67377002/8968411
             Menu {
                 ForEach(StyleContext.StyleCases.filter( { $0 != selectionState.style }) , id: \.self) { styleContext in
                     Button(action: { selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
                         Text(styleContext.name)
                             .font(.system(size: styleContext.fontSize))
                     }
+                    .contentShape(Rectangle())
                 }
             } label: {
                 Text(selectionState.style.name)
                     .frame(width: 88, height: 20, alignment: .center)
             }
+            .menuStyle(BorderlessButtonMenuStyle())
             .frame(width: 88, height: 30)
             .overlay(
                 RoundedRectangle(
@@ -46,25 +47,29 @@ public struct StyleToolbar: View {
             .disabled(selectionState.style == .Undefined)
             Divider()
             ToolbarImageButton(
-                image: Image(systemName: "list.bullet"),
                 action: { selectedWebView?.toggleListItem(type: .UL) },
-                active: selectionState.isInListItem && selectionState.list == .UL
-            )
+                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 })
+            ) {
+                Image.forToolbar(systemName: "list.bullet")
+            }
             ToolbarImageButton(
-                image: Image(systemName: "list.number"),
                 action: { selectedWebView?.toggleListItem(type: .OL) },
-                active: selectionState.isInListItem && selectionState.list == .OL
-            )
+                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 })
+            ) {
+                Image.forToolbar(systemName: "list.number")
+            }
             ToolbarImageButton(
-                image: Image(systemName: "increase.quotelevel"),
                 action: { selectedWebView?.increaseQuoteLevel() },
-                active: selectionState.quote
-            )
+                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 })
+            ) {
+                Image.forToolbar(systemName: "increase.quotelevel")
+            }
             ToolbarImageButton(
-                image: Image(systemName: "decrease.quotelevel"),
                 action: { selectedWebView?.decreaseQuoteLevel() },
-                active: selectionState.quote
-            )
+                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 })
+            ) {
+                Image.forToolbar(systemName: "decrease.quotelevel")
+            }
             .disabled(!selectionState.quote)
         }
     }

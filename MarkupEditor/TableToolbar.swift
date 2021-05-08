@@ -11,7 +11,6 @@ public struct TableToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
-    private var markupDelegate: MarkupDelegate?
     @State private var rows: Int = 0
     @State private var cols: Int = 0
     
@@ -46,12 +45,11 @@ public struct TableToolbar: View {
         Divider()
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, showToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
         self.selectionState = selectionState
         _rows = State(initialValue: selectionState.rows)
         _cols = State(initialValue: selectionState.cols)
         _selectedWebView = selectedWebView
-        self.markupDelegate = markupDelegate
         _showToolbar = showToolbar
     }
     

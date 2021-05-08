@@ -30,8 +30,8 @@ public struct LabeledToolbar<Content: View>: View {
 struct LabeledToolbar_Previews: PreviewProvider {
     static var previews: some View {
         LabeledToolbar(label: Text("Test Label")) {
-            ToolbarImageButton(image: Image(systemName: "square.and.arrow.up.fill"), action: { print("up")})
-            ToolbarImageButton(image: Image(systemName: "square.and.arrow.down.fill"), action: { print("down")})
+            ToolbarImageButton(action: { print("up") }) { Image.forToolbar(systemName: "square.and.arrow.up.fill") }
+            ToolbarImageButton(action: { print("down") }) { Image.forToolbar(systemName: "square.and.arrow.down.fill")}
         }
     }
 }

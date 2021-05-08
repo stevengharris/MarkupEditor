@@ -13,41 +13,48 @@ public struct FormatToolbar: View {
     
     public var body: some View {
         LabeledToolbar(label: Text("Format").font(.system(size: 10, weight: .light))) {
-                ToolbarImageButton(
-                    image: Image(systemName: "bold"),
-                    action: { selectedWebView?.bold() },
-                    active: selectionState.bold
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "italic"),
-                    action: { selectedWebView?.italic() },
-                    active: selectionState.italic
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "underline"),
-                    action: { selectedWebView?.underline() },
-                    active: selectionState.underline
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "curlybraces"),
-                    action: { selectedWebView?.code() },
-                    active: selectionState.code
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "strikethrough"),
-                    action: { selectedWebView?.strike() },
-                    active: selectionState.strike
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "textformat.subscript"),
-                    action: { selectedWebView?.subscriptText() },
-                    active: selectionState.sub
-                )
-                ToolbarImageButton(
-                    image: Image(systemName: "textformat.superscript"),
-                    action: { selectedWebView?.superscript() },
-                    active: selectionState.sup
-                )
+            ToolbarImageButton(
+                action: { selectedWebView?.bold() },
+                active: $selectionState.bold
+            ) {
+                Image.forToolbar(systemName: "bold")
+            }
+            ToolbarImageButton (
+                action: { selectedWebView?.italic() },
+                active: $selectionState.italic
+            ) {
+                Image.forToolbar(systemName: "italic")
+            }
+            ToolbarImageButton(
+                action: { selectedWebView?.underline() },
+                active: $selectionState.underline
+            ) {
+                Image.forToolbar(systemName: "underline")
+            }
+            ToolbarImageButton(
+                action: { selectedWebView?.code() },
+                active: $selectionState.code
+            ) {
+                Image.forToolbar(systemName: "curlybraces")
+            }
+            ToolbarImageButton(
+                action: { selectedWebView?.strike() },
+                active: $selectionState.strike
+            ) {
+                Image.forToolbar(systemName: "strikethrough")
+            }
+            ToolbarImageButton(
+                action: { selectedWebView?.subscriptText() },
+                active: $selectionState.sub
+            ) {
+                Image.forToolbar(systemName: "textformat.subscript")
+            }
+            ToolbarImageButton(
+                action: { selectedWebView?.superscript() },
+                active: $selectionState.sup
+            ) {
+                Image.forToolbar(systemName: "textformat.superscript")
+            }
         }
     }
     
