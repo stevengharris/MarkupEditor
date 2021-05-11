@@ -179,6 +179,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    //TODO:- Remove this call as it really should be internal to markup.js
     public func backupRange(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.backupRange()") { result, error in
             handler?()
@@ -201,7 +202,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func insertImage(src: String?, alt: String?, handler: (()->Void)? = nil) {
         if src == nil {
-            modifyImage(src: nil, alt: nil, scale: nil)
+            modifyImage(src: nil, alt: nil, scale: nil, handler: handler)
         } else {
             var args = "'\(src!.escaped)'"
             if alt != nil {
@@ -237,11 +238,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    
-    
     //MARK:- Image editing
     
-    public func modifyImage(src: String?, alt: String?, scale: Int?) {
+    public func modifyImage(src: String?, alt: String?, scale: Int?, handler: (()->Void)?) {
         // If src is nil, then no arguments are passed and the image will be removed
         // Otherwise, the src, alt, and scale will be applied to the selected image
         // (or removed if alt or scale are nil)
@@ -259,7 +258,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 args += ", null"
             }
         }
-        evaluateJavaScript("MU.modifyImage(\(args))")
+        evaluateJavaScript("MU.modifyImage(\(args))") { result, error in
+            handler?()
+        }
     }
     
     //MARK:- Autosizing

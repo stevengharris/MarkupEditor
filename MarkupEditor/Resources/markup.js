@@ -256,8 +256,6 @@ document.addEventListener('mouseup', function() {
 
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
-        //_consoleLog("selection changed"); // + _selectionString());
-        MU.backupRange();
         _callback('selectionChange');
     //} else {
     //    _consoleLog("selection muted");
@@ -275,6 +273,7 @@ var _selectionString = function() {
 }
 
 MU.editor.addEventListener('input', function() {
+    //_consoleLog("input>backupRange");
     MU.backupRange();
     _callback('input');
 });
@@ -406,6 +405,7 @@ MU.emptyDocument = function() {
     sel.removeAllRanges();
     unmuteChanges();
     sel.addRange(range);
+    //_consoleLog("emptyDocument>backupRange");
     MU.backupRange();
 }
 
@@ -833,26 +833,42 @@ MU.insertImage = function(url, alt) {
     el.onload = MU.updateHeight;
     var range = sel.getRangeAt(0).cloneRange();
     range.insertNode(el);
-    _selectNextTextNode(el);
-};
-
-/**
- * Select and return the first text child that is a sibling of element,
- * or element itself if it is a TEXT_NODE
- */
-var _selectNextTextNode = function(element) {
-    var nextTextNode = _getFirstOfType(element, Node.TEXT_NODE);
-    if (nextTextNode) {
+    var nextTextElement = _selectNextTextElement(el);
+    if (!nextTextElement) {
+        var br = document.createElement('br');
+        el.appendChild(br);
         var newRange = document.createRange();
-        newRange.setStart(nextTextNode, 0);
-        newRange.setEnd(nextTextNode,0);
+        newRange.setStart(el, 1);
+        newRange.setEnd(el, 1);
         sel.removeAllRanges();
         sel.addRange(newRange);
         MU.backupRange();
         _callback('input');
-        return nextTextNode;
+    }
+};
+
+/**
+ * Given element, select the nextSibling or child of a sibling that is a TEXT_NODE
+ */
+var _selectNextTextElement = function(element) {
+    var sel = document.getSelection();
+    var nextSib = element.nextSibling;
+    while (nextSib) {
+        var firstTextChild = _getFirstOfType(nextSib, Node.TEXT_NODE);
+        if (firstTextChild) {
+            var newRange = document.createRange();
+            newRange.setStart(firstTextChild, 0);
+            newRange.setEnd(firstTextChild,0);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            MU.backupRange();
+            _callback('input');
+            nextSib = null;
+        } else {
+            nextSib = nextSib.nextSibling;
+        }
     };
-    return null;
+    return firstTextChild;
 }
 
 /**

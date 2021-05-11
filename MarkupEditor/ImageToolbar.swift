@@ -106,7 +106,7 @@ public struct ImageToolbar: View {
                 scale -= scaleStep
                 return
             }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale)
+            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
         }
     }
     
@@ -121,7 +121,7 @@ public struct ImageToolbar: View {
                 scale += scaleStep
                 return
             }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale)
+            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
         }
     }
     
@@ -136,14 +136,20 @@ public struct ImageToolbar: View {
             return
         }
         if previewedSrc.isEmpty && !src.isEmpty {
-            selectedWebView?.insertImage(src: argSrc, alt: argAlt)
+            selectedWebView?.insertImage(src: argSrc, alt: argAlt) {
+                previewedSrc = src
+                previewedAlt = alt
+                previewedScale = scale
+                handler?()
+            }
         } else {
-            selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale)
+            selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale) {
+                previewedSrc = src
+                previewedAlt = alt
+                previewedScale = scale
+                handler?()
+            }
         }
-        previewedSrc = src
-        previewedAlt = alt
-        previewedScale = scale
-        handler?()
     }
     
     private func preview() {

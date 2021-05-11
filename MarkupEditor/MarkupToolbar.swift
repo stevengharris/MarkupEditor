@@ -63,7 +63,6 @@ public struct MarkupToolbar: View {
             LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
                 .isHidden(!showLinkToolbar, remove: !showLinkToolbar)
                 .onAppear(perform: {
-                    selectedWebView?.backupRange()
                     markupDelegate?.markupToolbarAppeared(type: .link)
                 })
                 .onDisappear(perform: {
@@ -73,7 +72,6 @@ public struct MarkupToolbar: View {
             ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
                     .isHidden(!showImageToolbar, remove: !showImageToolbar)
                 .onAppear(perform: {
-                    selectedWebView?.backupRange()
                     markupDelegate?.markupToolbarAppeared(type: .image)
                 })
                 .onDisappear(perform: {
@@ -83,7 +81,6 @@ public struct MarkupToolbar: View {
             TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
                 .isHidden(!showTableToolbar, remove: !showTableToolbar)
                 .onAppear(perform: {
-                    selectedWebView?.backupRange()
                     markupDelegate?.markupToolbarAppeared(type: .table)
                 })
                 .onDisappear(perform: {
