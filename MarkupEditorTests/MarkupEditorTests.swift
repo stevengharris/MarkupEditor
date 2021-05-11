@@ -61,22 +61,27 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     var loadedExpectation: XCTestExpectation = XCTestExpectation(description: "Loaded")
     
     override func setUpWithError() throws {
+        continueAfterFailure = false
         webView = MarkupWKWebView()
-        coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self)
-        coordinator.webView = webView
+        coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")
         wait(for: [loadedExpectation], timeout: 1)
     }
     
-    func markupDidLoad(_ view: MarkupWKWebView) {
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         // Since we marked self as the markupDelegate, we receive the markupDidLoad message
         loadedExpectation.fulfill()
+        handler?()
     }
     
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+    
+    func testLoad() throws {
+        // Do nothing other than run setupWithError
     }
 
     func testStyles() throws {
@@ -154,7 +159,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -195,7 +200,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -236,7 +241,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -295,7 +300,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -388,7 +393,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -518,7 +523,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -648,7 +653,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -722,7 +727,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2.0)
+            wait(for: [expectation], timeout: 2)
         }
     }
 

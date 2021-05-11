@@ -535,8 +535,8 @@ var _toggleFormat = function(type) {
 //};
 
 MU.getPrettyHTML = function() {
-    return _prettify(MU.editor.innerHTML);
-    //return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+    //return _prettify(MU.editor.innerHTML);
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
 
 var _prettify = function(html) {
@@ -1697,7 +1697,6 @@ var _setTag = function(type, sel) {
         // it doesn't have any visibility on the screen.
         var emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
-        //range.selectNode(emptyTextNode);
     } else {
         // Why not just range.surroundContents(el)?
         // Because for selections that span elements, it doesn't work.
@@ -1709,7 +1708,6 @@ var _setTag = function(type, sel) {
         el.appendChild(range.extractContents());
     }
     range.insertNode(el);
-    //_selectTag(el);
     var newRange = document.createRange();
     var textNode = _getFirstOfType(el, Node.TEXT_NODE);
     //_consoleLog("textNode.textContent: " + textNode.textContent);
@@ -1728,7 +1726,6 @@ var _setTag = function(type, sel) {
     } else {
         _consoleLog("** Error");
     };
-    /*
     // Check if the insertion left an empty element preceding or following
     // the inserted el. Unfortunately, when starting/ending the selection at
     // the beginning/end of an element in the multinode selection - for example:
@@ -1752,9 +1749,6 @@ var _setTag = function(type, sel) {
             nextSib.parentNode.removeChild(nextSib);
         }
     }
-    sel.removeAllRanges();
-    sel.addRange(range);
-    */
 };
 
 var _selectTag = function(nodeToSelect) {

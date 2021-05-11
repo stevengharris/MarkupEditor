@@ -10,8 +10,8 @@ import SwiftUI
 import MarkupEditor
 
 class ViewController: UIViewController {
-    @IBOutlet weak var toolbarHolder: UIView!
-    @IBOutlet weak var toolbarHeightConstraint: NSLayoutConstraint!
+    @IBOutlet weak var stack: UIStackView!
+    var toolbarHolder: UIView!
     var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
     private var coordinator: MarkupCoordinator!
@@ -37,8 +37,7 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        toolbarHeightConstraint.constant = toolbarHeight
-        initializeStackView()
+        toolbarHolder = UIView()
         toolbar = MarkupToolbar(
             selectionState: selectionState,
             selectedWebView: selectedWebViewBinding,
@@ -46,21 +45,16 @@ class ViewController: UIViewController {
             leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
             )
         add(swiftUIView: toolbar, to: toolbarHolder)
+        initializeStackView()
     }
     
     func initializeStackView() {
-        // Create a vertical stack to hold the webView and rawTextView
-        let stack = UIStackView()
+        // Populate the overall vertical stack with the toolbarHolder, webView, and rawTextView
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.axis = .vertical
-        stack.alignment = .fill
-        stack.distribution = .fillEqually
-        view.addSubview(stack)
+        stack.addArrangedSubview(toolbarHolder)
+        toolbarHolder.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: toolbarHolder.bottomAnchor, constant: 4),
-            stack.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            stack.topAnchor.constraint(equalTo: toolbarHolder.topAnchor, constant: 4)
         ])
         webView = MarkupWKWebView()
         stack.addArrangedSubview(webView)
@@ -152,18 +146,16 @@ extension ViewController: MarkupDelegate {
     }
     
     func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {
-        toolbarHolder.layoutIfNeeded()
+        //toolbarHolder.layoutIfNeeded()
         //UIView.animate(withDuration: 0.2) {
-            self.toolbarHeightConstraint.constant = self.toolbarHeight * 2 + 2
-            //self.toolbarHolder.layoutIfNeeded()
+            self.stack.layoutIfNeeded()
         //}
     }
     
     func markupToolbarDisappeared() {
-        //toolbarHolder.layoutIfNeeded()
+        stack.layoutIfNeeded()
         //UIView.animate(withDuration: 0.2) {
-            self.toolbarHeightConstraint.constant = self.toolbarHeight
-            self.toolbarHolder.layoutIfNeeded()
+            //self.toolbarHolder.layoutIfNeeded()
         //}
     }
     

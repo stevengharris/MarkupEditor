@@ -16,17 +16,17 @@ public struct InsertToolbar: View {
     public var body: some View {
         LabeledToolbar(label: Text("Insert")) {
             ToolbarImageButton(
-                action: { showLinkToolbar.toggle() },
+                action: { withAnimation { showLinkToolbar.toggle() } },
                 active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "link") }
             .disabled(!enabledToolbar(type: .link))
             ToolbarImageButton(
-                action: { showImageToolbar.toggle() },
+                action: { withAnimation { showImageToolbar.toggle() } },
                 active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "photo") }
             .disabled(!enabledToolbar(type: .image))
             ToolbarImageButton(
-                action: { showTableToolbar.toggle() },
+                action: { withAnimation { showTableToolbar.toggle() } },
                 active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "tablecells") }
             .disabled(!enabledToolbar(type: .table))
