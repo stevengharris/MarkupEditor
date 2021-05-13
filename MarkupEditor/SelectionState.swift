@@ -25,6 +25,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var table: Bool = false
     @Published public var thead: Bool = false
     @Published public var tbody: Bool = false
+    @Published public var header: Bool = false
     @Published public var colspan: Bool = false
     @Published public var rows: Int = 0
     @Published public var cols: Int = 0
@@ -99,20 +100,21 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     public func reset(from selectionState: SelectionState?) {
         selection = selectionState?.selection
-        href = selectionState?.href
-        link = selectionState?.link
-        src = selectionState?.src
-        alt = selectionState?.alt
-        scale = selectionState?.scale ?? 100
-        frame = selectionState?.frame
-        table = selectionState?.table ?? false
-        thead = selectionState?.thead ?? false
-        tbody = selectionState?.tbody ?? false
-        colspan = selectionState?.colspan ?? false
-        rows = selectionState?.rows ?? 0
-        cols = selectionState?.cols ?? 0
-        row = selectionState?.row ?? 0
-        col = selectionState?.col ?? 0
+        href = selectionState?.href                     // href for <a> if selected
+        link = selectionState?.link                     // text linked to href in <a> if selected
+        src = selectionState?.src                       // src for <img> if selected
+        alt = selectionState?.alt                       // alt for <img> if selected
+        scale = selectionState?.scale ?? 100            // scale for <img> if selected
+        frame = selectionState?.frame                   // frame of <img> if selected
+        table = selectionState?.table ?? false          // Is selection in a table
+        thead = selectionState?.thead ?? false          // Is selection in table header
+        tbody = selectionState?.tbody ?? false          // Is selection in table body
+        header = selectionState?.header ?? false        // Does table have a header
+        colspan = selectionState?.colspan ?? false      // If so, does header have colspan
+        rows = selectionState?.rows ?? 0                // Number of rows in table if selected
+        cols = selectionState?.cols ?? 0                // Number of cols in table if selected
+        row = selectionState?.row ?? 0                  // 1-based row number selected in body (0 if header)
+        col = selectionState?.col ?? 0                  // 1-based col number selected in body or header
         style = selectionState?.style ?? StyleContext.Undefined
         list = selectionState?.list ?? ListContext.Undefined
         li = selectionState?.li ?? false
@@ -159,15 +161,17 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     func tableString() -> String {
         guard table else { return "none" }
         let tableSize = "\(rows)x\(cols)"
-        let headerType = colspan ? "spanning header" : "non-spanning header"
+        let headerType = header ? (colspan ? "spanning header" : "non-spanning header") : "no header"
         if tbody {
             return "in body row \(row), col \(col) of \(tableSize) table with \(headerType)"
-        } else {
+        } else if thead {
             if colspan {
                 return "in \(headerType) of \(tableSize) table"
             } else {
                 return "in col \(col) of \(headerType) of \(tableSize) table"
             }
+        } else {
+            return "Error: in \(tableSize) table, but in neither tbody nor thead"
         }
     }
     

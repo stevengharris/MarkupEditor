@@ -1304,6 +1304,7 @@ var _getSelectionState = function() {
     state['table'] = tableAttributes['table'];
     state['thead'] = tableAttributes['thead'];
     state['tbody'] = tableAttributes['tbody'];
+    state['header'] = tableAttributes['header'];
     state['colspan'] = tableAttributes['colspan'];
     state['rows'] = tableAttributes['rows'];
     state['cols'] = tableAttributes['cols'];
@@ -1463,6 +1464,12 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
  * about the table and what is selected in it.
  * Note that the table likely has empty #text elements in it depending on how the
  * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
+ * The values in elements are JavaScript objects of various kinds; however, the
+ * values in attributes have to be consumable on the Swift side. So, for example,
+ * the elements['thead'] is the HTML Table Heade Element, whereas attributes['thead']
+ * is either true or false indicating whether the selection is in the header.
+ * Similarly, elements['header'] and ['colspan'] are true or false so
+ * can be stored in attributes directly.
  */
 var _getTableAttributesAtSelection = function() {
     var attributes = {};
@@ -1471,7 +1478,8 @@ var _getTableAttributesAtSelection = function() {
     if (!attributes['table']) { return attributes };
     attributes['thead'] = elements['thead'] != null;
     attributes['tbody'] = elements['tbody'] != null;
-    attributes['colspan'] = elements['colspan'] != null;
+    attributes['header'] = elements['header'];
+    attributes['colspan'] = elements['colspan'];
     attributes['cols'] = elements['cols'];
     attributes['rows'] = elements['rows'];
     attributes['row'] = elements['row'];
@@ -1537,9 +1545,10 @@ var _getTableElementsAtSelection = function() {
             return {};
         }
         // Track the size of the table and whether the header spans columns
-        const [rows, cols, colspan] = _getRowsCols(table);
+        const [rows, cols, header, colspan] = _getRowsCols(table);
         elements['rows'] = rows;
         elements['cols'] = cols;
+        elements['header'] = header
         elements['colspan'] = colspan;
     };
     return elements;
@@ -1553,10 +1562,13 @@ var _getTableElementsAtSelection = function() {
  * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
  * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
  * is zero. The colspan value is returned so we know if the header spans columns.
+ * Externally, we only need to know if a header exists. Internally in JavaScript, we can
+ * always _getSection for the table to find out.
  */
 var _getRowsCols = function(table) {
     var rowCount = 0;
     var colCount = 0;
+    var headerExists = false;
     var colspan = null;
     var children = table.children;
     for (let i=0; i<children.length; i++) {
@@ -1569,6 +1581,7 @@ var _getRowsCols = function(table) {
                 rowCount = rows.length;
                 colCount = cols.length;
             } else if (section.nodeName === 'THEAD') {
+                headerExists = true;
                 if (cols.length > 0) {
                     colspan = _numberAttribute(cols[0], 'colspan');
                 };
@@ -1581,7 +1594,7 @@ var _getRowsCols = function(table) {
         };
     };
     let colSpanExists = colspan != null;
-    return [ rowCount, colCount, colSpanExists ];
+    return [ rowCount, colCount, headerExists, colSpanExists ];
 }
 
 /**
@@ -1598,11 +1611,11 @@ var _getSection = function(table, name) {
     return null;
 };
 
-
 /**
- * Add a row below the current selection, whether it's in the header or body
+ * Add a row before or after the current selection, whether it's in the header or body.
+ * For rows, AFTER = below; otherwise above.
  */
-MU.addRowAfter = function() {
+MU.addRow = function(direction) {
     MU.backupRange();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
@@ -1618,34 +1631,189 @@ MU.addRowAfter = function() {
     for (let i=0; i<cols; i++) {
         newRow.appendChild(document.createElement('td'));
     };
-    // For reference, form of insertNode is...
+    // For reference, form of insertBefore is...
     //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
     if (thead) {
-        // We are in the header
-        // A row below the header is the first row of the body
-        if (rows > 0) {
-            // There is at least one row in the body, so put the new one first
-            var body = _getSection(table, 'TBODY');
-            if (body) {
-                var firstRow = body.children[0];
-                body.insertBefore(newRow, firstRow);
+        if (direction === 'AFTER') {
+            // We are in the header
+            // A row after the header is the first row of the body
+            if (rows > 0) {
+                // There is at least one row in the body, so put the new one first
+                var body = _getSection(table, 'TBODY');
+                if (body) {
+                    var firstRow = body.children[0];
+                    body.insertBefore(newRow, firstRow);
+                }
+            } else {
+                // The body doesn't exist because rows === 0
+                // Create it and put the new row in it
+                var body = document.createElement('tbody');
+                body.appendChild(tr);
+                table.appendChild(body)
             }
-        } else {
-            // The body doesn't exist because rows === 0
-            // Create it and put the new row in it
-            var body = document.createElement('tbody');
-            body.appendChild(tr);
-            table.appendChild(body)
         }
-    } else if (tbody && tr.nextSibling) {
-        // We are in the body, so tr is the selected row
-        tbody.insertBefore(newRow, tr.nextSibling);
+    } else if (tbody) {
+        if (direction === 'AFTER') {
+            // We are in the body, so tr is the selected row
+            // If tr.nextSibling is null, newRow will be inserted
+            // after tr.
+            tbody.insertBefore(newRow, tr.nextSibling);
+        } else {
+            tbody.insertBefore(newRow, tr)
+        }
     } else {
-        _consoleLog("Could not add row after");
+        _consoleLog("Could not add row");
     }
     MU.restoreRange();
     _callback('input');
 };
+
+/**
+ * Add a col before or after the current selection, whether it's in the header or body.
+ */
+MU.addCol = function(direction) {
+    MU.backupRange();
+    var tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    // There will always be a table and tr and either tbody or thead
+    var table = tableElements['table'];
+    var col = tableElements['col'];
+    var tbody = tableElements['tbody'];
+    var thead = tableElements['thead'];
+    var colspan = tableElements['colspan'];
+    if (tbody || (thead && !colspan)) {
+        // We have selected the body of the table or the header.
+        // In the case of selecting the header, it is a non-colspan header,
+        // so col is meaningful (otherwise it is always 1 in a colspan header).
+        // Loop over all rows in the body, adding a new td in each one
+        var body = _getSection(table, 'TBODY');
+        if (body) {
+            var tr = body.firstChild;
+            while (tr) {
+                // Find the td in this row that is the same col as the selection
+                var td = tr.firstChild;
+                for (let i=0; i<col; i++) {
+                    td = td.nextSibling;
+                }
+                // Then insert a new td before or after
+                var newTd = document.createElement('td');
+                // For reference, form of insertBefore is...
+                //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
+                if (direction === 'AFTER') {
+                    tr.insertBefore(newTd, td.nextSibling);
+                } else {
+                    tr.insertBefore(newTd, td);
+                }
+                tr = tr.nextSibling;
+            }
+        }
+        var header = _getSection(table, 'THEAD');
+        if (header) {
+            // If the header exists for this table, we need to expand it, too.
+            var tr = header.firstChild;
+            var th = tr.firstChild;
+            if (colspan) {
+                th.setAttribute('colspan', cols+1)
+            } else {
+                for (let i=0; i<col; i++) {
+                    th = th.nextSibling;
+                }
+                // Then insert a new td before or after
+                var newTh = document.createElement('th');
+                // For reference, form of insertBefore is...
+                //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
+                if (direction === 'AFTER') {
+                    th.insertBefore(newTh, th.nextSibling);
+                } else {
+                    th.insertBefore(newTh, th);
+                }
+            }
+        }
+    }
+    MU.restoreRange();
+    _callback('input');
+}
+
+MU.addHeader = function(colspan) {
+    MU.backupRange();
+    var tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    // There will always be a table and tbody has to be selected
+    var table = tableElements['table'];
+    var cols = tableElements['cols'];
+    var tbody = tableElements['tbody'];
+    if (tbody) {
+        var header = document.createElement('thead');
+        var tr = document.createElement('tr');
+        if (colspan) {
+            header.setAttribute('colspan', cols);
+            var th = document.createElement('th');
+            tr.appendChild(th);
+            header.appendChild(tr);
+        } else {
+            for (let i=0; i<cols; i++) {
+                var th = document.createElement('th');
+                tr.appendChild(th);
+            }
+            header.appendChild(tr);
+        };
+        table.insertBefore(header, tbody);
+    }
+    MU.restoreRange();
+    _callback('input');
+}
+
+MU.deleteRow = function() {
+    MU.backupRange();
+    var tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    // There will always be a table and tr and either tbody or thead
+    // tr might be the row in the header or a row in the body
+    var table = tableElements['table'];
+    var thead = tableElements['thead'];
+    var tbody = tableElements['tbody'];
+    var tr = tableElements['tr'];
+    var newCell;
+    if (thead) {
+        // We are going to delete the header,
+        // So we will identify the first body cell
+        // for selection after deleting
+        var body = _getSection(table, 'TBODY');
+        if (body) {
+            var newTr = body.firstChild;
+            newCell = newTr.firstChild;
+        }
+    } else if (tbody) {
+        // We are going to delete a body row,
+        // So if we will choose the nextSib if there is one,
+        // or prevSib if not, or even the header if we have to
+        // for selection after deleting
+        var newTr;
+        if (tr.nextSibling) {
+            newTr = tr.nextSibling;
+        } else if (tr.previousSibling) {
+            newTr = tr.previousSibling;
+        } else if (_getSection(table, 'THEAD')) {
+            var header = _getSection(table, 'THEAD');
+            newTr = header.firstChild;
+        }
+    }
+    if (newTr) {
+        // There is a row left, so we will do the remove and select the first element of the newTr
+        tr.parentNode.removeChild(tr)
+        var range = document.createRange();
+        var cell = newTr.firstChild;
+        range.setStart(cell, 0);
+        range.setEnd(cell, 0);
+        sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else {
+        // We just removed everything in the table, so let's just get rid of it
+        table.parentNode.removeChild(table);
+    }
+    _callback('input');
+}
 
 //MARK:- Common private functions
 

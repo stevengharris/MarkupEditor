@@ -21,8 +21,23 @@ public struct TableToolbar: View {
                 }
             }
             Divider()
-            ToolbarTextButton(title: "+Header", action: addHeader)
-            ToolbarTextButton(title: "+Row", action: addRow)
+            LabeledToolbar(label: Text("Add")) {
+                ToolbarTextButton(title: "Header", action: { selectedWebView?.addHeader() })
+                    .disabled(selectionState.header)
+                ToolbarTextButton(title: "RowBelow", action: { selectedWebView?.addRow(.after) })
+                ToolbarTextButton(title: "RowAbove", action: { selectedWebView?.addRow(.before) })
+                    .disabled(selectionState.thead)
+                ToolbarTextButton(title: "ColAfter", action: { selectedWebView?.addCol(.after) })
+                    .disabled(selectionState.thead && selectionState.colspan)
+                ToolbarTextButton(title: "ColBefore", action: { selectedWebView?.addCol(.before) })
+                    .disabled(selectionState.thead && selectionState.colspan)
+            }
+            Divider()
+            LabeledToolbar(label: Text("Delete")) {
+                ToolbarTextButton(title: "Row", action: { selectedWebView?.deleteRow() })
+                ToolbarTextButton(title: "Column", action: { print("deleteCol") })
+            }
+            
             Divider()
             Spacer()
         }
@@ -36,16 +51,6 @@ public struct TableToolbar: View {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         _showToolbar = showToolbar
-    }
-    
-    private func addHeader() {
-        
-    }
-    
-    private func addRow() {
-        selectedWebView?.addRow(.after) {
-            print("woohoo")
-        }
     }
     
 }

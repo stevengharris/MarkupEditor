@@ -220,7 +220,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK:- Table editing
     
-    public enum TableDir {
+    public enum TableDirection {
         case before
         case after
     }
@@ -229,13 +229,30 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
     }
     
-    public func addRow(_ tableDir: TableDir, handler: (()->Void)?) {
-        switch tableDir {
+    public func addRow(_ direction: TableDirection, handler: (()->Void)? = nil) {
+        switch direction {
         case .before:
-            evaluateJavaScript("MU.addRowBefore()") { result, error in handler?() }
+            evaluateJavaScript("MU.addRow('BEFORE')") { result, error in handler?() }
         case .after:
-            evaluateJavaScript("MU.addRowAfter()") { result, error in handler?() }
+            evaluateJavaScript("MU.addRow('AFTER')") { result, error in handler?() }
         }
+    }
+    
+    public func deleteRow(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.deleteRow()") { result, error in handler?() }
+    }
+    
+    public func addCol(_ direction: TableDirection, handler: (()->Void)? = nil) {
+        switch direction {
+        case .before:
+            evaluateJavaScript("MU.addCol('BEFORE')") { result, error in handler?() }
+        case .after:
+            evaluateJavaScript("MU.addCol('AFTER')") { result, error in handler?() }
+        }
+    }
+    
+    public func addHeader(colspan: Bool = false, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.addHeader(\(colspan))") { result, error in handler?() }
     }
     
     //MARK:- Image editing
@@ -370,6 +387,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.table = state["table"] as? Bool ?? false
         selectionState.thead = state["thead"] as? Bool ?? false
         selectionState.tbody = state["tbody"] as? Bool ?? false
+        selectionState.header = state["header"] as? Bool ?? false
         selectionState.colspan = state["colspan"] as? Bool ?? false
         selectionState.rows = state["rows"] as? Int ?? 0
         selectionState.cols = state["cols"] as? Int ?? 0
