@@ -169,15 +169,11 @@ var _firstSelectionTagMatching = function(matchNames, excludeNames) {
 var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
     var sel = document.getSelection();
     if (sel) {
-        if (sel.type === 'None') {
-            return null;
-        } else {    // sel.type will be Caret or Range
-            var focusNode = sel.focusNode;
-            if (focusNode) {
-                var selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
-                if (selElement) {
-                    return selElement;
-                }
+        var focusNode = sel.focusNode
+        if (focusNode) {
+            var selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
+            if (selElement) {
+                return selElement;
             }
         }
     }
@@ -189,17 +185,13 @@ var _selectionTagsMatching = function(tagNames) {
     var sel = document.getSelection();
     var tags = [];
     if (sel) {
-        if (sel.type === 'None') {
-            return tags;
-        } else {    // sel.type will be Caret or Range
-            var focusNode = sel.focusNode;
-            while (focusNode) {
-                var selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
-                if (selElement) {
-                    tags.push(selElement.tagName);
-                }
-                focusNode = focusNode.parentNode;
+        var focusNode = sel.focusNode;
+        while (focusNode) {
+            var selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
+            if (selElement) {
+                tags.push(selElement.tagName);
             }
+            focusNode = focusNode.parentNode;
         }
     }
     return tags;
@@ -1931,9 +1923,31 @@ var _firstTextNodeChild = function(element) {
 
 /**
  * Recursively search parentElements to find the first one included in matchNames
- * without ever encountering one in excludeNames
+ * without ever encountering one in excludeNames.
+ * If node is a TEXT_NODE, then start with its parent; else, just start with node
+ * to find a match.
  */
 var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
+    // ExcludeNames may be null, in which case will just match; else return null
+    // if any element in excludeNames is encountered
+    if (!node) { return null };
+    var element;
+    if (node.nodeType === Node.TEXT_NODE) {
+        element = node.parentElement;
+    } else {
+        element = node;
+    };
+    var tagName = element.tagName;
+    if (excludeNames && excludeNames.includes(tagName)) {
+        return null;
+    } else if (matchNames.includes(tagName)) {
+        return element;
+    } else {
+        return _findFirstParentElementInTagNames(element.parentElement, matchNames, excludeNames);
+    };
+};
+
+var _oldFindFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
     // ExcludeNames may be null, in which case will just match; else return null
     // if any element in excludeNames is encountered
     var parentElement = node.parentElement;
@@ -1950,6 +1964,7 @@ var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames)
         };
     };
 };
+
 
 //MARK:- Unused?
 

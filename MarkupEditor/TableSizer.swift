@@ -13,11 +13,11 @@ struct TableSizer: View {
     let cellSize: CGFloat = 16
     @Binding var rows: Int
     @Binding var cols: Int
-    @Binding var showingPopover: Bool
-    @Binding var tappedInPopover: Bool
+    @Binding var showing: Bool
+    @Binding var tapped: Bool
     var body: some View {
         VStack(spacing: 0) {
-            if tappedInPopover {
+            if tapped {
                 Text("\(rows)x\(cols) table").foregroundColor(Color.black)
             } else {
                 Text("Size the table").foregroundColor(Color.black)
@@ -31,11 +31,11 @@ struct TableSizer: View {
                             .background(Color(UIColor.systemBackground))
                             .foregroundColor(row < rows && col < cols ? Color.accentColor.opacity(0.2) : Color(UIColor.systemBackground))
                             .onTapGesture(count: 1, perform: {
-                                tappedInPopover = true
-                                showingPopover.toggle()
+                                tapped = true
+                                showing.toggle()
                             })
                             .onHover(perform: { hovering in
-                                if hovering && tappedInPopover {
+                                if hovering && tapped {
                                     rows = row + 1
                                     cols = col + 1
                                 }
@@ -47,15 +47,15 @@ struct TableSizer: View {
         .onHover(perform: { hovering in
             // We track if we're outside the TableSizer so we know if it was dismissed rather than tapped
             // This is because we never get a tap gesture if we tap outside of the popover
-            tappedInPopover = hovering
+            tapped = hovering
         })
         .padding(8)
     }
     
-    init(rows: Binding<Int>, cols: Binding<Int>, showingPopover: Binding<Bool>, tappedInPopover: Binding<Bool>) {
+    init(rows: Binding<Int>, cols: Binding<Int>, showing: Binding<Bool>, tapped: Binding<Bool>) {
         _rows = rows
         _cols = cols
-        _showingPopover = showingPopover
-        _tappedInPopover = tappedInPopover
+        _showing = showing
+        _tapped = tapped
     }
 }

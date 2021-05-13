@@ -13,6 +13,10 @@ public struct InsertToolbar: View {
     @Binding private var showLinkToolbar: Bool
     @Binding private var showImageToolbar: Bool
     @Binding private var showTableToolbar: Bool
+    @State private var showTableSizer: Bool = false
+    @State private var tappedInTableSizer: Bool = false
+    @State private var rows: Int = 0
+    @State private var cols: Int = 0
     public var body: some View {
         LabeledToolbar(label: Text("Insert")) {
             ToolbarImageButton(
@@ -26,10 +30,26 @@ public struct InsertToolbar: View {
             ) { Image.forToolbar(systemName: "photo") }
             .disabled(!enabledToolbar(type: .image))
             ToolbarImageButton(
-                action: { withAnimation { showTableToolbar.toggle() } },
+                action: {
+                    if showTableToolbar || selectionState.isInTable {
+                        showTableToolbar.toggle()
+                    } else {
+                        showTableSizer.toggle()
+                    }
+                },
                 active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "tablecells") }
             .disabled(!enabledToolbar(type: .table))
+            .popover(isPresented: $showTableSizer) {
+                TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer, tapped: $tappedInTableSizer)
+                    .onDisappear() {
+                        if tappedInTableSizer && rows > 0 && cols > 0 {
+                            selectedWebView?.insertTable(rows: rows, cols: cols) {
+                                showTableToolbar.toggle()
+                            }
+                        }
+                    }
+            }
         }
     }
     
@@ -45,6 +65,10 @@ public struct InsertToolbar: View {
         case .table:
             return showTableToolbar || (!(showLinkToolbar || showImageToolbar) && selectionState.isInsertable)
         }
+    }
+    
+    private func createTable() {
+        
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showLinkToolbar: Binding<Bool>, showImageToolbar: Binding<Bool>, showTableToolbar: Binding<Bool>) {
