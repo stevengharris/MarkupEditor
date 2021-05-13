@@ -13,26 +13,56 @@ public struct TableToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @State private var rows: Int = 0
     @State private var cols: Int = 0
+    @State private var isPresentingPopover = false
+    @State private var tappedInPopover = false
     
     public var body: some View {
         HStack(alignment: .bottom) {
-            Group {
-                LabeledToolbar(label: Text("Rows")) {
-                    Stepper(onIncrement: incrementRows, onDecrement: decrementRows) {
-                        Text("\(rows)")
-                            .frame(width: 20, alignment: .trailing)
-                    }
-                    .scaledToFit()
+            LabeledToolbar(label: Text("Create")) {
+                ToolbarImageButton(
+                    action: { isPresentingPopover.toggle() },
+                    active: $isPresentingPopover) {
+                    Image.forToolbar(systemName: "square.grid.3x2")
                 }
-                LabeledToolbar(label: Text("Columns")) {
-                    Stepper(onIncrement: incrementCols, onDecrement: decrementCols) {
-                        Text("\(cols)")
-                            .frame(width: 20, alignment: .trailing)
-                    }
-                    .scaledToFit()
+                .popover(isPresented: $isPresentingPopover) {
+                    TableSizer(rows: $rows, cols: $cols, showingPopover: $isPresentingPopover, tappedInPopover: $tappedInPopover)
+                        .onDisappear() {
+                            if tappedInPopover && rows > 0 && cols > 0 {
+                                insertOrModify()
+                            }
+                        }
                 }
             }
             .disabled(selectionState.isInTable)
+            //Button("Create", action: {
+            //    isPresentingPopover.toggle()
+            //})
+            //    .buttonStyle(BorderlessButtonStyle())
+            //    .popover(isPresented: $isPresentingPopover) {
+            //        TableSizer(rows: $rows, cols: $cols, showingPopover: $isPresentingPopover, tappedInPopover: $tappedInPopover)
+            //            .onDisappear() {
+            //                if tappedInPopover && rows > 0 && cols > 0 {
+            //                    insertOrModify()
+            //                }
+            //            }
+            //    }
+            //Group {
+            //    LabeledToolbar(label: Text("Rows")) {
+            //        Stepper(onIncrement: incrementRows, onDecrement: decrementRows) {
+            //            Text("\(rows)")
+            //                .frame(width: 20, alignment: .trailing)
+            //        }
+            //        .scaledToFit()
+            //    }
+            //    LabeledToolbar(label: Text("Columns")) {
+            //        Stepper(onIncrement: incrementCols, onDecrement: decrementCols) {
+            //            Text("\(cols)")
+            //                .frame(width: 20, alignment: .trailing)
+            //        }
+            //        .scaledToFit()
+            //    }
+            //}
+            //.disabled(selectionState.isInTable)
             Divider()
             ToolbarTextButton(title: "+Header", action: addHeader)
             ToolbarTextButton(title: "+Row", action: addRow)
@@ -116,10 +146,4 @@ public struct TableToolbar: View {
         }
     }
     
-}
-
-struct TableToolbar_Previews: PreviewProvider {
-    static var previews: some View {
-        LinkToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbar: .constant(true))
-    }
 }
