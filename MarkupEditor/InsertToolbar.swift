@@ -29,12 +29,17 @@ public struct InsertToolbar: View {
                 active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "photo") }
             .disabled(!enabledToolbar(type: .image))
+            // If we are creating a table, then we need to show the TableSizer first and then
+            // show the TableToolbar if we created one. If we are already in a table, then
+            // just toggle the TableToolbar.
             ToolbarImageButton(
                 action: {
-                    if showTableToolbar || selectionState.isInTable {
-                        showTableToolbar.toggle()
-                    } else {
-                        showTableSizer.toggle()
+                    withAnimation {
+                        if showTableToolbar || selectionState.isInTable {
+                            showTableToolbar.toggle()
+                        } else {
+                            showTableSizer.toggle()
+                        }
                     }
                 },
                 active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
@@ -42,10 +47,14 @@ public struct InsertToolbar: View {
             .disabled(!enabledToolbar(type: .table))
             .popover(isPresented: $showTableSizer) {
                 TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer, tapped: $tappedInTableSizer)
+                    .onAppear() {
+                        rows = 0
+                        cols = 0
+                    }
                     .onDisappear() {
                         if tappedInTableSizer && rows > 0 && cols > 0 {
                             selectedWebView?.insertTable(rows: rows, cols: cols) {
-                                showTableToolbar.toggle()
+                                withAnimation { showTableToolbar.toggle() }
                             }
                         }
                     }

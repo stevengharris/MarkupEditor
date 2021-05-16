@@ -17,7 +17,7 @@ struct TableSizer: View {
     @Binding var tapped: Bool
     var body: some View {
         VStack(spacing: 0) {
-            if tapped {
+            if tapped && rows > 0 && cols > 0 {
                 Text("\(rows)x\(cols) table").foregroundColor(Color.black)
             } else {
                 Text("Size the table").foregroundColor(Color.black)
@@ -53,6 +53,8 @@ struct TableSizer: View {
     }
     
     init(rows: Binding<Int>, cols: Binding<Int>, showing: Binding<Bool>, tapped: Binding<Bool>) {
+        // The TableSizer should always open with zero rows and columns since it is only used to
+        // create a new table
         _rows = rows
         _cols = cols
         _showing = showing

@@ -60,33 +60,44 @@ public struct MarkupToolbar: View {
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
             Divider()           // Horizontal at the bottom
-            LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
-                .isHidden(!showLinkToolbar, remove: !showLinkToolbar)
-                .onAppear(perform: {
-                    markupDelegate?.markupToolbarAppeared(type: .link)
-                })
-                .onDisappear(perform: {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                })
-            ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
-                    .isHidden(!showImageToolbar, remove: !showImageToolbar)
-                .onAppear(perform: {
-                    markupDelegate?.markupToolbarAppeared(type: .image)
-                })
-                .onDisappear(perform: {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                })
-            TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
-                .isHidden(!showTableToolbar, remove: !showTableToolbar)
-                .onAppear(perform: {
-                    markupDelegate?.markupToolbarAppeared(type: .table)
-                })
-                .onDisappear(perform: {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                })
+            if showLinkToolbar {
+                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
+                    .onAppear(perform: {
+                        markupDelegate?.markupToolbarAppeared(type: .link)
+                    })
+                    .onDisappear(perform: {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    })
+            }
+            if showImageToolbar {
+                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
+                    .onAppear(perform: {
+                        markupDelegate?.markupToolbarAppeared(type: .image)
+                    })
+                    .onDisappear(perform: {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    })
+                
+            }
+            if showTableToolbar {
+                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
+                    .onAppear(perform: {
+                        markupDelegate?.markupToolbarAppeared(type: .table)
+                    })
+                    .onDisappear(perform: {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    })
+                    // If we deleted a row or column and the table was deleted as a result,
+                    // or if we just select a different place in the document, close the toolbar
+                    .onChange(of: selectionState.table, perform: { value in
+                        if selectionState.rows == 0 && selectionState.cols == 0 {
+                            withAnimation { showTableToolbar = false }
+                        }
+                    })
+            }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))
