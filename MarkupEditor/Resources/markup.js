@@ -805,175 +805,6 @@ MU.decreaseQuoteLevel = function() {
     }
 }
 
-//MARK:- Insert operations
-
-/**
- * Insert the image at url with alt text, signaling updateHeight when done loading.
- * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupRange so that range can be restored prior
- * to the insert* operation.
- * We leave the selection after the inserted image.
- * The operation will cause a selectionChange event.
- */
-MU.insertImage = function(url, alt) {
-    MU.restoreRange();
-    var sel = document.getSelection();
-    var range = sel.getRangeAt(0).cloneRange();
-    var el = document.createElement('img');
-    el.setAttribute('src', url);
-    if (alt) { el.setAttribute('alt', alt) };
-    el.onload = MU.updateHeight;
-    var range = sel.getRangeAt(0).cloneRange();
-    range.insertNode(el);
-    var nextTextElement = _selectNextTextElement(el);
-    if (!nextTextElement) {
-        var br = document.createElement('br');
-        el.appendChild(br);
-        var newRange = document.createRange();
-        newRange.setStart(el, 1);
-        newRange.setEnd(el, 1);
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-        MU.backupRange();
-        _callback('input');
-    }
-};
-
-/**
- * Given element, select the nextSibling or child of a sibling that is a TEXT_NODE
- */
-var _selectNextTextElement = function(element) {
-    var sel = document.getSelection();
-    var nextSib = element.nextSibling;
-    while (nextSib) {
-        var firstTextChild = _getFirstOfType(nextSib, Node.TEXT_NODE);
-        if (firstTextChild) {
-            var newRange = document.createRange();
-            newRange.setStart(firstTextChild, 0);
-            newRange.setEnd(firstTextChild,0);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-            MU.backupRange();
-            _callback('input');
-            nextSib = null;
-        } else {
-            nextSib = nextSib.nextSibling;
-        }
-    };
-    return firstTextChild;
-}
-
-/**
- * Return the first node of nodeType within node, doing a depthwise traversal
- */
-var _getFirstOfType = function(node, nodeType) {
-    if (node.nodeType === nodeType) {
-        //_consoleLog("node.parentNode.outerHTML: " + node.parentNode.outerHTML)
-        return node
-    };
-    var childNodes = node.childNodes;
-    for (let i=0; i<childNodes.length; i++) {
-        return _getFirstOfType(childNodes[i], nodeType);
-    };
-    return null;
-}
-
-/**
- * Modify the attributes of the image at selection.
- * If url is null, then remove the image.
- * Scale is a percentage like '80' where null means 100%.
- * Scale is always expressed relative to full scale.
- */
-MU.modifyImage = function(src, alt, scale) {
-    MU.restoreRange();
-    var el = _getElementAtSelection('IMG');
-    if (el) {
-        if (src) {
-            el.setAttribute('src', src);
-            if (alt) {
-                el.setAttribute('alt', alt);
-            } else {
-                el.removeAttribute('alt');
-            }
-            if (scale) {
-                let width = _percentInt(scale, el.naturalWidth);
-                let height = _percentInt(scale, el.naturalHeight);
-                el.setAttribute('width', width);
-                el.setAttribute('height', height);
-            } else {
-                el.removeAttribute('width');
-                el.removeAttribute('height');
-            }
-            MU.restoreRange()
-        } else {
-            el.parentNode.removeChild(el);
-        };
-        _callback('input');
-    };
-};
-
-/**
- * Insert a link to url. The selection has to be across a range.
- * When done, re-select the range and back it up.
- */
-MU.insertLink = function(url) {
-    MU.restoreRange();
-    var sel = document.getSelection();
-    if (sel.toString().length !== 0) {
-        if (sel.rangeCount) {
-            var el = document.createElement('a');
-            el.setAttribute('href', url);
-            var range = sel.getRangeAt(0).cloneRange();
-            range.surroundContents(el);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            // Note because the selection is changing while the view is not focused,
-            // we need to backupRange() so we can get it back when we come back
-            // into focus later.
-            MU.backupRange();
-            _callback('input');
-        }
-    }
-};
-                                
-/**
- * Insert an empty table with the specified number of rows and cols.
- * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupRange so that range can be restored prior
- * to the insert* operation.
- * We leave the selection in the first cell of the first row.
- * The operation will cause a selectionChange event.
- */
-MU.insertTable = function(rows, cols) {
-    MU.restoreRange();
-    var sel = document.getSelection();
-    var range = sel.getRangeAt(0).cloneRange();
-    var table = document.createElement('table');
-    var tbody = document.createElement('tbody');
-    var firstRow;
-    for (let row = 0; row < rows; row++) {
-        var tr = document.createElement('tr');
-        if (row === 0) { firstRow = tr };
-        for (let col = 0; col < cols; col++) {
-            var td = document.createElement('td');
-            tr.appendChild(td);
-        };
-        tbody.appendChild(tr);
-    };
-    table.appendChild(tbody);
-    var range = sel.getRangeAt(0).cloneRange();
-    range.insertNode(table);
-    if (firstRow) {
-        var newRange = document.createRange();
-        newRange.setStart(firstRow, 0);
-        newRange.setEnd(firstRow, 0)
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-        MU.backupRange();
-    };
-    _callback('input');
-};
-
 //MARK:- Range operations
 
 /**
@@ -988,7 +819,7 @@ MU.insertTable = function(rows, cols) {
  * the application has to decide when to becomeFirstResponder.
  */
 var _initializeRange = function() {
-    var firstTextNode = _getFirstOfType(MU.editor, Node.TEXT_NODE);
+    var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
@@ -1399,6 +1230,30 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
 //MARK:- Links
 
 /**
+ * Insert a link to url. The selection has to be across a range.
+ * When done, re-select the range and back it up.
+ */
+MU.insertLink = function(url) {
+    MU.restoreRange();
+    var sel = document.getSelection();
+    if (sel.toString().length !== 0) {
+        if (sel.rangeCount) {
+            var el = document.createElement('a');
+            el.setAttribute('href', url);
+            var range = sel.getRangeAt(0).cloneRange();
+            range.surroundContents(el);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            // Note because the selection is changing while the view is not focused,
+            // we need to backupRange() so we can get it back when we come back
+            // into focus later.
+            MU.backupRange();
+            _callback('input');
+        }
+    }
+};
+
+/**
  * If the current selection's parent is an A tag, get the href and text.
  * @returns dictionary with href and link as keys; empty if not a link
  */
@@ -1416,6 +1271,84 @@ var _getLinkAttributesAtSelection = function() {
 };
 
 //MARK:- Images
+
+/**
+ * Insert the image at url with alt text, signaling updateHeight when done loading.
+ * All insert operations that involve user interaction outside of JavaScript
+ * need to be preceded by backupRange so that range can be restored prior
+ * to the insert* operation.
+ * We leave the selection after the inserted image.
+ * The operation will cause a selectionChange event.
+ */
+MU.insertImage = function(url, alt) {
+    MU.restoreRange();
+    var sel = document.getSelection();
+    var range = sel.getRangeAt(0).cloneRange();
+    var el = document.createElement('img');
+    el.setAttribute('src', url);
+    if (alt) { el.setAttribute('alt', alt) };
+    el.onload = MU.updateHeight;
+    var range = sel.getRangeAt(0).cloneRange();
+    range.insertNode(el);
+    // After inserting the image, we want to leave the selection at the beginning
+    // of the nextTextElement after it for inline images. If there is no such thing,
+    // then find the next best thing.
+    var nearestTextNode = _getFirstChildOfTypeNear(el, Node.TEXT_NODE);
+    var newRange = document.createRange();
+    if (nearestTextNode) {
+        newRange.setStart(nearestTextNode, 0);
+        newRange.setEnd(nearestTextNode, 0)
+    } else {
+        var nextSibling = el.nextSibling;
+        if (nextSibling && (nextSibling.nodeName === 'BR')) {
+            var newTextNode = document.createTextNode('');
+            nextSibling.replaceWith(newTextNode);
+            newRange.setStart(newTextNode, 0);
+            newRange.setEnd(newTextNode, 0)
+        } else {
+            newRange.setStart(el, 0);
+            newRange.setEnd(el, 0)
+        };
+    }
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    MU.backupRange();
+    _callback('input');
+};
+
+/**
+ * Modify the attributes of the image at selection.
+ * If url is null, then remove the image.
+ * Scale is a percentage like '80' where null means 100%.
+ * Scale is always expressed relative to full scale.
+ */
+MU.modifyImage = function(src, alt, scale) {
+    MU.restoreRange();
+    var el = _getElementAtSelection('IMG');
+    if (el) {
+        if (src) {
+            el.setAttribute('src', src);
+            if (alt) {
+                el.setAttribute('alt', alt);
+            } else {
+                el.removeAttribute('alt');
+            }
+            if (scale) {
+                let width = _percentInt(scale, el.naturalWidth);
+                let height = _percentInt(scale, el.naturalHeight);
+                el.setAttribute('width', width);
+                el.setAttribute('height', height);
+            } else {
+                el.removeAttribute('width');
+                el.removeAttribute('height');
+            }
+            MU.restoreRange()
+        } else {
+            el.parentNode.removeChild(el);
+        };
+        _callback('input');
+    };
+};
 
 /**
  * If the current selection's anchorNode is an IMG tag, get the src and alt.
@@ -1458,6 +1391,44 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
 };
 
 //MARK:- Tables
+
+/**
+ * Insert an empty table with the specified number of rows and cols.
+ * All insert operations that involve user interaction outside of JavaScript
+ * need to be preceded by backupRange so that range can be restored prior
+ * to the insert* operation.
+ * We leave the selection in the first cell of the first row.
+ * The operation will cause a selectionChange event.
+ */
+MU.insertTable = function(rows, cols) {
+    MU.restoreRange();
+    var sel = document.getSelection();
+    var range = sel.getRangeAt(0).cloneRange();
+    var table = document.createElement('table');
+    var tbody = document.createElement('tbody');
+    var firstRow;
+    for (let row = 0; row < rows; row++) {
+        var tr = document.createElement('tr');
+        if (row === 0) { firstRow = tr };
+        for (let col = 0; col < cols; col++) {
+            var td = document.createElement('td');
+            tr.appendChild(td);
+        };
+        tbody.appendChild(tr);
+    };
+    table.appendChild(tbody);
+    var range = sel.getRangeAt(0).cloneRange();
+    range.insertNode(table);
+    if (firstRow) {
+        var newRange = document.createRange();
+        newRange.setStart(firstRow, 0);
+        newRange.setEnd(firstRow, 0)
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        MU.backupRange();
+    };
+    _callback('input');
+};
 
 /*
  * If the selection is inside a TABLE, populate attributes with the information
@@ -1773,22 +1744,20 @@ MU.deleteRow = function() {
     var thead = tableElements['thead'];
     var tbody = tableElements['tbody'];
     var tr = tableElements['tr'];
-    var newCell;
+    var newTr;
     if (thead) {
         // We are going to delete the header,
         // So we will identify the first body cell
         // for selection after deleting
         var body = _getSection(table, 'TBODY');
         if (body) {
-            var newTr = body.firstChild;
-            newCell = newTr.firstChild;
+            newTr = body.firstChild;
         }
     } else if (tbody) {
         // We are going to delete a body row,
-        // So if we will choose the nextSib if there is one,
+        // So we will choose the nextSib if there is one,
         // or prevSib if not, or even the header if we have to
         // for selection after deleting
-        var newTr;
         if (tr.nextSibling) {
             newTr = tr.nextSibling;
         } else if (tr.previousSibling) {
@@ -1798,24 +1767,111 @@ MU.deleteRow = function() {
             newTr = header.firstChild;
         }
     }
+    var sel = document.getSelection();
     if (newTr) {
         // There is a row left, so we will do the remove and select the first element of the newTr
-        tr.parentNode.removeChild(tr)
+        tr.parentNode.removeChild(tr);
         var range = document.createRange();
         var cell = newTr.firstChild;
         range.setStart(cell, 0);
         range.setEnd(cell, 0);
-        sel = document.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
     } else {
-        // We just removed everything in the table, so let's just get rid of it
+        // We just removed everything in the table, so let's just get rid of it.
+        // However, before we delete the table, find the best thing to select when it's gone.
+        var newRange = document.createRange();
+        var nearestTextNode = _getFirstChildOfTypeNear(table, Node.TEXT_NODE);
+        if (nearestTextNode) {
+            newRange.setStart(nearestTextNode, 0);
+            newRange.setEnd(nearestTextNode, 0);
+        } else {
+            var sibling = (table.nextSibling) ? table.nextSibling : table.previousSibling;
+            if (sibling && (nextSibling.nodeName === 'BR')) {
+                var newTextNode = document.createTextNode('');
+                sibling.replaceWith(newTextNode);
+                newRange.setStart(newTextNode, 0);
+                newRange.setEnd(newTextNode, 0);
+            } else if (sibling) {
+                newRange.setStart(sibling, 0);
+                newRange.setEnd(sibling, 0);
+            } else {
+                var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+                if (firstTextNode) {
+                    newRange.setStart(firstTextNode, 0);
+                    newRange.setEnd(firstTextNode, 0);
+                } else {
+                    // Things are really messed up if this happens!
+                    newRange.setStart(MU.editor, 0);
+                    newRange.setEnd(MU.editor, 0);
+                };
+            };
+        };
         table.parentNode.removeChild(table);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        MU.backupRange();
     }
     _callback('input');
 }
 
 //MARK:- Common private functions
+
+/**
+ * Return the first node of nodeType within node, doing a depthwise traversal
+ */
+var _getFirstChildOfTypeWithin = function(node, nodeType) {
+    if (node.nodeType === nodeType) {
+        return node
+    };
+    var childNodes = node.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        return _getFirstChildOfTypeWithin(childNodes[i], nodeType);
+    };
+    return null;
+}
+
+/**
+ * Return the first node of nodeType within element's next siblings
+ */
+var _getFirstChildOfTypeAfter = function(element, nodeType) {
+    var nextSib = element.nextSibling;
+    while (nextSib) {
+        var firstChildOfType = _getFirstChildOfTypeWithin(nextSib, nodeType);
+        if (firstChildOfType) {
+            nextSib = null;
+        } else {
+            nextSib = nextSib.nextSibling;
+        };
+    };
+    return firstChildOfType;
+};
+
+/**
+ * Return the first node of nodeType within element's previous siblings
+ */
+var _getFirstChildOfTypeBefore = function(element, nodeType) {
+    var prevSib = element.previousSibling;
+    while (prevSib) {
+        var firstChildOfType = _getFirstChildOfTypeWithin(prevSib, nodeType);
+        if (firstChildOfType) {
+            prevSib = null;
+        } else {
+            prevSib = prevSib.prevSibling;
+        };
+    };
+    return firstChildOfType;
+};
+
+/**
+ * Return the firstChild of nodeType after element, or if there isn't one,
+ * return the firstChild of nodeType before element, or if there isn't one,
+ * return null.
+ */
+var _getFirstChildOfTypeNear = function(element, nodeType) {
+    var nearestChildOfType = _getFirstChildOfTypeAfter(element, nodeType);
+    return (nearestChildOfType) ? nearestChildOfType : _getFirstChildOfTypeBefore(element, nodeType);
+}
 
 /*
  * Return a number that is what is actually specified in the attribute.
@@ -1885,7 +1941,7 @@ var _setTag = function(type, sel) {
     }
     range.insertNode(el);
     var newRange = document.createRange();
-    var textNode = _getFirstOfType(el, Node.TEXT_NODE);
+    var textNode = _getFirstChildOfTypeWithin(el, Node.TEXT_NODE);
     //_consoleLog("textNode.textContent: " + textNode.textContent);
     //_consoleLog("textNode.parentNode.outerHTML: " + textNode.parentNode.outerHTML);
     if (textNode) {
