@@ -251,6 +251,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func deleteCol(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.deleteCol()") { result, error in handler?() }
+    }
+    
     public func addHeader(colspan: Bool = false, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.addHeader(\(colspan))") { result, error in handler?() }
     }

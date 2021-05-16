@@ -1478,7 +1478,7 @@ var _getTableElementsAtSelection = function() {
             elements['th'] = cell;
         }
         // Find the column the selection is in, since we know it immediately
-        var colCount = 1;
+        var colCount = 0;
         while (_cell.previousSibling) {
             _cell = _cell.previousSibling;
             if (_cell.nodeType === cell.nodeType) { colCount++; };
@@ -1497,7 +1497,7 @@ var _getTableElementsAtSelection = function() {
             elements['tbody'] = section;
             // If the selection is in the body, then we can find the row
             var _row = row;
-            var rowCount = 1;
+            var rowCount = 0;
             while (_row.previousSibling) {
                 _row = _row.previousSibling;
                 if (_row.nodeType === row.nodeType) { rowCount++; };
@@ -1779,41 +1779,125 @@ MU.deleteRow = function() {
         sel.addRange(range);
     } else {
         // We just removed everything in the table, so let's just get rid of it.
-        // However, before we delete the table, find the best thing to select when it's gone.
-        var newRange = document.createRange();
-        var nearestTextNode = _getFirstChildOfTypeNear(table, Node.TEXT_NODE);
-        if (nearestTextNode) {
-            newRange.setStart(nearestTextNode, 0);
-            newRange.setEnd(nearestTextNode, 0);
-        } else {
-            var sibling = (table.nextSibling) ? table.nextSibling : table.previousSibling;
-            if (sibling && (nextSibling.nodeName === 'BR')) {
-                var newTextNode = document.createTextNode('');
-                sibling.replaceWith(newTextNode);
-                newRange.setStart(newTextNode, 0);
-                newRange.setEnd(newTextNode, 0);
-            } else if (sibling) {
-                newRange.setStart(sibling, 0);
-                newRange.setEnd(sibling, 0);
-            } else {
-                var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-                if (firstTextNode) {
-                    newRange.setStart(firstTextNode, 0);
-                    newRange.setEnd(firstTextNode, 0);
-                } else {
-                    // Things are really messed up if this happens!
-                    newRange.setStart(MU.editor, 0);
-                    newRange.setEnd(MU.editor, 0);
-                };
-            };
-        };
+        // However, before we delete the table, get the range to select when it's gone.
+        var nextSel = _selectAfterDeleting(table);
         table.parentNode.removeChild(table);
         sel.removeAllRanges();
+        var newRange = document.createRange();
+        newRange.setStart(nextSel, 0);
+        newRange.setEnd(nextSel, 0);
         sel.addRange(newRange);
         MU.backupRange();
     }
     _callback('input');
 }
+
+var _selectAfterDeleting = function(table) {
+    var nearestTextNode = _getFirstChildOfTypeNear(table, Node.TEXT_NODE);
+    if (nearestTextNode) {
+        return nearestTextNode
+    } else {
+        var sibling = (table.nextSibling) ? table.nextSibling : table.previousSibling;
+        if (sibling && (nextSibling.nodeName === 'BR')) {
+            var newTextNode = document.createTextNode('');
+            sibling.replaceWith(newTextNode);
+            return newTextNode;
+        } else if (sibling) {
+            return sibling;
+        } else {
+            var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+            if (firstTextNode) {
+                return firstTextNode;
+            } else {
+                // Things are really messed up if this happens!
+                return MU.editor;
+            };
+        };
+    };
+}
+
+MU.deleteCol = function() {
+    MU.backupRange();
+    var tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    // There will always be a table and tr and either tbody or thead
+    // tr might be the row in the header or a row in the body
+    var table = tableElements['table'];
+    var thead = tableElements['thead'];
+    var tbody = tableElements['tbody'];
+    var newTr = tableElements['tr'];
+    var cols = tableElements['cols'];
+    var col = tableElements['col'];
+    var colspan = tableElements['colspan'];
+    var newCol;
+    if ((tbody || (thead && !colspan)) && cols > 1) {
+        // newCol identifies the column to select in newTr after deleting
+        if (col === cols - 1) {
+            newCol = col - 1;   // In the last col, so decrement 1
+        } else {
+            newCol = col;       // Leave in the same column (i.e., the one after the col being deleted)
+        }
+    } else if ((cols > 1) && thead && colspan) {
+        // We really can't do anything when delete column is selected when in header w/colspan
+        // since we have no idea what column to delete unless there is only one
+        return;
+    } else if (cols === 1) {
+        // We are deleting the last column of the table
+        var sel = document.getSelection();
+        var nextSel = _selectAfterDeleting(table);
+        table.parentNode.removeChild(table);
+        sel.removeAllRanges();
+        var newRange = document.createRange();
+        newRange.setStart(nextSel, 0);
+        newRange.setEnd(nextSel, 0)
+        sel.addRange(newRange);
+        MU.backupRange();
+        _callback('input');
+        return;
+    }
+    // newCol should be non-null if we got here; iow, we will be deleting a column and leaving
+    // the remaining table in place with a cell selected.
+    // Now delete the column elements from each row and the header
+    var body = _getSection(table, 'TBODY');
+    if (body) {
+        var tr = body.firstChild;
+        while (tr) {
+            var td = tr.firstChild;
+            for (let i=0; i<col; i++) {
+                td = td.nextSibling;
+            }
+            tr.removeChild(td);
+            tr = tr.nextSibling;
+        }
+    }
+    var header = _getSection(table, 'THEAD');
+    if (header) {
+        var tr = header.firstChild;
+        var th = tr.firstChild;
+        if (colspan) {
+            th.setAttribute('colspan', cols-1);
+        } else {
+            for (let i=0; i<col; i++) {
+                th = th.nextSibling;
+            }
+            tr.removeChild(th);
+        }
+    }
+    // Then, since newTr still exists, select the newCol child in it
+    var newCell = newTr.firstChild;
+    for (let i=0; i<newCol; i++) {
+        newCell = newCell.nextSibling;
+    }
+    var sel = document.getSelection();
+    var range = document.createRange();
+    range.setStart(newCell, 0);
+    range.setEnd(newCell, 0);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    MU.backupRange();
+    _callback('input');
+}
+
 
 //MARK:- Common private functions
 

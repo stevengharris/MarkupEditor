@@ -35,9 +35,8 @@ public struct TableToolbar: View {
             Divider()
             LabeledToolbar(label: Text("Delete")) {
                 ToolbarTextButton(title: "Row", action: { selectedWebView?.deleteRow() })
-                ToolbarTextButton(title: "Column", action: { print("deleteCol") })
+                ToolbarTextButton(title: "Column", action: { selectedWebView?.deleteCol() })
             }
-            
             Divider()
             Spacer()
         }
