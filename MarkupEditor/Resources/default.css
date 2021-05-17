@@ -2,7 +2,7 @@ body {
     font-family: -apple-system;
     font: -apple-system-body;
     /* word-wrap: break-word; */
-    caret-color: red;
+    caret-color: red;   /* Helps with debugging since should not appear */
     line-height: 1.7;
     padding: 0 20px 20px 20px;
 }
@@ -84,11 +84,43 @@ h1 + p, h2 + p, h3 + p {
 
 table {
     border: 1px solid #DDD;
+    min-width: 100px;
 }
 
 table thead tr th {
     border-bottom: 1px solid #DDD;
 }
+
+td, th {
+    min-width: 20px;
+}
+
+/* GitHub style?
+table {
+    padding: 0; }
+table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+table tr:nth-child(2n) {
+    background-color: #f8f8f8; }
+table tr th {
+    font-weight: bold;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr td {
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+    margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+    margin-bottom: 0; }
+*/
 
 code {
     background-color: #F8F8F8;

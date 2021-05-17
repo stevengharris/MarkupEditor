@@ -220,11 +220,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK:- Table editing
     
-    public enum TableDirection {
-        case before
-        case after
-    }
-    
     public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
         evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
     }

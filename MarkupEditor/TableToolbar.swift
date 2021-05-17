@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+public enum TableDirection {
+    case before
+    case after
+}
+
 public struct TableToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
@@ -22,20 +27,34 @@ public struct TableToolbar: View {
             }
             Divider()
             LabeledToolbar(label: Text("Add")) {
-                ToolbarTextButton(title: "Header", action: { selectedWebView?.addHeader() })
-                    .disabled(selectionState.header)
-                ToolbarTextButton(title: "RowBelow", action: { selectedWebView?.addRow(.after) })
-                ToolbarTextButton(title: "RowAbove", action: { selectedWebView?.addRow(.before) })
-                    .disabled(selectionState.thead)
-                ToolbarTextButton(title: "ColAfter", action: { selectedWebView?.addCol(.after) })
-                    .disabled(selectionState.thead && selectionState.colspan)
-                ToolbarTextButton(title: "ColBefore", action: { selectedWebView?.addCol(.before) })
-                    .disabled(selectionState.thead && selectionState.colspan)
+                ToolbarImageButton(action: { selectedWebView?.addHeader() }) {
+                    AddHeader(rows: 2, cols: 3)
+                }
+                .disabled(selectionState.header)
+                ToolbarImageButton(action: { selectedWebView?.addRow(.after) }) {
+                    AddRow(direction: .after)
+                }
+                ToolbarImageButton(action: { selectedWebView?.addRow(.before) }) {
+                    AddRow(direction: .before)
+                }
+                .disabled(selectionState.thead)
+                ToolbarImageButton(action: { selectedWebView?.addCol(.after) }) {
+                    AddCol(direction: .after)
+                }
+                .disabled(selectionState.thead && selectionState.colspan)
+                ToolbarImageButton(action: { selectedWebView?.addCol(.before) }) {
+                    AddCol(direction: .before)
+                }
+                .disabled(selectionState.thead && selectionState.colspan)
             }
             Divider()
             LabeledToolbar(label: Text("Delete")) {
-                ToolbarTextButton(title: "Row", action: { selectedWebView?.deleteRow() })
-                ToolbarTextButton(title: "Column", action: { selectedWebView?.deleteCol() })
+                ToolbarImageButton(action: { selectedWebView?.deleteRow() }) {
+                    DeleteRow()
+                }
+                ToolbarImageButton(action: { selectedWebView?.deleteCol() }) {
+                    DeleteCol()
+                }
             }
             Divider()
             Spacer()
