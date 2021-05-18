@@ -13,10 +13,6 @@ public struct InsertToolbar: View {
     @Binding private var showLinkToolbar: Bool
     @Binding private var showImageToolbar: Bool
     @Binding private var showTableToolbar: Bool
-    @State private var showTableSizer: Bool = false
-    @State private var tappedInTableSizer: Bool = false
-    @State private var rows: Int = 0
-    @State private var cols: Int = 0
     public var body: some View {
         LabeledToolbar(label: Text("Insert")) {
             ToolbarImageButton(
@@ -29,36 +25,11 @@ public struct InsertToolbar: View {
                 active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "photo") }
             .disabled(!enabledToolbar(type: .image))
-            // If we are creating a table, then we need to show the TableSizer first and then
-            // show the TableToolbar if we created one. If we are already in a table, then
-            // just toggle the TableToolbar.
             ToolbarImageButton(
-                action: {
-                    withAnimation {
-                        if showTableToolbar || selectionState.isInTable {
-                            showTableToolbar.toggle()
-                        } else {
-                            showTableSizer.toggle()
-                        }
-                    }
-                },
+                action: { withAnimation { showTableToolbar.toggle() } },
                 active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
-            ) { Image.forToolbar(systemName: "tablecells") }
+            ) { Image.forToolbar(systemName: "squareshape.split.3x3") }
             .disabled(!enabledToolbar(type: .table))
-            .popover(isPresented: $showTableSizer) {
-                TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer, tapped: $tappedInTableSizer)
-                    .onAppear() {
-                        rows = 0
-                        cols = 0
-                    }
-                    .onDisappear() {
-                        if tappedInTableSizer && rows > 0 && cols > 0 {
-                            selectedWebView?.insertTable(rows: rows, cols: cols) {
-                                withAnimation { showTableToolbar.toggle() }
-                            }
-                        }
-                    }
-            }
         }
     }
     
@@ -74,10 +45,6 @@ public struct InsertToolbar: View {
         case .table:
             return showTableToolbar || (!(showLinkToolbar || showImageToolbar) && selectionState.isInsertable)
         }
-    }
-    
-    private func createTable() {
-        
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showLinkToolbar: Binding<Bool>, showImageToolbar: Binding<Bool>, showTableToolbar: Binding<Bool>) {

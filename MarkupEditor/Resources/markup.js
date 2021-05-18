@@ -1412,6 +1412,7 @@ MU.insertTable = function(rows, cols) {
         if (row === 0) { firstRow = tr };
         for (let col = 0; col < cols; col++) {
             var td = document.createElement('td');
+            td.setAttribute('tabindex', 0);
             tr.appendChild(td);
         };
         tbody.appendChild(tr);
@@ -1600,7 +1601,9 @@ MU.addRow = function(direction) {
     // Create an empty row with the right number of elements
     var newRow = document.createElement('tr');
     for (let i=0; i<cols; i++) {
-        newRow.appendChild(document.createElement('td'));
+        var td = document.createElement('td');
+        td.setAttribute('tabindex', 0);
+        newRow.appendChild(td);
     };
     // For reference, form of insertBefore is...
     //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
@@ -1668,6 +1671,7 @@ MU.addCol = function(direction) {
                 }
                 // Then insert a new td before or after
                 var newTd = document.createElement('td');
+                newTd.setAttribute('tabindex', 0);
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -1691,6 +1695,7 @@ MU.addCol = function(direction) {
                 }
                 // Then insert a new td before or after
                 var newTh = document.createElement('th');
+                newTh.setAttribute('tabindex', 0);
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -1719,11 +1724,13 @@ MU.addHeader = function(colspan) {
         if (colspan) {
             header.setAttribute('colspan', cols);
             var th = document.createElement('th');
+            th.setAttribute('tabindex', 0);
             tr.appendChild(th);
             header.appendChild(tr);
         } else {
             for (let i=0; i<cols; i++) {
                 var th = document.createElement('th');
+                th.setAttribute('tabindex', 0);
                 tr.appendChild(th);
             }
             header.appendChild(tr);

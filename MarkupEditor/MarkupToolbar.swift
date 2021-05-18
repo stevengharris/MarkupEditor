@@ -90,13 +90,6 @@ public struct MarkupToolbar: View {
                         markupDelegate?.markupToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
                     })
-                    // If we deleted a row or column and the table was deleted as a result,
-                    // or if we just select a different place in the document, close the toolbar
-                    .onChange(of: selectionState.table, perform: { value in
-                        if selectionState.rows == 0 && selectionState.cols == 0 {
-                            withAnimation { showTableToolbar = false }
-                        }
-                    })
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
