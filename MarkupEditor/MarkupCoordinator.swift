@@ -64,7 +64,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         let initialContent = webView.html ?? ""
         webView.setHtml(initialContent) { content in
             self.markupDelegate?.markupDidLoad(self.webView) {
-                self.webView.becomeFirstResponder()
+                //self.webView.becomeFirstResponder()
             }
         }
     }

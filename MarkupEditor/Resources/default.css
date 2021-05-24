@@ -10,7 +10,7 @@ body {
 #editor {
     caret-color: blue;
     overflow: auto;
-    cursor: text;
+    cursor: auto;
 }
 
 #editor:focus {

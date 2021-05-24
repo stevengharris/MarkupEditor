@@ -84,6 +84,191 @@ const MU = {};
  */
 MU.editor = document.getElementById('editor');
 
+/*
+ * The Undoer class below was adopted with minor changes from https://github.com/samthor/undoer
+ * under the Apache 2.0 license found at https://github.com/samthor/undoer/blob/dad5b30c2667579667b883e246cad77711daaff7/LICENSE.
+ */
+
+class Undoer {
+    
+    /**
+     * @template T
+     * @param {function(T)} callback to call when undo/redo occurs
+     * @param {T=} zero the zero state for undoing everything
+     */
+    constructor(callback, zero=null) {
+        this._duringUpdate = false;
+        this._stack = [zero];
+        
+        // Using an input element rather than contentEditable div because parent is already a
+        // contentEditable div
+        this._ctrl = document.createElement('input');
+        this._ctrl.setAttribute('aria-hidden', 'true');
+        this._ctrl.setAttribute('id', 'hiddenInput');
+        this._ctrl.style.opacity = 0;
+        this._ctrl.style.position = 'fixed';
+        this._ctrl.style.top = '-1000px';
+        this._ctrl.style.pointerEvents = 'none';
+        this._ctrl.tabIndex = -1;
+        
+        this._ctrl.textContent = '0';
+        this._ctrl.style.visibility = 'hidden';  // hide element while not used
+        
+        this._ctrl.addEventListener('focus', (ev) => {
+            // Safari needs us to wait, can't blur immediately.
+            window.setTimeout(() => void this._ctrl.blur(), 1);
+        });
+        this._ctrl.addEventListener('input', (ev) => {
+            ev.stopImmediatePropagation();  // We don't want this event to be seen by the parent
+            if (!this._duringUpdate) {
+                callback(this.data);
+                this._ctrl.textContent = this._depth - 1;
+            } else {
+                this._ctrl.textContent = ev.data;
+            }
+            // clear selection, otherwise user copy gesture will copy value
+            // nb. this _probably_ won't work inside Shadow DOM
+            // nb. this is mitigated by the fact that we set visibility: 'hidden'
+            const s = window.getSelection();
+            if (s.containsNode(this._ctrl, true)) {
+                s.removeAllRanges();
+            }
+        });
+    }
+    
+    /**
+     * @return {number} the current stack value
+     */
+    get _depth() {
+        return +(this._ctrl.textContent) || 0;
+    }
+    
+    /**
+     * @return {T} the current data
+     * @export
+     */
+    get data() {
+        return this._stack[this._depth];
+    }
+    
+    /**
+     * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
+     *
+     * @param {T} data the data for this undo event
+     * @param {!Node=} parent to add to, uses document.body by default
+     * @export
+     */
+    push(data, parent) {
+        // nb. We can't remove this later: the only case we could is if the user undoes everything
+        // and then does some _other_ action (which we can't detect).
+        if (!this._ctrl.parentNode) {
+            // nb. we check parentNode as this would remove contentEditable's history
+            (parent || document.body).appendChild(this._ctrl);
+        }
+        
+        const nextID = this._depth + 1;
+        this._stack.splice(nextID, this._stack.length - nextID, data);
+
+        const previousFocus = document.activeElement;
+        const previousRange = _rangeProxy();
+        try {
+            this._duringUpdate = true;
+            this._ctrl.style.visibility = null;
+            this._ctrl.focus();
+            document.execCommand('selectAll');
+            document.execCommand('insertText', false, nextID);
+        } finally {
+            this._duringUpdate = false;
+            this._ctrl.style.visibility = 'hidden';
+        }
+        previousFocus && previousFocus.focus();
+    }
+};
+
+/**
+ * Create the undoer and the callback
+ * The data is created at undoer.push time and consists of an
+ * operation name key followed by a Selection and some operation-specific
+ * data. For example, a pastePlain operation includes the Selection
+ * that should be removed on undo.
+ */
+
+const _doOperation = function(undoerData) {
+    switch (undoerData.operation) {
+        case 'pasteText':
+            // Paste the undoerData.data text after the range.endOffset or range.endContainer
+            // TODO: Handle non-collapsed ranges
+            let pastedText = undoerData.data;
+            let range = undoerData.range;
+            let originalText = range.endContainer.textContent;
+            let newText = originalText.substring(0, range.endOffset) + pastedText + originalText.substr(range.endOffset);
+            range.endContainer.textContent = newText;
+            let newRange = document.createRange();
+            newRange.setStart(range.endContainer, range.endOffset + pastedText.length);
+            newRange.setEnd(range.endContainer, range.endOffset + pastedText.length);
+            let selection = document.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            _callback('input');
+            break;
+        default:
+            _consoleLog("undoerData.operation: " + undoerData.operation);
+    };
+};
+
+const _undoOperation = function(undoerData) {
+    switch (undoerData.operation) {
+        case 'pasteText':
+            let pastedText = undoerData.data;
+            let range = undoerData.range;
+            // The pastedText was placed after the range.endOffset in endContainer
+            // Make sure it's still there and if so, remove it, leaving the selection
+            // TODO: Handle non-collapsed ranges
+            let textContent = range.endContainer.textContent;
+            let existingText = textContent.slice(range.endOffset, range.endOffset + pastedText.length);
+            if (existingText === pastedText) {
+                let startText = textContent.slice(0, range.endOffset);
+                let endText = textContent.slice(range.endOffset + pastedText.length);
+                range.endContainer.textContent = startText + endText;
+                let newRange = document.createRange();
+                newRange.setStart(range.endContainer, range.endOffset);
+                newRange.setEnd(range.endContainer, range.endOffset);
+                let selection = document.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                _callback('input');
+            } else {
+                _consoleLog('undo pasteText mismatch: ' + existingText);
+            }
+            break;
+        default:
+            _consoleLog("undoerData.operation: " + undoerData.operation);
+    };
+};
+
+const undoer = new Undoer(_undoOperation, null);
+
+const _undoerData = function(operation, data) {
+    const undoData = {
+        operation: operation,
+        range: _rangeProxy(),
+        data: data
+    }
+    return undoData;
+};
+
+MU.editor.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var pastedText = undefined;
+    if (e.clipboardData && e.clipboardData.getData) {
+        pastedText = e.clipboardData.getData('text/plain');
+    }
+    const undoerData = _undoerData('pasteText', pastedText)
+    MU.backupRange();
+    undoer.push(undoerData, MU.editor);
+    _doOperation(undoerData);
+});
+
 /**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
  */
@@ -226,12 +411,12 @@ var muteChanges = function() { _setMuteChanges(true) };
 var unmuteChanges = function() { _setMuteChanges(false) };
 var _setMuteChanges = function(bool) { _muteChanges = bool };
 
-document.addEventListener('mousedown', function() {
+MU.editor.addEventListener('mousedown', function() {
     mouseDown = true;
     unmuteChanges();
 });
 
-document.addEventListener('mousemove', function() {
+MU.editor.addEventListener('mousemove', function() {
     if (mouseDown) {
         muteChanges();
     } else {
@@ -239,7 +424,7 @@ document.addEventListener('mousemove', function() {
     };
 });
 
-document.addEventListener('mouseup', function() {
+MU.editor.addEventListener('mouseup', function() {
     // TODO:- I don't think this is needed so have commented it out.
     //if (moving && mouseDown) { _callback('selectionChange') };
     mouseDown = false;
@@ -278,8 +463,10 @@ MU.editor.addEventListener('focus', function() {
 
 MU.editor.addEventListener('blur', function() {
     //_consoleLog("blur>backupRange");
-    MU.backupRange();
-    _callback('blur');
+    if (!undoer._duringUpdate) {
+        MU.backupRange();
+        _callback('blur');
+    }
 });
 
 MU.editor.addEventListener('click', function(event) {
@@ -836,50 +1023,66 @@ var _initializeRange = function() {
     MU.editor.focus();
 }
 
-MU.backupRange = function() {
-    var selection = document.getSelection();
+const _rangeProxy = function() {
+    // A range obtained from selection.getRangeAt(0).cloneRange() can end up being changed
+    // as focus changes, etc. So, to avoid the problem, return an object with properties
+    // for the startContainer, startOffset, endContainer, and endOffset.
+    const selection = document.getSelection();
     if (selection.rangeCount > 0) {
         var range = selection.getRangeAt(0).cloneRange();
-        MU.currentSelection = {
+        return {
             'startContainer': range.startContainer,
             'startOffset': range.startOffset,
             'endContainer': range.endContainer,
             'endOffset': range.endOffset
         };
     } else {
-        MU.currentSelection = {};
-        _consoleLog("Backed up empty range");
-        new Error("Backed up empty range")
-    }
-    //_consoleLog(
-    //    'backedUp\n' +
-    //    ' startContainer: ' + MU.currentSelection.startContainer.textContent + '\n' +
-    //    ' startOffset: ' + MU.currentSelection.startOffset + '\n' +
-    //    ' endContainer: ' + MU.currentSelection.endContainer.textContent + '\n' +
-    //    ' endOffset: ' + MU.currentSelection.endOffset);
+        return null;
+    };
 };
 
-MU.restoreRange = function() {
-    if ((MU.currentSelection.length === 0) || (!MU.currentSelection.startContainer)) {
-        _consoleLog("Restoring invalid range");
-        new Error("Restoring invalid range");
-        return
-    };
-    muteChanges();
+const _restoreRange = function(rangeProxy) {
+    if (rangeProxy && rangeProxy.length === 0) {
+        _consoleLog("Attempt to restore invalid range");
+        new Error("Attempt to restore invalid range");
+        return;
+    }
     var selection = document.getSelection();
     selection.removeAllRanges();
     var range = document.createRange();
-    range.setStart(MU.currentSelection.startContainer, MU.currentSelection.startOffset);
-    range.setEnd(MU.currentSelection.endContainer, MU.currentSelection.endOffset);
-    unmuteChanges();
+    range.setStart(rangeProxy.startContainer, rangeProxy.startOffset);
+    range.setEnd(rangeProxy.endContainer, rangeProxy.endOffset);
     selection.addRange(range);
-    //_consoleLog(
-    //    'restored\n' +
-    //    ' startContainer: ' + MU.currentSelection.startContainer.textContent + '\n' +
-    //    ' startOffset: ' + MU.currentSelection.startOffset + '\n' +
-    //    ' endContainer: ' + MU.currentSelection.endContainer.textContent + '\n' +
-    //    ' endOffset: ' + MU.currentSelection.endOffset);
+}
+
+MU.backupRange = function() {
+    MU.currentSelection = _rangeProxy();
 };
+
+MU.restoreRange = function() {
+    _restoreRange(MU.currentSelection);
+};
+
+const _rangeString = function(range) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    var startContainerType, startContainerContent, endContainerType, endContainerContent;
+    if (startContainer.nodeType === Node.TEXT_NODE) {
+        startContainerType = "<TextElement>"
+        startContainerContent = startContainer.textContent;
+    } else {
+        startContainerType = "<" + startContainer.tagName + ">";
+        startContainerContent = startContainer.innerHTML;
+    }
+    if (endContainer.nodeType === Node.TEXT_NODE) {
+        endContainerType = "<TextElement>"
+        endContainerContent = endContainer.textContent;
+    } else {
+        endContainerType = "<" + endContainer.tagName + ">";
+        endContainerContent = endContainer.innerHTML;
+    }
+    return "range:\n" + "  startContainer: " + startContainerType + ", content: " + startContainerContent + "\n" + "  startOffset: " + range.startOffset + "\n" + "  endContainer: " + endContainerType + ", content: " + endContainerContent + "\n" + "  endOffset: " + range.endOffset
+}
 
 MU.addRangeToSelection = function(selection, range) {
     if (selection) {
