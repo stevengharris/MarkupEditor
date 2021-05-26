@@ -88,7 +88,6 @@ MU.editor = document.getElementById('editor');
  * The Undoer class below was adopted with minor changes from https://github.com/samthor/undoer
  * under the Apache 2.0 license found at https://github.com/samthor/undoer/blob/dad5b30c2667579667b883e246cad77711daaff7/LICENSE.
  */
-
 class Undoer {
     
     /**
@@ -170,76 +169,58 @@ class Undoer {
         this._stack.splice(nextID, this._stack.length - nextID, data);
 
         const previousFocus = document.activeElement;
-        const previousRange = _rangeProxy();
+        MU.backupRange();   // Otherwise, when we refocus, it won't be set right
         try {
             this._duringUpdate = true;
             this._ctrl.style.visibility = null;
-            this._ctrl.focus();
+            this._ctrl.focus({preventScroll: true});
             document.execCommand('selectAll');
             document.execCommand('insertText', false, nextID);
         } finally {
             this._duringUpdate = false;
             this._ctrl.style.visibility = 'hidden';
         }
-        previousFocus && previousFocus.focus();
+        previousFocus && previousFocus.focus({preventScroll: true});
     }
 };
 
 /**
  * Create the undoer and the callback
  * The data is created at undoer.push time and consists of an
- * operation name key followed by a Selection and some operation-specific
- * data. For example, a pastePlain operation includes the Selection
- * that should be removed on undo.
+ * operation name key followed by a Range and some operation-specific
+ * data. For example, a pasteText operation includes the Range
+ * that existed when the original paste took place.
  */
 
 const _doOperation = function(undoerData) {
+    const operation = undoerData.operation;
+    const range = undoerData.range;
+    const data = undoerData.data;
     switch (undoerData.operation) {
         case 'pasteText':
-            // Paste the undoerData.data text after the range.endOffset or range.endContainer
-            // TODO: Handle non-collapsed ranges
-            let pastedText = undoerData.data;
-            let range = undoerData.range;
-            let originalText = range.endContainer.textContent;
-            let newText = originalText.substring(0, range.endOffset) + pastedText + originalText.substr(range.endOffset);
-            range.endContainer.textContent = newText;
-            let newRange = document.createRange();
-            newRange.setStart(range.endContainer, range.endOffset + pastedText.length);
-            newRange.setEnd(range.endContainer, range.endOffset + pastedText.length);
-            let selection = document.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(newRange);
-            _callback('input');
+            _doPasteText(range, data);
             break;
         default:
-            _consoleLog("undoerData.operation: " + undoerData.operation);
+            _consoleLog("Error: Unknown undoerData.operation " + undoerData.operation);
     };
 };
 
 const _undoOperation = function(undoerData) {
-    switch (undoerData.operation) {
+    const operation = undoerData.operation;
+    const range = undoerData.range;
+    const data = undoerData.data;
+    switch (operation) {
+        case 'format':
+            // Note formatting is done by toggling, either using _setTag or _unsetTag
+            // under the covers. In either case, the undoer.push is done, so the there
+            // is always an undo available, and there is no need for a _doOperation
+            // equivalent.
+            MU.restoreRange();
+            _toggleFormat(data);
+            MU.backupRange();
+            break;
         case 'pasteText':
-            let pastedText = undoerData.data;
-            let range = undoerData.range;
-            // The pastedText was placed after the range.endOffset in endContainer
-            // Make sure it's still there and if so, remove it, leaving the selection
-            // TODO: Handle non-collapsed ranges
-            let textContent = range.endContainer.textContent;
-            let existingText = textContent.slice(range.endOffset, range.endOffset + pastedText.length);
-            if (existingText === pastedText) {
-                let startText = textContent.slice(0, range.endOffset);
-                let endText = textContent.slice(range.endOffset + pastedText.length);
-                range.endContainer.textContent = startText + endText;
-                let newRange = document.createRange();
-                newRange.setStart(range.endContainer, range.endOffset);
-                newRange.setEnd(range.endContainer, range.endOffset);
-                let selection = document.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(newRange);
-                _callback('input');
-            } else {
-                _consoleLog('undo pasteText mismatch: ' + existingText);
-            }
+            _undoPasteText(range, data);
             break;
         default:
             _consoleLog("undoerData.operation: " + undoerData.operation);
@@ -257,17 +238,55 @@ const _undoerData = function(operation, data) {
     return undoData;
 };
 
+//MARK:- Copy/cut/paste
+
 MU.editor.addEventListener('paste', function(e) {
     e.preventDefault();
     var pastedText = undefined;
     if (e.clipboardData && e.clipboardData.getData) {
         pastedText = e.clipboardData.getData('text/plain');
     }
-    const undoerData = _undoerData('pasteText', pastedText)
-    MU.backupRange();
+    const undoerData = _undoerData('pasteText', pastedText);
     undoer.push(undoerData, MU.editor);
     _doOperation(undoerData);
 });
+
+const _doPasteText = function(range, data) {
+    // Paste the undoerData.data text after the range.endOffset or range.endContainer
+    // TODO: Handle non-collapsed ranges
+    let originalText = range.endContainer.textContent;
+    let newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
+    range.endContainer.textContent = newText;
+    let newRange = document.createRange();
+    newRange.setStart(range.endContainer, range.endOffset + data.length);
+    newRange.setEnd(range.endContainer, range.endOffset + data.length);
+    let selection = document.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    _callback('input');
+}
+
+const _undoPasteText = function(range, data) {
+    // The pasted text data was placed after the range.endOffset in endContainer
+    // Make sure it's still there and if so, remove it, leaving the selection
+    // TODO: Handle non-collapsed ranges
+    let textContent = range.endContainer.textContent;
+    let existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
+    if (existingText === data) {
+        let startText = textContent.slice(0, range.endOffset);
+        let endText = textContent.slice(range.endOffset + data.length);
+        range.endContainer.textContent = startText + endText;
+        let newRange = document.createRange();
+        newRange.setStart(range.endContainer, range.endOffset);
+        newRange.setEnd(range.endContainer, range.endOffset);
+        let selection = document.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+        _callback('input');
+    } else {
+        _consoleLog('undo pasteText mismatch: ' + existingText);
+    }
+}
 
 /**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
@@ -664,17 +683,26 @@ MU.toggleSuperscript = function() {
     _toggleFormat('sup');
 };
 
-var _toggleFormat = function(type) {
+const _toggleFormat = function(type) {
     // Turn the format tag off and on for selection
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
+    var range = sel.getRangeAt(0).cloneRange();
     var existingElement = _findFirstParentElementInTagNames(selNode, [type.toUpperCase()]);
     if (existingElement) {
-        _unsetTag(existingElement, sel);
+        _unsetTag(existingElement, range);
     } else {
-        _setTag(type, sel);
+        _setTag(type, range);
     }
+    // Note that both _setTag and _unsetTag reset the selection when they're done;
+    // however, the selection should be left in a way that undoing is accomplished
+    // by just re-executing the _toggleFormat. So, for example, _toggleFormat while
+    // selected between characters in a word will toggleFormat for the word, but leave
+    // the selection at the same place in that word. Also, toggleFormat when a word
+    // has a range selected will leave the same range selected.
+    const undoerData = _undoerData('format', type);
+    undoer.push(undoerData, MU.editor);
     _callback('input');
 }
 
@@ -1030,16 +1058,20 @@ const _rangeProxy = function() {
     const selection = document.getSelection();
     if (selection.rangeCount > 0) {
         var range = selection.getRangeAt(0).cloneRange();
-        return {
-            'startContainer': range.startContainer,
-            'startOffset': range.startOffset,
-            'endContainer': range.endContainer,
-            'endOffset': range.endOffset
-        };
+        return _rangeCopy(range);
     } else {
         return null;
     };
 };
+
+const _rangeCopy = function(range) {
+    return {
+        'startContainer': range.startContainer,
+        'startOffset': range.startOffset,
+        'endContainer': range.endContainer,
+        'endOffset': range.endOffset
+    };
+}
 
 const _restoreRange = function(rangeProxy) {
     if (rangeProxy && rangeProxy.length === 0) {
@@ -2202,15 +2234,22 @@ var _getElementAtSelection = function(nodeName) {
     return null;
 }
 
-
 /**
- * Put the tag around the current selection, even if range.collapsed
+ * Put the tag around the current selection, or the word if range.collapsed
+ * If not in a word or in a non-collapsed range, create and empty element of
+ * type tag and select it so that new input begins in that element immediately.
  */
-var _setTag = function(type, sel) {
-    //_consoleLog("type: " + type + ", sel: " + sel);
+var _setTag = function(type, range) {
     var el = document.createElement(type);
-    var range = sel.getRangeAt(0).cloneRange();
-    if (range.collapsed) {
+    const wordRange = _wordRangeAtCaret();
+    const startNewTag = range.collapsed && !wordRange;
+    const tagWord = range.collapsed && wordRange;
+    var newRange = document.createRange();
+    // In all cases, el is the new element with tagName type and range will have
+    // been modified to have the new element appropriately inserted. The
+    // newRange is set appropriately depending on the case.
+    if (startNewTag) {
+        // If we are in a word and collapsed, then we treat separately.
         // When we have the case of a collapsed selection, AFAICT there is no way to
         // set the selection to be inside of an empty element. As a workaround, I create
         // a zero-width space character inside of it. This causes move-by-character to stay
@@ -2221,8 +2260,19 @@ var _setTag = function(type, sel) {
         // If we create the empty node (e.g., <b></b> but don't start typing to replace
         // the empty text character, then we can "see" it show up when we select even tho
         // it doesn't have any visibility on the screen.
+        // TODO - The cursor doesn't show up, dammit.
         var emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
+        range.insertNode(el);
+        newRange.selectNode(emptyTextNode);
+    } else if (tagWord) {
+        const inWordOffset = range.startOffset - wordRange.startOffset;
+        const wordNode = document.createTextNode(wordRange.toString());
+        el.appendChild(wordNode);
+        wordRange.deleteContents();
+        wordRange.insertNode(el);
+        newRange.setStart(wordNode, inWordOffset);
+        newRange.setEnd(wordNode, inWordOffset);
     } else {
         // Why not just range.surroundContents(el)?
         // Because for selections that span elements, it doesn't work.
@@ -2232,26 +2282,21 @@ var _setTag = function(type, sel) {
         // The extractContents-appendChild-insertNode for italic operation produces:
         //      <p><b>Hel<i>lo</b> wo</i>rld<p>
         el.appendChild(range.extractContents());
+        range.insertNode(el);
+        newRange.selectNode(el);
     }
-    range.insertNode(el);
-    var newRange = document.createRange();
-    var textNode = _getFirstChildOfTypeWithin(el, Node.TEXT_NODE);
-    //_consoleLog("textNode.textContent: " + textNode.textContent);
-    //_consoleLog("textNode.parentNode.outerHTML: " + textNode.parentNode.outerHTML);
-    if (textNode) {
-        newRange.selectNode(textNode);
-    } else {
-        _consoleLog('* Error')
-        newRange.selectNode(el);   // A backup
-    }
-    var newSel = document.getSelection();
-    if (newSel) {
-        newSel.removeAllRanges();
-        newSel.addRange(newRange);
+    var sel = document.getSelection();
+    if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(newRange);
         MU.backupRange();
     } else {
         _consoleLog("** Error");
     };
+    // Note: Now that tagging with selection collapsed inside a word means
+    // the word is tagged, and selecting at the beginning of a word just
+    // does the non-spacing char, the following is not needed.
+    //
     // Check if the insertion left an empty element preceding or following
     // the inserted el. Unfortunately, when starting/ending the selection at
     // the beginning/end of an element in the multinode selection - for example:
@@ -2261,50 +2306,58 @@ var _setTag = function(type, sel) {
     // IOW, we end up with a blank sibling to the new <i> element. It doesn't
     // hurt anything, but it's annoying as hell. So the following code checks
     // for it and removes it.
-    var prevSib = el.previousSibling;
-    if (prevSib && (prevSib.nodeType != Node.TEXT_NODE)) {
-        var innerHTML = prevSib.innerHTML;
-        if (!innerHTML || (innerHTML.length == 0)) {
-            prevSib.parentNode.removeChild(prevSib);
-        }
-    }
-    var nextSib = el.nextSibling;
-    if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
-        var innerHTML = nextSib.innerHTML;
-        if (!innerHTML || (innerHTML.length == 0)) {
-            nextSib.parentNode.removeChild(nextSib);
-        }
-    }
+    //var prevSib = el.previousSibling;
+    //if (prevSib && (prevSib.nodeType != Node.TEXT_NODE)) {
+    //    var innerHTML = prevSib.innerHTML;
+    //    if (!innerHTML || (innerHTML.length == 0)) {
+    //        prevSib.parentNode.removeChild(prevSib);
+    //    }
+    //}
+    //var nextSib = el.nextSibling;
+    //if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
+    //    var innerHTML = nextSib.innerHTML;
+    //    if (!innerHTML || (innerHTML.length == 0)) {
+    //        nextSib.parentNode.removeChild(nextSib);
+    //    }
+    //}
 };
 
-var _selectTag = function(nodeToSelect) {
-    var elementRange = document.createRange();
-    if (nodeToSelect.firstChild.nodeType === Node.TEXT_NODE) {
-        elementRange.setStart(nodeToSelect.firstChild, 0);
-    } else {
-        elementRange.setStart(nodeToSelect, 0);
+const _wordRangeAtCaret = function() {
+    const sel = document.getSelection();
+    if ((!sel) || (sel.rangeCount === 0) || (!sel.isCollapsed)) { return null };
+    const range = sel.getRangeAt(0).cloneRange();
+    if (range.startContainer.nodeType !== Node.TEXT_NODE) { return null };
+    // Select the word in the selNode
+    var startOffset = range.startOffset;
+    var endOffset = range.endOffset;
+    let selNodeText = range.startContainer.textContent;
+    while ((startOffset > 0) && !_isWhiteSpace(selNodeText[startOffset - 1])) {
+        startOffset -= 1;
     }
-    if (nodeToSelect.lastChild.nodeType === Node.TEXT_NODE) {
-        elementRange.setEnd(nodeToSelect.lastChild, nodeToSelect.lastChild.textContent.length);
-    } else {
-        elementRange.setEnd(nodeToSelect, nodeToSelect.childNodes.length - 1);
+    while ((endOffset < selNodeText.length) && !_isWhiteSpace(selNodeText[endOffset]))  {
+        endOffset += 1;
     }
-    var sel = document.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(elementRange);
+    // If both startOffset and endOffset have moved from the originals in range,
+    // then the selection/caret is inside of a word, not on the ends of one
+    if ((startOffset < range.startOffset) && (endOffset > range.endOffset)) {
+        var wordRange = document.createRange();
+        wordRange.setStart(range.startContainer, startOffset);
+        wordRange.setEnd(range.endContainer, endOffset);
+        return wordRange;
+    } else {
+        return null;
+    }
 };
 
 /**
- * Remove the tag from the oldElement. The oldSelection startContainer might or might not be
- * the oldElement passed-in. In all cases, though, oldSelection starts at some offset into text.
+ * Remove the tag from the oldElement. The oldRange startContainer might or might not be
+ * the oldElement passed-in. In all cases, though, oldRange starts at some offset into text.
  * The element passed-in has the tag we are removing, so replacing outerHTML with inner removes
  * the outermost in place. A simple reassignment still leaves references the element type
  * unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
  * So, we need to do a proper replace.
  */
-var _unsetTag = function(oldElement, oldSelection) {
-    // First, hold onto the old range so we can put it back in place when done
-    var oldRange = oldSelection.getRangeAt(0).cloneRange();
+var _unsetTag = function(oldElement, oldRange) {
     // Note: I thought cloneRange() does copy by value.
     // Per https://developer.mozilla.org/en-us/docs/Web/API/Range/cloneRange...
     //   The returned clone is copied by value, not reference, so a change in either Range
