@@ -223,8 +223,21 @@ const _undoOperation = function(undoerData) {
             _undoPasteText(range, data);
             break;
         default:
-            _consoleLog("undoerData.operation: " + undoerData.operation);
+            _consoleLog("Error: Unknown undoerData.operation " + undoerData.operation);
     };
+};
+
+/**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from the toolbar. Note that the _undoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting)
+ */
+MU.undo = function() {
+    document.execCommand('undo', false, null);
+};
+
+MU.redo = function() {
+    document.execCommand('redo', false, null);
 };
 
 const undoer = new Undoer(_undoOperation, null);
@@ -640,14 +653,6 @@ MU.setBackgroundColor = function(color) {
 
 MU.setHeight = function(size) {
     MU.editor.style.height = size;
-};
-
-MU.undo = function() {
-    document.execCommand('undo', false, null);
-};
-
-MU.redo = function() {
-    document.execCommand('redo', false, null);
 };
 
 //MARK:- Formatting

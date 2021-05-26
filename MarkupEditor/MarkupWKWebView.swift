@@ -218,6 +218,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    //MARK:- Undo/redo
+    
+    public func undo(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.undo()") { result, error in handler?() }
+    }
+    
+    public func redo(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.redo()") { result, error in handler?() }
+    }
+    
     //MARK:- Table editing
     
     public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {

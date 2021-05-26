@@ -13,10 +13,10 @@ public struct UndoRedoToolbar: View {
     
     public var body: some View {
         LabeledToolbar(label: Text("Undo/Redo").font(.system(size: 10, weight: .light))) {
-            ToolbarImageButton(action: { print("markupView?.undo()") } ) {
+            ToolbarImageButton(action: { selectedWebView?.undo() } ) {
                 Image.forToolbar(systemName: "arrow.uturn.backward")
             }
-            ToolbarImageButton(action: { print("markupView?.redo()") } ) {
+            ToolbarImageButton(action: { selectedWebView?.redo() } ) {
                 Image.forToolbar(systemName: "arrow.uturn.forward")
             }
         }
