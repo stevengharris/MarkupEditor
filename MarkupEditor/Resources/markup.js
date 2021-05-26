@@ -1652,7 +1652,6 @@ MU.insertTable = function(rows, cols) {
         if (row === 0) { firstRow = tr };
         for (let col = 0; col < cols; col++) {
             var td = document.createElement('td');
-            td.setAttribute('tabindex', 0);
             tr.appendChild(td);
         };
         tbody.appendChild(tr);
@@ -1842,7 +1841,6 @@ MU.addRow = function(direction) {
     var newRow = document.createElement('tr');
     for (let i=0; i<cols; i++) {
         var td = document.createElement('td');
-        td.setAttribute('tabindex', 0);
         newRow.appendChild(td);
     };
     // For reference, form of insertBefore is...
@@ -1892,9 +1890,11 @@ MU.addCol = function(direction) {
     // There will always be a table and tr and either tbody or thead
     var table = tableElements['table'];
     var col = tableElements['col'];
+    var cols = tableElements['cols'];
     var tbody = tableElements['tbody'];
     var thead = tableElements['thead'];
     var colspan = tableElements['colspan'];
+    var tr, td, th;
     if (tbody || (thead && !colspan)) {
         // We have selected the body of the table or the header.
         // In the case of selecting the header, it is a non-colspan header,
@@ -1902,16 +1902,12 @@ MU.addCol = function(direction) {
         // Loop over all rows in the body, adding a new td in each one
         var body = _getSection(table, 'TBODY');
         if (body) {
-            var tr = body.firstChild;
-            while (tr) {
-                // Find the td in this row that is the same col as the selection
-                var td = tr.firstChild;
-                for (let i=0; i<col; i++) {
-                    td = td.nextSibling;
-                }
+            var rows = body.children;       // Only tr elements
+            for (let j=0; j<rows.length; j++) {
+                tr = rows[j];
+                td = tr.children[col];  // Only td elements
                 // Then insert a new td before or after
                 var newTd = document.createElement('td');
-                newTd.setAttribute('tabindex', 0);
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -1919,23 +1915,19 @@ MU.addCol = function(direction) {
                 } else {
                     tr.insertBefore(newTd, td);
                 }
-                tr = tr.nextSibling;
             }
-        }
+        };
         var header = _getSection(table, 'THEAD');
         if (header) {
             // If the header exists for this table, we need to expand it, too.
-            var tr = header.firstChild;
-            var th = tr.firstChild;
+            tr = header.children[0];    // Only tr elements
+            th = tr.children[0];
             if (colspan) {
                 th.setAttribute('colspan', cols+1)
             } else {
-                for (let i=0; i<col; i++) {
-                    th = th.nextSibling;
-                }
+                th = tr.children[col];           // Only th elements
                 // Then insert a new td before or after
                 var newTh = document.createElement('th');
-                newTh.setAttribute('tabindex', 0);
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -1964,13 +1956,11 @@ MU.addHeader = function(colspan) {
         if (colspan) {
             header.setAttribute('colspan', cols);
             var th = document.createElement('th');
-            th.setAttribute('tabindex', 0);
             tr.appendChild(th);
             header.appendChild(tr);
         } else {
             for (let i=0; i<cols; i++) {
                 var th = document.createElement('th');
-                th.setAttribute('tabindex', 0);
                 tr.appendChild(th);
             }
             header.appendChild(tr);
@@ -2105,28 +2095,23 @@ MU.deleteCol = function() {
     // newCol should be non-null if we got here; iow, we will be deleting a column and leaving
     // the remaining table in place with a cell selected.
     // Now delete the column elements from each row and the header
+    var tr, td, th;
     var body = _getSection(table, 'TBODY');
     if (body) {
-        var tr = body.firstChild;
-        while (tr) {
-            var td = tr.firstChild;
-            for (let i=0; i<col; i++) {
-                td = td.nextSibling;
-            }
+        var rows = body.children;
+        for (let j=0; j<rows.length; j++) {
+            tr = rows[j];
+            td = tr.children[col];
             tr.removeChild(td);
-            tr = tr.nextSibling;
         }
     }
     var header = _getSection(table, 'THEAD');
     if (header) {
-        var tr = header.firstChild;
-        var th = tr.firstChild;
+        tr = header.children[0];
+        th = tr.children[0];
         if (colspan) {
             th.setAttribute('colspan', cols-1);
         } else {
-            for (let i=0; i<col; i++) {
-                th = th.nextSibling;
-            }
             tr.removeChild(th);
         }
     }

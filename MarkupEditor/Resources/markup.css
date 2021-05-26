@@ -1,32 +1,16 @@
-/**
- * Copyright © 2021 Steven Harris. All rights reserved.
- * Copyright (C) 2015 Wasabeef
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-@charset "UTF-8";
-
 body {
-    overflow: auto;
-    margin: 8px;
     font-family: -apple-system;
     font: -apple-system-body;
+    /* word-wrap: break-word; */
+    caret-color: red;   /* Helps with debugging since should not appear */
+    line-height: 1.7;
+    padding: 0 20px 20px 20px;
 }
 
 #editor {
+    caret-color: blue;
     overflow: auto;
-    cursor: text;
+    cursor: auto;
 }
 
 #editor:focus {
@@ -34,146 +18,121 @@ body {
 }
 
 /*
- * The following, adapted from https://opensource.apple.com/source/dcerpc/dcerpc-61/www/content/css/blueprint/src/typography.css.auto.html
- * might be a model for some better styling. Inserting it here for consideration/experimentation later
-
-body {
-  font-size: 75%;
-  font-family: -apple-system;
-  font: -apple-system-body;
+#editor {
+    -webkit-user-select: auto !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    overflow: auto;
+    display: table-cell;
+    height: 100%;
 }
-
-h1,h2,h3,h4,h5,h6 { font-weight: normal; }
-
-h1 { font-size: 3em; line-height: 1; margin-bottom: 0.5em; }
-h2 { font-size: 2em; margin-bottom: 0.75em; }
-h3 { font-size: 1.5em; line-height: 1; margin-bottom: 1em; }
-h4 { font-size: 1.2em; line-height: 1.25; margin-bottom: 1.25em; }
-h5 { font-size: 1em; font-weight: bold; margin-bottom: 1.5em; }
-h6 { font-size: 1em; font-weight: bold; }
-
-h1 img, h2 img, h3 img,
-h4 img, h5 img, h6 img {
-  margin: 0;
-}
-
-p           { margin: 0 0 1.5em; }
-p img.left  { float: left; margin: 1.5em 1.5em 1.5em 0; padding: 0; }
-p img.right { float: right; margin: 1.5em 0 1.5em 1.5em; }
-
-a:focus,
-a:hover     { cursor: pointer; }
-
-blockquote  { margin: 1.5em; color: #666; font-style: italic; }
-strong      { font-weight: bold; }
-em,dfn      { font-style: italic; }
-dfn         { font-weight: bold; }
-sup, sub    { line-height: 0; }
-
-abbr,
-acronym     { border-bottom: 1px dotted #666; }
-address     { margin: 0 0 1.5em; font-style: italic; }
-del         { color:#666; }
-
-pre                 { margin: 1.5em 0; white-space: pre; }
-pre,code,tt { font: 1em 'andale mono', 'lucida console', monospace; line-height: 1.5; }
-
-
-li ul,
-li ol       { margin:0 1.5em; }
-ul, ol      { margin: 0 1.5em 1.5em 1.5em; }
-
-ul          { list-style-type: disc; }
-ol          { list-style-type: decimal; }
-
-dl          { margin: 0 0 1.5em 0; }
-dl dt       { font-weight: bold; }
-dd          { margin-left: 1.5em;}
-
-
-table       { margin-bottom: 1.4em; width:100%; }
-th          { font-weight: bold; }
-thead th         { background: #c3d9ff; }
-th,td,caption { padding: 4px 10px 4px 5px; }
-tr.even td  { background: #e5ecf9; }
-tfoot       { font-style: italic; }
-caption     { background: #eee; }
-
-
-.small      { font-size: .8em; margin-bottom: 1.875em; line-height: 1.875em; }
-.large      { font-size: 1.2em; line-height: 2.5em; margin-bottom: 1.25em; }
-.hide       { display: none; }
-
-.quiet      { color: #666; }
-.loud       { color: #000; }
-.highlight  { background:#ff0; }
-.added      { background:#060; color: #fff; }
-.removed    { background:#900; color: #fff; }
-
-.first      { margin-left:0; padding-left:0; }
-.last       { margin-right:0; padding-right:0; }
-.top        { margin-top:0; padding-top:0; }
-.bottom     { margin-bottom:0; padding-bottom:0; }
 */
 
-/* TODO:- Templatize the font sizes */
-
-/* Not sure why this has no effect, as I would like it to be clearer in dark mode but doesn't do anything ever */
-/* Values below are garbage to see if they have any effect
-::selection {
-  color: #00ff00;
-  background-color: #FFA500;
+a {
+    text-decoration: none;
 }
- */
-
-code {
-    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-    white-space: pre-wrap;
-}
-
-blockquote {
-    font-style: italic
-}
-
-h1, h2, h3, h4, h5, h6, p, ul, ol {
-     margin: 0px;
-     margin-right: 8px;
-}
-
-h1 {
-    font-size: 26px;
-}
-
-h2 {
-    font-size: 24px;
-}
-
-h3 {
-    font-size: 22px;
-}
-
-h4 {
-    font-size: 20px;
-}
-
-h5 {
-    font-size: 18px;
-}
-
-h6 {
-    font-size: 16px;
-}
-
-p {
-    font-size: 14px;
+@media (prefers-color-scheme: dark) {
+    a {
+        color: #4183c4;
+    }
 }
 
 a:hover {
-    cursor: pointer;
+    text-decoration: underline;
 }
 
-/* May be useful later
-img:focus {
-    outline: 2px solid blue;
+p, ul, ol, dl, table, pre {
+    margin: 15px 0;
 }
+
+ul, ol {
+    padding-left: 30px;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+h2 {
+    font-size: 2.0em;
+}
+
+h3 {
+    font-size: 1.5em;
+}
+
+h4 {
+    font-size: 1.2em;
+}
+
+h5 {
+    font-size: 1.0em;
+}
+
+h6 {
+    font-size: .83em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+    line-height: 1.7;
+    margin: 0 0 10px 0;
+}
+
+h1 + p, h2 + p, h3 + p {
+    margin-top: 10px;
+}
+
+table {
+    border: 1px solid #DDD;
+    min-width: 100px;
+}
+
+table thead tr th {
+    border-bottom: 1px solid #DDD;
+}
+
+td, th {
+    min-width: 20px;
+}
+
+/* GitHub style?
+table {
+    padding: 0; }
+table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+table tr:nth-child(2n) {
+    background-color: #f8f8f8; }
+table tr th {
+    font-weight: bold;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr td {
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+    margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+    margin-bottom: 0; }
 */
+
+code {
+    background-color: #F8F8F8;
+    border-radius: 3px;
+    border: 1px solid #DDD;
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
+    margin: 0 2px;
+    padding: 0 5px;
+    white-space: pre;
+}
+@media (prefers-color-scheme: dark) {
+    code {
+        background-color: #808080;
+    }
+}
