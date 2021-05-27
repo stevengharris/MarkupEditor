@@ -95,7 +95,7 @@ class Undoer {
      * @param {function(T)} callback to call when undo/redo occurs
      * @param {T=} zero the zero state for undoing everything
      */
-    constructor(callback, zero=null) {
+    constructor(undoCallback, redoCallback, zero=null) {
         this._duringUpdate = false;
         this._stack = [zero];
         
@@ -118,13 +118,30 @@ class Undoer {
             window.setTimeout(() => void this._ctrl.blur(), 1);
         });
         this._ctrl.addEventListener('input', (ev) => {
+            // There are two types of input events.
+            // 1. If _duringUpdate, we just pushed data onto _stack and ev.data is the index
+            //      of what we just spliced into _stack.
+            // 2. If !_duringUpdate, then we are undoing or redoing. In this case, ev.data
+            //      is null, and we use _depth to find out what _ctrl is holding. That
+            //      value is the index into _stack for either undoing or redoing.
             ev.stopImmediatePropagation();  // We don't want this event to be seen by the parent
+            //_consoleLog("input event: " + ev.inputType);
+            //_consoleLog("  this._depth: " + this._depth);
+            //_consoleLog("  this.data: " + JSON.stringify(this.data));
+            //_consoleLog("  ev.data: " + ev.data);
+            //_consoleLog("  initial this._ctrl.textContent: " + this._ctrl.textContent);
             if (!this._duringUpdate) {
-                callback(this.data);
-                this._ctrl.textContent = this._depth - 1;
+                if (ev.inputType === 'historyUndo') {
+                    undoCallback(this._stack[this._depth]);
+                    this._ctrl.textContent = this._depth - 1;
+                } else if (ev.inputType === 'historyRedo') {
+                    redoCallback(this._stack[this._depth + 1]);
+                    this._ctrl.textContent = this._depth + 1;
+                };
             } else {
                 this._ctrl.textContent = ev.data;
             }
+            //_consoleLog("  final this._ctrl.textContent: " + this._ctrl.textContent);
             // clear selection, otherwise user copy gesture will copy value
             // nb. this _probably_ won't work inside Shadow DOM
             // nb. this is mitigated by the fact that we set visibility: 'hidden'
@@ -197,6 +214,11 @@ const _doOperation = function(undoerData) {
     const range = undoerData.range;
     const data = undoerData.data;
     switch (undoerData.operation) {
+        case 'format':
+            MU.restoreRange();
+            _toggleFormat(data);
+            MU.backupRange();
+            break;
         case 'pasteText':
             _doPasteText(range, data);
             break;
@@ -211,10 +233,6 @@ const _undoOperation = function(undoerData) {
     const data = undoerData.data;
     switch (operation) {
         case 'format':
-            // Note formatting is done by toggling, either using _setTag or _unsetTag
-            // under the covers. In either case, the undoer.push is done, so the there
-            // is always an undo available, and there is no need for a _doOperation
-            // equivalent.
             MU.restoreRange();
             _toggleFormat(data);
             MU.backupRange();
@@ -240,8 +258,6 @@ MU.redo = function() {
     document.execCommand('redo', false, null);
 };
 
-const undoer = new Undoer(_undoOperation, null);
-
 const _undoerData = function(operation, data) {
     const undoData = {
         operation: operation,
@@ -250,6 +266,8 @@ const _undoerData = function(operation, data) {
     }
     return undoData;
 };
+
+const undoer = new Undoer(_undoOperation, _doOperation, null);
 
 //MARK:- Copy/cut/paste
 
@@ -661,35 +679,49 @@ MU.setHeight = function(size) {
 // 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
 
 MU.toggleBold = function() {
-    _toggleFormat('b');
+    _toggleFormatForUndo('b');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormat('i');
+    _toggleFormatForUndo('i');
 };
 
 MU.toggleUnderline = function() {
-    _toggleFormat('u');
+    _toggleFormatForUndo('u');
 };
 
 MU.toggleStrike = function() {
-    _toggleFormat('del');
+    _toggleFormatForUndo('del');
 };
 
 MU.toggleCode = function() {
-    _toggleFormat('code');
+    _toggleFormatForUndo('code');
 };
 
 MU.toggleSubscript = function() {
-    _toggleFormat('sub');
+    _toggleFormatForUndo('sub');
 };
 
 MU.toggleSuperscript = function() {
-    _toggleFormat('sup');
+    _toggleFormatForUndo('sup');
 };
+
+const _toggleFormatForUndo = function(type) {
+    // Toggle the format tag off and on, pushing onto the undo stack afterward
+    _toggleFormat(type);
+    // Both _setTag and _unsetTag reset the selection when they're done;
+    // however, the selection should be left in a way that undoing is accomplished
+    // by just re-executing the _toggleFormat. So, for example, _toggleFormat while
+    // selected between characters in a word will toggleFormat for the word, but leave
+    // the selection at the same place in that word. Also, toggleFormat when a word
+    // has a range selected will leave the same range selected.
+    const undoerData = _undoerData('format', type);
+    undoer.push(undoerData, MU.editor);
+}
 
 const _toggleFormat = function(type) {
     // Turn the format tag off and on for selection
+    // Called directly on undo/redo so that nothing new is pushed onto the undo stack
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
@@ -700,14 +732,6 @@ const _toggleFormat = function(type) {
     } else {
         _setTag(type, range);
     }
-    // Note that both _setTag and _unsetTag reset the selection when they're done;
-    // however, the selection should be left in a way that undoing is accomplished
-    // by just re-executing the _toggleFormat. So, for example, _toggleFormat while
-    // selected between characters in a word will toggleFormat for the word, but leave
-    // the selection at the same place in that word. Also, toggleFormat when a word
-    // has a range selected will leave the same range selected.
-    const undoerData = _undoerData('format', type);
-    undoer.push(undoerData, MU.editor);
     _callback('input');
 }
 
@@ -1061,7 +1085,7 @@ const _rangeProxy = function() {
     // as focus changes, etc. So, to avoid the problem, return an object with properties
     // for the startContainer, startOffset, endContainer, and endOffset.
     const selection = document.getSelection();
-    if (selection.rangeCount > 0) {
+    if ((selection) && (selection.rangeCount > 0)) {
         var range = selection.getRangeAt(0).cloneRange();
         return _rangeCopy(range);
     } else {
