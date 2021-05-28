@@ -219,6 +219,9 @@ const _doOperation = function(undoerData) {
     const range = undoerData.range;
     const data = undoerData.data;
     switch (undoerData.operation) {
+        case 'pasteText':
+            _doPasteText(range, data);
+            break;
         case 'format':
             MU.restoreRange();
             _toggleFormat(data, false);
@@ -234,11 +237,13 @@ const _doOperation = function(undoerData) {
             MU.toggleListItem(data.newListType, false);
             MU.backupRange();
             break;
-        case 'pasteText':
-            _doPasteText(range, data);
+        case 'indent':
+            MU.restoreRange();
+            MU.increaseQuoteLevel(false);
+            MU.backupRange();
             break;
         default:
-            _consoleLog("Error: Unknown undoerData.operation " + undoerData.operation);
+            _consoleLog("Error: Unknown doOperation " + undoerData.operation);
     };
 };
 
@@ -247,6 +252,9 @@ const _undoOperation = function(undoerData) {
     const range = undoerData.range;
     const data = undoerData.data;
     switch (operation) {
+        case 'pasteText':
+            _undoPasteText(range, data);
+            break;
         case 'format':
             MU.restoreRange();
             _toggleFormat(data, false);
@@ -262,11 +270,13 @@ const _undoOperation = function(undoerData) {
             MU.toggleListItem(data.oldListType, false);
             MU.backupRange();
             break;
-        case 'pasteText':
-            _undoPasteText(range, data);
+        case 'indent':
+            MU.restoreRange();
+            MU.decreaseQuoteLevel(false);
+            MU.backupRange();
             break;
         default:
-            _consoleLog("Error: Unknown undoerData.operation " + undoerData.operation);
+            _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
     };
 };
 
@@ -955,32 +965,7 @@ var _replaceNodeWithListItem = function(selNode) {
     return newListItemElement;
 };
 
-MU.replaceList = function(oldList, newList, undoable=true) {
-    // Find/verify the oldList for the selection and replace it with newList
-    // Replaces original usage of execCommand(insert<type>List)
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
-    if (!sel || !selNode) { return };
-    var existingElement = _findFirstParentElementInTagNames(selNode, [oldList.toUpperCase()]);
-    if (existingElement) {
-        MU.backupRange();
-        var range = sel.getRangeAt(0).cloneRange();
-        var newElement = _replaceTag(newList.toUpperCase(), existingElement);
-        range.setStart(newElement, range.startOffset);
-        range.setEnd(newElement, range.endOffset);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        if (undoable) {
-            MU.backupRange();
-            const undoerData = _undoerData('list', { oldList: oldList, newList: newList });
-            undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
-        }
-        _callback('input');
-    };
-};
-
-MU.increaseQuoteLevel = function() {
+MU.increaseQuoteLevel = function(undoable=true) {
     // Add a new BLOCKQUOTE
     // This is a lot more like setting a style than a format, since it applies to the
     // selected element, not to the range of the selection.
@@ -1048,10 +1033,16 @@ MU.increaseQuoteLevel = function() {
     range.setEnd(endContainer, oldEndOffset);
     sel.removeAllRanges();
     sel.addRange(range);
+    if (undoable) {
+        MU.backupRange();
+        const undoerData = _undoerData('indent', null);
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
     _callback('input');
 }
 
-MU.decreaseQuoteLevel = function() {
+MU.decreaseQuoteLevel = function(undoable=true) {
     // Remove an existing BLOCKQUOTE if it exists
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
@@ -1059,6 +1050,12 @@ MU.decreaseQuoteLevel = function() {
     var existingElement = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
     if (existingElement) {
         _unsetTag(existingElement, sel);
+        if (undoable) {
+            MU.backupRange();
+            const undoerData = _undoerData('indent', null);
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange();
+        }
         _callback('input');
     }
 }

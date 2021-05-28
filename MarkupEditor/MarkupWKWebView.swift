@@ -446,17 +446,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func replaceList(in selectionState: SelectionState, with newList: ListContext, handler: (()->Void)? = nil) {
-        let oldList = selectionState.list
-        guard newList != oldList else { return }
-        // We want to pass empty string as the argument into Javascript if .Undefined
-        let oldOrEmpty = oldList == .Undefined ? "" : oldList.tag
-        let newOrEmpty = newList == .Undefined ? "" : newList.tag
-        evaluateJavaScript("MU.replaceList('\(oldOrEmpty)', '\(newOrEmpty)')") { result, error in
-            handler?()
-        }
-    }
-    
     public func toggleListItem(type: ListContext, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleListItem('\(type.tag)')") { result, error in
             handler?()
