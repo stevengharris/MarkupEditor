@@ -207,7 +207,7 @@ class Undoer {
 };
 
 /**
- * Create the undoer and the callback
+ * Create the undoer and the callbacks
  * The data is created at undoer.push time and consists of an
  * operation name key followed by a Range and some operation-specific
  * data. For example, a pasteText operation includes the Range
@@ -221,7 +221,12 @@ const _doOperation = function(undoerData) {
     switch (undoerData.operation) {
         case 'format':
             MU.restoreRange();
-            _toggleFormat(data);
+            _toggleFormat(data, false);
+            MU.backupRange();
+            break;
+        case 'style':
+            MU.restoreRange();
+            MU.replaceStyle(data.oldStyle, data.newStyle, false);
             MU.backupRange();
             break;
         case 'pasteText':
@@ -239,7 +244,12 @@ const _undoOperation = function(undoerData) {
     switch (operation) {
         case 'format':
             MU.restoreRange();
-            _toggleFormat(data);
+            _toggleFormat(data, false);
+            MU.backupRange();
+            break;
+        case 'style':
+            MU.restoreRange();
+            MU.replaceStyle(data.newStyle, data.oldStyle, false);
             MU.backupRange();
             break;
         case 'pasteText':
@@ -650,49 +660,34 @@ MU.setHeight = function(size) {
 // 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
 
 MU.toggleBold = function() {
-    _toggleFormatForUndo('b');
+    _toggleFormat('b');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormatForUndo('i');
+    _toggleFormat('i');
 };
 
 MU.toggleUnderline = function() {
-    _toggleFormatForUndo('u');
+    _toggleFormat('u');
 };
 
 MU.toggleStrike = function() {
-    _toggleFormatForUndo('del');
+    _toggleFormat('del');
 };
 
 MU.toggleCode = function() {
-    _toggleFormatForUndo('code');
+    _toggleFormat('code');
 };
 
 MU.toggleSubscript = function() {
-    _toggleFormatForUndo('sub');
+    _toggleFormat('sub');
 };
 
 MU.toggleSuperscript = function() {
-    _toggleFormatForUndo('sup');
+    _toggleFormat('sup');
 };
 
-const _toggleFormatForUndo = function(type) {
-    // Toggle the format tag off and on, pushing onto the undo stack afterward
-    _toggleFormat(type);
-    // Both _setTag and _unsetTag reset the selection when they're done;
-    // however, the selection should be left in a way that undoing is accomplished
-    // by just re-executing the _toggleFormat. So, for example, _toggleFormat while
-    // selected between characters in a word will toggleFormat for the word, but leave
-    // the selection at the same place in that word. Also, toggleFormat when a word
-    // has a range selected will leave the same range selected.
-    MU.backupRange()
-    const undoerData = _undoerData('format', type);
-    undoer.push(undoerData, MU.editor);
-    MU.restoreRange()
-};
-
-const _toggleFormat = function(type) {
+const _toggleFormat = function(type, undoable=true) {
     // Turn the format tag off and on for selection
     // Called directly on undo/redo so that nothing new is pushed onto the undo stack
     var sel = document.getSelection();
@@ -704,6 +699,18 @@ const _toggleFormat = function(type) {
         _unsetTag(existingElement, range);
     } else {
         _setTag(type, range);
+    }
+    if (undoable) {
+        // Both _setTag and _unsetTag reset the selection when they're done;
+        // however, the selection should be left in a way that undoing is accomplished
+        // by just re-executing the _toggleFormat. So, for example, _toggleFormat while
+        // selected between characters in a word will toggleFormat for the word, but leave
+        // the selection at the same place in that word. Also, toggleFormat when a word
+        // has a range selected will leave the same range selected.
+        MU.backupRange()
+        const undoerData = _undoerData('format', type);
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange()
     }
     _callback('input');
 }
@@ -774,7 +781,7 @@ var _prettify = function(html) {
 // 2. Unlike formats, styles are never nested (so toggling makes no sense)
 // 3. Every block in a LogEntry should have some style
 
-MU.replaceStyle = function(oldStyle, newStyle) {
+MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     // Find/verify the oldStyle for the selection and replace it with newStyle
     // Replaces original usage of execCommand(formatBlock)
     var sel = document.getSelection();
@@ -788,6 +795,12 @@ MU.replaceStyle = function(oldStyle, newStyle) {
         range.setEnd(newElement.firstChild, range.endOffset);
         sel.removeAllRanges();
         sel.addRange(range);
+        if (undoable) {
+            MU.backupRange();
+            const undoerData = _undoerData('style', { oldStyle: oldStyle, newStyle: newStyle });
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange()
+        }
         _callback('input');
     };
 };
