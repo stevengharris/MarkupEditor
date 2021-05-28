@@ -229,6 +229,11 @@ const _doOperation = function(undoerData) {
             MU.replaceStyle(data.oldStyle, data.newStyle, false);
             MU.backupRange();
             break;
+        case 'list':
+            MU.restoreRange();
+            MU.toggleListItem(data.newListType, false);
+            MU.backupRange();
+            break;
         case 'pasteText':
             _doPasteText(range, data);
             break;
@@ -250,6 +255,11 @@ const _undoOperation = function(undoerData) {
         case 'style':
             MU.restoreRange();
             MU.replaceStyle(data.newStyle, data.oldStyle, false);
+            MU.backupRange();
+            break;
+        case 'list':
+            MU.restoreRange();
+            MU.toggleListItem(data.oldListType, false);
             MU.backupRange();
             break;
         case 'pasteText':
@@ -693,12 +703,11 @@ const _toggleFormat = function(type, undoable=true) {
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    var range = sel.getRangeAt(0).cloneRange();
     var existingElement = _findFirstParentElementInTagNames(selNode, [type.toUpperCase()]);
     if (existingElement) {
-        _unsetTag(existingElement, range);
+        _unsetTag(existingElement, sel);
     } else {
-        _setTag(type, range);
+        _setTag(type, sel);
     }
     if (undoable) {
         // Both _setTag and _unsetTag reset the selection when they're done;
@@ -807,7 +816,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
 
 //MARK:- Nestables, including lists and block quotes
 
-MU.toggleListItem = function(newListType) {
+MU.toggleListItem = function(newListType, undoable=true) {
     // Turn the list tag off and on for selection, doing the right thing
     // for different cases of selections.
     // The newListType passed-in is the kind of List we want the List Item to
@@ -825,18 +834,18 @@ MU.toggleListItem = function(newListType) {
     var oldEndOffset = range.endOffset;
     var selectionState = _getSelectionState();
     var styleType = selectionState['style'];
-    var listType = selectionState['list'];
+    var oldListType = selectionState['list'];
     var isInListItem = selectionState['li'];
     // We will capture the newSelNode for restoring the selection along the way
     var newSelNode = null;
-    if (listType) {
+    if (oldListType) {
         // TOP-LEVEL CASE: We selected something in a list
-        var listElement = _findFirstParentElementInTagNames(selNode, [listType]);
+        var listElement = _findFirstParentElementInTagNames(selNode, [oldListType]);
         var listItemElementCount = _childrenWithTagNameCount(listElement, 'LI');
         if (isInListItem) {
             // CASE: We selected a list item inside of a list
             var listItemElement = _findFirstParentElementInTagNames(selNode, ['LI']);
-            if (listType === newListType) {
+            if (oldListType === newListType) {
                 // We want to toggle it off and remove the list altogether if it's empty afterward
                 // NOTE: _unsetTag resets the selection properly itself. So, we don't
                 // set newSelNode in this case
@@ -847,10 +856,17 @@ MU.toggleListItem = function(newListType) {
                     _unsetTag(listElement, sel);
                 }
             } else {
-                // If this is the only item in the list, then change the list type rather than
-                // change the one element.
                 if (listItemElementCount === 1) {
-                    newSelNode = _replaceTag(newListType, listElement);
+                    // If this is the only item in the list, then change the list type rather than
+                    // change the one element.
+                    if (newListType) {
+                        newSelNode = _replaceTag(newListType, listElement);
+                    } else {
+                        // We are unsetting the list for a single-item list, so just remove both so
+                        // the list is removed.
+                        _unsetTag(listItemElement, sel);
+                        _unsetTag(listElement, sel);
+                    }
                 } else {
                     // We want to replace the existing list item with a newListType list that contains it
                     var newListElement = document.createElement(newListType);
@@ -862,14 +878,14 @@ MU.toggleListItem = function(newListType) {
         } else if (styleType) {
             // CASE: We selected a styled element in a list, but not in an LI
             var styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
-            if (listType === newListType) {
+            if (oldListType === newListType) {
                 // We want the entire styled element to be a list item in the existing list
                 newSelNode = _replaceNodeWithListItem(styledElement);
             } else {
                 // We want to make the entire styled element the first item in a new newListType list
                 newSelNode = _replaceNodeWithList(newListType, styledElement);
             }
-        } else if (listType === newListType) {
+        } else if (oldListType === newListType) {
             // CASE: We selected something in a newListType list that is not an LI and not styled.
             // Replace selNode with a new LI that contains it
             newSelNode = _replaceNodeWithListItem(selNode);
@@ -902,6 +918,12 @@ MU.toggleListItem = function(newListType) {
         sel.removeAllRanges();
         sel.addRange(range);
     }
+    if (undoable) {
+        MU.backupRange();
+        const undoerData = _undoerData('list', { newListType: newListType, oldListType: oldListType });
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
     _callback('input');
 };
 
@@ -933,7 +955,7 @@ var _replaceNodeWithListItem = function(selNode) {
     return newListItemElement;
 };
 
-MU.replaceList = function(oldList, newList) {
+MU.replaceList = function(oldList, newList, undoable=true) {
     // Find/verify the oldList for the selection and replace it with newList
     // Replaces original usage of execCommand(insert<type>List)
     var sel = document.getSelection();
@@ -948,6 +970,12 @@ MU.replaceList = function(oldList, newList) {
         range.setEnd(newElement, range.endOffset);
         sel.removeAllRanges();
         sel.addRange(range);
+        if (undoable) {
+            MU.backupRange();
+            const undoerData = _undoerData('list', { oldList: oldList, newList: newList });
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange();
+        }
         _callback('input');
     };
 };
@@ -2239,7 +2267,8 @@ var _getElementAtSelection = function(nodeName) {
  * If not in a word or in a non-collapsed range, create and empty element of
  * type tag and select it so that new input begins in that element immediately.
  */
-var _setTag = function(type, range) {
+var _setTag = function(type, sel) {
+    const range = sel.getRangeAt(0).cloneRange();
     var el = document.createElement(type);
     const wordRange = _wordRangeAtCaret();
     const startNewTag = range.collapsed && !wordRange;
@@ -2285,14 +2314,9 @@ var _setTag = function(type, range) {
         range.insertNode(el);
         newRange.selectNode(el);
     }
-    var sel = document.getSelection();
-    if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-        MU.backupRange();
-    } else {
-        _consoleLog("** Error");
-    };
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    MU.backupRange();
     // Note: Now that tagging with selection collapsed inside a word means
     // the word is tagged, and selecting at the beginning of a word just
     // does the non-spacing char, the following is not needed.
@@ -2357,7 +2381,8 @@ const _wordRangeAtCaret = function() {
  * unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
  * So, we need to do a proper replace.
  */
-var _unsetTag = function(oldElement, oldRange) {
+var _unsetTag = function(oldElement, sel) {
+    const oldRange = sel.getRangeAt(0).cloneRange();
     // Note: I thought cloneRange() does copy by value.
     // Per https://developer.mozilla.org/en-us/docs/Web/API/Range/cloneRange...
     //   The returned clone is copied by value, not reference, so a change in either Range
@@ -2421,9 +2446,9 @@ var _unsetTag = function(oldElement, oldRange) {
     range = document.createRange();
     range.setStart(startContainer, startOffset);
     range.setEnd(endContainer, endOffset);
-    var selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return newElement;
 }
 
 /**
