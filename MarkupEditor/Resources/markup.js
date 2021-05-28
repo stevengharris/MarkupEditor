@@ -182,6 +182,11 @@ class Undoer {
             (parent || document.body).appendChild(this._ctrl);
         }
         
+        // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
+        // and the previousFocus (the MU.editor). When MU.editor gets the focus event, it will always
+        // reset so other focus events are not muted.
+        muteFocusBlur();
+        
         const nextID = this._depth + 1;
         this._stack.splice(nextID, this._stack.length - nextID, data);
 
@@ -268,56 +273,6 @@ const _undoerData = function(operation, data) {
 };
 
 const undoer = new Undoer(_undoOperation, _doOperation, null);
-
-//MARK:- Copy/cut/paste
-
-MU.editor.addEventListener('paste', function(e) {
-    e.preventDefault();
-    var pastedText = undefined;
-    if (e.clipboardData && e.clipboardData.getData) {
-        pastedText = e.clipboardData.getData('text/plain');
-    }
-    const undoerData = _undoerData('pasteText', pastedText);
-    undoer.push(undoerData, MU.editor);
-    _doOperation(undoerData);
-});
-
-const _doPasteText = function(range, data) {
-    // Paste the undoerData.data text after the range.endOffset or range.endContainer
-    // TODO: Handle non-collapsed ranges
-    let originalText = range.endContainer.textContent;
-    let newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
-    range.endContainer.textContent = newText;
-    let newRange = document.createRange();
-    newRange.setStart(range.endContainer, range.endOffset + data.length);
-    newRange.setEnd(range.endContainer, range.endOffset + data.length);
-    let selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-    _callback('input');
-}
-
-const _undoPasteText = function(range, data) {
-    // The pasted text data was placed after the range.endOffset in endContainer
-    // Make sure it's still there and if so, remove it, leaving the selection
-    // TODO: Handle non-collapsed ranges
-    let textContent = range.endContainer.textContent;
-    let existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
-    if (existingText === data) {
-        let startText = textContent.slice(0, range.endOffset);
-        let endText = textContent.slice(range.endOffset + data.length);
-        range.endContainer.textContent = startText + endText;
-        let newRange = document.createRange();
-        newRange.setStart(range.endContainer, range.endOffset);
-        newRange.setEnd(range.endContainer, range.endOffset);
-        let selection = document.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        _callback('input');
-    } else {
-        _consoleLog('undo pasteText mismatch: ' + existingText);
-    }
-}
 
 /**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
@@ -505,17 +460,37 @@ MU.editor.addEventListener('input', function() {
     _callback('input');
 });
 
+var _muteFocusBlur = false;
+var muteFocusBlur = function() { _setMuteFocusBlur(true) };
+var unmuteFocusBlur = function() { _setMuteFocusBlur(false) };
+var _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
+
 MU.editor.addEventListener('focus', function() {
+    // A blur/focus cycle occurs when the undoer is used, but we don't want that to
+    // be noticable by the MarkupEditor in Swift.
     //_consoleLog("focus>restoreRange");
-    MU.restoreRange();
-    _callback('focus');
+    if (!_muteFocusBlur) {
+        MU.restoreRange();
+        _callback('focus');
+    //} else {
+    //    _consoleLog(" ignored");
+    }
+    // Always unmute after focus happens, since it should only happen once for
+    // the undoer.push operation
+    unmuteFocusBlur();    // Always unmuteChanges when focus happens
 });
 
 MU.editor.addEventListener('blur', function() {
+    // A blur/focus cycle occurs when the undoer is used, but we don't want that to
+    // be noticable by the MarkupEditor in Swift. The blur during the undoer.push
+    // operation will always be followed by a focus, where _muteFocusBlur will be
+    // reset.
     //_consoleLog("blur>backupRange");
-    if (!undoer._duringUpdate) {
+    if (!_muteFocusBlur) {
         MU.backupRange();
         _callback('blur');
+    //} else {
+    //    _consoleLog(" ignored")
     }
 });
 
@@ -541,59 +516,55 @@ MU.editor.addEventListener('keyup', function(event) {
     };
 });
 
-/* Here is some experimentation on using the EventListener
- * to replace execCommand and avoid excessive formatting
- * Ref: https://w3c.github.io/input-events/
- *
-document.addEventListener('beforecopy', function(event) {
-    //event.preventDefault();
-    MU.callback('beforecopy');
+//MARK:- Paste
+
+MU.editor.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var pastedText = undefined;
+    if (e.clipboardData && e.clipboardData.getData) {
+        pastedText = e.clipboardData.getData('text/plain');
+    }
+    const undoerData = _undoerData('pasteText', pastedText);
+    undoer.push(undoerData, MU.editor);
+    _doOperation(undoerData);
 });
 
-document.addEventListener('beforecut', function(event) {
-    //event.preventDefault();
-    MU.callback('beforecut');
-});
+const _doPasteText = function(range, data) {
+    // Paste the undoerData.data text after the range.endOffset or range.endContainer
+    // TODO: Handle non-collapsed ranges
+    let originalText = range.endContainer.textContent;
+    let newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
+    range.endContainer.textContent = newText;
+    let newRange = document.createRange();
+    newRange.setStart(range.endContainer, range.endOffset + data.length);
+    newRange.setEnd(range.endContainer, range.endOffset + data.length);
+    let selection = document.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    _callback('input');
+}
 
-document.addEventListener('beforepaste', function(event) {
-    event.preventDefault();
-    MU.callback('beforepaste');
-});
-
-document.addEventListener('copy', function() {
-    MU.callback('copy');
-});
-
-document.addEventListener('cut', function() {
-    MU.callback('cut');
-});
-
-document.addEventListener('paste', function() {
-    navigator.clipboard.readText().then( clipText => {
-        var pasteText;
-        var content = clipText.getElementsByTagName('span');
-        for (i = 0; i < content.length; i++) {
-            if (content) {
-                pasteText = content[i].innerText;
-                content[i].style.display = '';
-            } else {
-                content[i].style.display = 'none';
-            }
-        }
-        var sel = document.getSelection();
-        if (sel && (sel.type !== 'None')) {
-            var focusNode = sel.focusNode;
-            if (focusNode) {
-                var selElement = focusNode.parentElement;
-                if (selElement) {
-                    selElement.innerText = pasteText;
-                    MU.callback('input')
-                }
-            }
-        }
-    });
-});
-*/
+const _undoPasteText = function(range, data) {
+    // The pasted text data was placed after the range.endOffset in endContainer
+    // Make sure it's still there and if so, remove it, leaving the selection
+    // TODO: Handle non-collapsed ranges
+    let textContent = range.endContainer.textContent;
+    let existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
+    if (existingText === data) {
+        let startText = textContent.slice(0, range.endOffset);
+        let endText = textContent.slice(range.endOffset + data.length);
+        range.endContainer.textContent = startText + endText;
+        let newRange = document.createRange();
+        newRange.setStart(range.endContainer, range.endOffset);
+        newRange.setEnd(range.endContainer, range.endOffset);
+        let selection = document.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+        _callback('input');
+    } else {
+        _consoleLog('undo pasteText mismatch: ' + existingText);
+    }
+}
 
 //MARK:- Callbacks
 
@@ -715,9 +686,11 @@ const _toggleFormatForUndo = function(type) {
     // selected between characters in a word will toggleFormat for the word, but leave
     // the selection at the same place in that word. Also, toggleFormat when a word
     // has a range selected will leave the same range selected.
+    MU.backupRange()
     const undoerData = _undoerData('format', type);
     undoer.push(undoerData, MU.editor);
-}
+    MU.restoreRange()
+};
 
 const _toggleFormat = function(type) {
     // Turn the format tag off and on for selection
