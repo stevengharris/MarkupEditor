@@ -215,6 +215,8 @@ class Undoer {
  */
 
 const _doOperation = function(undoerData) {
+    // Invoked to redo the operation identified in undoerData. So, for example,
+    // when operation is 'indent', we redo an indent by executing increaseQuoteLevel.
     const operation = undoerData.operation;
     const range = undoerData.range;
     const data = undoerData.data;
@@ -242,12 +244,40 @@ const _doOperation = function(undoerData) {
             MU.increaseQuoteLevel(false);
             MU.backupRange();
             break;
+        case 'insertLink':
+            // Reset the selection based on the range after the link was removed,
+            // then insert the link at that range. When the link is inserted,
+            // the insertLink operation leaves the selection properly set,
+            // but we have to update the undoerData.range to reflect it.
+            var sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            MU.backupRange();
+            MU.insertLink(data, false);
+            var newSel = document.getSelection();
+            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            break;
+        case 'removeLink':
+            // Reset the selection based on the range after insert was done,
+            // then remove the link at that range. When the link is removed,
+            // the removeLink operation leaves the selection properly set,
+            // but we have to update the undoerData.range to reflect it.
+            var sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            MU.backupRange();
+            MU.removeLink(false);
+            var newSel = document.getSelection();
+            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            break;
         default:
             _consoleLog("Error: Unknown doOperation " + undoerData.operation);
     };
 };
 
 const _undoOperation = function(undoerData) {
+    // Invoked to undo the operation identified in undoerData. So, for example,
+    // when operation is 'indent', we undo an indent by executing decreaseQuoteLevel.
     const operation = undoerData.operation;
     const range = undoerData.range;
     const data = undoerData.data;
@@ -275,6 +305,32 @@ const _undoOperation = function(undoerData) {
             MU.decreaseQuoteLevel(false);
             MU.backupRange();
             break;
+        case 'insertLink':
+            // Reset the selection based on the range after insert was done,
+            // then remove the link at that range. When the link is removed,
+            // the removeLink operation leaves the selection properly set,
+            // but we have to update the undoerData.range to reflect it.
+            var sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            MU.backupRange();
+            MU.removeLink(false);
+            var newSel = document.getSelection();
+            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            break;
+        case 'removeLink':
+            // Reset the selection based on the range after the link was removed,
+            // then insert the link at that range. When the link is inserted,
+            // the insertLink operation leaves the selection properly set,
+            // but we have to update the undoerData.range to reflect it.
+            var sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            MU.backupRange();
+            MU.insertLink(data, false);
+            var newSel = document.getSelection();
+            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            break;
         default:
             _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
     };
@@ -294,9 +350,11 @@ MU.redo = function() {
 };
 
 const _undoerData = function(operation, data) {
+    const sel = document.getSelection();
+    const range = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
     const undoData = {
         operation: operation,
-        range: _rangeProxy(),
+        range: range,
         data: data
     }
     return undoData;
@@ -1508,25 +1566,72 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
  * Insert a link to url. The selection has to be across a range.
  * When done, re-select the range and back it up.
  */
-MU.insertLink = function(url) {
+MU.insertLink = function(url, undoable=true) {
     MU.restoreRange();
     var sel = document.getSelection();
-    if (sel.toString().length !== 0) {
-        if (sel.rangeCount) {
-            var el = document.createElement('a');
-            el.setAttribute('href', url);
-            var range = sel.getRangeAt(0).cloneRange();
-            range.surroundContents(el);
+    if (!sel || (sel.rangeCount === 0)) { return };
+    var range;
+    if (sel.isCollapsed) {
+        range = _wordRangeAtCaret()
+    } else {
+        range = sel.getRangeAt(0).cloneRange();
+    }
+    var el = document.createElement('a');
+    el.setAttribute('href', url);
+    el.appendChild(range.extractContents());
+    range.deleteContents();
+    range.insertNode(el);
+    range.setStart(el.firstChild, 0);
+    range.setEnd(el.firstChild, el.firstChild.textContent.length);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    // Note because the selection is changing while the view is not focused,
+    // we need to backupRange() so we can get it back when we come back
+    // into focus later.
+    MU.backupRange();
+    if (undoable) {
+        const undoerData = _undoerData('insertLink', url);
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
+    _callback('input');
+    return el;
+};
+
+/**
+ * Remove the link at the selection
+ */
+MU.removeLink = function(undoable=true) {
+    // When we call this method, sel is the text inside of an anchorNode
+    MU.restoreRange();
+    var sel = document.getSelection();
+    if (sel) {
+        var element = sel.anchorNode.parentElement;
+        if ('A' === element.nodeName) {
+            // Before we _unsetTag, we know what element is and can determine what to select
+            // after it is gone. We want to select all of the text that was linked-to
+            // as if the user had selected the entire link. After selecting it, then set that
+            // as the backed-up range before unsetting the tag. So, if we started with a caret
+            // selection inside of a link and removed the link, we will end up with the entire
+            // linked-to text selected when done. Now the undo operation knows the text selection
+            // and when undo happens, the link can be properly restored.
+            var linkRange = document.createRange();
+            const linkText = element.firstChild;
+            linkRange.setStart(linkText, 0);
+            linkRange.setEnd(linkText, linkText.length);
             sel.removeAllRanges();
-            sel.addRange(range);
-            // Note because the selection is changing while the view is not focused,
-            // we need to backupRange() so we can get it back when we come back
-            // into focus later.
+            sel.addRange(linkRange);
+            _unsetTag(element, sel);
             MU.backupRange();
+            if (undoable) {
+                const undoerData = _undoerData('removeLink', element.href);
+                undoer.push(undoerData, MU.editor);
+                MU.restoreRange();
+            }
             _callback('input');
         }
     }
-};
+}
 
 /**
  * If the current selection's parent is an A tag, get the href and text.
@@ -2445,7 +2550,6 @@ var _unsetTag = function(oldElement, sel) {
     range.setEnd(endContainer, endOffset);
     sel.removeAllRanges();
     sel.addRange(range);
-    return newElement;
 }
 
 /**

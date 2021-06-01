@@ -16,34 +16,34 @@ public struct InsertToolbar: View {
     public var body: some View {
         LabeledToolbar(label: Text("Insert")) {
             ToolbarImageButton(
-                action: { withAnimation { showLinkToolbar.toggle() } },
-                active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 })
+                action: { withAnimation { showOnly(.link) } },
+                active: Binding<Bool>(get: { showLinkToolbar || selectionState.isInLink }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "link") }
-            .disabled(!enabledToolbar(type: .link))
             ToolbarImageButton(
-                action: { withAnimation { showImageToolbar.toggle() } },
-                active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 })
+                action: { withAnimation { showOnly(.image) } },
+                active: Binding<Bool>(get: { showImageToolbar || selectionState.isInImage }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "photo") }
-            .disabled(!enabledToolbar(type: .image))
             ToolbarImageButton(
-                action: { withAnimation { showTableToolbar.toggle() } },
-                active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 })
+                action: { withAnimation { showOnly(.table)} },
+                active: Binding<Bool>(get: { showTableToolbar || selectionState.isInTable }, set: { _ = $0 })
             ) { Image.forToolbar(systemName: "squareshape.split.3x3") }
-            .disabled(!enabledToolbar(type: .table))
         }
     }
     
-    private func enabledToolbar(type: MarkupToolbar.ToolbarType) -> Bool {
-        // The disabled logic is too hard to wrap my head around, so this is the enabled logic.
-        // Always enabled if we are showing this type of toolbar, so we can hide it again.
-        // Otherwise, enabled if we are not showing one of the other toolbars and the selectionState is proper
+    private func showOnly(_ type: MarkupToolbar.ToolbarType) {
         switch type {
         case .link:
-            return showLinkToolbar || (!(showImageToolbar || showTableToolbar) && selectionState.isLinkable)
+            if showImageToolbar { showImageToolbar.toggle() }
+            if showTableToolbar { showTableToolbar.toggle() }
+            showLinkToolbar.toggle()
         case .image:
-            return showImageToolbar || (!(showLinkToolbar || showTableToolbar) && selectionState.isInsertable)
+            if showLinkToolbar { showLinkToolbar.toggle() }
+            if showTableToolbar { showTableToolbar.toggle() }
+            showImageToolbar.toggle()
         case .table:
-            return showTableToolbar || (!(showLinkToolbar || showImageToolbar) && selectionState.isInsertable)
+            if showLinkToolbar { showLinkToolbar.toggle() }
+            if showImageToolbar { showImageToolbar.toggle() }
+            showTableToolbar.toggle()
         }
     }
     

@@ -47,7 +47,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     // Selection state queries
     public var isLinkable: Bool {
-        return link != nil || selection != nil
+        return href == nil          // Can't link when selection is in a link
     }
     public var isFollowable: Bool { // Whether selecting will follow the link
          isInLink && selection == nil
