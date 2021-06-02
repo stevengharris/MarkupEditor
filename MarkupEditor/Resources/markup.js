@@ -245,30 +245,10 @@ const _doOperation = function(undoerData) {
             MU.backupRange();
             break;
         case 'insertLink':
-            // Reset the selection based on the range after the link was removed,
-            // then insert the link at that range. When the link is inserted,
-            // the insertLink operation leaves the selection properly set,
-            // but we have to update the undoerData.range to reflect it.
-            var sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            MU.backupRange();
-            MU.insertLink(data, false);
-            var newSel = document.getSelection();
-            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            _doInsertLink(undoerData);
             break;
         case 'removeLink':
-            // Reset the selection based on the range after insert was done,
-            // then remove the link at that range. When the link is removed,
-            // the removeLink operation leaves the selection properly set,
-            // but we have to update the undoerData.range to reflect it.
-            var sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            MU.backupRange();
-            MU.removeLink(false);
-            var newSel = document.getSelection();
-            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            _doRemoveLink(undoerData);
             break;
         default:
             _consoleLog("Error: Unknown doOperation " + undoerData.operation);
@@ -306,30 +286,10 @@ const _undoOperation = function(undoerData) {
             MU.backupRange();
             break;
         case 'insertLink':
-            // Reset the selection based on the range after insert was done,
-            // then remove the link at that range. When the link is removed,
-            // the removeLink operation leaves the selection properly set,
-            // but we have to update the undoerData.range to reflect it.
-            var sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            MU.backupRange();
-            MU.removeLink(false);
-            var newSel = document.getSelection();
-            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            _doRemoveLink(undoerData);
             break;
         case 'removeLink':
-            // Reset the selection based on the range after the link was removed,
-            // then insert the link at that range. When the link is inserted,
-            // the insertLink operation leaves the selection properly set,
-            // but we have to update the undoerData.range to reflect it.
-            var sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            MU.backupRange();
-            MU.insertLink(data, false);
-            var newSel = document.getSelection();
-            undoerData.range = newSel.getRangeAt(0).cloneRange();
+            _doInsertLink(undoerData);
             break;
         default:
             _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
@@ -1769,6 +1729,42 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
         _findNodeByNameInContainer(element.parentElement, nodeName, rootElementId);
     }
 };
+
+/**
+ * Do the insertLink operation following a removeLink operation
+ * Used to undo the removeLink operation and to do the insertLink operation.
+ */
+const _doInsertLink = function(undoerData) {
+    // Reset the selection based on the range after the link was removed,
+    // then insert the link at that range. After the link is re-inserted,
+    // the insertLink operation leaves the selection properly set,
+    // but we have to update the undoerData.range to reflect it.
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(undoerData.range);
+    MU.backupRange();
+    MU.insertLink(undoerData.data, false);
+    var newSel = document.getSelection();
+    undoerData.range = newSel.getRangeAt(0).cloneRange();
+}
+
+/**
+ * Do the removeLink operation following an insertLink operation
+ * Used to undo the insertLink operation and to do the removeLink operation.
+ */
+const _doRemoveLink = function(undoerData) {
+    // Reset the selection based on the range after insert was done,
+    // then remove the link at that range. When the link is re-removed,
+    // the removeLink operation leaves the selection properly set,
+    // but we have to update the undoerData.range to reflect it.
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(undoerData.range);
+    MU.backupRange();
+    MU.removeLink(false);
+    var newSel = document.getSelection();
+    undoerData.range = newSel.getRangeAt(0).cloneRange();
+}
 
 //MARK:- Tables
 
