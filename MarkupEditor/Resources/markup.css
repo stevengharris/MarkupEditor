@@ -17,15 +17,26 @@ body {
     outline: none !important;
 }
 
-/*
-#editor {
-    -webkit-user-select: auto !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    overflow: auto;
-    display: table-cell;
-    height: 100%;
+/* The following two sections along with the third, highlight an image on selection,
+ * without a blinking cursor and return to the standard blue cursor when not selected.
+ *
+ * Unfortunately, they also have the effect of making the caret color transparent
+ * until after you select the image. Removing them for now, but need to come
+ * back again later.
+
+img:not(:active) {
+    caret-color: blue;
+}
+ 
+#editor:not(:active) {
+    caret-color: transparent;
 }
 */
+
+img:focus {
+    outline: none;
+    border: 2px solid #00FFFF;
+}
 
 a {
     text-decoration: none;

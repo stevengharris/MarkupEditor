@@ -250,6 +250,12 @@ const _doOperation = function(undoerData) {
         case 'removeLink':
             _doRemoveLink(undoerData);
             break;
+        case 'insertImage':
+            _doInsertImage(undoerData);
+            break;
+        case 'modifyImage':
+            _doModifyImage(undoerData);
+            break;
         default:
             _consoleLog("Error: Unknown doOperation " + undoerData.operation);
     };
@@ -291,6 +297,12 @@ const _undoOperation = function(undoerData) {
         case 'removeLink':
             _doInsertLink(undoerData);
             break;
+        case 'insertImage':
+            _doModifyImage(undoerData);
+            break;
+        case 'modifyImage':
+            _doInsertImage(undoerData);
+            break;
         default:
             _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
     };
@@ -309,12 +321,21 @@ MU.redo = function() {
     document.execCommand('redo', false, null);
 };
 
-const _undoerData = function(operation, data) {
-    const sel = document.getSelection();
-    const range = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
+/**
+ * Return the populated undoerData held on the Undoer._stack
+ * If range is not passed-in, then populate range from document.getSelection()
+ */
+const _undoerData = function(operation, data, range=null) {
+    var undoerRange;
+    if (range) {
+        undoerRange = range;
+    } else {
+        const sel = document.getSelection();
+        undoerRange = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
+    }
     const undoData = {
         operation: operation,
-        range: range,
+        range: undoerRange,
         data: data
     }
     return undoData;
@@ -561,6 +582,8 @@ MU.editor.addEventListener('keyup', function(event) {
         _cleanUpAttributes('style');
     } else if (key === 'Enter') {
         _replaceDivIfNeeded();
+    //} else if ((key === 'ArrowLeft') || (key === 'ArrowRight') || (key === 'ArrowDown') || (key === 'ArrowUp')) {
+    //    _consoleLog("Arrow key")
     };
 });
 
@@ -1610,23 +1633,65 @@ var _getLinkAttributesAtSelection = function() {
     return link;
 };
 
+/**
+ * Do the insertLink operation following a removeLink operation
+ * Used to undo the removeLink operation and to do the insertLink operation.
+ */
+const _doInsertLink = function(undoerData) {
+    // Reset the selection based on the range after the link was removed,
+    // then insert the link at that range. After the link is re-inserted,
+    // the insertLink operation leaves the selection properly set,
+    // but we have to update the undoerData.range to reflect it.
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(undoerData.range);
+    MU.backupRange();
+    MU.insertLink(undoerData.data, false);
+    var newSel = document.getSelection();
+    undoerData.range = newSel.getRangeAt(0).cloneRange();
+}
+
+/**
+ * Do the removeLink operation following an insertLink operation
+ * Used to undo the insertLink operation and to do the removeLink operation.
+ */
+const _doRemoveLink = function(undoerData) {
+    // Reset the selection based on the range after insert was done,
+    // then remove the link at that range. When the link is re-removed,
+    // the removeLink operation leaves the selection properly set,
+    // but we have to update the undoerData.range to reflect it.
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(undoerData.range);
+    MU.backupRange();
+    MU.removeLink(false);
+    var newSel = document.getSelection();
+    undoerData.range = newSel.getRangeAt(0).cloneRange();
+}
+
 //MARK:- Images
 
 /**
- * Insert the image at url with alt text, signaling updateHeight when done loading.
+ * Insert the image at src with alt text, signaling updateHeight when done loading.
  * All insert operations that involve user interaction outside of JavaScript
  * need to be preceded by backupRange so that range can be restored prior
  * to the insert* operation.
  * We leave the selection after the inserted image.
  * The operation will cause a selectionChange event.
+ * Return the image element that is created, so we can use it for undoing.
  */
-MU.insertImage = function(url, alt) {
+MU.insertImage = function(src, alt, scale=100, undoable=true) {
     MU.restoreRange();
     var sel = document.getSelection();
     var range = sel.getRangeAt(0).cloneRange();
     var el = document.createElement('img');
-    el.setAttribute('src', url);
+    el.setAttribute('src', src);
     if (alt) { el.setAttribute('alt', alt) };
+    if (scale !== 100) {
+        el.setAttribute('width', scale);
+        el.setAttribute('height', scale);
+    }
+    el.setAttribute('tabindex', -1);    // Allows us to select the image
     el.onload = MU.updateHeight;
     var range = sel.getRangeAt(0).cloneRange();
     range.insertNode(el);
@@ -1653,16 +1718,28 @@ MU.insertImage = function(url, alt) {
     sel.removeAllRanges();
     sel.addRange(newRange);
     MU.backupRange();
+    // Track image insertion on the undo stack if necessary and hold onto the new image element's range
+    // Note that the range tracked on the undo stack is not the same as the selection, which has been
+    // set to make continued typing easy after inserting the image.
+    if (undoable) {
+        var imgRange = document.createRange();
+        imgRange.selectNode(el);
+        const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
     _callback('input');
+    return el;
 };
 
 /**
  * Modify the attributes of the image at selection.
- * If url is null, then remove the image.
+ * If src is null, then remove the image.
  * Scale is a percentage like '80' where null means 100%.
  * Scale is always expressed relative to full scale.
+ * Only removing an image is undoable.
  */
-MU.modifyImage = function(src, alt, scale) {
+MU.modifyImage = function(src, alt, scale, undoable=true) {
     MU.restoreRange();
     var el = _getElementAtSelection('IMG');
     if (el) {
@@ -1684,7 +1761,28 @@ MU.modifyImage = function(src, alt, scale) {
             }
             MU.restoreRange()
         } else {
+            // Before removing the el, find the nearest text node to leave selection at
+            // and record the existing src, alt, and scale
+            const nearestTextNode = _selectAfterDeleting(el);
+            const deletedSrc = el.getAttribute('src');
+            const deletedAlt = el.getAttribute('alt');
+            const deletedScale = el.getAttribute('width');
             el.parentNode.removeChild(el);
+            // Then reset the selection
+            var sel = document.getSelection();
+            if (sel) {
+                const range = document.createRange();
+                range.setStart(nearestTextNode, 0);
+                range.setEnd(nearestTextNode, 0);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            };
+            MU.backupRange();
+            if (undoable) {
+                const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: deletedScale});
+                undoer.push(undoerData, MU.editor);
+                MU.restoreRange();
+            }
         };
         _callback('input');
     };
@@ -1731,39 +1829,40 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
 };
 
 /**
- * Do the insertLink operation following a removeLink operation
- * Used to undo the removeLink operation and to do the insertLink operation.
+ * Do the insertImage operation following a modifyImage operation
+ * Used to undo the modifyImage/remove operation and to do the insertImage operation.
  */
-const _doInsertLink = function(undoerData) {
-    // Reset the selection based on the range after the link was removed,
-    // then insert the link at that range. After the link is re-inserted,
-    // the insertLink operation leaves the selection properly set,
-    // but we have to update the undoerData.range to reflect it.
+const _doInsertImage = function(undoerData) {
+    // Reset the selection based on the range after the image was removed,
+    // then insert the image at that range. After the image is re-inserted,
+    // the insertImage operation leaves the selection properly set to keep
+    // typing, but we need to update the undoerData.range with the range
+    // for the newly (re)created image element.
     var sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(undoerData.range);
     MU.backupRange();
-    MU.insertLink(undoerData.data, false);
-    var newSel = document.getSelection();
-    undoerData.range = newSel.getRangeAt(0).cloneRange();
+    const el = MU.insertImage(undoerData.data.src, undoerData.data.alt, undoerData.data.scale, false);
+    const range = document.createRange();
+    range.selectNode(el);
+    undoerData.range = range;
 }
 
 /**
- * Do the removeLink operation following an insertLink operation
- * Used to undo the insertLink operation and to do the removeLink operation.
+ * Do the modifyImage operation following an insertImage operation
+ * Used to undo the insertImage operation and to do the modifyImage/remove operation.
  */
-const _doRemoveLink = function(undoerData) {
-    // Reset the selection based on the range after insert was done,
-    // then remove the link at that range. When the link is re-removed,
-    // the removeLink operation leaves the selection properly set,
-    // but we have to update the undoerData.range to reflect it.
+const _doModifyImage = function(undoerData) {
+    // The undoerData has the range to select to remove the image;
+    // iow, the image exists when modifyImage is called.
+    // Once the image is removed, the selection is set properly, and
+    // we don't want to update the undoerData.
+    // Remove image is done with modifyImage but with src=null.
     var sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(undoerData.range);
     MU.backupRange();
-    MU.removeLink(false);
-    var newSel = document.getSelection();
-    undoerData.range = newSel.getRangeAt(0).cloneRange();
+    MU.modifyImage(null, null, null, false);
 }
 
 //MARK:- Tables
@@ -2165,30 +2264,6 @@ MU.deleteRow = function() {
     _callback('input');
 }
 
-var _selectAfterDeleting = function(table) {
-    var nearestTextNode = _getFirstChildOfTypeNear(table, Node.TEXT_NODE);
-    if (nearestTextNode) {
-        return nearestTextNode
-    } else {
-        var sibling = (table.nextSibling) ? table.nextSibling : table.previousSibling;
-        if (sibling && (nextSibling.nodeName === 'BR')) {
-            var newTextNode = document.createTextNode('');
-            sibling.replaceWith(newTextNode);
-            return newTextNode;
-        } else if (sibling) {
-            return sibling;
-        } else {
-            var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-            if (firstTextNode) {
-                return firstTextNode;
-            } else {
-                // Things are really messed up if this happens!
-                return MU.editor;
-            };
-        };
-    };
-}
-
 MU.deleteCol = function() {
     MU.backupRange();
     var tableElements = _getTableElementsAtSelection();
@@ -2336,14 +2411,45 @@ var _numberAttribute = function(element, attribute) {
 };
 
 /**
+ * Return the nearest text node to element.
+ * Used for deleting element and leaving selection in a reasonable state.
+ * If the nearest sibling is a BR, we will replace it with a text node
+ * and return that text node.
+ */
+var _selectAfterDeleting = function(element) {
+    var nearestTextNode = _getFirstChildOfTypeNear(element, Node.TEXT_NODE);
+    if (nearestTextNode) {
+        return nearestTextNode
+    } else {
+        var sibling = (element.nextSibling) ? element.nextSibling : element.previousSibling;
+        if (sibling && (nextSibling.nodeName === 'BR')) {
+            var newTextNode = document.createTextNode('');
+            sibling.replaceWith(newTextNode);
+            return newTextNode;
+        } else if (sibling) {
+            return sibling;
+        } else {
+            var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+            if (firstTextNode) {
+                return firstTextNode;
+            } else {
+                // Things are really messed up if this happens!
+                return MU.editor;
+            };
+        };
+    };
+}
+
+/**
  * Get the element with nodeName at the selection point if one exists
  */
 var _getElementAtSelection = function(nodeName) {
     var sel = document.getSelection();
-    if (sel) {
+    if (sel) {  // Removed check on && isCollapsed
         var node = sel.anchorNode;
+        var anchorOffset = sel.anchorOffset;
         if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
-            if (sel.anchorOffset === node.textContent.length) {
+            if (anchorOffset === node.textContent.length) {
                 // We have selected the end of a text element, which might be next
                 // to an element we're looking for
                 var nextSibling = node.nextSibling;
@@ -2352,9 +2458,9 @@ var _getElementAtSelection = function(nodeName) {
                 };
             };
         } else if (node.nodeType === Node.ELEMENT_NODE) {
-            // We selected some element (like <P>) and its first child might be an element we're looking for
-            var firstChild = node.firstChild;
-            return (firstChild && firstChild.nodeName === nodeName) ? firstChild : null;
+            // We selected some element (like <P>) and the child at anchorOffset might be an element we're looking for
+            var child = node.childNodes[anchorOffset];
+            return (child && child.nodeName === nodeName) ? child : null;
         };
     };
     return null;
