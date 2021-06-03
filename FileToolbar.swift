@@ -11,17 +11,27 @@ import MarkupEditor
 struct FileToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
+    @State private var hoverLabel: Text = Text("File")
     private var fileToolbarDelegate: FileToolbarDelegate?
     
     var body: some View {
-        LabeledToolbar(label: Text("File").font(.system(size: 10, weight: .light))) {
-            ToolbarImageButton(action: { fileToolbarDelegate?.newDocument(handler: nil) } ) {
+        LabeledToolbar(label: hoverLabel) {
+            ToolbarImageButton(
+                action: { fileToolbarDelegate?.newDocument(handler: nil) },
+                onHover: { over in hoverLabel = Text(over ? "New" : "File") }
+            ) {
                 Image.forToolbar(systemName: "plus")
             }
-            ToolbarImageButton(action: { fileToolbarDelegate?.existingDocument(handler: nil) } ) {
+            ToolbarImageButton(
+                action: { fileToolbarDelegate?.existingDocument(handler: nil) },
+                onHover: { over in hoverLabel = Text(over ? "Existing" : "File") }
+            ) {
                 Image.forToolbar(systemName: "newspaper")
             }
-            ToolbarImageButton(action: { fileToolbarDelegate?.rawDocument() } ) {
+            ToolbarImageButton(
+                action: { fileToolbarDelegate?.rawDocument() },
+                onHover: { over in hoverLabel = Text(over ? "Raw HTML" : "File") }
+            ) {
                 Image.forToolbar(systemName: "chevron.left.slash.chevron.right")
             }
         }

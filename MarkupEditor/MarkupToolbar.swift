@@ -40,7 +40,7 @@ public struct MarkupToolbar: View {
                     Divider()
                 }
                 Group {
-                    UndoRedoToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    CorrectionToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
                     InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showLinkToolbar: $showLinkToolbar, showImageToolbar: $showImageToolbar, showTableToolbar: $showTableToolbar)
                     Divider()

@@ -20,6 +20,9 @@ public struct TableToolbar: View {
     @State private var tappedInTableSizer: Bool = false
     @State private var rows: Int = 0
     @State private var cols: Int = 0
+    @State private var addHoverLabel: Text = Text("Add")
+    @State private var deleteHoverLabel: Text = Text("Delete")
+
     
     public var body: some View {
         HStack(alignment: .bottom) {
@@ -41,33 +44,54 @@ public struct TableToolbar: View {
                 }
             }
             Divider()
-            LabeledToolbar(label: Text("Add")) {
-                ToolbarImageButton(action: { selectedWebView?.addHeader() }) {
+            LabeledToolbar(label: addHoverLabel) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.addHeader() },
+                    onHover: { over in addHoverLabel = Text(over ? "Add Header" : "Add") }
+                ) {
                     AddHeader(rows: 2, cols: 3)
                 }
                 .disabled(selectionState.header)
-                ToolbarImageButton(action: { selectedWebView?.addRow(.after) }) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.addRow(.after) },
+                    onHover: { over in addHoverLabel = Text(over ? "Add Row Below" : "Add") }
+                ) {
                     AddRow(direction: .after)
                 }
-                ToolbarImageButton(action: { selectedWebView?.addRow(.before) }) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.addRow(.before) },
+                    onHover: { over in addHoverLabel = Text(over ? "Add Row Above" : "Add") }
+                ) {
                     AddRow(direction: .before)
                 }
                 .disabled(selectionState.thead)
-                ToolbarImageButton(action: { selectedWebView?.addCol(.after) }) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.addCol(.after) },
+                    onHover: { over in addHoverLabel = Text(over ? "Add Col After" : "Add") }
+                ) {
                     AddCol(direction: .after)
                 }
                 .disabled(selectionState.thead && selectionState.colspan)
-                ToolbarImageButton(action: { selectedWebView?.addCol(.before) }) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.addCol(.before) },
+                    onHover: { over in addHoverLabel = Text(over ? "Add Col Before" : "Add") }
+                ) {
                     AddCol(direction: .before)
                 }
                 .disabled(selectionState.thead && selectionState.colspan)
             }
             Divider()
-            LabeledToolbar(label: Text("Delete")) {
-                ToolbarImageButton(action: { selectedWebView?.deleteRow() }) {
+            LabeledToolbar(label: deleteHoverLabel) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.deleteRow() },
+                    onHover: { over in deleteHoverLabel = Text(over ? "Delete Row" : "Delete") }
+                ) {
                     DeleteRow()
                 }
-                ToolbarImageButton(action: { selectedWebView?.deleteCol() }) {
+                ToolbarImageButton(
+                    action: { selectedWebView?.deleteCol() },
+                    onHover: { over in deleteHoverLabel = Text(over ? "Delete Col" : "Delete") }
+                ) {
                     DeleteCol()
                 }
             }

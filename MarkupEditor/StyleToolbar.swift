@@ -10,9 +10,10 @@ import SwiftUI
 public struct StyleToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
+    @State private var hoverLabel: Text = Text("Style")
     
     public var body: some View {
-        LabeledToolbar(label: Text("Style").font(.system(size: 10, weight: .light))) {
+        LabeledToolbar(label: hoverLabel) {
             // I spent a long time trying to make the drop-down buttons show in the proper font.
             // AFAICT, Apple is doing something aggressive to prevent that from happening.
             // Maybe it messes something up on MacOS. OTOH, I see it on OneNote as a kind of
@@ -48,25 +49,29 @@ public struct StyleToolbar: View {
             Divider()
             ToolbarImageButton(
                 action: { selectedWebView?.toggleListItem(type: .UL) },
-                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 })
+                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
+                onHover: { over in hoverLabel = Text(over ? "Bulleted" : "Style") }
             ) {
                 Image.forToolbar(systemName: "list.bullet")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.toggleListItem(type: .OL) },
-                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 })
+                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
+                onHover: { over in hoverLabel = Text(over ? "Numbered" : "Style") }
             ) {
                 Image.forToolbar(systemName: "list.number")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.increaseQuoteLevel() },
-                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 })
+                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                onHover: { over in hoverLabel = Text(over ? "Indent" : "Style") }
             ) {
                 Image.forToolbar(systemName: "increase.quotelevel")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.decreaseQuoteLevel() },
-                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 })
+                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                onHover: { over in hoverLabel = Text(over ? "Outdent" : "Style") }
             ) {
                 Image.forToolbar(systemName: "decrease.quotelevel")
             }

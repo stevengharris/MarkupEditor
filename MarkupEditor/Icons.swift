@@ -7,6 +7,25 @@
 
 import SwiftUI
 
+//MARK:- Link Icons
+
+struct RemoveLink: View {
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Image.forToolbar(systemName: "link")
+            Image(systemName: "minus.circle.fill")
+                .foregroundColor(Color.red)
+                .background(Color.black)
+                .clipShape(Circle())
+                .offset(CGSize(width: -8, height: 2))
+                .font(Font.system(size: 8).weight(.bold))
+                .zIndex(1)
+        }
+    }
+}
+
+//MARK:- Table Icons
+
 struct TableCell: View {
     @State var width: CGFloat
     @State var height: CGFloat

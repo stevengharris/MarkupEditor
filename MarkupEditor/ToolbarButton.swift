@@ -19,12 +19,14 @@ public struct ToolbarImageButton<Content: View>: View {
     let action: ()->Void
     @Binding var active: Bool
     let activeColor: Color
+    let onHover: ((Bool)->Void)?
     
     public var body: some View {
         Button(action: action, label: {
             image
                 .frame(width: 30, height: 30)
         })
+        .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
         // fixes from flaky problems in surrpunding SwiftUI views that are presented
         // below this one, altho AFAICT not in ones adjacent horizontally.
@@ -39,11 +41,12 @@ public struct ToolbarImageButton<Content: View>: View {
         .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
     }
 
-    public init(action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, @ViewBuilder content: ()->Content) {
+    public init(action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil, @ViewBuilder content: ()->Content) {
         self.image = content()
         self.action = action
         _active = active
         self.activeColor = activeColor
+        self.onHover = onHover
     }
 
 }

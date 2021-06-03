@@ -10,48 +10,56 @@ import SwiftUI
 public struct FormatToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
+    @State private var hoverLabel: Text = Text("Format")
     
     public var body: some View {
-        LabeledToolbar(label: Text("Format").font(.system(size: 10, weight: .light))) {
+        LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
                 action: { selectedWebView?.bold() },
-                active: $selectionState.bold
+                active: $selectionState.bold,
+                onHover: { over in hoverLabel = Text(over ? "Bold" : "Format") }
             ) {
                 Image.forToolbar(systemName: "bold")
             }
             ToolbarImageButton (
                 action: { selectedWebView?.italic() },
-                active: $selectionState.italic
+                active: $selectionState.italic,
+                onHover: { over in hoverLabel = Text(over ? "Italic" : "Format") }
             ) {
                 Image.forToolbar(systemName: "italic")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.underline() },
-                active: $selectionState.underline
+                active: $selectionState.underline,
+                onHover: { over in hoverLabel = Text(over ? "Underline" : "Format") }
             ) {
                 Image.forToolbar(systemName: "underline")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.code() },
-                active: $selectionState.code
+                active: $selectionState.code,
+                onHover: { over in hoverLabel = Text(over ? "Code" : "Format") }
             ) {
                 Image.forToolbar(systemName: "curlybraces")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.strike() },
-                active: $selectionState.strike
+                active: $selectionState.strike,
+                onHover: { over in hoverLabel = Text(over ? "Strikethrough" : "Format") }
             ) {
                 Image.forToolbar(systemName: "strikethrough")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.subscriptText() },
-                active: $selectionState.sub
+                active: $selectionState.sub,
+                onHover: { over in hoverLabel = Text(over ? "Subscript" : "Format") }
             ) {
                 Image.forToolbar(systemName: "textformat.subscript")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.superscript() },
-                active: $selectionState.sup
+                active: $selectionState.sup,
+                onHover: { over in hoverLabel = Text(over ? "Superscript" : "Format") }
             ) {
                 Image.forToolbar(systemName: "textformat.superscript")
             }

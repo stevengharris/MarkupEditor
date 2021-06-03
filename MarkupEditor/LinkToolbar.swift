@@ -45,6 +45,13 @@ public struct LinkToolbar: View {
             }
             .padding([.trailing], 8)
             Divider()
+            LabeledToolbar(label: Text("Delete")) {
+                ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
+                    RemoveLink()
+                }
+            }
+            .disabled(!selectionState.isInLink)
+            Divider()
             ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
                 .disabled(!canBeSaved())
             ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
