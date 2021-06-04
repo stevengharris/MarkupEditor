@@ -13,12 +13,10 @@ struct RemoveLink: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             Image.forToolbar(systemName: "link")
-            Image(systemName: "minus.circle.fill")
+            Image(systemName: "xmark")
                 .foregroundColor(Color.red)
-                .background(Color.black)
-                .clipShape(Circle())
-                .offset(CGSize(width: -8, height: 2))
                 .font(Font.system(size: 8).weight(.bold))
+                .offset(CGSize(width: -8, height: 2))
                 .zIndex(1)
         }
     }
