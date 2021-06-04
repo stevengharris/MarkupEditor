@@ -10,7 +10,7 @@ import SwiftUI
 public struct StyleToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
-    @State private var hoverLabel: Text = Text("Style")
+    @State private var hoverLabel: Text = Text("Paragraph Style")
     
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
@@ -50,28 +50,28 @@ public struct StyleToolbar: View {
             ToolbarImageButton(
                 action: { selectedWebView?.toggleListItem(type: .UL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Bulleted" : "Style") }
+                onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
             ) {
                 Image.forToolbar(systemName: "list.bullet")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.toggleListItem(type: .OL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Numbered" : "Style") }
+                onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
             ) {
                 Image.forToolbar(systemName: "list.number")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.increaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Indent" : "Style") }
+                onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
             ) {
                 Image.forToolbar(systemName: "increase.quotelevel")
             }
             ToolbarImageButton(
                 action: { selectedWebView?.decreaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Outdent" : "Style") }
+                onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
             ) {
                 Image.forToolbar(systemName: "decrease.quotelevel")
             }

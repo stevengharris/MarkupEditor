@@ -79,14 +79,14 @@ struct TableRow: View {
     @State var selected: Bool = false
     @State var selectCol: Int? = nil
     @State var deleted: Bool = false
-    @State var deleteCol: Int? = nil
+    @State var deleteCols: [Int]? = nil
     @State var isHeader: Bool = false
     var body: some View {
         GeometryReader() { geometry in
             HStack(spacing: 0) {
                 ForEach(0..<cols, id: \.self) { col in
                     let select = selected ? true : col == selectCol
-                    let delete = deleted ? true : col == deleteCol
+                    let delete = deleted ? true : deleteCols?.contains(col) ?? false
                     let trailingOnly = isHeader && col == cols - 1
                     let none = isHeader && cols > 2 && col > 0 && col < cols - 1
                     let both = !isHeader && col == cols - 1
@@ -119,8 +119,8 @@ struct TableIcon: View {
     @State var selectRow: Int? = nil
     @State var selectCol: Int? = nil
     @State var withHeader: Bool = false
-    @State var deleteRow: Int? = nil
-    @State var deleteCol: Int? = nil
+    @State var deleteRows: [Int]? = nil
+    @State var deleteCols: [Int]? = nil
     var body: some View {
         GeometryReader() { geometry in
             let rowHeight = geometry.size.height / CGFloat(rows)
@@ -133,8 +133,8 @@ struct TableIcon: View {
                             height: rowHeight,
                             selected: row == selectRow,
                             selectCol: selectCol,
-                            deleted: row == deleteRow,
-                            deleteCol: deleteCol,
+                            deleted: deleteRows?.contains(row) ?? false,
+                            deleteCols: deleteCols,
                             isHeader: withHeader ? (row == 0) : false
                         )
                         if row == 0 {
@@ -233,13 +233,19 @@ struct AddHeader: View {
 
 struct DeleteRow: View {
     var body: some View {
-        TableIcon(rows: 3, cols: 3, selectRow: 1, deleteRow: 1)
+        TableIcon(rows: 3, cols: 3, selectRow: 1, deleteRows: [1])
     }
 }
 
 struct DeleteCol: View {
     var body: some View {
-        TableIcon(rows: 3, cols: 3, selectCol: 1, deleteCol: 1)
+        TableIcon(rows: 3, cols: 3, selectCol: 1, deleteCols: [1])
+    }
+}
+
+struct DeleteTable: View {
+    var body: some View {
+        TableIcon(rows: 3, cols: 3, deleteRows: [0, 1, 2])
     }
 }
 

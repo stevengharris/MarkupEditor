@@ -30,6 +30,7 @@ public struct TableToolbar: View {
                 ToolbarImageButton(action: { showTableSizer.toggle() } ) {
                     CreateTable()
                 }
+                .disabled(selectionState.isInTable)
                 .popover(isPresented: $showTableSizer) {
                     TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer, tapped: $tappedInTableSizer)
                         .onAppear() {
@@ -51,34 +52,35 @@ public struct TableToolbar: View {
                 ) {
                     AddHeader(rows: 2, cols: 3)
                 }
-                .disabled(selectionState.header)
+                .disabled(!selectionState.isInTable || selectionState.header)
                 ToolbarImageButton(
                     action: { selectedWebView?.addRow(.after) },
                     onHover: { over in addHoverLabel = Text(over ? "Add Row Below" : "Add") }
                 ) {
                     AddRow(direction: .after)
                 }
+                .disabled(!selectionState.isInTable)
                 ToolbarImageButton(
                     action: { selectedWebView?.addRow(.before) },
                     onHover: { over in addHoverLabel = Text(over ? "Add Row Above" : "Add") }
                 ) {
                     AddRow(direction: .before)
                 }
-                .disabled(selectionState.thead)
+                .disabled(!selectionState.isInTable || selectionState.thead)
                 ToolbarImageButton(
                     action: { selectedWebView?.addCol(.after) },
-                    onHover: { over in addHoverLabel = Text(over ? "Add Col After" : "Add") }
+                    onHover: { over in addHoverLabel = Text(over ? "Add Column After" : "Add") }
                 ) {
                     AddCol(direction: .after)
                 }
-                .disabled(selectionState.thead && selectionState.colspan)
+                .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
                 ToolbarImageButton(
                     action: { selectedWebView?.addCol(.before) },
-                    onHover: { over in addHoverLabel = Text(over ? "Add Col Before" : "Add") }
+                    onHover: { over in addHoverLabel = Text(over ? "Add Column Before" : "Add") }
                 ) {
                     AddCol(direction: .before)
                 }
-                .disabled(selectionState.thead && selectionState.colspan)
+                .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
             }
             Divider()
             LabeledToolbar(label: deleteHoverLabel) {
@@ -88,12 +90,21 @@ public struct TableToolbar: View {
                 ) {
                     DeleteRow()
                 }
+                .disabled(!selectionState.isInTable)
                 ToolbarImageButton(
                     action: { selectedWebView?.deleteCol() },
-                    onHover: { over in deleteHoverLabel = Text(over ? "Delete Col" : "Delete") }
+                    onHover: { over in deleteHoverLabel = Text(over ? "Delete Column" : "Delete") }
                 ) {
                     DeleteCol()
                 }
+                .disabled(!selectionState.isInTable)
+                ToolbarImageButton(
+                    action: { selectedWebView?.deleteTable() },
+                    onHover: { over in deleteHoverLabel = Text(over ? "Delete Table" : "Delete") }
+                ) {
+                    DeleteTable()
+                }
+                .disabled(!selectionState.isInTable)
             }
             Divider()
             Spacer()

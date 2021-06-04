@@ -264,6 +264,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.addHeader(\(colspan))") { result, error in handler?() }
     }
     
+    public func deleteTable(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.deleteTable()") { result, error in handler?() }
+    }
+    
     //MARK:- Image editing
     
     public func modifyImage(src: String?, alt: String?, scale: Int?, handler: (()->Void)?) {
