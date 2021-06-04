@@ -534,7 +534,7 @@ var muteFocusBlur = function() { _setMuteFocusBlur(true) };
 var unmuteFocusBlur = function() { _setMuteFocusBlur(false) };
 var _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
 
-MU.editor.addEventListener('focus', function() {
+MU.editor.addEventListener('focus', function(e) {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
     // be noticable by the MarkupEditor in Swift.
     //_consoleLog("focus>restoreRange");
@@ -547,6 +547,8 @@ MU.editor.addEventListener('focus', function() {
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
     unmuteFocusBlur();    // Always unmuteChanges when focus happens
+    e.preventDefault();
+    MU.editor.focus({preventScroll:true})
 });
 
 MU.editor.addEventListener('blur', function() {
