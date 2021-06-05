@@ -23,6 +23,9 @@ public struct LabeledToolbar<Content: View>: View {
             HStack(alignment: .bottom) {
                 content
             }
+            // The following fixes a problem with the individual buttons only being partially
+            // tappable, while preserving the .onHover behavior.
+            .gesture(TapGesture(), including: .subviews)
         }
     }
 }
