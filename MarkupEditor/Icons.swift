@@ -9,7 +9,7 @@ import SwiftUI
 
 //MARK:- Link Icons
 
-struct RemoveLink: View {
+struct DeleteLink: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             Image.forToolbar(systemName: "link")

@@ -47,7 +47,7 @@ public struct LinkToolbar: View {
             Divider()
             LabeledToolbar(label: Text("Delete")) {
                 ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                    RemoveLink()
+                    DeleteLink()
                 }
             }
             .disabled(!selectionState.isInLink)
