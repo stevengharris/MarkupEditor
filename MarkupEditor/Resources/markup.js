@@ -1926,9 +1926,12 @@ MU.deleteTable = function(undoable=true) {
     var table = elements['table'];
     if (table) {
         const outerHTML = table.outerHTML;
+        const row = elements['row'];
+        const col = elements['col'];
+        const thead = elements['thead'] != null     // Are we in the header?
         _deleteAndResetSelection(table);
         if (undoable) {
-            const undoerData = _undoerData('deleteTable', outerHTML);
+            const undoerData = _undoerData('deleteTable', {outerHTML: outerHTML, row: row, col: col, thead: thead});
             undoer.push(undoerData, MU.editor);
             MU.restoreRange();
         };
@@ -2366,6 +2369,24 @@ const _selectCol = function(tr, col) {
 };
 
 /**
+ * Given the table, row, col, and whether we want to select row/col in the header,
+ * reset the selection to the row/col in the table.
+ * Used after doInsertTable to restore the selection to the same row/col it
+ * started it, but will be at the beginning of the first child in it.
+ */
+const _restoreSelection = function(table, row, col, thead) {
+    var tr;
+    if (thead) {
+        const header = _getSection(table, 'THEAD');
+        tr = header.children[0];
+    } else {
+        const body = _getSection(table, 'TBODY');
+        tr = body.children[row];
+    }
+    _selectCol(tr, col)
+}
+
+/**
  * Do the insertTable operation following a deleteTable operation
  * Used to undo the deleteTable operation and to do the insertTable operation.
  */
@@ -2373,20 +2394,29 @@ const _doInsertTable = function(undoerData) {
     // Reset the selection based on the range after the table was removed,
     // then insert the table at that range. The original table's outerHTML
     // is held in the undoerData.data.outerHTML along with the row and col of
-    // the selection. After the table is re-inserted,
-    // the insertTable operation leaves the selection properly set to keep
-    // typing, but we need to update the undoerData.range with the range
-    // for the newly (re)created table element.
+    // the selection. After the table is re-inserted, we need to update the
+    // undoerData.range with the range for the newly (re)created table element.
+    // We leave the selection at the same row/col that was selected when the
+    // table was deleted, but we don't try to put it at the same offset as before.
     var template = document.createElement('template');
-    template.innerHTML = undoerData.data;
-    var table = template.content;
+    template.innerHTML = undoerData.data.outerHTML;
+    var tableFragment = template.content;
     var newRange = undoerData.range.cloneRange();
-    newRange.insertNode(table);
+    newRange.insertNode(tableFragment);
+    // Select the entire table
     var sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(newRange);
     MU.backupRange();
-    undoerData.range = newRange;
+    // We need the new table that now exists at selection, not the fragment.
+    // Restore the selection to leave it at the beginning of the proper row/col
+    // it was at when originally deleted. Then reset the undoerData range to hold
+    // onto the new range.
+    const table = _getFirstChildWithNameWithin(newRange.endContainer, 'TABLE');
+    if (table) {
+        _restoreSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.thead)
+        undoerData.range = document.getSelection().getRangeAt(0).cloneRange();
+    }
 }
 
 /**
@@ -2407,6 +2437,21 @@ const _doDeleteTable = function(undoerData) {
 
 
 //MARK:- Common private functions
+
+/**
+ * Return the first node with nodeName within node, doing a depthwise traversal
+ * Will only examine element nodes, not text nodes, so nodeName should not be #text
+ */
+var _getFirstChildWithNameWithin = function(node, nodeName) {
+    if (node.nodeName === nodeName) {
+        return node
+    };
+    var children = node.children;
+    for (let i=0; i<children.length; i++) {
+        return _getFirstChildWithNameWithin(children[i], nodeName);
+    };
+    return null;
+}
 
 /**
  * Return the first node of nodeType within node, doing a depthwise traversal

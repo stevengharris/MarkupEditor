@@ -31,12 +31,6 @@ public struct ToolbarImageButton<Content: View>: View {
         // fixes from flaky problems in surrpunding SwiftUI views that are presented
         // below this one, altho AFAICT not in ones adjacent horizontally.
         // Ref: https://stackoverflow.com/a/67377002/8968411
-        //
-        // At this point, only the top half of the button detects taps. I tried .tapGesture,
-        // which makes it accept the tap but then causes the TextFields below to be unresponsive.
-        // I tried adding contentShape in various places, but so far no matter what I do that
-        // fixes the "only the top half is tappable" problem, but they all have the same problem
-        // of fixing the hit test issue while messing up the TextField. Fun!
         .contentShape(RoundedRectangle(cornerRadius: 3))
         .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
     }
