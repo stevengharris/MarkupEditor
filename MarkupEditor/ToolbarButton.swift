@@ -28,7 +28,7 @@ public struct ToolbarImageButton<Content: View>: View {
         })
         .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
-        // fixes from flaky problems in surrpunding SwiftUI views that are presented
+        // fixes some flaky problems in surrounding SwiftUI views that are presented
         // below this one, altho AFAICT not in ones adjacent horizontally.
         // Ref: https://stackoverflow.com/a/67377002/8968411
         .contentShape(RoundedRectangle(cornerRadius: 3))

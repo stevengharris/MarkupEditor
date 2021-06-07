@@ -262,6 +262,18 @@ const _doOperation = function(undoerData) {
         case 'deleteTable':
             _doDeleteTable(undoerData);
             break;
+        case 'addRow':
+            _doAddRow(undoerData);
+            break;
+        case 'deleteRow':
+            _doDeleteRow(undoerData);
+            break;
+        case 'addCol':
+            _doAddCol(undoerData);
+            break;
+        case 'deleteCol':
+            _doDeleteCol(undoerData);
+            break;
         default:
             _consoleLog("Error: Unknown doOperation " + undoerData.operation);
     };
@@ -314,6 +326,18 @@ const _undoOperation = function(undoerData) {
             break;
         case 'deleteTable':
             _doInsertTable(undoerData);
+            break;
+        case 'addRow':
+            _doDeleteRow(undoerData);
+            break;
+        case 'deleteRow':
+            _doAddRow(undoerData);
+            break;
+        case 'addCol':
+            _doDeleteCol(undoerData);
+            break;
+        case 'deleteCol':
+            _doInsertCol(undoerData);
             break;
         default:
             _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
@@ -871,7 +895,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         sel.addRange(range);
         if (undoable) {
             MU.backupRange();
-            const undoerData = _undoerData('style', { oldStyle: oldStyle, newStyle: newStyle });
+            const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData, MU.editor);
             MU.restoreRange()
         }
@@ -985,7 +1009,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     }
     if (undoable) {
         MU.backupRange();
-        const undoerData = _undoerData('list', { newListType: newListType, oldListType: oldListType });
+        const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType});
         undoer.push(undoerData, MU.editor);
         MU.restoreRange();
     }
@@ -1928,10 +1952,10 @@ MU.deleteTable = function(undoable=true) {
         const outerHTML = table.outerHTML;
         const row = elements['row'];
         const col = elements['col'];
-        const thead = elements['thead'] != null     // Are we in the header?
+        const inHeader = elements['thead'] != null     // Are we in the header?
         _deleteAndResetSelection(table);
         if (undoable) {
-            const undoerData = _undoerData('deleteTable', {outerHTML: outerHTML, row: row, col: col, thead: thead});
+            const undoerData = _undoerData('deleteTable', {outerHTML: outerHTML, row: row, col: col, inHeader: inHeader});
             undoer.push(undoerData, MU.editor);
             MU.restoreRange();
         };
@@ -1988,8 +2012,8 @@ var _getTableElementsAtSelection = function() {
         }
         // Find the column the selection is in, since we know it immediately
         var colCount = 0;
-        while (_cell.previousSibling) {
-            _cell = _cell.previousSibling;
+        while (_cell.previousElementSibling) {
+            _cell = _cell.previousElementSibling;
             if (_cell.nodeType === cell.nodeType) { colCount++; };
         };
         elements['col'] = colCount;
@@ -2007,8 +2031,8 @@ var _getTableElementsAtSelection = function() {
             // If the selection is in the body, then we can find the row
             var _row = row;
             var rowCount = 0;
-            while (_row.previousSibling) {
-                _row = _row.previousSibling;
+            while (_row.previousElementSibling) {
+                _row = _row.previousElementSibling;
                 if (_row.nodeType === row.nodeType) { rowCount++; };
             };
             elements['row'] = rowCount;
@@ -2095,8 +2119,9 @@ var _getSection = function(table, name) {
  * Add a row before or after the current selection, whether it's in the header or body.
  * For rows, AFTER = below; otherwise above.
  */
-MU.addRow = function(direction) {
+MU.addRow = function(direction, undoable=true) {
     MU.backupRange();
+    var addedRow = false;
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
@@ -2124,46 +2149,56 @@ MU.addRow = function(direction) {
                 if (body) {
                     var firstRow = body.children[0];
                     body.insertBefore(newRow, firstRow);
+                    addedRow = true;
                 }
             } else {
                 // The body doesn't exist because rows === 0
                 // Create it and put the new row in it
                 var body = document.createElement('tbody');
-                body.appendChild(tr);
+                body.appendChild(newRow);
                 table.appendChild(body)
+                addedRow = true;
             }
         }
     } else if (tbody) {
         if (direction === 'AFTER') {
             // We are in the body, so tr is the selected row
-            // If tr.nextSibling is null, newRow will be inserted
+            // If tr.nextElementSibling is null, newRow will be inserted
             // after tr.
-            tbody.insertBefore(newRow, tr.nextSibling);
+            tbody.insertBefore(newRow, tr.nextElementSibling);
         } else {
             tbody.insertBefore(newRow, tr)
         }
+        addedRow = true;
     } else {
         _consoleLog("Could not add row");
     }
     MU.restoreRange();
+    // Track row addition on the undo stack if necessary.
+    if (undoable && addedRow) {
+        const undoerData = _undoerData('addRow', newRow);
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
     _callback('input');
 };
 
 /**
  * Add a col before or after the current selection, whether it's in the header or body.
  */
-MU.addCol = function(direction) {
+MU.addCol = function(direction, undoable=true) {
     MU.backupRange();
+    var addedCol = false;
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
     var table = tableElements['table'];
+    var row = tableElements['row'];
     var col = tableElements['col'];
     var cols = tableElements['cols'];
     var tbody = tableElements['tbody'];
     var thead = tableElements['thead'];
     var colspan = tableElements['colspan'];
-    var tr, td, th;
     if (tbody || (thead && !colspan)) {
         // We have selected the body of the table or the header.
         // In the case of selecting the header, it is a non-colspan header,
@@ -2173,41 +2208,50 @@ MU.addCol = function(direction) {
         if (body) {
             var rows = body.children;       // Only tr elements
             for (let j=0; j<rows.length; j++) {
-                tr = rows[j];
-                td = tr.children[col];  // Only td elements
+                let tr = rows[j];
+                let td = tr.children[col];  // Only td elements
                 // Then insert a new td before or after
-                var newTd = document.createElement('td');
+                let newTd = document.createElement('td');
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
-                    tr.insertBefore(newTd, td.nextSibling);
+                    tr.insertBefore(newTd, td.nextElementSibling);
                 } else {
                     tr.insertBefore(newTd, td);
                 }
-            }
+            };
+            addedCol = true;
         };
         var header = _getSection(table, 'THEAD');
         if (header) {
             // If the header exists for this table, we need to expand it, too.
-            tr = header.children[0];    // Only tr elements
-            th = tr.children[0];
+            let tr = header.children[0];    // Only tr elements
+            let th = tr.children[0];
             if (colspan) {
                 th.setAttribute('colspan', cols+1)
             } else {
                 th = tr.children[col];           // Only th elements
                 // Then insert a new td before or after
-                var newTh = document.createElement('th');
+                let newTh = document.createElement('th');
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
-                    th.insertBefore(newTh, th.nextSibling);
+                    th.insertBefore(newTh, th.nextElementSibling);
                 } else {
                     th.insertBefore(newTh, th);
                 }
+                addedCol = true;
             }
         }
     }
     MU.restoreRange();
+    // Track col addition on the undo stack if necessary.
+    if (undoable && addedCol) {
+        _consoleLog("row: " + row + ", col: " + col + ", inHeader: " + (thead != null))
+        const undoerData = _undoerData('addCol', {row: row, col: col, inHeader: (thead != null)});
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    }
     _callback('input');
 }
 
@@ -2240,7 +2284,7 @@ MU.addHeader = function(colspan) {
     _callback('input');
 }
 
-MU.deleteRow = function() {
+MU.deleteRow = function(undoable=true) {
     MU.backupRange();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
@@ -2250,6 +2294,9 @@ MU.deleteRow = function() {
     var thead = tableElements['thead'];
     var tbody = tableElements['tbody'];
     var tr = tableElements['tr'];
+    const outerHTML = table.outerHTML;
+    const row = tableElements['row'];
+    const col = tableElements['col'];
     var newTr;
     if (thead) {
         // We are going to delete the header,
@@ -2257,20 +2304,20 @@ MU.deleteRow = function() {
         // for selection after deleting
         var body = _getSection(table, 'TBODY');
         if (body) {
-            newTr = body.firstChild;
+            newTr = body.firstElementChild;
         }
     } else if (tbody) {
         // We are going to delete a body row,
         // So we will choose the nextSib if there is one,
         // or prevSib if not, or even the header if we have to
         // for selection after deleting
-        if (tr.nextSibling) {
-            newTr = tr.nextSibling;
-        } else if (tr.previousSibling) {
-            newTr = tr.previousSibling;
+        if (tr.nextElementSibling) {
+            newTr = tr.nextElementSibling;
+        } else if (tr.previousElementSibling) {
+            newTr = tr.previousElementSibling;
         } else if (_getSection(table, 'THEAD')) {
             var header = _getSection(table, 'THEAD');
-            newTr = header.firstChild;
+            newTr = header.firstElementChild;
         }
     }
     var sel = document.getSelection();
@@ -2278,14 +2325,24 @@ MU.deleteRow = function() {
         // There is a row left, so we will do the remove and select the first element of the newTr
         tr.parentNode.removeChild(tr);
         _selectCol(newTr, 0)
+        if (undoable) {
+            const undoerData = _undoerData('deleteRow', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange();
+        };
     } else {
         // We just removed everything in the table, so let's just get rid of it.
         _deleteAndResetSelection(table);
+        if (undoable) {
+            const undoerData = _undoerData('deleteTable', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange();
+        };
     }
     _callback('input');
 }
 
-MU.deleteCol = function() {
+MU.deleteCol = function(undoable=true) {
     MU.backupRange();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
@@ -2298,6 +2355,8 @@ MU.deleteCol = function() {
     var cols = tableElements['cols'];
     var col = tableElements['col'];
     var colspan = tableElements['colspan'];
+    const outerHTML = table.outerHTML;
+    const row = tableElements['row'];
     var newCol;
     if ((tbody || (thead && !colspan)) && cols > 1) {
         // newCol identifies the column to select in newTr after deleting
@@ -2313,6 +2372,11 @@ MU.deleteCol = function() {
     } else if (cols === 1) {
         // We are deleting the last column of the table
         _deleteAndResetSelection(table);
+        if (undoable) {
+            const undoerData = _undoerData('deleteTable', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
+            undoer.push(undoerData, MU.editor);
+            MU.restoreRange();
+        };
         _callback('input');
         return;
     }
@@ -2341,6 +2405,11 @@ MU.deleteCol = function() {
     }
     // Then, since newTr still exists, select the newCol child in it
     _selectCol(newTr, newCol);
+    if (undoable) {
+        const undoerData = _undoerData('deleteCol', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
+        undoer.push(undoerData, MU.editor);
+        MU.restoreRange();
+    };
     _callback('input');
 }
 
@@ -2356,15 +2425,23 @@ const _selectCol = function(tr, col) {
         const cellNode = cell.firstChild;
         if (cellNode) {
             if (cellNode.nodeType === Node.TEXT_NODE) {
+                _consoleLog("A")
                 range.setStart(cellNode, 0);
                 range.setEnd(cellNode, 0);
             } else {
+                _consoleLog("B")
                 range.selectNode(cellNode);
             };
-            sel.removeAllRanges();
-            sel.addRange(range);
-            MU.backupRange();
+        } else {
+            _consoleLog("C")
+            let br = document.createElement('br');
+            cell.appendChild(br);
+            range.selectNode(br);
+            _consoleLog("D")
         };
+        sel.removeAllRanges();
+        sel.addRange(range);
+        MU.backupRange();
     };
 };
 
@@ -2374,9 +2451,9 @@ const _selectCol = function(tr, col) {
  * Used after doInsertTable to restore the selection to the same row/col it
  * started it, but will be at the beginning of the first child in it.
  */
-const _restoreSelection = function(table, row, col, thead) {
+const _restoreSelection = function(table, row, col, inHeader) {
     var tr;
-    if (thead) {
+    if (inHeader) {
         const header = _getSection(table, 'THEAD');
         tr = header.children[0];
     } else {
@@ -2387,7 +2464,7 @@ const _restoreSelection = function(table, row, col, thead) {
 }
 
 /**
- * Do the insertTable operation following a deleteTable operation
+ * Do the insertTable operation following a deleteTable operation.
  * Used to undo the deleteTable operation and to do the insertTable operation.
  */
 const _doInsertTable = function(undoerData) {
@@ -2414,13 +2491,13 @@ const _doInsertTable = function(undoerData) {
     // onto the new range.
     const table = _getFirstChildWithNameWithin(newRange.endContainer, 'TABLE');
     if (table) {
-        _restoreSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.thead)
+        _restoreSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.inHeader)
         undoerData.range = document.getSelection().getRangeAt(0).cloneRange();
     }
 }
 
 /**
- * Do the deleteTable operation following an insertTable operation
+ * Do the deleteTable operation following an insertTable operation.
  * Used to undo the insertTable operation and to do the deleteTable operation.
  */
 const _doDeleteTable = function(undoerData) {
@@ -2435,6 +2512,46 @@ const _doDeleteTable = function(undoerData) {
     MU.deleteTable(false);
 }
 
+/**
+ * Do the addRow operation following a deleteRow operation.
+ */
+const _doAddRow = function(undoerData) {
+    _consoleLog("_doAddRow");
+}
+
+/**
+ * Do the deleteRow operation following an addRow operation.
+ */
+const _doDeleteRow = function(undoerData) {
+    // The undoerData holds the row that was added in.
+    _selectCol(undoerData.data, 0);
+    MU.deleteRow(false);
+}
+
+/**
+ * Do the addCol operation following a deleteCol operation.
+ */
+const _doAddCol = function(undoerData) {
+    _consoleLog("_doAddCol");
+}
+
+/**
+ * Do the deleteCol operation following an addCol operation.
+ */
+const _doDeleteCol = function(undoerData) {
+    // First, restore the selection that was in place when the column was added
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(undoerData.range);
+    MU.backupRange();
+    const tableElements = _getTableElementsAtSelection();
+    const table = tableElements['table'];
+    if (table) {
+        _consoleLog("undoerData.data.row: " + undoerData.data.row + ", undoerData.data.col: " + undoerData.data.col)
+        _restoreSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.inHeader)
+        MU.deleteCol(false);
+    }
+}
 
 //MARK:- Common private functions
 
