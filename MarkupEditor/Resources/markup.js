@@ -1437,7 +1437,7 @@ var _doubleClickSelect = function(sel, selNode) {
 
 var _tripleClickSelect = function(sel) {
     // Find the node that should be selected in full, and then select it
-    var nodeToSelect = _firstSelectionNodeMatching(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL']);
+    var nodeToSelect = _firstSelectionNodeMatching(_blockTags());
     if (nodeToSelect) {
         var elementRange = document.createRange();
         if (nodeToSelect.firstChild.nodeType === Node.TEXT_NODE) {
@@ -1533,6 +1533,13 @@ var _getSelectionState = function() {
     //}
     return state
 };
+
+/**
+ * Return the array of element tags that are block-level (i.e., contain other elements)
+ */
+const _blockTags = function() {
+    return ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL']
+}
 
 var _getSelectionStyle = function() {
     return _firstSelectionTagMatching(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
@@ -1902,6 +1909,7 @@ MU.insertTable = function(rows, cols, undoable=true) {
     if ((rows < 1) || (cols < 1)) { return };
     MU.restoreRange();
     var sel = document.getSelection();
+    var selNode = (sel) ? sel.focusNode : null;
     var range = sel.getRangeAt(0).cloneRange();
     var table = document.createElement('table');
     var tbody = document.createElement('tbody');
@@ -1916,18 +1924,15 @@ MU.insertTable = function(rows, cols, undoable=true) {
         tbody.appendChild(tr);
     };
     table.appendChild(tbody);
-    var range = sel.getRangeAt(0).cloneRange();
-    range.insertNode(table);
-    var newRange = document.createRange();
-    newRange.setStart(firstRow, 0);
-    newRange.setEnd(firstRow, 0)
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    MU.backupRange();
+    var targetNode = _findFirstParentElementInTagNames(selNode, _blockTags());
+    if (!targetNode) { return };
+    targetNode.insertAdjacentHTML('afterend', table.outerHTML);
+    // We need the new table that now exists at selection.
+    // Restore the selection to leave it at the beginning of the new table
+    table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
+    _restoreSelection(table, 0, 0, false);
     // Track table insertion on the undo stack if necessary
     if (undoable) {
-        var tableRange = document.createRange();
-        tableRange.selectNode(table);
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
         undoer.push(undoerData, MU.editor);
         MU.restoreRange();
