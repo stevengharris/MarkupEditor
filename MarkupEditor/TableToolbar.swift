@@ -22,7 +22,6 @@ public struct TableToolbar: View {
     @State private var cols: Int = 0
     @State private var addHoverLabel: Text = Text("Add")
     @State private var deleteHoverLabel: Text = Text("Delete")
-
     
     public var body: some View {
         HStack(alignment: .bottom) {
@@ -97,7 +96,7 @@ public struct TableToolbar: View {
                 ) {
                     DeleteCol()
                 }
-                .disabled(!selectionState.isInTable)
+                .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
                 ToolbarImageButton(
                     action: { selectedWebView?.deleteTable() },
                     onHover: { over in deleteHoverLabel = Text(over ? "Delete Table" : "Delete") }
