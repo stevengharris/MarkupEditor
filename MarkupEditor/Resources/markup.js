@@ -213,7 +213,7 @@ class Undoer {
  * data. For example, a pasteText operation includes the Range
  * that existed when the original paste took place.
  */
-const _doOperation = function(undoerData) {
+const _redoOperation = function(undoerData) {
     // Invoked to redo the operation identified in undoerData. So, for example,
     // when operation is 'indent', we redo an indent by executing increaseQuoteLevel.
     const operation = undoerData.operation;
@@ -221,7 +221,7 @@ const _doOperation = function(undoerData) {
     const data = undoerData.data;
     switch (undoerData.operation) {
         case 'pasteText':
-            _doPasteText(range, data);
+            _redoPasteText(range, data);
             break;
         case 'format':
             MU.restoreRange();
@@ -244,22 +244,22 @@ const _doOperation = function(undoerData) {
             MU.backupRange();
             break;
         case 'insertLink':
-            _doInsertLink(undoerData);
+            _redoInsertLink(undoerData);
             break;
         case 'deleteLink':
-            _doDeleteLink(undoerData);
+            _redoDeleteLink(undoerData);
             break;
         case 'insertImage':
-            _doInsertImage(undoerData);
+            _redoInsertImage(undoerData);
             break;
         case 'modifyImage':
-            _doModifyImage(undoerData);
+            _redoModifyImage(undoerData);
             break;
         case 'insertTable':
-            _doInsertTable(undoerData);
+            _redoInsertTable(undoerData);
             break;
         case 'deleteTable':
-            _doDeleteTable(undoerData);
+            _redoDeleteTable(undoerData);
             break;
         case 'restoreTable':
             _restoreTable(undoerData);
@@ -300,22 +300,22 @@ const _undoOperation = function(undoerData) {
             MU.backupRange();
             break;
         case 'insertLink':
-            _doDeleteLink(undoerData);
+            _redoDeleteLink(undoerData);
             break;
         case 'deleteLink':
-            _doInsertLink(undoerData);
+            _redoInsertLink(undoerData);
             break;
         case 'insertImage':
-            _doModifyImage(undoerData);
+            _redoModifyImage(undoerData);
             break;
         case 'modifyImage':
-            _doInsertImage(undoerData);
+            _redoInsertImage(undoerData);
             break;
         case 'insertTable':
-            _doDeleteTable(undoerData);
+            _redoDeleteTable(undoerData);
             break;
         case 'deleteTable':
-            _doInsertTable(undoerData);
+            _redoInsertTable(undoerData);
             break;
         case 'restoreTable':
             _restoreTable(undoerData);
@@ -382,9 +382,14 @@ const _backupUndoerRange = function(undoerData) {
 };
 
 /**
- * The undoer is the singleton that handles undo/redo
+ * The undoer is the singleton that handles undo/redo.
+ * The _undoOperation/_redoOperation are the functions we
+ * call to perform undo and redo, passing the undoerData
+ * which includes the operation name, data specific to the
+ * operation, as well as a range that might be needed to
+ * perform the operation.
  */
-const undoer = new Undoer(_undoOperation, _doOperation, null);
+const undoer = new Undoer(_undoOperation, _redoOperation, null);
 
 /**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
@@ -642,10 +647,10 @@ MU.editor.addEventListener('paste', function(e) {
     }
     const undoerData = _undoerData('pasteText', pastedText);
     undoer.push(undoerData, MU.editor);
-    _doOperation(undoerData);
+    _redoOperation(undoerData);
 });
 
-const _doPasteText = function(range, data) {
+const _redoPasteText = function(range, data) {
     // Paste the undoerData.data text after the range.endOffset or range.endContainer
     // TODO: Handle non-collapsed ranges
     let originalText = range.endContainer.textContent;
@@ -1689,7 +1694,7 @@ var _getLinkAttributesAtSelection = function() {
  * Do the insertLink operation following a deleteLink operation
  * Used to undo the deleteLink operation and to do the insertLink operation.
  */
-const _doInsertLink = function(undoerData) {
+const _redoInsertLink = function(undoerData) {
     // Reset the selection based on the range after the link was removed,
     // then insert the link at that range. After the link is re-inserted,
     // the insertLink operation leaves the selection properly set,
@@ -1704,7 +1709,7 @@ const _doInsertLink = function(undoerData) {
  * Do the deleteLink operation following an insertLink operation
  * Used to undo the insertLink operation and to do the deleteLink operation.
  */
-const _doDeleteLink = function(undoerData) {
+const _redoDeleteLink = function(undoerData) {
     // Reset the selection based on the range after insert was done,
     // then remove the link at that range. When the link is re-removed,
     // the deleteLink operation leaves the selection properly set,
@@ -1866,7 +1871,7 @@ var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
  * Do the insertImage operation following a modifyImage operation
  * Used to undo the modifyImage/remove operation and to do the insertImage operation.
  */
-const _doInsertImage = function(undoerData) {
+const _redoInsertImage = function(undoerData) {
     // Reset the selection based on the range after the image was removed,
     // then insert the image at that range. After the image is re-inserted,
     // the insertImage operation leaves the selection properly set to keep
@@ -1884,7 +1889,7 @@ const _doInsertImage = function(undoerData) {
  * Do the modifyImage operation following an insertImage operation
  * Used to undo the insertImage operation and to do the modifyImage/remove operation.
  */
-const _doModifyImage = function(undoerData) {
+const _redoModifyImage = function(undoerData) {
     // The undoerData has the range to select to remove the image;
     // iow, the image exists when modifyImage is called.
     // Once the image is removed, the selection is set properly, and
@@ -2475,7 +2480,7 @@ const _restoreSelection = function(table, row, col, inHeader) {
  * Do the insertTable operation following a deleteTable operation.
  * Used to undo the deleteTable operation and to do the insertTable operation.
  */
-const _doInsertTable = function(undoerData) {
+const _redoInsertTable = function(undoerData) {
     // Reset the selection based on the range after the table was removed,
     // then insert the table at that range. The original table's outerHTML
     // is held in the undoerData.data.outerHTML along with the row and col of
@@ -2505,7 +2510,7 @@ const _doInsertTable = function(undoerData) {
  * Do the deleteTable operation following an insertTable operation.
  * Used to undo the insertTable operation and to do the deleteTable operation.
  */
-const _doDeleteTable = function(undoerData) {
+const _redoDeleteTable = function(undoerData) {
     // The undoerData has the range to select to remove the table;
     // iow, the table exists when deleteTable is called. Leave the
     // undoerData.range set to the selection after deleting the table.
@@ -2540,8 +2545,8 @@ const _restoreTable = function(undoerData) {
     const row = tableElements['row'];
     const col = tableElements['col'];
     const inHeader = tableElements['thead'] != null
-    _doDeleteTable(undoerData);
-    _doInsertTable(undoerData);
+    _redoDeleteTable(undoerData);
+    _redoInsertTable(undoerData);
     undoerData.data.outerHTML = outerHTML;
     undoerData.data.row = row;
     undoerData.data.col = col;
