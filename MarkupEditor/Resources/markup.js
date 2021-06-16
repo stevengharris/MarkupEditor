@@ -1,78 +1,26 @@
 /**
  * Copyright © 2021 Steven Harris. All rights reserved.
  *
- * Initial code cloned from https://github.com/YoomamaFTW/RichEditorView
- * which was itself derived from https://github.com/cbess/RichEditorView/
- * which was in turn derived from cjwirth's original at
- * https://github.com/cjwirth/RichEditorView. This is a bit of a twisty
- * maze of licenses, but in an attempt to abide by all of them, here are
- * their license statements:
- * First cjwirth's:
- 
-/**
- * Copyright (C) 2015 Wasabeef
+ * This code was inspired by the original RichEditorView by cjwirth
+ * at https://github.com/cjwirth/RichEditorView. Subsequent versions by cbess
+ * at https://github.com/cbess/RichEditorView/ and YoomamaFTW
+ * at https://github.com/YoomamaFTW/RichEditorView were also very helpful.
+ * The licenses for those repositories were Apache and BSD-3.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Code here has almost no recognizable parts from those repositories.
+ * Some of the changes from the original RichEditorView include:
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * Then, cbess's, which is BSD3:
- *
- Copyright (c) 2019, C. Bess - Soli Deo gloria - perfectGod.com Copyright (c) 2015, Caesar Wirth All rights reserved.
-
- Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
- Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
- Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/**
- * Then YoomamaFTW's, which is BSD3:
- *
- BSD 3-Clause License
-
- Copyright (c) 2015, YoomamaFTW, Caesar Wirth
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- 1. Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
-
- 2. Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
- 3. Neither the name of the copyright holder nor the names of its
-    contributors may be used to endorse or promote products derived from
-    this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 1. Replacement of all execCommand usage, with the exception of very narrow
+ *      usage to support undo/redo.
+ * 2. Use of window.webkit.messageHandlers for all callbacks to Swift.
+ * 3. Use of selectionState to capture the state of document.getSelection()
+ *      for usage on the Swift side.
+ * 4. Extensive use of event listeners to call back into Swift when things
+ *      happen on the Javascript side, avoiding round-trips.
+ * 5. Proper support for undo/redo, which previously was handled by the browser
+ *      when using execCommand.
+ * 6. Full support inserting, removing, and modifying links, images, and tables,
+ *      including undo/redo operations.
  */
 
 'use strict';
@@ -86,13 +34,15 @@ MU.editor = document.getElementById('editor');
 
 /*
  * The Undoer class below was adopted with minor changes from https://github.com/samthor/undoer
- * under the Apache 2.0 license found at https://github.com/samthor/undoer/blob/dad5b30c2667579667b883e246cad77711daaff7/LICENSE.
+ * under the Apache 2.0 license found
+ * at https://github.com/samthor/undoer/blob/dad5b30c2667579667b883e246cad77711daaff7/LICENSE.
  */
 class Undoer {
     
     /**
      * @template T
-     * @param {function(T)} callback to call when undo/redo occurs
+     * @param {function(T)} callback to call when undo occurs
+     * @param {function(T)} callback to call when redo occurs
      * @param {T=} zero the zero state for undoing everything
      */
     constructor(undoCallback, redoCallback, zero=null) {
@@ -161,7 +111,6 @@ class Undoer {
     
     /**
      * @return {T} the current data
-     * @export
      */
     get data() {
         return this._stack[this._depth];
@@ -172,7 +121,6 @@ class Undoer {
      *
      * @param {T} data the data for this undo event
      * @param {!Node=} parent to add to, uses document.body by default
-     * @export
      */
     push(data, parent) {
         // nb. We can't remove this later: the only case we could is if the user undoes everything
@@ -191,7 +139,7 @@ class Undoer {
         this._stack.splice(nextID, this._stack.length - nextID, data);
 
         const previousFocus = document.activeElement;
-        MU.backupRange();   // Otherwise, when we refocus, it won't be set right
+        _backupSelection();   // Otherwise, when we refocus, it won't be set right
         try {
             this._duringUpdate = true;
             this._ctrl.style.visibility = null;
@@ -207,71 +155,36 @@ class Undoer {
 };
 
 /**
- * Create the undoer and the callbacks
- * The data is created at undoer.push time and consists of an
- * operation name key followed by a Range and some operation-specific
- * data. For example, a pasteText operation includes the Range
- * that existed when the original paste took place.
+ * Return the populated undoerData object held on the Undoer._stack.
+ * If range is not passed-in, then populate range from document.getSelection().
+ *
+ * @param {String}      operation   The name of the operation that was performed (e.g., 'paste').
+ * @param {Object}      data        The object with data specific to operation for undo/redo.
+ * @param {HTML Range}  range       A range that can be used during the undo/redo if current selection is inadequate.
+ * @return {Object}                 The object populated with operation, data, and range.
  */
-const _redoOperation = function(undoerData) {
-    // Invoked to redo the operation identified in undoerData. So, for example,
-    // when operation is 'indent', we redo an indent by executing increaseQuoteLevel.
-    const operation = undoerData.operation;
-    const range = undoerData.range;
-    const data = undoerData.data;
-    switch (undoerData.operation) {
-        case 'pasteText':
-            _redoPasteText(range, data);
-            break;
-        case 'format':
-            MU.restoreRange();
-            _toggleFormat(data, false);
-            MU.backupRange();
-            break;
-        case 'style':
-            MU.restoreRange();
-            MU.replaceStyle(data.oldStyle, data.newStyle, false);
-            MU.backupRange();
-            break;
-        case 'list':
-            MU.restoreRange();
-            MU.toggleListItem(data.newListType, false);
-            MU.backupRange();
-            break;
-        case 'indent':
-            MU.restoreRange();
-            MU.increaseQuoteLevel(false);
-            MU.backupRange();
-            break;
-        case 'insertLink':
-            _redoInsertLink(undoerData);
-            break;
-        case 'deleteLink':
-            _redoDeleteLink(undoerData);
-            break;
-        case 'insertImage':
-            _redoInsertImage(undoerData);
-            break;
-        case 'modifyImage':
-            _redoModifyImage(undoerData);
-            break;
-        case 'insertTable':
-            _redoInsertTable(undoerData);
-            break;
-        case 'deleteTable':
-            _redoDeleteTable(undoerData);
-            break;
-        case 'restoreTable':
-            _restoreTable(undoerData);
-            break;
-        default:
-            _consoleLog("Error: Unknown doOperation " + undoerData.operation);
+const _undoerData = function(operation, data, range=null) {
+    var undoerRange;
+    if (range) {
+        undoerRange = range;
+    } else {
+        const sel = document.getSelection();
+        undoerRange = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
+    }
+    return {
+        operation: operation,
+        range: undoerRange,
+        data: data
     };
 };
 
+/**
+ * Undo the operation identified in undoerData. So, for example,
+ * when operation is 'indent', we undo an indent by executing decreaseQuoteLevel.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
+ */
 const _undoOperation = function(undoerData) {
-    // Invoked to undo the operation identified in undoerData. So, for example,
-    // when operation is 'indent', we undo an indent by executing decreaseQuoteLevel.
     const operation = undoerData.operation;
     const range = undoerData.range;
     const data = undoerData.data;
@@ -280,24 +193,24 @@ const _undoOperation = function(undoerData) {
             _undoPasteText(range, data);
             break;
         case 'format':
-            MU.restoreRange();
+            _restoreSelection();
             _toggleFormat(data, false);
-            MU.backupRange();
+            _backupSelection();
             break;
         case 'style':
-            MU.restoreRange();
+            _restoreSelection();
             MU.replaceStyle(data.newStyle, data.oldStyle, false);
-            MU.backupRange();
+            _backupSelection();
             break;
         case 'list':
-            MU.restoreRange();
+            _restoreSelection();
             MU.toggleListItem(data.oldListType, false);
-            MU.backupRange();
+            _backupSelection();
             break;
         case 'indent':
-            MU.restoreRange();
+            _restoreSelection();
             MU.decreaseQuoteLevel(false);
-            MU.backupRange();
+            _backupSelection();
             break;
         case 'insertLink':
             _redoDeleteLink(undoerData);
@@ -326,58 +239,62 @@ const _undoOperation = function(undoerData) {
 };
 
 /**
- * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
- * event to be triggered from the toolbar. Note that the _undoOperation gets called when it has
- * been placed in the stack with undoer.push (for example, for formatting or pasting)
+ * Redo the operation identified in undoerData. So, for example,
+ * when operation is 'indent', we redo an indent by executing increaseQuoteLevel.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
-MU.undo = function() {
-    document.execCommand('undo', false, null);
-};
-
-MU.redo = function() {
-    document.execCommand('redo', false, null);
-};
-
-/**
- * Return the populated undoerData held on the Undoer._stack
- * If range is not passed-in, then populate range from document.getSelection()
- */
-const _undoerData = function(operation, data, range=null) {
-    var undoerRange;
-    if (range) {
-        undoerRange = range;
-    } else {
-        const sel = document.getSelection();
-        undoerRange = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
-    }
-    const undoData = {
-        operation: operation,
-        range: undoerRange,
-        data: data
-    }
-    return undoData;
-};
-
-/**
- * Restore the selection to the range held in undoerData.
- * Note that caller has to MU.backupRange independently if needed.
- */
-const _restoreUndoerRange = function(undoerData) {
+const _redoOperation = function(undoerData) {
+    const operation = undoerData.operation;
     const range = undoerData.range;
-    if (range) {
-        var sel = document.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-    };
-};
-
-/**
- * Backup the current selection into the undoerData.range
- */
-const _backupUndoerRange = function(undoerData) {
-    const sel = document.getSelection();
-    if (sel && (sel.rangeCount > 0)) {
-        undoerData.range = sel.getRangeAt(0).cloneRange();
+    const data = undoerData.data;
+    switch (undoerData.operation) {
+        case 'pasteText':
+            _redoPasteText(range, data);
+            break;
+        case 'format':
+            _restoreSelection();
+            _toggleFormat(data, false);
+            _backupSelection();
+            break;
+        case 'style':
+            _restoreSelection();
+            MU.replaceStyle(data.oldStyle, data.newStyle, false);
+            _backupSelection();
+            break;
+        case 'list':
+            _restoreSelection();
+            MU.toggleListItem(data.newListType, false);
+            _backupSelection();
+            break;
+        case 'indent':
+            _restoreSelection();
+            MU.increaseQuoteLevel(false);
+            _backupSelection();
+            break;
+        case 'insertLink':
+            _redoInsertLink(undoerData);
+            break;
+        case 'deleteLink':
+            _redoDeleteLink(undoerData);
+            break;
+        case 'insertImage':
+            _redoInsertImage(undoerData);
+            break;
+        case 'modifyImage':
+            _redoModifyImage(undoerData);
+            break;
+        case 'insertTable':
+            _redoInsertTable(undoerData);
+            break;
+        case 'deleteTable':
+            _redoDeleteTable(undoerData);
+            break;
+        case 'restoreTable':
+            _restoreTable(undoerData);
+            break;
+        default:
+            _consoleLog("Error: Unknown redoOperation " + undoerData.operation);
     };
 };
 
@@ -392,119 +309,73 @@ const _backupUndoerRange = function(undoerData) {
 const undoer = new Undoer(_undoOperation, _redoOperation, null);
 
 /**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _undoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.undo = function() {
+    document.execCommand('undo', false, null);
+};
+
+/**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _redoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.redo = function() {
+    document.execCommand('redo', false, null);
+};
+
+/**
+ * Restore the selection to the range held in undoerData.
+ * Note that caller has to call _backupSelection independently if needed.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
+ */
+const _restoreUndoerRange = function(undoerData) {
+    const range = undoerData.range;
+    if (range) {
+        var sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    };
+};
+
+/**
+ * Backup the current selection into the undoerData.range.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
+ */
+const _backupUndoerRange = function(undoerData) {
+    const sel = document.getSelection();
+    if (sel && (sel.rangeCount > 0)) {
+        undoerData.range = sel.getRangeAt(0).cloneRange();
+    };
+};
+
+/**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
  */
 window.onload = function() {
     _callback('ready');
 };
 
-
-/// Call back into Swift
-/// The message is handled by the WKScriptMessageHandler.
-/// In our case, the WKScriptMessageHandler is the MarkupCoordinator,
-/// and the userContentController(_ userContentController:didReceive:)
-/// function receives message as a WKScriptMessage.
-var _callback = function(message) {
+/**
+ * Callback into Swift.
+ * The message is handled by the WKScriptMessageHandler.
+ * In our case, the WKScriptMessageHandler is the MarkupCoordinator,
+ * and the userContentController(_ userContentController:didReceive:)
+ * function receives message as a WKScriptMessage.
+ *
+ * @param {String} message     The message, which might be a JSONified string
+ */
+const _callback = function(message) {
     window.webkit.messageHandlers.markup.postMessage(message);
-}
-
-/// Returns the cursor position relative to its current position onscreen.
-/// Can be negative if it is above what is visible
-MU.getRelativeCaretYPosition = function() {
-    var y = 0;
-    var sel = document.getSelection();
-    if (sel.rangeCount) {
-        var range = sel.getRangeAt(0);
-        var needsWorkAround = (range.startOffset == 0)
-        /* Removing fixes bug when node name other than 'div' */
-        // && range.startContainer.nodeName.toLowerCase() == 'div');
-        if (needsWorkAround) {
-            y = range.startContainer.offsetTop - window.pageYOffset;
-        } else {
-            if (range.getClientRects) {
-                var rects = range.getClientRects();
-                if (rects.length > 0) {
-                    y = rects[0].top;
-                }
-            }
-        }
-    }
-
-    return y;
 };
 
-/// Looks specifically for a Range selection and not a Caret selection
-MU.rangeSelectionExists = function() {
-    //!! coerces a null to bool
-    var sel = document.getSelection();
-    if (sel && sel.type == 'Range') {
-        return true;
-    }
-    return false;
-};
-
-/// Return the first tag the selection is inside of
-MU.selectionTag = function() {
-    var sel = document.getSelection();
-    if (sel) {
-        if (sel.type === 'None') {
-            return '';
-        } else {    // sel.type will be Caret or Range
-            var focusNode = sel.focusNode;
-            if (focusNode) {
-                var selElement = focusNode.parentElement;
-                if (selElement) {
-                    return selElement.tagName;
-                }
-            }
-        }
-    }
-    return '';
-};
-
-/// Return the first tag contained in matchNames that the selection is inside of, without encountering one in excludeNames
-var _firstSelectionTagMatching = function(matchNames, excludeNames) {
-    var matchingNode = _firstSelectionNodeMatching(matchNames, excludeNames);
-    if (matchingNode) {
-        return matchingNode.tagName;
-    } else {
-        return '';
-    }
-};
-
-/// Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames
-var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
-    var sel = document.getSelection();
-    if (sel) {
-        var focusNode = sel.focusNode
-        if (focusNode) {
-            var selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
-            if (selElement) {
-                return selElement;
-            }
-        }
-    }
-    return null;
-};
-
-/// Return the all tags in tagNames that the selection is inside of
-var _selectionTagsMatching = function(tagNames) {
-    var sel = document.getSelection();
-    var tags = [];
-    if (sel) {
-        var focusNode = sel.focusNode;
-        while (focusNode) {
-            var selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
-            if (selElement) {
-                tags.push(selElement.tagName);
-            }
-            focusNode = focusNode.parentNode;
-        }
-    }
-    return tags;
-};
-
-//MARK:- Event listeners
+/**
+ * Event Listeners
+ */
 
 /**
  * The selectionChange callback is expensive on the Swift side, because it
@@ -527,17 +398,23 @@ var _selectionTagsMatching = function(tagNames) {
  *    selectionChange callback until it matters.
  *
  */
-var mouseDown = false;
-var _muteChanges = false;
-var muteChanges = function() { _setMuteChanges(true) };
-var unmuteChanges = function() { _setMuteChanges(false) };
-var _setMuteChanges = function(bool) { _muteChanges = bool };
+let mouseDown = false;
+let _muteChanges = false;
+const muteChanges = function() { _setMuteChanges(true) };
+const unmuteChanges = function() { _setMuteChanges(false) };
+const _setMuteChanges = function(bool) { _muteChanges = bool };
 
+/**
+ * Track when mouse is down, unmute to broadcase selectionChange unless mousemove happens.
+ */
 MU.editor.addEventListener('mousedown', function() {
     mouseDown = true;
     unmuteChanges();
 });
 
+/**
+ * Mute selectionChange when mousedown has happened and the mouse is moving.
+ */
 MU.editor.addEventListener('mousemove', function() {
     if (mouseDown) {
         muteChanges();
@@ -546,6 +423,9 @@ MU.editor.addEventListener('mousemove', function() {
     };
 });
 
+/**
+ * Unmute selectionChange on mouseup.
+ */
 MU.editor.addEventListener('mouseup', function() {
     // TODO:- I don't think this is needed so have commented it out.
     //if (moving && mouseDown) { _callback('selectionChange') };
@@ -553,70 +433,68 @@ MU.editor.addEventListener('mouseup', function() {
     unmuteChanges();
 });
 
+/**
+ * Let Swift know the selection has changed so it can getSelectionState.
+ * The eventListener has to be done at the document level, not MU.editor.
+ */
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
         _callback('selectionChange');
-    //} else {
-    //    _consoleLog("selection muted");
     }
 });
-
-var _selectionString = function() {
-    var sel = document.getSelection();
-    var range = sel.getRangeAt(0).cloneRange();
-    var sc = range.startContainer;
-    var so = range.startOffset;
-    var ec = range.endContainer;
-    var eo = range.endOffset;
-    return 'start: "' + sc.textContent + '" at ' + so + ', end: "' + ec.textContent + '" at ' + eo
-}
 
 MU.editor.addEventListener('input', function() {
     //_consoleLog("input>backupRange");
-    MU.backupRange();
+    _backupSelection();
     _callback('input');
 });
 
-var _muteFocusBlur = false;
-var muteFocusBlur = function() { _setMuteFocusBlur(true) };
-var unmuteFocusBlur = function() { _setMuteFocusBlur(false) };
-var _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
+/**
+ * A blur/focus cycle occurs when the undoer is used, but we don't want that to
+ * be noticable by the MarkupEditor in Swift. We use mute/unmute to track the
+ * whether the focus and blur callbacks should be made, as determined in the Undoer.
+ */
+let _muteFocusBlur = false;
+const muteFocusBlur = function() { _setMuteFocusBlur(true) };
+const unmuteFocusBlur = function() { _setMuteFocusBlur(false) };
+const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
 
+/**
+ * Restore the range captured on blur and then let Swift know focus happened.
+ */
 MU.editor.addEventListener('focus', function(e) {
-    // A blur/focus cycle occurs when the undoer is used, but we don't want that to
-    // be noticable by the MarkupEditor in Swift.
-    //_consoleLog("focus>restoreRange");
     if (!_muteFocusBlur) {
-        MU.restoreRange();
+        _restoreSelection();
         _callback('focus');
-    //} else {
-    //    _consoleLog(" ignored");
     }
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
-    unmuteFocusBlur();    // Always unmuteChanges when focus happens
+    unmuteFocusBlur();
     e.preventDefault();
     MU.editor.focus({preventScroll:true})
 });
 
+/**
+ * Capture the current selection using backupRange and then let Swift know blur happened.
+ * The blur during the undoer.push operation will always be followed by a focus, where
+ * _muteFocusBlur will be reset.
+ */
 MU.editor.addEventListener('blur', function() {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
-    // be noticable by the MarkupEditor in Swift. The blur during the undoer.push
-    // operation will always be followed by a focus, where _muteFocusBlur will be
-    // reset.
+    // be noticable by the MarkupEditor in Swift.
     if (!_muteFocusBlur) {
-        //_consoleLog("blur>backupRange");
-        MU.backupRange();
+        _backupSelection();
         _callback('blur');
-    //} else {
-    //    _consoleLog(" ignored")
     }
 });
 
+/**
+ * Notify Swift on single-click (e.g., for following links)
+ * Handle the case of multiple clicks being received without
+ * doing selection.
+ * TODO - Maybe remove the _multiClickSelect call
+ */
 MU.editor.addEventListener('click', function(event) {
-    // Notify on single-click (e.g., for following links)
-    // Handle the case of multiple clicks being received without
-    // doing selection
     let nclicks = event.detail;
     if (nclicks === 1) {
         _callback('click');
@@ -625,6 +503,10 @@ MU.editor.addEventListener('click', function(event) {
     }
 });
 
+/**
+ * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
+ * Clean up formatting if needed.
+ */
 MU.editor.addEventListener('keyup', function(event) {
     const key = event.key;
     if ((key === 'Backspace') || (key === 'Delete')) {
@@ -637,138 +519,123 @@ MU.editor.addEventListener('keyup', function(event) {
     };
 });
 
-//MARK:- Paste
-
+/**
+ * Do a custom paste operation to avoid polluting the document with arbitrary HTML
+ */
 MU.editor.addEventListener('paste', function(e) {
-    e.preventDefault();
-    var pastedText = undefined;
-    if (e.clipboardData && e.clipboardData.getData) {
-        pastedText = e.clipboardData.getData('text/plain');
-    }
-    const undoerData = _undoerData('pasteText', pastedText);
-    undoer.push(undoerData, MU.editor);
-    _redoOperation(undoerData);
+   e.preventDefault();
+   let pastedText = undefined;
+   if (e.clipboardData && e.clipboardData.getData) {
+       pastedText = e.clipboardData.getData('text/plain');
+   };
+   const undoerData = _undoerData('pasteText', pastedText);
+   undoer.push(undoerData, MU.editor);
+   _redoOperation(undoerData);
 });
 
+/**
+ * Paste
+ */
+
+/**
+ * Do or redo the paste operation
+ */
 const _redoPasteText = function(range, data) {
     // Paste the undoerData.data text after the range.endOffset or range.endContainer
     // TODO: Handle non-collapsed ranges
-    let originalText = range.endContainer.textContent;
-    let newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
+    const originalText = range.endContainer.textContent;
+    const newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
     range.endContainer.textContent = newText;
-    let newRange = document.createRange();
+    const newRange = document.createRange();
     newRange.setStart(range.endContainer, range.endOffset + data.length);
     newRange.setEnd(range.endContainer, range.endOffset + data.length);
-    let selection = document.getSelection();
+    const selection = document.getSelection();
     selection.removeAllRanges();
     selection.addRange(newRange);
     _callback('input');
-}
+};
 
+/**
+ * Undo the paste operation after it was done via _redoPasteText
+ */
 const _undoPasteText = function(range, data) {
     // The pasted text data was placed after the range.endOffset in endContainer
     // Make sure it's still there and if so, remove it, leaving the selection
     // TODO: Handle non-collapsed ranges
-    let textContent = range.endContainer.textContent;
-    let existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
+    const textContent = range.endContainer.textContent;
+    const existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
     if (existingText === data) {
-        let startText = textContent.slice(0, range.endOffset);
-        let endText = textContent.slice(range.endOffset + data.length);
+        const startText = textContent.slice(0, range.endOffset);
+        const endText = textContent.slice(range.endOffset + data.length);
         range.endContainer.textContent = startText + endText;
-        let newRange = document.createRange();
+        const newRange = document.createRange();
         newRange.setStart(range.endContainer, range.endOffset);
         newRange.setEnd(range.endContainer, range.endOffset);
-        let selection = document.getSelection();
+        const selection = document.getSelection();
         selection.removeAllRanges();
         selection.addRange(newRange);
         _callback('input');
     } else {
         _consoleLog('undo pasteText mismatch: ' + existingText);
-    }
-}
-
-//MARK:- Callbacks
-
-MU.customAction = function(action) {
-    let messageDict = {
-        'messageType' : 'action',
-        'action' : action
-    }
-    var message = JSON.stringify(messageDict);
-    _callback(message);
+    };
 };
 
-MU.updateHeight = function() {
-    _callback('updateHeight');
-};
+/**
+ * Getting and setting document contents
+ */
 
-var _consoleLog = function(string) {
-    let messageDict = {
-        'messageType' : 'log',
-        'log' : string
-    }
-    var message = JSON.stringify(messageDict);
-    _callback(message);
-};
-
+/**
+ * Clean out the MU.editor and replace it with an empty paragraph
+ */
 MU.emptyDocument = function() {
     while (MU.editor.firstChild) {
         MU.editor.removeChild(MU.editor.firstChild);
     };
-    var p = document.createElement('p');
+    const p = document.createElement('p');
     p.appendChild(document.createElement('br'));
     MU.editor.appendChild(p);
-    var sel = document.getSelection();
-    var range = document.createRange();
+    const sel = document.getSelection();
+    const range = document.createRange();
     muteChanges();
     range.setStart(p, 1);
     range.setEnd(p, 1);
     sel.removeAllRanges();
     unmuteChanges();
     sel.addRange(range);
-    //_consoleLog("emptyDocument>backupRange");
-    MU.backupRange();
+    _backupSelection();
 }
 
 /**
  * Set the contents of the editor element
+ *
  * @param {String} contents The HTML for the editor element
  */
 MU.setHTML = function(contents) {
-    var tempWrapper = document.createElement('div');
+    const tempWrapper = document.createElement('div');
     tempWrapper.innerHTML = contents;
-    var images = tempWrapper.querySelectorAll('img');
+    const images = tempWrapper.querySelectorAll('img');
     for (var i = 0; i < images.length; i++) {
-        images[i].onload = MU.updateHeight;
+        images[i].onload = function() { _callback('updateHeight') };
     }
     MU.editor.innerHTML = tempWrapper.innerHTML;
     _initializeRange()
 };
 
 /**
- * Gets the contents of the editor element
- * @return {String} The HTML for the editor element
+ * Get the contents of the editor element
+ *
+ * @return {string} The HTML for the editor element
  */
 MU.getHTML = function() {
     return MU.editor.innerHTML;
 };
 
-MU.setFontSize = function(size) {
-    MU.editor.style.fontSize = size;
-};
-
-MU.setBackgroundColor = function(color) {
-    MU.editor.style.backgroundColor = color;
-};
-
-MU.setHeight = function(size) {
-    MU.editor.style.height = size;
-};
-
-//MARK:- Formatting
-// Note:
-// 1. Formats (B, I, U, DEL, SUB, SUP) are toggled off and on
-// 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
+/**
+ * Formatting
+ * Note:
+ * 1. Formats (B, I, U, DEL, CODE, SUB, SUP) are toggled off and on
+ * 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
+ */
 
 MU.toggleBold = function() {
     _toggleFormat('b');
@@ -798,13 +665,15 @@ MU.toggleSuperscript = function() {
     _toggleFormat('sup');
 };
 
+/**
+ * Turn the format tag off and on for selection.
+ * Called directly on undo/redo so that nothing new is pushed onto the undo stack
+ */
 const _toggleFormat = function(type, undoable=true) {
-    // Turn the format tag off and on for selection
-    // Called directly on undo/redo so that nothing new is pushed onto the undo stack
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    var existingElement = _findFirstParentElementInTagNames(selNode, [type.toUpperCase()]);
+    const existingElement = _findFirstParentElementInTagNames(selNode, [type.toUpperCase()]);
     if (existingElement) {
         _unsetTag(existingElement, sel);
     } else {
@@ -817,15 +686,17 @@ const _toggleFormat = function(type, undoable=true) {
         // selected between characters in a word will toggleFormat for the word, but leave
         // the selection at the same place in that word. Also, toggleFormat when a word
         // has a range selected will leave the same range selected.
-        MU.backupRange()
+        _backupSelection()
         const undoerData = _undoerData('format', type);
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange()
+        _restoreSelection()
     }
     _callback('input');
 }
 
-//MARK:- Raw and formatted text
+/**
+ * Raw and formatted text
+ */
 
 //var _configureTurndownService = function() {
 //    var gfm = turndownPluginGfm.gfm;
@@ -860,40 +731,49 @@ const _toggleFormat = function(type, undoable=true) {
 //    return _showdownService(MU.getMarkdown());
 //};
 
+/**
+ * Return a marginally prettier version of the raw editor contents.
+ *
+ * @return {String}     A string showing the raw HTML with tags, etc.
+ */
 MU.getPrettyHTML = function() {
     //return _prettify(MU.editor.innerHTML);
     return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
 
-var _prettify = function(html) {
+const _prettify = function(html) {
     // From https://stackoverflow.com/a/60338028/8968411
-    var tab = '\t';
-    var result = '';
-    var indent= '';
-
+    const tab = '\t';
+    const result = '';
+    const indent= '';
     html.split(/>\s*</).forEach(function(element) {
         if (element.match( /^\/\w/ )) {
             indent = indent.substring(tab.length);
         }
-
         result += indent + '<' + element + '>\n\n';
-
         if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith("input")  ) {
             indent += tab;
         }
     });
-
     return result.substring(1, result.length-3);
 }
 
-//MARK:- Styling
-// 1. Styles (P, H1-H6) are applied to blocks
-// 2. Unlike formats, styles are never nested (so toggling makes no sense)
-// 3. Every block in a LogEntry should have some style
+/**
+ * Styling
+ * 1. Styles (P, H1-H6) are applied to blocks
+ * 2. Unlike formats, styles are never nested (so toggling makes no sense)
+ * 3. Every block should have some style
+ */
 
+/**
+ * Find/verify the oldStyle for the selection and replace it with newStyle.
+ * Replacement for execCommand(formatBlock).
+ *
+ * @param {String}  oldStyle    One of the styles P or H1-H6 that exists at selection.
+ * @param {String}  newStyle    One of the styles P or H1-H6 to replace oldStyle with.
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
+ */
 MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
-    // Find/verify the oldStyle for the selection and replace it with newStyle
-    // Replaces original usage of execCommand(formatBlock)
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode) { return };
@@ -906,46 +786,51 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         sel.removeAllRanges();
         sel.addRange(range);
         if (undoable) {
-            MU.backupRange();
+            _backupSelection();
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange()
+            _restoreSelection()
         }
         _callback('input');
     };
 };
 
-//MARK:- Nestables, including lists and block quotes
+/**
+ * Nestables, including lists and block quotes
+ */
 
+/**
+ * Turn the list tag off and on for selection, doing the right thing
+ * for different cases of selections.
+ * If the selection is in a list type that is different than newListTyle,
+ * we need to create a new list and make the selection appear in it.
+ *
+ * @param {String} newListType      The kind of list we want the list item to be in if we are turning it on or changing it.
+ * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
+ */
 MU.toggleListItem = function(newListType, undoable=true) {
-    // Turn the list tag off and on for selection, doing the right thing
-    // for different cases of selections.
-    // The newListType passed-in is the kind of List we want the List Item to
-    // appear in if we are turning it on or changing it. But, it might be in
-    // a list of the wrong type, in which case we need to create a new list
-    // and make the selection appear in it.
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
     // Capture the range settings for the selection
-    var range = sel.getRangeAt(0).cloneRange();
-    var oldStartContainer = range.startContainer;
-    var oldStartOffset = range.startOffset;
-    var oldEndContainer = range.endContainer;
-    var oldEndOffset = range.endOffset;
-    var selectionState = _getSelectionState();
-    var styleType = selectionState['style'];
-    var oldListType = selectionState['list'];
-    var isInListItem = selectionState['li'];
+    const range = sel.getRangeAt(0).cloneRange();
+    const oldStartContainer = range.startContainer;
+    const oldStartOffset = range.startOffset;
+    const oldEndContainer = range.endContainer;
+    const oldEndOffset = range.endOffset;
+    const selectionState = _getSelectionState();
+    const styleType = selectionState['style'];
+    const oldListType = selectionState['list'];
+    const isInListItem = selectionState['li'];
     // We will capture the newSelNode for restoring the selection along the way
-    var newSelNode = null;
+    let newSelNode = null;
     if (oldListType) {
         // TOP-LEVEL CASE: We selected something in a list
-        var listElement = _findFirstParentElementInTagNames(selNode, [oldListType]);
-        var listItemElementCount = _childrenWithTagNameCount(listElement, 'LI');
+        const listElement = _findFirstParentElementInTagNames(selNode, [oldListType]);
+        const listItemElementCount = _childrenWithTagNameCount(listElement, 'LI');
         if (isInListItem) {
             // CASE: We selected a list item inside of a list
-            var listItemElement = _findFirstParentElementInTagNames(selNode, ['LI']);
+            const listItemElement = _findFirstParentElementInTagNames(selNode, ['LI']);
             if (oldListType === newListType) {
                 // We want to toggle it off and remove the list altogether if it's empty afterward
                 // NOTE: _unsetTag resets the selection properly itself. So, we don't
@@ -970,7 +855,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
                     }
                 } else {
                     // We want to replace the existing list item with a newListType list that contains it
-                    var newListElement = document.createElement(newListType);
+                    const newListElement = document.createElement(newListType);
                     newListElement.innerHTML = listItemElement.outerHTML;
                     listItemElement.replaceWith(newListElement);
                     newSelNode = newListElement.firstChild;
@@ -978,7 +863,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
             }
         } else if (styleType) {
             // CASE: We selected a styled element in a list, but not in an LI
-            var styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
+            const styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
             if (oldListType === newListType) {
                 // We want the entire styled element to be a list item in the existing list
                 newSelNode = _replaceNodeWithListItem(styledElement);
@@ -998,7 +883,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     } else {
         // TOP-LEVEL CASE: We selected something outside of any list
         // By definition, we want to put it in a newListType list
-        var styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
+        const styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
         if (styledElement) {
             newSelNode = _replaceNodeWithList(newListType, styledElement);
         } else {
@@ -1007,7 +892,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     };
     // If we captured the newSelNode, then reset the selection based on it
     if (newSelNode) {
-        var startContainer, endContainer;
+        let startContainer, endContainer;
         startContainer = _firstChildMatchingContainer(newSelNode.parentNode, oldStartContainer);
         if (oldEndContainer ===  oldStartContainer) {
             endContainer = startContainer;
@@ -1020,19 +905,24 @@ MU.toggleListItem = function(newListType, undoable=true) {
         sel.addRange(range);
     }
     if (undoable) {
-        MU.backupRange();
+        _backupSelection();
         const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
 };
 
-var _replaceNodeWithList = function(newListType, selNode) {
-    // Create a newListType list, place selNode's contents in it, and replace selNode with the new list
-    // Return the newListItemElement, which we can use to reset selection from selNode
-    var newListElement = document.createElement(newListType);
-    var newListItemElement = document.createElement('LI');
+/**
+ * Put the contents of selNode in a list of type newListType.
+ *
+ * @param {String}      newListType     The type of list to put selNode's contents in.
+ * @param {HTML Node}   selNode         The node at the selection.
+ * @return {HTML ListElement}           The new list element.
+ */
+const _replaceNodeWithList = function(newListType, selNode) {
+    const newListElement = document.createElement(newListType);
+    const newListItemElement = document.createElement('LI');
     if (selNode.nodeType == Node.TEXT_NODE) {
         newListItemElement.innerHTML = selNode.textContent;
     } else {
@@ -1043,10 +933,15 @@ var _replaceNodeWithList = function(newListType, selNode) {
     return newListItemElement;
 };
 
-var _replaceNodeWithListItem = function(selNode) {
-    // Create a newListItem containing selNode's contents, and replace selNode it
-    // Return the newListItemElement, which we can use to reset selection from selNode
-    var newListItemElement = document.createElement('LI');
+/**
+ * Put the contents of selNode in a list item, and replace selNode with the new list item.
+ *
+ * @param {HTML Node}   selNode     The node at the selection.
+ * @return {HTML ListItemElement}   The new list item element.
+ */
+const _replaceNodeWithListItem = function(selNode) {
+    //
+    const newListItemElement = document.createElement('LI');
     if (selNode.nodeType == Node.TEXT_NODE) {
         newListItemElement.innerHTML = selNode.textContent;
     } else {
@@ -1056,22 +951,26 @@ var _replaceNodeWithListItem = function(selNode) {
     return newListItemElement;
 };
 
+/**
+ * Add a new BLOCKQUOTE
+ * This is a lot more like setting a style than a format, since it applies to the
+ * selected element, not to the range of the selection.
+ * However, it's important to note that while BLOCKQUOTEs can contain styled
+ * elements, styled elements cannot contain BLOCKQUOTEs.
+ *
+ * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
+ */
 MU.increaseQuoteLevel = function(undoable=true) {
-    // Add a new BLOCKQUOTE
-    // This is a lot more like setting a style than a format, since it applies to the
-    // selected element, not to the range of the selection.
-    // However, it's important to note that while BLOCKQUOTEs can contain styled
-    // elements, styled elements cannot contain BLOCKQUOTEs.
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    var selectionState = _getSelectionState();
+    const selectionState = _getSelectionState();
     // Capture the range settings for the selection
-    var range = sel.getRangeAt(0).cloneRange();
-    var oldStartContainer = range.startContainer;
-    var oldStartOffset = range.startOffset;
-    var oldEndContainer = range.endContainer;
-    var oldEndOffset = range.endOffset;
+    const range = sel.getRangeAt(0).cloneRange();
+    const oldStartContainer = range.startContainer;
+    const oldStartOffset = range.startOffset;
+    const oldEndContainer = range.endContainer;
+    const oldEndOffset = range.endOffset;
     // We should be inside of style, but if we are inside of a BLOCKQUOTE
     // then we want to increase the quote level from the style, not from the
     // BLOCKQUOTE level. See if we can find a style tag before encountering the
@@ -1094,8 +993,8 @@ MU.increaseQuoteLevel = function(undoable=true) {
     // as the parent to put in another BLOCKQUOTE.
     // We should always be selecting inside of some styled element in a LogEntry,
     // but we don't know for sure.
-    var selStyle = selectionState['style'];
-    var selNodeParent;
+    const selStyle = selectionState['style'];
+    let selNodeParent;
     if (selStyle) {
         selNodeParent = _findFirstParentElementInTagNames(selNode, [selStyle]);
     } else {
@@ -1108,12 +1007,12 @@ MU.increaseQuoteLevel = function(undoable=true) {
     }
     // Now create a new BLOCKQUOTE parent based, put the selNodeParent's outerHTML
     // into it, and replace the selNodeParent with the BLOCKQUOTE
-    var newParent = document.createElement('blockquote');
+    const newParent = document.createElement('blockquote');
     newParent.innerHTML = selNodeParent.outerHTML;
     selNodeParent.replaceWith(newParent);
     // Restore the selection by locating the start and endContainers in the newParent
-    MU.backupRange();
-    var startContainer, endContainer;
+    _backupSelection();
+    let startContainer, endContainer;
     startContainer = _firstChildMatchingContainer(newParent, oldStartContainer);
     if (oldEndContainer ===  oldStartContainer) {
         endContainer = startContainer;
@@ -1125,33 +1024,39 @@ MU.increaseQuoteLevel = function(undoable=true) {
     sel.removeAllRanges();
     sel.addRange(range);
     if (undoable) {
-        MU.backupRange();
+        _backupSelection();
         const undoerData = _undoerData('indent', null);
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
 }
 
+/**
+ * Remove an existing BLOCKQUOTE if it exists
+ *
+ * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
+ */
 MU.decreaseQuoteLevel = function(undoable=true) {
-    // Remove an existing BLOCKQUOTE if it exists
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    var existingElement = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
+    const existingElement = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
     if (existingElement) {
         _unsetTag(existingElement, sel);
         if (undoable) {
-            MU.backupRange();
+            _backupSelection();
             const undoerData = _undoerData('indent', null);
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
+            _restoreSelection();
         }
         _callback('input');
     }
 }
 
-//MARK:- Range operations
+/**
+ * Range operations
+ */
 
 /**
  * Make sure selection is set to something reasonable when starting
@@ -1164,65 +1069,77 @@ MU.decreaseQuoteLevel = function(undoable=true) {
  * signals contentDidLoad, because with more than one MarkupWKWebView,
  * the application has to decide when to becomeFirstResponder.
  */
-var _initializeRange = function() {
-    var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-    var selection = document.getSelection();
+const _initializeRange = function() {
+    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    const selection = document.getSelection();
     selection.removeAllRanges();
-    var range = document.createRange();
+    const range = document.createRange();
     if (firstTextNode) {
         muteChanges();
         range.setStart(firstTextNode, 0);
         range.setEnd(firstTextNode, 0);
         unmuteChanges();
         selection.addRange(range);
-        MU.backupRange();
+        _backupSelection();
     } else {
         MU.emptyDocument()
     }
     MU.editor.focus();
 }
 
+/**
+ * Return an object containing the startContainer, startOffset, endContainer, and endOffset at selection
+ * A HTML Range obtained from selection.getRangeAt(0).cloneRange() can end up being changed
+ * as focus changes, etc. So, to avoid the problem, return a range-like object with properties
+ * for the startContainer, startOffset, endContainer, and endOffset.
+ *
+ * @return {Object || null}     Return the object or null if selection is non-existent
+ */
 const _rangeProxy = function() {
-    // A range obtained from selection.getRangeAt(0).cloneRange() can end up being changed
-    // as focus changes, etc. So, to avoid the problem, return an object with properties
-    // for the startContainer, startOffset, endContainer, and endOffset.
     const selection = document.getSelection();
     if ((selection) && (selection.rangeCount > 0)) {
         var range = selection.getRangeAt(0).cloneRange();
-        return _rangeCopy(range);
+        return {
+            'startContainer': range.startContainer,
+            'startOffset': range.startOffset,
+            'endContainer': range.endContainer,
+            'endOffset': range.endOffset
+        };
     } else {
         return null;
     };
 };
 
-const _rangeCopy = function(range) {
-    return {
-        'startContainer': range.startContainer,
-        'startOffset': range.startOffset,
-        'endContainer': range.endContainer,
-        'endOffset': range.endOffset
-    };
-}
-
+/**
+ * Restore the selection to the range held in rangeProxy
+ *
+ * @param {Object}  rangeProxy      The HTML Range-like object that was populated using _rangeProxy()
+ */
 const _restoreRange = function(rangeProxy) {
     if (rangeProxy && rangeProxy.length === 0) {
         _consoleLog("Attempt to restore invalid range");
         new Error("Attempt to restore invalid range");
         return;
     }
-    var selection = document.getSelection();
+    const selection = document.getSelection();
     selection.removeAllRanges();
-    var range = document.createRange();
+    const range = document.createRange();
     range.setStart(rangeProxy.startContainer, rangeProxy.startOffset);
     range.setEnd(rangeProxy.endContainer, rangeProxy.endOffset);
     selection.addRange(range);
 }
 
-MU.backupRange = function() {
+/**
+ * Backup the range of the current selection into MU.currentSelection
+ */
+const _backupSelection = function() {
     MU.currentSelection = _rangeProxy();
 };
 
-MU.restoreRange = function() {
+/**
+ * Restore the selection to the range held in MU.currentSelection
+ */
+const _restoreSelection = function() {
     _restoreRange(MU.currentSelection);
 };
 
@@ -1263,31 +1180,9 @@ MU.selectElementContents = function(el) {
     MU.addRangeToSelection(sel, range);
 };
 
-//MARK:- Focus and blur
-
-//MU.focus = function() {
-//    var range = document.createRange();
-//    range.selectNodeContents(MU.editor);
-//    range.collapse(false);
-//    var selection = document.getSelection();
-//    selection.removeAllRanges();
-//    selection.addRange(range);
-//    MU.editor.focus();
-//};
-//
-//MU.focusAtPoint = function(x, y) {
-//    var range = document.caretRangeFromPoint(x, y) || document.createRange();
-//    var selection = document.getSelection();
-//    selection.removeAllRanges();
-//    selection.addRange(range);
-//    MU.editor.focus();
-//};
-//
-//MU.blurFocus = function() {
-//    MU.editor.blur();
-//};
-
-//MARK:- Clean up of weird things to avoid ugly HTML
+/**
+ * Clean up of weird things to avoid ugly HTML
+ */
 
 MU.cleanUpHTML = function() {
     // Due to the presence of "-webkit-text-size-adjust: 100%;" in normalize.css,
@@ -1397,8 +1292,11 @@ var _replaceDivIfNeeded = function() {
         };
     };
 };
-                                
-//MARK:- Explicit handling of multi-click
+
+/**
+ * Explicit handling of multi-click
+ * TODO:- Remove?
+ */
 
 /**
  * We received a double or triple click event.
@@ -1463,8 +1361,10 @@ var _tripleClickSelect = function(sel) {
 var _isWhiteSpace = function(s) {
     return /\s/g.test(s);
 };
-                                
-//MARK:- Selection
+
+/**
+ * Selection
+ */
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -1568,7 +1468,8 @@ var _getSelectionText = function() {
 
 /**
  * If there is a range selection, return it as a string.
- * @returns {string}
+ *
+ * @return {string}
  */
 MU.getRangeSelection = function() {
     var sel = document.getSelection();
@@ -1600,14 +1501,16 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
     return true;
 }
 
-//MARK:- Links
+/**
+ * Links
+ */
 
 /**
  * Insert a link to url. The selection has to be across a range.
  * When done, re-select the range and back it up.
  */
 MU.insertLink = function(url, undoable=true) {
-    MU.restoreRange();
+    _restoreSelection();
     var sel = document.getSelection();
     if (!sel || (sel.rangeCount === 0)) { return };
     var range;
@@ -1628,11 +1531,11 @@ MU.insertLink = function(url, undoable=true) {
     // Note because the selection is changing while the view is not focused,
     // we need to backupRange() so we can get it back when we come back
     // into focus later.
-    MU.backupRange();
+    _backupSelection();
     if (undoable) {
         const undoerData = _undoerData('insertLink', url);
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
     return el;
@@ -1643,7 +1546,7 @@ MU.insertLink = function(url, undoable=true) {
  */
 MU.deleteLink = function(undoable=true) {
     // When we call this method, sel is the text inside of an anchorNode
-    MU.restoreRange();
+    _restoreSelection();
     var sel = document.getSelection();
     if (sel) {
         var element = sel.anchorNode.parentElement;
@@ -1662,11 +1565,11 @@ MU.deleteLink = function(undoable=true) {
             sel.removeAllRanges();
             sel.addRange(linkRange);
             _unsetTag(element, sel);
-            MU.backupRange();
+            _backupSelection();
             if (undoable) {
                 const undoerData = _undoerData('deleteLink', element.href);
                 undoer.push(undoerData, MU.editor);
-                MU.restoreRange();
+                _restoreSelection();
             }
             _callback('input');
         }
@@ -1700,7 +1603,7 @@ const _redoInsertLink = function(undoerData) {
     // the insertLink operation leaves the selection properly set,
     // but we have to update the undoerData.range to reflect it.
     _restoreUndoerRange(undoerData);
-    MU.backupRange();
+    _backupSelection();
     MU.insertLink(undoerData.data, false);
     _backupUndoerRange(undoerData);
 }
@@ -1715,12 +1618,14 @@ const _redoDeleteLink = function(undoerData) {
     // the deleteLink operation leaves the selection properly set,
     // but we have to update the undoerData.range to reflect it.
     _restoreUndoerRange(undoerData);
-    MU.backupRange();
+    _backupSelection();
     MU.deleteLink(false);
     _backupUndoerRange(undoerData);
 }
 
-//MARK:- Images
+/**
+ * Images
+ */
 
 /**
  * Insert the image at src with alt text, signaling updateHeight when done loading.
@@ -1732,7 +1637,7 @@ const _redoDeleteLink = function(undoerData) {
  * Return the image element that is created, so we can use it for undoing.
  */
 MU.insertImage = function(src, alt, scale=100, undoable=true) {
-    MU.restoreRange();
+    _restoreSelection();
     var sel = document.getSelection();
     var range = sel.getRangeAt(0).cloneRange();
     var img = document.createElement('img');
@@ -1743,7 +1648,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
         img.setAttribute('height', scale);
     }
     img.setAttribute('tabindex', -1);    // Allows us to select the image
-    img.onload = MU.updateHeight;
+    img.onload = function() { _callback('updateHeight') };
     var range = sel.getRangeAt(0).cloneRange();
     range.insertNode(img);
     // After inserting the image, we want to leave the selection at the beginning
@@ -1768,7 +1673,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
-    MU.backupRange();
+    _backupSelection();
     // Track image insertion on the undo stack if necessary and hold onto the new image element's range
     // Note that the range tracked on the undo stack is not the same as the selection, which has been
     // set to make continued typing easy after inserting the image.
@@ -1777,7 +1682,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
         imgRange.selectNode(el);
         const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
     return img;
@@ -1791,7 +1696,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
  * Only removing an image is undoable.
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
-    MU.restoreRange();
+    _restoreSelection();
     var img = _getElementAtSelection('IMG');
     if (img) {
         if (src) {
@@ -1810,7 +1715,7 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
                 img.removeAttribute('width');
                 img.removeAttribute('height');
             }
-            MU.restoreRange()
+            _restoreSelection()
         } else {
             // Before removing the img, record the existing src, alt, and scale
             const deletedSrc = img.getAttribute('src');
@@ -1820,7 +1725,7 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
             if (undoable) {
                 const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: deletedScale});
                 undoer.push(undoerData, MU.editor);
-                MU.restoreRange();
+                _restoreSelection();
             }
         };
         _callback('input');
@@ -1878,7 +1783,7 @@ const _redoInsertImage = function(undoerData) {
     // typing, but we need to update the undoerData.range with the range
     // for the newly (re)created image element.
     _restoreUndoerRange(undoerData);
-    MU.backupRange();
+    _backupSelection();
     const el = MU.insertImage(undoerData.data.src, undoerData.data.alt, undoerData.data.scale, false);
     const range = document.createRange();
     range.selectNode(el);
@@ -1896,11 +1801,13 @@ const _redoModifyImage = function(undoerData) {
     // we don't want to update the undoerData.
     // Remove image is done with modifyImage but with src=null.
     _restoreUndoerRange(undoerData);
-    MU.backupRange();
+    _backupSelection();
     MU.modifyImage(null, null, null, false);
 }
 
-//MARK:- Tables
+/**
+ * Tables
+ */
 
 /**
  * Insert an empty table with the specified number of rows and cols.
@@ -1912,7 +1819,7 @@ const _redoModifyImage = function(undoerData) {
  */
 MU.insertTable = function(rows, cols, undoable=true) {
     if ((rows < 1) || (cols < 1)) { return };
-    MU.restoreRange();
+    _restoreSelection();
     var sel = document.getSelection();
     var selNode = (sel) ? sel.focusNode : null;
     var range = sel.getRangeAt(0).cloneRange();
@@ -1935,12 +1842,12 @@ MU.insertTable = function(rows, cols, undoable=true) {
     // We need the new table that now exists at selection.
     // Restore the selection to leave it at the beginning of the new table
     table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
-    _restoreSelection(table, 0, 0, false);
+    _restoreTableSelection(table, 0, 0, false);
     // Track table insertion on the undo stack if necessary
     if (undoable) {
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
     return table;
@@ -1961,7 +1868,7 @@ MU.deleteTable = function(undoable=true) {
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: inHeader, outerHTML: outerHTML});
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
+            _restoreSelection();
         };
         _callback('input');
     };
@@ -2124,7 +2031,7 @@ var _getSection = function(table, name) {
  * For rows, AFTER = below; otherwise above.
  */
 MU.addRow = function(direction, undoable=true) {
-    MU.backupRange();
+    _backupSelection();
     var addedRow = false;
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
@@ -2180,7 +2087,7 @@ MU.addRow = function(direction, undoable=true) {
     } else {
         _consoleLog("Could not add row");
     }
-    MU.restoreRange();
+    _restoreSelection();
     // Track row addition on the undo stack if necessary.
     if (undoable && addedRow) {
         // Heavyweight, but set range to the new table with the new row, and
@@ -2189,7 +2096,7 @@ MU.addRow = function(direction, undoable=true) {
         // selection.
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     }
     _callback('input');
 };
@@ -2198,7 +2105,7 @@ MU.addRow = function(direction, undoable=true) {
  * Add a col before or after the current selection, whether it's in the header or body.
  */
 MU.addCol = function(direction, undoable=true) {
-    MU.backupRange();
+    _backupSelection();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
@@ -2253,19 +2160,19 @@ MU.addCol = function(direction, undoable=true) {
             }
         }
     };
-    MU.restoreRange();
+    _restoreSelection();
     // Track col addition on the undo stack if necessary.
     if (undoable) {
         // Use restoreTable to handle addCol undo/redo
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     };
     _callback('input');
 };
 
 MU.addHeader = function(colspan, undoable=true) {
-    MU.backupRange();
+    _backupSelection();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tbody has to be selected
@@ -2292,18 +2199,18 @@ MU.addHeader = function(colspan, undoable=true) {
         };
         table.insertBefore(header, tbody);
     };
-    MU.restoreRange();
+    _restoreSelection();
     if (undoable) {
         // Use restoreTable to handle addHeader undo/redo
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: false, outerHTML: outerHTML});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     };
     _callback('input');
 };
 
 MU.deleteRow = function(undoable=true) {
-    MU.backupRange();
+    _backupSelection();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
@@ -2345,7 +2252,7 @@ MU.deleteRow = function(undoable=true) {
         if (undoable) {
             const undoerData = _undoerData('restoreTable', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
+            _restoreSelection();
         };
     } else {
         // We just removed everything in the table, so let's just get rid of it.
@@ -2353,14 +2260,14 @@ MU.deleteRow = function(undoable=true) {
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
+            _restoreSelection();
         };
     }
     _callback('input');
 };
 
 MU.deleteCol = function(undoable=true) {
-    MU.backupRange();
+    _backupSelection();
     var tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
@@ -2392,7 +2299,7 @@ MU.deleteCol = function(undoable=true) {
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
             undoer.push(undoerData, MU.editor);
-            MU.restoreRange();
+            _restoreSelection();
         };
         _callback('input');
         return;
@@ -2425,7 +2332,7 @@ MU.deleteCol = function(undoable=true) {
     if (undoable) {
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
         undoer.push(undoerData, MU.editor);
-        MU.restoreRange();
+        _restoreSelection();
     };
     _callback('input');
 };
@@ -2454,7 +2361,7 @@ const _selectCol = function(tr, col) {
         };
         sel.removeAllRanges();
         sel.addRange(range);
-        MU.backupRange();
+        _backupSelection();
     };
 };
 
@@ -2464,7 +2371,7 @@ const _selectCol = function(tr, col) {
  * Used after doInsertTable to restore the selection to the same row/col it
  * started it, but will be at the beginning of the first child in it.
  */
-const _restoreSelection = function(table, row, col, inHeader) {
+const _restoreTableSelection = function(table, row, col, inHeader) {
     var tr;
     if (inHeader) {
         const header = _getSection(table, 'THEAD');
@@ -2501,7 +2408,7 @@ const _redoInsertTable = function(undoerData) {
     // onto the new range.
     const table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
     if (table) {
-        _restoreSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.inHeader)
+        _restoreTableSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.inHeader)
         _backupUndoerRange(undoerData);
     };
 };
@@ -2515,7 +2422,7 @@ const _redoDeleteTable = function(undoerData) {
     // iow, the table exists when deleteTable is called. Leave the
     // undoerData.range set to the selection after deleting the table.
     _restoreUndoerRange(undoerData);
-    MU.backupRange();
+    _backupSelection();
     MU.deleteTable(false);
     _backupUndoerRange(undoerData);
 };
@@ -2553,7 +2460,64 @@ const _restoreTable = function(undoerData) {
     undoerData.data.inHeader = inHeader;
 };
 
-//MARK:- Common private functions
+/**
+ * Common private functions
+ */
+
+/**
+ * Callback into Swift to show a string in the XCode console, like console.log()
+ */
+const _consoleLog = function(string) {
+    let messageDict = {
+        'messageType' : 'log',
+        'log' : string
+    }
+    _callback(JSON.stringify(messageDict));
+};
+
+/// Return the first tag contained in matchNames that the selection is inside of, without encountering one in excludeNames
+var _firstSelectionTagMatching = function(matchNames, excludeNames) {
+    var matchingNode = _firstSelectionNodeMatching(matchNames, excludeNames);
+    if (matchingNode) {
+        return matchingNode.tagName;
+    } else {
+        return '';
+    }
+};
+
+/// Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames
+var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
+    var sel = document.getSelection();
+    if (sel) {
+        var focusNode = sel.focusNode
+        if (focusNode) {
+            var selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
+            if (selElement) {
+                return selElement;
+            }
+        }
+    }
+    return null;
+};
+
+/// Return the all tags in tagNames that the selection is inside of
+var _selectionTagsMatching = function(tagNames) {
+    var sel = document.getSelection();
+    var tags = [];
+    if (sel) {
+        var focusNode = sel.focusNode;
+        while (focusNode) {
+            var selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
+            if (selElement) {
+                tags.push(selElement.tagName);
+            }
+            focusNode = focusNode.parentNode;
+        }
+    }
+    return tags;
+};
+
+
 
 /**
  * Return the first node with nodeName within node, doing a depthwise traversal
@@ -2681,7 +2645,7 @@ const _deleteAndResetSelection = function(element, direction) {
         newRange.setEnd(nextEl, 0);
     }
     sel.addRange(newRange);
-    MU.backupRange();
+    _backupSelection();
 }
 
 /**
@@ -2764,7 +2728,7 @@ var _setTag = function(type, sel) {
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
-    MU.backupRange();
+    _backupSelection();
     // Note: Now that tagging with selection collapsed inside a word means
     // the word is tagged, and selecting at the beginning of a word just
     // does the non-spacing char, the following is not needed.
@@ -2902,11 +2866,11 @@ var _unsetTag = function(oldElement, sel) {
  * Given an element with a tag, replace its tag with the new tagName
  */
 var _replaceTag = function(tagName, element) {
-    MU.backupRange();
+    _backupSelection();
     var newElement = document.createElement(tagName);
     newElement.innerHTML = element.innerHTML;
     element.replaceWith(newElement);
-    MU.restoreRange();
+    _restoreSelection();
     return newElement;
 };
 
@@ -3009,7 +2973,85 @@ var _oldFindFirstParentElementInTagNames = function(node, matchNames, excludeNam
 };
 
 
-//MARK:- Unused?
+/**
+ * Unused?
+ * TODO - Remove
+ */
+
+MU.setFontSize = function(size) {
+    MU.editor.style.fontSize = size;
+};
+
+MU.setBackgroundColor = function(color) {
+    MU.editor.style.backgroundColor = color;
+};
+
+MU.setHeight = function(size) {
+    MU.editor.style.height = size;
+};
+
+MU.customAction = function(action) {
+    let messageDict = {
+        'messageType' : 'action',
+        'action' : action
+    }
+    var message = JSON.stringify(messageDict);
+    _callback(message);
+};
+
+/// Returns the cursor position relative to its current position onscreen.
+/// Can be negative if it is above what is visible
+MU.getRelativeCaretYPosition = function() {
+    var y = 0;
+    var sel = document.getSelection();
+    if (sel.rangeCount) {
+        var range = sel.getRangeAt(0);
+        var needsWorkAround = (range.startOffset == 0)
+        /* Removing fixes bug when node name other than 'div' */
+        // && range.startContainer.nodeName.toLowerCase() == 'div');
+        if (needsWorkAround) {
+            y = range.startContainer.offsetTop - window.pageYOffset;
+        } else {
+            if (range.getClientRects) {
+                var rects = range.getClientRects();
+                if (rects.length > 0) {
+                    y = rects[0].top;
+                }
+            }
+        }
+    }
+
+    return y;
+};
+
+/// Looks specifically for a Range selection and not a Caret selection
+MU.rangeSelectionExists = function() {
+    //!! coerces a null to bool
+    var sel = document.getSelection();
+    if (sel && sel.type == 'Range') {
+        return true;
+    }
+    return false;
+};
+
+/// Return the first tag the selection is inside of
+MU.selectionTag = function() {
+    var sel = document.getSelection();
+    if (sel) {
+        if (sel.type === 'None') {
+            return '';
+        } else {    // sel.type will be Caret or Range
+            var focusNode = sel.focusNode;
+            if (focusNode) {
+                var selElement = focusNode.parentElement;
+                if (selElement) {
+                    return selElement.tagName;
+                }
+            }
+        }
+    }
+    return '';
+};
 
 MU.getLineHeight = function() {
     return MU.editor.style.lineHeight;
@@ -3040,14 +3082,14 @@ MU.setBlockquote = function() {
 };
 
 MU.setTextColor = function(color) {
-    MU.restoreRange();
+    _restoreSelection();
     document.execCommand('styleWithCSS', null, true);
     document.execCommand('foreColor', false, color);
     document.execCommand('styleWithCSS', null, false);
 };
 
 MU.setTextBackgroundColor = function(color) {
-    MU.restoreRange();
+    _restoreSelection();
     document.execCommand('styleWithCSS', null, true);
     document.execCommand('hiliteColor', false, color);
     document.execCommand('styleWithCSS', null, false);
