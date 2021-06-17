@@ -12,7 +12,7 @@ The MarkupEditor is presenting an HTML document to you as you edit. It uses the 
 
 ### Markup Editor Goals and Non-Goals
 
-I am working on a larger project that requires embeded support "rich text" editing. I felt like WYSIWYG editing was a must-have requirement. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen. It's a lot better than editing raw HTML, but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of preview mode to make sure what you are writing will be presented like you expect feels like CI/CD for writing. 
+I am working on a larger project that requires embedded support "rich text" editing. I felt like WYSIWYG editing was a must-have requirement. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen. It's a lot better than editing raw HTML, but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of preview mode to make sure what you are writing will be presented like you expect feels like CI/CD for writing. 
 
 Still, I wanted an editing experience that didn't get in the way. I wanted something with the feature-simplicity of Markdown, but presented in a clean, what-you-see-is-what-you-get manner that supported the basics people expect:
 
@@ -21,7 +21,7 @@ Still, I wanted an editing experience that didn't get in the way. I wanted somet
     * Support bulleted and numbered lists
     * Support indenting
 2. Formatting
-    * Bold, italic, underline, strikethrough, sub- and super-scripting
+    * Bold, italic, underline, code, strikethrough, sub- and super-scripting
 3. Embedding
     * Images
     * Tables

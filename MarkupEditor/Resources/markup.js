@@ -651,6 +651,36 @@ MU.getHTML = function() {
     return MU.editor.innerHTML;
 };
 
+/**
+ * Make sure selection is set to something reasonable when starting
+ * or setting HTML.
+ * Something reasonable here means the front of the first text node,
+ * and creating that element in an empty document if it doesn't exist.
+ * We make the contentEditable editor have focus when done. From a
+ * the iOS perspective, this doesn't mean we becomeFirstResponder.
+ * This should be done at the application level when the MarkupDelegate
+ * signals contentDidLoad, because with more than one MarkupWKWebView,
+ * the application has to decide when to becomeFirstResponder.
+ */
+const _initializeRange = function() {
+    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    const selection = document.getSelection();
+    selection.removeAllRanges();
+    const range = document.createRange();
+    if (firstTextNode) {
+        muteChanges();
+        range.setStart(firstTextNode, 0);
+        range.setEnd(firstTextNode, 0);
+        unmuteChanges();
+        selection.addRange(range);
+        _backupSelection();
+    } else {
+        MU.emptyDocument()
+    }
+    MU.editor.focus();
+    _callback('updateHeight');
+}
+
 /********************************************************************************
  * Formatting
  * 1. Formats (B, I, U, DEL, CODE, SUB, SUP) are toggled off and on
@@ -1076,35 +1106,6 @@ MU.decreaseQuoteLevel = function(undoable=true) {
 /********************************************************************************
  * Range operations
  */
-
-/**
- * Make sure selection is set to something reasonable when starting
- * or setting HTML.
- * Something reasonable here means the front of the first text node,
- * and creating that element in an empty document if it doesn't exist.
- * We make the contentEditable editor have focus when done. From a
- * the iOS perspective, this doesn't mean we becomeFirstResponder.
- * This should be done at the application level when the MarkupDelegate
- * signals contentDidLoad, because with more than one MarkupWKWebView,
- * the application has to decide when to becomeFirstResponder.
- */
-const _initializeRange = function() {
-    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-    const selection = document.getSelection();
-    selection.removeAllRanges();
-    const range = document.createRange();
-    if (firstTextNode) {
-        muteChanges();
-        range.setStart(firstTextNode, 0);
-        range.setEnd(firstTextNode, 0);
-        unmuteChanges();
-        selection.addRange(range);
-        _backupSelection();
-    } else {
-        MU.emptyDocument()
-    }
-    MU.editor.focus();
-}
 
 /**
  * Return an object containing the startContainer, startOffset, endContainer, and endOffset at selection

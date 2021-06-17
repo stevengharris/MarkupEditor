@@ -54,17 +54,12 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     }
     
     private func loadInitialHtml() {
-        // We need to initialize the selection/range for immediate double or
-        // triple clicks to be detected. We still have to deal with selection
-        // ourselves, but at least we consistently receive double and triple
-        // clicks if the selection is initialized. Not having range initialized
-        // also causes problems on the initial focus. When we blur, we backupSelection,
-        // and when we focus, we restoreSelection. But, if there is no initialRange,
-        // then we never focus properly.
+        // Load the html held by the webView, let the markupDelegate know, and then becomeFirstResponder.
+        // If we don't becomeFirstResponder, then our first selection in the webView causes scrolling.
         let initialContent = webView.html ?? ""
         webView.setHtml(initialContent) { content in
             self.markupDelegate?.markupDidLoad(self.webView) {
-                //self.webView.becomeFirstResponder()
+                self.webView.becomeFirstResponder()
             }
         }
     }
@@ -104,7 +99,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         case "focus":
             //print("* focus")
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
-            //webView.becomeFirstResponder()
             // NOTE: Just because the webView here has focus does not mean it becomes the
             // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
             // Use markupDelegate.markupTookFocus to reset selectedWebView if needed, since
