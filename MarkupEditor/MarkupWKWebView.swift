@@ -179,19 +179,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //TODO:- Remove this call as it really should be internal to markup.js
-    public func backupRange(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.backupRange()") { result, error in
-            handler?()
-        }
-    }
-    
-    public func restoreRange(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.restoreRange()") { result, error in
-            handler?()
-        }
-    }
-    
     public func insertLink(_ href: String?, handler: (()->Void)? = nil) {
         if href == nil {
             evaluateJavaScript("MU.deleteLink()") { result, error in handler?() }

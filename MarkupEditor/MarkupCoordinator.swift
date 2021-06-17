@@ -58,8 +58,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         // triple clicks to be detected. We still have to deal with selection
         // ourselves, but at least we consistently receive double and triple
         // clicks if the selection is initialized. Not having range initialized
-        // also causes problems on the initial focus. When we blur, we backupRange,
-        // and when we focus, we restoreRange. But, if there is no initialRange,
+        // also causes problems on the initial focus. When we blur, we backupSelection,
+        // and when we focus, we restoreSelection. But, if there is no initialRange,
         // then we never focus properly.
         let initialContent = webView.html ?? ""
         webView.setHtml(initialContent) { content in

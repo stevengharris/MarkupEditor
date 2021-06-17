@@ -5,13 +5,17 @@
  * at https://github.com/cjwirth/RichEditorView. Subsequent versions by cbess
  * at https://github.com/cbess/RichEditorView/ and YoomamaFTW
  * at https://github.com/YoomamaFTW/RichEditorView were also very helpful.
- * The licenses for those repositories were Apache and BSD-3.
- *
+ * The licenses for those repositories are BSD-3.
  * Code here has almost no recognizable parts from those repositories.
- * Some of the changes from the original RichEditorView include:
  *
- * 1. Replacement of all execCommand usage, with the exception of very narrow
- *      usage to support undo/redo.
+ * The license for this code and the MarkupEditor repository is MIT,
+ * found at https://github.com/stevengharris/MarkupEditor/blob/main/LICENSE.
+ *
+ * For a historical perspective, some of the changes from the original
+ * RichEditorView include:
+ *
+ * 1. Replacement of all execCommand usage, with the exception of a very narrow
+ *      case to support undo/redo.
  * 2. Use of window.webkit.messageHandlers for all callbacks to Swift.
  * 3. Use of selectionState to capture the state of document.getSelection()
  *      for usage on the Swift side.
@@ -19,11 +23,18 @@
  *      happen on the Javascript side, avoiding round-trips.
  * 5. Proper support for undo/redo, which previously was handled by the browser
  *      when using execCommand.
- * 6. Full support inserting, removing, and modifying links, images, and tables,
+ * 6. Full support for inserting, removing, and modifying links, images, and tables,
  *      including undo/redo operations.
  */
 
 'use strict';
+
+/********************************************************************************
+ * Bootstrapping
+ * MU is for Markup.
+ * Public functions called from Swift are MU.*
+ * Private functions used internally are const _*
+ */
 
 const MU = {};
 
@@ -31,6 +42,10 @@ const MU = {};
  * The editor element contains the HTML being edited
  */
 MU.editor = document.getElementById('editor');
+
+/********************************************************************************
+ * Undo/Redo
+ */
 
 /*
  * The Undoer class below was adopted with minor changes from https://github.com/samthor/undoer
@@ -75,11 +90,11 @@ class Undoer {
             //      is null, and we use _depth to find out what _ctrl is holding. That
             //      value is the index into _stack for either undoing or redoing.
             ev.stopImmediatePropagation();  // We don't want this event to be seen by the parent
-            //_consoleLog("input event: " + ev.inputType);
-            //_consoleLog("  this._depth: " + this._depth);
-            //_consoleLog("  this.data: " + JSON.stringify(this.data));
-            //_consoleLog("  ev.data: " + ev.data);
-            //_consoleLog("  initial this._ctrl.textContent: " + this._ctrl.textContent);
+            //_consoleLog('input event: ' + ev.inputType);
+            //_consoleLog('  this._depth: ' + this._depth);
+            //_consoleLog('  this.data: ' + JSON.stringify(this.data));
+            //_consoleLog('  ev.data: ' + ev.data);
+            //_consoleLog('  initial this._ctrl.textContent: ' + this._ctrl.textContent);
             if (!this._duringUpdate) {
                 if (ev.inputType === 'historyUndo') {
                     undoCallback(this._stack[this._depth]);
@@ -91,7 +106,7 @@ class Undoer {
             } else {
                 this._ctrl.textContent = ev.data;
             }
-            //_consoleLog("  final this._ctrl.textContent: " + this._ctrl.textContent);
+            //_consoleLog('  final this._ctrl.textContent: ' + this._ctrl.textContent);
             // clear selection, otherwise user copy gesture will copy value
             // nb. this _probably_ won't work inside Shadow DOM
             // nb. this is mitigated by the fact that we set visibility: 'hidden'
@@ -164,7 +179,7 @@ class Undoer {
  * @return {Object}                 The object populated with operation, data, and range.
  */
 const _undoerData = function(operation, data, range=null) {
-    var undoerRange;
+    let undoerRange;
     if (range) {
         undoerRange = range;
     } else {
@@ -234,7 +249,7 @@ const _undoOperation = function(undoerData) {
             _restoreTable(undoerData);
             break;
         default:
-            _consoleLog("Error: Unknown undoOperation " + undoerData.operation);
+            _consoleLog('Error: Unknown undoOperation ' + undoerData.operation);
     };
 };
 
@@ -294,7 +309,7 @@ const _redoOperation = function(undoerData) {
             _restoreTable(undoerData);
             break;
         default:
-            _consoleLog("Error: Unknown redoOperation " + undoerData.operation);
+            _consoleLog('Error: Unknown redoOperation ' + undoerData.operation);
     };
 };
 
@@ -335,7 +350,7 @@ MU.redo = function() {
 const _restoreUndoerRange = function(undoerData) {
     const range = undoerData.range;
     if (range) {
-        var sel = document.getSelection();
+        const sel = document.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
     };
@@ -373,7 +388,7 @@ const _callback = function(message) {
     window.webkit.messageHandlers.markup.postMessage(message);
 };
 
-/**
+/********************************************************************************
  * Event Listeners
  */
 
@@ -444,7 +459,6 @@ document.addEventListener('selectionchange', function() {
 });
 
 MU.editor.addEventListener('input', function() {
-    //_consoleLog("input>backupRange");
     _backupSelection();
     _callback('input');
 });
@@ -475,7 +489,7 @@ MU.editor.addEventListener('focus', function(e) {
 });
 
 /**
- * Capture the current selection using backupRange and then let Swift know blur happened.
+ * Capture the current selection using backupSelection and then let Swift know blur happened.
  * The blur during the undoer.push operation will always be followed by a focus, where
  * _muteFocusBlur will be reset.
  */
@@ -515,7 +529,7 @@ MU.editor.addEventListener('keyup', function(event) {
     } else if (key === 'Enter') {
         _replaceDivIfNeeded();
     //} else if ((key === 'ArrowLeft') || (key === 'ArrowRight') || (key === 'ArrowDown') || (key === 'ArrowUp')) {
-    //    _consoleLog("Arrow key")
+    //    _consoleLog('Arrow key')
     };
 });
 
@@ -533,12 +547,15 @@ MU.editor.addEventListener('paste', function(e) {
    _redoOperation(undoerData);
 });
 
-/**
+/********************************************************************************
  * Paste
  */
 
 /**
- * Do or redo the paste operation
+ * Do or redo the paste operation.
+ *
+ * @param   {HTML Range}    range       The range to pasting into.
+ * @param   {String}        data        The text to paste.
  */
 const _redoPasteText = function(range, data) {
     // Paste the undoerData.data text after the range.endOffset or range.endContainer
@@ -556,7 +573,11 @@ const _redoPasteText = function(range, data) {
 };
 
 /**
- * Undo the paste operation after it was done via _redoPasteText
+ * Undo the paste operation after it was done via _redoPasteText.
+ *
+ * @param   {HTML Range}    range       The range to pasting into.
+ * @param   {String}        data        The text to paste.
+ *
  */
 const _undoPasteText = function(range, data) {
     // The pasted text data was placed after the range.endOffset in endContainer
@@ -580,7 +601,7 @@ const _undoPasteText = function(range, data) {
     };
 };
 
-/**
+/********************************************************************************
  * Getting and setting document contents
  */
 
@@ -614,7 +635,7 @@ MU.setHTML = function(contents) {
     const tempWrapper = document.createElement('div');
     tempWrapper.innerHTML = contents;
     const images = tempWrapper.querySelectorAll('img');
-    for (var i = 0; i < images.length; i++) {
+    for (let i=0; i<images.length; i++) {
         images[i].onload = function() { _callback('updateHeight') };
     }
     MU.editor.innerHTML = tempWrapper.innerHTML;
@@ -630,9 +651,8 @@ MU.getHTML = function() {
     return MU.editor.innerHTML;
 };
 
-/**
+/********************************************************************************
  * Formatting
- * Note:
  * 1. Formats (B, I, U, DEL, CODE, SUB, SUP) are toggled off and on
  * 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
  */
@@ -694,13 +714,13 @@ const _toggleFormat = function(type, undoable=true) {
     _callback('input');
 }
 
-/**
+/********************************************************************************
  * Raw and formatted text
  */
 
-//var _configureTurndownService = function() {
-//    var gfm = turndownPluginGfm.gfm;
-//    var turndownService = new TurndownService();
+//const _configureTurndownService = function() {
+//    const gfm = turndownPluginGfm.gfm;
+//    const turndownService = new TurndownService();
 //    turndownService.use(gfm);
 //    turndownService.addRule('strikethrough', {
 //      filter: ['del', 's', 'strike'],
@@ -713,8 +733,8 @@ const _toggleFormat = function(type, undoable=true) {
 //
 //const _turndownService = _configureTurndownService();
 //
-//var _configureShowdownService = function() {
-//    var converter = new showdown.Converter();
+//const _configureShowdownService = function() {
+//    const converter = new showdown.Converter();
 //    converter.setOption('noHeaderId', true);
 //    converter.setOption('strikethrough', true);
 //    converter.setOption('parseImgDimensions', true);
@@ -722,7 +742,7 @@ const _toggleFormat = function(type, undoable=true) {
 //}
 //
 //const _showdownService = _configureShowdownService();
-
+//
 //MU.getMarkdown = function() {
 //    return _turndownService.turndown(MU.editor.innerHTML);
 //};
@@ -730,6 +750,24 @@ const _toggleFormat = function(type, undoable=true) {
 //MU.getRoundTrip = function() {
 //    return _showdownService(MU.getMarkdown());
 //};
+//
+//const _prettify = function(html) {
+//    // A hack to prettify MU.editor.innerHTML.
+//    // From https://stackoverflow.com/a/60338028/8968411.
+//    const tab = '\t';
+//    const result = '';
+//    const indent= '';
+//    html.split(/>\s*</).forEach(function(element) {
+//        if (element.match( /^\/\w/ )) {
+//            indent = indent.substring(tab.length);
+//        }
+//        result += indent + '<' + element + '>\n\n';
+//        if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith('input')  ) {
+//            indent += tab;
+//        }
+//    });
+//    return result.substring(1, result.length-3);
+//}
 
 /**
  * Return a marginally prettier version of the raw editor contents.
@@ -737,28 +775,10 @@ const _toggleFormat = function(type, undoable=true) {
  * @return {String}     A string showing the raw HTML with tags, etc.
  */
 MU.getPrettyHTML = function() {
-    //return _prettify(MU.editor.innerHTML);
     return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
 
-const _prettify = function(html) {
-    // From https://stackoverflow.com/a/60338028/8968411
-    const tab = '\t';
-    const result = '';
-    const indent= '';
-    html.split(/>\s*</).forEach(function(element) {
-        if (element.match( /^\/\w/ )) {
-            indent = indent.substring(tab.length);
-        }
-        result += indent + '<' + element + '>\n\n';
-        if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith("input")  ) {
-            indent += tab;
-        }
-    });
-    return result.substring(1, result.length-3);
-}
-
-/**
+/********************************************************************************
  * Styling
  * 1. Styles (P, H1-H6) are applied to blocks
  * 2. Unlike formats, styles are never nested (so toggling makes no sense)
@@ -774,13 +794,13 @@ const _prettify = function(html) {
  * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
  */
 MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode) { return };
-    var existingElement = _findFirstParentElementInTagNames(selNode, [oldStyle.toUpperCase()]);
+    const existingElement = _findFirstParentElementInTagNames(selNode, [oldStyle.toUpperCase()]);
     if (existingElement) {
-        var range = sel.getRangeAt(0).cloneRange();
-        var newElement = _replaceTag(newStyle.toUpperCase(), existingElement);
+        const range = sel.getRangeAt(0).cloneRange();
+        const newElement = _replaceTag(existingElement, newStyle.toUpperCase());
         range.setStart(newElement.firstChild, range.startOffset);
         range.setEnd(newElement.firstChild, range.endOffset);
         sel.removeAllRanges();
@@ -795,7 +815,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     };
 };
 
-/**
+/********************************************************************************
  * Nestables, including lists and block quotes
  */
 
@@ -805,7 +825,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
  * If the selection is in a list type that is different than newListTyle,
  * we need to create a new list and make the selection appear in it.
  *
- * @param {String} newListType      The kind of list we want the list item to be in if we are turning it on or changing it.
+ * @param {String}  newListType     The kind of list we want the list item to be in if we are turning it on or changing it.
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
 MU.toggleListItem = function(newListType, undoable=true) {
@@ -846,7 +866,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
                     // If this is the only item in the list, then change the list type rather than
                     // change the one element.
                     if (newListType) {
-                        newSelNode = _replaceTag(newListType, listElement);
+                        newSelNode = _replaceTag(listElement, newListType);
                     } else {
                         // We are unsetting the list for a single-item list, so just remove both so
                         // the list is removed.
@@ -940,7 +960,6 @@ const _replaceNodeWithList = function(newListType, selNode) {
  * @return {HTML ListItemElement}   The new list item element.
  */
 const _replaceNodeWithListItem = function(selNode) {
-    //
     const newListItemElement = document.createElement('LI');
     if (selNode.nodeType == Node.TEXT_NODE) {
         newListItemElement.innerHTML = selNode.textContent;
@@ -998,7 +1017,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
     if (selStyle) {
         selNodeParent = _findFirstParentElementInTagNames(selNode, [selStyle]);
     } else {
-        var existingBlockQuote = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
+        const existingBlockQuote = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
         if (existingBlockQuote) {
             selNodeParent = existingBlockQuote;
         } else {
@@ -1054,7 +1073,7 @@ MU.decreaseQuoteLevel = function(undoable=true) {
     }
 }
 
-/**
+/********************************************************************************
  * Range operations
  */
 
@@ -1093,12 +1112,12 @@ const _initializeRange = function() {
  * as focus changes, etc. So, to avoid the problem, return a range-like object with properties
  * for the startContainer, startOffset, endContainer, and endOffset.
  *
- * @return {Object || null}     Return the object or null if selection is non-existent
+ * @return {Object | null}     Return the object or null if selection is non-existent
  */
 const _rangeProxy = function() {
     const selection = document.getSelection();
     if ((selection) && (selection.rangeCount > 0)) {
-        var range = selection.getRangeAt(0).cloneRange();
+        const range = selection.getRangeAt(0).cloneRange();
         return {
             'startContainer': range.startContainer,
             'startOffset': range.startOffset,
@@ -1117,8 +1136,8 @@ const _rangeProxy = function() {
  */
 const _restoreRange = function(rangeProxy) {
     if (rangeProxy && rangeProxy.length === 0) {
-        _consoleLog("Attempt to restore invalid range");
-        new Error("Attempt to restore invalid range");
+        _consoleLog('Attempt to restore invalid range');
+        new Error('Attempt to restore invalid range');
         return;
     }
     const selection = document.getSelection();
@@ -1143,122 +1162,121 @@ const _restoreSelection = function() {
     _restoreRange(MU.currentSelection);
 };
 
+/**
+ * Return a reasonably informative string describing the range, for debugging purposes
+ *
+ * @param {Object | HTML Range}     range   Something holding onto the startContainer, startOffset, endContainer, and endOffset
+ */
 const _rangeString = function(range) {
     const startContainer = range.startContainer;
     const endContainer = range.endContainer;
-    var startContainerType, startContainerContent, endContainerType, endContainerContent;
+    let startContainerType, startContainerContent, endContainerType, endContainerContent;
     if (startContainer.nodeType === Node.TEXT_NODE) {
-        startContainerType = "<TextElement>"
+        startContainerType = '<TextElement>'
         startContainerContent = startContainer.textContent;
     } else {
-        startContainerType = "<" + startContainer.tagName + ">";
+        startContainerType = '<' + startContainer.tagName + '>';
         startContainerContent = startContainer.innerHTML;
-    }
+    };
     if (endContainer.nodeType === Node.TEXT_NODE) {
-        endContainerType = "<TextElement>"
+        endContainerType = '<TextElement>'
         endContainerContent = endContainer.textContent;
     } else {
-        endContainerType = "<" + endContainer.tagName + ">";
+        endContainerType = '<' + endContainer.tagName + '>';
         endContainerContent = endContainer.innerHTML;
-    }
-    return "range:\n" + "  startContainer: " + startContainerType + ", content: " + startContainerContent + "\n" + "  startOffset: " + range.startOffset + "\n" + "  endContainer: " + endContainerType + ", content: " + endContainerContent + "\n" + "  endOffset: " + range.endOffset
-}
-
-MU.addRangeToSelection = function(selection, range) {
-    if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
+    };
+    return 'range:\n' + '  startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n' + '  startOffset: ' + range.startOffset + '\n' + '  endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n' + '  endOffset: ' + range.endOffset;
 };
 
-// Programatically select a DOM element
-MU.selectElementContents = function(el) {
-    var range = document.createRange();
-    range.selectNodeContents(el);
-    var sel = document.getSelection();
-    // this.createSelectionFromRange sel, range
-    MU.addRangeToSelection(sel, range);
-};
-
-/**
- * Clean up of weird things to avoid ugly HTML
+/********************************************************************************
+ * Clean up to avoid ugly HTML
  */
 
+/**
+ * Due to the presence of "-webkit-text-size-adjust: 100%;" in css,
+ * WebKit may be inserting styling for elements many places, but particularly
+ * on deletion as it tries to maintain the proper appearance. However, even
+ * with that removed, we still end up with spans that try to enforce the
+ * previous "style" (for example, H1) font size. We also end up with styles
+ * imposed on format elements. All of these need to be removed, since we
+ * don't support arbitrary font size changes.
+ * Spans need to be removed and replaced with their innerHTML.
+ */
 MU.cleanUpHTML = function() {
-    // Due to the presence of "-webkit-text-size-adjust: 100%;" in normalize.css,
-    // WebKit was inserting styling for elements many places, but particularly
-    // on deletion as it tried to maintain the proper appearance. However, even
-    // with that removed, we still end up with spans that try to enforce the
-    // previous "style" (for example, H1) font size. We also end up with styles
-    // imposed on format elements. All of these need to be removed, since we
-    // don't support arbitrary font size changes.
-    // Spans need to be removed and replaced with their innerHTML.
     _cleanUpSpans();
     _cleanUpAttributes('style');
 };
 
-var _cleanUpSpans = function() {
-    // Standard webkit editing may leave messy and useless SPANs all over the place.
-    // This method just cleans them all up and notifies Swift that the content
-    // has changed. Start with the selection focusNode's parent, so as to make
-    // sure to get all its siblings. If there is no focusNode, fix the entire
-    // editor.
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
-    var startNode = (selNode) ? selNode.parentNode : MU.editor;
+/**
+ * Standard webkit editing may leave messy and useless SPANs all over the place.
+ * This method just cleans them all up and notifies Swift that the content
+ * has changed. Start with the selection focusNode's parent, so as to make
+ * sure to get all its siblings. If there is no focusNode, fix the entire
+ * editor.
+ */
+const _cleanUpSpans = function() {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
+    const startNode = (selNode) ? selNode.parentNode : MU.editor;
     if (startNode) {
-        var spansRemoved = _cleanUpSpansWithin(startNode);
+        const spansRemoved = _cleanUpSpansWithin(startNode);
         if (spansRemoved > 0) {
             _callback('input');
-        }
+        };
     };
-}
+};
 
-var _cleanUpSpansWithin = function(node) {
-    // Do a depth-first traversal from node, removing spans
-    // starting at the leaf nodes
-    // Return the number of spans removed
-    var spansRemoved = 0;
-    var children = node.children;
+/**
+ * Do a depth-first traversal from node, removing spans starting at the leaf nodes.
+ *
+ * @return {Int}    The number of spans removed
+ */
+const _cleanUpSpansWithin = function(node) {
+    let spansRemoved = 0;
+    const children = node.children;
     if (children.length > 0) {
-        for (let i=0; i < children.length; i++) {
+        for (let i=0; i<children.length; i++) {
             spansRemoved += _cleanUpSpansWithin(children[i]);
         };
     };
     if (node.tagName === 'SPAN') {
         spansRemoved++;
-        var template = document.createElement('template');
+        const template = document.createElement('template');
         template.innerHTML = node.innerHTML;
-        var newElement = template.content;
+        const newElement = template.content;
         node.replaceWith(newElement);
     };
     return spansRemoved;
-}
+};
 
-var _cleanUpAttributes = function(attribute) {
-    // Do a depth-first traversal from selection, removing attributes
-    // from the focusNode and its siblings. If there is no focusNode,
-    // fix the entire editor.
-    // If any attributes were removed, then notify Swift of a content change
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
-    var startNode = (selNode) ? selNode.parentNode : MU.editor;
+/**
+ * Do a depth-first traversal from selection, removing attributes
+ * from the focusNode and its siblings. If there is no focusNode,
+ * fix the entire editor.
+ * If any attributes were removed, then notify Swift of a content change
+ */
+const _cleanUpAttributes = function(attribute) {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
+    const startNode = (selNode) ? selNode.parentNode : MU.editor;
     if (startNode) {
-        var attributesRemoved = _cleanUpAttributesWithin(attribute, startNode);
+        const attributesRemoved = _cleanUpAttributesWithin(attribute, startNode);
         if (attributesRemoved > 0) {
             _callback('input');
-        }
+        };
     };
 };
 
-var _cleanUpAttributesWithin = function(attribute, node) {
-    // Do a depth-first traversal from node, removing attributes
-    // starting at the leaf nodes
-    // Return the number of attributes removed
-    var attributesRemoved = 0;
-    var children = node.children;
+/**
+ * Do a depth-first traversal from node, removing attributes starting at the leaf nodes.
+ *
+ * @return {Int}    The number of attributes removed
+ */
+const _cleanUpAttributesWithin = function(attribute, node) {
+    let attributesRemoved = 0;
+    const children = node.children;
     if (children.length > 0) {
-        for (let i=0; i < children.length; i++) {
+        for (let i=0; i<children.length; i++) {
             attributesRemoved += _cleanUpAttributesWithin(attribute, children[i]);
         };
     };
@@ -1274,14 +1292,14 @@ var _cleanUpAttributesWithin = function(attribute, node) {
  * replace the DIV with a tag of the same type as previousSibling. We use this
  * to prevent DIVs from being inserted when Enter is pressed.
  */
-var _replaceDivIfNeeded = function() {
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+const _replaceDivIfNeeded = function() {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.tagName === 'DIV')) {
-        var prevSib = selNode.previousSibling;
+        const prevSib = selNode.previousSibling;
         if (prevSib.nodeType === Node.ELEMENT_NODE) {
-            var range = sel.getRangeAt(0).cloneRange();
-            var newElement = document.createElement(prevSib.tagName);
+            const range = sel.getRangeAt(0).cloneRange();
+            const newElement = document.createElement(prevSib.tagName);
             newElement.appendChild(document.createElement('br'));
             selNode.replaceWith(newElement);
             range.setStart(newElement, 0);
@@ -1293,21 +1311,23 @@ var _replaceDivIfNeeded = function() {
     };
 };
 
-/**
+/********************************************************************************
  * Explicit handling of multi-click
  * TODO:- Remove?
  */
 
 /**
  * We received a double or triple click event.
- * When switching LogEntryViews, the double and triple click does not highlight
- * immediately. So, this method highlights and sets the selection properly if needed.
- * We can get double and triple clicks events when the selection is already set
- * properly, in which case we do nothing.
+ * When switching between multiple MarkupWKWebViews, the double and triple click does
+ * not highlight immediately. So, this method highlights and sets the selection properly
+ * if needed. We can get double and triple clicks events when the selection is already
+ * set properly, in which case we do nothing.
+ *
+ * @param {Int}     nClicks     The number of clicks in the 'click' event that got us here
  */
-var _multiClickSelect = function(nClicks) {
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
+const _multiClickSelect = function(nClicks) {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
     if (selNode) {
         if (nClicks === 3) {
             _tripleClickSelect(sel);
@@ -1319,30 +1339,39 @@ var _multiClickSelect = function(nClicks) {
     };
 };
 
-var _doubleClickSelect = function(sel, selNode) {
-    // Select the word in the selNode
-    var range = sel.getRangeAt(0).cloneRange();
-    var startOffset = range.startOffset;
-    var endOffset = range.endOffset;
-    let selNodeText = selNode.textContent;
+/**
+ * Select the word in the selNode
+ *
+ * @param {HTML Selection}  sel         The current selection
+ * @param {HTML Node}       selNode     The node at the selection
+ */
+const _doubleClickSelect = function(sel, selNode) {
+    const range = sel.getRangeAt(0).cloneRange();
+    let startOffset = range.startOffset;
+    let endOffset = range.endOffset;
+    const selNodeText = selNode.textContent;
     while ((startOffset > 0) && !_isWhiteSpace(selNodeText[startOffset - 1])) {
         startOffset -= 1;
     }
     while ((endOffset < selNodeText.length) && !_isWhiteSpace(selNodeText[endOffset]))  {
         endOffset += 1;
     }
-    var wordRange = document.createRange();
+    const wordRange = document.createRange();
     wordRange.setStart(range.startContainer, startOffset);
     wordRange.setEnd(range.endContainer, endOffset);
     sel.removeAllRanges();
     sel.addRange(wordRange);
 };
 
-var _tripleClickSelect = function(sel) {
-    // Find the node that should be selected in full, and then select it
-    var nodeToSelect = _firstSelectionNodeMatching(_blockTags());
+/**
+ * Find the node that should be selected in full, and then select it
+ *
+ * @param {HTML Selection}  sel         The current selection
+ */
+const _tripleClickSelect = function(sel) {
+    const nodeToSelect = _firstSelectionNodeMatching(_styleTags());
     if (nodeToSelect) {
-        var elementRange = document.createRange();
+        const elementRange = document.createRange();
         if (nodeToSelect.firstChild.nodeType === Node.TEXT_NODE) {
             elementRange.setStart(nodeToSelect.firstChild, 0);
         } else {
@@ -1358,46 +1387,57 @@ var _tripleClickSelect = function(sel) {
     }
 };
 
-var _isWhiteSpace = function(s) {
+/**
+ * Return a boolean indicating if s is a white space
+ *
+ * @param   {String}      s     The string that might be white space
+ * @return {Boolean}            Whether it's white space
+ */
+const _isWhiteSpace = function(s) {
     return /\s/g.test(s);
 };
 
-/**
+/********************************************************************************
  * Selection
  */
 
 /**
  * Populate a dictionary of properties about the current selection
- * and return it in a JSON form
+ * and return it in a JSON form. This is the primary means that the
+ * Swift side finds out what the selection is in the document, so we
+ * can tell if the selection is in a bolded word or a list or a table, etc.
+ *
+ * @return {String}      The stringified dictionary of selectionState.
  */
 MU.getSelectionState = function() {
-    var state = _getSelectionState();
+    const state = _getSelectionState();
     return JSON.stringify(state);
 };
 
 /**
- * Populate a dictionary of properties about the current selection
- * and return it
+ * Populate a dictionary of properties about the current selection and return it.
+ *
+ * @return {String: String}     The dictionary of properties describing the selection
  */
-var _getSelectionState = function() {
-    var state = {};
+const _getSelectionState = function() {
+    const state = {};
     if (!document.getSelection()) {
         return state;
     }
     // Selected text
     state['selection'] = _getSelectionText();
     // Link
-    var linkAttributes = _getLinkAttributesAtSelection();
+    const linkAttributes = _getLinkAttributesAtSelection();
     state['href'] = linkAttributes['href'];
     state['link'] = linkAttributes['link'];
     // Image
-    var imageAttributes = _getImageAttributesAtSelection();
+    const imageAttributes = _getImageAttributesAtSelection();
     state['src'] = imageAttributes['src'];
     state['alt'] = imageAttributes['alt'];
     state['scale'] = imageAttributes['scale'];
     state['frame'] = imageAttributes['frame'];
     // Table
-    var tableAttributes = _getTableAttributesAtSelection();
+    const tableAttributes = _getTableAttributesAtSelection();
     state['table'] = tableAttributes['table'];
     state['thead'] = tableAttributes['thead'];
     state['tbody'] = tableAttributes['tbody'];
@@ -1408,7 +1448,7 @@ var _getSelectionState = function() {
     state['row'] = tableAttributes['row'];
     state['col'] = tableAttributes['col'];
     // Style
-    state['style'] = _getSelectionStyle();
+    state['style'] = _getParagraphStyle();
     state['list'] = _firstSelectionTagMatching(['UL', 'OL']);
     if (state['list']) {
         // If we are in a list, then we might or might not be in a list item
@@ -1419,7 +1459,7 @@ var _getSelectionState = function() {
     }
     state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
     // Format
-    var formatTags = _getFormatTags();
+    const formatTags = _getFormatTags();
     state['bold'] = formatTags.includes('B');
     state['italic'] = formatTags.includes('I');
     state['underline'] = formatTags.includes('U');
@@ -1428,38 +1468,62 @@ var _getSelectionState = function() {
     state['sup'] = formatTags.includes('SUP');
     state['code'] = formatTags.includes('CODE');
     // DEBUGGING
-    //var focusNode = document.getSelection().focusNode;
+    //const focusNode = document.getSelection().focusNode;
     //if (focusNode) {
     //    state['focusNodeType'] = focusNode.nodeType;
     //}
-    //var focusOffset = document.getSelection().focusOffset;
+    //const focusOffset = document.getSelection().focusOffset;
     //if (focusOffset) {
     //    state['focusOffset'] = focusOffset;
     //}
-    return state
+    return state;
 };
 
 /**
- * Return the array of element tags that are block-level (i.e., contain other elements)
+ * Return the array of element tags that are block-level and represent styles.
+ *
+ * @return {[String]}       Tag names that represent styles on the Swift side.
  */
-const _blockTags = function() {
+const _styleTags = function() {
     return ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL']
 }
 
-var _getSelectionStyle = function() {
+/**
+ * Return the paragraph style at the selection.
+ *
+ * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
+ */
+const _getParagraphStyle = function() {
     return _firstSelectionTagMatching(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 };
 
-var _getFormatTags = function() {
+/**
+ * Return an array of format tags at the selection. For example, the selection could
+ * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['B', 'I', 'U'].
+ *
+ * @return {[String]}       Tag names that represent the selection formatting on the Swift side.
+ */
+const _getFormatTags = function() {
     return _selectionTagsMatching(['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
 };
-                                
-var _getTableTags = function() {
+
+/**
+ * Return an array of table tags at the selection. For example, if the selection is in
+ * a TD element or a TR in the TBODY, we will get ['TABLE', 'TBODY', 'TR', 'TD'].
+ *
+ * @return {[String]}       Tag names that represent the selection table elements.
+ */
+const _getTableTags = function() {
     return _selectionTagsMatching(['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'])
 };
 
-var _getSelectionText = function() {
-    var sel = document.getSelection();
+/**
+ * Return the currently selected text.
+ *
+ * @return {String}         The selected text, which may be empty
+ */
+const _getSelectionText = function() {
+    const sel = document.getSelection();
     if (sel) {
         return sel.toString();
     }
@@ -1467,59 +1531,54 @@ var _getSelectionText = function() {
 };
 
 /**
- * If there is a range selection, return it as a string.
- *
- * @return {string}
- */
-MU.getRangeSelection = function() {
-    var sel = document.getSelection();
-    if (sel && sel.type == 'Range') {
-        return sel.toString();
-    }
-    return null;
-};
-
-/**
  * For testing purposes, set selection based on elementIds and offsets
- * Like selection, the startOffset and endOffset are number of characters
- * when startElement is #test; else, child number
- * Return true if both elements are found; else, false
+ * Like range, the startOffset and endOffset are number of characters
+ * when startElement is #text; else, child number.
+ *
+ * @param   {String}  startElementId      The id of the element to use as startContainer for the range.
+ * @param   {Int}     startOffset         The offset into the startContainer for the range.
+ * @param   {String}  endElementId        The id of the element to use as endContainer for the range.
+ * @param   {Int}     endOffset           The offset into the endContainer for the range.
+ * @return  {Boolean}                     True if both elements are found; else, false.
  */
 MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
-    var startElement = document.getElementById(startElementId);
-    var endElement = document.getElementById(endElementId);
+    const startElement = document.getElementById(startElementId);
+    const endElement = document.getElementById(endElementId);
     if (!startElement || !endElement) { return false };
-    var startContainer = _firstTextNodeChild(startElement);
-    var endContainer = _firstTextNodeChild(endElement);
+    const startContainer = _firstTextNodeChild(startElement);
+    const endContainer = _firstTextNodeChild(endElement);
     if (!startContainer || !endContainer) { return false };
-    var range = document.createRange();
+    const range = document.createRange();
     range.setStart(startContainer, startOffset);
     range.setEnd(endContainer, endOffset);
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
     return true;
-}
+};
 
-/**
+/********************************************************************************
  * Links
  */
 
 /**
  * Insert a link to url. The selection has to be across a range.
  * When done, re-select the range and back it up.
+ *
+ * @param {String}  url             The url/href to use for the link
+ * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
 MU.insertLink = function(url, undoable=true) {
     _restoreSelection();
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     if (!sel || (sel.rangeCount === 0)) { return };
-    var range;
+    let range;
     if (sel.isCollapsed) {
         range = _wordRangeAtCaret()
     } else {
         range = sel.getRangeAt(0).cloneRange();
     }
-    var el = document.createElement('a');
+    const el = document.createElement('a');
     el.setAttribute('href', url);
     el.appendChild(range.extractContents());
     range.deleteContents();
@@ -1529,7 +1588,7 @@ MU.insertLink = function(url, undoable=true) {
     sel.removeAllRanges();
     sel.addRange(range);
     // Note because the selection is changing while the view is not focused,
-    // we need to backupRange() so we can get it back when we come back
+    // we need to backupSelection() so we can get it back when we come back
     // into focus later.
     _backupSelection();
     if (undoable) {
@@ -1538,18 +1597,19 @@ MU.insertLink = function(url, undoable=true) {
         _restoreSelection();
     }
     _callback('input');
-    return el;
 };
 
 /**
- * Remove the link at the selection
+ * Remove the link at the selection.
+ *
+ * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
 MU.deleteLink = function(undoable=true) {
     // When we call this method, sel is the text inside of an anchorNode
     _restoreSelection();
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     if (sel) {
-        var element = sel.anchorNode.parentElement;
+        const element = sel.anchorNode.parentElement;
         if ('A' === element.nodeName) {
             // Before we _unsetTag, we know what element is and can determine what to select
             // after it is gone. We want to select all of the text that was linked-to
@@ -1558,7 +1618,7 @@ MU.deleteLink = function(undoable=true) {
             // selection inside of a link and removed the link, we will end up with the entire
             // linked-to text selected when done. Now the undo operation knows the text selection
             // and when undo happens, the link can be properly restored.
-            var linkRange = document.createRange();
+            const linkRange = document.createRange();
             const linkText = element.firstChild;
             linkRange.setStart(linkText, 0);
             linkRange.setEnd(linkText, linkText.length);
@@ -1578,13 +1638,14 @@ MU.deleteLink = function(undoable=true) {
 
 /**
  * If the current selection's parent is an A tag, get the href and text.
- * @returns dictionary with href and link as keys; empty if not a link
+ *
+ * @return {String : String}        Dictionary with 'href' and 'link' as keys; empty if not a link
  */
-var _getLinkAttributesAtSelection = function() {
-    var link = {};
-    var sel = document.getSelection();
+const _getLinkAttributesAtSelection = function() {
+    const link = {};
+    const sel = document.getSelection();
     if (sel) {
-        var element = sel.anchorNode.parentElement;
+        const element = sel.anchorNode.parentElement;
         if ('A' === element.nodeName) {
             link['href'] = element.getAttribute('href');
             link['link'] = element.text;
@@ -1596,6 +1657,8 @@ var _getLinkAttributesAtSelection = function() {
 /**
  * Do the insertLink operation following a deleteLink operation
  * Used to undo the deleteLink operation and to do the insertLink operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoInsertLink = function(undoerData) {
     // Reset the selection based on the range after the link was removed,
@@ -1611,6 +1674,8 @@ const _redoInsertLink = function(undoerData) {
 /**
  * Do the deleteLink operation following an insertLink operation
  * Used to undo the insertLink operation and to do the deleteLink operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoDeleteLink = function(undoerData) {
     // Reset the selection based on the range after insert was done,
@@ -1623,54 +1688,58 @@ const _redoDeleteLink = function(undoerData) {
     _backupUndoerRange(undoerData);
 }
 
-/**
+/********************************************************************************
  * Images
  */
 
 /**
  * Insert the image at src with alt text, signaling updateHeight when done loading.
  * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupRange so that range can be restored prior
+ * need to be preceded by backupSelection so that selection can be restored prior
  * to the insert* operation.
  * We leave the selection after the inserted image.
  * The operation will cause a selectionChange event.
- * Return the image element that is created, so we can use it for undoing.
+ *
+ * @param {String}              src         The url of the image.
+ * @param {String}              alt         The alt text describing the image.
+ * @param {Int}                 scale       The scale as a percentage of original's naturalWidth/Height.
+ * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
+ * @return {HTML Image Element}             The image element that was created, used for undo/redo.
  */
 MU.insertImage = function(src, alt, scale=100, undoable=true) {
     _restoreSelection();
-    var sel = document.getSelection();
-    var range = sel.getRangeAt(0).cloneRange();
-    var img = document.createElement('img');
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0).cloneRange();
+    const img = document.createElement('img');
     img.setAttribute('src', src);
     if (alt) { img.setAttribute('alt', alt) };
     if (scale !== 100) {
         img.setAttribute('width', scale);
         img.setAttribute('height', scale);
     }
-    img.setAttribute('tabindex', -1);    // Allows us to select the image
-    img.onload = function() { _callback('updateHeight') };
-    var range = sel.getRangeAt(0).cloneRange();
+    img.setAttribute('tabindex', -1);                       // Allows us to select the image
+    img.onload = function() { _callback('updateHeight') };  // Let Swift know the height changed after loading
     range.insertNode(img);
     // After inserting the image, we want to leave the selection at the beginning
     // of the nextTextElement after it for inline images. If there is no such thing,
     // then find the next best thing.
-    var nearestTextNode = _getFirstChildOfTypeAfter(img, Node.TEXT_NODE);
-    var newRange = document.createRange();
+    const nearestTextNode = _getFirstChildOfTypeAfter(img, Node.TEXT_NODE);
+    const newRange = document.createRange();
     if (nearestTextNode) {
         newRange.setStart(nearestTextNode, 0);
-        newRange.setEnd(nearestTextNode, 0)
+        newRange.setEnd(nearestTextNode, 0);
     } else {
-        var nextSibling = img.nextSibling;
+        const nextSibling = img.nextSibling;
         if (nextSibling && (nextSibling.nodeName === 'BR')) {
-            var newTextNode = document.createTextNode('');
+            const newTextNode = document.createTextNode('');
             nextSibling.replaceWith(newTextNode);
             newRange.setStart(newTextNode, 0);
-            newRange.setEnd(newTextNode, 0)
+            newRange.setEnd(newTextNode, 0);
         } else {
             newRange.setStart(img, 0);
-            newRange.setEnd(img, 0)
+            newRange.setEnd(img, 0);
         };
-    }
+    };
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
@@ -1678,12 +1747,12 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
     // Note that the range tracked on the undo stack is not the same as the selection, which has been
     // set to make continued typing easy after inserting the image.
     if (undoable) {
-        var imgRange = document.createRange();
+        const imgRange = document.createRange();
         imgRange.selectNode(el);
         const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
         undoer.push(undoerData, MU.editor);
         _restoreSelection();
-    }
+    };
     _callback('input');
     return img;
 };
@@ -1694,10 +1763,15 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
  * Scale is a percentage like '80' where null means 100%.
  * Scale is always expressed relative to full scale.
  * Only removing an image is undoable.
+ *
+ * @param {String}              src         The url of the image.
+ * @param {String}              alt         The alt text describing the image.
+ * @param {Int}                 scale       The scale as a percentage of original's naturalWidth/Height.
+ * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
     _restoreSelection();
-    var img = _getElementAtSelection('IMG');
+    const img = _getElementAtSelection('IMG');
     if (img) {
         if (src) {
             img.setAttribute('src', src);
@@ -1734,19 +1808,21 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
 
 /**
  * If the current selection's anchorNode is an IMG tag, get the src and alt.
- * @returns {Dictionary} with src and alt as keys; empty if not an image
+ * We include the boundingRect in attributes in case we want to do something with it on the Swift side.
+ *
+ * @return {String : String}        Dictionary with 'src', 'alt', etc as keys; empty if not an image.
  */
-var _getImageAttributesAtSelection = function() {
-    var attributes = {};
-    var img = _getElementAtSelection('IMG');
+const _getImageAttributesAtSelection = function() {
+    const attributes = {};
+    const img = _getElementAtSelection('IMG');
     if (img) {
         attributes['src'] = img.getAttribute('src');
         attributes['alt'] = img.getAttribute('alt');
-        var scale = _imgScale(img);
+        const scale = _imgScale(img);
         if (scale) {
             attributes['scale'] = scale;
         };
-        var rect = img.getBoundingClientRect();
+        const rect = img.getBoundingClientRect();
         let rectDict = {
             'x' : rect.left,
             'y' : rect.top,
@@ -1759,22 +1835,10 @@ var _getImageAttributesAtSelection = function() {
 };
 
 /**
- * Recursively search element ancestors to find a element nodeName e.g. A
- */
-var _findNodeByNameInContainer = function(element, nodeName, rootElementId) {
-    if (element.nodeName == nodeName) {
-        return element;
-    } else {
-        if (element.id === rootElementId) {
-            return null;
-        }
-        _findNodeByNameInContainer(element.parentElement, nodeName, rootElementId);
-    }
-};
-
-/**
  * Do the insertImage operation following a modifyImage operation
  * Used to undo the modifyImage/remove operation and to do the insertImage operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoInsertImage = function(undoerData) {
     // Reset the selection based on the range after the image was removed,
@@ -1793,6 +1857,8 @@ const _redoInsertImage = function(undoerData) {
 /**
  * Do the modifyImage operation following an insertImage operation
  * Used to undo the insertImage operation and to do the modifyImage/remove operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoModifyImage = function(undoerData) {
     // The undoerData has the range to select to remove the image;
@@ -1805,44 +1871,49 @@ const _redoModifyImage = function(undoerData) {
     MU.modifyImage(null, null, null, false);
 }
 
-/**
+/********************************************************************************
  * Tables
  */
 
 /**
  * Insert an empty table with the specified number of rows and cols.
  * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupRange so that range can be restored prior
+ * need to be preceded by backupSelection so that range can be restored prior
  * to the insert* operation.
  * We leave the selection in the first cell of the first row.
  * The operation will cause a selectionChange event.
+ *
+ * @param   {Int}                 rows        The number of rows in the table to be created.
+ * @param   {Int}                 cols        The number of columns in the table to be created.
+ * @param   {Boolean}             undoable    True if we should push undoerData onto the undo stack.
+ * @return  {HTML Table Element}              The table element that was created, used for undo/redo.
  */
 MU.insertTable = function(rows, cols, undoable=true) {
     if ((rows < 1) || (cols < 1)) { return };
     _restoreSelection();
-    var sel = document.getSelection();
-    var selNode = (sel) ? sel.focusNode : null;
-    var range = sel.getRangeAt(0).cloneRange();
-    var table = document.createElement('table');
-    var tbody = document.createElement('tbody');
-    var firstRow;
-    for (let row = 0; row < rows; row++) {
-        var tr = document.createElement('tr');
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
+    const range = sel.getRangeAt(0).cloneRange();
+    const table = document.createElement('table');
+    const tbody = document.createElement('tbody');
+    let firstRow;
+    for (let row=0; row<rows; row++) {
+        let tr = document.createElement('tr');
         if (row === 0) { firstRow = tr };
-        for (let col = 0; col < cols; col++) {
-            var td = document.createElement('td');
+        for (let col=0; col<cols; col++) {
+            let td = document.createElement('td');
             tr.appendChild(td);
         };
         tbody.appendChild(tr);
     };
     table.appendChild(tbody);
-    var targetNode = _findFirstParentElementInTagNames(selNode, _blockTags());
+    const targetNode = _findFirstParentElementInTagNames(selNode, _styleTags());
     if (!targetNode) { return };
     targetNode.insertAdjacentHTML('afterend', table.outerHTML);
     // We need the new table that now exists at selection.
     // Restore the selection to leave it at the beginning of the new table
-    table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
-    _restoreTableSelection(table, 0, 0, false);
+    const newTable = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
+    _restoreTableSelection(newTable, 0, 0, false);
     // Track table insertion on the undo stack if necessary
     if (undoable) {
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
@@ -1850,15 +1921,17 @@ MU.insertTable = function(rows, cols, undoable=true) {
         _restoreSelection();
     }
     _callback('input');
-    return table;
+    return newTable;
 };
 
 /**
- * Delete the entire table at the selection
+ * Delete the entire table at the selection.
+ *
+ * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  */
 MU.deleteTable = function(undoable=true) {
     const elements = _getTableElementsAtSelection();
-    var table = elements['table'];
+    const table = elements['table'];
     if (table) {
         const outerHTML = table.outerHTML;
         const row = elements['row'];
@@ -1881,14 +1954,16 @@ MU.deleteTable = function(undoable=true) {
  * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
  * The values in elements are JavaScript objects of various kinds; however, the
  * values in attributes have to be consumable on the Swift side. So, for example,
- * the elements['thead'] is the HTML Table Heade Element, whereas attributes['thead']
+ * the elements['thead'] is the HTML Table Header Element, whereas attributes['thead']
  * is either true or false indicating whether the selection is in the header.
  * Similarly, elements['header'] and ['colspan'] are true or false so
  * can be stored in attributes directly.
+ *
+ * @return {String : T}     Dictionary with keys of various types consumable in Swift
  */
-var _getTableAttributesAtSelection = function() {
-    var attributes = {};
-    var elements = _getTableElementsAtSelection();
+const _getTableAttributesAtSelection = function() {
+    const attributes = {};
+    const elements = _getTableElementsAtSelection();
     attributes['table'] = elements['table'] != null;
     if (!attributes['table']) { return attributes };
     attributes['thead'] = elements['thead'] != null;
@@ -1909,12 +1984,14 @@ var _getTableAttributesAtSelection = function() {
  * as we go. We compute the row and col of the selection, too.
  * If anything is unexpected along the way, we return an empty
  * dictionary.
+ *
+ * @return {String : T}     Dictionary with keys of types consumable here in JavaScript
  */
-var _getTableElementsAtSelection = function() {
-    var elements = {};
-    var cell = _firstSelectionNodeMatching(['TD', 'TH']);
+const _getTableElementsAtSelection = function() {
+    const elements = {};
+    const cell = _firstSelectionNodeMatching(['TD', 'TH']);
     if (cell) {
-        var _cell = cell;
+        let _cell = cell;
         // Track the cell the selection is in
         if (cell.nodeName === 'TD') {
             elements['td'] = cell;
@@ -1922,26 +1999,26 @@ var _getTableElementsAtSelection = function() {
             elements['th'] = cell;
         }
         // Find the column the selection is in, since we know it immediately
-        var colCount = 0;
+        let colCount = 0;
         while (_cell.previousElementSibling) {
             _cell = _cell.previousElementSibling;
             if (_cell.nodeType === cell.nodeType) { colCount++; };
         };
         elements['col'] = colCount;
         // Track the row the selection is in
-        var row = cell.parentNode;
+        const row = cell.parentNode;
         if (row.nodeName === 'TR') {
             elements['tr'] = row;
         } else {
             return {};
         }
         // Track whether we are in the header or body
-        var section = row.parentNode;
+        const section = row.parentNode;
         if (section.nodeName === 'TBODY') {
             elements['tbody'] = section;
             // If the selection is in the body, then we can find the row
-            var _row = row;
-            var rowCount = 0;
+            let _row = row;
+            let rowCount = 0;
             while (_row.previousElementSibling) {
                 _row = _row.previousElementSibling;
                 if (_row.nodeType === row.nodeType) { rowCount++; };
@@ -1953,7 +2030,7 @@ var _getTableElementsAtSelection = function() {
             return {};
         };
         // Track the selected table
-        var table = section.parentNode;
+        const table = section.parentNode;
         if (table.nodeName === 'TABLE') {
             elements['table'] = table;
         } else {
@@ -1979,19 +2056,22 @@ var _getTableElementsAtSelection = function() {
  * is zero. The colspan value is returned so we know if the header spans columns.
  * Externally, we only need to know if a header exists. Internally in JavaScript, we can
  * always _getSection for the table to find out.
+ *
+ * @param {HTML Table Element}  table   The table being examined
+ * @return {[T]}                        Array with number of rows and cols and whether a header with or without colSpan exists
  */
-var _getRowsCols = function(table) {
-    var rowCount = 0;
-    var colCount = 0;
-    var headerExists = false;
-    var colspan = null;
-    var children = table.children;
+const _getRowsCols = function(table) {
+    let rowCount = 0;
+    let colCount = 0;
+    let headerExists = false;
+    let colspan = null;
+    const children = table.children;
     for (let i=0; i<children.length; i++) {
-        var section = children[i];
-        var rows = section.children;
+        let section = children[i];
+        let rows = section.children;
         if (rows.length > 0) {
-            var row = rows[0];
-            var cols = row.children;
+            let row = rows[0];
+            let cols = row.children;
             if (section.nodeName === 'TBODY') {
                 rowCount = rows.length;
                 colCount = cols.length;
@@ -2008,17 +2088,21 @@ var _getRowsCols = function(table) {
             };
         };
     };
-    let colSpanExists = colspan != null;
+    const colSpanExists = colspan != null;
     return [ rowCount, colCount, headerExists, colSpanExists ];
 }
 
 /**
- * Return the named section of the table (e.g., name === 'THEAD' or 'TBODY')
+ * Return the section of the table identified by node name
+ *
+ * @param {HTML Table Element}  table   The table being examined.
+ * @param {String}              name    The desired section, either 'THEAD' or 'TBODY'.
+ * @return {HTML Table Header | HTML Table Body | null}
  */
-var _getSection = function(table, name) {
-    var children = table.children;
+const _getSection = function(table, name) {
+    const children = table.children;
     for (let i=0; i<children.length; i++) {
-        var section = children[i];
+        let section = children[i];
         if (section.nodeName === name) {
             return section;
         };
@@ -2029,26 +2113,29 @@ var _getSection = function(table, name) {
 /**
  * Add a row before or after the current selection, whether it's in the header or body.
  * For rows, AFTER = below; otherwise above.
+ *
+ * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
  */
 MU.addRow = function(direction, undoable=true) {
     _backupSelection();
-    var addedRow = false;
-    var tableElements = _getTableElementsAtSelection();
+    let addedRow = false;
+    const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
-    var table = tableElements['table'];
-    var tr = tableElements['tr'];
-    var tbody = tableElements['tbody'];
-    var thead = tableElements['thead'];
-    var rows = tableElements['rows'];
-    var cols = tableElements['cols'];
-    var row = tableElements['row'];
-    var col = tableElements['col'];
-    var outerHTML = table.outerHTML;    // The table contents before we insert a row
+    const table = tableElements['table'];
+    const tr = tableElements['tr'];
+    const tbody = tableElements['tbody'];
+    const thead = tableElements['thead'];
+    const rows = tableElements['rows'];
+    const cols = tableElements['cols'];
+    const row = tableElements['row'];
+    const col = tableElements['col'];
+    const outerHTML = table.outerHTML;    // The table contents before we insert a row
     // Create an empty row with the right number of elements
-    var newRow = document.createElement('tr');
+    const newRow = document.createElement('tr');
     for (let i=0; i<cols; i++) {
-        var td = document.createElement('td');
+        let td = document.createElement('td');
         newRow.appendChild(td);
     };
     // For reference, form of insertBefore is...
@@ -2059,16 +2146,16 @@ MU.addRow = function(direction, undoable=true) {
             // A row after the header is the first row of the body
             if (rows > 0) {
                 // There is at least one row in the body, so put the new one first
-                var body = _getSection(table, 'TBODY');
+                let body = _getSection(table, 'TBODY');
                 if (body) {
-                    var firstRow = body.children[0];
+                    let firstRow = body.children[0];
                     body.insertBefore(newRow, firstRow);
                     addedRow = true;
                 }
             } else {
                 // The body doesn't exist because rows === 0
                 // Create it and put the new row in it
-                var body = document.createElement('tbody');
+                let body = document.createElement('tbody');
                 body.appendChild(newRow);
                 table.appendChild(body)
                 addedRow = true;
@@ -2085,7 +2172,7 @@ MU.addRow = function(direction, undoable=true) {
         }
         addedRow = true;
     } else {
-        _consoleLog("Could not add row");
+        _consoleLog('Could not add row');
     }
     _restoreSelection();
     // Track row addition on the undo stack if necessary.
@@ -2102,29 +2189,32 @@ MU.addRow = function(direction, undoable=true) {
 };
 
 /**
- * Add a col before or after the current selection, whether it's in the header or body.
+ * Add a column before or after the current selection, whether it's in the header or body.
+ *
+ * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new column goes relative to the selection.
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
  */
 MU.addCol = function(direction, undoable=true) {
     _backupSelection();
-    var tableElements = _getTableElementsAtSelection();
+    const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
-    var table = tableElements['table'];
-    var row = tableElements['row'];
-    var col = tableElements['col'];
-    var cols = tableElements['cols'];
-    var tbody = tableElements['tbody'];
-    var thead = tableElements['thead'];
-    var colspan = tableElements['colspan'];
+    const table = tableElements['table'];
+    const row = tableElements['row'];
+    const col = tableElements['col'];
+    const cols = tableElements['cols'];
+    const tbody = tableElements['tbody'];
+    const thead = tableElements['thead'];
+    const colspan = tableElements['colspan'];
     const outerHTML = table.outerHTML;  // Table contents before we add a column
     if (tbody || (thead && !colspan)) {
         // We have selected the body of the table or the header.
         // In the case of selecting the header, it is a non-colspan header,
         // so col is meaningful (otherwise it is always 1 in a colspan header).
         // Loop over all rows in the body, adding a new td in each one
-        var body = _getSection(table, 'TBODY');
+        const body = _getSection(table, 'TBODY');
         if (body) {
-            var rows = body.children;       // Only tr elements
+            const rows = body.children;       // Only tr elements
             for (let j=0; j<rows.length; j++) {
                 let tr = rows[j];
                 let td = tr.children[col];  // Only td elements
@@ -2136,10 +2226,10 @@ MU.addCol = function(direction, undoable=true) {
                     tr.insertBefore(newTd, td.nextElementSibling);
                 } else {
                     tr.insertBefore(newTd, td);
-                }
+                };
             };
         };
-        var header = _getSection(table, 'THEAD');
+        const header = _getSection(table, 'THEAD');
         if (header) {
             // If the header exists for this table, we need to expand it, too.
             let tr = header.children[0];    // Only tr elements
@@ -2156,9 +2246,9 @@ MU.addCol = function(direction, undoable=true) {
                     th.insertBefore(newTh, th.nextElementSibling);
                 } else {
                     th.insertBefore(newTh, th);
-                }
-            }
-        }
+                };
+            };
+        };
     };
     _restoreSelection();
     // Track col addition on the undo stack if necessary.
@@ -2171,28 +2261,34 @@ MU.addCol = function(direction, undoable=true) {
     _callback('input');
 };
 
+/**
+ * Add a header to the table at the selection.
+ *
+ * @param {Boolean} colspan     Whether the header should span all columns of the table or not.
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
+ */
 MU.addHeader = function(colspan, undoable=true) {
     _backupSelection();
-    var tableElements = _getTableElementsAtSelection();
+    const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tbody has to be selected
-    var table = tableElements['table'];
-    var row = tableElements['row'];
-    var col = tableElements['col'];
-    var cols = tableElements['cols'];
-    var tbody = tableElements['tbody'];
+    const table = tableElements['table'];
+    const row = tableElements['row'];
+    const col = tableElements['col'];
+    const cols = tableElements['cols'];
+    const tbody = tableElements['tbody'];
     const outerHTML = table.outerHTML;
     if (tbody) {
-        var header = document.createElement('thead');
-        var tr = document.createElement('tr');
+        const header = document.createElement('thead');
+        const tr = document.createElement('tr');
         if (colspan) {
             header.setAttribute('colspan', cols);
-            var th = document.createElement('th');
+            let th = document.createElement('th');
             tr.appendChild(th);
             header.appendChild(tr);
         } else {
             for (let i=0; i<cols; i++) {
-                var th = document.createElement('th');
+                let th = document.createElement('th');
                 tr.appendChild(th);
             }
             header.appendChild(tr);
@@ -2209,25 +2305,30 @@ MU.addHeader = function(colspan, undoable=true) {
     _callback('input');
 };
 
+/**
+ * Delete the row at the selection point in the table.
+ *
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
+ */
 MU.deleteRow = function(undoable=true) {
     _backupSelection();
-    var tableElements = _getTableElementsAtSelection();
+    const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
     // tr might be the row in the header or a row in the body
-    var table = tableElements['table'];
-    var thead = tableElements['thead'];
-    var tbody = tableElements['tbody'];
-    var tr = tableElements['tr'];
+    const table = tableElements['table'];
+    const thead = tableElements['thead'];
+    const tbody = tableElements['tbody'];
+    const tr = tableElements['tr'];
     const outerHTML = table.outerHTML;
     const row = tableElements['row'];
     const col = tableElements['col'];
-    var newTr;
+    let newTr;
     if (thead) {
         // We are going to delete the header,
         // So we will identify the first body cell
         // for selection after deleting
-        var body = _getSection(table, 'TBODY');
+        const body = _getSection(table, 'TBODY');
         if (body) {
             newTr = body.firstElementChild;
         }
@@ -2241,7 +2342,7 @@ MU.deleteRow = function(undoable=true) {
         } else if (tr.previousElementSibling) {
             newTr = tr.previousElementSibling;
         } else if (_getSection(table, 'THEAD')) {
-            var header = _getSection(table, 'THEAD');
+            const header = _getSection(table, 'THEAD');
             newTr = header.firstElementChild;
         }
     }
@@ -2266,22 +2367,27 @@ MU.deleteRow = function(undoable=true) {
     _callback('input');
 };
 
+/**
+ * Delete the column at the selection point in the table.
+ *
+ * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
+ */
 MU.deleteCol = function(undoable=true) {
     _backupSelection();
-    var tableElements = _getTableElementsAtSelection();
+    const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     // There will always be a table and tr and either tbody or thead
     // tr might be the row in the header or a row in the body
-    var table = tableElements['table'];
-    var thead = tableElements['thead'];
-    var tbody = tableElements['tbody'];
-    var newTr = tableElements['tr'];
-    var cols = tableElements['cols'];
-    var col = tableElements['col'];
-    var colspan = tableElements['colspan'];
+    const table = tableElements['table'];
+    const thead = tableElements['thead'];
+    const tbody = tableElements['tbody'];
+    const newTr = tableElements['tr'];
+    const cols = tableElements['cols'];
+    const col = tableElements['col'];
+    const colspan = tableElements['colspan'];
     const outerHTML = table.outerHTML;
     const row = tableElements['row'];
-    var newCol;
+    let newCol;
     if ((tbody || (thead && !colspan)) && cols > 1) {
         // newCol identifies the column to select in newTr after deleting
         if (col === cols - 1) {
@@ -2307,17 +2413,17 @@ MU.deleteCol = function(undoable=true) {
     // newCol should be non-null if we got here; iow, we will be deleting a column and leaving
     // the remaining table in place with a cell selected.
     // Now delete the column elements from each row and the header
-    var tr, td, th;
-    var body = _getSection(table, 'TBODY');
+    let tr, td, th;
+    const body = _getSection(table, 'TBODY');
     if (body) {
-        var rows = body.children;
+        const rows = body.children;
         for (let j=0; j<rows.length; j++) {
             tr = rows[j];
             td = tr.children[col];
             tr.removeChild(td);
         }
     };
-    var header = _getSection(table, 'THEAD');
+    const header = _getSection(table, 'THEAD');
     if (header) {
         tr = header.children[0];
         th = tr.children[0];
@@ -2339,13 +2445,16 @@ MU.deleteCol = function(undoable=true) {
 
 /**
  * Given a row, tr, select at the beginning of the first text element in col, or
- * the entire first element if not a text element
+ * the entire first element if not a text element.
+ *
+ * @param {HTML Row Element}    tr      The row that holds the TD or TH cell in column col to be selected.
+ * @param {Int}                 col     The column to be selected
  */
 const _selectCol = function(tr, col) {
-    var cell = tr.children[col];
+    const cell = tr.children[col];
     if (cell) { // The cell is either a th or td
-        var sel = document.getSelection();
-        var range = document.createRange();
+        const sel = document.getSelection();
+        const range = document.createRange();
         const cellNode = cell.firstChild;
         if (cellNode) {
             if (cellNode.nodeType === Node.TEXT_NODE) {
@@ -2355,7 +2464,7 @@ const _selectCol = function(tr, col) {
                 range.selectNode(cellNode);
             };
         } else {
-            let br = document.createElement('br');
+            const br = document.createElement('br');
             cell.appendChild(br);
             range.selectNode(br);
         };
@@ -2370,9 +2479,13 @@ const _selectCol = function(tr, col) {
  * reset the selection to the row/col in the table.
  * Used after doInsertTable to restore the selection to the same row/col it
  * started it, but will be at the beginning of the first child in it.
+ *
+ * @param {HTML Table Element}  table   The table to put the selection in.
+ * @param {Int}                 row     The row number to select the TD cell in.
+ * @param {Int}                 col     The column number to select the TD or TH cell in.
  */
 const _restoreTableSelection = function(table, row, col, inHeader) {
-    var tr;
+    let tr;
     if (inHeader) {
         const header = _getSection(table, 'THEAD');
         tr = header.children[0];
@@ -2386,6 +2499,8 @@ const _restoreTableSelection = function(table, row, col, inHeader) {
 /**
  * Do the insertTable operation following a deleteTable operation.
  * Used to undo the deleteTable operation and to do the insertTable operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoInsertTable = function(undoerData) {
     // Reset the selection based on the range after the table was removed,
@@ -2396,7 +2511,7 @@ const _redoInsertTable = function(undoerData) {
     // We leave the selection at the same row/col that was selected when the
     // table was deleted, but we don't try to put it at the same offset as before.
     const endContainer = undoerData.range.endContainer;
-    var targetNode = endContainer;
+    let targetNode = endContainer;
     if (endContainer.nodeType === Node.TEXT_NODE) {
         targetNode = endContainer.parentNode;
     };
@@ -2416,6 +2531,8 @@ const _redoInsertTable = function(undoerData) {
 /**
  * Do the deleteTable operation following an insertTable operation.
  * Used to undo the insertTable operation and to do the deleteTable operation.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _redoDeleteTable = function(undoerData) {
     // The undoerData has the range to select to remove the table;
@@ -2428,9 +2545,9 @@ const _redoDeleteTable = function(undoerData) {
 };
 
 /**
- * Restore the previous table by deleting the exising table and
+ * Restore the previous table by deleting the existing table and
  * inserting the one held in undoerData. This is a lazy way to
- * handle undo for addRow, deleteRow, addCol, and deleteCol.
+ * handle undo/redo for addRow, deleteRow, addCol, and deleteCol.
  * In each of these cases, undoerData holds the row and column
  * that were selected before the operation we are undoing or redoing,
  * along with the outerHTML that existed before the operation.
@@ -2443,6 +2560,8 @@ const _redoDeleteTable = function(undoerData) {
  * Why not reset the undoerData.range? Because the range is what we need
  * to delete the *table*, not to delete a row or col or add a row or col,
  * and that does not change.
+ *
+ * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _restoreTable = function(undoerData) {
     _restoreUndoerRange(undoerData);
@@ -2460,7 +2579,7 @@ const _restoreTable = function(undoerData) {
     undoerData.data.inHeader = inHeader;
 };
 
-/**
+/********************************************************************************
  * Common private functions
  */
 
@@ -2475,9 +2594,13 @@ const _consoleLog = function(string) {
     _callback(JSON.stringify(messageDict));
 };
 
-/// Return the first tag contained in matchNames that the selection is inside of, without encountering one in excludeNames
-var _firstSelectionTagMatching = function(matchNames, excludeNames) {
-    var matchingNode = _firstSelectionNodeMatching(matchNames, excludeNames);
+/**
+ * Return the first tag contained in matchNames that the selection is inside of, without encountering one in excludeNames.
+ *
+ * @return {String}         The tagName that was found, or an empty string if not found.
+ */
+const _firstSelectionTagMatching = function(matchNames, excludeNames) {
+    const matchingNode = _firstSelectionNodeMatching(matchNames, excludeNames);
     if (matchingNode) {
         return matchingNode.tagName;
     } else {
@@ -2485,13 +2608,17 @@ var _firstSelectionTagMatching = function(matchNames, excludeNames) {
     }
 };
 
-/// Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames
-var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
-    var sel = document.getSelection();
+/**
+ * Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames.
+ *
+ * @return {HTML Element}   The element that was found, or null if not found.
+ */
+const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
+    const sel = document.getSelection();
     if (sel) {
-        var focusNode = sel.focusNode
+        const focusNode = sel.focusNode
         if (focusNode) {
-            var selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
+            const selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
             if (selElement) {
                 return selElement;
             }
@@ -2500,14 +2627,19 @@ var _firstSelectionNodeMatching = function(matchNames, excludeNames) {
     return null;
 };
 
-/// Return the all tags in tagNames that the selection is inside of
-var _selectionTagsMatching = function(tagNames) {
-    var sel = document.getSelection();
-    var tags = [];
+/**
+ * Return all of the tags in tagNames that the selection is inside of.
+ *
+ * @param   {[String]}      Array of tag names to search upward for, starting at selection.
+ * @return  {[String]}      Array of tag names found.
+ */
+const _selectionTagsMatching = function(tagNames) {
+    const sel = document.getSelection();
+    const tags = [];
     if (sel) {
-        var focusNode = sel.focusNode;
+        let focusNode = sel.focusNode;
         while (focusNode) {
-            var selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
+            let selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
             if (selElement) {
                 tags.push(selElement.tagName);
             }
@@ -2517,17 +2649,19 @@ var _selectionTagsMatching = function(tagNames) {
     return tags;
 };
 
-
-
 /**
- * Return the first node with nodeName within node, doing a depthwise traversal
+ * Return the first node with nodeName within node, doing a depthwise traversal.
  * Will only examine element nodes, not text nodes, so nodeName should not be #text
+ *
+ * @param   {HTML Node}     node        The node to look inside of for a child with nodeName.
+ * @param   {String}        nodeName    The name of the node we are looking for.
+ * @return  {HTML Element | null}       The element we found, or null.
  */
-var _getFirstChildWithNameWithin = function(node, nodeName) {
+const _getFirstChildWithNameWithin = function(node, nodeName) {
     if (node.nodeName === nodeName) {
-        return node
+        return node;
     };
-    var children = node.children;
+    const children = node.children;
     for (let i=0; i<children.length; i++) {
         return _getFirstChildWithNameWithin(children[i], nodeName);
     };
@@ -2535,13 +2669,17 @@ var _getFirstChildWithNameWithin = function(node, nodeName) {
 };
 
 /**
- * Return the first node of nodeType within node, doing a depthwise traversal
+ * Return the first node of nodeType within node, doing a depthwise traversal.
+ *
+ * @param   {HTML Node}     node        The node to look inside of for a child of type nodeType.
+ * @param   {String}        nodeType    The type of node we are looking for.
+ * @return  {HTML Node | null}          The node we found, or null.
  */
-var _getFirstChildOfTypeWithin = function(node, nodeType) {
+const _getFirstChildOfTypeWithin = function(node, nodeType) {
     if (node.nodeType === nodeType) {
-        return node
+        return node;
     };
-    var childNodes = node.childNodes;
+    const childNodes = node.childNodes;
     for (let i=0; i<childNodes.length; i++) {
         return _getFirstChildOfTypeWithin(childNodes[i], nodeType);
     };
@@ -2549,12 +2687,17 @@ var _getFirstChildOfTypeWithin = function(node, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's next siblings
+ * Return the first node of nodeType within element's next siblings.
+ *
+ * @param   {HTML Element}  element     The element to start looking at for nextSiblings.
+ * @param   {String}        nodeType    The type of node we are looking for.
+ * @return  {HTML Node | null}          The node we found, or null.
  */
-var _getFirstChildOfTypeAfter = function(element, nodeType) {
-    var nextSib = element.nextSibling;
+const _getFirstChildOfTypeAfter = function(element, nodeType) {
+    let nextSib = element.nextSibling;
+    let firstChildOfType;
     while (nextSib) {
-        var firstChildOfType = _getFirstChildOfTypeWithin(nextSib, nodeType);
+        firstChildOfType = _getFirstChildOfTypeWithin(nextSib, nodeType);
         if (firstChildOfType) {
             nextSib = null;
         } else {
@@ -2565,11 +2708,15 @@ var _getFirstChildOfTypeAfter = function(element, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's previous siblings
+ * Return the first node of nodeType within element's previous siblings.
+ *
+ * @param   {HTML Element}  element     The element to start looking at for previousSiblings.
+ * @param   {String}        nodeType    The type of node we are looking for.
+ * @return  {HTML Node | null}          The node we found, or null.
  */
-var _getFirstChildOfTypeBefore = function(element, nodeType) {
-    var prevSib = element.previousElementSibling;
-    var firstChildOfType;
+const _getFirstChildOfTypeBefore = function(element, nodeType) {
+    let prevSib = element.previousElementSibling;
+    let firstChildOfType;
     while (prevSib) {
         firstChildOfType = _getFirstChildOfTypeWithin(prevSib, nodeType);
         if (firstChildOfType) {
@@ -2584,10 +2731,14 @@ var _getFirstChildOfTypeBefore = function(element, nodeType) {
 /*
  * Return a number that is what is actually specified in the attribute.
  * Since all attributes are strings, using them in raw form can cause weird
- * JavaScript autoconversion issues, especially when adding things to them
+ * JavaScript autoconversion issues, especially when adding things to them.
+ *
+ * @param   {HTML Element}  element     HTML element.
+ * @param   {String}        attribute   The name of the attribute.
+ * @return  {Number | null}             The value of the attribute if it is actually a number; else null.
  */
-var _numberAttribute = function(element, attribute) {
-    var number = Number(element.getAttribute(attribute));
+const _numberAttribute = function(element, attribute) {
+    const number = Number(element.getAttribute(attribute));
     return isNaN(number) ? null : number
 };
 
@@ -2596,9 +2747,13 @@ var _numberAttribute = function(element, attribute) {
  * Used for deleting element and leaving selection in a reasonable state.
  * If the nearest sibling is a BR, we will replace it with a text node
  * and return that text node.
+ *
+ * @param   {HTML Element}      element     HTML element.
+ * @param   {String}            direction   Either 'BEFORE' or 'AFTER' to identify which way to look for a text node
+ * @return  {HTML Text Node | MU.editor}    The text node in the direction, or as fallback, the editor element
  */
 const _elementAfterDeleting = function(element, direction) {
-    var nearestTextNode;
+    let nearestTextNode;
     if (direction === 'BEFORE') {
         nearestTextNode = _getFirstChildOfTypeBefore(element, Node.TEXT_NODE);
     } else {
@@ -2607,15 +2762,15 @@ const _elementAfterDeleting = function(element, direction) {
     if (nearestTextNode) {
         return nearestTextNode
     } else {
-        var sibling = (element.nextSibling) ? element.nextSibling : element.previousSibling;
+        const sibling = (element.nextSibling) ? element.nextSibling : element.previousSibling;
         if (sibling && (nextSibling.nodeName === 'BR')) {
-            var newTextNode = document.createTextNode('');
+            const newTextNode = document.createTextNode('');
             sibling.replaceWith(newTextNode);
             return newTextNode;
         } else if (sibling) {
             return sibling;
         } else {
-            var firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+            const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
             if (firstTextNode) {
                 return firstTextNode;
             } else {
@@ -2630,13 +2785,16 @@ const _elementAfterDeleting = function(element, direction) {
  * Delete the element and reset the selection to the nearest text node to what
  * we deleted. The selection should be left in a state that will allow the
  * element to be inserted again at the same spot.
+ *
+ * @param   {HTML Element}      element     HTML element.
+ * @param   {String}            direction   Either 'BEFORE' or 'AFTER' to identify where to put the selection
  */
 const _deleteAndResetSelection = function(element, direction) {
-    var nextEl = _elementAfterDeleting(element, direction);
+    const nextEl = _elementAfterDeleting(element, direction);
     element.parentNode.removeChild(element);
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     sel.removeAllRanges();
-    var newRange = document.createRange();
+    const newRange = document.createRange();
     if (direction === 'BEFORE') {
         newRange.setStart(nextEl, nextEl.textContent.length);
         newRange.setEnd(nextEl, nextEl.textContent.length);
@@ -2649,43 +2807,49 @@ const _deleteAndResetSelection = function(element, direction) {
 }
 
 /**
- * Get the element with nodeName at the selection point if one exists
+ * Get the element with nodeName at the selection point if one exists.
+ *
+ * @param   {String}        nodeName    The name of the node we are looking for.
+ * @return  {HTML Node | null}          The node we found or null if not found.
  */
 const _getElementAtSelection = function(nodeName) {
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     if (sel) {  // Removed check on && isCollapsed
-        var node = sel.anchorNode;
-        var anchorOffset = sel.anchorOffset;
+        const node = sel.anchorNode;
+        const anchorOffset = sel.anchorOffset;
         if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
             if (anchorOffset === node.textContent.length) {
                 // We have selected the end of a text element, which might be next
                 // to an element we're looking for
-                var nextSibling = node.nextSibling;
+                const nextSibling = node.nextSibling;
                 if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
                     return (nextSibling.nodeName === nodeName) ? nextSibling : null;
                 };
             };
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             // We selected some element (like <P>) and the child at anchorOffset might be an element we're looking for
-            var child = node.childNodes[anchorOffset];
+            const child = node.childNodes[anchorOffset];
             return (child && child.nodeName === nodeName) ? child : null;
         };
     };
     return null;
-}
+};
 
 /**
  * Put the tag around the current selection, or the word if range.collapsed
- * If not in a word or in a non-collapsed range, create and empty element of
+ * If not in a word or in a non-collapsed range, create an empty element of
  * type tag and select it so that new input begins in that element immediately.
+ *
+ * @param   {String}            type    The tag name to set; e.g., 'B'.
+ * @param   {HTML Selection}    sel     The current selection.
  */
-var _setTag = function(type, sel) {
+const _setTag = function(type, sel) {
     const range = sel.getRangeAt(0).cloneRange();
-    var el = document.createElement(type);
+    const el = document.createElement(type);
     const wordRange = _wordRangeAtCaret();
     const startNewTag = range.collapsed && !wordRange;
     const tagWord = range.collapsed && wordRange;
-    var newRange = document.createRange();
+    const newRange = document.createRange();
     // In all cases, el is the new element with tagName type and range will have
     // been modified to have the new element appropriately inserted. The
     // newRange is set appropriately depending on the case.
@@ -2702,7 +2866,7 @@ var _setTag = function(type, sel) {
         // the empty text character, then we can "see" it show up when we select even tho
         // it doesn't have any visibility on the screen.
         // TODO - The cursor doesn't show up, dammit.
-        var emptyTextNode = document.createTextNode('\u200B');
+        const emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
         range.insertNode(el);
         newRange.selectNode(emptyTextNode);
@@ -2742,31 +2906,37 @@ var _setTag = function(type, sel) {
     // IOW, we end up with a blank sibling to the new <i> element. It doesn't
     // hurt anything, but it's annoying as hell. So the following code checks
     // for it and removes it.
-    //var prevSib = el.previousSibling;
+    //const prevSib = el.previousSibling;
     //if (prevSib && (prevSib.nodeType != Node.TEXT_NODE)) {
-    //    var innerHTML = prevSib.innerHTML;
+    //    const innerHTML = prevSib.innerHTML;
     //    if (!innerHTML || (innerHTML.length == 0)) {
     //        prevSib.parentNode.removeChild(prevSib);
     //    }
     //}
-    //var nextSib = el.nextSibling;
+    //const nextSib = el.nextSibling;
     //if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
-    //    var innerHTML = nextSib.innerHTML;
+    //    const innerHTML = nextSib.innerHTML;
     //    if (!innerHTML || (innerHTML.length == 0)) {
     //        nextSib.parentNode.removeChild(nextSib);
     //    }
     //}
 };
 
+/**
+ * When selection is collapsed and in or next to a word, return the range
+ * surrounding the word.
+ *
+ * @return  {HTML Range | null}    The range that surrounds the word the selection is in; else, null.
+ */
 const _wordRangeAtCaret = function() {
     const sel = document.getSelection();
     if ((!sel) || (sel.rangeCount === 0) || (!sel.isCollapsed)) { return null };
     const range = sel.getRangeAt(0).cloneRange();
     if (range.startContainer.nodeType !== Node.TEXT_NODE) { return null };
     // Select the word in the selNode
-    var startOffset = range.startOffset;
-    var endOffset = range.endOffset;
-    let selNodeText = range.startContainer.textContent;
+    let startOffset = range.startOffset;
+    let endOffset = range.endOffset;
+    const selNodeText = range.startContainer.textContent;
     while ((startOffset > 0) && !_isWhiteSpace(selNodeText[startOffset - 1])) {
         startOffset -= 1;
     }
@@ -2776,7 +2946,7 @@ const _wordRangeAtCaret = function() {
     // If both startOffset and endOffset have moved from the originals in range,
     // then the selection/caret is inside of a word, not on the ends of one
     if ((startOffset < range.startOffset) && (endOffset > range.endOffset)) {
-        var wordRange = document.createRange();
+        const wordRange = document.createRange();
         wordRange.setStart(range.startContainer, startOffset);
         wordRange.setEnd(range.endContainer, endOffset);
         return wordRange;
@@ -2792,8 +2962,11 @@ const _wordRangeAtCaret = function() {
  * the outermost in place. A simple reassignment still leaves references the element type
  * unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
  * So, we need to do a proper replace.
+ *
+ * @param   {HTML Element}      oldElement      The element we are removing the tag from.
+ * @param   {HTML Selection}    sel             The current selection.
  */
-var _unsetTag = function(oldElement, sel) {
+const _unsetTag = function(oldElement, sel) {
     const oldRange = sel.getRangeAt(0).cloneRange();
     // Note: I thought cloneRange() does copy by value.
     // Per https://developer.mozilla.org/en-us/docs/Web/API/Range/cloneRange...
@@ -2802,15 +2975,15 @@ var _unsetTag = function(oldElement, sel) {
     // But this doesn't seem to be true in practice. In practice, oldRange properties get
     // changed after we do replaceWith below. We need to hold onto the values explicitly
     // so we can assign them properly to the new range after unsetting the tag.
-    var oldStartContainer = oldRange.startContainer;
-    var oldStartOffset = oldRange.startOffset;
-    var oldEndContainer = oldRange.endContainer;
-    var oldEndOffset = oldRange.endOffset;
+    const oldStartContainer = oldRange.startContainer;
+    const oldStartOffset = oldRange.startOffset;
+    const oldEndContainer = oldRange.endContainer;
+    const oldEndOffset = oldRange.endOffset;
     // Get a newElement from the innerHTML of the oldElement, but hold onto the parentNode
-    var oldParentNode = oldElement.parentNode;
-    var template = document.createElement('template');
+    const oldParentNode = oldElement.parentNode;
+    const template = document.createElement('template');
     template.innerHTML = oldElement.innerHTML;
-    var newElement = template.content;
+    const newElement = template.content;
     oldElement.replaceWith(newElement);
     // Now that oldElement has been replaced, we need to reset the selection.
     // We need to do everything from the oldParentNode, which remains unchanged.
@@ -2837,8 +3010,8 @@ var _unsetTag = function(oldElement, sel) {
     //      point of the Range.
     // So, we need to make sure the startOffset and endOffset make sense for the newElement
     // if it replaces the startContainer or endContainer.
-    var range, startContainer, startOffset, endContainer, endOffset;
-    var newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
+    let range, startContainer, startOffset, endContainer, endOffset;
+    const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
     if (newStartContainer) {
         startContainer = newStartContainer;
         startOffset = oldStartOffset;
@@ -2846,7 +3019,7 @@ var _unsetTag = function(oldElement, sel) {
         startContainer = newElement;
         startOffset = 0;
     }
-    var newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
+    const newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
     if (newEndContainer) {
         endContainer = newEndContainer;
         endOffset = oldEndOffset;
@@ -2860,14 +3033,18 @@ var _unsetTag = function(oldElement, sel) {
     range.setEnd(endContainer, endOffset);
     sel.removeAllRanges();
     sel.addRange(range);
-}
+};
 
 /**
- * Given an element with a tag, replace its tag with the new tagName
+ * Given an element with a tag, replace its tag with the new tagName.
+ *
+ * @param   {HTML Element}  element     The element for which we are replacing the tag.
+ * @param   {String}        tagName     The type of element we want; e.g., 'B'.
+ *
  */
-var _replaceTag = function(tagName, element) {
+const _replaceTag = function(element, tagName) {
     _backupSelection();
-    var newElement = document.createElement(tagName);
+    const newElement = document.createElement(tagName);
     newElement.innerHTML = element.innerHTML;
     element.replaceWith(newElement);
     _restoreSelection();
@@ -2875,37 +3052,38 @@ var _replaceTag = function(tagName, element) {
 };
 
 /**
- * Return the count of the element's children that have the tagName
+ * Return the count of the element's children that have the tagName.
+ *
+ * @param   {HTML Element}  element     The element for which we are replacing the tag.
+ * @param   {String}        tagName     The type of element we want; e.g., 'B'.
  */
-var _childrenWithTagNameCount = function(element, tagName) {
-    var count = 0;
-    var children = element.children;
-    for (let i=0; i < children.length; i++) {
+const _childrenWithTagNameCount = function(element, tagName) {
+    let count = 0;
+    const children = element.children;
+    for (let i=0; i<children.length; i++) {
         if (children[i].tagName === tagName) { count++ };
     }
     return count;
 }
 
 /**
- * Find the first child of element whose textContent matches the container passed-in
+ * Find the first child of element whose textContent matches the container passed-in.
+ *
+ * @param   {HTML Element}      element     The element for which we are replacing the tag.
+ * @param   {HTML Text Node}    container   The text node we are trying to match.
+ * @return  {HTML Text Node | null}         The text node whose textContent matches container's; else null.
  */
-var _firstChildMatchingContainer = function(element, container) {
-    // Sure, might be obvious to you, but just for the record...
-    // The children property returns a collection of an element's child
-    // elements, as an HTMLCollection object. The difference between
-    // children and childNodes, is that childNodes contain all nodes,
-    // including text nodes and comment nodes, while children only contain
-    // element nodes.
+const _firstChildMatchingContainer = function(element, container) {
     // For our purposes here, container is always a #text node.
-    var childNodes = element.childNodes;
-    for (let i = 0; i < childNodes.length; i++) {
-        var node = childNodes[i];
+    const childNodes = element.childNodes;    // Include text nodes and comment nodes
+    for (let i=0; i<childNodes.length; i++) {
+        let node = childNodes[i];
         if (node.nodeType === container.nodeType) {
             if (node.textContent === container.textContent) {
                 return node;
             }
         } else {
-            var child = _firstChildMatchingContainer(node, container);
+            let child = _firstChildMatchingContainer(node, container);
             if (child) {
                 return child;
             }
@@ -2915,36 +3093,41 @@ var _firstChildMatchingContainer = function(element, container) {
 }
 
 /**
- * Return the first child within element that is a textNode using depth-first traversal
+ * Return the first child within element that is a textNode using depth-first traversal.
+ *
+ * @param   {HTML Element}      element     The element in which we are looking for a text node.
  */
-var _firstTextNodeChild = function(element) {
-    let childNodes = element.childNodes;
-    for (let i = 0; i < childNodes.length; i++) {
-        var node = childNodes[i];
+const _firstTextNodeChild = function(element) {
+    const childNodes = element.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        let node = childNodes[i];
         if (node.nodeType === Node.TEXT_NODE) {
             return node;
         };
     };
     return null;
-}
+};
 
 /**
- * Recursively search parentElements to find the first one included in matchNames
- * without ever encountering one in excludeNames.
- * If node is a TEXT_NODE, then start with its parent; else, just start with node
- * to find a match.
+ * Recursively search parent elements to find the first one included in matchNames
+ * without ever encountering one in excludeNames. Note that excludeNames may be null,
+ * in which case will just match. Return null if any element in excludeNames is
+ * encountered. If node is a TEXT_NODE, then start with its parent; else, just start
+ * with node to find a match.
+ *
+ * @param   {HTML Node}     node            The node to look upward from to find a parent.
+ * @param   {[String]}      matchNames      Array of tags/nodeNames that we are searching for.
+ * @param   {[String]}      excludeNames    Array or tags/nodeNames that will abort the search.
  */
-var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
-    // ExcludeNames may be null, in which case will just match; else return null
-    // if any element in excludeNames is encountered
+const _findFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
     if (!node) { return null };
-    var element;
+    let element;
     if (node.nodeType === Node.TEXT_NODE) {
         element = node.parentElement;
     } else {
         element = node;
     };
-    var tagName = element.tagName;
+    const tagName = element.tagName;
     if (excludeNames && excludeNames.includes(tagName)) {
         return null;
     } else if (matchNames.includes(tagName)) {
@@ -2954,26 +3137,7 @@ var _findFirstParentElementInTagNames = function(node, matchNames, excludeNames)
     };
 };
 
-var _oldFindFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
-    // ExcludeNames may be null, in which case will just match; else return null
-    // if any element in excludeNames is encountered
-    var parentElement = node.parentElement;
-    if (!parentElement) {
-        return null;
-    } else {
-        var parentTagName = parentElement.tagName;
-        if (excludeNames && excludeNames.includes(parentTagName)) {
-            return null;
-        } else if (matchNames.includes(parentTagName)) {
-            return parentElement;
-        } else {
-            return _findFirstParentElementInTagNames(parentElement, matchNames, excludeNames);
-        };
-    };
-};
-
-
-/**
+/********************************************************************************
  * Unused?
  * TODO - Remove
  */
@@ -2995,39 +3159,37 @@ MU.customAction = function(action) {
         'messageType' : 'action',
         'action' : action
     }
-    var message = JSON.stringify(messageDict);
-    _callback(message);
+    _callback(JSON.stringify(messageDict));
 };
 
 /// Returns the cursor position relative to its current position onscreen.
 /// Can be negative if it is above what is visible
 MU.getRelativeCaretYPosition = function() {
-    var y = 0;
-    var sel = document.getSelection();
+    let y = 0;
+    const sel = document.getSelection();
     if (sel.rangeCount) {
-        var range = sel.getRangeAt(0);
-        var needsWorkAround = (range.startOffset == 0)
+        const range = sel.getRangeAt(0);
+        const needsWorkAround = (range.startOffset == 0);
         /* Removing fixes bug when node name other than 'div' */
         // && range.startContainer.nodeName.toLowerCase() == 'div');
         if (needsWorkAround) {
             y = range.startContainer.offsetTop - window.pageYOffset;
         } else {
             if (range.getClientRects) {
-                var rects = range.getClientRects();
+                const rects = range.getClientRects();
                 if (rects.length > 0) {
                     y = rects[0].top;
-                }
-            }
-        }
-    }
-
+                };
+            };
+        };
+    };
     return y;
 };
 
 /// Looks specifically for a Range selection and not a Caret selection
 MU.rangeSelectionExists = function() {
     //!! coerces a null to bool
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     if (sel && sel.type == 'Range') {
         return true;
     }
@@ -3036,14 +3198,14 @@ MU.rangeSelectionExists = function() {
 
 /// Return the first tag the selection is inside of
 MU.selectionTag = function() {
-    var sel = document.getSelection();
+    const sel = document.getSelection();
     if (sel) {
         if (sel.type === 'None') {
             return '';
         } else {    // sel.type will be Caret or Range
-            var focusNode = sel.focusNode;
+            const focusNode = sel.focusNode;
             if (focusNode) {
-                var selElement = focusNode.parentElement;
+                const selElement = focusNode.parentElement;
                 if (selElement) {
                     return selElement.tagName;
                 }
@@ -3115,16 +3277,24 @@ MU.setJustifyRight = function() {
     document.execCommand('justifyRight', false, null);
 };
 
-/**
+/********************************************************************************
  * This is so pathetic, I cannot believe I am doing it.
  * But, wherever the / shows up in JavaScript, XCode messes
  * up all subsequent formatting and it becomes pretty unbearable
  * to deal with the indentation it forces on you.
- * So, I'm putting the only methods where I divide at the bottom of the file.
+ * So, I'm putting the only methods where I divide at the bottom of the
+ * file and using these methods rather than inlining above.
  */
 
-var _imgScale = function(element) {
-    var width = _numberAttribute(element, 'width')
+/**
+ * Return the scale as a percentage based on naturalWidth.
+ * The implicit assumption here is that width and height are scaled the same.
+ *
+ * @param   {HTML Image Element}    The image we are finding the scale for.
+ * @return  {Number | null}         The scale as a percentage, e.g., 80.
+ */
+const _imgScale = function(element) {
+    const width = _numberAttribute(element, 'width')
     if (width) {
         return 100 * width / element.naturalWidth;
     } else {
@@ -3132,7 +3302,14 @@ var _imgScale = function(element) {
     }
 }
 
-var _percentInt = function(percent, int) {
+/**
+ * Return percent of int; e.g., 80 percent of 10 is 8.
+ *
+ * @param   {Number}    percent     The percentage to calculate.
+ * @param   {Int}       int         The number to find percentage of.
+ * @return  {Number}                The result.
+ */
+const _percentInt = function(percent, int) {
     return int * percent / 100;
 }
 
