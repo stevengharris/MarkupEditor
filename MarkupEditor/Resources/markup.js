@@ -78,11 +78,21 @@ class Undoer {
         this._ctrl.textContent = '0';
         this._ctrl.style.visibility = 'hidden';  // hide element while not used
         
+        this._ctrl.addEventListener('blur', (ev) => {
+            _consoleLog("blurred: hiddenInput");
+        });
+        
         this._ctrl.addEventListener('focus', (ev) => {
+            _consoleLog("focused: hiddenInput");
             // Safari needs us to wait, can't blur immediately.
             window.setTimeout(() => void this._ctrl.blur(), 1);
+            //window.setTimeout(function() {
+            //    MU.editor.focus()
+            //    _restoreSelection()
+            //}, 1);
         });
         this._ctrl.addEventListener('input', (ev) => {
+            _consoleLog("input: hiddenInput");
             // There are two types of input events.
             // 1. If _duringUpdate, we just pushed data onto _stack and ev.data is the index
             //      of what we just spliced into _stack.
@@ -154,8 +164,8 @@ class Undoer {
         this._stack.splice(nextID, this._stack.length - nextID, data);
 
         const previousFocus = document.activeElement;
-        _backupSelection();   // Otherwise, when we refocus, it won't be set right
         try {
+            _backupSelection();   // Otherwise, when we refocus, it won't be set right
             this._duringUpdate = true;
             this._ctrl.style.visibility = null;
             this._ctrl.focus({preventScroll: true});
@@ -165,7 +175,13 @@ class Undoer {
             this._duringUpdate = false;
             this._ctrl.style.visibility = 'hidden';
         }
-        previousFocus && previousFocus.focus({preventScroll: true});
+        if (previousFocus) {
+            previousFocus.focus({preventScroll: true});
+            // _restoreSelection with a timeout or the caret doesn't show up
+            window.setTimeout(() => void _restoreSelection(), 1);
+        } else {
+            _consoleLog("*** Error: no previousFocus")
+        }\
     }
 };
 
@@ -477,6 +493,7 @@ const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
  * Restore the range captured on blur and then let Swift know focus happened.
  */
 MU.editor.addEventListener('focus', function(e) {
+    _consoleLog("focused: " + e.target.id);
     if (!_muteFocusBlur) {
         _restoreSelection();
         _callback('focus');
@@ -493,9 +510,15 @@ MU.editor.addEventListener('focus', function(e) {
  * The blur during the undoer.push operation will always be followed by a focus, where
  * _muteFocusBlur will be reset.
  */
-MU.editor.addEventListener('blur', function() {
+MU.editor.addEventListener('blur', function(e) {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
     // be noticable by the MarkupEditor in Swift.
+    _consoleLog("blurred: " + e.target.id);
+    if (e.relatedTarget) {
+        _consoleLog("will focus: " + e.relatedTarget.id);
+    } else {
+        _consoleLog("will focus: null");
+    }
     if (!_muteFocusBlur) {
         _backupSelection();
         _callback('blur');
@@ -736,10 +759,8 @@ const _toggleFormat = function(type, undoable=true) {
         // selected between characters in a word will toggleFormat for the word, but leave
         // the selection at the same place in that word. Also, toggleFormat when a word
         // has a range selected will leave the same range selected.
-        _backupSelection()
         const undoerData = _undoerData('format', type);
         undoer.push(undoerData, MU.editor);
-        _restoreSelection()
     }
     _callback('input');
 }
@@ -829,17 +850,10 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     if (!sel || !selNode) { return };
     const existingElement = _findFirstParentElementInTagNames(selNode, [oldStyle.toUpperCase()]);
     if (existingElement) {
-        const range = sel.getRangeAt(0).cloneRange();
         const newElement = _replaceTag(existingElement, newStyle.toUpperCase());
-        range.setStart(newElement.firstChild, range.startOffset);
-        range.setEnd(newElement.firstChild, range.endOffset);
-        sel.removeAllRanges();
-        sel.addRange(range);
         if (undoable) {
-            _backupSelection();
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData, MU.editor);
-            _restoreSelection()
         }
         _callback('input');
     };
@@ -3043,12 +3057,40 @@ const _unsetTag = function(oldElement, sel) {
  * @param   {String}        tagName     The type of element we want; e.g., 'B'.
  *
  */
-const _replaceTag = function(element, tagName) {
-    _backupSelection();
+const _replaceTag = function(oldElement, tagName) {
+    const sel = document.getSelection();
+    const oldParentNode = oldElement.parentNode;
+    const oldRange = sel.getRangeAt(0).cloneRange();
+    const oldStartContainer = oldRange.startContainer;
+    const oldStartOffset = oldRange.startOffset;
+    const oldEndContainer = oldRange.endContainer;
+    const oldEndOffset = oldRange.endOffset;
     const newElement = document.createElement(tagName);
-    newElement.innerHTML = element.innerHTML;
-    element.replaceWith(newElement);
-    _restoreSelection();
+    newElement.innerHTML = oldElement.innerHTML;
+    oldElement.replaceWith(newElement);
+    let startContainer, startOffset, endContainer, endOffset;
+    const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
+    if (newStartContainer) {
+        startContainer = newStartContainer;
+        startOffset = oldStartOffset;
+    } else {
+        startContainer = newElement;
+        startOffset = 0;
+    }
+    const newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
+    if (newEndContainer) {
+        endContainer = newEndContainer;
+        endOffset = oldEndOffset;
+    } else {
+        endContainer = newElement;
+        endOffset = 0;
+    };
+    // With the new range properties sorted out, create the new range and reset the selection
+    const range = document.createRange();
+    range.setStart(startContainer, startOffset);
+    range.setEnd(endContainer, endOffset);
+    sel.removeAllRanges();
+    sel.addRange(range);
     return newElement;
 };
 
