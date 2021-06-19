@@ -66,12 +66,13 @@ class Undoer {
         
         // Using an input element rather than contentEditable div because parent is already a
         // contentEditable div
-        this._ctrl = document.createElement('input');
+        this._ctrl = document.createElement('div');
+        this._ctrl.setAttribute('contenteditable', 'true');
         this._ctrl.setAttribute('aria-hidden', 'true');
-        //this._ctrl.setAttribute('id', 'hiddenInput');
-        //this._ctrl.style.opacity = 0;
-        //this._ctrl.style.position = 'fixed';
-        //this._ctrl.style.top = '-1000px';
+        this._ctrl.setAttribute('id', 'hiddenInput');
+        this._ctrl.style.opacity = 0;
+        this._ctrl.style.position = 'fixed';
+        this._ctrl.style.top = '-1000px';
         this._ctrl.style.pointerEvents = 'none';
         this._ctrl.tabIndex = -1;
         
@@ -147,30 +148,8 @@ class Undoer {
         // nb. We can't remove this later: the only case we could is if the user undoes everything
         // and then does some _other_ action (which we can't detect).
         if (!this._ctrl.parentNode) {
-            // Since we are editing MU.editor, a contentEditable, and we don't want this._ctrl
-            // for undo showing up in its innerHTML, we need to put it in its own contentEditable.
-            const div = document.createElement('div');
-            div.setAttribute('aria-hidden', 'true');
-            div.setAttribute('id', 'undoContainer');
-            div.setAttribute('contenteditable', 'true');
-            div.style.opacity = 0;
-            div.style.position = 'fixed';
-            div.style.top = '-1000px';
-            div.style.pointerEvents = 'none';
-            this._ctrl.style.visibility = 'hidden';  // hide element while not used
-            div.appendChild(this._ctrl);
-            
-            div.addEventListener('focus', (ev) => {
-                //_consoleLog("focused: div");
-                // Safari needs us to wait, can't blur immediately.
-                // Hardcode refocusing on MU.editor rather than using this._ctrl.blur()
-                window.setTimeout(function() {
-                    muteFocusBlur();
-                    div.blur();
-                }, 1);
-            });
-            
-            document.body.appendChild(div);
+            // nb. we check parentNode as this would remove contentEditable's history
+            (parent || document.body).appendChild(this._ctrl);
         };
         
         const nextID = this._depth + 1;
