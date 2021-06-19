@@ -68,31 +68,27 @@ class Undoer {
         // contentEditable div
         this._ctrl = document.createElement('input');
         this._ctrl.setAttribute('aria-hidden', 'true');
-        this._ctrl.setAttribute('id', 'hiddenInput');
-        this._ctrl.style.opacity = 0;
-        this._ctrl.style.position = 'fixed';
-        this._ctrl.style.top = '-1000px';
+        //this._ctrl.setAttribute('id', 'hiddenInput');
+        //this._ctrl.style.opacity = 0;
+        //this._ctrl.style.position = 'fixed';
+        //this._ctrl.style.top = '-1000px';
         this._ctrl.style.pointerEvents = 'none';
         this._ctrl.tabIndex = -1;
         
         this._ctrl.textContent = '0';
         this._ctrl.style.visibility = 'hidden';  // hide element while not used
         
-        this._ctrl.addEventListener('blur', (ev) => {
-            _consoleLog("blurred: hiddenInput");
+        this._ctrl.addEventListener('focus', (ev) => {
+            //_consoleLog("focused: hiddenInput");
+            // Safari needs us to wait, can't blur immediately.
+            window.setTimeout(function() {
+                muteFocusBlur();
+                this._ctrl.blur();;
+            }, 1);
         });
         
-        this._ctrl.addEventListener('focus', (ev) => {
-            _consoleLog("focused: hiddenInput");
-            // Safari needs us to wait, can't blur immediately.
-            window.setTimeout(() => void this._ctrl.blur(), 1);
-            //window.setTimeout(function() {
-            //    MU.editor.focus()
-            //    _restoreSelection()
-            //}, 1);
-        });
         this._ctrl.addEventListener('input', (ev) => {
-            _consoleLog("input: hiddenInput");
+            //_consoleLog("input: hiddenInput");
             // There are two types of input events.
             // 1. If _duringUpdate, we just pushed data onto _stack and ev.data is the index
             //      of what we just spliced into _stack.
@@ -151,14 +147,31 @@ class Undoer {
         // nb. We can't remove this later: the only case we could is if the user undoes everything
         // and then does some _other_ action (which we can't detect).
         if (!this._ctrl.parentNode) {
-            // nb. we check parentNode as this would remove contentEditable's history
-            (parent || document.body).appendChild(this._ctrl);
-        }
-        
-        // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
-        // and the previousFocus (the MU.editor). When MU.editor gets the focus event, it will always
-        // reset so other focus events are not muted.
-        muteFocusBlur();
+            // Since we are editing MU.editor, a contentEditable, and we don't want this._ctrl
+            // for undo showing up in its innerHTML, we need to put it in its own contentEditable.
+            const div = document.createElement('div');
+            div.setAttribute('aria-hidden', 'true');
+            div.setAttribute('id', 'undoContainer');
+            div.setAttribute('contenteditable', 'true');
+            div.style.opacity = 0;
+            div.style.position = 'fixed';
+            div.style.top = '-1000px';
+            div.style.pointerEvents = 'none';
+            this._ctrl.style.visibility = 'hidden';  // hide element while not used
+            div.appendChild(this._ctrl);
+            
+            div.addEventListener('focus', (ev) => {
+                //_consoleLog("focused: div");
+                // Safari needs us to wait, can't blur immediately.
+                // Hardcode refocusing on MU.editor rather than using this._ctrl.blur()
+                window.setTimeout(function() {
+                    muteFocusBlur();
+                    div.blur();
+                }, 1);
+            });
+            
+            document.body.appendChild(div);
+        };
         
         const nextID = this._depth + 1;
         this._stack.splice(nextID, this._stack.length - nextID, data);
@@ -168,6 +181,10 @@ class Undoer {
             _backupSelection();   // Otherwise, when we refocus, it won't be set right
             this._duringUpdate = true;
             this._ctrl.style.visibility = null;
+            // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
+            // and the previousFocus (the MU.editor). When MU.editor gets the focus event, it will always
+            // reset so other focus events are not muted.
+            muteFocusBlur();
             this._ctrl.focus({preventScroll: true});
             document.execCommand('selectAll');
             document.execCommand('insertText', false, nextID);
@@ -176,12 +193,12 @@ class Undoer {
             this._ctrl.style.visibility = 'hidden';
         }
         if (previousFocus) {
+            // And we need to mute again when regaining focus.
+            muteFocusBlur();
             previousFocus.focus({preventScroll: true});
             // _restoreSelection with a timeout or the caret doesn't show up
             window.setTimeout(() => void _restoreSelection(), 1);
-        } else {
-            _consoleLog("*** Error: no previousFocus")
-        }\
+        };
     }
 };
 
@@ -493,7 +510,7 @@ const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
  * Restore the range captured on blur and then let Swift know focus happened.
  */
 MU.editor.addEventListener('focus', function(e) {
-    _consoleLog("focused: " + e.target.id);
+    //_consoleLog("focused: " + e.target.id);
     if (!_muteFocusBlur) {
         _restoreSelection();
         _callback('focus');
@@ -513,12 +530,12 @@ MU.editor.addEventListener('focus', function(e) {
 MU.editor.addEventListener('blur', function(e) {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
     // be noticable by the MarkupEditor in Swift.
-    _consoleLog("blurred: " + e.target.id);
-    if (e.relatedTarget) {
-        _consoleLog("will focus: " + e.relatedTarget.id);
-    } else {
-        _consoleLog("will focus: null");
-    }
+    //_consoleLog("blurred: " + e.target.id);
+    //if (e.relatedTarget) {
+    //    _consoleLog(" will focus: " + e.relatedTarget.id);
+    //} else {
+    //    _consoleLog(" will focus: null");
+    //}
     if (!_muteFocusBlur) {
         _backupSelection();
         _callback('blur');
@@ -566,7 +583,7 @@ MU.editor.addEventListener('paste', function(e) {
        pastedText = e.clipboardData.getData('text/plain');
    };
    const undoerData = _undoerData('pasteText', pastedText);
-   undoer.push(undoerData, MU.editor);
+   undoer.push(undoerData);
    _redoOperation(undoerData);
 });
 
@@ -760,7 +777,7 @@ const _toggleFormat = function(type, undoable=true) {
         // the selection at the same place in that word. Also, toggleFormat when a word
         // has a range selected will leave the same range selected.
         const undoerData = _undoerData('format', type);
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
     }
     _callback('input');
 }
@@ -853,7 +870,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         const newElement = _replaceTag(existingElement, newStyle.toUpperCase());
         if (undoable) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
         }
         _callback('input');
     };
@@ -971,7 +988,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     if (undoable) {
         _backupSelection();
         const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType});
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     }
     _callback('input');
@@ -1089,7 +1106,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
     if (undoable) {
         _backupSelection();
         const undoerData = _undoerData('indent', null);
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     }
     _callback('input');
@@ -1110,7 +1127,7 @@ MU.decreaseQuoteLevel = function(undoable=true) {
         if (undoable) {
             _backupSelection();
             const undoerData = _undoerData('indent', null);
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
             _restoreSelection();
         }
         _callback('input');
@@ -1131,7 +1148,7 @@ MU.decreaseQuoteLevel = function(undoable=true) {
  */
 const _rangeProxy = function() {
     const selection = document.getSelection();
-    if ((selection) && (selection.rangeCount > 0)) {
+    if (selection && (selection.rangeCount > 0)) {
         const range = selection.getRangeAt(0).cloneRange();
         return {
             'startContainer': range.startContainer,
@@ -1150,24 +1167,29 @@ const _rangeProxy = function() {
  * @param {Object}  rangeProxy      The HTML Range-like object that was populated using _rangeProxy()
  */
 const _restoreRange = function(rangeProxy) {
-    if (rangeProxy && rangeProxy.length === 0) {
-        _consoleLog('Attempt to restore invalid range');
-        new Error('Attempt to restore invalid range');
-        return;
-    }
-    const selection = document.getSelection();
-    selection.removeAllRanges();
-    const range = document.createRange();
-    range.setStart(rangeProxy.startContainer, rangeProxy.startOffset);
-    range.setEnd(rangeProxy.endContainer, rangeProxy.endOffset);
-    selection.addRange(range);
-}
+    if (rangeProxy && (rangeProxy.startContainer)) {
+        const selection = document.getSelection();
+        selection.removeAllRanges();
+        const range = document.createRange();
+        range.setStart(rangeProxy.startContainer, rangeProxy.startOffset);
+        range.setEnd(rangeProxy.endContainer, rangeProxy.endOffset);
+        selection.addRange(range);
+    } else {
+        _consoleLog('Attempt to restore null range');
+        new Error('Attempt to restore null range');
+    };
+};
 
 /**
  * Backup the range of the current selection into MU.currentSelection
  */
 const _backupSelection = function() {
-    MU.currentSelection = _rangeProxy();
+    const rangeProxy = _rangeProxy();
+    MU.currentSelection = rangeProxy;
+    if (!rangeProxy) {
+        _consoleLog('Backed up null range');
+        new Error('Backed up null range');
+    };
 };
 
 /**
@@ -1608,7 +1630,7 @@ MU.insertLink = function(url, undoable=true) {
     _backupSelection();
     if (undoable) {
         const undoerData = _undoerData('insertLink', url);
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     }
     _callback('input');
@@ -1643,7 +1665,7 @@ MU.deleteLink = function(undoable=true) {
             _backupSelection();
             if (undoable) {
                 const undoerData = _undoerData('deleteLink', element.href);
-                undoer.push(undoerData, MU.editor);
+                undoer.push(undoerData);
                 _restoreSelection();
             }
             _callback('input');
@@ -1765,7 +1787,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
         const imgRange = document.createRange();
         imgRange.selectNode(el);
         const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     };
     _callback('input');
@@ -1813,7 +1835,7 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
             _deleteAndResetSelection(img, 'BEFORE');
             if (undoable) {
                 const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: deletedScale});
-                undoer.push(undoerData, MU.editor);
+                undoer.push(undoerData);
                 _restoreSelection();
             }
         };
@@ -1932,8 +1954,8 @@ MU.insertTable = function(rows, cols, undoable=true) {
     // Track table insertion on the undo stack if necessary
     if (undoable) {
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
-        undoer.push(undoerData, MU.editor);
-        _restoreSelection();
+        undoer.push(undoerData);
+        //_restoreSelection();
     }
     _callback('input');
     return newTable;
@@ -1955,7 +1977,7 @@ MU.deleteTable = function(undoable=true) {
         _deleteAndResetSelection(table, 'BEFORE');
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: inHeader, outerHTML: outerHTML});
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
             _restoreSelection();
         };
         _callback('input');
@@ -2197,7 +2219,7 @@ MU.addRow = function(direction, undoable=true) {
         // along with the original outerHTML to recreate the original table and
         // selection.
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     }
     _callback('input');
@@ -2270,7 +2292,7 @@ MU.addCol = function(direction, undoable=true) {
     if (undoable) {
         // Use restoreTable to handle addCol undo/redo
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     };
     _callback('input');
@@ -2314,7 +2336,7 @@ MU.addHeader = function(colspan, undoable=true) {
     if (undoable) {
         // Use restoreTable to handle addHeader undo/redo
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: false, outerHTML: outerHTML});
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     };
     _callback('input');
@@ -2367,7 +2389,7 @@ MU.deleteRow = function(undoable=true) {
         _selectCol(newTr, 0)
         if (undoable) {
             const undoerData = _undoerData('restoreTable', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
             _restoreSelection();
         };
     } else {
@@ -2375,7 +2397,7 @@ MU.deleteRow = function(undoable=true) {
         _deleteAndResetSelection(table, 'BEFORE');
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
             _restoreSelection();
         };
     }
@@ -2419,7 +2441,7 @@ MU.deleteCol = function(undoable=true) {
         _deleteAndResetSelection(table, 'BEFORE');
         if (undoable) {
             const undoerData = _undoerData('deleteTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
-            undoer.push(undoerData, MU.editor);
+            undoer.push(undoerData);
             _restoreSelection();
         };
         _callback('input');
@@ -2452,7 +2474,7 @@ MU.deleteCol = function(undoable=true) {
     _selectCol(newTr, newCol)
     if (undoable) {
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
-        undoer.push(undoerData, MU.editor);
+        undoer.push(undoerData);
         _restoreSelection();
     };
     _callback('input');
