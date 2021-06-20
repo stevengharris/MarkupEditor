@@ -3,6 +3,7 @@
 //  MarkupEditor
 //
 //  Created by Steven Harris on 5/12/21.
+//  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
 import SwiftUI

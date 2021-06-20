@@ -1,8 +1,9 @@
 //
-//  LabeledTextField.swift
+//  ToolbarTextField.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 4/5/21.
+//  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
 import SwiftUI

@@ -3,6 +3,7 @@
 //  MarkupEditor
 //
 //  Created by Steven Harris on 4/16/21.
+//  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
 import UIKit
