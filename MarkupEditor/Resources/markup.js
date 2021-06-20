@@ -48,7 +48,7 @@ MU.editor = document.getElementById('editor');
  */
 
 /*
- * The Undoer class below was adopted with minor changes from https://github.com/samthor/undoer
+ * The Undoer class below was adopted from https://github.com/samthor/undoer
  * under the Apache 2.0 license found
  * at https://github.com/samthor/undoer/blob/dad5b30c2667579667b883e246cad77711daaff7/LICENSE.
  */
@@ -70,6 +70,7 @@ class Undoer {
         this._ctrl.setAttribute('contenteditable', 'true');
         this._ctrl.setAttribute('aria-hidden', 'true');
         this._ctrl.setAttribute('id', 'hiddenInput');
+        this._ctrl.style.caretColor = 'blue';   // To match MU.editor as focus changes
         this._ctrl.style.opacity = 0;
         this._ctrl.style.position = 'fixed';
         this._ctrl.style.top = '-1000px';
@@ -78,15 +79,6 @@ class Undoer {
         
         this._ctrl.textContent = '0';
         this._ctrl.style.visibility = 'hidden';  // hide element while not used
-        
-        this._ctrl.addEventListener('focus', (ev) => {
-            //_consoleLog("focused: hiddenInput");
-            // Safari needs us to wait, can't blur immediately.
-            window.setTimeout(function() {
-                muteFocusBlur();
-                this._ctrl.blur();;
-            }, 1);
-        });
         
         this._ctrl.addEventListener('input', (ev) => {
             //_consoleLog("input: hiddenInput");
@@ -105,13 +97,16 @@ class Undoer {
             if (!this._duringUpdate) {
                 if (ev.inputType === 'historyUndo') {
                     undoCallback(this._stack[this._depth]);
-                    this._ctrl.textContent = this._depth - 1;
+                    this.setUndoIndex(this._depth - 1);
                 } else if (ev.inputType === 'historyRedo') {
                     redoCallback(this._stack[this._depth + 1]);
-                    this._ctrl.textContent = this._depth + 1;
+                    this.setUndoIndex(this._depth + 1);
                 };
             } else {
-                this._ctrl.textContent = ev.data;
+                // Because the input happens so quickly after the push causes this._ctrl to get focus,
+                // we need to do change the undoIndex in textContent after a timeout, similarly
+                // to how the focus followed by immediate blur needs a timeout.
+                window.setTimeout(() => void this.setUndoIndex(ev.data), 0);
             }
             //_consoleLog('  final this._ctrl.textContent: ' + this._ctrl.textContent);
             // clear selection, otherwise user copy gesture will copy value
@@ -122,7 +117,7 @@ class Undoer {
                 s.removeAllRanges();
             }
         });
-    }
+    };
     
     /**
      * @return {number} the current stack value
@@ -137,6 +132,18 @@ class Undoer {
     get data() {
         return this._stack[this._depth];
     }
+    
+    /**
+     * Set the textContent and revert focus to MU.editor
+     * @param {String}  content     The index into this._stack for the data
+     */
+    setUndoIndex(content) {
+        //_consoleLog("undoIndex: " + content);
+        this._ctrl.textContent = content;
+        muteFocusBlur();
+        // Reset focus on MU.editor directly rather than use this._ctrl.blur();
+        MU.editor.focus({preventScroll:true});
+    };
     
     /**
      * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
@@ -174,9 +181,8 @@ class Undoer {
         if (previousFocus) {
             // And we need to mute again when regaining focus.
             muteFocusBlur();
+            // The focus event in MU.editor does _restoreSelection
             previousFocus.focus({preventScroll: true});
-            // _restoreSelection with a timeout or the caret doesn't show up
-            window.setTimeout(() => void _restoreSelection(), 1);
         };
     }
 };
@@ -466,8 +472,11 @@ MU.editor.addEventListener('mouseup', function() {
  */
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
+        //_consoleLog(' unmuted selectionchange')
         _callback('selectionChange');
-    }
+    //} else {
+    //    _consoleLog(' muted selectionchange')
+    };
 });
 
 MU.editor.addEventListener('input', function() {
@@ -490,15 +499,16 @@ const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
  */
 MU.editor.addEventListener('focus', function(e) {
     //_consoleLog("focused: " + e.target.id);
+    _restoreSelection();
     if (!_muteFocusBlur) {
-        _restoreSelection();
+        //_consoleLog(" unmuted focus")
         _callback('focus');
-    }
+    //} else {
+    //    _consoleLog(" muted focus")
+    };
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
     unmuteFocusBlur();
-    e.preventDefault();
-    MU.editor.focus({preventScroll:true})
 });
 
 /**
@@ -687,16 +697,14 @@ const _initializeRange = function() {
     selection.removeAllRanges();
     const range = document.createRange();
     if (firstTextNode) {
-        muteChanges();
         range.setStart(firstTextNode, 0);
         range.setEnd(firstTextNode, 0);
-        unmuteChanges();
         selection.addRange(range);
         _backupSelection();
     } else {
         MU.emptyDocument()
     }
-    MU.editor.focus();
+    MU.editor.focus({preventScroll:true});
     _callback('updateHeight');
 }
 
@@ -748,6 +756,7 @@ const _toggleFormat = function(type, undoable=true) {
     } else {
         _setTag(type, sel);
     }
+    _backupSelection();
     if (undoable) {
         // Both _setTag and _unsetTag reset the selection when they're done;
         // however, the selection should be left in a way that undoing is accomplished
@@ -1117,6 +1126,12 @@ MU.decreaseQuoteLevel = function(undoable=true) {
  * Range operations
  */
 
+const _reselect = function(sel, range) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _backupSelection();
+}
+
 /**
  * Return an object containing the startContainer, startOffset, endContainer, and endOffset at selection
  * A HTML Range obtained from selection.getRangeAt(0).cloneRange() can end up being changed
@@ -1148,10 +1163,10 @@ const _rangeProxy = function() {
 const _restoreRange = function(rangeProxy) {
     if (rangeProxy && (rangeProxy.startContainer)) {
         const selection = document.getSelection();
-        selection.removeAllRanges();
         const range = document.createRange();
         range.setStart(rangeProxy.startContainer, rangeProxy.startOffset);
         range.setEnd(rangeProxy.endContainer, rangeProxy.endOffset);
+        selection.removeAllRanges();
         selection.addRange(range);
     } else {
         _consoleLog('Attempt to restore null range');
@@ -2908,7 +2923,7 @@ const _setTag = function(type, sel) {
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
-    _backupSelection();
+    //_backupSelection();
     // Note: Now that tagging with selection collapsed inside a word means
     // the word is tagged, and selecting at the beginning of a word just
     // does the non-spacing char, the following is not needed.
