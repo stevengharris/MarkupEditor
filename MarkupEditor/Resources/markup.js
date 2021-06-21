@@ -64,6 +64,18 @@ class Undoer {
         this._duringUpdate = false;
         this._stack = [zero];
         
+        /**
+         * Set the textContent and revert focus to MU.editor
+         * @param {String}  content     The index into this._stack for the data
+         */
+        this._setUndoIndex = function(content) {
+            //_consoleLog("undoIndex: " + content);
+            this._ctrl.textContent = content;
+            muteFocusBlur();
+            // Reset focus on MU.editor directly rather than use this._ctrl.blur();
+            MU.editor.focus({preventScroll:true});
+        };
+        
         // Using an input element rather than contentEditable div because parent is already a
         // contentEditable div
         this._ctrl = document.createElement('div');
@@ -97,16 +109,16 @@ class Undoer {
             if (!this._duringUpdate) {
                 if (ev.inputType === 'historyUndo') {
                     undoCallback(this._stack[this._depth]);
-                    this.setUndoIndex(this._depth - 1);
+                    this._setUndoIndex(this._depth - 1);
                 } else if (ev.inputType === 'historyRedo') {
                     redoCallback(this._stack[this._depth + 1]);
-                    this.setUndoIndex(this._depth + 1);
+                    this._setUndoIndex(this._depth + 1);
                 };
             } else {
                 // Because the input happens so quickly after the push causes this._ctrl to get focus,
                 // we need to do change the undoIndex in textContent after a timeout, similarly
                 // to how the focus followed by immediate blur needs a timeout.
-                window.setTimeout(() => void this.setUndoIndex(ev.data), 0);
+                window.setTimeout(() => void this._setUndoIndex(ev.data), 0);
             }
             //_consoleLog('  final this._ctrl.textContent: ' + this._ctrl.textContent);
             // clear selection, otherwise user copy gesture will copy value
@@ -132,18 +144,6 @@ class Undoer {
     get data() {
         return this._stack[this._depth];
     }
-    
-    /**
-     * Set the textContent and revert focus to MU.editor
-     * @param {String}  content     The index into this._stack for the data
-     */
-    setUndoIndex(content) {
-        //_consoleLog("undoIndex: " + content);
-        this._ctrl.textContent = content;
-        muteFocusBlur();
-        // Reset focus on MU.editor directly rather than use this._ctrl.blur();
-        MU.editor.focus({preventScroll:true});
-    };
     
     /**
      * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
@@ -497,8 +497,8 @@ const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
 /**
  * Restore the range captured on blur and then let Swift know focus happened.
  */
-MU.editor.addEventListener('focus', function(e) {
-    //_consoleLog("focused: " + e.target.id);
+MU.editor.addEventListener('focus', function(ev) {
+    //_consoleLog("focused: " + ev.target.id);
     _restoreSelection();
     if (!_muteFocusBlur) {
         //_consoleLog(" unmuted focus")
@@ -516,12 +516,12 @@ MU.editor.addEventListener('focus', function(e) {
  * The blur during the undoer.push operation will always be followed by a focus, where
  * _muteFocusBlur will be reset.
  */
-MU.editor.addEventListener('blur', function(e) {
+MU.editor.addEventListener('blur', function(ev) {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
     // be noticable by the MarkupEditor in Swift.
-    //_consoleLog("blurred: " + e.target.id);
-    //if (e.relatedTarget) {
-    //    _consoleLog(" will focus: " + e.relatedTarget.id);
+    //_consoleLog("blurred: " + ev.target.id);
+    //if (ev.relatedTarget) {
+    //    _consoleLog(" will focus: " + ev.relatedTarget.id);
     //} else {
     //    _consoleLog(" will focus: null");
     //}
@@ -537,8 +537,8 @@ MU.editor.addEventListener('blur', function(e) {
  * doing selection.
  * TODO - Maybe remove the _multiClickSelect call
  */
-MU.editor.addEventListener('click', function(event) {
-    let nclicks = event.detail;
+MU.editor.addEventListener('click', function(ev) {
+    let nclicks = ev.detail;
     if (nclicks === 1) {
         _callback('click');
     } else {
@@ -550,8 +550,8 @@ MU.editor.addEventListener('click', function(event) {
  * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
  * Clean up formatting if needed.
  */
-MU.editor.addEventListener('keyup', function(event) {
-    const key = event.key;
+MU.editor.addEventListener('keyup', function(ev) {
+    const key = ev.key;
     if ((key === 'Backspace') || (key === 'Delete')) {
         _cleanUpSpans();
         _cleanUpAttributes('style');
@@ -565,11 +565,11 @@ MU.editor.addEventListener('keyup', function(event) {
 /**
  * Do a custom paste operation to avoid polluting the document with arbitrary HTML
  */
-MU.editor.addEventListener('paste', function(e) {
-   e.preventDefault();
+MU.editor.addEventListener('paste', function(ev) {
+   ev.preventDefault();
    let pastedText = undefined;
-   if (e.clipboardData && e.clipboardData.getData) {
-       pastedText = e.clipboardData.getData('text/plain');
+   if (ev.clipboardData && ev.clipboardData.getData) {
+       pastedText = ev.clipboardData.getData('text/plain');
    };
    const undoerData = _undoerData('pasteText', pastedText);
    undoer.push(undoerData);
