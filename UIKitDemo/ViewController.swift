@@ -170,13 +170,30 @@ extension ViewController: FileToolbarDelegate {
     }
     
     func existingDocument(handler: ((URL?)->Void)? = nil) {
-        
+        let controller =  UIDocumentPickerViewController(forOpeningContentTypes: [.html])
+        controller.allowsMultipleSelection = false
+        controller.delegate = self
+        present(controller, animated: true)
     }
     
     func rawDocument() {
         let willBeHidden = !bottomStack.isHidden
         bottomStackHeightConstraint.isActive = !willBeHidden
         bottomStack.isHidden = willBeHidden
+    }
+    
+}
+
+extension ViewController: UIDocumentPickerDelegate {
+    
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first, url.startAccessingSecurityScopedResource() else { return }
+        defer { url.stopAccessingSecurityScopedResource() }
+        openExistingDocument(url: url)
+    }
+    
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        controller.dismiss(animated: true, completion: nil)
     }
     
 }
