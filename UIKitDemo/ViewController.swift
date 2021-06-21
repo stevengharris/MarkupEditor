@@ -22,6 +22,7 @@ class ViewController: UIViewController {
     /// To see the raw HTML
     private var rawTextView: UITextView!
     private var bottomStack: UIStackView!
+    private var bottomStackHeightConstraint: NSLayoutConstraint!
     /// The state of the selection in the MarkupWKWebView, shown in the toolbar
     @Published var selectionState: SelectionState = SelectionState()
     @Published var selectedWebView: MarkupWKWebView?
@@ -38,25 +39,24 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        initializeToolbar()
+        initializeStackView()
+    }
+    
+    func initializeToolbar() {
         toolbarHolder = UIView()
         toolbar = MarkupToolbar(
             selectionState: selectionState,
             selectedWebView: selectedWebViewBinding,
             markupDelegate: self,
             leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
-            )
+        )
         add(swiftUIView: toolbar, to: toolbarHolder)
-        initializeStackView()
     }
     
     func initializeStackView() {
         // Populate the overall vertical stack with the toolbarHolder, webView, and rawTextView
-        stack.translatesAutoresizingMaskIntoConstraints = false
         stack.addArrangedSubview(toolbarHolder)
-        toolbarHolder.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: toolbarHolder.topAnchor, constant: 4)
-        ])
         webView = MarkupWKWebView()
         stack.addArrangedSubview(webView)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
@@ -65,6 +65,18 @@ class ViewController: UIViewController {
         bottomStack = UIStackView()
         bottomStack.isHidden = true
         bottomStack.axis = .vertical
+        bottomStack.spacing = 8
+        let divider = UIView()
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            divider.heightAnchor.constraint(equalToConstant: 1)
+        ])
+        divider.backgroundColor = UIColor.systemGray5
+        bottomStack.addArrangedSubview(divider)
+        NSLayoutConstraint.activate([
+            divider.leadingAnchor.constraint(equalTo: bottomStack.leadingAnchor, constant: 4),
+            divider.trailingAnchor.constraint(equalTo: bottomStack.trailingAnchor, constant: 4),
+        ])
         let label = UILabel()
         label.text = "Document HTML"
         label.textAlignment = .center
@@ -74,6 +86,7 @@ class ViewController: UIViewController {
         rawTextView.contentInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         bottomStack.addArrangedSubview(rawTextView)
         stack.addArrangedSubview(bottomStack)
+        bottomStackHeightConstraint = NSLayoutConstraint(item: bottomStack!, attribute: .height, relatedBy: .equal, toItem: webView, attribute: .height, multiplier: 1, constant: 0)
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -146,20 +159,6 @@ extension ViewController: MarkupDelegate {
         setRawText()
     }
     
-    func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {
-        //toolbarHolder.layoutIfNeeded()
-        //UIView.animate(withDuration: 0.2) {
-            self.stack.layoutIfNeeded()
-        //}
-    }
-    
-    func markupToolbarDisappeared() {
-        stack.layoutIfNeeded()
-        //UIView.animate(withDuration: 0.2) {
-            //self.toolbarHolder.layoutIfNeeded()
-        //}
-    }
-    
 }
 
 extension ViewController: FileToolbarDelegate {
@@ -175,13 +174,9 @@ extension ViewController: FileToolbarDelegate {
     }
     
     func rawDocument() {
-        //UIView.animate(
-        //    withDuration: 0.1,
-        //    delay: 0.0,
-        //    animations: {
-                self.bottomStack.isHidden = !self.bottomStack.isHidden
-        //        self.bottomStack.alpha = self.bottomStack.isHidden ? 0.0 : 1.0
-        //})
+        let willBeHidden = !bottomStack.isHidden
+        bottomStackHeightConstraint.isActive = !willBeHidden
+        bottomStack.isHidden = willBeHidden
     }
     
 }

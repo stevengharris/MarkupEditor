@@ -19,17 +19,17 @@ public struct InsertToolbar: View {
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
-                action: { withAnimation { showOnly(.link) } },
+                action: { showOnly(.link) }, // makes UIKit usage look wonky -> withAnimation { showOnly(.link) } },
                 active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
                 onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .link : nil)) } }
             ) { Image.forToolbar(systemName: "link") }
             ToolbarImageButton(
-                action: { withAnimation { showOnly(.image) } },
+                action: { showOnly(.image) }, // makes UIKit usage look wonky -> withAnimation { showOnly(.image) } },
                 active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
                 onHover:  { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .image : nil)) } }
             ) { Image.forToolbar(systemName: "photo") }
             ToolbarImageButton(
-                action: { withAnimation { showOnly(.table)} },
+                action: { showOnly(.table)}, // makes UIKit usage look wonky -> withAnimation { showOnly(.table)} },
                 active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
                 onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .table : nil)) } }
             ) { Image.forToolbar(systemName: "squareshape.split.3x3") }

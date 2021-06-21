@@ -37,7 +37,6 @@ struct ContentView: View {
                     Text("Document HTML")
                     Spacer()
                 }.background(Color(UIColor.systemGray5))
-                Spacer()
                 TextView(text: $rawText)
                     .font(Font.system(size: StyleContext.P.fontSize))
                     .padding([.top, .bottom, .leading, .trailing], 8)

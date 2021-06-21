@@ -62,34 +62,34 @@ public struct MarkupToolbar: View {
             Divider()           // Horizontal at the bottom
             if showLinkToolbar {
                 LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
-                    .onAppear(perform: {
+                    .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .link)
-                    })
-                    .onDisappear(perform: {
+                    }
+                    .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
-                    })
+                    }
             }
             if showImageToolbar {
                 ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
-                    .onAppear(perform: {
+                    .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .image)
-                    })
-                    .onDisappear(perform: {
+                    }
+                    .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
-                    })
+                    }
                 
             }
             if showTableToolbar {
                 TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
-                    .onAppear(perform: {
+                    .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .table)
-                    })
-                    .onDisappear(perform: {
+                    }
+                    .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
                         selectedWebView?.becomeFirstResponder()
-                    })
+                    }
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
