@@ -2923,7 +2923,7 @@ const _setTag = function(type, sel) {
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
-    //_backupSelection();
+    _backupSelection();
     // Note: Now that tagging with selection collapsed inside a word means
     // the word is tagged, and selecting at the beginning of a word just
     // does the non-spacing char, the following is not needed.
@@ -2937,20 +2937,20 @@ const _setTag = function(type, sel) {
     // IOW, we end up with a blank sibling to the new <i> element. It doesn't
     // hurt anything, but it's annoying as hell. So the following code checks
     // for it and removes it.
-    //const prevSib = el.previousSibling;
-    //if (prevSib && (prevSib.nodeType != Node.TEXT_NODE)) {
-    //    const innerHTML = prevSib.innerHTML;
-    //    if (!innerHTML || (innerHTML.length == 0)) {
-    //        prevSib.parentNode.removeChild(prevSib);
-    //    }
-    //}
-    //const nextSib = el.nextSibling;
-    //if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
-    //    const innerHTML = nextSib.innerHTML;
-    //    if (!innerHTML || (innerHTML.length == 0)) {
-    //        nextSib.parentNode.removeChild(nextSib);
-    //    }
-    //}
+    const prevSib = el.previousSibling;
+    if (prevSib && (prevSib.nodeType != Node.TEXT_NODE)) {
+        const innerHTML = prevSib.innerHTML;
+        if (!innerHTML || (innerHTML.length == 0)) {
+            prevSib.parentNode.removeChild(prevSib);
+        }
+    }
+    const nextSib = el.nextSibling;
+    if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
+        const innerHTML = nextSib.innerHTML;
+        if (!innerHTML || (innerHTML.length == 0)) {
+            nextSib.parentNode.removeChild(nextSib);
+        }
+    }
 };
 
 /**
