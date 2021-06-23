@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The toolbar for setting the paragraph style.
 public struct StyleToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?

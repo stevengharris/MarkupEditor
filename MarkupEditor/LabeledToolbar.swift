@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The standard way to display one of the toolbars with a label above. Typically ToobarImageButtons are provided as its content.
 public struct LabeledToolbar<Content: View>: View {
     let label: Text
     let content: Content

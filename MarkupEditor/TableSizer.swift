@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// Show an 8x10 grid for the user to choose a table size to create. 
 struct TableSizer: View {
     let maxRows: Int = 8
     let maxCols: Int = 10

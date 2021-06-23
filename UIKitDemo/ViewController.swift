@@ -10,6 +10,10 @@ import UIKit
 import SwiftUI
 import MarkupEditor
 
+/// The main view for the UIKitDemo.
+///
+/// Displays the MarkupToolbar at the top and the MarkupWKWebView at the bottom containing demo.html.
+/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar.
 class ViewController: UIViewController {
     @IBOutlet weak var stack: UIStackView!
     var toolbarHolder: UIView!

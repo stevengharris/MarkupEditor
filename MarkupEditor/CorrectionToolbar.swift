@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The toolbar for undo and redo.
 public struct CorrectionToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?

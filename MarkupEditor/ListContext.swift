@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Tracks list types in the StyleToolbar.
 public class ListContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
     
     public static func == (lhs: ListContext, rhs: ListContext) -> Bool {

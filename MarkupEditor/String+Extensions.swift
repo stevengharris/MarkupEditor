@@ -29,6 +29,7 @@ extension String {
         return newString
     }
     
+    /// Return true if self is a valid URL
     var isValidURL: Bool {
         let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
         let matches = detector.matches(in: self, options: [], range: NSRange(location: 0, length: utf16.count))

@@ -1153,7 +1153,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
     // If selection is in a style, use that node as the parent to put in a
     // BLOCKQUOTE. If not, then look for a BLOCKQUOTE and use that node
     // as the parent to put in another BLOCKQUOTE.
-    // We should always be selecting inside of some styled element in a LogEntry,
+    // We should always be selecting inside of some styled element,
     // but we don't know for sure.
     const selStyle = selectionState['style'];
     let selNodeParent;

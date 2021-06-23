@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The TextField used in the ImageToolbar and LinkToolbar.
 public struct ToolbarTextField: View {
     let label: String!
     let placeholder: String!

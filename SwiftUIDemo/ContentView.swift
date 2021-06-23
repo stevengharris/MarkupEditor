@@ -10,6 +10,10 @@ import SwiftUI
 import MarkupEditor
 import UniformTypeIdentifiers
 
+/// The main view for the SwiftUIDemo.
+///
+/// Displays the MarkupToolbar at the top and the MarkupWebView at the bottom containing demo.html.
+/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
 struct ContentView: View {
 
     @StateObject var selectionState = SelectionState()

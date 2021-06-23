@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The TextView displays the raw html of the MarkupWKWebView.
 struct TextView: UIViewRepresentable {
     @Binding var text: NSAttributedString
 

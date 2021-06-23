@@ -8,11 +8,16 @@
 
 import SwiftUI
 
+/// Enum to identify directions for adding rows and columns.
+///
+/// Case "before" means to the left, and "after" means to the right for columns.
+/// Case "before" means above, and "after' means below for rows.
 public enum TableDirection {
     case before
     case after
 }
 
+/// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?

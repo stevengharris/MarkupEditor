@@ -10,6 +10,7 @@ import SwiftUI
 
 extension Image {
     
+    /// Return an image that is properly scaled for the userInterfaceIdiom
     public static func forToolbar(systemName: String) -> Image {
         if UIDevice.current.userInterfaceIdiom == .mac {
             let config = UIImage.SymbolConfiguration(scale: .large)

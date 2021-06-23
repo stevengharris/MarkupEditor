@@ -9,6 +9,7 @@
 import SwiftUI
 import MarkupEditor
 
+/// The toolbar to open new or existing files and to expose the raw HTML in the selectedWebView.
 struct FileToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?

@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?

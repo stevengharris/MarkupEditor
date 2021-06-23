@@ -7,18 +7,9 @@
 //
 
 import UIKit
-import Combine
 
-/// HTML tags treated as styles in the MarkupToolbar. The names are displayed to the user, but the html trucks in tags
+/// HTML tags treated as styles in the StyleToolbar. The names are displayed to the user, but the html trucks in tags
 public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
-    // From log_entry.css, needs templatizing
-    // h1 { font-size: 26px; }
-    // h2 { font-size: 24px; }
-    // h3 { font-size: 22px; }
-    // h4 { font-size: 20px; }
-    // h5 { font-size: 18px; }
-    // h6 { font-size: 16px; }
-    // p { font-size: 14px; }
 
     public static let Undefined = StyleContext(tag: "Undefined", name: "Style", fontSize: P.fontSize)
     public static let P = StyleContext(tag: "P", name: "Normal", fontSize: 14)

@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// The FileToolbarDelegate handles requests from the FileToolbar.
 protocol FileToolbarDelegate {
     func newDocument(handler: ((URL?)->Void)?)
     func existingDocument(handler: ((URL?)->Void)?)

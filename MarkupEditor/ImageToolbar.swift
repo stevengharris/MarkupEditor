@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?

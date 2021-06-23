@@ -21,9 +21,9 @@ import WebKit
 /// All interaction with JavaScript is asynchronous. So, for example, the WKToolbar might invoke `bold(handler:)`
 /// on the selectedWebView. The handler on the call into JavaScript is optional. On the JavaScript side, we run
 /// `MU.toggleBold()`. The last thing `toggleBold()` does is invoke `_callback('input')`. This
-/// result in `userContentController(_:didReceive)' to be invoked in the MarkupCoordinator to
-/// let us know something happened on the JavaScript side that requires us to get the html from the
-/// MarkupWKWebView so we maintain up-to-date information in Swift about what is in the MarkupWKWebView.
+/// results in `userContentController(_:didReceive)' being invoked in the MarkupCoordinator to
+/// let us know something happened on the JavaScript side . In this way, we we maintain up-to-date information
+/// as-needed in Swift about what is in the MarkupWKWebView.
 public class MarkupWKWebView: WKWebView, ObservableObject {
     static let DefaultInnerLineHeight: Int = 18
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
@@ -72,27 +72,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         tintColor = tintColor.resolvedColor(with: .current)
     }
     
-    //public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-    //    guard let event = event else { return nil }
-    //    switch event.type {
-    //    case .touches:
-    //        print("WKWebView was hit with: \(event.description)")
-    //        return super.hitTest(point, with: event)
-    //    default:
-    //        return super.hitTest(point, with: event)
-    //    }
-    //}
-    
     //MARK:- Responder Handling
-    
-    //@discardableResult override public func becomeFirstResponder() -> Bool {
-    //    print(">becomeFirstResponder")
-    //    if canBecomeFirstResponder {
-    //        return super.becomeFirstResponder()
-    //    } else {
-    //        return false
-    //    }
-    //}
     
     public override var canBecomeFirstResponder: Bool {
         return hasFocus
@@ -105,15 +85,27 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK:- Testing support
     
     public func setTestHtml(value: String, handler: (() -> Void)? = nil) {
-        evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in
-            handler?()
-        }
+        evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
     }
     
     public func setTestRange(startId: String, startOffset: Int, endId: String, endOffset: Int, handler: @escaping (Bool) -> Void) {
         evaluateJavaScript("MU.setRange('\(startId)', '\(startOffset)', '\(endId)', '\(endOffset)')") { result, error in
             handler(result as? Bool ?? false)
         }
+    }
+    
+    public func testUndo(handler: (()->Void)? = nil) {
+        // Invoke the _undoOperation directly.
+        // This is useful for testing because the execCommand used by the MU.undo function
+        // operates asynchronously, so its changes are not immediately available when testing.
+        evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+    }
+    
+    public func testRedo(handler: (()->Void)? = nil) {
+        // Invoke the _redoOperation directly.
+        // This is useful for testing because the execCommand used by the MU.redo function
+        // operates asynchronously, so its changes are not immediately available when testing.
+        evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
     }
     
     //MARK:- Javascript interactions
@@ -219,20 +211,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Note that this operation interleaves the browser-native redo (e.g., redoing typing)
         // with the _redoOperation implemented in markup.js.
         evaluateJavaScript("MU.redo()") { result, error in handler?() }
-    }
-    
-    public func testUndo(handler: (()->Void)? = nil) {
-        // Invoke the _undoOperation directly.
-        // This is useful for testing because the execCommand used by the MU.undo function
-        // operates asynchronously, so its changes are not immediately available when testing.
-        evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
-    }
-    
-    public func testRedo(handler: (()->Void)? = nil) {
-        // Invoke the _redoOperation directly.
-        // This is useful for testing because the execCommand used by the MU.redo function
-        // operates asynchronously, so its changes are not immediately available when testing.
-        evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
     }
     
     //MARK:- Table editing

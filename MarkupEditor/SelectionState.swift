@@ -6,10 +6,9 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import Foundation
 import UIKit
 
-/// The state of the selection in a LogEntryView
+/// The state of the selection in a MarkupWKWebView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
     // Selected text
     @Published public var selection: String? = nil
@@ -113,8 +112,8 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         colspan = selectionState?.colspan ?? false      // If so, does header have colspan
         rows = selectionState?.rows ?? 0                // Number of rows in table if selected
         cols = selectionState?.cols ?? 0                // Number of cols in table if selected
-        row = selectionState?.row ?? 0                  // 1-based row number selected in body (0 if header)
-        col = selectionState?.col ?? 0                  // 1-based col number selected in body or header
+        row = selectionState?.row ?? 0                  // Row number selected in body (0 if header)
+        col = selectionState?.col ?? 0                  // Col number selected in body or header
         style = selectionState?.style ?? StyleContext.Undefined
         list = selectionState?.list ?? ListContext.Undefined
         li = selectionState?.li ?? false

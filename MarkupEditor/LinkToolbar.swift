@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+/// The toolbar for creating and editing hyperlinks.
 public struct LinkToolbar: View {
     @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?

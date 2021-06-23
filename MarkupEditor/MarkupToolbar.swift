@@ -13,6 +13,10 @@ import SwiftUI
 /// The MarkupToolbar observes the selectionState so that its display reflects the current state.
 /// For example, when selectedWebView is nil, the toolbar is disabled, and when the selectionState shows
 /// that the selection is inside of a bolded element, then the bold (B) button is active and filled-in.
+/// The MarkupToolbar contains multiple other toolbars, such as StyleToolbar and FormatToolbar
+/// which invoke methods in the selectedWebView, an instance of MarkupWKWebView.
+/// The InsertToolbar sets showLinkToolbar, showImageToolbar, and showTableToolbar, which in turn
+/// uncover one of the specific subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
     
     public enum ToolbarType: CaseIterable {
@@ -53,13 +57,13 @@ public struct MarkupToolbar: View {
                     rightToolbar
                     Divider()
                 }
-                Spacer()            // Push everything to the left
+                Spacer()                // Push everything to the left
             }
             .frame(height: 47)
             .padding([.leading, .trailing], 8)
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
-            Divider()           // Horizontal at the bottom
+            Divider()                   // Horizontal at the bottom
             if showLinkToolbar {
                 LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
                     .onAppear {

@@ -1,7 +1,6 @@
 body {
     font-family: -apple-system;
     font: -apple-system-body;
-    /* word-wrap: break-word; */
     caret-color: red;   /* Helps with debugging since should not appear */
     line-height: 1.7;
     padding: 0 20px 20px 20px;
