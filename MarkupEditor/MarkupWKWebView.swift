@@ -208,11 +208,31 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK:- Undo/redo
     
     public func undo(handler: (()->Void)? = nil) {
+        // Invoke the undo function from the undo button, same as occurs with Command-S.
+        // Note that this operation interleaves the browser-native undo (e.g., undoing typing)
+        // with the _undoOperation implemented in markup.js.
         evaluateJavaScript("MU.undo()") { result, error in handler?() }
     }
     
     public func redo(handler: (()->Void)? = nil) {
+        // Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
+        // Note that this operation interleaves the browser-native redo (e.g., redoing typing)
+        // with the _redoOperation implemented in markup.js.
         evaluateJavaScript("MU.redo()") { result, error in handler?() }
+    }
+    
+    public func testUndo(handler: (()->Void)? = nil) {
+        // Invoke the _undoOperation directly.
+        // This is useful for testing because the execCommand used by the MU.undo function
+        // operates asynchronously, so its changes are not immediately available when testing.
+        evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+    }
+    
+    public func testRedo(handler: (()->Void)? = nil) {
+        // Invoke the _redoOperation directly.
+        // This is useful for testing because the execCommand used by the MU.redo function
+        // operates asynchronously, so its changes are not immediately available when testing.
+        evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
     }
     
     //MARK:- Table editing

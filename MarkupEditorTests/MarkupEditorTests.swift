@@ -163,7 +163,93 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 2)
         }
     }
+
+    func testUndoStyles() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (   // Replace p with h1
+                HtmlTest(
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            self.webView.testUndo() {
+                                handler()
+                            }
+                        }
+                    }
+                }
+            ),
+            (   // Replace h2 with h6
+                HtmlTest(
+                    startHtml: "<h2 id=\"h2\">Hello world</h2>",
+                    endHtml: "<h2>Hello world</h2>",
+                    startId: "h2",
+                    startOffset: 0,
+                    endId: "h2",
+                    endOffset: 10
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H6) {
+                            self.webView.testUndo() {
+                                handler()
+                            }
+                        }
+                    }
+                }
+            ),
+            (   // Replace h3 with p
+                HtmlTest(
+                    startHtml: "<h3 id=\"h3\">Hello world</h3>",
+                    endHtml: "<h3>Hello world</h3>",
+                    startId: "h3",
+                    startOffset: 2,
+                    endId: "h3",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .P) {
+                            self.webView.testUndo() {
+                                handler()
+                            }
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Undoing the setting and replacing of styles")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == startHtml)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == endHtml, "Expected \(endHtml), saw: \(formatted ?? "nil")")
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
     
+
     func testFormats() throws {
         // Select a range in a P styled string, apply a format to it
         for format in FormatContext.AllCases {
@@ -205,7 +291,53 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testunFormats() throws {
+    func testUndoFormats() throws {
+        // Select a range in a P styled string, apply a format to it, and then undo
+        for format in FormatContext.AllCases {
+            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            let expectation = XCTestExpectation(description: "Undo formatting of \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == test.startHtml)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == test.endHtml)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        XCTAssert(unformatted == test.startHtml)
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUnformats() throws {
         // Given a range of formatted text, toggle the format off
         for format in FormatContext.AllCases {
             let test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
@@ -219,6 +351,57 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                             self.webView.getHtml { formatted in
                                 XCTAssert(formatted == test.endHtml)
                                 expectation.fulfill()
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoUnformats() throws {
+        // Given a range of formatted text, toggle the format off, then undo
+        for format in FormatContext.AllCases {
+            let rawString = "This is a start."
+            let test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
+            // The undo doesn't preserve the id that is injected by .forUnformatting, so construct startHTML
+            // below for comparison post-undo.
+            let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: nil)
+            let startHtml = formattedString.styledHtml(adding: .P)
+            let expectation = XCTestExpectation(description: "Format \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == test.startHtml)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == test.endHtml)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        XCTAssert(unformatted == startHtml)
+                                        expectation.fulfill()
+                                    }
+                                }
                             }
                         }
                         switch format {
@@ -528,6 +711,141 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testUndoBlockQuotes() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (   // Increase quote level, selection in text element
+                HtmlTest(
+                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    endHtml: "<blockquote><p id=\"p\">Hello <b id=\"b\">world</b></p></blockquote>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.increaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Increase quote level, selection in a non-text element
+                HtmlTest(
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.increaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Decrease quote level from 1 to 0, selection in a non-text element, no styling
+                HtmlTest(
+                    startHtml: "<blockquote><b id=\"b\"><i id=\"i\">Hello </i>world</b></blockquote>",
+                    endHtml: "<b id=\"b\"><i id=\"i\">Hello </i>world</b>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.decreaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Decrease quote level from 1 to 0, selection in a non-text element, with styling
+                HtmlTest(
+                    startHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.decreaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Decrease quote level from 2 to 1, selection in a non-text element
+                HtmlTest(
+                    startHtml: "<blockquote><blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote></blockquote>",
+                    endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.decreaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element
+                HtmlTest(
+                    startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
+                    endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
+                    startId: "i2",
+                    startOffset: 2,
+                    endId: "i2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.increaseQuoteLevel() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        XCTAssert(formatted == endHtml, "Expected start: \(startHtml), saw: \(unformatted ?? "nil")")
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
     func testLists() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
@@ -621,7 +939,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             (   // Change one of the list items in a multi-element unordered list to an ordered list item
                 HtmlTest(
                     startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
-                    endHtml: "<ul><ol><li><p>Hello <b id=\"b\">world1</b></p></li></ol><li><p>Hello <b>world2</b></p></li></ul>",
+                    endHtml: "<ol><li><p>Hello <b id=\"b\">world1</b></p></li></ol><ul><li><p>Hello <b>world2</b></p></li></ul>",
                     startId: "b",
                     startOffset: 2,
                     endId: "b",
@@ -649,6 +967,141 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                             self.webView.getHtml { formatted in
                                 XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
                                 expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoLists() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (   // Make a paragraph into an ordered list
+                HtmlTest(
+                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Make a paragraph into an unordered list
+                HtmlTest(
+                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    endHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Remove a list item from a single-element unordered list, thereby removing the list, too
+                HtmlTest(
+                    startHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
+                    endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Remove a list item from a single-element ordered list, thereby removing the list, too
+                HtmlTest(
+                    startHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
+                    endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Remove a list item from a multi-element unordered list, leaving the list in place
+                HtmlTest(
+                    startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
+                    endHtml: "<ul><p>Hello <b id=\"b\">world1</b></p><li><p>Hello <b>world2</b></p></li></ul>",
+                    startId: "b",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Change one of the list items in a multi-element unordered list to an ordered list item
+                HtmlTest(
+                    startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
+                    endHtml: "<ol><li><p>Hello <b id=\"b\">world1</b></p></li></ol><ul><li><p>Hello <b>world2</b></p></li></ul>",
+                    startId: "b",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        XCTAssert(unformatted == startHtml, "Expected start: \(startHtml), saw: \(unformatted ?? "nil")")
+                                        expectation.fulfill()
+                                    }
+                                }
                             }
                         }
                     }
@@ -723,6 +1176,54 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                             self.webView.getHtml { formatted in
                                 XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
                                 expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoInsertEmpty() throws {
+        /* See the notes in testInsertEmpty */
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (   // Make a paragraph into an ordered list
+                HtmlTest(
+                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
+                    endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            )
+        ]
+        for (test, action) in htmlTestAndActions {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        XCTAssert(unformatted == startHtml, "Expected start: \(startHtml), saw: \(formatted ?? "nil")")
+                                        expectation.fulfill()
+                                    }
+                                }
                             }
                         }
                     }

@@ -184,7 +184,17 @@ class Undoer {
             // The focus event in MU.editor does _restoreSelection
             previousFocus.focus({preventScroll: true});
         };
-    }
+    };
+    
+    testUndo() {
+        _undoOperation(this._stack[this._depth]);
+        this._setUndoIndex(this._depth - 1);
+    };
+    
+    testRedo() {
+        _redoOperation(this._stack[this._depth]);
+        this._setUndoIndex(this._depth - 1);
+    };
 };
 
 /**
@@ -855,7 +865,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     if (!sel || !selNode) { return };
     const existingElement = _findFirstParentElementInTagNames(selNode, [oldStyle.toUpperCase()]);
     if (existingElement) {
-        const newElement = _replaceTag(existingElement, newStyle.toUpperCase());
+        _replaceTag(existingElement, newStyle.toUpperCase());
         if (undoable) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData);
@@ -915,7 +925,8 @@ MU.toggleListItem = function(newListType, undoable=true) {
                     // If this is the only item in the list, then change the list type rather than
                     // change the one element.
                     if (newListType) {
-                        newSelNode = _replaceTag(listElement, newListType);
+                        const newList = _replaceTag(listElement, newListType);
+                        newSelNode = newList.firstChild;
                     } else {
                         // We are unsetting the list for a single-item list, so just remove both so
                         // the list is removed.
@@ -924,12 +935,12 @@ MU.toggleListItem = function(newListType, undoable=true) {
                     }
                 } else {
                     // We want to replace the existing list item with a newListType list that contains it
-                    const newListElement = document.createElement(newListType);
-                    newListElement.innerHTML = listItemElement.outerHTML;
-                    listItemElement.replaceWith(newListElement);
-                    newSelNode = newListElement.firstChild;
+                    newSelNode = _splitList(listItemElement, newListType);
                 }
             }
+            if (newSelNode) {
+                _collapseList(newSelNode)
+            };
         } else if (styleType) {
             // CASE: We selected a styled element in a list, but not in an LI
             const styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
@@ -980,6 +991,89 @@ MU.toggleListItem = function(newListType, undoable=true) {
         _restoreSelection();
     }
     _callback('input');
+};
+
+/**
+ * Given a listItemElement that we want to be in a newListType,
+ * split the list it resides in so that the listItemElement is in
+ * its own list of newListType, and the one it was in has been split
+ * around it. So, for example, if newListType is UL and listItemElement
+ * is in an OL, then we end up with two or three lists depending on
+ * whether the element was in the middle or at the ends of the original.
+ *
+ * @param   {HTML List Item Element}    listItemElement     The LI currently in a UL or OL.
+ * @param   {String}                    newListType         Either OL or UL to indicate what listItemElement should be in.
+ * @return  {HTML List Item Element}                        The listItemElement now residing in a new list of newListType.
+ */
+const _splitList = function(listItemElement, newListType) {
+    const oldList = listItemElement.parentNode;
+    const oldListType = oldList.nodeName;
+    const oldListItems = oldList.children;
+    const newList = document.createElement(newListType)
+    const preList = document.createElement(oldListType);
+    const postList = document.createElement(oldListType);
+    while (oldListItems.length > 0) {
+        let child = oldListItems[0];
+        if (child === listItemElement) {
+            newList.appendChild(listItemElement);
+        } else {
+            if (newList.children.length === 0) {
+                preList.appendChild(child);
+            } else {
+                postList.appendChild(child);
+            }
+        };
+    };
+    oldList.replaceWith(newList);
+    if (preList.children.length > 0) {
+        newList.parentNode.insertBefore(preList, newList)
+    };
+    if (postList.children.length > 0) {
+        newList.parentNode.insertBefore(postList, newList.nextSibling);
+    };
+    return listItemElement;
+};
+
+/**
+ * Given a listItemElement in a UL or OL list, examine its parent's siblings and collapse
+ * as many as possible into a single list when they are of the same type. For example, if
+ * listItemElement in in a UL list surrounded by two other ULs, then listItemElement's parent
+ * will become be a single UL with the elements of all three ULs combined, and the
+ * other ULs will be removed. Intervening white space and non-list elements are preserved.
+ *
+ * @param   {HTML List Item Element}    listItemElement     The LI currently in a UL or OL.
+ */
+const _collapseList = function(listItemElement) {
+    const list = listItemElement.parentNode;
+    const listType = list.nodeName;
+    const firstChild = list.firstChild;
+    // Use previousElementSibling to find the list, but use childNodes
+    // to include intervening non-LI nodes as part of the collapsing process,
+    // taking from prevList and putting before the (unchanging) firstChild of list.
+    let prevList = list.previousElementSibling;
+    while (prevList && (prevList.nodeName === listType)) {
+        while (prevList.childNodes.length > 0) {
+            list.insertBefore(prevList.childNodes[0], firstChild);
+        };
+        // Now the earlier content has been collapsed into list,
+        // so remove it and move on to the previousElementSibling.
+        prevList.parentNode.removeChild(prevList);
+        prevList = prevList.previousElementSibling;
+    };
+    // Use nextElementSibling to find the list, but use childNodes
+    // to include intervening non-LI nodes as part of the collapsing process,
+    // taking from nextList and putting at the (changing) end of list.
+    let nextList = list.nextElementSibling;
+    while (nextList && (nextList.nodeName === listType)) {
+        while (nextList.childNodes.length > 0) {
+            let lastChild = list.lastChild;
+            list.insertBefore(nextList.childNodes[0], lastChild.nextSibling);
+        };
+        // Now the following content has been collapsed into list,
+        // so remove it and move on to the nextElementSibling.
+        nextList.parentNode.removeChild(nextList);
+        nextList = nextList.nextElementSibling;
+    };
 };
 
 /**
@@ -1587,6 +1681,22 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
     sel.addRange(range);
     return true;
 };
+
+/**
+ * For testing purposes, invoke undo by direct input to undoer.
+ * Using MU.undo() from a test does not work properly.
+ */
+MU.testUndo = function() {
+    undoer.testUndo();
+}
+
+/**
+ * For testing purposes, invoke redo by direct input to undoer.
+ * Using MU.redo() from a test does not work properly.
+ */
+MU.testRedo = function() {
+    undoer.testRedo();
+}
 
 /********************************************************************************
  * Links
