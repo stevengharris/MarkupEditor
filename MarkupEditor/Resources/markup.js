@@ -760,7 +760,7 @@ const _toggleFormat = function(type, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    const existingElement = _findFirstParentElementInTagNames(selNode, [type.toUpperCase()]);
+    const existingElement = _findFirstParentElementInNodeNames(selNode, [type.toUpperCase()]);
     if (existingElement) {
         _unsetTag(existingElement, sel);
     } else {
@@ -863,7 +863,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode) { return };
-    const existingElement = _findFirstParentElementInTagNames(selNode, [oldStyle.toUpperCase()]);
+    const existingElement = _findFirstParentElementInNodeNames(selNode, [oldStyle.toUpperCase()]);
     if (existingElement) {
         _replaceTag(existingElement, newStyle.toUpperCase());
         if (undoable) {
@@ -905,11 +905,11 @@ MU.toggleListItem = function(newListType, undoable=true) {
     let newSelNode = null;
     if (oldListType) {
         // TOP-LEVEL CASE: We selected something in a list
-        const listElement = _findFirstParentElementInTagNames(selNode, [oldListType]);
-        const listItemElementCount = _childrenWithTagNameCount(listElement, 'LI');
+        const listElement = _findFirstParentElementInNodeNames(selNode, [oldListType]);
+        const listItemElementCount = _childrenWithNodeNameCount(listElement, 'LI');
         if (isInListItem) {
             // CASE: We selected a list item inside of a list
-            const listItemElement = _findFirstParentElementInTagNames(selNode, ['LI']);
+            const listItemElement = _findFirstParentElementInNodeNames(selNode, ['LI']);
             if (oldListType === newListType) {
                 // We want to toggle it off and remove the list altogether if it's empty afterward
                 // NOTE: _unsetTag resets the selection properly itself. So, we don't
@@ -943,7 +943,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
             };
         } else if (styleType) {
             // CASE: We selected a styled element in a list, but not in an LI
-            const styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
+            const styledElement = _findFirstParentElementInNodeNames(selNode, [styleType]);
             if (oldListType === newListType) {
                 // We want the entire styled element to be a list item in the existing list
                 newSelNode = _replaceNodeWithListItem(styledElement);
@@ -963,7 +963,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     } else {
         // TOP-LEVEL CASE: We selected something outside of any list
         // By definition, we want to put it in a newListType list
-        const styledElement = _findFirstParentElementInTagNames(selNode, [styleType]);
+        const styledElement = _findFirstParentElementInNodeNames(selNode, [styleType]);
         if (styledElement) {
             newSelNode = _replaceNodeWithList(newListType, styledElement);
         } else {
@@ -1158,9 +1158,9 @@ MU.increaseQuoteLevel = function(undoable=true) {
     const selStyle = selectionState['style'];
     let selNodeParent;
     if (selStyle) {
-        selNodeParent = _findFirstParentElementInTagNames(selNode, [selStyle]);
+        selNodeParent = _findFirstParentElementInNodeNames(selNode, [selStyle]);
     } else {
-        const existingBlockQuote = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
+        const existingBlockQuote = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
         if (existingBlockQuote) {
             selNodeParent = existingBlockQuote;
         } else {
@@ -1203,7 +1203,7 @@ MU.decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    const existingElement = _findFirstParentElementInTagNames(selNode, ['BLOCKQUOTE']);
+    const existingElement = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
     if (existingElement) {
         _unsetTag(existingElement, sel);
         if (undoable) {
@@ -1300,14 +1300,14 @@ const _rangeString = function(range) {
         startContainerType = '<TextElement>'
         startContainerContent = startContainer.textContent;
     } else {
-        startContainerType = '<' + startContainer.tagName + '>';
+        startContainerType = '<' + startContainer.nodeName + '>';
         startContainerContent = startContainer.innerHTML;
     };
     if (endContainer.nodeType === Node.TEXT_NODE) {
         endContainerType = '<TextElement>'
         endContainerContent = endContainer.textContent;
     } else {
-        endContainerType = '<' + endContainer.tagName + '>';
+        endContainerType = '<' + endContainer.nodeName + '>';
         endContainerContent = endContainer.innerHTML;
     };
     return 'range:\n' + '  startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n' + '  startOffset: ' + range.startOffset + '\n' + '  endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n' + '  endOffset: ' + range.endOffset;
@@ -1364,7 +1364,7 @@ const _cleanUpSpansWithin = function(node) {
             spansRemoved += _cleanUpSpansWithin(children[i]);
         };
     };
-    if (node.tagName === 'SPAN') {
+    if (node.nodeName === 'SPAN') {
         spansRemoved++;
         const template = document.createElement('template');
         template.innerHTML = node.innerHTML;
@@ -1436,7 +1436,7 @@ const _cleanUpEnter = function() {
             _initializeRange();
             repairSelection = false;
         };
-    } else if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.tagName === 'DIV')) {
+    } else if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.nodeName === 'DIV')) {
         selNode.replaceWith(newElement);
     } else {
         repairSelection = false;
@@ -2063,7 +2063,7 @@ MU.insertTable = function(rows, cols, undoable=true) {
         tbody.appendChild(tr);
     };
     table.appendChild(tbody);
-    const targetNode = _findFirstParentElementInTagNames(selNode, _styleTags());
+    const targetNode = _findFirstParentElementInNodeNames(selNode, _styleTags());
     if (!targetNode) { return };
     targetNode.insertAdjacentHTML('afterend', table.outerHTML);
     // We need the new table that now exists at selection.
@@ -2753,19 +2753,19 @@ const _consoleLog = function(string) {
 /**
  * Return the first tag contained in matchNames that the selection is inside of, without encountering one in excludeNames.
  *
- * @return {String}         The tagName that was found, or an empty string if not found.
+ * @return {String}         The nodeName that was found, or an empty string if not found.
  */
 const _firstSelectionTagMatching = function(matchNames, excludeNames) {
     const matchingNode = _firstSelectionNodeMatching(matchNames, excludeNames);
     if (matchingNode) {
-        return matchingNode.tagName;
+        return matchingNode.nodeName;
     } else {
         return '';
     }
 };
 
 /**
- * Return the first node that the selection is inside of whose tagName matches matchNames, without encountering one in excludeNames.
+ * Return the first node that the selection is inside of whose nodeName matches matchNames, without encountering one in excludeNames.
  *
  * @return {HTML Element}   The element that was found, or null if not found.
  */
@@ -2774,7 +2774,7 @@ const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
     if (sel) {
         const focusNode = sel.focusNode
         if (focusNode) {
-            const selElement = _findFirstParentElementInTagNames(focusNode, matchNames, excludeNames);
+            const selElement = _findFirstParentElementInNodeNames(focusNode, matchNames, excludeNames);
             if (selElement) {
                 return selElement;
             }
@@ -2784,20 +2784,20 @@ const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
 };
 
 /**
- * Return all of the tags in tagNames that the selection is inside of.
+ * Return all of the tags in nodeNames that the selection is inside of.
  *
- * @param   {[String]}      Array of tag names to search upward for, starting at selection.
- * @return  {[String]}      Array of tag names found.
+ * @param   {[String]}  nodeNames   Array of nodeNames to search upward for, starting at selection.
+ * @return  {[String]}              Array of nodeNames found.
  */
-const _selectionTagsMatching = function(tagNames) {
+const _selectionTagsMatching = function(nodeNames) {
     const sel = document.getSelection();
     const tags = [];
     if (sel) {
         let focusNode = sel.focusNode;
         while (focusNode) {
-            let selElement = _findFirstParentElementInTagNames(focusNode, tagNames);
+            let selElement = _findFirstParentElementInNodeNames(focusNode, nodeNames);
             if (selElement) {
-                tags.push(selElement.tagName);
+                tags.push(selElement.nodeName);
             }
             focusNode = focusNode.parentNode;
         }
@@ -3006,7 +3006,7 @@ const _setTag = function(type, sel) {
     const startNewTag = range.collapsed && !wordRange;
     const tagWord = range.collapsed && wordRange;
     const newRange = document.createRange();
-    // In all cases, el is the new element with tagName type and range will have
+    // In all cases, el is the new element with nodeName type and range will have
     // been modified to have the new element appropriately inserted. The
     // newRange is set appropriately depending on the case.
     if (startNewTag) {
@@ -3192,13 +3192,13 @@ const _unsetTag = function(oldElement, sel) {
 };
 
 /**
- * Given an element with a tag, replace its tag with the new tagName.
+ * Given an element with a tag, replace its tag with the new nodeName.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
- * @param   {String}        tagName     The type of element we want; e.g., 'B'.
+ * @param   {String}        nodeName    The type of element we want; e.g., 'B'.
  *
  */
-const _replaceTag = function(oldElement, tagName) {
+const _replaceTag = function(oldElement, nodeName) {
     const sel = document.getSelection();
     const oldParentNode = oldElement.parentNode;
     const oldRange = sel.getRangeAt(0).cloneRange();
@@ -3206,7 +3206,7 @@ const _replaceTag = function(oldElement, tagName) {
     const oldStartOffset = oldRange.startOffset;
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
-    const newElement = document.createElement(tagName);
+    const newElement = document.createElement(nodeName);
     newElement.innerHTML = oldElement.innerHTML;
     oldElement.replaceWith(newElement);
     let startContainer, startOffset, endContainer, endOffset;
@@ -3236,16 +3236,16 @@ const _replaceTag = function(oldElement, tagName) {
 };
 
 /**
- * Return the count of the element's children that have the tagName.
+ * Return the count of the element's children that have the nodeName.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
- * @param   {String}        tagName     The type of element we want; e.g., 'B'.
+ * @param   {String}        nodeName     The type of element we want; e.g., 'B'.
  */
-const _childrenWithTagNameCount = function(element, tagName) {
+const _childrenWithNodeNameCount = function(element, nodeName) {
     let count = 0;
     const children = element.children;
     for (let i=0; i<children.length; i++) {
-        if (children[i].tagName === tagName) { count++ };
+        if (children[i].nodeName === nodeName) { count++ };
     }
     return count;
 }
@@ -3303,7 +3303,7 @@ const _firstTextNodeChild = function(element) {
  * @param   {[String]}      matchNames      Array of tags/nodeNames that we are searching for.
  * @param   {[String]}      excludeNames    Array or tags/nodeNames that will abort the search.
  */
-const _findFirstParentElementInTagNames = function(node, matchNames, excludeNames) {
+const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNames) {
     if (!node) { return null };
     let element;
     if (node.nodeType === Node.TEXT_NODE) {
@@ -3311,13 +3311,13 @@ const _findFirstParentElementInTagNames = function(node, matchNames, excludeName
     } else {
         element = node;
     };
-    const tagName = element.tagName;
-    if (excludeNames && excludeNames.includes(tagName)) {
+    const nodeName = element.nodeName;
+    if (excludeNames && excludeNames.includes(nodeName)) {
         return null;
-    } else if (matchNames.includes(tagName)) {
+    } else if (matchNames.includes(nodeName)) {
         return element;
     } else {
-        return _findFirstParentElementInTagNames(element.parentElement, matchNames, excludeNames);
+        return _findFirstParentElementInNodeNames(element.parentElement, matchNames, excludeNames);
     };
 };
 
@@ -3391,7 +3391,7 @@ MU.selectionTag = function() {
             if (focusNode) {
                 const selElement = focusNode.parentElement;
                 if (selElement) {
-                    return selElement.tagName;
+                    return selElement.nodeName;
                 }
             }
         }
