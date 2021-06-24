@@ -884,7 +884,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				INFOPLIST_FILE = MarkupEditor/Info.plist;
+				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -904,7 +904,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				INFOPLIST_FILE = MarkupEditor/Info.plist;
+				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
