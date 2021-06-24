@@ -566,7 +566,7 @@ MU.editor.addEventListener('keyup', function(ev) {
         _cleanUpSpans();
         _cleanUpAttributes('style');
     } else if (key === 'Enter') {
-        _replaceDivIfNeeded();
+        _cleanUpEnter();
     //} else if ((key === 'ArrowLeft') || (key === 'ArrowRight') || (key === 'ArrowDown') || (key === 'ArrowUp')) {
     //    _consoleLog('Arrow key')
     };
@@ -1413,27 +1413,42 @@ const _cleanUpAttributesWithin = function(attribute, node) {
 };
                                 
 /**
- * If selection is in a DIV and the previousSibling is an ElementNode, then
- * replace the DIV with a tag of the same type as previousSibling. We use this
- * to prevent DIVs from being inserted when Enter is pressed.
+ * If selection is in a DIV in MU.editor, then replace the DIV with a normal 'p'
+ * paragraph. If the selection is in a BR in MU.editor, then insert a normal 'p'
+ * paragraph at that location.
+ * We use this to prevent DIVs from being inserted after keydown Enter happens
+ * and to replace bare <br> elements with <p><br></p>.
  */
-const _replaceDivIfNeeded = function() {
+const _cleanUpEnter = function() {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
-    if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.tagName === 'DIV')) {
-        const prevSib = selNode.previousSibling;
-        if (prevSib.nodeType === Node.ELEMENT_NODE) {
-            const range = sel.getRangeAt(0).cloneRange();
-            const newElement = document.createElement(prevSib.tagName);
-            newElement.appendChild(document.createElement('br'));
-            selNode.replaceWith(newElement);
-            range.setStart(newElement, 0);
-            range.setEnd(newElement, 0);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            _callback('input');
+    if (!selNode) { return };
+    const newElement = document.createElement('p');
+    newElement.appendChild(document.createElement('br'));
+    let repairSelection = true;
+    if (selNode === MU.editor) {
+        const selRange = sel.getRangeAt(0);
+        const startNode = MU.editor.childNodes[selRange.startOffset];
+        if (startNode.nodeName === 'BR') {
+            startNode.replaceWith(newElement);
+        } else {
+            _consoleLog("Unexpected startNode after Enter: " + startNode);
+            _initializeRange();
+            repairSelection = false;
         };
-    };
+    } else if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.tagName === 'DIV')) {
+        selNode.replaceWith(newElement);
+    } else {
+        repairSelection = false;
+    }
+    if (repairSelection) {
+        const range = document.createRange();
+        range.setStart(newElement, 0);
+        range.setEnd(newElement, 0);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+    _callback('input');
 };
 
 /********************************************************************************

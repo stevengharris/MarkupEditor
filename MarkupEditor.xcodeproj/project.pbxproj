@@ -84,6 +84,7 @@
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
+		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA5EEF04264061B800B111A1 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
@@ -134,7 +135,6 @@
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
 		AAFADF41261524AE0024F2DC /* MarkupEditorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkupEditorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAFADF64261525B90024F2DC /* MarkupEditor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MarkupEditor.h; sourceTree = "<group>"; };
-		AAFADF65261525B90024F2DC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../MarkupEditor/Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,8 +182,8 @@
 		AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */ = {
 			isa = PBXGroup;
 			children = (
+				AA316DE22684DB30007E95CC /* Info.plist */,
 				AAFADF64261525B90024F2DC /* MarkupEditor.h */,
-				AAFADF65261525B90024F2DC /* Info.plist */,
 			);
 			path = MarkupEditorFramework;
 			sourceTree = "<group>";
