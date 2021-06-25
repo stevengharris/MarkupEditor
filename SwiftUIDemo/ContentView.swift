@@ -107,20 +107,13 @@ struct ContentView: View {
 extension ContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        setRawText(handler)
-    }
-    
-    func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
+        setRawText(handler)
     }
     
     func markupInput(_ view: MarkupWKWebView) {
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
-    }
-    
-    func markup(_ view: MarkupWKWebView, contentDidChange content: String) {
-        rawText = attributedString(from: content)
     }
 
 }

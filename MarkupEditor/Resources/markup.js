@@ -559,6 +559,8 @@ MU.editor.addEventListener('click', function(ev) {
 /**
  * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
  * Clean up formatting if needed.
+ * We do the clean up after Enter because the default behavior (like breaking paragraphs)
+ * is generally correct and the selection is predictably left in a br or div.
  */
 MU.editor.addEventListener('keyup', function(ev) {
     const key = ev.key;
@@ -863,15 +865,42 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode) { return };
-    const existingElement = _findFirstParentElementInNodeNames(selNode, [oldStyle.toUpperCase()]);
+    let existingElement = null;
+    if (oldStyle) {
+        // There can only be an existing element if oldStyle is non-null
+        existingElement = _findFirstParentElementInNodeNames(selNode, [oldStyle.toUpperCase()]);
+    };
     if (existingElement) {
-        _replaceTag(existingElement, newStyle.toUpperCase());
+        _replaceTag(existingElement, (newStyle) ? newStyle.toUpperCase() : newStyle);
         if (undoable) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData);
         }
         _callback('input');
-    };
+    } else if (selNode.nodeType === Node.TEXT_NODE) {
+        // We occasionally (e.g., in lists) select unstyled text nodes.
+        // In these cases, we need to select the entire text node, set the style,
+        // and then reset the selection afterward. We can only do this when the
+        // selNode is not within a style already, since styles cannot be nested.
+        const rangeProxy = _rangeProxy()
+        let range = document.createRange();
+        range.setStart(selNode, 0);
+        range.setEnd(selNode, selNode.textContent.length);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        _setTag(newStyle, sel);
+        range = document.getSelection().getRangeAt(0);
+        range.setStart(range.startContainer, rangeProxy.startOffset);
+        range.setEnd(range.endContainer, rangeProxy.endOffset);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        if (undoable) {
+            // Pass the oldStyle as null since on undo we want to remove the style completely.
+            const undoerData = _undoerData('style', {oldStyle: null, newStyle: newStyle});
+            undoer.push(undoerData);
+        }
+        _callback('input');
+    }
 };
 
 /********************************************************************************
@@ -1423,32 +1452,48 @@ const _cleanUpEnter = function() {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!selNode) { return };
-    const newElement = document.createElement('p');
-    newElement.appendChild(document.createElement('br'));
-    let repairSelection = true;
+    // We only need to repair the selection when we replace a node.
+    // In that case, newSelection identifies what we need to select.
+    let newElement = null;
     if (selNode === MU.editor) {
+        // Perhaps we have a table at the end of the document and we press Enter after it.
         const selRange = sel.getRangeAt(0);
         const startNode = MU.editor.childNodes[selRange.startOffset];
         if (startNode.nodeName === 'BR') {
-            startNode.replaceWith(newElement);
+            newElement = document.createElement('br');
+            const newParagraph = document.createElement('p');
+            newParagraph.appendChild(newElement);
+            startNode.replaceWith(newParagraph);
         } else {
+            // A failsafe to reset the selection to MU.editor beginning.
             _consoleLog("Unexpected startNode after Enter: " + startNode);
             _initializeRange();
-            repairSelection = false;
         };
-    } else if ((selNode.nodeType === Node.ELEMENT_NODE) && (selNode.nodeName === 'DIV')) {
-        selNode.replaceWith(newElement);
-    } else {
-        repairSelection = false;
+    } else if (selNode.nodeType === Node.ELEMENT_NODE) {
+        // We can be in a list or div, in which case we want to modify what Enter
+        // produced by default. In other cases, such as Enter occurring in a table
+        // or a blockquote, we just leave it alone.
+        const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+        if (existingListItem) {
+            newElement = document.createTextNode('');
+            const newListItem = document.createElement('li');
+            newListItem.appendChild(newElement);
+            selNode.replaceWith(newListItem);
+        } else if (selNode.nodeName === 'DIV') {
+            newElement = document.createElement('br');
+            const newParagraph = document.createElement('p');
+            newParagraph.appendChild(newElement);
+            selNode.replaceWith(newParagraph);
+        };
     }
-    if (repairSelection) {
+    if (newElement) {
         const range = document.createRange();
         range.setStart(newElement, 0);
         range.setEnd(newElement, 0);
         sel.removeAllRanges();
         sel.addRange(range);
+        _callback('input');
     }
-    _callback('input');
 };
 
 /********************************************************************************
@@ -3049,10 +3094,6 @@ const _setTag = function(type, sel) {
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
-    // Note: Now that tagging with selection collapsed inside a word means
-    // the word is tagged, and selecting at the beginning of a word just
-    // does the non-spacing char, the following is not needed.
-    //
     // Check if the insertion left an empty element preceding or following
     // the inserted el. Unfortunately, when starting/ending the selection at
     // the beginning/end of an element in the multinode selection - for example:
@@ -3067,15 +3108,15 @@ const _setTag = function(type, sel) {
         const innerHTML = prevSib.innerHTML;
         if (!innerHTML || (innerHTML.length == 0)) {
             prevSib.parentNode.removeChild(prevSib);
-        }
-    }
+        };
+    };
     const nextSib = el.nextSibling;
     if (nextSib && (nextSib.nodeType != Node.TEXT_NODE)) {
         const innerHTML = nextSib.innerHTML;
         if (!innerHTML || (innerHTML.length == 0)) {
             nextSib.parentNode.removeChild(nextSib);
-        }
-    }
+        };
+    };
 };
 
 /**
@@ -3206,8 +3247,13 @@ const _replaceTag = function(oldElement, nodeName) {
     const oldStartOffset = oldRange.startOffset;
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
-    const newElement = document.createElement(nodeName);
-    newElement.innerHTML = oldElement.innerHTML;
+    let newElement;
+    if (nodeName) {
+        newElement = document.createElement(nodeName);
+        newElement.innerHTML = oldElement.innerHTML;
+    } else {
+        newElement = document.createTextNode(oldElement.innerHTML)
+    }
     oldElement.replaceWith(newElement);
     let startContainer, startOffset, endContainer, endOffset;
     const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);

@@ -8,7 +8,7 @@ Jealous of those JavaScript coders with their WYSIWYG text editors, but just can
 
 ## MarkupEditor Goals and Non-Goals
 
-I am working on a larger project that requires embedded support for "rich text" editing. I felt like WYSIWYG editing was a must-have requirement. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen? It's a lot better than editing raw HTML, but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of preview mode to make sure what you are writing will be presented like you expect feels like CI/CD for writing. 
+I am working on a larger project that requires embedded support for "rich text" editing". WYSIWYG editing is a must-have requirement for me. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen? Sure, it's a lot better than editing raw HTML; but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of preview mode to make sure what you are writing will be presented like you expect feels like CI/CD for writing. 
 
 Still, I wanted an editing experience that didn't get in the way. I wanted something with the feature-simplicity of Markdown, but presented in a clean, what-you-see-is-what-you-get manner that supported the basics people expect:
 
@@ -22,9 +22,8 @@ Still, I wanted an editing experience that didn't get in the way. I wanted somet
     * Images
     * Tables
     * Links
-4. Undo/redo
 
-As you might expect, then, this feature set is pretty darned close to Markdown - or at least a GitHub flavor of Markdown. It doesn't include a lot of things you might expect from your favorite word processor:
+As you might expect, then, this feature set is pretty darned close to Markdown - or at least a GitHub flavor of Markdown. And as soon as you do WYSIWYG editing, you must support undo/redo properly. The feature list doesn't include some things you might expect from your favorite word processor:
 
 * Colored text
 * Highlighting
@@ -44,11 +43,13 @@ The MarkupEditor is presenting an HTML document to you as you edit. It uses Java
 
 ## Consuming the MarkupEditor
 
-Behind the scenes, the MarkupEditor interacts with a single `contentEditable` DIV element created in `markup.html` to modify the DOM of the document you are editing. It uses a subclass of `WKWebView` - the `MarkupWKWebView` - to make calls to the JavaScript in `markup.js`. In turn, the JavaScript calls back into Swift to let the Swift side know that changes occurred. The callbacks on the Swift side are handled by the `MarkupCoordinator`. The `MarkupCoordinator` is the `WKScriptMessageHandler` for a single  `MarkupWKWebView` and receives all the JavaScript callbacks in `userContentController(_:didReceive:)`.  The `MarkupCoordinator` in turn notifies your `MarkupDelegate` of changes. See `MarkupDelegate.swift` for the full protocol and default implementations. 
+Behind the scenes, the MarkupEditor interacts with an HTML document (created in `markup.html`) that uses a single `contentEditable` DIV element to modify the DOM of the document you are editing. It uses a subclass of `WKWebView` - the `MarkupWKWebView` - to make calls to the JavaScript in `markup.js`. In turn, the JavaScript calls back into Swift to let the Swift side know that changes occurred. The callbacks on the Swift side are handled by the `MarkupCoordinator`. The `MarkupCoordinator` is the `WKScriptMessageHandler` for a single  `MarkupWKWebView` and receives all the JavaScript callbacks in `userContentController(_:didReceive:)`.  The `MarkupCoordinator` in turn notifies your `MarkupDelegate` of changes. See `MarkupDelegate.swift` for the full protocol and default implementations. 
 
 That sounds complicated, but it is mostly implementation details you should not need to worry about. The `MarkupDelegate` protocol is the key mechanism for your app to find out about changes as the user interacts with the document. The `MarkupWKWebView` is the key mechanism to make changes to the document from the Swift side or to obtain information from the document, such as its contents. The `MarkupToolbar` is a convenient, pre-built UI to invoke changes to the document by interacting with the `MarkupWKWebView`.
 
 To avoid spurious logging from the underlying WKWebView in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
+
+NOTE: The MarkupEditor at this point has only really been used as a Mac Catalyst app and has some implicit dependencies on using it with a keyboard.
 
 ### Swift Package
 
@@ -62,7 +63,7 @@ Clone this repository and build the MarkupFramework target in Xcode. Add the Mar
 
 When consuming the MarkupEditor in SwiftUI, you can use the `MarkupToolbar` and `MarkupWebView` directly in your own View. The `MarkupWebView` is a UIViewRepresentable for the `MarkupWKWebView` and deals with setting up the `MarkupCoordinator` itself.
 
-For example, you can add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. The `selectionState` and `selectedWebView` have to be accessed by both the `MarkupToolbar` and `MarkupWebView`, so can be held as state in `ContentView`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupTookFocus` callback when the underlying `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. The example below shows how to use the `markupTookFocus` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
+For example, you can add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. The `selectionState` and `selectedWebView` have to be accessed by both the `MarkupToolbar` and `MarkupWebView`, so can be held as state in `ContentView`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. If you had multiple `MarkupWebViews` and a single `MarkupToolbar`, you can the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
 
 ```
 import SwiftUI
@@ -90,17 +91,15 @@ struct ContentView: View {
 }
 
 extension ContentView: MarkupDelegate {
-    
-    func markupTookFocus(_ view: MarkupWKWebView) {
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         selectedWebView = view
     }
-
 }
 ```
 
 ### UIKit Usage
 
-The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code.
+The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code for a detailed example. I'd like there to be less boilerplate code, but I'm also planning on using the MarkupEditor in a SwiftUI app so am likely not to put a lot of effort into that.
 
 ## Demos
 
@@ -127,11 +126,12 @@ The current version is very much a work in progress. The work is a back-and-fort
 
 1. Needs to support text justification. Initially I thought I could live without it, since it's not properly supported in Markdown. But, especially with tables, it is really a must-have.
 2. Preferences. I need to parameterize various things and make them settable by preferences.
+3. Menus are not done properly.
 
 ## Legacy and Acknowledgements
 
 When I started my search for a "Swift WYSIWYG editor", I found a kind of mishmash of things. The [RichEditorView](https://github.com/cjwirth/RichEditorView) was one of the most visible. The RichEditorView was originally built using UIWebView, which has long been deprecated. A couple of people [forked](https://github.com/cbess/RichEditorView/) and [ported](https://github.com/YoomamaFTW/RichEditorView) it to WKWebView and shared their work. I used that for a while in some work I was doing, but I kept hitting edges and felt like I was having to put a lot of work into a fork that would never really see the light of day. The thought of moving the result into SwiftUI was making me queasy. The MarkupEditor is meant to be a proper "modern" version for WYSIWYG editing you can use in your SwiftUI or UIKit project, but it was hatched in the original RichEditorView.
 
-The Markdown editor uses an html document containing a contentEditable div under the covers, which seems like a good idea until you read Nick Santos' article about [Why ContentEditable is Terrible](https://medium.engineering/why-contenteditable-is-terrible-122d8a40e480). His main arguments center around WYSIWYG, and the meaning of the term when editing a document in this way. In the simplest case, consider if you save the HTML you edited using the MarkupEditor and then use a different css to display it in a different browser. What you saw when you edited will certainly not be what you get. The text content will be 100% the same, of course. If what you are editing and saving remains in the same html form and is presented using the same css using a WKWebView, then it will be WYSIWYG. In any case, you need to think about it when adopting this approach.
+The Markdown editor uses an HTML document containing a contentEditable div under the covers, which seems like a good idea until you read Nick Santos' article about [Why ContentEditable is Terrible](https://medium.engineering/why-contenteditable-is-terrible-122d8a40e480). His main arguments center around WYSIWYG, and the meaning of the term when editing a document in this way. In the simplest case, consider if you save the HTML you edited using the MarkupEditor and then use a different CSS to display it in a different browser. What you saw when you edited will certainly not be what you get. The text content will be 100% the same, of course. If what you are editing and saving remains in the same html form and is presented using the same CSS using a WKWebView, then it will be WYSIWYG. In any case, you need to think about it when adopting this approach.
 
-In case you think "To heck with this contentEditable nonsense. How hard can it be to build a little editor!?", I refer you to this [article on lord.io](https://lord.io/text-editing-hates-you-too/). I may have hated every moment writing JavaScript while implementing this project, but the DOM and its incredibly well-documented API are proven and kind of amazing. To be able to ride on top of the work done in the browser is a gift horse that should not be looked in the mouth.
+In case you think "To heck with this contentEditable nonsense. How hard can it be to build a little editor!?", I refer you to this [article on lord.io](https://lord.io/text-editing-hates-you-too/). I did not enjoy writing JavaScript while implementing this project, but the DOM and its incredibly well-documented API are proven and kind of amazing. To be able to ride on top of the work done in the browser is a gift horse that should not be looked in the mouth.

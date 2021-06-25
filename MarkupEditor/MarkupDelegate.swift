@@ -22,9 +22,6 @@ public protocol MarkupDelegate {
     /// Can be used to update the UI.
     func markup(_ view: MarkupWKWebView, heightDidChange height: Int)
     
-    /// Called whenever the content inside the view changes.
-    func markup(_ view: MarkupWKWebView, contentDidChange content: String)
-    
     /// Called when the MarkupWKWebView starts editing.
     func markupTookFocus(_ view: MarkupWKWebView)
     
@@ -70,7 +67,6 @@ public protocol MarkupDelegate {
 extension MarkupDelegate {
     public func markupInput(_ view: MarkupWKWebView) {}
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
-    public func markup(_ view: MarkupWKWebView, contentDidChange content: String) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
     public func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) { handler?() }

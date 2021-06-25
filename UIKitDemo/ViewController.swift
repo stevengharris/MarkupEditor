@@ -151,11 +151,8 @@ class ViewController: UIViewController {
 extension ViewController: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        setRawText(handler)
-    }
-    
-    func markupTookFocus(_ view: MarkupWKWebView) {
         selectedWebView = view
+        setRawText(handler)
     }
     
     func markupInput(_ view: MarkupWKWebView) {

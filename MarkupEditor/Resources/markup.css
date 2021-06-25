@@ -2,7 +2,7 @@ body {
     font-family: -apple-system;
     font: -apple-system-body;
     caret-color: red;   /* Helps with debugging since should not appear */
-    line-height: 1.7;
+    font-size: 1.0em;
     padding: 0 20px 20px 20px;
 }
 
@@ -34,7 +34,7 @@ img:not(:active) {
 
 img:focus {
     outline: none;
-    border: 2px solid #00FFFF;
+    /* border: 2px solid #00FFFF; */ /* Helps with debugging */
 }
 
 a {
@@ -84,7 +84,6 @@ h6 {
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: bold;
-    line-height: 1.7;
     margin: 0 0 10px 0;
 }
 
@@ -94,7 +93,7 @@ h1 + p, h2 + p, h3 + p {
 
 table {
     border: 1px solid #DDD;
-    min-width: 100px;
+    width: 100%;
 }
 
 table thead tr th {
