@@ -27,7 +27,7 @@ public struct MarkupToolbar: View {
     
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
-    private var markupDelegate: MarkupDelegate?
+    @State var markupDelegate: MarkupDelegate?
     @State private var showLinkToolbar: Bool = false
     @State private var showImageToolbar: Bool = false
     @State private var showTableToolbar: Bool = false
@@ -64,37 +64,7 @@ public struct MarkupToolbar: View {
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
             Divider()                   // Horizontal at the bottom
-            if showLinkToolbar {
-                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .link)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
-                    }
-            }
-            if showImageToolbar {
-                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .image)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
-                    }
-                
-            }
-            if showTableToolbar {
-                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .table)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
-                    }
-            }
+            SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: $markupDelegate, showLinkToolbar: $showLinkToolbar, showImageToolbar: $showImageToolbar, showTableToolbar: $showTableToolbar)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))
