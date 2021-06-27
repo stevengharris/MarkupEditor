@@ -92,16 +92,25 @@ h1 + p, h2 + p, h3 + p {
 }
 
 table {
+    table-layout: fixed;
+    border-collapse: collapse;
     border: 1px solid #DDD;
     width: 100%;
 }
 
 table thead tr th {
+    padding: 4px;
     border-bottom: 1px solid #DDD;
 }
 
-td, th {
-    min-width: 20px;
+table tbody tr {
+    padding: 4px;
+    border-bottom: 1px solid #DDD;
+}
+
+table tbody td {
+    padding: 4px;
+    border-right: 1px solid #DDD;
 }
 
 /* GitHub style?

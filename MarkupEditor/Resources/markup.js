@@ -71,9 +71,14 @@ class Undoer {
         this._setUndoIndex = function(content) {
             //_consoleLog("undoIndex: " + content);
             this._ctrl.textContent = content;
-            muteFocusBlur();
-            // Reset focus on MU.editor directly rather than use this._ctrl.blur();
-            MU.editor.focus({preventScroll:true});
+            // Reset focus on MU.editor directly rather than use this._ctrl.blur()
+            // Because the input can happen quickly after the push causes this._ctrl to get focus,
+            // we need to do change the undoIndex in textContent after a timeout, similarly
+            // to how the focus followed by immediate blur needs a timeout.
+            window.setTimeout(function() {
+                muteFocusBlur();    // Will be unmuted after MU.editor receives focus
+                MU.editor.focus({preventScroll:true});
+            }, 0)
         };
         
         // Using an input element rather than contentEditable div because parent is already a
@@ -115,19 +120,8 @@ class Undoer {
                     this._setUndoIndex(this._depth + 1);
                 };
             } else {
-                // Because the input happens so quickly after the push causes this._ctrl to get focus,
-                // we need to do change the undoIndex in textContent after a timeout, similarly
-                // to how the focus followed by immediate blur needs a timeout.
-                window.setTimeout(() => void this._setUndoIndex(ev.data), 0);
-            }
-            //_consoleLog('  final this._ctrl.textContent: ' + this._ctrl.textContent);
-            // clear selection, otherwise user copy gesture will copy value
-            // nb. this _probably_ won't work inside Shadow DOM
-            // nb. this is mitigated by the fact that we set visibility: 'hidden'
-            const s = window.getSelection();
-            if (s.containsNode(this._ctrl, true)) {
-                s.removeAllRanges();
-            }
+                this._setUndoIndex(ev.data);
+            };
         });
     };
     
@@ -178,12 +172,12 @@ class Undoer {
             this._duringUpdate = false;
             this._ctrl.style.visibility = 'hidden';
         }
-        if (previousFocus) {
-            // And we need to mute again when regaining focus.
-            muteFocusBlur();
-            // The focus event in MU.editor does _restoreSelection
-            previousFocus.focus({preventScroll: true});
-        };
+        //if (previousFocus) {
+        //    // And we need to mute again when regaining focus.
+        //    muteFocusBlur();
+        //    // The focus event in MU.editor does _restoreSelection
+        //    previousFocus.focus({preventScroll: true});
+        //};
     };
     
     testUndo() {
@@ -441,7 +435,7 @@ const _callback = function(message) {
  *    selectionChange callback until it matters.
  *
  */
-let mouseDown = false;
+let _mouseDown = false;
 let _muteChanges = false;
 const muteChanges = function() { _setMuteChanges(true) };
 const unmuteChanges = function() { _setMuteChanges(false) };
@@ -451,29 +445,23 @@ const _setMuteChanges = function(bool) { _muteChanges = bool };
  * Track when mouse is down, unmute to broadcase selectionChange unless mousemove happens.
  */
 MU.editor.addEventListener('mousedown', function() {
-    mouseDown = true;
-    unmuteChanges();
+    _mouseDown = true;
+    _muteChanges = false;
 });
 
 /**
  * Mute selectionChange when mousedown has happened and the mouse is moving.
  */
 MU.editor.addEventListener('mousemove', function() {
-    if (mouseDown) {
-        muteChanges();
-    } else {
-        unmuteChanges();
-    };
+    if (_mouseDown) { _muteChanges = true };
 });
 
 /**
  * Unmute selectionChange on mouseup.
  */
 MU.editor.addEventListener('mouseup', function() {
-    // TODO:- I don't think this is needed so have commented it out.
-    //if (moving && mouseDown) { _callback('selectionChange') };
-    mouseDown = false;
-    unmuteChanges();
+    _mouseDown = false;
+    _muteChanges = false;
 });
 
 /**
@@ -482,10 +470,10 @@ MU.editor.addEventListener('mouseup', function() {
  */
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
-        //_consoleLog(' unmuted selectionchange')
+        //_consoleLog('unmuted selectionchange')
         _callback('selectionChange');
     //} else {
-    //    _consoleLog(' muted selectionchange')
+    //    _consoleLog(' (muted selectionchange)')
     };
 });
 
@@ -498,11 +486,17 @@ MU.editor.addEventListener('input', function() {
  * A blur/focus cycle occurs when the undoer is used, but we don't want that to
  * be noticable by the MarkupEditor in Swift. We use mute/unmute to track the
  * whether the focus and blur callbacks should be made, as determined in the Undoer.
+ * We also don't want selectionchange events to trigger callbacks during the cycle.
  */
 let _muteFocusBlur = false;
-const muteFocusBlur = function() { _setMuteFocusBlur(true) };
-const unmuteFocusBlur = function() { _setMuteFocusBlur(false) };
-const _setMuteFocusBlur = function(bool) { _muteFocusBlur = bool };
+const muteFocusBlur = function() {
+    _muteFocusBlur = true;
+    muteChanges();
+};
+const unmuteFocusBlur = function() {
+    unmuteChanges();
+    _muteFocusBlur = false;
+};
 
 /**
  * Restore the range captured on blur and then let Swift know focus happened.
@@ -511,10 +505,10 @@ MU.editor.addEventListener('focus', function(ev) {
     //_consoleLog("focused: " + ev.target.id);
     _restoreSelection();
     if (!_muteFocusBlur) {
-        //_consoleLog(" unmuted focus")
+        //_consoleLog("unmuted focus")
         _callback('focus');
     //} else {
-    //    _consoleLog(" muted focus")
+    //    _consoleLog(" (muted focus)")
     };
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
@@ -529,7 +523,11 @@ MU.editor.addEventListener('focus', function(ev) {
 MU.editor.addEventListener('blur', function(ev) {
     // A blur/focus cycle occurs when the undoer is used, but we don't want that to
     // be noticable by the MarkupEditor in Swift.
-    //_consoleLog("blurred: " + ev.target.id);
+    //if (!_muteFocusBlur) {
+    //    _consoleLog("blurred: " + ev.target.id);
+    //} else {
+    //    _consoleLog(" (muted blurred: " + ev.target.id +")");
+    //}
     //if (ev.relatedTarget) {
     //    _consoleLog(" will focus: " + ev.relatedTarget.id);
     //} else {
@@ -658,11 +656,9 @@ MU.emptyDocument = function() {
     MU.editor.appendChild(p);
     const sel = document.getSelection();
     const range = document.createRange();
-    muteChanges();
     range.setStart(p, 1);
     range.setEnd(p, 1);
     sel.removeAllRanges();
-    unmuteChanges();
     sel.addRange(range);
     _backupSelection();
 }
@@ -889,7 +885,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         sel.removeAllRanges();
         sel.addRange(range);
         _setTag(newStyle, sel);
-        range = document.getSelection().getRangeAt(0);
+        range = document.createRange();
         range.setStart(range.startContainer, rangeProxy.startOffset);
         range.setEnd(range.endContainer, rangeProxy.endOffset);
         sel.removeAllRanges();
@@ -2094,13 +2090,10 @@ MU.insertTable = function(rows, cols, undoable=true) {
     _restoreSelection();
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
-    const range = sel.getRangeAt(0).cloneRange();
     const table = document.createElement('table');
     const tbody = document.createElement('tbody');
-    let firstRow;
     for (let row=0; row<rows; row++) {
         let tr = document.createElement('tr');
-        if (row === 0) { firstRow = tr };
         for (let col=0; col<cols; col++) {
             let td = document.createElement('td');
             tr.appendChild(td);
@@ -2119,7 +2112,6 @@ MU.insertTable = function(rows, cols, undoable=true) {
     if (undoable) {
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
         undoer.push(undoerData);
-        //_restoreSelection();
     }
     _callback('input');
     return newTable;
