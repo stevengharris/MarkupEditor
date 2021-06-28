@@ -3,21 +3,27 @@
 //  MarkupEditor
 //
 //  Created by Steven Harris on 6/27/21.
+//  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
 import SwiftUI
 
 /// The sub-toolbar used for creating/editing links, images, and tables.
 public struct SubToolbar: View {
+    
+    public enum ToolbarType {
+        case image
+        case link
+        case table
+    }
+    
     @ObservedObject private var selectionState: SelectionState
+    @EnvironmentObject var showSubToolbar: ShowSubToolbar
     @Binding private var selectedWebView: MarkupWKWebView?
     @Binding private var markupDelegate: MarkupDelegate?
-    @Binding private var showLinkToolbar: Bool
-    @Binding private var showImageToolbar: Bool
-    @Binding private var showTableToolbar: Bool
     public var body: some View {
-        if showLinkToolbar {
-            LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showLinkToolbar)
+        if showSubToolbar.type == .link {
+            LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                 .onAppear {
                     markupDelegate?.markupToolbarAppeared(type: .link)
                 }
@@ -26,8 +32,8 @@ public struct SubToolbar: View {
                     selectedWebView?.becomeFirstResponder()
                 }
         }
-        if showImageToolbar {
-            ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showImageToolbar)
+        if showSubToolbar.type == .image {
+            ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                 .onAppear {
                     markupDelegate?.markupToolbarAppeared(type: .image)
                 }
@@ -37,8 +43,8 @@ public struct SubToolbar: View {
                 }
             
         }
-        if showTableToolbar {
-            TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showToolbar: $showTableToolbar)
+        if showSubToolbar.type == .table {
+            TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                 .onAppear {
                     markupDelegate?.markupToolbarAppeared(type: .table)
                 }
@@ -49,13 +55,10 @@ public struct SubToolbar: View {
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: Binding<MarkupDelegate?>, showLinkToolbar: Binding<Bool>, showImageToolbar: Binding<Bool>, showTableToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: Binding<MarkupDelegate?>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         _markupDelegate = markupDelegate
-        _showLinkToolbar = showLinkToolbar
-        _showImageToolbar = showImageToolbar
-        _showTableToolbar = showTableToolbar
     }
     
 }

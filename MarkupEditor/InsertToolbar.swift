@@ -12,10 +12,8 @@ import SwiftUI
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
-    @Binding private var showLinkToolbar: Bool
-    @Binding private var showImageToolbar: Bool
-    @Binding private var showTableToolbar: Bool
-    private var showAnyToolbar: Bool { showLinkToolbar || showImageToolbar || showTableToolbar }
+    @EnvironmentObject private var showSubToolbar: ShowSubToolbar
+    private var showAnyToolbar: Bool { showSubToolbar.type != nil }
     @State private var hoverLabel: Text = Text("Insert")
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
@@ -37,27 +35,17 @@ public struct InsertToolbar: View {
         }
     }
     
-    private func showOnly(_ type: MarkupToolbar.ToolbarType) {
-        switch type {
-        case .link:
-            if showImageToolbar { showImageToolbar.toggle() }
-            if showTableToolbar { showTableToolbar.toggle() }
-            showLinkToolbar.toggle()
-            hoverLabel = Text(labelString(for: .link))
-        case .image:
-            if showLinkToolbar { showLinkToolbar.toggle() }
-            if showTableToolbar { showTableToolbar.toggle() }
-            showImageToolbar.toggle()
-            hoverLabel = Text(labelString(for: .image))
-        case .table:
-            if showLinkToolbar { showLinkToolbar.toggle() }
-            if showImageToolbar { showImageToolbar.toggle() }
-            showTableToolbar.toggle()
-            hoverLabel = Text(labelString(for: .table))
+    private func showOnly(_ type: SubToolbar.ToolbarType) {
+        if showSubToolbar.type == nil || showSubToolbar.type != type {
+            showSubToolbar.type = type
+            hoverLabel = Text(labelString(for: type))
+        } else {
+            showSubToolbar.type = nil
+            hoverLabel = Text(labelString(for: .none))
         }
     }
     
-    private func labelString(for type: MarkupToolbar.ToolbarType?) -> String {
+    private func labelString(for type: SubToolbar.ToolbarType?) -> String {
         switch type {
         case .link:
             return "Insert Link"
@@ -70,12 +58,9 @@ public struct InsertToolbar: View {
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showLinkToolbar: Binding<Bool>, showImageToolbar: Binding<Bool>, showTableToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showLinkToolbar = showLinkToolbar
-        _showImageToolbar = showImageToolbar
-        _showTableToolbar = showTableToolbar
     }
     
 }

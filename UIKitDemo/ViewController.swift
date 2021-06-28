@@ -20,8 +20,8 @@ class ViewController: UIViewController {
     var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
     private var coordinator: MarkupCoordinator!
-    /// The MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
-    private var toolbar: MarkupToolbar!
+    /// The AnyView wrapper of MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
+    private var toolbar: AnyView!
     private let toolbarHeight: CGFloat = 54
     /// To see the raw HTML
     private var rawTextView: UITextView!
@@ -29,7 +29,10 @@ class ViewController: UIViewController {
     private var bottomStackHeightConstraint: NSLayoutConstraint!
     /// The state of the selection in the MarkupWKWebView, shown in the toolbar
     @Published var selectionState: SelectionState = SelectionState()
+    /// Which MarkupWKWebView we have selected and which the MarkupToolbar acts on
     @Published var selectedWebView: MarkupWKWebView?
+    /// Identify which type of SubToolbar is showing, or nil if none
+    let showSubToolbar = ShowSubToolbar()
     /// A binding of selectedWebView used by the MarkupToolbar and its coordinator.
     ///
     /// Since MarkupToolbar uses a SwiftUI-style binding to the selectedWebView, we need to use one
@@ -49,12 +52,13 @@ class ViewController: UIViewController {
     
     func initializeToolbar() {
         toolbarHolder = UIView()
-        toolbar = MarkupToolbar(
+        // We need to wrap MarkupToolbar in AnyView so we can set its environment
+        toolbar = AnyView(MarkupToolbar(
             selectionState: selectionState,
             selectedWebView: selectedWebViewBinding,
             markupDelegate: self,
             leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
-        )
+        ).environmentObject(showSubToolbar))
         add(swiftUIView: toolbar, to: toolbarHolder)
     }
     

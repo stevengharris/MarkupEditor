@@ -15,22 +15,12 @@ import SwiftUI
 /// that the selection is inside of a bolded element, then the bold (B) button is active and filled-in.
 /// The MarkupToolbar contains multiple other toolbars, such as StyleToolbar and FormatToolbar
 /// which invoke methods in the selectedWebView, an instance of MarkupWKWebView.
-/// The InsertToolbar sets showLinkToolbar, showImageToolbar, and showTableToolbar, which in turn
-/// uncover one of the specific subtoolbars that require additional user interaction.
+/// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
+/// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
-    
-    public enum ToolbarType: CaseIterable {
-        case image
-        case link
-        case table
-    }
-    
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     @State var markupDelegate: MarkupDelegate?
-    @State private var showLinkToolbar: Bool = false
-    @State private var showImageToolbar: Bool = false
-    @State private var showTableToolbar: Bool = false
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
     /// User-supplied view to be shown on the right side of the default MarkupToolbar
@@ -46,7 +36,7 @@ public struct MarkupToolbar: View {
                 Group {
                     CorrectionToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
-                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, showLinkToolbar: $showLinkToolbar, showImageToolbar: $showImageToolbar, showTableToolbar: $showTableToolbar)
+                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
                     StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
                     Divider()
@@ -64,7 +54,7 @@ public struct MarkupToolbar: View {
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
             Divider()                   // Horizontal at the bottom
-            SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: $markupDelegate, showLinkToolbar: $showLinkToolbar, showImageToolbar: $showImageToolbar, showTableToolbar: $showTableToolbar)
+            SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: $markupDelegate)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))

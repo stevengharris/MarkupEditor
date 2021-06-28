@@ -10,7 +10,6 @@ import SwiftUI
 
 /// The toolbar for creating and editing hyperlinks.
 public struct LinkToolbar: View {
-    @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var initialHref: String?
@@ -78,10 +77,9 @@ public struct LinkToolbar: View {
         return (!href.isEmpty && href.isValidURL) || (href.isEmpty && initialHref != nil)
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showToolbar = showToolbar
         initialHref = selectionState.href
         _previewedHref = State(initialValue: selectionState.href ?? "")
         _href = State(initialValue: selectionState.href ?? "")
@@ -115,25 +113,19 @@ public struct LinkToolbar: View {
     private func save() {
         // Save href it is hasn't been previewed, and then close
         guard canBeSaved() else { return }
-        insertOrModify() {
-            // TODO: The animation causes problems in UIKit. Need to figure it out
-            withAnimation { showToolbar.toggle() }
-        }
+        insertOrModify()
     }
     
     private func cancel() {
         // Restore href to its initial value, put things back the way they were, and then close
         href = initialHref ?? ""
-        insertOrModify() {
-            // TODO: The animation causes problems in UIKit. Need to figure it out
-            withAnimation { showToolbar.toggle() }
-        }
+        insertOrModify()
     }
     
 }
 
 struct LinkToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        LinkToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbar: .constant(true))
+        LinkToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
     }
 }

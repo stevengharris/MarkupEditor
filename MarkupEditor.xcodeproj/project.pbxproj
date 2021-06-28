@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */; };
 		AA1B80D82620ECD100891FFB /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80D72620ECD100891FFB /* TextView.swift */; };
 		AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80CD2620C87C00891FFB /* FileToolbar.swift */; };
 		AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */; };
@@ -78,6 +79,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowSubToolbar.swift; sourceTree = "<group>"; };
 		AA1B80C82620B62000891FFB /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		AA1B80CD2620C87C00891FFB /* FileToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileToolbar.swift; sourceTree = "<group>"; };
 		AA1B80D72620ECD100891FFB /* TextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextView.swift; sourceTree = "<group>"; };
@@ -310,6 +312,7 @@
 				AA61AD4C263B13C100326810 /* LabeledToolbar.swift */,
 				AA8EFAF3261E0EA9008AE31E /* LinkToolbar.swift */,
 				AA652A00260E99FF000674B7 /* MarkupToolbar.swift */,
+				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AA8EFACB261E068F008AE31E /* StyleToolbar.swift */,
 				AA9CDA8E268900380046D308 /* SubToolbar.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
@@ -528,6 +531,7 @@
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
+				AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */,
 				AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
 				AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */,

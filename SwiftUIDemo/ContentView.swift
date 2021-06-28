@@ -18,6 +18,7 @@ struct ContentView: View {
 
     @StateObject var selectionState = SelectionState()
     @State var selectedWebView: MarkupWKWebView?
+    private let showSubToolbar = ShowSubToolbar()
     @State private var rawText = NSAttributedString(string: "")
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
@@ -33,6 +34,7 @@ struct ContentView: View {
                         selectionState: selectionState,
                         selectedWebView: $selectedWebView,
                         fileToolbarDelegate: self)))
+                .environmentObject(showSubToolbar)
             MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
             if rawShowing {
                 Divider()

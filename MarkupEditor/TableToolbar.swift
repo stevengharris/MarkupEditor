@@ -19,7 +19,6 @@ public enum TableDirection {
 
 /// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
-    @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     @State private var showTableSizer: Bool = false
@@ -120,10 +119,9 @@ public struct TableToolbar: View {
         Divider()
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showToolbar = showToolbar
     }
     
 }

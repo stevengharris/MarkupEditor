@@ -10,7 +10,6 @@ import SwiftUI
 
 /// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
-    @Binding var showToolbar: Bool
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var initialSrc: String?
@@ -82,10 +81,9 @@ public struct ImageToolbar: View {
         Divider()
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, showToolbar: Binding<Bool>) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
-        _showToolbar = showToolbar
         initialSrc = selectionState.src
         initialAlt = selectionState.alt
         initialScale = selectionState.scale
@@ -164,10 +162,7 @@ public struct ImageToolbar: View {
     private func save() {
         // Save src, alt, scale if they haven't been previewed, and then close
         saving = true
-        insertOrModify() {
-            // TODO: The animation causes problems in UIKit. Need to figure it out
-            withAnimation { showToolbar.toggle() }
-        }
+        insertOrModify()
     }
     
     private func cancel() {
@@ -176,10 +171,7 @@ public struct ImageToolbar: View {
         src = initialSrc ?? ""
         alt = initialAlt ?? ""
         scale = initialScale ?? 100
-        insertOrModify() {
-            // TODO: The animation causes problems in UIKit. Need to figure it out
-            withAnimation { showToolbar.toggle() }
-        }
+        insertOrModify()
     }
     
 }
@@ -188,6 +180,6 @@ struct ImageToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
         // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil), showToolbar: .constant(true))
+        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
     }
 }

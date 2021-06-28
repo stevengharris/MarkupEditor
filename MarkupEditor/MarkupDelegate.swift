@@ -57,7 +57,7 @@ public protocol MarkupDelegate {
     func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
     
     /// Take action when a toolbar appeared.
-    func markupToolbarAppeared(type: MarkupToolbar.ToolbarType)
+    func markupToolbarAppeared(type: SubToolbar.ToolbarType)
     
     /// Take action when a toolbar disappeared.
     func markupToolbarDisappeared()
@@ -115,7 +115,7 @@ extension MarkupDelegate {
     /// A table was selected, and selectionState contains information about it.
     public func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {}
 
-    public func markupToolbarAppeared(type: MarkupToolbar.ToolbarType) {}
+    public func markupToolbarAppeared(type: SubToolbar.ToolbarType) {}
     public func markupToolbarDisappeared() {}
     
 }
