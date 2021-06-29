@@ -23,54 +23,57 @@ public struct LinkToolbar: View {
     private var argHRef: String? { href.isEmpty ? nil : href }
     
     public var body: some View {
-        HStack(alignment: .bottom) {
-            GeometryReader { geometry in
-                HStack {
-                    ToolbarTextField(
-                        label: "Link URL",
-                        placeholder: "Enter URL",
-                        text: $href,
-                        commitHandler: { save() },
-                        validationHandler: { href.isValidURL }
-                    )
-                    .frame(width: geometry.size.width * 0.7)
-                    ToolbarTextField(
-                        label: "Text",
-                        placeholder: "No text linked",
-                        text: $link
-                    )
-                    .frame(width: geometry.size.width * 0.3)
-                    .disabled(true)
+        VStack(spacing: 2) {
+            HStack(alignment: .bottom) {
+                GeometryReader { geometry in
+                    HStack {
+                        ToolbarTextField(
+                            label: "Link URL",
+                            placeholder: "Enter URL",
+                            text: $href,
+                            commitHandler: { save() },
+                            validationHandler: { href.isValidURL }
+                        )
+                        .frame(width: geometry.size.width * 0.7)
+                        ToolbarTextField(
+                            label: "Text",
+                            placeholder: "No text linked",
+                            text: $link
+                        )
+                        .frame(width: geometry.size.width * 0.3)
+                        .disabled(true)
+                    }
+                    .padding([.top], 2)
                 }
-                .padding([.top], 2)
-            }
-            .padding([.trailing], 8)
-            Divider()
-            LabeledToolbar(label: Text("Delete")) {
-                ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                    DeleteLink()
+                .padding([.trailing], 8)
+                Divider()
+                LabeledToolbar(label: Text("Delete")) {
+                    ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
+                        DeleteLink()
+                    }
                 }
+                .disabled(!selectionState.isInLink)
+                Divider()
+                ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                    .disabled(!canBeSaved())
+                ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
             }
-            .disabled(!selectionState.isInLink)
+            .onChange(of: selectionState.selection, perform: { value in
+                href = selectionState.href ?? ""
+                link = selectionState.link ?? selectionState.selection ?? ""
+                previewedHref = href
+            })
+            .onChange(of: selectionState.href, perform: { value in
+                href = selectionState.href ?? ""
+                link = selectionState.link ?? selectionState.selection ?? ""
+                previewedHref = href
+            })
             Divider()
-            ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                .disabled(!canBeSaved())
-            ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
         }
-        .onChange(of: selectionState.selection, perform: { value in
-            href = selectionState.href ?? ""
-            link = selectionState.link ?? selectionState.selection ?? ""
-            previewedHref = href
-        })
-        .onChange(of: selectionState.href, perform: { value in
-            href = selectionState.href ?? ""
-            link = selectionState.link ?? selectionState.selection ?? ""
-            previewedHref = href
-        })
-        .frame(height: 47)
+        .background(Color(UIColor.systemBackground))
+        .frame(height: 50)
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
-        Divider()
     }
     
     private func canBeSaved() -> Bool {

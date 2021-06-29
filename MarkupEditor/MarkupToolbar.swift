@@ -54,7 +54,6 @@ public struct MarkupToolbar: View {
             .padding([.top, .bottom], 2)
             .disabled(selectedWebView == nil)
             Divider()                   // Horizontal at the bottom
-            SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: $markupDelegate)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(UIColor.systemBackground))

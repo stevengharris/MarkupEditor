@@ -33,52 +33,57 @@ public struct ImageToolbar: View {
     @State private var endedEditing: Bool = false
     
     public var body: some View {
-        HStack(alignment: .bottom) {
-            GeometryReader { geometry in
-                HStack {
-                    ToolbarTextField(
-                        label: "Image URL",
-                        placeholder: "Enter URL",
-                        text: $src,
-                        commitHandler: { save() },
-                        validationHandler: { src.isValidURL }
-                    )
-                    .frame(width: geometry.size.width * 0.7)
-                    ToolbarTextField(
-                        label: "Description",
-                        placeholder: "Enter Description",
-                        text: $alt
-                    )
-                    .frame(width: geometry.size.width * 0.3)
+        VStack(spacing: 2) {
+            HStack(alignment: .bottom) {
+                GeometryReader { geometry in
+                    HStack {
+                        ToolbarTextField(
+                            label: "Image URL",
+                            placeholder: "Enter URL",
+                            text: $src,
+                            commitHandler: { save() },
+                            validationHandler: { src.isValidURL }
+                        )
+                        .frame(width: geometry.size.width * 0.7)
+                        ToolbarTextField(
+                            label: "Description",
+                            placeholder: "Enter Description",
+                            text: $alt
+                        )
+                        .frame(width: geometry.size.width * 0.3)
+                    }
+                    .padding([.top], 2)
                 }
-                .padding([.top], 2)
-            }
-            .padding([.trailing], 8)
-            Divider()
-            LabeledToolbar(label: Text("Scale")) {
-                Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                    Text("\(scale)%")
-                        .frame(width: 50, alignment: .trailing)
+                .padding([.trailing], 8)
+                Divider()
+                LabeledToolbar(label: Text("Scale")) {
+                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
+                        Text("\(scale)%")
+                            .frame(width: 50, alignment: .trailing)
+                    }
+                    .scaledToFit()
                 }
-                .scaledToFit()
+                Divider()
+                ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                    .disabled(!src.isEmpty && !src.isValidURL)
+                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
             }
+            .onChange(of: selectionState.src, perform: { value in
+                src = selectionState.src ?? ""
+                alt = selectionState.alt ?? ""
+                scale = selectionState.scale ?? 100
+                previewedSrc = src
+                previewedAlt = alt
+                previewedScale = scale
+            })
             Divider()
-            ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                .disabled(!src.isEmpty && !src.isValidURL)
-            ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
         }
-        .onChange(of: selectionState.src, perform: { value in
-            src = selectionState.src ?? ""
-            alt = selectionState.alt ?? ""
-            scale = selectionState.scale ?? 100
-            previewedSrc = src
-            previewedAlt = alt
-            previewedScale = scale
-        })
-        .frame(height: 47)
+        .background(Color(UIColor.systemBackground))
+        .frame(height: 50)
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
-        Divider()
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
