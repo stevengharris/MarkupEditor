@@ -22,6 +22,7 @@ class ViewController: UIViewController {
     private var coordinator: MarkupCoordinator!
     /// The AnyView wrapper of MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
     private var toolbar: AnyView!
+    private var subToolbar: AnyView!
     private let toolbarHeight: CGFloat = 54
     /// To see the raw HTML
     private var rawTextView: UITextView!
@@ -60,12 +61,14 @@ class ViewController: UIViewController {
             leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
         ).environmentObject(showSubToolbar))
         add(swiftUIView: toolbar, to: toolbarHolder)
+        subToolbar = AnyView(SubToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupDelegate: self).environmentObject(showSubToolbar))
     }
     
     func initializeStackView() {
         // Populate the overall vertical stack with the toolbarHolder, webView, and rawTextView
         stack.addArrangedSubview(toolbarHolder)
         webView = MarkupWKWebView()
+        overlayTop(swiftUIView: subToolbar, on: webView)
         stack.addArrangedSubview(webView)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")

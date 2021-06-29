@@ -56,7 +56,9 @@ public struct LinkToolbar: View {
                 Divider()
                 ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
                     .disabled(!canBeSaved())
+                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
             }
             .onChange(of: selectionState.selection, perform: { value in
                 href = selectionState.href ?? ""

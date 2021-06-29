@@ -24,39 +24,36 @@ struct ContentView: View {
     @State private var rawShowing: Bool = false
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self)
-                .environmentObject(showSubToolbar)
-                .zIndex(10)
-                .offset(x: 0, y: 51)
-            VStack(spacing: 0) {
-                MarkupToolbar(
-                    selectionState: selectionState,
-                    selectedWebView: $selectedWebView,
-                    markupDelegate: self,
-                    leftToolbar: AnyView(
-                        FileToolbar(
-                            selectionState: selectionState,
-                            selectedWebView: $selectedWebView,
-                            fileToolbarDelegate: self)))
-                MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
-                if rawShowing {
-                    VStack {
-                        Divider()
-                        HStack {
-                            Spacer()
-                            Text("Document HTML")
-                            Spacer()
-                        }.background(Color(UIColor.systemGray5))
-                        TextView(text: $rawText)
-                            .font(Font.system(size: StyleContext.P.fontSize))
-                            .padding([.top, .bottom, .leading, .trailing], 8)
-                    }
+        VStack(spacing: 0) {
+            MarkupToolbar(
+                selectionState: selectionState,
+                selectedWebView: $selectedWebView,
+                markupDelegate: self,
+                leftToolbar: AnyView(
+                    FileToolbar(
+                        selectionState: selectionState,
+                        selectedWebView: $selectedWebView,
+                        fileToolbarDelegate: self)))
+            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
+                .overlay(
+                    SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self),
+                    alignment: .topLeading)
+            if rawShowing {
+                VStack {
+                    Divider()
+                    HStack {
+                        Spacer()
+                        Text("Document HTML")
+                        Spacer()
+                    }.background(Color(UIColor.systemGray5))
+                    TextView(text: $rawText)
+                        .font(Font.system(size: StyleContext.P.fontSize))
+                        .padding([.top, .bottom, .leading, .trailing], 8)
                 }
             }
-            .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-            .environmentObject(showSubToolbar)
         }
+        .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
+        .environmentObject(showSubToolbar)
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
