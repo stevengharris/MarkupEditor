@@ -113,6 +113,10 @@ table tbody td {
     border-right: 1px solid #DDD;
 }
 
+li p {
+    margin: 0px 0;
+}
+
 /* GitHub style?
 table {
     padding: 0; }

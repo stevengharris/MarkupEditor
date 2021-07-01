@@ -471,6 +471,7 @@ MU.editor.addEventListener('mouseup', function() {
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
         //_consoleLog('unmuted selectionchange')
+        _backupSelection();
         _callback('selectionChange');
     //} else {
     //    _consoleLog(' (muted selectionchange)')
@@ -555,6 +556,40 @@ MU.editor.addEventListener('click', function(ev) {
 });
 
 /**
+ * Monitor certain keydown events that follow actions that mess up simple HTML formatting.
+ * Clean up formatting if needed.
+ * We do the clean up after Enter because the default behavior (like breaking paragraphs)
+ * is generally correct and the selection is predictably left in a br or div.
+ */
+MU.editor.addEventListener('keydown', function(ev) {
+    const key = ev.key;
+    if (key === 'Enter') {
+        const state = _getSelectionState();
+        if (state['list']) {
+            if (_doListEnter()) {
+                ev.preventDefault();
+            };
+        };
+    } else if (key === 'Tab') {
+        _consoleLog("Tab"); // with ev.getModifierState(): " + ev.getModifierState())
+        const state = _getSelectionState();
+        if (state['list']) {
+            if (_doListTab(ev.shiftKey)) {
+                ev.preventDefault();
+                _consoleLog(" Prevent Default")
+            } else {
+                _consoleLog(" Default")
+            }
+        } else {
+            _consoleLog(" Default")
+        }
+    } else {
+        _consoleLog("key: " + key)
+    }
+});
+
+
+/**
  * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
  * Clean up formatting if needed.
  * We do the clean up after Enter because the default behavior (like breaking paragraphs)
@@ -565,10 +600,6 @@ MU.editor.addEventListener('keyup', function(ev) {
     if ((key === 'Backspace') || (key === 'Delete')) {
         _cleanUpSpans();
         _cleanUpAttributes('style');
-    } else if (key === 'Enter') {
-        _cleanUpEnter();
-    //} else if ((key === 'ArrowLeft') || (key === 'ArrowRight') || (key === 'ArrowDown') || (key === 'ArrowUp')) {
-    //    _consoleLog('Arrow key')
     };
 });
 
@@ -1438,59 +1469,80 @@ const _cleanUpAttributesWithin = function(attribute, node) {
 };
                                 
 /**
- * If selection is in a DIV in MU.editor, then replace the DIV with a normal 'p'
- * paragraph. If the selection is in a BR in MU.editor, then insert a normal 'p'
- * paragraph at that location.
- * We use this to prevent DIVs from being inserted after keydown Enter happens
- * and to replace bare <br> elements with <p><br></p>.
+ * We are inside of a list and hit Enter.
+ * @return  {HTML BR Element}   The BR in the newly created LI or null if we should let the default Enter handling happen
  */
-const _cleanUpEnter = function() {
-    const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
-    if (!selNode) { return };
-    // We only need to repair the selection when we replace a node.
-    // In that case, newSelection identifies what we need to select.
-    let newElement = null;
-    if (selNode === MU.editor) {
-        // Perhaps we have a table at the end of the document and we press Enter after it.
-        const selRange = sel.getRangeAt(0);
-        const startNode = MU.editor.childNodes[selRange.startOffset];
-        if (startNode.nodeName === 'BR') {
-            newElement = document.createElement('br');
-            const newParagraph = document.createElement('p');
-            newParagraph.appendChild(newElement);
-            startNode.replaceWith(newParagraph);
-        } else {
-            // A failsafe to reset the selection to MU.editor beginning.
-            _consoleLog("Unexpected startNode after Enter: " + startNode);
-            _initializeRange();
-        };
-    } else if (selNode.nodeType === Node.ELEMENT_NODE) {
-        // We can be in a list or div, in which case we want to modify what Enter
-        // produced by default. In other cases, such as Enter occurring in a table
-        // or a blockquote, we just leave it alone.
-        const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
-        if (existingListItem) {
-            newElement = document.createTextNode('');
-            const newListItem = document.createElement('li');
-            newListItem.appendChild(newElement);
-            selNode.replaceWith(newListItem);
-        } else if (selNode.nodeName === 'DIV') {
-            newElement = document.createElement('br');
-            const newParagraph = document.createElement('p');
-            newParagraph.appendChild(newElement);
-            selNode.replaceWith(newParagraph);
-        };
+const _doListEnter = function() {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode) { return null };
+    // If sel is not collapsed, delete the entire selection and reset before continuing
+    if (!sel.isCollapsed) {
+        sel.deleteFromDocument();
+        sel = document.getSelection();
+        selNode = (sel) ? sel.focusNode : null;
+        if (!selNode) { return null };
     }
-    if (newElement) {
-        const range = document.createRange();
-        range.setStart(newElement, 0);
-        range.setEnd(newElement, 0);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        _callback('input');
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!existingList || !existingListItem) { return null };
+    let newElement = document.createElement('br');
+    const newParagraph = document.createElement('p');
+    const newListItem = document.createElement('li');
+    newParagraph.appendChild(newElement);
+    newListItem.appendChild(newParagraph);
+    const existingRange = sel.getRangeAt(0).cloneRange();
+    if (existingRange.startOffset === 0) {
+        // We are at the beginning of a list node
+        existingList.insertBefore(newListItem, existingListItem);
+    } else if ((selNode.nodeType === Node.TEXT_NODE) && (existingRange.endOffset === selNode.textContent.length)) {
+        // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
+        // Move all of selNode's siblings to the newListItem, leaving selNode alone
+        let sib = selNode.parentNode;   // Whatever the text node is inside of
+        while (sib = sib.nextElementSibling) {
+            newListItem.appendChild(sib);
+        };
+        // Then insert newListItem that now has selNode parent's siblings before the next LI or UL or OL or whatever
+        existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
+    } else {
+        return null;    // To let standard event handling to happen
     }
-};
+    const range = document.createRange();
+    range.setStart(newElement, 0);
+    range.setEnd(newElement, 0);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _callback('input');
+    return newElement;  // To preventDefault() on Enter
+}
+
+/**
+ * We are inside of a list and hit Tab.
+ * @return  {HTML Node}   The existing node put in new list of the same type
+ */
+const _doListTab = function(shiftKey) {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!existingList || !existingListItem) { return null };
+    const existingRange = sel.getRangeAt(0).cloneRange();
+    if (existingRange.startOffset !== 0) { return null };    // To let standard event handling to happen
+    // We are at the beginning of a list node
+    if (shiftKey) {
+        _consoleLog("Shifted")
+    } else {
+        _consoleLog("Not shifted")
+        const newList = document.createElement(existingList.nodeName);
+        const newListItem = document.createElement('li');
+        newListItem.appendChild(selNode);
+        newList.appendChild(newListItem);
+        existingListItem.replaceWith(newList);
+    }
+    _callback('input');
+    return selNode;  // To preventDefault() on Enter
+}
 
 /********************************************************************************
  * Explicit handling of multi-click
