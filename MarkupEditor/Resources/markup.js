@@ -471,7 +471,6 @@ MU.editor.addEventListener('mouseup', function() {
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
         //_consoleLog('unmuted selectionchange')
-        _backupSelection();
         _callback('selectionChange');
     //} else {
     //    _consoleLog(' (muted selectionchange)')
@@ -506,15 +505,23 @@ MU.editor.addEventListener('focus', function(ev) {
     //_consoleLog("focused: " + ev.target.id);
     _restoreSelection();
     if (!_muteFocusBlur) {
-        //_consoleLog("unmuted focus")
+        //_consoleLog("unmuted focus: " + ev.target.id)
         _callback('focus');
     //} else {
-    //    _consoleLog(" (muted focus)")
+    //    _consoleLog(" (muted focus: " + ev.target.id + ")")
     };
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
     unmuteFocusBlur();
 });
+
+//MU.editor.addEventListener('focusout', function(ev) {
+//    _consoleLog("focusout: " + ev.target.id);
+//});
+//
+//MU.editor.addEventListener('focusin', function(ev) {
+//    _consoleLog("focusin: " + ev.target.id);
+//});
 
 /**
  * Capture the current selection using backupSelection and then let Swift know blur happened.
@@ -556,36 +563,81 @@ MU.editor.addEventListener('click', function(ev) {
 });
 
 /**
- * Monitor certain keydown events that follow actions that mess up simple HTML formatting.
- * Clean up formatting if needed.
- * We do the clean up after Enter because the default behavior (like breaking paragraphs)
- * is generally correct and the selection is predictably left in a br or div.
+ * Track keystrokes combined with modifiers using the keyModifier (e.g., 'Shift') as key
+ * and the key-pressed as the value.
+ * On keydown of any key that is pressed at the same time as a keyModifier, populate the
+ * _hotKeyDown. On keyup of any keyModifier, clear it.
+ * Note that the keydown event is triggered for every keystroke unless somehow intercepted
+ * at a lower level, but if a modifierKey is pressed, the keyup does not occur except when
+ * the modifierKey comes up. For example pressing Shift and then ] triggers keydown both for
+ * Shift and ], but keyup is never triggered when the ] key is let go as long as Shift is
+ * still being held. So, Shift+[ triggers keydown for both, but when you let go of [ and
+ * press ], the only event that is triggered is keydown on ]. The keyup on [ never happens.
+ * Keyup is triggered when the Shift key is let go. And because we only want to track a single
+ * key combined with one or more of the modifiers, this is the reason to key _hotKeyDown by the
+ * keyModifier, not by the ev.key itself. We end up with _hotKeyDown['Shift'] = ']' for Shift+].
+ * If we hold Shift and Meta and then press ], we end up with _hotKeyDown['Shift'] = ']'
+ * AND _hotKeyDown['Meta'] = ']'. This approach precludes key combos other than the modifier
+ * keys (i.e., no Control+P+Q).
+ */
+var _hotKeyDown = {};
+const keyModifiers = ['Shift', 'Meta', 'Alt', 'Control'];
+const _trackHotKeyDown = function(ev) {
+    const key = ev.key;
+    if (keyModifiers.includes(key)) { return };     // If pressing one of the modifiers, nothing to do
+    _hotKeyDown['Shift'] = (ev.shiftKey) ? key : null;
+    _hotKeyDown['Meta'] = (ev.metaKey) ? key : null;
+    _hotKeyDown['Alt'] = (ev.altKey) ? key : null;
+    _hotKeyDown['Control'] = (ev.ctrlKey) ? key : null;
+    //if (_hotKeyDown['Shift']) { _consoleLog("Setting Shift to " + _hotKeyDown['Shift']) }
+    //if (_hotKeyDown['Meta']) { _consoleLog("Setting Meta to " + _hotKeyDown['Meta']) }
+    //if (_hotKeyDown['Alt']) { _consoleLog("Setting Alt to " + _hotKeyDown['Alt']) }
+    //if (_hotKeyDown['Control']) { _consoleLog("Setting Control to " + _hotKeyDown['Control']) }
+};
+const _trackModifierKeyUp = function(ev) {
+    const key = ev.key;
+    if (!keyModifiers.includes(key)) { return };    // If not releasing a modifier, nothing to do
+    //if ((key === 'Shift') && _hotKeyDown['Shift']) { _consoleLog("Clearing Shift, was " + _hotKeyDown['Shift']) }
+    //if ((key === 'Meta') && _hotKeyDown['Meta']) { _consoleLog("Clearing Meta, was " + _hotKeyDown['Meta']) }
+    //if ((key === 'Alt') && _hotKeyDown['Alt']) { _consoleLog("Clearing Alt, was " + _hotKeyDown['Alt']) }
+    //if ((key === 'Control') && _hotKeyDown['Control']) { _consoleLog("Clearing Control, was " + _hotKeyDown['Control']) }
+    _hotKeyDown[key] = null;
+};
+MU.editor.addEventListener('keydown', _trackHotKeyDown);
+MU.editor.addEventListener('keyup', _trackModifierKeyUp);
+
+/**
+ * Return true if the key is down together with the modifier
+ */
+const _keyModified = function(modifier, key) {
+    return _hotKeyDown[modifier] === key;
+};
+
+/**
+ * Monitor certain keydown events for special handling.
+ * This event is fired after, and in addition to, the one that tracks _hotKeyDown,
+ * so we can examine the state of _hotKeyDown to determine what to do depending
+ * on the context.
  */
 MU.editor.addEventListener('keydown', function(ev) {
     const key = ev.key;
     if (key === 'Enter') {
         const state = _getSelectionState();
-        if (state['list']) {
-            if (_doListEnter()) {
-                ev.preventDefault();
-            };
+        if (state['list'] && _doListEnter()) {
+            ev.preventDefault();
         };
-    } else if (key === 'Tab') {
-        _consoleLog("Tab"); // with ev.getModifierState(): " + ev.getModifierState())
+    } else if ((key === 'Tab') || _keyModified('Meta', ']')) {
         const state = _getSelectionState();
-        if (state['list']) {
-            if (_doListTab(ev.shiftKey)) {
-                ev.preventDefault();
-                _consoleLog(" Prevent Default")
-            } else {
-                _consoleLog(" Default")
-            }
-        } else {
-            _consoleLog(" Default")
-        }
-    } else {
-        _consoleLog("key: " + key)
-    }
+        if (state['list'] && _doListIndent()) {
+            ev.preventDefault();
+        };
+    } else if (_keyModified('Shift', 'Tab') || _keyModified('Meta', '[')) {
+        /// TODO:- Shift Tab is never triggered. Instead it moves focus somewhere
+        const state = _getSelectionState();
+        if (state['list'] && _doListOutdent()) {
+            ev.preventDefault();
+        };
+    };
 });
 
 
@@ -1050,6 +1102,242 @@ MU.toggleListItem = function(newListType, undoable=true) {
 };
 
 /**
+ * We are inside of a list and hit Enter.
+ *
+ * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
+ */
+const _doListEnter = function() {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode) { return null };
+    // If sel is not collapsed, delete the entire selection and reset before continuing
+    if (!sel.isCollapsed) {
+        sel.deleteFromDocument();
+        sel = document.getSelection();
+        selNode = (sel) ? sel.focusNode : null;
+        if (!selNode) { return null };
+    }
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!existingList || !existingListItem) { return null };
+    let newElement = document.createElement('br');
+    const newParagraph = document.createElement('p');
+    const newListItem = document.createElement('li');
+    newParagraph.appendChild(newElement);
+    newListItem.appendChild(newParagraph);
+    const existingRange = sel.getRangeAt(0).cloneRange();
+    if (existingRange.startOffset === 0) {
+        // We are at the beginning of a list node
+        existingList.insertBefore(newListItem, existingListItem);
+        _callback('input');
+        // Leave selection alone
+        return existingListItem;  // To preventDefault() on Enter
+    } else if ((selNode.nodeType === Node.TEXT_NODE) && (existingRange.endOffset === selNode.textContent.length)) {
+        // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
+        // Move all of selNode's parent's siblings to the newListItem, leaving selNode alone
+        let sib = selNode.parentNode;   // Whatever the text node is inside of
+        while (sib = sib.nextElementSibling) {
+            newListItem.appendChild(sib);
+        };
+        // Then insert newListItem that now has selNode parent's siblings before the next LI or UL or OL or whatever
+        existingList.insertBefore(newListItem, existingListItem.nextElementSibling);const range = document.createRange();
+        // And leave selection in the newElement
+        range.setStart(newElement, 0);
+        range.setEnd(newElement, 0);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        _callback('input');
+        return newElement;  // To preventDefault() on Enter
+    }
+    return null;    // To let standard event handling to happen
+}
+
+/**
+ * We are inside of a list and want to indent the selected item in it.
+ *
+ * @return  {HTML Node}   The existing node put in new list of the same type to preventDefault handling; else, null.
+ */
+const _doListIndent = function() {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!existingList || !existingListItem) { return null };
+    _backupSelection();
+    if (_indentListItem(existingListItem, existingList)) {
+        _restoreSelection();
+        _callback('input');
+        return selNode;  // To preventDefault() on Enter
+    };
+    return null;
+};
+
+/**
+ * Given an existingListItem in an existingList, indent the existingListItem,
+ * leaving everything else (including existingListItem's sublists) at the same level.
+ *
+ * @return  {HTML Node}   The existingListItem if it could be indented; else, null.
+ */
+const _indentListItem = function(existingListItem, existingList) {
+    const previousListItem = existingListItem.previousElementSibling;
+    if (!previousListItem || (previousListItem.nodeName !== 'LI')) { return null };
+    // The only valid child of UL or OL is LI; however,
+    // LI can have UL or OL children to form sublists. So, indenting
+    // means taking an existing LI putting it in a new UL or OL, and then
+    // appending the new UL or OL as a child of the existing LI's
+    // previousSibling. If previousElementSibling doesn't exist or is not
+    // an LI, then the indent is not allowed. Thus, indenting the 2nd list
+    // item in:
+    //  <UL>
+    //      <LI>List item 1</LI>
+    //      <LI>List item 2</LI>
+    //  </UL>
+    // becomes:
+    //  <UL>
+    //      <LI>List item 1
+    //          <UL>
+    //              <LI>List item 2</LI>
+    //          </UL>
+    //      </LI>
+    //  </UL>
+    //
+    // Check whether to put the newListItem in its own newList, or whether to append it to
+    // the existingList at the level above in the list.
+    // Consider:
+    //  <UL>
+    //      <LI>List item 1
+    //          <UL>
+    //              <LI>Sublist item 1</LI>
+    //          </UL>
+    //      </LI>
+    //      <LI>List item 2</LI>
+    //  </UL>
+    // When indenting List item 2, we want:
+    //  <UL>
+    //      <LI>List item 1
+    //          <UL>
+    //              <LI>Sublist item 1</LI>
+    //              <LI>List item 2</LI>
+    //          </UL>
+    //      </LI>
+    //  </UL>
+    // We don't want:
+    //  <UL>
+    //      <LI>List item 1
+    //          <UL>
+    //              <LI>Sublist item 1</LI>
+    //          </UL>
+    //          <UL>
+    //              <LI>List item 2</LI>
+    //          </UL>
+    //      </LI>
+    //  </UL>
+    const prevListItemLastChild = previousListItem.lastElementChild;
+    if (prevListItemLastChild && (prevListItemLastChild.nodeName === existingList.nodeName)) {
+        // The previous list's last element is a list of the same type, so existingListItem should just be appended to it
+        prevListItemLastChild.appendChild(existingListItem);
+        
+    } else {
+        // We just need to create a newList to contain existingListItem, and then put that list
+        // as a child of previousListItem.
+        const newList = document.createElement(existingList.nodeName);
+        newList.appendChild(existingListItem);
+        previousListItem.appendChild(newList);
+    };
+    // But existingListItem's list children now have to be outdented so they stay at the original level in the list
+    let existingChild = existingListItem.firstElementChild;
+    while (existingChild && (existingChild.nodeName === existingList.nodeName)) {
+        let existingSubListItem = existingChild.firstElementChild;
+        while (existingSubListItem) {
+            _outdentListItem(existingSubListItem, existingChild);
+            existingSubListItem = existingChild.firstElementChild;
+        };
+        existingChild = existingListItem.firstElementChild;
+    };
+    return existingListItem;
+};
+    
+/**
+ * We are inside of a list and want to outdent the selected item in it.
+ * We can only outdent if the list we are in is contained in another list.
+ *
+ * @return  {HTML Node}   The existing node put in the containing list of the same type; else, null.
+ */
+const _doListOutdent = function() {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!(existingList && existingListItem)) { return null };
+    _backupSelection();
+    if (_outdentListItem(existingListItem, existingList)) {
+        _restoreSelection()
+        _callback('input');
+        return selNode;  // To preventDefault() on Enter
+    };
+    return null;
+};
+
+/**
+ * Given an existingListItem in an existingList, outdent the existingListItem,
+ * leaving everything else (including existingListItem's sublists) at the same level.
+ *
+ * @return  {HTML Node}   The existingListItem if it could be outdented; else, null.
+ */
+const _outdentListItem = function(existingListItem, existingList) {
+    const outerList = (existingList) ? _findFirstParentElementInNodeNames(existingList.parentNode, ['UL', 'OL']) : null;
+    if (!outerList) { return null };
+    // Following the comments in _doListOutdent, we want to outdent
+    // Sublist item 2 in:
+    //  <UL>
+    //     <LI>List item 1
+    //         <UL>
+    //             <LI>Sublist item 1</LI>
+    //             <LI>Sublist item 2</LI>
+    //             <LI>Sublist item 3</LI>
+    //         </UL>
+    //     </LI>
+    //     <LI>List item 2</LI>
+    //  </UL>
+    // which should produce:
+    //  <UL>
+    //     <LI>List item 1
+    //         <UL>
+    //             <LI>Sublist item 1</LI>
+    //         </UL>
+    //     </LI>
+    //     <LI>Sublist item 2
+    //         <UL>
+    //             <LI>Sublist item 3</LI>
+    //         </UL>
+    //     </LI>
+    //     <LI>List item 2</LI>
+    //  </UL>
+    // To do this, find the existingListItem and the existingList it is inside of.
+    // The existingList's parentNode's nextSibling is what we want to put the
+    // existingListItem before. However, before we do that, move all of existingListItem's
+    // nextSiblings to be its children, thereby "moving down" any nodes below it in the
+    // existingList. When done, if existingList is empty, remove it.
+    const nextListItem = existingList.parentNode.nextSibling;
+    let sib = existingListItem.nextSibling;
+    if (sib) {
+        const newList = document.createElement(existingList.nodeName);
+        while (sib) {
+            newList.appendChild(sib);
+            sib = existingListItem.nextSibling;
+        }
+        existingListItem.appendChild(newList);
+    }
+    outerList.insertBefore(existingListItem, nextListItem);
+    if (existingList.children.length === 0) {
+        existingList.parentNode.removeChild(existingList);
+    }
+    return existingListItem;
+}
+
+/**
  * Given a listItemElement that we want to be in a newListType,
  * split the list it resides in so that the listItemElement is in
  * its own list of newListType, and the one it was in has been split
@@ -1468,82 +1756,6 @@ const _cleanUpAttributesWithin = function(attribute, node) {
     return attributesRemoved;
 };
                                 
-/**
- * We are inside of a list and hit Enter.
- * @return  {HTML BR Element}   The BR in the newly created LI or null if we should let the default Enter handling happen
- */
-const _doListEnter = function() {
-    let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
-    if (!selNode) { return null };
-    // If sel is not collapsed, delete the entire selection and reset before continuing
-    if (!sel.isCollapsed) {
-        sel.deleteFromDocument();
-        sel = document.getSelection();
-        selNode = (sel) ? sel.focusNode : null;
-        if (!selNode) { return null };
-    }
-    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
-    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
-    if (!existingList || !existingListItem) { return null };
-    let newElement = document.createElement('br');
-    const newParagraph = document.createElement('p');
-    const newListItem = document.createElement('li');
-    newParagraph.appendChild(newElement);
-    newListItem.appendChild(newParagraph);
-    const existingRange = sel.getRangeAt(0).cloneRange();
-    if (existingRange.startOffset === 0) {
-        // We are at the beginning of a list node
-        existingList.insertBefore(newListItem, existingListItem);
-    } else if ((selNode.nodeType === Node.TEXT_NODE) && (existingRange.endOffset === selNode.textContent.length)) {
-        // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
-        // Move all of selNode's siblings to the newListItem, leaving selNode alone
-        let sib = selNode.parentNode;   // Whatever the text node is inside of
-        while (sib = sib.nextElementSibling) {
-            newListItem.appendChild(sib);
-        };
-        // Then insert newListItem that now has selNode parent's siblings before the next LI or UL or OL or whatever
-        existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
-    } else {
-        return null;    // To let standard event handling to happen
-    }
-    const range = document.createRange();
-    range.setStart(newElement, 0);
-    range.setEnd(newElement, 0);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    _callback('input');
-    return newElement;  // To preventDefault() on Enter
-}
-
-/**
- * We are inside of a list and hit Tab.
- * @return  {HTML Node}   The existing node put in new list of the same type
- */
-const _doListTab = function(shiftKey) {
-    let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
-    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
-    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
-    if (!existingList || !existingListItem) { return null };
-    const existingRange = sel.getRangeAt(0).cloneRange();
-    if (existingRange.startOffset !== 0) { return null };    // To let standard event handling to happen
-    // We are at the beginning of a list node
-    if (shiftKey) {
-        _consoleLog("Shifted")
-    } else {
-        _consoleLog("Not shifted")
-        const newList = document.createElement(existingList.nodeName);
-        const newListItem = document.createElement('li');
-        newListItem.appendChild(selNode);
-        newList.appendChild(newListItem);
-        existingListItem.replaceWith(newList);
-    }
-    _callback('input');
-    return selNode;  // To preventDefault() on Enter
-}
-
 /********************************************************************************
  * Explicit handling of multi-click
  * TODO:- Remove?

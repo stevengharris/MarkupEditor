@@ -27,36 +27,40 @@ public struct MarkupToolbar: View {
     private var rightToolbar: AnyView?
     
     public var body: some View {
-        VStack(spacing: 2) {
-            HStack(alignment: .bottom) {
-                if leftToolbar != nil {
-                    leftToolbar
-                    Divider()
+        
+        ScrollView(.horizontal) {
+            VStack(spacing: 2) {
+                HStack(alignment: .bottom) {
+                    if leftToolbar != nil {
+                        leftToolbar
+                        Divider()
+                    }
+                    Group {
+                        CorrectionToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        Divider()
+                        InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        Divider()
+                        StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        Divider()
+                        FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                        Divider()           // Vertical on the right
+                    }
+                    if rightToolbar != nil {
+                        rightToolbar
+                        Divider()
+                    }
+                    Spacer()                // Push everything to the left
                 }
-                Group {
-                    CorrectionToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    Divider()
-                    InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    Divider()
-                    StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    Divider()
-                    FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                    Divider()           // Vertical on the right
-                }
-                if rightToolbar != nil {
-                    rightToolbar
-                    Divider()
-                }
-                Spacer()                // Push everything to the left
+                .frame(height: 47)
+                .padding([.leading, .trailing], 8)
+                .padding([.top, .bottom], 2)
+                .disabled(selectedWebView == nil)
+                Divider()                   // Horizontal at the bottom
             }
-            .frame(height: 47)
-            .padding([.leading, .trailing], 8)
-            .padding([.top, .bottom], 2)
-            .disabled(selectedWebView == nil)
-            Divider()                   // Horizontal at the bottom
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .background(Color(UIColor.systemBackground))
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(Color(UIColor.systemBackground))
+        .onTapGesture {}    // Otherwise, the MarkupToolbar ToolbarButtons end up not working when in the ScrollView.
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {

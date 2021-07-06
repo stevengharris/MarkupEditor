@@ -455,3 +455,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
 }
 
+//MARK:- UIResponderStandardEditActions overrides
+
+extension MarkupWKWebView {
+    
+    public override func toggleBoldface(_ sender: Any?) {
+        bold()
+    }
+    
+    public override func toggleItalics(_ sender: Any?) {
+        italic()
+    }
+    
+    public override func toggleUnderline(_ sender: Any?) {
+        underline()
+    }
+    
+    public override func increaseSize(_ sender: Any?) {
+        // Do nothing
+    }
+    
+    public override func decreaseSize(_ sender: Any?) {
+        // Do nothing
+    }
+    
+}
