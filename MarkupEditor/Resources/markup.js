@@ -1126,21 +1126,24 @@ const _doListEnter = function() {
     newParagraph.appendChild(newElement);
     newListItem.appendChild(newParagraph);
     const existingRange = sel.getRangeAt(0).cloneRange();
-    if (existingRange.startOffset === 0) {
+    if ((existingRange.startOffset === 0) && (!selNode.previousSibling)) {
         // We are at the beginning of a list node
         existingList.insertBefore(newListItem, existingListItem);
         _callback('input');
         // Leave selection alone
         return existingListItem;  // To preventDefault() on Enter
-    } else if ((selNode.nodeType === Node.TEXT_NODE) && (existingRange.endOffset === selNode.textContent.length)) {
+    } else if ((selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)) {
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
-        // Move all of selNode's parent's siblings to the newListItem, leaving selNode alone
-        let sib = selNode.parentNode;   // Whatever the text node is inside of
-        while (sib = sib.nextElementSibling) {
+        // First, move all of the siblings of selNode's parentNode to reside in the new list,
+        // leaving selNode itself alone.
+        let sib = selNode.parentNode.nextElementSibling;
+        while (sib) {
             newListItem.appendChild(sib);
-        };
-        // Then insert newListItem that now has selNode parent's siblings before the next LI or UL or OL or whatever
-        existingList.insertBefore(newListItem, existingListItem.nextElementSibling);const range = document.createRange();
+            sib = selNode.parentNode.nextElementSibling;
+        }
+        // Then, insert the newListItem with its new children into the list before the next list element.
+        existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
+        const range = document.createRange();
         // And leave selection in the newElement
         range.setStart(newElement, 0);
         range.setEnd(newElement, 0);
@@ -1149,8 +1152,8 @@ const _doListEnter = function() {
         _callback('input');
         return newElement;  // To preventDefault() on Enter
     }
-    return null;    // To let standard event handling to happen
-}
+    return null;    // To let standard event handling happen
+};
 
 /**
  * We are inside of a list and want to indent the selected item in it.
@@ -1287,9 +1290,15 @@ const _doListOutdent = function() {
  * @return  {HTML Node}   The existingListItem if it could be outdented; else, null.
  */
 const _outdentListItem = function(existingListItem, existingList) {
+    // First, determine if we can outdent within an outerList, or if existingListItem
+    // should just not be in a list at all
     const outerList = (existingList) ? _findFirstParentElementInNodeNames(existingList.parentNode, ['UL', 'OL']) : null;
-    if (!outerList) { return null };
-    // Following the comments in _doListOutdent, we want to outdent
+    if (!outerList) {
+        // We can't outdent in a list any further, so split the list here and then put
+        // the existingListItem contents outside of the list, and return immediately;
+        return _splitList(existingListItem)
+    };
+    // Following the comments in _indentListItem, we want to outdent
     // Sublist item 2 in:
     //  <UL>
     //     <LI>List item 1
@@ -1320,20 +1329,20 @@ const _outdentListItem = function(existingListItem, existingList) {
     // existingListItem before. However, before we do that, move all of existingListItem's
     // nextSiblings to be its children, thereby "moving down" any nodes below it in the
     // existingList. When done, if existingList is empty, remove it.
-    const nextListItem = existingList.parentNode.nextSibling;
-    let sib = existingListItem.nextSibling;
+    const nextListItem = existingList.parentNode.nextElementSibling;
+    let sib = existingListItem.nextElementSibling;
     if (sib) {
         const newList = document.createElement(existingList.nodeName);
         while (sib) {
             newList.appendChild(sib);
-            sib = existingListItem.nextSibling;
+            sib = existingListItem.nextElementSibling;
         }
         existingListItem.appendChild(newList);
-    }
+    };
     outerList.insertBefore(existingListItem, nextListItem);
     if (existingList.children.length === 0) {
         existingList.parentNode.removeChild(existingList);
-    }
+    };
     return existingListItem;
 }
 
@@ -1344,38 +1353,81 @@ const _outdentListItem = function(existingListItem, existingList) {
  * around it. So, for example, if newListType is UL and listItemElement
  * is in an OL, then we end up with two or three lists depending on
  * whether the element was in the middle or at the ends of the original.
+ * Note that the listItemElement might contain an Element or a text node,
+ * and it might have children, such an a sublist of UL or OL.
+ * If newListType is null or not specified, then place the contents
+ * of the listItemElement between the split list, but not in a UL
+ * or OL at all. In this case, we need to leave any "bare text" in
+ * a <P>.
  *
  * @param   {HTML List Item Element}    listItemElement     The LI currently in a UL or OL.
- * @param   {String}                    newListType         Either OL or UL to indicate what listItemElement should be in.
- * @return  {HTML List Item Element}                        The listItemElement now residing in a new list of newListType.
+ * @param   {String | null}             newListType         OL or UL to indicate what listItemElement should be in, or null.
+ * @return  {HTML List Item Element}                        The listItemElement now residing in a new list of newListType, or null.
  */
 const _splitList = function(listItemElement, newListType) {
     const oldList = listItemElement.parentNode;
     const oldListType = oldList.nodeName;
     const oldListItems = oldList.children;
-    const newList = document.createElement(newListType)
     const preList = document.createElement(oldListType);
     const postList = document.createElement(oldListType);
-    while (oldListItems.length > 0) {
-        let child = oldListItems[0];
+    // Populate the preList and postList that will surround the new list
+    // containing listItemElement or children of listItemElement
+    let listToPopulate = preList;
+    while (oldListItems.length > 1) {
+        let index = (listToPopulate === preList) ? 0 : 1;
+        let child = oldListItems[index];
         if (child === listItemElement) {
-            newList.appendChild(listItemElement);
+            listToPopulate = postList;  // Flip the listToPopulate and skip the listItemElement
+            index = 1;
         } else {
-            if (newList.children.length === 0) {
-                preList.appendChild(child);
-            } else {
-                postList.appendChild(child);
-            }
+            listToPopulate.appendChild(child);
         };
     };
-    oldList.replaceWith(newList);
+    // Insert the preList and postList before and after the oldList (which now
+    // contains only the listItemElement
     if (preList.children.length > 0) {
-        newList.parentNode.insertBefore(preList, newList)
+        oldList.parentNode.insertBefore(preList, oldList)
     };
     if (postList.children.length > 0) {
-        newList.parentNode.insertBefore(postList, newList.nextSibling);
+        oldList.parentNode.insertBefore(postList, oldList.nextSibling);
     };
-    return listItemElement;
+    if (newListType) {
+        // We want listItemElement to be in a list of newListType
+        const newList = document.createElement(newListType);
+        newList.appendChild(listItemElement);
+        oldList.replaceWith(newList);
+        return listItemElement;
+    } else {
+        // We want the contents of listItemElement to be embedded between
+        // at the right place in the document, which varies depending on
+        // whether there was a postList to mark the location.
+        let insertionPoint;
+        if (postList.children.length > 0) {
+            insertionPoint = postList;
+        } else {
+            insertionPoint = oldList.nextSibling;
+        };
+        let child;
+        const firstChild = listItemElement.firstChild;
+        while (child = listItemElement.firstChild) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                if (child.textContent.trim().length > 0) {
+                    // We want any bare text node children to be embedded in <p>
+                    const p = document.createElement('p');
+                    p.appendChild(child);
+                    insertionPoint.parentNode.insertBefore(p, insertionPoint);
+                } else {
+                    insertionPoint.parentNode.insertBefore(child, insertionPoint);
+                };
+            } else {
+                // The child could be something like <p> or <h5>, or even a <ul> or <ol>
+                insertionPoint.parentNode.insertBefore(child, insertionPoint);
+            };
+        };
+        // But in any case, the oldList is depopulated by the time we are done, so remove it
+        oldList.parentNode.removeChild(oldList);
+        return (firstChild) ? firstChild : listItemElement; // firstChild should always exist
+    };
 };
 
 /**
