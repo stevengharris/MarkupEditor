@@ -28,7 +28,7 @@ public struct MarkupToolbar: View {
     
     public var body: some View {
         
-        ScrollView(.horizontal) {
+        //ScrollView(.horizontal) {
             VStack(spacing: 2) {
                 HStack(alignment: .bottom) {
                     if leftToolbar != nil {
@@ -59,8 +59,8 @@ public struct MarkupToolbar: View {
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .background(Color(UIColor.systemBackground))
-        }
-        .onTapGesture {}    // Otherwise, the MarkupToolbar ToolbarButtons end up not working when in the ScrollView.
+        //}
+        //.onTapGesture {}    // Otherwise, the MarkupToolbar ToolbarButtons end up not working when in the ScrollView.
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {

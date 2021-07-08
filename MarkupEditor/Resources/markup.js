@@ -625,6 +625,8 @@ MU.editor.addEventListener('keydown', function(ev) {
         const state = _getSelectionState();
         if (state['list'] && _doListEnter()) {
             ev.preventDefault();
+        } else if (_doEnter()) {
+            ev.preventDefault()
         };
     } else if ((key === 'Tab') || _keyModified('Meta', ']')) {
         const state = _getSelectionState();
@@ -639,6 +641,42 @@ MU.editor.addEventListener('keydown', function(ev) {
         };
     };
 });
+
+/**
+ * Handle the Enter key to avoid <div> being inserted instead of <p>
+ *
+ * @returns {HTML Paragraph Element}   The newly created P to preventDefault handling; else, null.
+ */
+const _doEnter = function() {
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode) { return null };
+    // If sel is not collapsed, delete the entire selection and reset before continuing
+    if (!sel.isCollapsed) {
+        sel.deleteFromDocument();
+        sel = document.getSelection();
+        selNode = (sel) ? sel.focusNode : null;
+        if (!selNode) { return null };
+    };
+    const existingRange = sel.getRangeAt(0).cloneRange();
+    if ((selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)) {
+        // We are at the end of the last text node in some element, so we want to
+        // create a new <P> to keep typing
+        const parent = selNode.parentNode;
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        parent.parentNode.insertBefore(p, parent.nextSibling);
+        const range = document.createRange();
+        // And leave selection in the newElement
+        range.setStart(p, 0);
+        range.setEnd(p, 0);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        _callback('input');
+        return p;   // To preventDefault() on Enter
+    };
+    return null;    // Let the MarkupWKWebView do its normal thing
+}
 
 
 /**
@@ -1405,7 +1443,7 @@ const _splitList = function(listItemElement, newListType) {
         if (postList.children.length > 0) {
             insertionPoint = postList;
         } else {
-            insertionPoint = oldList.nextSibling;
+            insertionPoint = oldList.nextSibling ?? MU.editor;
         };
         let child;
         const firstChild = listItemElement.firstChild;
@@ -3484,6 +3522,11 @@ const _unsetTag = function(oldElement, sel) {
     const oldStartOffset = oldRange.startOffset;
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
+    //
+    // TODO:- Deal with turning off a tag at at the end of a word; for example,
+    // type, CTRL-B turns bold on, type, then CTRL-B turns it off, but what was
+    // bolded stays bolded.
+    //
     // Get a newElement from the innerHTML of the oldElement, but hold onto the parentNode
     const oldParentNode = oldElement.parentNode;
     const template = document.createElement('template');
