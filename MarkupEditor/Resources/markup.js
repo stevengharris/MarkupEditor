@@ -140,6 +140,13 @@ class Undoer {
     }
     
     /**
+     * @return {Boolean}    Whether we are pushing something onto the _undoStack
+     */
+    get pushingUndo() {
+        return this._duringUpdate;
+    }
+    
+    /**
      * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
      *
      * @param {T} data the data for this undo event
@@ -541,7 +548,9 @@ MU.editor.addEventListener('blur', function(ev) {
     //} else {
     //    _consoleLog(" will focus: null");
     //}
-    _backupSelection();
+    if (!undoer || (undoer && !undoer.pushingUndo)) {
+        _backupSelection()
+    };
     if (!_muteFocusBlur) {
         _callback('blur');
     }
