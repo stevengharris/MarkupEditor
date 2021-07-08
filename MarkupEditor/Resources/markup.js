@@ -541,8 +541,8 @@ MU.editor.addEventListener('blur', function(ev) {
     //} else {
     //    _consoleLog(" will focus: null");
     //}
+    _backupSelection();
     if (!_muteFocusBlur) {
-        _backupSelection();
         _callback('blur');
     }
 });
