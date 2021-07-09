@@ -630,22 +630,52 @@ const _keyModified = function(modifier, key) {
  */
 MU.editor.addEventListener('keydown', function(ev) {
     const key = ev.key;
+    const sel = document.getSelection()
+    const selNode = (sel) ? sel.focusNode : null;
+    if (!selNode) { return };
     if (key === 'Enter') {
-        const state = _getSelectionState();
-        if (state['list'] && _doListEnter()) {
-            ev.preventDefault();
-        } else if (_doEnter()) {
-            ev.preventDefault()
-        };
-    } else if ((key === 'Tab') || _keyModified('Meta', ']')) {
-        const state = _getSelectionState();
-        if (state['list'] && _doListIndent()) {
+        const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+        if ((inList && _doListEnter()) || _doEnter()) {
             ev.preventDefault();
         };
-    } else if (_keyModified('Shift', 'Tab') || _keyModified('Meta', '[')) {
-        /// TODO:- Shift Tab is never triggered. Instead it moves focus somewhere
-        const state = _getSelectionState();
-        if (state['list'] && _doListOutdent()) {
+    } else {
+        const specialParent = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL', 'TABLE', 'BLOCKQUOTE']);
+        if (specialParent) {
+            const nodeName = specialParent.nodeName;
+            const inList = (nodeName === 'UL') || (nodeName === 'OL')
+            const inTable = nodeName === 'TABLE';
+            const inBlockQuote = nodeName === 'BLOCKQUOTE';
+            let preventDefault;
+            if (key === 'Tab') {
+                preventDefault =
+                    (inList && _doListIndent()) ||
+                    (inBlockQuote && MU.increaseQuoteLevel()) ||
+                    (inTable && _doNextCell());
+            } else if (_keyModified('Meta', ']')) {
+                preventDefault =
+                    (inList && _doListIndent()) ||
+                    (inBlockQuote && MU.increaseQuoteLevel()) ||
+                    (inTable && MU.increaseQuoteLevel());
+            } else if (_keyModified('Meta', '=')) {
+                //} else if (_keyModified('Shift', 'Tab')) {
+                // TODO:- Shift Tab is never triggered. Instead it moves focus somewhere
+                //      For now, this is just a hack to use Meta+= as an alternative to exercise code
+                preventDefault =
+                    (inList && _doListOutdent()) ||
+                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
+                    (inTable && _doPrevCell());
+            } else if (_keyModified('Meta', '[')) {
+                preventDefault =
+                    (inList && _doListOutdent()) ||
+                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
+                    (inTable && MU.decreaseQuoteLevel());
+            };
+            if (preventDefault) {
+                ev.preventDefault();
+            };
+        } else if (
+            (_keyModified('Meta', ']') && MU.increaseQuoteLevel()) ||
+            (_keyModified('Meta', '[') && MU.decreaseQuoteLevel())) {
             ev.preventDefault();
         };
     };
@@ -1568,7 +1598,7 @@ const _replaceNodeWithListItem = function(selNode) {
 MU.increaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
-    if (!sel || !selNode || !sel.rangeCount) { return };
+    if (!sel || !selNode || !sel.rangeCount) { return null };
     const selectionState = _getSelectionState();
     // Capture the range settings for the selection
     const range = sel.getRangeAt(0).cloneRange();
@@ -1635,6 +1665,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
         _restoreSelection();
     }
     _callback('input');
+    return selNode;
 }
 
 /**
@@ -1645,7 +1676,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
 MU.decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
-    if (!sel || !selNode || !sel.rangeCount) { return };
+    if (!sel || !selNode || !sel.rangeCount) { return null };
     const existingElement = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
     if (existingElement) {
         _unsetTag(existingElement, sel);
@@ -1656,7 +1687,9 @@ MU.decreaseQuoteLevel = function(undoable=true) {
             _restoreSelection();
         }
         _callback('input');
-    }
+        return selNode;
+    };
+    return null;
 }
 
 /********************************************************************************
@@ -3134,6 +3167,73 @@ const _restoreTable = function(undoerData) {
     undoerData.data.col = col;
     undoerData.data.inHeader = inHeader;
 };
+
+/**
+ * Move from current row/col forward to the next one in the table.
+ * Special handling for the last final cell of the table to insert a
+ * new row and the move into it.
+ */
+const _doNextCell = function() {
+    const tableElements = _getTableElementsAtSelection();
+    const table = tableElements['table'];
+    const row = tableElements['row'];
+    const col = tableElements['col'];
+    const rows = tableElements['rows'];
+    const cols = tableElements['cols'];
+    const inHeader = tableElements['thead'] != null
+    const colspan = tableElements['colspan']
+    if (inHeader) {
+        if (!colspan && (col < cols-1)) {
+            _restoreTableSelection(table, row, col+1, true);
+        } else if (rows > 0) {
+            _restoreTableSelection(table, 0, 0, false);
+        } else {
+            MU.addRow('AFTER');
+            const newTableElements = _getTableElementsAtSelection();
+            const newTable = newTableElements['table'];
+            _restoreTableSelection(newTable, 0, 0, false);
+        };
+    } else if (col < cols-1) {
+        _restoreTableSelection(table, row, col+1, false);
+    } else if (row < rows-1) {
+        _restoreTableSelection(table, row+1, 0, false);
+    } else if ((row === rows-1) && (col === cols-1)) {
+        MU.addRow('AFTER');
+        const newTableElements = _getTableElementsAtSelection();
+        const newTable = newTableElements['table'];
+        const newRows = newTableElements['rows'];   // should be original rows+1
+        _restoreTableSelection(newTable, newRows-1, 0, false);
+    };
+}
+
+/**
+ * Move from the current row/col back to the previous one in the table.
+ */
+const _doPrevCell = function() {
+    const tableElements = _getTableElementsAtSelection();
+    const table = tableElements['table'];
+    const row = tableElements['row'];
+    const col = tableElements['col'];
+    const cols = tableElements['cols'];
+    const header = _getSection(table, 'THEAD');
+    const inHeader = tableElements['thead'] != null
+    const colspan = tableElements['colspan']
+    if (inHeader) {
+        if (!colspan && (col > 0)) {
+            _restoreTableSelection(table, row, col-1, true);
+        };
+    } else if (col > 0) {
+        _restoreTableSelection(table, row, col-1, false);
+    } else if ((col === 0) && (row > 0)) {
+        _restoreTableSelection(table, row-1, cols-1, false);
+    } else if (header && (col === 0) && (row === 0)) {
+        if (!colspan) {
+            _restoreTableSelection(table, 0, cols-1, true);
+        } else {
+            _restoreTableSelection(table, 0, 0, true);
+        };
+    }
+}
 
 /********************************************************************************
  * Common private functions
