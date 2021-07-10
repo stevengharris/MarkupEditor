@@ -75,10 +75,14 @@ class Undoer {
             // Because the input can happen quickly after the push causes this._ctrl to get focus,
             // we need to do change the undoIndex in textContent after a timeout, similarly
             // to how the focus followed by immediate blur needs a timeout.
+            //
+            // Experimentation shows that a delay of 10 prevents the caret from disappearing,
+            // particularly for _toggleFormat. Not sure how reproducible it is or if there is
+            // a determinate way to do it, as this just seems like a hack.
             window.setTimeout(function() {
                 muteFocusBlur();    // Will be unmuted after MU.editor receives focus
                 MU.editor.focus({preventScroll:true});
-            }, 0)
+            }, 10)
         };
         
         // Using an input element rather than contentEditable div because parent is already a
@@ -108,7 +112,13 @@ class Undoer {
             ev.stopImmediatePropagation();  // We don't want this event to be seen by the parent
             //_consoleLog('input event: ' + ev.inputType);
             //_consoleLog('  this._depth: ' + this._depth);
-            //_consoleLog('  this.data: ' + JSON.stringify(this.data));
+            //_consoleLog('  this.data.operation: ' + this.data.operation);
+            //if (this.data.range) {
+            //    _consoleLog('  this.data.range:' + _rangeString(this.data.range));
+            //} else {
+            //    _consoleLog('  this.data.range: null');
+            //}
+            //_consoleLog('  this.data.data: ' + JSON.stringify(this.data.data));
             //_consoleLog('  ev.data: ' + ev.data);
             //_consoleLog('  initial this._ctrl.textContent: ' + this._ctrl.textContent);
             if (!this._duringUpdate) {
@@ -477,7 +487,7 @@ MU.editor.addEventListener('mouseup', function() {
  */
 document.addEventListener('selectionchange', function() {
     if (!_muteChanges) {
-        //_consoleLog('unmuted selectionchange')
+        //_consoleLog('selectionchange')
         _callback('selectionChange');
     //} else {
     //    _consoleLog(' (muted selectionchange)')
@@ -509,13 +519,12 @@ const unmuteFocusBlur = function() {
  * Restore the range captured on blur and then let Swift know focus happened.
  */
 MU.editor.addEventListener('focus', function(ev) {
-    //_consoleLog("focused: " + ev.target.id);
     _restoreSelection();
     if (!_muteFocusBlur) {
-        //_consoleLog("unmuted focus: " + ev.target.id)
+        //_consoleLog("focused: " + ev.target.id)
         _callback('focus');
     //} else {
-    //    _consoleLog(" (muted focus: " + ev.target.id + ")")
+    //    _consoleLog(" (muted focused: " + ev.target.id + ")")
     };
     // Always unmute after focus happens, since it should only happen once for
     // the undoer.push operation
@@ -674,6 +683,7 @@ MU.editor.addEventListener('keydown', function(ev) {
                 ev.preventDefault();
             };
         } else if (
+            ((key === 'Tab') || _keyModified('Shift', 'Tab')) ||        // Do nothing for tab by default
             (_keyModified('Meta', ']') && MU.increaseQuoteLevel()) ||
             (_keyModified('Meta', '[') && MU.decreaseQuoteLevel())) {
             ev.preventDefault();
@@ -1786,7 +1796,7 @@ const _rangeString = function(range) {
         endContainerType = '<' + endContainer.nodeName + '>';
         endContainerContent = endContainer.innerHTML;
     };
-    return 'range:\n' + '  startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n' + '  startOffset: ' + range.startOffset + '\n' + '  endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n' + '  endOffset: ' + range.endOffset;
+    return '\n   startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n   startOffset: ' + range.startOffset + '\n   endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n   endOffset: ' + range.endOffset;
 };
 
 /********************************************************************************
@@ -2766,10 +2776,6 @@ MU.addRow = function(direction, undoable=true) {
     _restoreSelection();
     // Track row addition on the undo stack if necessary.
     if (undoable && addedRow) {
-        // Heavyweight, but set range to the new table with the new row, and
-        // capture the row and col that was selected when the new row was added,
-        // along with the original outerHTML to recreate the original table and
-        // selection.
         const undoerData = _undoerData('restoreTable', {row: row, col: col, inHeader: (thead != null), outerHTML: outerHTML});
         undoer.push(undoerData);
         _restoreSelection();
@@ -3038,14 +3044,17 @@ MU.deleteCol = function(undoable=true) {
  *
  * @param {HTML Row Element}    tr      The row that holds the TD or TH cell in column col to be selected.
  * @param {Int}                 col     The column to be selected
+ * @returns {HTML Node | null}          The selected node at row/col or header in table
  */
 const _selectCol = function(tr, col) {
     const cell = tr.children[col];
+    let selectedNode = null;
     if (cell) { // The cell is either a th or td
         const sel = document.getSelection();
         const range = document.createRange();
         const cellNode = cell.firstChild;
         if (cellNode) {
+            selectedNode = cellNode;
             if (cellNode.nodeType === Node.TEXT_NODE) {
                 range.setStart(cellNode, 0);
                 range.setEnd(cellNode, 0);
@@ -3056,11 +3065,13 @@ const _selectCol = function(tr, col) {
             const br = document.createElement('br');
             cell.appendChild(br);
             range.selectNode(br);
+            selectedNode = br;
         };
         sel.removeAllRanges();
         sel.addRange(range);
         _backupSelection();
     };
+    return selectedNode;
 };
 
 /**
@@ -3072,6 +3083,7 @@ const _selectCol = function(tr, col) {
  * @param {HTML Table Element}  table   The table to put the selection in.
  * @param {Int}                 row     The row number to select the TD cell in.
  * @param {Int}                 col     The column number to select the TD or TH cell in.
+ * @returns {HTML Node | null}          The selected node at row/col or header in table
  */
 const _restoreTableSelection = function(table, row, col, inHeader) {
     let tr;
@@ -3082,7 +3094,7 @@ const _restoreTableSelection = function(table, row, col, inHeader) {
         const body = _getSection(table, 'TBODY');
         tr = body.children[row];
     }
-    _selectCol(tr, col)
+    return _selectCol(tr, col)
 };
 
 /**
@@ -3172,6 +3184,7 @@ const _restoreTable = function(undoerData) {
  * Move from current row/col forward to the next one in the table.
  * Special handling for the last final cell of the table to insert a
  * new row and the move into it.
+ * @returns {HTML Node | null}          The cell we navigated to
  */
 const _doNextCell = function() {
     const tableElements = _getTableElementsAtSelection();
@@ -3182,32 +3195,35 @@ const _doNextCell = function() {
     const cols = tableElements['cols'];
     const inHeader = tableElements['thead'] != null
     const colspan = tableElements['colspan']
+    let nextElement = null;
     if (inHeader) {
         if (!colspan && (col < cols-1)) {
-            _restoreTableSelection(table, row, col+1, true);
+            nextElement = _restoreTableSelection(table, row, col+1, true);
         } else if (rows > 0) {
-            _restoreTableSelection(table, 0, 0, false);
+            nextElement = _restoreTableSelection(table, 0, 0, false);
         } else {
             MU.addRow('AFTER');
             const newTableElements = _getTableElementsAtSelection();
             const newTable = newTableElements['table'];
-            _restoreTableSelection(newTable, 0, 0, false);
+            nextElement = _restoreTableSelection(newTable, 0, 0, false);
         };
     } else if (col < cols-1) {
-        _restoreTableSelection(table, row, col+1, false);
+        nextElement = _restoreTableSelection(table, row, col+1, false);
     } else if (row < rows-1) {
-        _restoreTableSelection(table, row+1, 0, false);
+        nextElement = _restoreTableSelection(table, row+1, 0, false);
     } else if ((row === rows-1) && (col === cols-1)) {
         MU.addRow('AFTER');
         const newTableElements = _getTableElementsAtSelection();
         const newTable = newTableElements['table'];
         const newRows = newTableElements['rows'];   // should be original rows+1
-        _restoreTableSelection(newTable, newRows-1, 0, false);
+        nextElement = _restoreTableSelection(newTable, newRows-1, 0, false);
     };
+    return nextElement;
 }
 
 /**
  * Move from the current row/col back to the previous one in the table.
+ * @returns {HTML Node | null}          The cell we navigated to
  */
 const _doPrevCell = function() {
     const tableElements = _getTableElementsAtSelection();
@@ -3218,21 +3234,23 @@ const _doPrevCell = function() {
     const header = _getSection(table, 'THEAD');
     const inHeader = tableElements['thead'] != null
     const colspan = tableElements['colspan']
+    let nextElement = null;
     if (inHeader) {
         if (!colspan && (col > 0)) {
-            _restoreTableSelection(table, row, col-1, true);
+            nextElement = _restoreTableSelection(table, row, col-1, true);
         };
     } else if (col > 0) {
-        _restoreTableSelection(table, row, col-1, false);
+        nextElement = _restoreTableSelection(table, row, col-1, false);
     } else if ((col === 0) && (row > 0)) {
-        _restoreTableSelection(table, row-1, cols-1, false);
+        nextElement = _restoreTableSelection(table, row-1, cols-1, false);
     } else if (header && (col === 0) && (row === 0)) {
         if (!colspan) {
-            _restoreTableSelection(table, 0, cols-1, true);
+            nextElement = _restoreTableSelection(table, 0, cols-1, true);
         } else {
-            _restoreTableSelection(table, 0, 0, true);
+            nextElement = _restoreTableSelection(table, 0, 0, true);
         };
-    }
+    };
+    return nextElement
 }
 
 /********************************************************************************
