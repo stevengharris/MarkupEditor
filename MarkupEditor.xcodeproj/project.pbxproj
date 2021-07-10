@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */; };
+		AA1749E12699128C005F0428 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
 		AA1B80D82620ECD100891FFB /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80D72620ECD100891FFB /* TextView.swift */; };
 		AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80CD2620C87C00891FFB /* FileToolbar.swift */; };
 		AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */; };
@@ -41,7 +42,6 @@
 		AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* ViewController.swift */; };
-		AA6529A7260E8450000674B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA6529A6260E8450000674B7 /* Assets.xcassets */; };
 		AA6529AA260E8450000674B7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA6529A8260E8450000674B7 /* LaunchScreen.storyboard */; };
 		AA6529C5260E8B2B000674B7 /* UIViewController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */; };
 		AA6529CB260E8D69000674B7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA6529CA260E8D69000674B7 /* Main.storyboard */; };
@@ -102,7 +102,6 @@
 		AA65299D260E8450000674B7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AA65299F260E8450000674B7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA6529A1260E8450000674B7 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		AA6529A6260E8450000674B7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA6529A9260E8450000674B7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AA6529AB260E8450000674B7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UIKitDemo.entitlements; sourceTree = "<group>"; };
@@ -179,6 +178,7 @@
 				AA1B816C26265CAD00891FFB /* demo.html */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
+				AA652948260E8114000674B7 /* Assets.xcassets */,
 			);
 			name = "Shared Demo";
 			sourceTree = "<group>";
@@ -228,7 +228,6 @@
 				AAD26E85264463A300908777 /* ContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
-				AA652948260E8114000674B7 /* Assets.xcassets */,
 				AA65294D260E8114000674B7 /* Info.plist */,
 				AA65294A260E8114000674B7 /* Preview Content */,
 			);
@@ -252,7 +251,6 @@
 				AA6529A1260E8450000674B7 /* ViewController.swift */,
 				AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */,
 				AA6529CA260E8D69000674B7 /* Main.storyboard */,
-				AA6529A6260E8450000674B7 /* Assets.xcassets */,
 				AA6529A8260E8450000674B7 /* LaunchScreen.storyboard */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
@@ -499,7 +497,7 @@
 				AA6529CB260E8D69000674B7 /* Main.storyboard in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
 				AA6529AA260E8450000674B7 /* LaunchScreen.storyboard in Resources */,
-				AA6529A7260E8450000674B7 /* Assets.xcassets in Resources */,
+				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
