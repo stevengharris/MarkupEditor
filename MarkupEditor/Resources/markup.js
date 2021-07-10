@@ -2862,7 +2862,7 @@ MU.addCol = function(direction, undoable=true) {
  * @param {Boolean} colspan     Whether the header should span all columns of the table or not.
  * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
  */
-MU.addHeader = function(colspan, undoable=true) {
+MU.addHeader = function(colspan=true, undoable=true) {
     _backupSelection();
     const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
@@ -2877,8 +2877,8 @@ MU.addHeader = function(colspan, undoable=true) {
         const header = document.createElement('thead');
         const tr = document.createElement('tr');
         if (colspan) {
-            header.setAttribute('colspan', cols);
             let th = document.createElement('th');
+            th.setAttribute('colspan', cols);
             tr.appendChild(th);
             header.appendChild(tr);
         } else {
