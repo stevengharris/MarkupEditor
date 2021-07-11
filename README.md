@@ -1,3 +1,6 @@
+
+
+
 # MarkupEditor
 
 WYSIWYG editing for SwiftUI and UIKit apps
@@ -5,6 +8,10 @@ WYSIWYG editing for SwiftUI and UIKit apps
 Copyright © 2021 Steven G. Harris. All rights reserved.
 
 Jealous of those JavaScript coders with their WYSIWYG text editors, but just can't stomach the idea of immersing yourself in JavaScript when you're enjoying the comfort and joy of Swift? Yeah, me too. So when I was forced to do it, I thought I'd share what I did as a way to help others avoid it.
+
+## Demo
+
+https://user-images.githubusercontent.com/1020361/125211439-38561900-e25b-11eb-8057-daca03bf3459.mp4
 
 ## MarkupEditor Goals and Non-Goals
 
