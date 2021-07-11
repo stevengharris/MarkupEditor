@@ -27,6 +27,8 @@ public struct ToolbarTextField: View {
                 onEditingChanged: isEditingHandler ?? { _ in },
                 onCommit: commitHandler ?? { }
             )
+            .background(Color(UIColor.systemBackground))
+            .opacity(1)
             .textFieldStyle(PlainTextFieldStyle())
             .padding([.leading, .trailing], 8)
             .frame(height: 30)

@@ -41,7 +41,6 @@ public struct SubToolbar: View {
                     markupDelegate?.markupToolbarDisappeared()
                     selectedWebView?.becomeFirstResponder()
                 }
-            
         }
         if showSubToolbar.type == .table {
             TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)

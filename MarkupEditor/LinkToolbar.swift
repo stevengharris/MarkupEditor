@@ -61,21 +61,23 @@ public struct LinkToolbar: View {
                     .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
             }
             .onChange(of: selectionState.selection, perform: { value in
+                print("Alink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
                 href = selectionState.href ?? ""
                 link = selectionState.link ?? selectionState.selection ?? ""
                 previewedHref = href
             })
             .onChange(of: selectionState.href, perform: { value in
+                print("Blink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
                 href = selectionState.href ?? ""
                 link = selectionState.link ?? selectionState.selection ?? ""
                 previewedHref = href
             })
             Divider()
         }
-        .background(Color(UIColor.systemBackground))
         .frame(height: 50)
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
+        .background(Blur(style: .systemUltraThinMaterial))
     }
     
     private func canBeSaved() -> Bool {

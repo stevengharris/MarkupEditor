@@ -80,10 +80,10 @@ public struct ImageToolbar: View {
             })
             Divider()
         }
-        .background(Color(UIColor.systemBackground))
         .frame(height: 50)
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
+        .background(Blur(style: .systemUltraThinMaterial))
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
