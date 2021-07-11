@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */; };
 		AA1749E12699128C005F0428 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
+		AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749E2269B8EC3005F0428 /* Blur.swift */; };
 		AA1B80D82620ECD100891FFB /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80D72620ECD100891FFB /* TextView.swift */; };
 		AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80CD2620C87C00891FFB /* FileToolbar.swift */; };
 		AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */; };
@@ -80,6 +81,7 @@
 
 /* Begin PBXFileReference section */
 		AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowSubToolbar.swift; sourceTree = "<group>"; };
+		AA1749E2269B8EC3005F0428 /* Blur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blur.swift; sourceTree = "<group>"; };
 		AA1B80C82620B62000891FFB /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		AA1B80CD2620C87C00891FFB /* FileToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileToolbar.swift; sourceTree = "<group>"; };
 		AA1B80D72620ECD100891FFB /* TextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextView.swift; sourceTree = "<group>"; };
@@ -172,6 +174,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AA1749E4269B9444005F0428 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				AA1749E2269B8EC3005F0428 /* Blur.swift */,
+				AA806A392652ED49008F60E2 /* Icons.swift */,
+				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
+				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
+				AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
 		AA1B819D262747EC00891FFB /* Shared Demo */ = {
 			isa = PBXGroup;
 			children = (
@@ -303,8 +317,8 @@
 		AA652A38260E9B24000674B7 /* Toolbars */ = {
 			isa = PBXGroup;
 			children = (
+				AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */,
 				AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */,
-				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AA652A05260E99FF000674B7 /* ImageToolbar.swift */,
 				AA652A0C260E99FF000674B7 /* InsertToolbar.swift */,
 				AA61AD4C263B13C100326810 /* LabeledToolbar.swift */,
@@ -313,11 +327,8 @@
 				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AA8EFACB261E068F008AE31E /* StyleToolbar.swift */,
 				AA9CDA8E268900380046D308 /* SubToolbar.swift */,
-				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */,
-				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
-				AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */,
-				AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */,
+				AA1749E4269B9444005F0428 /* Utilities */,
 			);
 			name = Toolbars;
 			sourceTree = "<group>";
@@ -522,6 +533,7 @@
 				AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */,
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
 				AA408B242616685B00CAE8B9 /* MarkupWebView.swift in Sources */,
+				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
