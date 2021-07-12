@@ -1,26 +1,24 @@
-# MarkupEditor
-
-WYSIWYG editing for SwiftUI and UIKit apps
-
 <p align="center">
-    <img src="https://img.shields.io/badge/Swift-5.4-orange.svg" />
-    <a href="https://swift.org/package-manager">
-        <img src="https://img.shields.io/badge/swiftpm-compatible-brightgreen.svg?style=flat" alt="Swift Package Manager" />
-    </a>
+    <img src="https://img.shields.io/badge/Swift-5.4-brightgreen.svg" />
     <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+" />
     <img src="https://img.shields.io/badge/MacOS-11.3+-blue.svg" alt="MacOS 11.3+"/>
     <img src="https://img.shields.io/badge/Xcode-12+-blue.svg", alt="Xcode 12+" />
-    <img src="https://img.shields.io/badge/Swift-5.5-brightgreen.svg" alt="Swift 5.5" />
     <a href="https://twitter.com/stevengharris">
         <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris" />
     </a>
 </p>
 
+# MarkupEditor
+
+### 
+
+WYSIWYG editing for SwiftUI and UIKit apps.
+
 Jealous of those JavaScript coders with their WYSIWYG text editors, but just can't stomach the idea of immersing yourself in JavaScript when you're enjoying the comfort and joy of Swift? Yeah, me too. So when I was forced to do it, I thought I'd share what I did as a way to help others avoid it.
 
 ## Demo
 
-![MarkupEditor](https://user-images.githubusercontent.com/1020361/125211439-38561900-e25b-11eb-8057-daca03bf3459.mp4)
+![MarkupEditor](https://user-images.githubusercontent.com/1020361/125365436-17f49000-e329-11eb-98f2-1c509acade8a.mp4)
 
 ## MarkupEditor Goals and Non-Goals
 
@@ -134,13 +132,13 @@ The current version is very much a work in progress. The work is a back-and-fort
 3. Table editing
     * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
     * Headers are currently colspanning the full table, but this needs to be adjustable.
-    * Tab (&#11134;) navigates forward in the table, but &#8679;&#11134; doesn't work properly. You can use &#8984;= as a hack to navigate back for now.
+    * Tab (&#8677;) navigates forward in the table, but &#8679;&#8677; doesn't work properly. You can use &#8984;= as a hack to navigate back for now.
 4. Image editing
     * Selection is funky. Should show the image itself being selected but does not.
     * Scaling is clunky. I plan to replace the Stepper with an overlay with handles on the image.
     * Save and cancel should go away in favor of immediate preview and undo.
 5. List editing
-    * Tab (&#11134;) indents list items, but &#8679;&#11134; doesn't work. You can use &#8984;] to indent and &#8984;[ to outdent.
+    * Tab (&#8677;) indents list items, but &#8679;&#8677;; doesn't work. You can use &#8984;] to indent and &#8984;[ to outdent.
 
 ### Limitations
 
