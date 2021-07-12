@@ -1,11 +1,20 @@
-
-
-
 # MarkupEditor
 
 WYSIWYG editing for SwiftUI and UIKit apps
 
-Copyright © 2021 Steven G. Harris. All rights reserved.
+<p align="center">
+    <img src="https://img.shields.io/badge/Swift-5.4-orange.svg" />
+    <a href="https://swift.org/package-manager">
+        <img src="https://img.shields.io/badge/swiftpm-compatible-brightgreen.svg?style=flat" alt="Swift Package Manager" />
+    </a>
+    <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+" />
+    <img src="https://img.shields.io/badge/MacOS-11.3+-blue.svg" alt="MacOS 11.3+"/>
+    <img src="https://img.shields.io/badge/Xcode-12+-blue.svg", alt="Xcode 12+" />
+    <img src="https://img.shields.io/badge/Swift-5.5-brightgreen.svg" alt="Swift 5.5" />
+    <a href="https://twitter.com/stevengharris">
+        <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris" />
+    </a>
+</p>
 
 Jealous of those JavaScript coders with their WYSIWYG text editors, but just can't stomach the idea of immersing yourself in JavaScript when you're enjoying the comfort and joy of Swift? Yeah, me too. So when I was forced to do it, I thought I'd share what I did as a way to help others avoid it.
 

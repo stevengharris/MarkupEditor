@@ -117,6 +117,10 @@ li p {
     margin: 0px 0;
 }
 
+blockquote {
+    margin-right: 0px;
+}
+
 /* GitHub style?
 table {
     padding: 0; }
