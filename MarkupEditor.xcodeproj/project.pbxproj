@@ -179,6 +179,7 @@
 			children = (
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
+				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
 				AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */,
@@ -186,7 +187,7 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
-		AA1B819D262747EC00891FFB /* Shared Demo */ = {
+		AA1749E5269DFE84005F0428 /* SharedDemo */ = {
 			isa = PBXGroup;
 			children = (
 				AA1B816C26265CAD00891FFB /* demo.html */,
@@ -194,7 +195,7 @@
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
 				AA652948260E8114000674B7 /* Assets.xcassets */,
 			);
-			name = "Shared Demo";
+			path = SharedDemo;
 			sourceTree = "<group>";
 		};
 		AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */ = {
@@ -213,7 +214,7 @@
 				AA1B80C82620B62000891FFB /* Package.swift */,
 				AA652A30260E9A27000674B7 /* README.md */,
 				AA6529FE260E99FF000674B7 /* MarkupEditor */,
-				AA1B819D262747EC00891FFB /* Shared Demo */,
+				AA1749E5269DFE84005F0428 /* SharedDemo */,
 				AA652943260E8114000674B7 /* SwiftUIDemo */,
 				AA65299C260E8450000674B7 /* UIKitDemo */,
 				AA6529CF260E8E8E000674B7 /* MarkupEditorTests */,
@@ -324,7 +325,6 @@
 				AA61AD4C263B13C100326810 /* LabeledToolbar.swift */,
 				AA8EFAF3261E0EA9008AE31E /* LinkToolbar.swift */,
 				AA652A00260E99FF000674B7 /* MarkupToolbar.swift */,
-				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AA8EFACB261E068F008AE31E /* StyleToolbar.swift */,
 				AA9CDA8E268900380046D308 /* SubToolbar.swift */,
 				AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */,
