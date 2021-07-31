@@ -1,9 +1,9 @@
 <p align="center">
-    <img src="https://img.shields.io/badge/Swift-5.4-brightgreen.svg" />
-    <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+" />
-    <img src="https://img.shields.io/badge/MacOS-11.3+-blue.svg" alt="MacOS 11.3+"/>
+    <img src="https://img.shields.io/badge/Swift-5.4-brightgreen.svg">
+    <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+">
+    <img src="https://img.shields.io/badge/MacOS-11.3+-blue.svg" alt="MacOS 11.3+">
     <a href="https://twitter.com/stevengharris">
-        <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris" />
+        <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris">
     </a>
 </p>
 
