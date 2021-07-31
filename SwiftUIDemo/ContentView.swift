@@ -34,7 +34,7 @@ struct ContentView: View {
                         selectionState: selectionState,
                         selectedWebView: $selectedWebView,
                         fileToolbarDelegate: self)))
-            MarkupWebView(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self, initialContent: demoContent())
+            MarkupWebView(selectionState: selectionState, markupDelegate: self, initialContent: demoContent())
                 .overlay(
                     SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self),
                     alignment: .topLeading)

@@ -12,7 +12,7 @@ extension String {
     
     /// A string with the ' characters in it escaped.
     /// Used when passing a string into JavaScript, so the string is not completed too soon
-    var escaped: String {
+    public var escaped: String {
         let unicode = self.unicodeScalars
         var newString = ""
         for char in unicode {
@@ -30,10 +30,19 @@ extension String {
     }
     
     /// Return true if self is a valid URL
-    var isValidURL: Bool {
+    public var isValidURL: Bool {
         let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
         let matches = detector.matches(in: self, options: [], range: NSRange(location: 0, length: utf16.count))
         return matches.count == 1 && matches[0].range.length == utf16.count
+    }
+    
+    /// Return a string with newlines inserted at the beginning of style, table, and div elements so it's minimally more readable.
+    public var prettyHTML: String {
+        var newString = replacingOccurrences(of: "<p", with: "\n<p")
+        newString = newString.replacingOccurrences(of: "<h", with: "\n<h")
+        newString = newString.replacingOccurrences(of: "<div", with: "\n<div")
+        newString = newString.replacingOccurrences(of: "<table", with: "\n<table")
+        return newString.trimmingCharacters(in: .whitespaces)
     }
     
 }

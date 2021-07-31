@@ -32,6 +32,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     public var html: String?
+    public var userScripts: [String]? {
+        didSet {
+            if let userScripts = userScripts {
+                for script in userScripts {
+                    let wkUserScript = WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+                    configuration.userContentController.addUserScript(wkUserScript)
+                }
+            }
+        }
+    }
     
     public init() {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
@@ -151,7 +161,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func setHtml(_ html: String, handler: ((String)->Void)? = nil) {
         let contents = html.escaped
         evaluateJavaScript("MU.setHTML('\(contents)')") { result, error in
-            guard error == nil else { return }
+            guard error == nil else {
+                print("MU.setHTML error: \(error!.localizedDescription)")
+                handler?("")
+                return
+            }
             handler?(contents)
         }
     }

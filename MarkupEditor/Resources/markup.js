@@ -952,39 +952,6 @@ const _toggleFormat = function(type, undoable=true) {
  * Raw and formatted text
  */
 
-//const _configureTurndownService = function() {
-//    const gfm = turndownPluginGfm.gfm;
-//    const turndownService = new TurndownService();
-//    turndownService.use(gfm);
-//    turndownService.addRule('strikethrough', {
-//      filter: ['del', 's', 'strike'],
-//      replacement: function (content) {
-//        return '~~' + content + '~~'
-//      }
-//    })
-//    return turndownService;
-//};
-//
-//const _turndownService = _configureTurndownService();
-//
-//const _configureShowdownService = function() {
-//    const converter = new showdown.Converter();
-//    converter.setOption('noHeaderId', true);
-//    converter.setOption('strikethrough', true);
-//    converter.setOption('parseImgDimensions', true);
-//    return converter;
-//}
-//
-//const _showdownService = _configureShowdownService();
-//
-//MU.getMarkdown = function() {
-//    return _turndownService.turndown(MU.editor.innerHTML);
-//};
-//
-//MU.getRoundTrip = function() {
-//    return _showdownService(MU.getMarkdown());
-//};
-//
 //const _prettify = function(html) {
 //    // A hack to prettify MU.editor.innerHTML.
 //    // From https://stackoverflow.com/a/60338028/8968411.

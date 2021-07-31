@@ -19,25 +19,25 @@ import WebKit
 public struct MarkupWebView: UIViewRepresentable {
     public typealias Coordinator = MarkupCoordinator
     @ObservedObject private var selectionState: SelectionState
-    @Binding private var selectedWebView: MarkupWKWebView?
     /// The initial HTML content to be shown in the MarkupWKWebView.
     private var initialContent: String
     public var markupDelegate: MarkupDelegate?
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
+    private var userScripts: [String]?
     
     public init(
-        selectionState: SelectionState,
-        selectedWebView: Binding<MarkupWKWebView?>,
+        selectionState: SelectionState? = nil,
         markupDelegate: MarkupDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
+        userScripts: [String]? = nil,
         initialContent: String? = nil) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+        self.selectionState = selectionState ?? SelectionState()
         self.markupDelegate = markupDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate
+        self.userScripts = userScripts
         self.initialContent = initialContent ?? ""
     }
 
@@ -56,6 +56,7 @@ public struct MarkupWebView: UIViewRepresentable {
         let coordinator = context.coordinator
         webView.configuration.userContentController.add(coordinator, name: "markup")
         coordinator.webView = webView
+        webView.userScripts = userScripts
         return webView
     }
 
