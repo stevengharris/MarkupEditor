@@ -14,15 +14,5 @@ struct SwiftUIDemoApp: App {
         WindowGroup {
             ContentView()
         }
-       //.commands {
-       //    //CommandGroup(replacing: .textFormatting) {
-       //    //    Button(action: {print("clicked on MyApp Help menu")}) {
-       //    //        Text("MyApp Help")
-       //    //    }.keyboardShortcut(.tab) //, modifiers: .shift)
-       //    //}
-       //    CommandMenu("Test") {
-       //            Text("Test menu item")
-       //    }
-       //}
     }
 }
