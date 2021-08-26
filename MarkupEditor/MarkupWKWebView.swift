@@ -68,10 +68,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // "Bundle.module" without the package as a dependency, so I am forced into this
         // build time hackery.
         var bundle: Bundle
-        #if USEFRAMEWORK
-        bundle = Bundle(for: MarkupWKWebView.self)
-        #else
+        #if SWIFT_PACKAGE
         bundle = Bundle.module
+        #else
+        bundle = Bundle(for: MarkupWKWebView.self)
         #endif
         if let filePath = bundle.path(forResource: "markup", ofType: "html") {
             let url = URL(fileURLWithPath: filePath, isDirectory: false)
