@@ -19,6 +19,8 @@ public enum TableDirection {
 
 /// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    var height: CGFloat { toolbarPreference.style == .compact ? 30 : 47 }
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     @State private var showTableSizer: Bool = false
@@ -116,7 +118,7 @@ public struct TableToolbar: View {
             }
             Divider()
         }
-        .frame(height: 50)
+        .frame(height: height)
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
         .background(Blur(style: .systemUltraThinMaterial))

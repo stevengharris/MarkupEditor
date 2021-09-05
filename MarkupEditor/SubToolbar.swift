@@ -21,40 +21,45 @@ public struct SubToolbar: View {
     @EnvironmentObject var showSubToolbar: ShowSubToolbar
     @Binding private var selectedWebView: MarkupWKWebView?
     private var markupDelegate: MarkupDelegate?
+    
     public var body: some View {
-        if showSubToolbar.type == .link {
-            LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                .onAppear {
-                    markupDelegate?.markupToolbarAppeared(type: .link)
-                }
-                .onDisappear {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                }
+        VStack(spacing: 0) {
+            if showSubToolbar.type == .link {
+                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    .onAppear {
+                        markupDelegate?.markupToolbarAppeared(type: .link)
+                    }
+                    .onDisappear {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    }
+            }
+            if showSubToolbar.type == .image {
+                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    .onAppear {
+                        markupDelegate?.markupToolbarAppeared(type: .image)
+                    }
+                    .onDisappear {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    }
+            }
+            if showSubToolbar.type == .table {
+                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                    .onAppear {
+                        markupDelegate?.markupToolbarAppeared(type: .table)
+                    }
+                    .onDisappear {
+                        markupDelegate?.markupToolbarDisappeared()
+                        selectedWebView?.becomeFirstResponder()
+                    }
+            }
+            Divider()
         }
-        if showSubToolbar.type == .image {
-            ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                .onAppear {
-                    markupDelegate?.markupToolbarAppeared(type: .image)
-                }
-                .onDisappear {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                }
-        }
-        if showSubToolbar.type == .table {
-            TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
-                .onAppear {
-                    markupDelegate?.markupToolbarAppeared(type: .table)
-                }
-                .onDisappear {
-                    markupDelegate?.markupToolbarDisappeared()
-                    selectedWebView?.becomeFirstResponder()
-                }
-        }
+        
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate) {
+    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate?) {
         self.selectionState = selectionState
         _selectedWebView = selectedWebView
         self.markupDelegate = markupDelegate

@@ -10,6 +10,8 @@ import SwiftUI
 
 /// The TextField used in the ImageToolbar and LinkToolbar.
 public struct ToolbarTextField: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let label: String!
     let placeholder: String!
     @Binding var text: String
@@ -18,26 +20,55 @@ public struct ToolbarTextField: View {
     let validationHandler: (()->Bool)?
     
     public var body: some View {
-        VStack(spacing: 2) {
-            Text(label)
-                .font(.system(size: 10, weight: .light))
+        switch toolbarPreference.style {
+        case .labeled:
+            VStack(spacing: 2) {
+                Text(label)
+                    .font(.system(size: 10, weight: .light))
+                TextField(
+                    placeholder,
+                    text: $text,
+                    onEditingChanged: isEditingHandler ?? { _ in },
+                    onCommit: commitHandler ?? { }
+                )
+                .frame(height: height)
+                .opacity(1)
+                .textFieldStyle(PlainTextFieldStyle())
+                .padding(.horizontal, 8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3)
+                        .stroke(Color(UIColor.systemGray5))
+                )
+                .background(
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(UIColor.systemBackground))
+                )
+                .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+            }
+        case .compact:
             TextField(
                 placeholder,
                 text: $text,
                 onEditingChanged: isEditingHandler ?? { _ in },
                 onCommit: commitHandler ?? { }
             )
-            .background(Color(UIColor.systemBackground))
+            .frame(height: height)
             .opacity(1)
             .textFieldStyle(PlainTextFieldStyle())
-            .padding([.leading, .trailing], 8)
-            .frame(height: 30)
-            .cornerRadius(6)
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(UIColor.systemGray5)))
+            .padding(.horizontal, 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(Color(UIColor.systemGray5))
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color(UIColor.systemBackground))
+            )
             .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
             .autocapitalization(.none)
             .disableAutocorrection(true)
-            .background(Color(UIColor.systemBackground))
         }
     }
     

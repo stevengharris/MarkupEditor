@@ -10,6 +10,7 @@ import SwiftUI
 
 /// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var initialSrc: String?
@@ -33,56 +34,136 @@ public struct ImageToolbar: View {
     @State private var endedEditing: Bool = false
     
     public var body: some View {
-        VStack(spacing: 2) {
-            HStack(alignment: .bottom) {
-                GeometryReader { geometry in
-                    HStack {
-                        ToolbarTextField(
-                            label: "Image URL",
-                            placeholder: "Enter URL",
-                            text: $src,
-                            commitHandler: { save() },
-                            validationHandler: { src.isValidURL }
-                        )
-                        .frame(width: geometry.size.width * 0.7)
-                        ToolbarTextField(
-                            label: "Description",
-                            placeholder: "Enter Description",
-                            text: $alt
-                        )
-                        .frame(width: geometry.size.width * 0.3)
+        Group {
+            switch toolbarPreference.style {
+            case .compact:
+                /*
+                 HStack(alignment: .center) {
+                     GeometryReader { geometry in
+                         HStack {
+                             ToolbarTextField(
+                                 label: "Link URL",
+                                 placeholder: "Enter Link URL",
+                                 text: $href,
+                                 commitHandler: { save() },
+                                 validationHandler: { href.isValidURL }
+                             )
+                             .frame(width: geometry.size.width * 0.7)
+                             ToolbarTextField(
+                                 label: "Text",
+                                 placeholder: "No text linked",
+                                 text: $link
+                             )
+                             .frame(width: geometry.size.width * 0.3)
+                             .disabled(true)
+                         }
+                         .frame(height: geometry.size.height)
+                     }
+                     .padding([.trailing], 8)
+                     Divider()
+                     LabeledToolbar(label: Text("Delete")) {
+                         ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
+                             DeleteLink()
+                         }
+                     }
+                     .disabled(!selectionState.isInLink)
+                     Divider()
+                     ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                         .disabled(!canBeSaved())
+                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                     ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                 }
+                 .frame(height: 28)
+                 */
+                HStack(alignment: .center) {
+                    GeometryReader { geometry in
+                        HStack {
+                            ToolbarTextField(
+                                label: "Image URL",
+                                placeholder: "Enter Image URL",
+                                text: $src,
+                                commitHandler: { save() },
+                                validationHandler: { src.isValidURL }
+                            )
+                            .frame(width: geometry.size.width * 0.7)
+                            ToolbarTextField(
+                                label: "Description",
+                                placeholder: "Enter Description",
+                                text: $alt
+                            )
+                            .frame(width: geometry.size.width * 0.3)
+                        }
+                        .frame(height: geometry.size.height)
                     }
-                    .padding([.top], 2)
-                }
-                .padding([.trailing], 8)
-                Divider()
-                LabeledToolbar(label: Text("Scale")) {
-                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                        Text("\(scale)%")
-                            .frame(width: 50, alignment: .trailing)
+                    .padding([.trailing], 8)
+                    Divider()
+                    LabeledToolbar(label: Text("Scale")) {
+                        Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
+                            Text("\(scale)%")
+                                .frame(width: 50, height: 28, alignment: .trailing)
+                        }
                     }
-                    .scaledToFit()
+                    Divider()
+                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                        .disabled(!src.isEmpty && !src.isValidURL)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
-                Divider()
-                ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                    .disabled(!src.isEmpty && !src.isValidURL)
-                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                .frame(height: 28)
+            case .labeled:
+                HStack(alignment: .bottom) {
+                    GeometryReader { geometry in
+                        HStack {
+                            ToolbarTextField(
+                                label: "Image URL",
+                                placeholder: "Enter Image URL",
+                                text: $src,
+                                commitHandler: { save() },
+                                validationHandler: { src.isValidURL }
+                            )
+                            .frame(width: geometry.size.width * 0.7)
+                            ToolbarTextField(
+                                label: "Description",
+                                placeholder: "Enter Description",
+                                text: $alt
+                            )
+                            .frame(width: geometry.size.width * 0.3)
+                        }
+                        .padding([.top], 2)
+                    }
+                    .padding([.trailing], 8)
+                    Divider()
+                    LabeledToolbar(label: Text("Scale")) {
+                        Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
+                            Text("\(scale)%")
+                                .frame(width: 50, height: 28, alignment: .trailing)
+                        }
+                    }
+                    .padding([.bottom], 3)
+                    Divider()
+                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                        .padding([.bottom], 4)
+                        .disabled(!src.isEmpty && !src.isValidURL)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                        .padding([.bottom], 4)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                }
+                .frame(height: 50)
             }
-            .onChange(of: selectionState.src, perform: { value in
-                src = selectionState.src ?? ""
-                alt = selectionState.alt ?? ""
-                scale = selectionState.scale ?? 100
-                previewedSrc = src
-                previewedAlt = alt
-                previewedScale = scale
-            })
-            Divider()
         }
-        .frame(height: 50)
-        .padding([.leading, .trailing], 8)
-        .padding([.top, .bottom], 2)
+        .onChange(of: selectionState.src, perform: { value in
+            src = selectionState.src ?? ""
+            alt = selectionState.alt ?? ""
+            scale = selectionState.scale ?? 100
+            previewedSrc = src
+            previewedAlt = alt
+            previewedScale = scale
+        })
+        .padding(.horizontal, 8)
+        .padding(.vertical, 2)
         .background(Blur(style: .systemUltraThinMaterial))
     }
     

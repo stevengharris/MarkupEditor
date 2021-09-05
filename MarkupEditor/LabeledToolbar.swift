@@ -10,6 +10,7 @@ import SwiftUI
 
 /// The standard way to display one of the toolbars with a label above. Typically ToobarImageButtons are provided as its content.
 public struct LabeledToolbar<Content: View>: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
     let label: Text
     let content: Content
     
@@ -19,10 +20,21 @@ public struct LabeledToolbar<Content: View>: View {
     }
     
     public var body: some View {
-        VStack(spacing: 2) {
-            label
-                .font(.system(size: 10, weight: .light))
-            HStack(alignment: .bottom) {
+        switch toolbarPreference.style {
+        case .labeled:
+            VStack(spacing: 2) {
+                label
+                    .font(.system(size: 10, weight: .light))
+                HStack (alignment: .bottom) {
+                    content
+                }
+                .padding([.bottom], 1)
+                // The following fixes a problem with the individual buttons only being partially
+                // tappable, while preserving the .onHover behavior.
+                .gesture(TapGesture(), including: .subviews)
+            }
+        case .compact:
+            HStack(alignment: .center) {
                 content
             }
             // The following fixes a problem with the individual buttons only being partially

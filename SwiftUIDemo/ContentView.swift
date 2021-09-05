@@ -19,6 +19,7 @@ struct ContentView: View {
     @StateObject var selectionState = SelectionState()
     @State var selectedWebView: MarkupWKWebView?
     private let showSubToolbar = ShowSubToolbar()
+    private let toolbarPreference = ToolbarPreference(style: .compact)
     @State private var rawText = NSAttributedString(string: "")
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
@@ -34,6 +35,8 @@ struct ContentView: View {
                         selectionState: selectionState,
                         selectedWebView: $selectedWebView,
                         fileToolbarDelegate: self)))
+                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+            Divider()
             MarkupWebView(selectionState: selectionState, markupDelegate: self, initialContent: demoContent())
                 .overlay(
                     SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self),
@@ -54,6 +57,7 @@ struct ContentView: View {
         }
         .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .environmentObject(showSubToolbar)
+        .environmentObject(toolbarPreference)
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {

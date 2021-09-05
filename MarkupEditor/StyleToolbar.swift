@@ -10,6 +10,8 @@ import SwiftUI
 
 /// The toolbar for setting the paragraph style.
 public struct StyleToolbar: View {
+    @EnvironmentObject private var toolbarPreference: ToolbarPreference
+    var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     @State private var hoverLabel: Text = Text("Paragraph Style")
@@ -39,7 +41,7 @@ public struct StyleToolbar: View {
                     .frame(width: 88, height: 20, alignment: .center)
             }
             .menuStyle(BorderlessButtonMenuStyle())
-            .frame(width: 88, height: 30)
+            .frame(width: 88, height: height)
             .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,

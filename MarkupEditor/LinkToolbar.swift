@@ -10,6 +10,7 @@ import SwiftUI
 
 /// The toolbar for creating and editing hyperlinks.
 public struct LinkToolbar: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
     @Binding private var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     private var initialHref: String?
@@ -23,61 +24,106 @@ public struct LinkToolbar: View {
     private var argHRef: String? { href.isEmpty ? nil : href }
     
     public var body: some View {
-        VStack(spacing: 2) {
-            HStack(alignment: .bottom) {
-                GeometryReader { geometry in
-                    HStack {
-                        ToolbarTextField(
-                            label: "Link URL",
-                            placeholder: "Enter URL",
-                            text: $href,
-                            commitHandler: { save() },
-                            validationHandler: { href.isValidURL }
-                        )
-                        .frame(width: geometry.size.width * 0.7)
-                        ToolbarTextField(
-                            label: "Text",
-                            placeholder: "No text linked",
-                            text: $link
-                        )
-                        .frame(width: geometry.size.width * 0.3)
-                        .disabled(true)
+        Group {
+            switch toolbarPreference.style {
+            case .compact:
+                HStack(alignment: .center) {
+                    GeometryReader { geometry in
+                        HStack {
+                            ToolbarTextField(
+                                label: "Link URL",
+                                placeholder: "Enter Link URL",
+                                text: $href,
+                                commitHandler: { save() },
+                                validationHandler: { href.isValidURL }
+                            )
+                            .frame(width: geometry.size.width * 0.7)
+                            ToolbarTextField(
+                                label: "Text",
+                                placeholder: "No linked text",
+                                text: $link
+                            )
+                            .frame(width: geometry.size.width * 0.3)
+                            .disabled(true)
+                        }
+                        .frame(height: geometry.size.height)
                     }
-                    .padding([.top], 2)
-                }
-                .padding([.trailing], 8)
-                Divider()
-                LabeledToolbar(label: Text("Delete")) {
-                    ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                        DeleteLink()
+                    .padding([.trailing], 8)
+                    Divider()
+                    LabeledToolbar(label: Text("Delete")) {
+                        ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
+                            DeleteLink()
+                                .frame(width: 28, height: 28)
+                        }
                     }
+                    .disabled(!selectionState.isInLink)
+                    Divider()
+                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                        .disabled(!canBeSaved())
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
-                .disabled(!selectionState.isInLink)
-                Divider()
-                ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                    .disabled(!canBeSaved())
-                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                    .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                .frame(height: 28)
+            case .labeled:
+                HStack(alignment: .bottom) {
+                    GeometryReader { geometry in
+                        HStack {
+                            ToolbarTextField(
+                                label: "Link URL",
+                                placeholder: "Enter Link URL",
+                                text: $href,
+                                commitHandler: { save() },
+                                validationHandler: { href.isValidURL }
+                            )
+                            .frame(width: geometry.size.width * 0.7)
+                            ToolbarTextField(
+                                label: "Linked Text",
+                                placeholder: "No linked text",
+                                text: $link
+                            )
+                            .frame(width: geometry.size.width * 0.3)
+                            .disabled(true)
+                        }
+                        .frame(height: geometry.size.height)
+                    }
+                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 2, trailing: 8))
+                    Divider()
+                    LabeledToolbar(label: Text("Delete")) {
+                        ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
+                            DeleteLink()
+                        }
+                    }
+                    .padding([.bottom], 3)
+                    .disabled(!selectionState.isInLink)
+                    Divider()
+                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                        .padding([.bottom], 4)
+                        .disabled(!canBeSaved())
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                        .padding([.bottom], 4)
+                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
+                }
+                .frame(height: 50)
             }
-            .onChange(of: selectionState.selection, perform: { value in
-                print("Alink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
-                href = selectionState.href ?? ""
-                link = selectionState.link ?? selectionState.selection ?? ""
-                previewedHref = href
-            })
-            .onChange(of: selectionState.href, perform: { value in
-                print("Blink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
-                href = selectionState.href ?? ""
-                link = selectionState.link ?? selectionState.selection ?? ""
-                previewedHref = href
-            })
-            Divider()
         }
-        .frame(height: 50)
-        .padding([.leading, .trailing], 8)
-        .padding([.top, .bottom], 2)
+        .onChange(of: selectionState.selection, perform: { value in
+            print("Alink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            href = selectionState.href ?? ""
+            link = selectionState.link ?? selectionState.selection ?? ""
+            previewedHref = href
+        })
+        .onChange(of: selectionState.href, perform: { value in
+            print("Blink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            href = selectionState.href ?? ""
+            link = selectionState.link ?? selectionState.selection ?? ""
+            previewedHref = href
+        })
+        .padding(.horizontal, 8)
+        .padding(.vertical, 2)
         .background(Blur(style: .systemUltraThinMaterial))
+        
     }
     
     private func canBeSaved() -> Bool {

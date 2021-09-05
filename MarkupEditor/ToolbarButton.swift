@@ -16,6 +16,8 @@ import SwiftUI
 /// but the Image passed-in using ViewBuilder should be set using Image.forToolbar() to have the image
 /// sizes match.
 public struct ToolbarImageButton<Content: View>: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let image: Content
     let action: ()->Void
     @Binding var active: Bool
@@ -25,7 +27,7 @@ public struct ToolbarImageButton<Content: View>: View {
     public var body: some View {
         Button(action: action, label: {
             image
-                .frame(width: 30, height: 30)
+                .frame(width: height, height: height)
         })
         .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
@@ -47,6 +49,8 @@ public struct ToolbarImageButton<Content: View>: View {
 }
 
 public struct ToolbarTextButton: View {
+    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let title: String
     let action: ()->Void
     let width: CGFloat?
@@ -56,8 +60,8 @@ public struct ToolbarTextButton: View {
     public var body: some View {
         Button(action: action, label: {
             Text(title)
-                .frame(width: width, height: 30)
-                .padding([.leading, .trailing], 8)
+                .frame(width: width, height: height)
+                .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(
                         cornerRadius: 3,
@@ -89,13 +93,19 @@ struct ToolbarButtonStyle: ButtonStyle {
         configuration.label
             .cornerRadius(3)
             .foregroundColor(active ? Color(UIColor.systemBackground) : activeColor)
-            .background(
+            .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,
                     style: .continuous
                 )
                 .stroke(Color.accentColor)
-                .background(active ? activeColor: Color(UIColor.systemBackground))
+            )
+            .background(
+                RoundedRectangle(
+                    cornerRadius: 3,
+                    style: .continuous
+                )
+                .fill(active ? activeColor: Color(UIColor.systemBackground))
             )
     }
 }
