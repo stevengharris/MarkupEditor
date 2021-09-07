@@ -51,10 +51,16 @@ public struct LinkToolbar: View {
                     .padding([.trailing], 8)
                     Divider()
                     LabeledToolbar(label: Text("Delete")) {
-                        ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                            DeleteLink()
-                                .frame(width: 28, height: 28)
-                        }
+                        ToolbarImageButton(
+                                systemName: "link",
+                                action: { selectedWebView?.insertLink(nil) }
+                            ).overlay(
+                                Image(systemName: "xmark")
+                                    .foregroundColor(Color.red)
+                                    .font(Font.system(size: 8).weight(.bold))
+                                    .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
+                                    .zIndex(1)
+                            )
                     }
                     .disabled(!selectionState.isInLink)
                     Divider()
@@ -90,9 +96,16 @@ public struct LinkToolbar: View {
                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 2, trailing: 8))
                     Divider()
                     LabeledToolbar(label: Text("Delete")) {
-                        ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                            DeleteLink()
-                        }
+                        ToolbarImageButton(
+                            systemName: "link",
+                            action: { selectedWebView?.insertLink(nil) }
+                        ).overlay(
+                            Image(systemName: "xmark")
+                                .foregroundColor(Color.red)
+                                .font(Font.system(size: 8).weight(.bold))
+                                .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
+                                .zIndex(1)
+                        )
                     }
                     .padding([.bottom], 3)
                     .disabled(!selectionState.isInLink)

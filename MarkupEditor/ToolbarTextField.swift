@@ -11,7 +11,6 @@ import SwiftUI
 /// The TextField used in the ImageToolbar and LinkToolbar.
 public struct ToolbarTextField: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let label: String!
     let placeholder: String!
     @Binding var text: String
@@ -31,7 +30,7 @@ public struct ToolbarTextField: View {
                     onEditingChanged: isEditingHandler ?? { _ in },
                     onCommit: commitHandler ?? { }
                 )
-                .frame(height: height)
+                .frame(height: toolbarPreference.buttonHeight())
                 .opacity(1)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.horizontal, 8)
@@ -54,7 +53,7 @@ public struct ToolbarTextField: View {
                 onEditingChanged: isEditingHandler ?? { _ in },
                 onCommit: commitHandler ?? { }
             )
-            .frame(height: height)
+            .frame(height: toolbarPreference.buttonHeight())
             .opacity(1)
             .textFieldStyle(PlainTextFieldStyle())
             .padding(.horizontal, 8)

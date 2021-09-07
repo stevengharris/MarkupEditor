@@ -11,7 +11,6 @@ import SwiftUI
 /// The toolbar for setting the paragraph style.
 public struct StyleToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     @ObservedObject private var selectionState: SelectionState
     @Binding private var selectedWebView: MarkupWKWebView?
     @State private var hoverLabel: Text = Text("Paragraph Style")
@@ -38,10 +37,10 @@ public struct StyleToolbar: View {
                 }
             } label: {
                 Text(selectionState.style.name)
-                    .frame(width: 88, height: 20, alignment: .center)
+                    .frame(width: 88, height: toolbarPreference.buttonHeight(), alignment: .center)
             }
             .menuStyle(BorderlessButtonMenuStyle())
-            .frame(width: 88, height: height)
+            .frame(width: 88, height: toolbarPreference.buttonHeight())
             .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,
@@ -52,33 +51,29 @@ public struct StyleToolbar: View {
             .disabled(selectionState.style == .Undefined)
             Divider()
             ToolbarImageButton(
+                systemName: "list.bullet",
                 action: { selectedWebView?.toggleListItem(type: .UL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
-            ) {
-                Image.forToolbar(systemName: "list.bullet")
-            }
+            )
             ToolbarImageButton(
+                systemName: "list.number",
                 action: { selectedWebView?.toggleListItem(type: .OL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
-            ) {
-                Image.forToolbar(systemName: "list.number")
-            }
+            )
             ToolbarImageButton(
+                systemName: "increase.quotelevel",
                 action: { selectedWebView?.increaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
-            ) {
-                Image.forToolbar(systemName: "increase.quotelevel")
-            }
+            )
             ToolbarImageButton(
+                systemName: "decrease.quotelevel",
                 action: { selectedWebView?.decreaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
-            ) {
-                Image.forToolbar(systemName: "decrease.quotelevel")
-            }
+            )
             .disabled(!selectionState.quote)
         }
     }

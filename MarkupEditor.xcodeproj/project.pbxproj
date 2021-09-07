@@ -296,11 +296,11 @@
 			isa = PBXGroup;
 			children = (
 				AA652A13260E9A00000674B7 /* MarkupCoordinator.swift */,
+				AA5EEF04264061B800B111A1 /* Image+Extensions.swift */,
 				AA1B81A62629E63400891FFB /* MarkupDelegate.swift */,
 				AA652A11260E9A00000674B7 /* MarkupWebView.swift */,
 				AA652A15260E9A00000674B7 /* MarkupWKWebView.swift */,
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
-				AA5EEF04264061B800B111A1 /* Image+Extensions.swift */,
 				AA652A3B260E9B55000674B7 /* Selection */,
 				AA652A38260E9B24000674B7 /* Toolbars */,
 			);

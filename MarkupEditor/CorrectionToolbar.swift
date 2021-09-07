@@ -17,17 +17,15 @@ public struct CorrectionToolbar: View {
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
+                systemName: "arrow.uturn.backward",
                 action: { selectedWebView?.undo() },
                 onHover: { over in hoverLabel = Text(over ? "Undo" : "Correction") }
-            ) {
-                Image.forToolbar(systemName: "arrow.uturn.backward")
-            }
+            )
             ToolbarImageButton(
+                systemName: "arrow.uturn.forward",
                 action: { selectedWebView?.redo() },
                 onHover: { over in hoverLabel = Text(over ? "Redo" : "Correction") }
-            ) {
-                Image.forToolbar(systemName: "arrow.uturn.forward")
-            }
+            )
         }
     }
 

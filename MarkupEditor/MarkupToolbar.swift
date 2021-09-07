@@ -19,7 +19,6 @@ import SwiftUI
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    private var height: CGFloat { toolbarPreference.style == .compact ? 30 : 47 }
     @Binding public var selectedWebView: MarkupWKWebView?
     @ObservedObject private var selectionState: SelectionState
     @State var markupDelegate: MarkupDelegate?
@@ -29,7 +28,7 @@ public struct MarkupToolbar: View {
     private var rightToolbar: AnyView?
     
     public var body: some View {
-        HStack { //}(alignment: .bottom) {
+        HStack {
             if leftToolbar != nil {
                 leftToolbar
                 Divider()
@@ -50,7 +49,7 @@ public struct MarkupToolbar: View {
             }
             Spacer()                // Push everything to the left
         }
-        .frame(height: height)
+        .frame(height: toolbarPreference.height())
         .disabled(selectedWebView == nil)
         .background(Color(UIColor.systemBackground))
     }

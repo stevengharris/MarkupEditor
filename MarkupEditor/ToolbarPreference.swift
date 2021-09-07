@@ -26,16 +26,31 @@ public class ToolbarPreference: ObservableObject {
         self.style = style
     }
     
+    public func height() -> CGFloat {
+        switch style {
+        case .compact:
+            return 30
+        case .labeled:
+            return 47
+        }
+    }
+    
+    public func buttonHeight() -> CGFloat {
+        switch style {
+        case .compact:
+            return 24
+        case .labeled:
+            return 30
+        }
+    }
+    
+    public static func symbolScale(for style: Style) -> UIImage.SymbolScale {
+        switch style {
+        case .compact:
+            return .medium
+        case .labeled:
+            return .large
+        }
+    }
+    
 }
-
-//public struct StylePreferenceKey: PreferenceKey {
-//
-//
-//
-//    public static var defaultValue: style = .labeled
-//
-//    public static func reduce(value: inout style, nextValue: ()->style) {
-//        value = nextValue()
-//    }
-//
-//}

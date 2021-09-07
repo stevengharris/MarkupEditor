@@ -33,7 +33,8 @@ class ViewController: UIViewController {
     /// Which MarkupWKWebView we have selected and which the MarkupToolbar acts on
     @Published var selectedWebView: MarkupWKWebView?
     /// Identify which type of SubToolbar is showing, or nil if none
-    let showSubToolbar = ShowSubToolbar()
+    private let showSubToolbar = ShowSubToolbar()
+    private let toolbarPreference = ToolbarPreference(style: .compact)
     /// A binding of selectedWebView used by the MarkupToolbar and its coordinator.
     ///
     /// Since MarkupToolbar uses a SwiftUI-style binding to the selectedWebView, we need to use one
@@ -54,14 +55,27 @@ class ViewController: UIViewController {
     func initializeToolbar() {
         toolbarHolder = UIView()
         // We need to wrap MarkupToolbar in AnyView so we can set its environment
-        toolbar = AnyView(MarkupToolbar(
-            selectionState: selectionState,
-            selectedWebView: selectedWebViewBinding,
-            markupDelegate: self,
-            leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
-        ).environmentObject(showSubToolbar))
+        toolbar = AnyView(
+            MarkupToolbar(
+                selectionState: selectionState,
+                selectedWebView: selectedWebViewBinding,
+                markupDelegate: self,
+                leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
+            )
+            .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+            .environmentObject(showSubToolbar)
+            .environmentObject(toolbarPreference)
+        )
         add(swiftUIView: toolbar, to: toolbarHolder)
-        subToolbar = AnyView(SubToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, markupDelegate: self).environmentObject(showSubToolbar))
+        subToolbar = AnyView(
+            SubToolbar(
+                selectionState: selectionState,
+                selectedWebView: selectedWebViewBinding,
+                markupDelegate: self
+            )
+            .environmentObject(showSubToolbar)
+            .environmentObject(toolbarPreference)
+        )
     }
     
     func initializeStackView() {

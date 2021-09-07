@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-/// A 30x30 button typically used with a system image in the toolbar.
+/// A square button typically used with a system image in the toolbar.
 ///
 /// These RoundedRect buttons show text and outline in activeColor (.accentColor by default), with the
 /// backgroundColor of UIColor.systemBackground. When active, the text and background switch.
@@ -17,8 +17,8 @@ import SwiftUI
 /// sizes match.
 public struct ToolbarImageButton<Content: View>: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let image: Content
+    let systemName: String?
     let action: ()->Void
     @Binding var active: Bool
     let activeColor: Color
@@ -26,8 +26,8 @@ public struct ToolbarImageButton<Content: View>: View {
     
     public var body: some View {
         Button(action: action, label: {
-            image
-                .frame(width: height, height: height)
+            label()
+                .frame(width: toolbarPreference.buttonHeight(), height: toolbarPreference.buttonHeight())
         })
         .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
@@ -38,19 +38,43 @@ public struct ToolbarImageButton<Content: View>: View {
         .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
     }
 
+    /// Initialize a button using content. See the extension where Content == EmptyView for the systemName style initialization.
     public init(action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil, @ViewBuilder content: ()->Content) {
+        self.systemName = nil
         self.image = content()
         self.action = action
         _active = active
         self.activeColor = activeColor
         self.onHover = onHover
     }
+    
+    private func label() -> AnyView {
+        // Return either the image derived from content or the properly-sized systemName image based on style
+        if systemName == nil {
+            return AnyView(image)
+        } else {
+            return AnyView(Image.forToolbar(systemName: systemName!, style: toolbarPreference.style))
+        }
+    }
 
+}
+
+extension ToolbarImageButton where Content == EmptyView {
+    
+    /// Initialize a button using a systemImage which will override content, even if passed-in. Intended for use without a content block.
+    public init(systemName: String, action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil, @ViewBuilder content: ()->Content = { EmptyView() }) {
+        self.systemName = systemName
+        self.image = content()
+        self.action = action
+        _active = active
+        self.activeColor = activeColor
+        self.onHover = onHover
+    }
+    
 }
 
 public struct ToolbarTextButton: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    private var height: CGFloat { toolbarPreference.style == .compact ? 24 : 30 }
     let title: String
     let action: ()->Void
     let width: CGFloat?
@@ -60,7 +84,7 @@ public struct ToolbarTextButton: View {
     public var body: some View {
         Button(action: action, label: {
             Text(title)
-                .frame(width: width, height: height)
+                .frame(width: width, height: toolbarPreference.buttonHeight())
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(

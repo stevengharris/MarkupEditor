@@ -19,23 +19,20 @@ struct FileToolbar: View {
     var body: some View {
         LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
+                systemName: "plus",
                 action: { fileToolbarDelegate?.newDocument(handler: nil) },
                 onHover: { over in hoverLabel = Text(over ? "New" : "File") }
-            ) {
-                Image.forToolbar(systemName: "plus")
-            }
+            )
             ToolbarImageButton(
+                systemName: "newspaper",
                 action: { fileToolbarDelegate?.existingDocument(handler: nil) },
                 onHover: { over in hoverLabel = Text(over ? "Existing" : "File") }
-            ) {
-                Image.forToolbar(systemName: "newspaper")
-            }
+            )
             ToolbarImageButton(
+                systemName: "chevron.left.slash.chevron.right",
                 action: { fileToolbarDelegate?.rawDocument() },
                 onHover: { over in hoverLabel = Text(over ? "Raw HTML" : "File") }
-            ) {
-                Image.forToolbar(systemName: "chevron.left.slash.chevron.right")
-            }
+            )
         }
     }
 

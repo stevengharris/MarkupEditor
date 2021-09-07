@@ -8,21 +8,6 @@
 
 import SwiftUI
 
-//MARK:- Link Icons
-
-struct DeleteLink: View {
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            Image.forToolbar(systemName: "link")
-            Image(systemName: "xmark")
-                .foregroundColor(Color.red)
-                .font(Font.system(size: 8).weight(.bold))
-                .offset(CGSize(width: -8, height: 2))
-                .zIndex(1)
-        }
-    }
-}
-
 //MARK:- Table Icons
 
 struct TableCell: View {

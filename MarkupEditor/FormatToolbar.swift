@@ -16,54 +16,47 @@ public struct FormatToolbar: View {
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
+                systemName: "bold",
                 action: { selectedWebView?.bold() },
                 active: $selectionState.bold,
                 onHover: { over in hoverLabel = Text(over ? "Bold" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "bold")
-            }
+            )
             ToolbarImageButton (
+                systemName: "italic",
                 action: { selectedWebView?.italic() },
                 active: $selectionState.italic,
                 onHover: { over in hoverLabel = Text(over ? "Italic" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "italic")
-            }
+            )
             ToolbarImageButton(
+                systemName: "underline",
                 action: { selectedWebView?.underline() },
                 active: $selectionState.underline,
                 onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "underline")
-            }
+            )
             ToolbarImageButton(
+                systemName: "curlybraces",
                 action: { selectedWebView?.code() },
                 active: $selectionState.code,
                 onHover: { over in hoverLabel = Text(over ? "Code" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "curlybraces")
-            }
+            )
             ToolbarImageButton(
+                systemName: "strikethrough",
                 action: { selectedWebView?.strike() },
                 active: $selectionState.strike,
                 onHover: { over in hoverLabel = Text(over ? "Strikethrough" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "strikethrough")
-            }
+            )
             ToolbarImageButton(
+                systemName: "textformat.subscript",
                 action: { selectedWebView?.subscriptText() },
                 active: $selectionState.sub,
                 onHover: { over in hoverLabel = Text(over ? "Subscript" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "textformat.subscript")
-            }
+            )
             ToolbarImageButton(
+                systemName: "textformat.superscript",
                 action: { selectedWebView?.superscript() },
                 active: $selectionState.sup,
                 onHover: { over in hoverLabel = Text(over ? "Superscript" : "Text Format") }
-            ) {
-                Image.forToolbar(systemName: "textformat.superscript")
-            }
+            )
         }
     }
     

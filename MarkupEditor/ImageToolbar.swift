@@ -37,45 +37,6 @@ public struct ImageToolbar: View {
         Group {
             switch toolbarPreference.style {
             case .compact:
-                /*
-                 HStack(alignment: .center) {
-                     GeometryReader { geometry in
-                         HStack {
-                             ToolbarTextField(
-                                 label: "Link URL",
-                                 placeholder: "Enter Link URL",
-                                 text: $href,
-                                 commitHandler: { save() },
-                                 validationHandler: { href.isValidURL }
-                             )
-                             .frame(width: geometry.size.width * 0.7)
-                             ToolbarTextField(
-                                 label: "Text",
-                                 placeholder: "No text linked",
-                                 text: $link
-                             )
-                             .frame(width: geometry.size.width * 0.3)
-                             .disabled(true)
-                         }
-                         .frame(height: geometry.size.height)
-                     }
-                     .padding([.trailing], 8)
-                     Divider()
-                     LabeledToolbar(label: Text("Delete")) {
-                         ToolbarImageButton(action: { selectedWebView?.insertLink(nil) }) {
-                             DeleteLink()
-                         }
-                     }
-                     .disabled(!selectionState.isInLink)
-                     Divider()
-                     ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                         .disabled(!canBeSaved())
-                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                     ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                 }
-                 .frame(height: 28)
-                 */
                 HStack(alignment: .center) {
                     GeometryReader { geometry in
                         HStack {
