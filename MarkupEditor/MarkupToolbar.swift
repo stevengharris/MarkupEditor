@@ -51,7 +51,6 @@ public struct MarkupToolbar: View {
         }
         .frame(height: toolbarPreference.height())
         .disabled(selectedWebView == nil)
-        .background(Color(UIColor.systemBackground))
     }
     
     public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
