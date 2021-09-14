@@ -116,7 +116,7 @@ struct ToolbarButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .cornerRadius(3)
-            .foregroundColor(active ? Color.clear : activeColor)
+            .foregroundColor(active ? Color(UIColor.systemBackground) : activeColor)
             .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,
