@@ -3,7 +3,6 @@ body {
     font: -apple-system-body;
     caret-color: red;   /* Helps with debugging since should not appear */
     font-size: 1.0em;
-    padding: 0 20px 20px 20px;
 }
 
 #editor {
