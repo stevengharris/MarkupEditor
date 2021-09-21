@@ -20,8 +20,8 @@ public enum TableDirection {
 /// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    @Binding private var selectedWebView: MarkupWKWebView?
-    @ObservedObject private var selectionState: SelectionState
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     @State private var showTableSizer: Bool = false
     @State private var tappedInTableSizer: Bool = false
     @State private var rows: Int = 0
@@ -45,7 +45,7 @@ public struct TableToolbar: View {
                             }
                             .onDisappear() {
                                 if tappedInTableSizer && rows > 0 && cols > 0 {
-                                    selectedWebView?.insertTable(rows: rows, cols: cols)
+                                    observedWebView.selectedWebView?.insertTable(rows: rows, cols: cols)
                                 }
                             }
                     }
@@ -53,35 +53,35 @@ public struct TableToolbar: View {
                 Divider()
                 LabeledToolbar(label: addHoverLabel) {
                     ToolbarImageButton(
-                        action: { selectedWebView?.addHeader() },
+                        action: { observedWebView.selectedWebView?.addHeader() },
                         onHover: { over in addHoverLabel = Text(over ? "Add Header" : "Add") }
                     ) {
                         AddHeader(rows: 2, cols: 3)
                     }
                     .disabled(!selectionState.isInTable || selectionState.header)
                     ToolbarImageButton(
-                        action: { selectedWebView?.addRow(.after) },
+                        action: { observedWebView.selectedWebView?.addRow(.after) },
                         onHover: { over in addHoverLabel = Text(over ? "Add Row Below" : "Add") }
                     ) {
                         AddRow(direction: .after)
                     }
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
-                        action: { selectedWebView?.addRow(.before) },
+                        action: { observedWebView.selectedWebView?.addRow(.before) },
                         onHover: { over in addHoverLabel = Text(over ? "Add Row Above" : "Add") }
                     ) {
                         AddRow(direction: .before)
                     }
                     .disabled(!selectionState.isInTable || selectionState.thead)
                     ToolbarImageButton(
-                        action: { selectedWebView?.addCol(.after) },
+                        action: { observedWebView.selectedWebView?.addCol(.after) },
                         onHover: { over in addHoverLabel = Text(over ? "Add Column After" : "Add") }
                     ) {
                         AddCol(direction: .after)
                     }
                     .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
                     ToolbarImageButton(
-                        action: { selectedWebView?.addCol(.before) },
+                        action: { observedWebView.selectedWebView?.addCol(.before) },
                         onHover: { over in addHoverLabel = Text(over ? "Add Column Before" : "Add") }
                     ) {
                         AddCol(direction: .before)
@@ -91,21 +91,21 @@ public struct TableToolbar: View {
                 Divider()
                 LabeledToolbar(label: deleteHoverLabel) {
                     ToolbarImageButton(
-                        action: { selectedWebView?.deleteRow() },
+                        action: { observedWebView.selectedWebView?.deleteRow() },
                         onHover: { over in deleteHoverLabel = Text(over ? "Delete Row" : "Delete") }
                     ) {
                         DeleteRow()
                     }
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
-                        action: { selectedWebView?.deleteCol() },
+                        action: { observedWebView.selectedWebView?.deleteCol() },
                         onHover: { over in deleteHoverLabel = Text(over ? "Delete Column" : "Delete") }
                     ) {
                         DeleteCol()
                     }
                     .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
                     ToolbarImageButton(
-                        action: { selectedWebView?.deleteTable() },
+                        action: { observedWebView.selectedWebView?.deleteTable() },
                         onHover: { over in deleteHoverLabel = Text(over ? "Delete Table" : "Delete") }
                     ) {
                         DeleteTable()
@@ -121,11 +121,6 @@ public struct TableToolbar: View {
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
         .background(Blur(style: .systemUltraThinMaterial))
-    }
-    
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
     }
     
 }

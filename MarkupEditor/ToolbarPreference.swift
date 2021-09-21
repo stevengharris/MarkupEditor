@@ -9,8 +9,6 @@ import SwiftUI
 
 public class ToolbarPreference: ObservableObject {
 
-    static let shared = ToolbarPreference()
-
     public enum Style {
         case compact
         case labeled

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA0BC27026F8F52500B90327 /* MarkupEnv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */; };
 		AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */; };
 		AA1749E12699128C005F0428 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
 		AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749E2269B8EC3005F0428 /* Blur.swift */; };
@@ -81,6 +82,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEnv.swift; sourceTree = "<group>"; };
 		AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowSubToolbar.swift; sourceTree = "<group>"; };
 		AA1749E2269B8EC3005F0428 /* Blur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blur.swift; sourceTree = "<group>"; };
 		AA1B80C82620B62000891FFB /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 			children = (
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
+				AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */,
 				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
@@ -545,6 +548,7 @@
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
 				AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */,
+				AA0BC27026F8F52500B90327 /* MarkupEnv.swift in Sources */,
 				AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
 				AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */,

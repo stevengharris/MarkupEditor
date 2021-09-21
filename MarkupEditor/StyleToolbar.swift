@@ -11,8 +11,8 @@ import SwiftUI
 /// The toolbar for setting the paragraph style.
 public struct StyleToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @ObservedObject private var selectionState: SelectionState
-    @Binding private var selectedWebView: MarkupWKWebView?
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     @State private var hoverLabel: Text = Text("Paragraph Style")
     
     public var body: some View {
@@ -29,7 +29,7 @@ public struct StyleToolbar: View {
             // problems per https://stackoverflow.com/a/67377002/8968411
             Menu {
                 ForEach(StyleContext.StyleCases.filter( { $0 != selectionState.style }) , id: \.self) { styleContext in
-                    Button(action: { selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
+                    Button(action: { observedWebView.selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
                         Text(styleContext.name)
                             .font(.system(size: styleContext.fontSize))
                     }
@@ -52,25 +52,25 @@ public struct StyleToolbar: View {
             Divider()
             ToolbarImageButton(
                 systemName: "list.bullet",
-                action: { selectedWebView?.toggleListItem(type: .UL) },
+                action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
             )
             ToolbarImageButton(
                 systemName: "list.number",
-                action: { selectedWebView?.toggleListItem(type: .OL) },
+                action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
                 active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
             )
             ToolbarImageButton(
                 systemName: "increase.quotelevel",
-                action: { selectedWebView?.increaseQuoteLevel() },
+                action: { observedWebView.selectedWebView?.increaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
             )
             ToolbarImageButton(
                 systemName: "decrease.quotelevel",
-                action: { selectedWebView?.decreaseQuoteLevel() },
+                action: { observedWebView.selectedWebView?.decreaseQuoteLevel() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
             )
@@ -78,15 +78,10 @@ public struct StyleToolbar: View {
         }
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
-    }
-    
 }
 
 struct StyleToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        StyleToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        StyleToolbar()
     }
 }

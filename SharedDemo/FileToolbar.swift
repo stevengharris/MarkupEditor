@@ -11,8 +11,6 @@ import MarkupEditor
 
 /// The toolbar to open new or existing files and to expose the raw HTML in the selectedWebView.
 struct FileToolbar: View {
-    @ObservedObject private var selectionState: SelectionState
-    @Binding private var selectedWebView: MarkupWKWebView?
     @State private var hoverLabel: Text = Text("File")
     private var fileToolbarDelegate: FileToolbarDelegate?
     
@@ -36,9 +34,7 @@ struct FileToolbar: View {
         }
     }
 
-    init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, fileToolbarDelegate: FileToolbarDelegate? = nil) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+    init(fileToolbarDelegate: FileToolbarDelegate? = nil) {
         self.fileToolbarDelegate = fileToolbarDelegate
     }
     
@@ -46,7 +42,7 @@ struct FileToolbar: View {
 
 struct FileToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        FileToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        FileToolbar()
     }
 }
 

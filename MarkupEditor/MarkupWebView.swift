@@ -18,7 +18,8 @@ import WebKit
 /// window.webkit.messageHandlers.markup.postMessage(message);
 public struct MarkupWebView: UIViewRepresentable {
     public typealias Coordinator = MarkupCoordinator
-    @ObservedObject private var selectionState: SelectionState
+    private var selectionState: SelectionState
+    private var observedWebView: ObservedWebView
     /// The initial HTML content to be shown in the MarkupWKWebView.
     private var initialContent: String
     public var markupDelegate: MarkupDelegate?
@@ -27,13 +28,15 @@ public struct MarkupWebView: UIViewRepresentable {
     private var userScripts: [String]?
     
     public init(
-        selectionState: SelectionState? = nil,
+        selectionState: SelectionState = SelectionState(),
+        observedWebView: ObservedWebView = ObservedWebView(),
         markupDelegate: MarkupDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         initialContent: String? = nil) {
-        self.selectionState = selectionState ?? SelectionState()
+        self.selectionState = selectionState
+        self.observedWebView = observedWebView
         self.markupDelegate = markupDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate

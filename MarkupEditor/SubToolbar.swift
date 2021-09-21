@@ -17,41 +17,41 @@ public struct SubToolbar: View {
         case table
     }
     
-    @ObservedObject private var selectionState: SelectionState
     @EnvironmentObject var showSubToolbar: ShowSubToolbar
-    @Binding private var selectedWebView: MarkupWKWebView?
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     private var markupDelegate: MarkupDelegate?
     
     public var body: some View {
         VStack(spacing: 0) {
             if showSubToolbar.type == .link {
-                LinkToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                LinkToolbar(selectionState: selectionState)
                     .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .link)
                     }
                     .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
+                        observedWebView.selectedWebView?.becomeFirstResponder()
                     }
             }
             if showSubToolbar.type == .image {
-                ImageToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                ImageToolbar(selectionState: selectionState)
                     .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .image)
                     }
                     .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
+                        observedWebView.selectedWebView?.becomeFirstResponder()
                     }
             }
             if showSubToolbar.type == .table {
-                TableToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                TableToolbar()
                     .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .table)
                     }
                     .onDisappear {
                         markupDelegate?.markupToolbarDisappeared()
-                        selectedWebView?.becomeFirstResponder()
+                        observedWebView.selectedWebView?.becomeFirstResponder()
                     }
             }
             Divider()
@@ -59,9 +59,7 @@ public struct SubToolbar: View {
         
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate?) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+    public init(markupDelegate: MarkupDelegate?) {
         self.markupDelegate = markupDelegate
     }
     

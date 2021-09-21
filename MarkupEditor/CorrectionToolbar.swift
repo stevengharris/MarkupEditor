@@ -10,34 +10,29 @@ import SwiftUI
 
 /// The toolbar for undo and redo.
 public struct CorrectionToolbar: View {
-    @ObservedObject private var selectionState: SelectionState
-    @Binding private var selectedWebView: MarkupWKWebView?
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     @State private var hoverLabel: Text = Text("Correction")
     
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
             ToolbarImageButton(
                 systemName: "arrow.uturn.backward",
-                action: { selectedWebView?.undo() },
+                action: { observedWebView.selectedWebView?.undo() },
                 onHover: { over in hoverLabel = Text(over ? "Undo" : "Correction") }
             )
             ToolbarImageButton(
                 systemName: "arrow.uturn.forward",
-                action: { selectedWebView?.redo() },
+                action: { observedWebView.selectedWebView?.redo() },
                 onHover: { over in hoverLabel = Text(over ? "Redo" : "Correction") }
             )
         }
-    }
-
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
     }
     
 }
 
 struct CorrectionToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        CorrectionToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        CorrectionToolbar()
     }
 }

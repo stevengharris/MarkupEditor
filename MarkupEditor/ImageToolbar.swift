@@ -11,8 +11,8 @@ import SwiftUI
 /// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    @Binding private var selectedWebView: MarkupWKWebView?
-    @ObservedObject private var selectionState: SelectionState
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     private var initialSrc: String?
     private var initialAlt: String?
     private var initialScale: Int?
@@ -115,6 +115,9 @@ public struct ImageToolbar: View {
                 .frame(height: 50)
             }
         }
+        .onAppear {
+            
+        }
         .onChange(of: selectionState.src, perform: { value in
             src = selectionState.src ?? ""
             alt = selectionState.alt ?? ""
@@ -128,9 +131,7 @@ public struct ImageToolbar: View {
         .background(Blur(style: .systemUltraThinMaterial))
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+    public init(selectionState: SelectionState) {
         initialSrc = selectionState.src
         initialAlt = selectionState.alt
         initialScale = selectionState.scale
@@ -149,7 +150,7 @@ public struct ImageToolbar: View {
         if scale > 100 {
             scale = 100
         } else {
-            guard let view = selectedWebView, argSrc != nil else {
+            guard let view = observedWebView.selectedWebView, argSrc != nil else {
                 scale -= scaleStep
                 return
             }
@@ -164,7 +165,7 @@ public struct ImageToolbar: View {
         if scale < scaleStep {
             scale = scaleStep
         } else {
-            guard let view = selectedWebView, argSrc != nil else {
+            guard let view = observedWebView.selectedWebView, argSrc != nil else {
                 scale += scaleStep
                 return
             }
@@ -183,14 +184,14 @@ public struct ImageToolbar: View {
             return
         }
         if previewedSrc.isEmpty && !src.isEmpty {
-            selectedWebView?.insertImage(src: argSrc, alt: argAlt) {
+            observedWebView.selectedWebView?.insertImage(src: argSrc, alt: argAlt) {
                 previewedSrc = src
                 previewedAlt = alt
                 previewedScale = scale
                 handler?()
             }
         } else {
-            selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale) {
+            observedWebView.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale) {
                 previewedSrc = src
                 previewedAlt = alt
                 previewedScale = scale
@@ -227,6 +228,6 @@ struct ImageToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
         // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        ImageToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        ImageToolbar(selectionState: SelectionState())
     }
 }

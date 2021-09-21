@@ -11,8 +11,8 @@ import SwiftUI
 /// The toolbar for creating and editing hyperlinks.
 public struct LinkToolbar: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
-    @Binding private var selectedWebView: MarkupWKWebView?
-    @ObservedObject private var selectionState: SelectionState
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     private var initialHref: String?
     // The href and link are the state for the toolbar
     @State private var href: String
@@ -53,7 +53,7 @@ public struct LinkToolbar: View {
                     LabeledToolbar(label: Text("Delete")) {
                         ToolbarImageButton(
                                 systemName: "link",
-                                action: { selectedWebView?.insertLink(nil) }
+                            action: { observedWebView.selectedWebView?.insertLink(nil) }
                             ).overlay(
                                 Image(systemName: "xmark")
                                     .foregroundColor(Color.red)
@@ -98,7 +98,7 @@ public struct LinkToolbar: View {
                     LabeledToolbar(label: Text("Delete")) {
                         ToolbarImageButton(
                             systemName: "link",
-                            action: { selectedWebView?.insertLink(nil) }
+                            action: { observedWebView.selectedWebView?.insertLink(nil) }
                         ).overlay(
                             Image(systemName: "xmark")
                                 .foregroundColor(Color.red)
@@ -143,9 +143,7 @@ public struct LinkToolbar: View {
         return (!href.isEmpty && href.isValidURL) || (href.isEmpty && initialHref != nil)
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+    public init(selectionState: SelectionState) {
         initialHref = selectionState.href
         _previewedHref = State(initialValue: selectionState.href ?? "")
         _href = State(initialValue: selectionState.href ?? "")
@@ -163,12 +161,12 @@ public struct LinkToolbar: View {
             return
         }
         if previewedHref.isEmpty && !href.isEmpty {
-            selectedWebView?.insertLink(argHRef) {
+            observedWebView.selectedWebView?.insertLink(argHRef) {
                 previewedHref = href
                 handler?()
             }
         } else {
-            selectedWebView?.insertLink(argHRef) {
+            observedWebView.selectedWebView?.insertLink(argHRef) {
                 previewedHref = href
                 handler?()
             }
@@ -192,6 +190,6 @@ public struct LinkToolbar: View {
 
 struct LinkToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        LinkToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        LinkToolbar(selectionState: SelectionState())
     }
 }

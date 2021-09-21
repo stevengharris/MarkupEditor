@@ -16,10 +16,10 @@ import UniformTypeIdentifiers
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
 struct ContentView: View {
 
-    @StateObject var selectionState = SelectionState()
-    @State var selectedWebView: MarkupWKWebView?
+    private let markupEnv = MarkupEnv(style: .compact)
+    private var selectionState: SelectionState { markupEnv.selectionState }
+    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
     private let showSubToolbar = ShowSubToolbar()
-    private let toolbarPreference = ToolbarPreference(style: .compact)
     @State private var rawText = NSAttributedString(string: "")
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
@@ -27,19 +27,14 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             MarkupToolbar(
-                selectionState: selectionState,
-                selectedWebView: $selectedWebView,
                 markupDelegate: self,
                 leftToolbar: AnyView(
-                    FileToolbar(
-                        selectionState: selectionState,
-                        selectedWebView: $selectedWebView,
-                        fileToolbarDelegate: self)))
+                    FileToolbar(fileToolbarDelegate: self)))
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
             Divider()
-            MarkupWebView(selectionState: selectionState, markupDelegate: self, initialContent: demoContent())
+            MarkupWebView(selectionState: selectionState, observedWebView: markupEnv.observedWebView, markupDelegate: self, initialContent: demoContent())
                 .overlay(
-                    SubToolbar(selectionState: selectionState, selectedWebView: $selectedWebView, markupDelegate: self),
+                    SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
             if rawShowing {
                 VStack {
@@ -57,7 +52,9 @@ struct ContentView: View {
         }
         .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .environmentObject(showSubToolbar)
-        .environmentObject(toolbarPreference)
+        .environmentObject(markupEnv.toolbarPreference)
+        .environmentObject(markupEnv.selectionState)
+        .environmentObject(markupEnv.observedWebView)
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -118,7 +115,7 @@ struct ContentView: View {
 extension ContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        selectedWebView = view
+        markupEnv.observedWebView.selectedWebView = view
         setRawText(handler)
     }
     

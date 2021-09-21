@@ -10,8 +10,7 @@ import SwiftUI
 
 /// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
-    @ObservedObject private var selectionState: SelectionState
-    @Binding private var selectedWebView: MarkupWKWebView?
+    @EnvironmentObject private var selectionState: SelectionState
     @EnvironmentObject private var showSubToolbar: ShowSubToolbar
     private var showAnyToolbar: Bool { showSubToolbar.type != nil }
     @State private var hoverLabel: Text = Text("Insert")
@@ -59,11 +58,6 @@ public struct InsertToolbar: View {
         case .none:
             return "Insert"
         }
-    }
-    
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
     }
     
 }

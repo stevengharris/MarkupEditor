@@ -19,8 +19,8 @@ import SwiftUI
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @Binding public var selectedWebView: MarkupWKWebView?
-    @ObservedObject private var selectionState: SelectionState
+    @EnvironmentObject private var observedWebView: ObservedWebView
+    @EnvironmentObject private var selectionState: SelectionState
     @State var markupDelegate: MarkupDelegate?
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
@@ -34,13 +34,13 @@ public struct MarkupToolbar: View {
                 Divider()
             }
             Group {
-                CorrectionToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                CorrectionToolbar()
                 Divider()
-                InsertToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                InsertToolbar()
                 Divider()
-                StyleToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                StyleToolbar()
                 Divider()
-                FormatToolbar(selectionState: selectionState, selectedWebView: $selectedWebView)
+                FormatToolbar()
                 Divider()           // Vertical on the right
             }
             if rightToolbar != nil {
@@ -50,12 +50,10 @@ public struct MarkupToolbar: View {
             Spacer()                // Push everything to the left
         }
         .frame(height: toolbarPreference.height())
-        .disabled(selectedWebView == nil)
+        .disabled(observedWebView.selectedWebView == nil)
     }
     
-    public init(selectionState: SelectionState, selectedWebView: Binding<MarkupWKWebView?>, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
-        self.selectionState = selectionState
-        _selectedWebView = selectedWebView
+    public init(markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
         self.markupDelegate = markupDelegate
         self.leftToolbar = leftToolbar
         self.rightToolbar = rightToolbar
@@ -68,7 +66,7 @@ public struct MarkupToolbar: View {
 struct MarkupToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
-        MarkupToolbar(selectionState: SelectionState(), selectedWebView: .constant(nil))
+        MarkupToolbar()
     }
 }
 

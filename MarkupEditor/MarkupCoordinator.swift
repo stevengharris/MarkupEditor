@@ -36,7 +36,7 @@ import WebKit
 /// is received by this MarkupCoordinator, it notifies the MarkupDelegate, which might want to take some other
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
-    @Published private var selectionState: SelectionState
+    private var selectionState: SelectionState
     public var webView: MarkupWKWebView!
     public var markupDelegate: MarkupDelegate?
     
