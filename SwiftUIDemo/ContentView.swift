@@ -17,7 +17,6 @@ import UniformTypeIdentifiers
 struct ContentView: View {
 
     private let markupEnv = MarkupEnv(style: .compact)
-    private var selectionState: SelectionState { markupEnv.selectionState }
     private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
     private let showSubToolbar = ShowSubToolbar()
     @State private var rawText = NSAttributedString(string: "")
@@ -32,7 +31,7 @@ struct ContentView: View {
                     FileToolbar(fileToolbarDelegate: self)))
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
             Divider()
-            MarkupWebView(selectionState: selectionState, observedWebView: markupEnv.observedWebView, markupDelegate: self, initialContent: demoContent())
+            MarkupWebView(markupDelegate: self, initialContent: demoContent())
                 .overlay(
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)

@@ -16,6 +16,7 @@ import MarkupEditor
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar.
 class ViewController: UIViewController {
     @IBOutlet weak var stack: UIStackView!
+    let markupEnv = MarkupEnv(style: .compact)
     var toolbarHolder: UIView!
     var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
@@ -29,9 +30,9 @@ class ViewController: UIViewController {
     private var bottomStack: UIStackView!
     private var bottomStackHeightConstraint: NSLayoutConstraint!
     /// The state of the selection in the MarkupWKWebView, shown in the toolbar
-    @Published var selectionState: SelectionState = SelectionState()
+    var selectionState: SelectionState { markupEnv.selectionState }
     /// Which MarkupWKWebView we have selected and which the MarkupToolbar acts on
-    @Published var selectedWebView: MarkupWKWebView?
+    var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
     /// Identify which type of SubToolbar is showing, or nil if none
     private let showSubToolbar = ShowSubToolbar()
     private let toolbarPreference = ToolbarPreference(style: .compact)
@@ -44,7 +45,7 @@ class ViewController: UIViewController {
     /// multiple MarkupWKWebViews, and it may lose focus as the app is being used. Note that in this demo
     /// app, the markupTookFocus method handled here sets the selectedWebView which in turn updates
     /// the toolbar due to its using the binding.
-    var selectedWebViewBinding: Binding<MarkupWKWebView?> { Binding(get: { self.selectedWebView }, set: { self.selectedWebView = $0 }) }
+    //var selectedWebViewBinding: Binding<MarkupWKWebView?> { Binding(get: { self.selectedWebView }, set: { self.selectedWebView = $0 }) }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,24 +58,22 @@ class ViewController: UIViewController {
         // We need to wrap MarkupToolbar in AnyView so we can set its environment
         toolbar = AnyView(
             MarkupToolbar(
-                selectionState: selectionState,
-                selectedWebView: selectedWebViewBinding,
                 markupDelegate: self,
-                leftToolbar: AnyView(FileToolbar(selectionState: selectionState, selectedWebView: selectedWebViewBinding, fileToolbarDelegate: self))
+                leftToolbar: AnyView(FileToolbar(fileToolbarDelegate: self))
             )
-            .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-            .environmentObject(showSubToolbar)
-            .environmentObject(toolbarPreference)
+                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                .environmentObject(showSubToolbar)
+                .environmentObject(markupEnv.toolbarPreference)
+                .environmentObject(markupEnv.selectionState)
+                .environmentObject(markupEnv.observedWebView)
         )
         add(swiftUIView: toolbar, to: toolbarHolder)
         subToolbar = AnyView(
-            SubToolbar(
-                selectionState: selectionState,
-                selectedWebView: selectedWebViewBinding,
-                markupDelegate: self
-            )
-            .environmentObject(showSubToolbar)
-            .environmentObject(toolbarPreference)
+            SubToolbar(markupDelegate: self)
+                .environmentObject(showSubToolbar)
+                .environmentObject(markupEnv.toolbarPreference)
+                .environmentObject(markupEnv.selectionState)
+                .environmentObject(markupEnv.observedWebView)
         )
     }
     
@@ -172,7 +171,7 @@ class ViewController: UIViewController {
 extension ViewController: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        selectedWebView = view
+        markupEnv.observedWebView.selectedWebView = view
         setRawText(handler)
     }
     

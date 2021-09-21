@@ -17,9 +17,9 @@ import WebKit
 /// The Coordinator will be a WKScriptMessageHandler and handle callbacks that come in from calls in markup.js to
 /// window.webkit.messageHandlers.markup.postMessage(message);
 public struct MarkupWebView: UIViewRepresentable {
+    @EnvironmentObject var selectionState: SelectionState
+    @EnvironmentObject var observedWebView: ObservedWebView
     public typealias Coordinator = MarkupCoordinator
-    private var selectionState: SelectionState
-    private var observedWebView: ObservedWebView
     /// The initial HTML content to be shown in the MarkupWKWebView.
     private var initialContent: String
     public var markupDelegate: MarkupDelegate?
@@ -28,15 +28,11 @@ public struct MarkupWebView: UIViewRepresentable {
     private var userScripts: [String]?
     
     public init(
-        selectionState: SelectionState = SelectionState(),
-        observedWebView: ObservedWebView = ObservedWebView(),
         markupDelegate: MarkupDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         initialContent: String? = nil) {
-        self.selectionState = selectionState
-        self.observedWebView = observedWebView
         self.markupDelegate = markupDelegate
         self.wkNavigationDelegate = wkNavigationDelegate
         self.wkUIDelegate = wkUIDelegate
