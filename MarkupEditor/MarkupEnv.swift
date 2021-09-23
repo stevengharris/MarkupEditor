@@ -12,7 +12,7 @@ import Foundation
 /// Note that the MarkupEnv does not publish changes itself. Only the ObservableObjects it holds onto publish their changes.
 public class MarkupEnv: ObservableObject {
     
-    public let observedWebView = ObservedWebView(nil)
+    public let observedWebView = ObservedWebView()
     public let selectionState = SelectionState()
     public let toolbarPreference: ToolbarPreference
     public var toolbarPreferenceStyle: ToolbarPreference.Style { toolbarPreference.style }

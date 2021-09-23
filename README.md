@@ -122,7 +122,23 @@ The demos open `demo.html`, which contains information about how to use the Mark
 
 ## Status
 
-The current version is very much a work in progress. The work is a back-and-forth between the MarkupEditor package proper and the two demos. I am releasing it now because I think I can consume it properly in my other project, which will provide useful feedback beyond the demos.
+The current version is very much a work in progress. The work is a back-and-forth between the MarkupEditor package proper and the two demos. I am now consuming it in another project I am developing, so changes here are going to be driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
+
+### History
+
+#### Version 0.2.2
+
+The labeled toolbar took up too much screen real estate in my other project, so I created a .compact form and made that selectable via ToolbarPreference. Now I have a way to add other preferences easily. I also needed a better way to communicate the selectionState and selectedWebView when I have an arbitrary number of MarkupWebViews being editing using a single MarkupToolbar. I set up MarkupEnv to accomplish that and adjusted the SwiftUIDemo and UIKitDemo to use it.
+
+* Add this History section to the README.
+* Make the toolbar configurable between .compact (the new default) and .labeled via ToolbarPreference.
+* Use MarkupEnv to access the selectionState and selectedWebView.
+* Bundle loading logic now depends on SWIFT_PACKAGE in MarkupWKWebView, not my homegrown USEFRAMEWORK setting.
+* Some minor adjustments to backgrounds and css to fix issues when the MarkupToolbar and MarkupWebView were embedded in other SwiftUI views.
+
+#### Version 0.2.1
+
+* This was the first version made public and open sourced.
 
 ### Known Issues
 
