@@ -16,32 +16,52 @@ import WebKit
 ///
 /// The Coordinator will be a WKScriptMessageHandler and handle callbacks that come in from calls in markup.js to
 /// window.webkit.messageHandlers.markup.postMessage(message);
+///
+/// Note we use markupEnv here, which does not publish changes. Then, from it, we pass the selectionState to the
+/// Coordinator. This way MarkupWebView does not refresh as SelectionState updates. The SelectionState updates
+/// as you type and click around, but there is no need to trigger updateUIView when it changes.
 public struct MarkupWebView: UIViewRepresentable {
-    @EnvironmentObject var selectionState: SelectionState
-    @EnvironmentObject var observedWebView: ObservedWebView
+    @EnvironmentObject var markupEnv: MarkupEnv
     public typealias Coordinator = MarkupCoordinator
     /// The initial HTML content to be shown in the MarkupWKWebView.
-    private var initialContent: String
     public var markupDelegate: MarkupDelegate?
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
+    @Binding private var html: String
     
+    /// Initialize with initial html content that is not updatable externally
     public init(
         markupDelegate: MarkupDelegate? = nil,
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         initialContent: String? = nil) {
-        self.markupDelegate = markupDelegate
-        self.wkNavigationDelegate = wkNavigationDelegate
-        self.wkUIDelegate = wkUIDelegate
-        self.userScripts = userScripts
-        self.initialContent = initialContent ?? ""
-    }
+            self.markupDelegate = markupDelegate
+            self.wkNavigationDelegate = wkNavigationDelegate
+            self.wkUIDelegate = wkUIDelegate
+            self.userScripts = userScripts
+            _html = Binding<String>(get: { initialContent ?? "" }, set: { _ in })
+        }
+
+    /// Initialize with html content that is bound to an externally-held String (and therefore changable)
+    ///
+    /// When html is updated externally, it will trigger updateUIView, which sets webView's html.
+    public init(
+        markupDelegate: MarkupDelegate? = nil,
+        wkNavigationDelegate: WKNavigationDelegate? = nil,
+        wkUIDelegate: WKUIDelegate? = nil,
+        userScripts: [String]? = nil,
+        boundContent: Binding<String>) {
+            self.markupDelegate = markupDelegate
+            self.wkNavigationDelegate = wkNavigationDelegate
+            self.wkUIDelegate = wkUIDelegate
+            self.userScripts = userScripts
+            _html = boundContent
+        }
 
     public func makeCoordinator() -> Coordinator {
-        return Coordinator(selectionState: selectionState, markupDelegate: markupDelegate)
+        return Coordinator(selectionState: markupEnv.selectionState, markupDelegate: markupDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {
@@ -55,13 +75,15 @@ public struct MarkupWebView: UIViewRepresentable {
         let coordinator = context.coordinator
         webView.configuration.userContentController.add(coordinator, name: "markup")
         coordinator.webView = webView
+        // Set the html, which will be loaded after the "ready" message is received
+        webView.html = html
         webView.userScripts = userScripts
         return webView
     }
 
     public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
-        // Set the html, which will be loaded after the "ready" message is received
-        webView.html = initialContent
+        // print("updateUIView with: \(html.prefix(25))...")
+        webView.setHtml(html)
     }
     
 }

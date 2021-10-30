@@ -57,7 +57,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         // Load the html held by the webView, let the markupDelegate know, and then becomeFirstResponder.
         // If we don't becomeFirstResponder, then our first selection in the webView causes scrolling.
         let initialContent = webView.html ?? ""
-        webView.setHtml(initialContent) { content in
+        webView.setHtml(initialContent) {
             self.markupDelegate?.markupDidLoad(self.webView) {
                 self.webView.becomeFirstResponder()
             }

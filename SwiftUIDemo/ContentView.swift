@@ -51,6 +51,7 @@ struct ContentView: View {
         }
         .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .environmentObject(showSubToolbar)
+        .environmentObject(markupEnv)
         .environmentObject(markupEnv.toolbarPreference)
         .environmentObject(markupEnv.selectionState)
         .environmentObject(markupEnv.observedWebView)
@@ -74,7 +75,7 @@ struct ContentView: View {
     private func openExistingDocument(url: URL) {
         do {
             let html = try String(contentsOf: url, encoding: .utf8)
-            selectedWebView?.setHtml(html) { content in
+            selectedWebView?.setHtml(html) {
                 self.setRawText()
             }
         } catch let error {
