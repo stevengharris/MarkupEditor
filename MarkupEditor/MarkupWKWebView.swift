@@ -159,9 +159,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func setHtml(_ html: String, handler: (()->Void)? = nil) {
-        let contents = html.escaped
-        evaluateJavaScript("MU.setHTML('\(contents)')") { result, error in
+        self.html = html    // Our local record of what we set, used by setHtmlIfChanged
+        evaluateJavaScript("MU.setHTML('\(html.escaped)')") { result, error in
             handler?()
+        }
+    }
+    
+    public func setHtmlIfChanged(_ html: String, handler: (()->Void)? = nil) {
+        if html != self.html {
+            setHtml(html, handler: handler)
         }
     }
     

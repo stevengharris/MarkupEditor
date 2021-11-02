@@ -28,7 +28,14 @@ public struct MarkupWebView: UIViewRepresentable {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
-    @Binding private var html: String
+    /// The ObservableObject holding the html that can be updated externally if needed.
+    ///
+    /// For historical reference, this was originally a @Binding to a string, but for mysterious
+    /// reasons, that results in updateUIView being called 4x on initialization and every time
+    /// the app moves between foreground and background (that being somewhat weird
+    /// on Mac Catalyst anyway afaict, but meaning: you select a different window or re-select
+    /// the SwiftUI app).
+    @ObservedObject private var html: ObservableString
     
     /// Initialize with initial html content that is not updatable externally
     public init(
@@ -41,7 +48,7 @@ public struct MarkupWebView: UIViewRepresentable {
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
-            _html = Binding<String>(get: { initialContent ?? "" }, set: { _ in })
+            html = ObservableString(initialContent ?? "")
         }
 
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
@@ -57,7 +64,7 @@ public struct MarkupWebView: UIViewRepresentable {
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
-            _html = boundContent
+            html = ObservableString(boundContent.wrappedValue)
         }
 
     public func makeCoordinator() -> Coordinator {
@@ -75,15 +82,14 @@ public struct MarkupWebView: UIViewRepresentable {
         let coordinator = context.coordinator
         webView.configuration.userContentController.add(coordinator, name: "markup")
         coordinator.webView = webView
-        // Set the html, which will be loaded after the "ready" message is received
-        webView.html = html
         webView.userScripts = userScripts
         return webView
     }
 
+    /// Called explicitly when html is changed, but also called implicitly as the containing view is
     public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
-        // print("updateUIView with: \(html.prefix(25))...")
-        webView.setHtml(html)
+        // print("updateUIView")
+        webView.setHtmlIfChanged(html.value)
     }
     
 }
