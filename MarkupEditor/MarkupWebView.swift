@@ -20,6 +20,9 @@ import WebKit
 /// Note we use markupEnv here, which does not publish changes. Then, from it, we pass the selectionState to the
 /// Coordinator. This way MarkupWebView does not refresh as SelectionState updates. The SelectionState updates
 /// as you type and click around, but there is no need to trigger updateUIView when it changes.
+///
+/// See the explanation in updateView for a better understanding of when it is called. TL;DR: Hold onto the html in
+/// state somewhere external to the MarkupWebView, and pass a binding to that state in init.
 public struct MarkupWebView: UIViewRepresentable {
     @EnvironmentObject var markupEnv: MarkupEnv
     public typealias Coordinator = MarkupCoordinator
@@ -28,29 +31,8 @@ public struct MarkupWebView: UIViewRepresentable {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
-    /// The ObservableObject holding the html that can be updated externally if needed.
-    ///
-    /// For historical reference, this was originally a @Binding to a string, but for mysterious
-    /// reasons, that results in updateUIView being called 4x on initialization and every time
-    /// the app moves between foreground and background (that being somewhat weird
-    /// on Mac Catalyst anyway afaict, but meaning: you select a different window or re-select
-    /// the SwiftUI app).
-    @ObservedObject private var html: ObservableString
+    @Binding private var html: String
     
-    /// Initialize with initial html content that is not updatable externally
-    public init(
-        markupDelegate: MarkupDelegate? = nil,
-        wkNavigationDelegate: WKNavigationDelegate? = nil,
-        wkUIDelegate: WKUIDelegate? = nil,
-        userScripts: [String]? = nil,
-        initialContent: String? = nil) {
-            self.markupDelegate = markupDelegate
-            self.wkNavigationDelegate = wkNavigationDelegate
-            self.wkUIDelegate = wkUIDelegate
-            self.userScripts = userScripts
-            html = ObservableString(initialContent ?? "")
-        }
-
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
     ///
     /// When html is updated externally, it will trigger updateUIView, which sets webView's html.
@@ -59,12 +41,12 @@ public struct MarkupWebView: UIViewRepresentable {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
-        boundContent: Binding<String>) {
+        boundContent: Binding<String>? = nil) {
             self.markupDelegate = markupDelegate
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
-            html = ObservableString(boundContent.wrappedValue)
+            _html = boundContent ?? .constant("")
         }
 
     public func makeCoordinator() -> Coordinator {
@@ -86,10 +68,17 @@ public struct MarkupWebView: UIViewRepresentable {
         return webView
     }
 
-    /// Called explicitly when html is changed, but also called implicitly as the containing view is
+    /// Called explicitly when html is changed.
+    ///
+    /// When boundContent was nil in init, updateUIView will be called multiple times as the view appears
+    /// as well as when the view goes to background or returns to foreground. This seems to be a byproduct
+    /// of nobody holding onto the html binding externally, and creating it on-the-fly in init using .constant.
+    /// The same excessive calls to updateView occur if you use .constant in the caller without holding the
+    /// html in state properly. The bottom line is that for anything other than a quick demo, you really should
+    /// hold the html in state someplace properly and then pass the binding to that state to init.
     public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
-        // print("updateUIView")
-        webView.setHtmlIfChanged(html.value)
+        //print("MarkupWebView updateUIView")
+        webView.setHtmlIfChanged(html)
     }
     
 }

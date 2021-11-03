@@ -22,6 +22,34 @@ struct ContentView: View {
     @State private var rawText = NSAttributedString(string: "")
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
+    @State private var demoContent = Self.demoContent() ?? ""
+
+    private static func openableURL(from url: URL) -> URL? {
+        #if targetEnvironment(macCatalyst)
+        do {
+            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            var isStale = false
+            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            return isStale ? nil : scopedUrl
+        } catch let error {
+            print("Error getting openableURL: \(error.localizedDescription)")
+            return nil
+        }
+        #else
+        return url
+        #endif
+    }
+    
+    private static func demoContent() -> String? {
+        guard
+            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
+            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
+            let html = try? String(contentsOf: url) else {
+            return nil
+        }
+        url.stopAccessingSecurityScopedResource()
+        return html
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -31,7 +59,7 @@ struct ContentView: View {
                     FileToolbar(fileToolbarDelegate: self)))
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
             Divider()
-            MarkupWebView(markupDelegate: self, initialContent: demoContent())
+            MarkupWebView(markupDelegate: self, boundContent: $demoContent)
                 .overlay(
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
@@ -81,33 +109,6 @@ struct ContentView: View {
         } catch let error {
             print("Error loading html: \(error.localizedDescription)")
         }
-    }
-    
-    private func openableURL(from url: URL) -> URL? {
-        #if targetEnvironment(macCatalyst)
-        do {
-            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            var isStale = false
-            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            return isStale ? nil : scopedUrl
-        } catch let error {
-            print("Error getting openableURL: \(error.localizedDescription)")
-            return nil
-        }
-        #else
-        return url
-        #endif
-    }
-    
-    private func demoContent() -> String? {
-        guard
-            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
-            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
-            let html = try? String(contentsOf: url) else {
-            return nil
-        }
-        url.stopAccessingSecurityScopedResource()
-        return html
     }
     
 }

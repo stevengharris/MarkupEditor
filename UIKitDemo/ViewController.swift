@@ -131,7 +131,7 @@ class ViewController: UIViewController {
     private func openExistingDocument(url: URL) {
         do {
             let html = try String(contentsOf: url, encoding: .utf8)
-            selectedWebView?.setHtml(html) { content in
+            selectedWebView?.setHtml(html) {
                 self.setRawText()
             }
         } catch let error {
