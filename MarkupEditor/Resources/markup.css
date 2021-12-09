@@ -117,7 +117,7 @@ li p {
 }
 
 blockquote {
-    margin-right: 0px;
+    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */
 }
 
 /* GitHub style?
@@ -148,14 +148,17 @@ table tr th :last-child, table tr td :last-child {
 */
 
 code {
+    display: block;
     background-color: #F8F8F8;
     border-radius: 3px;
-    border: 1px solid #DDD;
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-    margin: 0 2px;
-    padding: 0 5px;
     white-space: pre;
 }
+
+p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+    display: inline;
+}
+
 @media (prefers-color-scheme: dark) {
     code {
         background-color: #808080;
