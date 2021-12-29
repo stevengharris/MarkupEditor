@@ -31,7 +31,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var editorHeight: Int = 0
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
-    public var html: String?
+    private var html: String?
+    private var resourcesUrl: URL?
+    public var id: String = UUID().uuidString
     public var userScripts: [String]? {
         didSet {
             if let userScripts = userScripts {
@@ -43,9 +45,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public init() {
-        super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
-        setupForEditing()
+    deinit {
+        //TODO: Find out where this MarkupWKWebView is being held that prevents deinit from being called
+        let fileManager = FileManager.default
+        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(id)
+        try? fileManager.removeItem(atPath: tempDir.path)
     }
     
     public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
@@ -58,28 +62,96 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         setupForEditing()
     }
     
+    public init(html: String?, resourcesUrl: URL? = nil, id: String? = nil) {
+        super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
+        self.html = html
+        self.resourcesUrl = resourcesUrl
+        if id != nil {
+            self.id = id!
+        }
+        setupForEditing()
+    }
+    
+    /// Set things up properly for editing.
+    ///
+    /// Setting things up means populating a temporary directory with the "root" files: markup.html,
+    /// markup.css, and markup.js. In addition, if resourcesUrl is specified, then its contents are copied into
+    /// the same relativePath below the temporary directory. This means the resourcesUrl generally should
+    /// have a baseUrl where the html-being-edited came from. If it resourcesUrl does not have a baseUrl,
+    /// then everything in resourcesUrl will be copied into the temporary directory along with the "root" files.
+    ///
+    /// Once all the files are properly set up in the temporaryDirectory, we loadFileURL on the markup.html
+    /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
+    /// is later populated with html.
     private func setupForEditing() {
-        // The markup.html loads the css and js scripts itself
-        // The MarkupEditor.framework is built with USEFRAMEWORK in its build settings.
         // If you use the framework as a dependency, the bundle can be identified from
         // the place where MarkupWKWebView is found. If you use the Swift package as a
         // dependency, it does some BundleFinder hocus pocus behind the scenes to allow
-        // Bundle to respond to module. Unfortunately, you cannot even compile
-        // "Bundle.module" without the package as a dependency, so I am forced into this
-        // build time hackery.
+        // Bundle to respond to module.
         var bundle: Bundle
         #if SWIFT_PACKAGE
         bundle = Bundle.module
         #else
         bundle = Bundle(for: MarkupWKWebView.self)
         #endif
-        if let filePath = bundle.path(forResource: "markup", ofType: "html") {
-            let url = URL(fileURLWithPath: filePath, isDirectory: false)
-            loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        guard
+            let rootHtml = bundle.url(forResource: "markup", withExtension: "html"),
+            let rootCss = bundle.url(forResource: "markup", withExtension: "css"),
+            let rootJs = bundle.url(forResource: "markup", withExtension: "js") else {
+                assertionFailure("Could not find markup.html, css, and js for this bundle.")
+                return
+            }
+        let fileManager = FileManager.default
+        // The tempDir is a "id" subdirectory below fileManager.temporaryDirectory
+        // If not supplied, then id will be a UUID().uuidString
+        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(id)
+        let tempDirPath = tempDir.path
+        do {
+            // Always start with a clean temporary directory
+            if fileManager.fileExists(atPath: tempDirPath) {
+                try fileManager.removeItem(atPath: tempDirPath)
+            }
+            // Copy the "root" files
+            try fileManager.createDirectory(atPath: tempDirPath, withIntermediateDirectories: true, attributes: nil)
+            for url in [rootHtml, rootCss, rootJs] {
+                try fileManager.copyItem(at: url, to: tempDir.appendingPathComponent(url.lastPathComponent))
+            }
+            // Copy the content of resourcesUrl into the relativePath below tempDir or to tempDir itself
+            if let resourcesUrl = resourcesUrl {
+                var tempResourcesDir: URL
+                if resourcesUrl.baseURL == nil {
+                    tempResourcesDir = tempDir
+                } else {
+                    tempResourcesDir = tempDir.appendingPathComponent(resourcesUrl.relativePath)
+                }
+                let tempResourcesDirPath = tempResourcesDir.path
+                try fileManager.createDirectory(atPath: tempResourcesDirPath, withIntermediateDirectories: true, attributes: nil)
+                let resources = try fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])
+                for resource in resources {
+                    try fileManager.copyItem(at: resource, to: tempResourcesDir.appendingPathComponent(resource.lastPathComponent))
+                }
+            }
+        } catch let error {
+            assertionFailure("Error creating a temporarary directory for editing: \(error.localizedDescription)")
         }
+        // Load markup.html to kick things off
+        let tempRootHtml = tempDir.appendingPathComponent(rootHtml.lastPathComponent)
+        loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
+    }
+    
+    public func loadInitialHtml(notifying delegate: MarkupDelegate? = nil) {
+        setHtml(html ?? "") {
+            if let delegate = delegate {
+                delegate.markupDidLoad(self) {
+                    self.becomeFirstResponder()
+                }
+            } else {
+                self.becomeFirstResponder()
+            }
+        }
     }
     
     //MARK:- Responder Handling
@@ -124,10 +196,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.setLineHeight('\(lineHeight ?? Self.DefaultInnerLineHeight)px')")
     }
     
-    //public func initializeRange() {
-    //    evaluateJavaScript("MU.initializeRange()")
-    //}
-    
     public func getHtml(_ handler: ((String?)->Void)?) {
         evaluateJavaScript("MU.getHTML()") { result, error in
             handler?(result as? String)
@@ -168,6 +236,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func setHtmlIfChanged(_ html: String, handler: (()->Void)? = nil) {
         if html != self.html {
             setHtml(html, handler: handler)
+        } else {
+            handler?()
         }
     }
     

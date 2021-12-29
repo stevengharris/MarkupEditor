@@ -12,7 +12,11 @@ import SwiftUI
 struct SwiftUIDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(url: demoUrl())
         }
+    }
+    
+    func demoUrl() -> URL? {
+        return Bundle.main.resourceURL?.appendingPathComponent("demo.html")
     }
 }

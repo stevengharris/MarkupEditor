@@ -47,6 +47,10 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         super.init()
     }
     
+    deinit {
+        print("deinit MarkupCoordinator")
+    }
+    
     private func updateHeight() {
         webView.updateHeight() { height in
             self.markupDelegate?.markup(self.webView, heightDidChange: height)
@@ -54,14 +58,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     }
     
     private func loadInitialHtml() {
-        // Load the html held by the webView, let the markupDelegate know, and then becomeFirstResponder.
-        // If we don't becomeFirstResponder, then our first selection in the webView causes scrolling.
-        let initialContent = webView.html ?? ""
-        webView.setHtml(initialContent) {
-            self.markupDelegate?.markupDidLoad(self.webView) {
-                self.webView.becomeFirstResponder()
-            }
-        }
+        // Let the webView handle loading its own html
+        webView.loadInitialHtml(notifying: markupDelegate)
     }
     
     /// Take action based on the message body received from JavaScript via the userContentController.

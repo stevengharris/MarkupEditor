@@ -62,6 +62,8 @@
 		AAD26E88264463AA00908777 /* DocumentPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E87264463AA00908777 /* DocumentPicker.swift */; };
 		AAFADF4F2615250B0024F2DC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AAFADF56261525110024F2DC /* MarkupEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */; };
+		AAFB64DB277CEED70032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
+		AAFB64DC277CEED80032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,6 +146,7 @@
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
 		AAFADF41261524AE0024F2DC /* MarkupEditorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkupEditorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAFADF64261525B90024F2DC /* MarkupEditor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MarkupEditor.h; sourceTree = "<group>"; };
+		AAFB64DA277CEECB0032E859 /* steve.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = steve.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -189,7 +192,6 @@
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
 				AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */,
 				AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */,
-				AA652A07260E99FF000674B7 /* Resources */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -197,10 +199,11 @@
 		AA1749E5269DFE84005F0428 /* SharedDemo */ = {
 			isa = PBXGroup;
 			children = (
+				AA652948260E8114000674B7 /* Assets.xcassets */,
 				AA1B816C26265CAD00891FFB /* demo.html */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
-				AA652948260E8114000674B7 /* Assets.xcassets */,
+				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
 			sourceTree = "<group>";
@@ -304,6 +307,7 @@
 				AA652A11260E9A00000674B7 /* MarkupWebView.swift */,
 				AA652A15260E9A00000674B7 /* MarkupWKWebView.swift */,
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
+				AA652A07260E99FF000674B7 /* Resources */,
 				AA652A3B260E9B55000674B7 /* Selection */,
 				AA652A38260E9B24000674B7 /* Toolbars */,
 			);
@@ -503,6 +507,7 @@
 			files = (
 				AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */,
 				AA1B816D26265CAD00891FFB /* demo.html in Resources */,
+				AAFB64DB277CEED70032E859 /* steve.png in Resources */,
 				AA652949260E8114000674B7 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -512,6 +517,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529CB260E8D69000674B7 /* Main.storyboard in Resources */,
+				AAFB64DC277CEED80032E859 /* steve.png in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
 				AA6529AA260E8450000674B7 /* LaunchScreen.storyboard in Resources */,
 				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,

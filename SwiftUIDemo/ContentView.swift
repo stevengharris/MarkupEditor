@@ -22,35 +22,15 @@ struct ContentView: View {
     @State private var rawText = NSAttributedString(string: "")
     @State private var pickerShowing: Bool = false
     @State private var rawShowing: Bool = false
-    @State private var demoContent = Self.demoContent() ?? ""
+    @State private var demoContent: String
+    // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
+    // loading of local resources in the edited document. That resource, a png, is packaged along
+    // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
+    // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
+    // where your html file comes from, or in a directory that holds both the html file and all
+    // of its resources.
+    private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
 
-    private static func openableURL(from url: URL) -> URL? {
-        #if targetEnvironment(macCatalyst)
-        do {
-            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            var isStale = false
-            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            return isStale ? nil : scopedUrl
-        } catch let error {
-            print("Error getting openableURL: \(error.localizedDescription)")
-            return nil
-        }
-        #else
-        return url
-        #endif
-    }
-    
-    private static func demoContent() -> String? {
-        guard
-            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
-            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
-            let html = try? String(contentsOf: url) else {
-            return nil
-        }
-        url.stopAccessingSecurityScopedResource()
-        return html
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             MarkupToolbar(
@@ -59,10 +39,13 @@ struct ContentView: View {
                     FileToolbar(fileToolbarDelegate: self)))
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
             Divider()
-            MarkupWebView(markupDelegate: self, boundContent: $demoContent)
+            MarkupWebView(markupDelegate: self, boundContent: $demoContent, resourcesUrl: resourcesUrl, id: "Document")
                 .overlay(
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
+                .onDisappear {
+                    markupEnv.observedWebView.selectedWebView = nil
+                }
             if rawShowing {
                 VStack {
                     Divider()
@@ -85,6 +68,14 @@ struct ContentView: View {
         .environmentObject(markupEnv.observedWebView)
     }
     
+    init(url: URL?) {
+        if let url = url {
+            _demoContent = State(initialValue: (try? String(contentsOf: url)) ?? "")
+        } else {
+            _demoContent = State(initialValue: "")
+        }
+    }
+    
     private func setRawText(_ handler: (()->Void)? = nil) {
         selectedWebView?.getPrettyHtml { html in
             rawText = attributedString(from: html ?? "")
@@ -101,14 +92,7 @@ struct ContentView: View {
     }
     
     private func openExistingDocument(url: URL) {
-        do {
-            let html = try String(contentsOf: url, encoding: .utf8)
-            selectedWebView?.setHtml(html) {
-                self.setRawText()
-            }
-        } catch let error {
-            print("Error loading html: \(error.localizedDescription)")
-        }
+        demoContent = (try? String(contentsOf: url)) ?? ""
     }
     
 }

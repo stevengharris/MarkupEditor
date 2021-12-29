@@ -31,6 +31,8 @@ public struct MarkupWebView: UIViewRepresentable {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
+    private var resourcesUrl: URL?
+    private var id: String?
     @Binding private var html: String
     
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
@@ -41,20 +43,24 @@ public struct MarkupWebView: UIViewRepresentable {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
-        boundContent: Binding<String>? = nil) {
+        boundContent: Binding<String>? = nil,
+        resourcesUrl: URL? = nil,
+        id: String? = nil) {
             self.markupDelegate = markupDelegate
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
             _html = boundContent ?? .constant("")
+            self.resourcesUrl = resourcesUrl
+            self.id = id
         }
-
+    
     public func makeCoordinator() -> Coordinator {
         return Coordinator(selectionState: markupEnv.selectionState, markupDelegate: markupDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {
-        let webView = MarkupWKWebView()
+        let webView = MarkupWKWebView(html: html, resourcesUrl: resourcesUrl, id: id)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupWebView.
         webView.navigationDelegate = wkNavigationDelegate
@@ -79,6 +85,10 @@ public struct MarkupWebView: UIViewRepresentable {
     public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
         //print("MarkupWebView updateUIView")
         webView.setHtmlIfChanged(html)
+    }
+    
+    public static func dismantleUIView(_ uiView: MarkupWKWebView, coordinator: MarkupCoordinator) {
+        uiView.configuration.userContentController.removeAllScriptMessageHandlers()
     }
     
 }

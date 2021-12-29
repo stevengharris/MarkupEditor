@@ -843,7 +843,13 @@ MU.setHTML = function(contents) {
     tempWrapper.innerHTML = contents;
     const images = tempWrapper.querySelectorAll('img');
     for (let i=0; i<images.length; i++) {
-        images[i].onload = function() { _callback('updateHeight') };
+        images[i].onload = function() {
+            // _consoleLog("Loaded " + images[i].src);
+            _callback('updateHeight')
+        };
+        //images[i].onerror = function() {
+        //    _consoleLog("Error loading " + images[i].src);
+        //};
     }
     MU.editor.innerHTML = tempWrapper.innerHTML;
     _initializeRange()
@@ -856,6 +862,29 @@ MU.setHTML = function(contents) {
  */
 MU.getHTML = function() {
     return MU.editor.innerHTML;
+};
+
+/**
+ * Set the base element for the document to the urlString.
+ * URLs within the html will be interpreted relative to this urlString.
+ * For example, and <img src="foo.png"> will be loaded from the location
+ * identified by urlString.
+ *
+ * @param {String} urlString The full string for base (e.g., 'file:///<path>')
+ */
+MU.setBase = function(urlString) {
+    const existingBase = document.getElementsByTagName('base')
+    if (existingBase.length > 0) {
+        _consoleLog("Existing base href was " + existingBase[0].href);
+        _consoleLog("Resetting base.href to " + urlString);
+        existingBase[0].href = urlString;
+    } else {
+        _consoleLog("Setting base.href to " + urlString);
+        const base = document.createElement('base');
+        base.href = urlString;
+        document.getElementsByTagName('head')[0].appendChild(base);
+    }
+    _consoleLog(" Done.");
 };
 
 /**

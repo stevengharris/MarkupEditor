@@ -36,16 +36,13 @@ class ViewController: UIViewController {
     /// Identify which type of SubToolbar is showing, or nil if none
     private let showSubToolbar = ShowSubToolbar()
     private let toolbarPreference = ToolbarPreference(style: .compact)
-    /// A binding of selectedWebView used by the MarkupToolbar and its coordinator.
-    ///
-    /// Since MarkupToolbar uses a SwiftUI-style binding to the selectedWebView, we need to use one
-    /// for a UIKit-based app. The toolbar does not (and should not) set the selectedWebView, so this just
-    /// lets us use the selectedWebView in UIKit like we use it as @State in the SwiftUI demo ContentView.
-    /// We want selectedWebView to be optional in general, since one MarkupToolbar can be used with
-    /// multiple MarkupWKWebViews, and it may lose focus as the app is being used. Note that in this demo
-    /// app, the markupTookFocus method handled here sets the selectedWebView which in turn updates
-    /// the toolbar due to its using the binding.
-    //var selectedWebViewBinding: Binding<MarkupWKWebView?> { Binding(get: { self.selectedWebView }, set: { self.selectedWebView = $0 }) }
+    // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
+    // loading of local resources in the edited document. That resource, a png, is packaged along
+    // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
+    // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
+    // where your html file comes from, or in a directory that holds both the html file and all
+    // of its resources.
+    private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,12 +77,11 @@ class ViewController: UIViewController {
     func initializeStackView() {
         // Populate the overall vertical stack with the toolbarHolder, webView, and rawTextView
         stack.addArrangedSubview(toolbarHolder)
-        webView = MarkupWKWebView()
+        webView = MarkupWKWebView(html: demoContent(), resourcesUrl: resourcesUrl, id: "Document")
         overlayTop(swiftUIView: subToolbar, on: webView)
         stack.addArrangedSubview(webView)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        webView.html = demoContent()
         bottomStack = UIStackView()
         bottomStack.isHidden = true
         bottomStack.axis = .vertical
@@ -139,31 +135,9 @@ class ViewController: UIViewController {
         }
     }
     
-    private func openableURL(from url: URL) -> URL? {
-        #if targetEnvironment(macCatalyst)
-        do {
-            let data = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            var isStale = false
-            let scopedUrl = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            return isStale ? nil : scopedUrl
-        } catch let error {
-            print("Error getting openableURL: \(error.localizedDescription)")
-            return nil
-        }
-        #else
-        return url
-        #endif
-    }
-    
-    private func demoContent() -> String? {
-        guard
-            let demoPath = Bundle.main.path(forResource: "demo", ofType: "html"),
-            let url = openableURL(from: URL(fileURLWithPath: demoPath)),
-            let html = try? String(contentsOf: url) else {
-            return nil
-        }
-        url.stopAccessingSecurityScopedResource()
-        return html
+    private func demoContent() -> String {
+        guard let demoUrl = Bundle.main.url(forResource: "demo", withExtension: "html") else { return "" }
+        return (try? String(contentsOf: demoUrl)) ?? ""
     }
 
 }
