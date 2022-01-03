@@ -62,6 +62,9 @@ public protocol MarkupDelegate {
     /// Take action when a toolbar disappeared.
     func markupToolbarDisappeared()
     
+    /// A locally cached image/resource was added at the url.
+    func markupImageAdded(url: URL)
+    
 }
 
 extension MarkupDelegate {
@@ -117,5 +120,6 @@ extension MarkupDelegate {
 
     public func markupToolbarAppeared(type: SubToolbar.ToolbarType) {}
     public func markupToolbarDisappeared() {}
+    public func markupImageAdded(url: URL) {}
     
 }

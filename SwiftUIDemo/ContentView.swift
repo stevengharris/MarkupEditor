@@ -20,7 +20,8 @@ struct ContentView: View {
     private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
     private let showSubToolbar = ShowSubToolbar()
     @State private var rawText = NSAttributedString(string: "")
-    @State private var pickerShowing: Bool = false
+    @State private var documentPickerShowing: Bool = false
+    @ObservedObject private var selectImage: SelectImage
     @State private var rawShowing: Bool = false
     @State private var demoContent: String
     // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
@@ -60,12 +61,14 @@ struct ContentView: View {
                 }
             }
         }
-        .pick(isPresented: $pickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
+        .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
+        .pick(isPresented: $selectImage.value, documentTypes: [.image, .video, .gif], onPicked: imageSelected(url:), onCancel: nil)
         .environmentObject(showSubToolbar)
         .environmentObject(markupEnv)
         .environmentObject(markupEnv.toolbarPreference)
         .environmentObject(markupEnv.selectionState)
         .environmentObject(markupEnv.observedWebView)
+        .environmentObject(markupEnv.selectImage)
     }
     
     init(url: URL?) {
@@ -74,6 +77,8 @@ struct ContentView: View {
         } else {
             _demoContent = State(initialValue: "")
         }
+        selectImage = markupEnv.selectImage
+        markupEnv.toolbarPreference.allowLocalImages = true
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -95,6 +100,10 @@ struct ContentView: View {
         demoContent = (try? String(contentsOf: url)) ?? ""
     }
     
+    private func imageSelected(url: URL) {
+        selectedWebView?.insertLocalImage(url: url)
+    }
+    
 }
 
 extension ContentView: MarkupDelegate {
@@ -108,6 +117,10 @@ extension ContentView: MarkupDelegate {
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
     }
+    
+    func markupImageAdded(url: URL) {
+        print("Image added from \(url.path)")
+    }
 
 }
 
@@ -120,7 +133,7 @@ extension ContentView: FileToolbarDelegate {
     }
     
     func existingDocument(handler: ((URL?)->Void)? = nil) {
-        pickerShowing.toggle()
+        documentPickerShowing.toggle()
     }
     
     func rawDocument() {

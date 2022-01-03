@@ -16,6 +16,7 @@ public class MarkupEnv: ObservableObject {
     public let selectionState = SelectionState()
     public let toolbarPreference: ToolbarPreference
     public var toolbarPreferenceStyle: ToolbarPreference.Style { toolbarPreference.style }
+    public let selectImage = SelectImage()
     
     public init(style: ToolbarPreference.Style = .compact) {
         toolbarPreference = ToolbarPreference(style: style)
@@ -28,5 +29,13 @@ public class ObservedWebView: ObservableObject, Identifiable {
     
     public init(_ webView: MarkupWKWebView? = nil) {
         selectedWebView = webView
+    }
+}
+
+public class SelectImage: ObservableObject {
+    @Published public var value: Bool
+    
+    public init(_ value: Bool = false) {
+        self.value = value
     }
 }

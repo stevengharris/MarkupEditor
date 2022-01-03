@@ -47,9 +47,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     deinit {
         //TODO: Find out where this MarkupWKWebView is being held that prevents deinit from being called
-        let fileManager = FileManager.default
-        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(id)
-        try? fileManager.removeItem(atPath: tempDir.path)
+        try? FileManager.default.removeItem(atPath: cacheUrl().path)
     }
     
     public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
@@ -74,13 +72,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Set things up properly for editing.
     ///
-    /// Setting things up means populating a temporary directory with the "root" files: markup.html,
+    /// Setting things up means populating a cache directory with the "root" files: markup.html,
     /// markup.css, and markup.js. In addition, if resourcesUrl is specified, then its contents are copied into
-    /// the same relativePath below the temporary directory. This means the resourcesUrl generally should
+    /// the same relativePath below the cache directory. This means the resourcesUrl generally should
     /// have a baseUrl where the html-being-edited came from. If it resourcesUrl does not have a baseUrl,
-    /// then everything in resourcesUrl will be copied into the temporary directory along with the "root" files.
+    /// then everything in resourcesUrl will be copied into the cache directory along with the "root" files.
     ///
-    /// Once all the files are properly set up in the temporaryDirectory, we loadFileURL on the markup.html
+    /// Once all the files are properly set up in the cacheDir, we loadFileURL on the markup.html
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
     private func setupForEditing() {
@@ -102,44 +100,58 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return
             }
         let fileManager = FileManager.default
-        // The tempDir is a "id" subdirectory below fileManager.temporaryDirectory
+        // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
-        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(id)
-        let tempDirPath = tempDir.path
+        let cacheDir = cacheUrl()
+        let cacheDirPath = cacheUrl().path
         do {
             // Always start with a clean temporary directory
-            if fileManager.fileExists(atPath: tempDirPath) {
-                try fileManager.removeItem(atPath: tempDirPath)
+            if fileManager.fileExists(atPath: cacheDirPath) {
+                try fileManager.removeItem(atPath: cacheDirPath)
             }
-            // Copy the "root" files
-            try fileManager.createDirectory(atPath: tempDirPath, withIntermediateDirectories: true, attributes: nil)
+            // Copy the "root" files. The cacheDir will always exist.
+            try fileManager.createDirectory(atPath: cacheDirPath, withIntermediateDirectories: true, attributes: nil)
             for url in [rootHtml, rootCss, rootJs] {
-                try fileManager.copyItem(at: url, to: tempDir.appendingPathComponent(url.lastPathComponent))
+                try fileManager.copyItem(at: url, to: cacheDir.appendingPathComponent(url.lastPathComponent))
             }
-            // Copy the content of resourcesUrl into the relativePath below tempDir or to tempDir itself
-            if let resourcesUrl = resourcesUrl {
-                var tempResourcesDir: URL
-                if resourcesUrl.baseURL == nil {
-                    tempResourcesDir = tempDir
-                } else {
-                    tempResourcesDir = tempDir.appendingPathComponent(resourcesUrl.relativePath)
+            // Copy the content of resourcesUrl into the relativePath below cacheDir or to cacheDir itself.
+            // While failing to set up the root files properly results in an assertion failure, failing
+            // to get the files at resourceUrl copied properly is silent.
+            do {
+                if let resourcesUrl = resourcesUrl {
+                    var tempResourcesDir: URL
+                    if resourcesUrl.baseURL == nil {
+                        tempResourcesDir = cacheDir
+                    } else {
+                        tempResourcesDir = cacheDir.appendingPathComponent(resourcesUrl.relativePath)
+                    }
+                    let tempResourcesDirPath = tempResourcesDir.path
+                    try fileManager.createDirectory(atPath: tempResourcesDirPath, withIntermediateDirectories: true, attributes: nil)
+                    // If we specify the resourceUrl but there are no resources, it's not an error
+                    let resources = (try? fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])) ?? []
+                    for resource in resources {
+                        try fileManager.copyItem(at: resource, to: tempResourcesDir.appendingPathComponent(resource.lastPathComponent))
+                    }
                 }
-                let tempResourcesDirPath = tempResourcesDir.path
-                try fileManager.createDirectory(atPath: tempResourcesDirPath, withIntermediateDirectories: true, attributes: nil)
-                let resources = try fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])
-                for resource in resources {
-                    try fileManager.copyItem(at: resource, to: tempResourcesDir.appendingPathComponent(resource.lastPathComponent))
-                }
+            } catch let error {
+                print("Failure copying resource files: \(error.localizedDescription)")
             }
         } catch let error {
             assertionFailure("Error creating a temporarary directory for editing: \(error.localizedDescription)")
         }
         // Load markup.html to kick things off
-        let tempRootHtml = tempDir.appendingPathComponent(rootHtml.lastPathComponent)
+        let tempRootHtml = cacheDir.appendingPathComponent(rootHtml.lastPathComponent)
         loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
+    }
+    
+    
+    /// Return the URL for an "id" subdirectory below the app's cache directory
+    private func cacheUrl() -> URL {
+        let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        return cacheUrls[0].appendingPathComponent(id)
     }
     
     public func loadInitialHtml(notifying delegate: MarkupDelegate? = nil) {
@@ -273,6 +285,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 args += ", '\(alt!.escaped)'"
             }
             evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
+        }
+    }
+    
+    public func insertLocalImage(url: URL, handler: (()->Void)? = nil) {
+        // TODO: Use extended attributes for alt text if available
+        // (see https://stackoverflow.com/a/38343753/8968411)
+        let cachedImageUrl = URL(fileURLWithPath: url.lastPathComponent, relativeTo: cacheUrl())
+        let fileManager = FileManager.default
+        try? fileManager.removeItem(at: cachedImageUrl)
+        do {
+            try FileManager.default.copyItem(at: url, to: cachedImageUrl)
+            let relativeSrc = cachedImageUrl.relativePath
+            insertImage(src: relativeSrc, alt: nil, handler: handler)
+        } catch let error {
+            print("Error inserting local image: \(error.localizedDescription)")
+            handler?()
         }
     }
     
@@ -540,7 +568,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
 }
 
-//MARK:- UIResponderStandardEditActions overrides
+//MARK: UIResponderStandardEditActions overrides
 
 extension MarkupWKWebView {
     
@@ -563,5 +591,34 @@ extension MarkupWKWebView {
     public override func decreaseSize(_ sender: Any?) {
         // Do nothing
     }
+    
+}
+
+//MARK: Drop support
+
+extension MarkupWKWebView: UIDropInteractionDelegate {
+    
+    //func configureInteractions() {
+    //    interactions.append(UIDropInteraction(delegate: self))
+    //}
+    //
+    //public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+    //    return session.canLoadObjects(ofClass: GitLink.self)
+    //}
+    //
+    //public func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+    //    return UIDropProposal(operation: .copy)
+    //}
+    //
+    //public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+    //    session.loadObjects(ofClass: GitLink.self) { gitLinks in
+    //        //guard let self = self else { return }
+    //        guard let gitLink = gitLinks.first else { return }
+    //        let userInfo: [String : Any] = [
+    //            "gitLink" : gitLink
+    //        ]
+    //        NotificationCenter.default.post(name: .LinkDropped, object: nil, userInfo: userInfo)
+    //    }
+    //}
     
 }

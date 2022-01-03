@@ -13,6 +13,7 @@ public struct ImageToolbar: View {
     @EnvironmentObject var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
+    @EnvironmentObject private var selectImage: SelectImage
     private var initialSrc: String?
     private var initialAlt: String?
     private var initialScale: Int?
@@ -45,7 +46,8 @@ public struct ImageToolbar: View {
                                 placeholder: "Enter Image URL",
                                 text: $src,
                                 commitHandler: { save() },
-                                validationHandler: { src.isValidURL }
+                                validationHandler: { src.isValidURL },
+                                loseFocusHandler: { save() }
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
@@ -58,18 +60,22 @@ public struct ImageToolbar: View {
                         .frame(height: geometry.size.height)
                     }
                     .padding([.trailing], 8)
+                    Spacer()
                     Divider()
-                    LabeledToolbar(label: Text("Scale")) {
-                        Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                            Text("\(scale)%")
-                                .frame(width: 50, height: 28, alignment: .trailing)
-                        }
+                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
+                        Text("\(scale)%")
+                            .frame(width: 40, height: 28, alignment: .trailing)
+                    }
+                    if toolbarPreference.allowLocalImages {
+                        Divider()
+                        ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
+                            .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
                     Divider()
-                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
+                    ToolbarTextButton(title: "Save", action: { self.save() }) //, width: 50)
                         .disabled(!src.isEmpty && !src.isValidURL)
                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
+                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }) //, width: 50)
                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
                 .frame(height: 28)
@@ -114,9 +120,6 @@ public struct ImageToolbar: View {
                 }
                 .frame(height: 50)
             }
-        }
-        .onAppear {
-            
         }
         .onChange(of: selectionState.src, perform: { value in
             src = selectionState.src ?? ""

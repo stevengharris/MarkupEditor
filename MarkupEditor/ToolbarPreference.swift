@@ -15,6 +15,7 @@ public class ToolbarPreference: ObservableObject {
     }
     
     @Published var style: Style
+    public var allowLocalImages: Bool = true
     
     public init() {
         self.style = .labeled
