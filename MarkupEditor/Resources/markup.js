@@ -2347,7 +2347,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
     // set to make continued typing easy after inserting the image.
     if (undoable) {
         const imgRange = document.createRange();
-        imgRange.selectNode(el);
+        imgRange.selectNode(img);
         const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
         undoer.push(undoerData);
         _restoreSelection();
