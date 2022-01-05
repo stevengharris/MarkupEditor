@@ -61,12 +61,16 @@ public struct MarkupToolbar: View {
     
 }
 
-//MARK:- Previews
+//MARK: Previews
 
 struct MarkupToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
+        let markupEnv = MarkupEnv(style: .compact)
         MarkupToolbar()
+            .environmentObject(markupEnv.selectionState)
+            .environmentObject(markupEnv.toolbarPreference)
+            .environmentObject(markupEnv.observedWebView)
     }
 }
 
