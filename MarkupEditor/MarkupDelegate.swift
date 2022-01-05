@@ -148,10 +148,18 @@ extension MarkupDelegate {
     public func markupToolbarAppeared(type: SubToolbar.ToolbarType) {}
     public func markupToolbarDisappeared() {}
     
+    /// By default, use the MarkupWKWebView's setup method to populate the cache directory resources.
+    ///
+    /// Override if you need some custom behavior. For example, you might want to use the cache directory
+    /// as a cache for resources, not repopulate it every time.
     public func markupSetup(_ view: MarkupWKWebView?) {
         view?.setup()
     }
     
+    /// By default, use the MarkupWKWebView's teardown method to remove its entire cache directory.
+    ///
+    /// Override if you need some custom behavior. For example, you might want to use the cache directory
+    /// as a cache, not clean it up every time.
     public func markupTeardown(_ view: MarkupWKWebView?) {
         view?.teardown()
     }

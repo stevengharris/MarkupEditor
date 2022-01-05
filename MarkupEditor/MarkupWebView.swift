@@ -87,8 +87,12 @@ public struct MarkupWebView: UIViewRepresentable {
         webView.setHtmlIfChanged(html)
     }
     
+    /// Dismantle the MarkupWKWebView by stopping loading, removing the userContentController, and letting
+    /// the markupDelegate know to teardown the view.
+    ///
+    /// Note: this doesn't happen in UIKit apps, because they don't use MarkupWebView. Users will need to hook
+    /// into the UIViewController lifecycle to accomplish this manually.
     public static func dismantleUIView(_ uiView: MarkupWKWebView, coordinator: MarkupCoordinator) {
-        print("Dismantling MarkupWebView \(uiView.id)")
         uiView.stopLoading()
         uiView.configuration.userContentController.removeAllScriptMessageHandlers()
         coordinator.markupDelegate?.markupTeardown(uiView)
