@@ -62,8 +62,35 @@ public protocol MarkupDelegate {
     /// Take action when a toolbar disappeared.
     func markupToolbarDisappeared()
     
+    /// Take action when the MarkupWKWebView is being set up.
+    ///
+    /// Called before the web view is setupForEditing.
+    func markupSetup(_ view: MarkupWKWebView?)
+    
+    /// Take action when the MarkupWKWebView is no longer needed.
+    func markupTeardown(_ view: MarkupWKWebView?)
+    
     /// A locally cached image/resource was added at the url.
     func markupImageAdded(url: URL)
+    
+    /// Respond whether a drop interaction can be handled.
+    ///
+    /// Returning false, means that neither the markupDropInteraction(\_, sessionDidUpdate) nor
+    /// the markupDropInteraction(\_, performDrop) method will be called.
+    ///
+    /// When using MarkupWebView in SwiftUI, return false to use .onDrop on that view.
+    /// This is also the default behavior, so not implementing markupDropInteraction(\_, canHandle)
+    /// means you can just use .onDrop with MarkupWebView as you would expect. If you
+    /// return true here, the .onDrop will never execute. In this case, you should override
+    /// the markupDropInteraction(\_, sessionDidUpdate) and the markupDropInteraction(\_, performDrop)
+    /// methods.
+    func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool
+    
+    /// Respond with a DropProposal
+    func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal
+    
+    /// Perform the drop
+    func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession)
     
 }
 
@@ -85,15 +112,15 @@ extension MarkupDelegate {
             // If the selection is a followable link, then let the delegate decide what to do.
             // The default behavior for the delegate is to open the href found in selectionState.
             if selectionState.isFollowable {
-                markupLinkSelected(view, selectionState: selectionState)
+                self.markupLinkSelected(view, selectionState: selectionState)
             }
             // If the selection is in an image, let the delegate decide what to do
             if selectionState.isInImage {
-                markupImageSelected(view, selectionState: selectionState)
+                self.markupImageSelected(view, selectionState: selectionState)
             }
             // If the selection is in a table, let the delegate decide what to do
             if selectionState.isInTable {
-                markupTableSelected(view, selectionState: selectionState)
+                self.markupTableSelected(view, selectionState: selectionState)
             }
         }
     }
@@ -120,6 +147,30 @@ extension MarkupDelegate {
 
     public func markupToolbarAppeared(type: SubToolbar.ToolbarType) {}
     public func markupToolbarDisappeared() {}
+    
+    public func markupSetup(_ view: MarkupWKWebView?) {
+        view?.setup()
+    }
+    
+    public func markupTeardown(_ view: MarkupWKWebView?) {
+        view?.teardown()
+    }
+    
     public func markupImageAdded(url: URL) {}
+    
+    /// See important comments in the protocol. By default, DropInteraction is not supported; however, in SwiftUI you
+    /// can use .onDrop on MarkupWebView without reimplementing this default method.
+    public func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        // An override might be something like: session.canLoadObjects(ofClass: <your model class>.self)
+        false
+    }
+    
+    /// Supply a copy proposal by default.
+    public func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        UIDropProposal(operation: .copy)
+    }
+    
+    /// Override this method to perform the drop.
+    public func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {}
     
 }

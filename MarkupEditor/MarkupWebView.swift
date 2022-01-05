@@ -60,7 +60,7 @@ public struct MarkupWebView: UIViewRepresentable {
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {
-        let webView = MarkupWKWebView(html: html, resourcesUrl: resourcesUrl, id: id)
+        let webView = MarkupWKWebView(html: html, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupWebView.
         webView.navigationDelegate = wkNavigationDelegate
@@ -88,7 +88,10 @@ public struct MarkupWebView: UIViewRepresentable {
     }
     
     public static func dismantleUIView(_ uiView: MarkupWKWebView, coordinator: MarkupCoordinator) {
+        print("Dismantling MarkupWebView \(uiView.id)")
+        uiView.stopLoading()
         uiView.configuration.userContentController.removeAllScriptMessageHandlers()
+        coordinator.markupDelegate?.markupTeardown(uiView)
     }
     
 }

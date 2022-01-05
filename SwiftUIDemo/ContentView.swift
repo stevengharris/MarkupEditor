@@ -24,6 +24,7 @@ struct ContentView: View {
     @ObservedObject private var selectImage: SelectImage
     @State private var rawShowing: Bool = false
     @State private var demoContent: String
+    @State private var droppingImage: Bool = false
     // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
@@ -44,8 +45,9 @@ struct ContentView: View {
                 .overlay(
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
-                .onDisappear {
-                    markupEnv.observedWebView.selectedWebView = nil
+                .onDrop(of: markupEnv.supportedImageTypes, isTargeted: $droppingImage) { (providers, location) -> Bool in
+                    print("Dropping \(providers) at \(location)")
+                    return true
                 }
             if rawShowing {
                 VStack {
@@ -62,13 +64,16 @@ struct ContentView: View {
             }
         }
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: [.image, .video, .gif], onPicked: imageSelected(url:), onCancel: nil)
+        .pick(isPresented: $selectImage.value, documentTypes: markupEnv.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         .environmentObject(showSubToolbar)
         .environmentObject(markupEnv)
         .environmentObject(markupEnv.toolbarPreference)
         .environmentObject(markupEnv.selectionState)
         .environmentObject(markupEnv.observedWebView)
         .environmentObject(markupEnv.selectImage)
+        .onDisappear {
+            markupEnv.observedWebView.selectedWebView = nil
+        }
     }
     
     init(url: URL?) {
@@ -121,6 +126,18 @@ extension ContentView: MarkupDelegate {
     func markupImageAdded(url: URL) {
         print("Image added from \(url.path)")
     }
+    
+    //func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+    //    false
+    //}
+    //
+    //func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+    //    UIDropProposal(operation: .copy)
+    //}
+    //
+    //func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+    //    print("Dropped")
+    //}
 
 }
 

@@ -44,30 +44,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
-    deinit {
-        //TODO: Find out where this MarkupWKWebView is being held that prevents deinit from being called
-        try? FileManager.default.removeItem(atPath: cacheUrl().path)
-    }
+    // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
+    private var markupDelegate: MarkupDelegate?
     
     public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         super.init(frame: frame, configuration: configuration)
-        setupForEditing()
+        initForEditing()
     }
     
     public required init?(coder: NSCoder) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
-        setupForEditing()
+        initForEditing()
     }
     
-    public init(html: String?, resourcesUrl: URL? = nil, id: String? = nil) {
+    public init(html: String?, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.resourcesUrl = resourcesUrl
         if id != nil {
             self.id = id!
         }
-        setupForEditing()
+        self.markupDelegate = markupDelegate
+        initForEditing()
     }
     
     /// Set things up properly for editing.
@@ -81,17 +79,38 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Once all the files are properly set up in the cacheDir, we loadFileURL on the markup.html
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
-    private func setupForEditing() {
+    private func initForEditing() {
+        initRootFiles()
+        markupDelegate?.markupSetup(self)
+        // Enable drop interaction
+        let dropInteraction = UIDropInteraction(delegate: self)
+        addInteraction(dropInteraction)
+        // Load markup.html to kick things off
+        let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
+        loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+        // Resolving the tintColor in this way lets the WKWebView
+        // handle dark mode without any explicit settings in css
+        tintColor = tintColor.resolvedColor(with: .current)
+    }
+    
+    /// Return the bundle that is appropriate for the packaging.
+    func bundle() -> Bundle {
         // If you use the framework as a dependency, the bundle can be identified from
         // the place where MarkupWKWebView is found. If you use the Swift package as a
         // dependency, it does some BundleFinder hocus pocus behind the scenes to allow
         // Bundle to respond to module.
-        var bundle: Bundle
         #if SWIFT_PACKAGE
-        bundle = Bundle.module
+        return Bundle.module
         #else
-        bundle = Bundle(for: MarkupWKWebView.self)
+        return Bundle(for: MarkupWKWebView.self)
         #endif
+    }
+    
+    /// Initialize the directory at cacheUrl with a clean copy of the root resource files. 
+    ///
+    /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
+    private func initRootFiles() {
+        let bundle = bundle()
         guard
             let rootHtml = bundle.url(forResource: "markup", withExtension: "html"),
             let rootCss = bundle.url(forResource: "markup", withExtension: "css"),
@@ -102,51 +121,61 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
-        let cacheDir = cacheUrl()
-        let cacheDirPath = cacheUrl().path
+        let cacheUrl = cacheUrl()
+        let cacheUrlPath = cacheUrl.path
         do {
-            // Always start with a clean temporary directory
-            if fileManager.fileExists(atPath: cacheDirPath) {
-                try fileManager.removeItem(atPath: cacheDirPath)
-            }
-            // Copy the "root" files. The cacheDir will always exist.
-            try fileManager.createDirectory(atPath: cacheDirPath, withIntermediateDirectories: true, attributes: nil)
-            for url in [rootHtml, rootCss, rootJs] {
-                try fileManager.copyItem(at: url, to: cacheDir.appendingPathComponent(url.lastPathComponent))
-            }
-            // Copy the content of resourcesUrl into the relativePath below cacheDir or to cacheDir itself.
-            // While failing to set up the root files properly results in an assertion failure, failing
-            // to get the files at resourceUrl copied properly is silent.
-            do {
-                if let resourcesUrl = resourcesUrl {
-                    var tempResourcesDir: URL
-                    if resourcesUrl.baseURL == nil {
-                        tempResourcesDir = cacheDir
-                    } else {
-                        tempResourcesDir = cacheDir.appendingPathComponent(resourcesUrl.relativePath)
-                    }
-                    let tempResourcesDirPath = tempResourcesDir.path
-                    try fileManager.createDirectory(atPath: tempResourcesDirPath, withIntermediateDirectories: true, attributes: nil)
-                    // If we specify the resourceUrl but there are no resources, it's not an error
-                    let resources = (try? fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])) ?? []
-                    for resource in resources {
-                        try fileManager.copyItem(at: resource, to: tempResourcesDir.appendingPathComponent(resource.lastPathComponent))
-                    }
-                }
-            } catch let error {
-                print("Failure copying resource files: \(error.localizedDescription)")
+            try fileManager.createDirectory(atPath: cacheUrlPath, withIntermediateDirectories: true, attributes: nil)
+            for srcUrl in [rootHtml, rootCss, rootJs] {
+                let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
+                try? fileManager.removeItem(at: dstUrl)
+                try fileManager.copyItem(at: srcUrl, to: dstUrl)
             }
         } catch let error {
-            assertionFailure("Error creating a temporarary directory for editing: \(error.localizedDescription)")
+            assertionFailure("Failed to set up cacheDir with root resource files: \(error.localizedDescription)")
         }
-        // Load markup.html to kick things off
-        let tempRootHtml = cacheDir.appendingPathComponent(rootHtml.lastPathComponent)
-        loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
-        // Resolving the tintColor in this way lets the WKWebView
-        // handle dark mode without any explicit settings in css
-        tintColor = tintColor.resolvedColor(with: .current)
     }
     
+    /// Populate the resources as copied from resourcesUrl.
+    ///
+    /// The markupDelegate invokes this method by default in markupSetup(). To customize population of the cacheUrl, override in markupSetup() in
+    /// the markupDelegate. Otherwise, the default behavior is to copy everything from resourcesUrl into the same relativePath below the cacheUrl.
+    public func setup() {
+        // Copy the content of resourcesUrl into the relativePath below cacheUrl or to cacheUrl itself.
+        // While failing to set up the root files properly results in an assertion failure, failing
+        // to get the files at resourceUrl copied properly is silent.
+        guard let resourcesUrl = resourcesUrl else {
+            return
+        }
+        let fileManager = FileManager.default
+        let cacheUrl = cacheUrl()
+        var tempResourcesUrl: URL
+        if resourcesUrl.baseURL == nil {
+            tempResourcesUrl = cacheUrl
+        } else {
+            tempResourcesUrl = cacheUrl.appendingPathComponent(resourcesUrl.relativePath)
+        }
+        let tempResourcesUrlPath = tempResourcesUrl.path
+        do {
+            try fileManager.createDirectory(atPath: tempResourcesUrlPath, withIntermediateDirectories: true, attributes: nil)
+            // If we specify the resourceUrl but there are no resources, it's not an error
+            let resources = (try? fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])) ?? []
+            for srcUrl in resources {
+                let dstUrl = tempResourcesUrl.appendingPathComponent(srcUrl.lastPathComponent)
+                try? fileManager.removeItem(at: dstUrl)
+                try fileManager.copyItem(at: srcUrl, to: dstUrl)
+            }
+            
+        } catch let error {
+            print("Failure copying resource files: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Tear down what we set up to use the MarkupEditor.
+    ///
+    /// By default, we remove everything at cacheUrl. Fail silently if there is a problem.
+    public func teardown() {
+        try? FileManager.default.removeItem(atPath: cacheUrl().path)
+    }
     
     /// Return the URL for an "id" subdirectory below the app's cache directory
     private func cacheUrl() -> URL {
@@ -154,9 +183,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return cacheUrls[0].appendingPathComponent(id)
     }
     
-    public func loadInitialHtml(notifying delegate: MarkupDelegate? = nil) {
+    public func loadInitialHtml() {
         setHtml(html ?? "") {
-            if let delegate = delegate {
+            if let delegate = self.markupDelegate {
                 delegate.markupDidLoad(self) {
                     self.becomeFirstResponder()
                 }
@@ -166,7 +195,44 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK:- Responder Handling
+    //MARK: Overrides
+    
+    /// Override hitTest to enable drop events.
+    ///
+    /// The view receives UIDragEvents, which appear to be a private type of
+    /// UIEvent.EventType. When the hitTest responds normally to these events,
+    /// they return the MarkupWKWebView instance, which never receives the
+    /// sessionDidUpdate or performDrop message, even though it does respond
+    /// that it canHandle the drop. This just seems to be a bug. The solution is to
+    /// handle "normal" drag events in the parent view, which is a WKWebView, and
+    /// handle the UIDragEvent in MarkupWKWebView.
+    ///
+    /// To avoid accessing a private event type directly, we check for all publicly
+    /// identifiable events first, letting the superclass handle them. The default case
+    /// captures everything else (which AFAICT is only UIDragEvent), and just returns
+    /// self (this instance of MarkupWKWebView). The end result is that we see the
+    /// drop here.
+    ///
+    /// Not sure if this hack will survive over the long run. It would be better
+    /// if there was a way to tell if the event.type was part of the public
+    /// UIEvent.EventType enum, but this doesn't seem to be possible.
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard let event = event else { return nil }
+        switch event.type {
+        case .hover, .motion, .presses, .remoteControl, .scroll, .touches, .transform:
+            // Let the superclass handle all the publicly recognized event types
+            //if event.type != .hover { // Else mouse movement over the view produces a zillion hover prints
+            //    print("Letting WKWebView handle: \(event.description)")
+            //}
+            return super.hitTest(point, with: event)
+        default:
+            // We will handle the UIDragEvent ourselves
+            //print("MarkupWKWebView handling: \(event.description)")
+            return self
+        }
+    }
+    
+    //MARK: Responder Handling
     
     public override var canBecomeFirstResponder: Bool {
         return hasFocus
@@ -176,7 +242,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return !hasFocus
     }
     
-    //MARK:- Testing support
+    //MARK: Testing support
     
     public func setTestHtml(value: String, handler: (() -> Void)? = nil) {
         evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
@@ -202,7 +268,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
     }
     
-    //MARK:- Javascript interactions
+    //MARK: Javascript interactions
     
     public func setLineHeight(_ lineHeight: Int? = nil) {
         evaluateJavaScript("MU.setLineHeight('\(lineHeight ?? Self.DefaultInnerLineHeight)px')")
@@ -310,7 +376,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK:- Undo/redo
+    //MARK: Undo/redo
     
     public func undo(handler: (()->Void)? = nil) {
         // Invoke the undo function from the undo button, same as occurs with Command-S.
@@ -326,7 +392,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.redo()") { result, error in handler?() }
     }
     
-    //MARK:- Table editing
+    //MARK: Table editing
     
     public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
         evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
@@ -366,7 +432,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.deleteTable()") { result, error in handler?() }
     }
     
-    //MARK:- Image editing
+    //MARK: Image editing
     
     public func modifyImage(src: String?, alt: String?, scale: Int?, handler: (()->Void)?) {
         // If src is nil, then no arguments are passed and the image will be removed
@@ -391,7 +457,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK:- Autosizing
+    //MARK: Autosizing
     
     public func setHtmlAndHeight(_ html: String, handler: ((Int) -> Void)? = nil) {
         evaluateJavaScript("MU.setHtml('\(html.escaped)')") { result, error in
@@ -407,7 +473,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return clientHeight + 2 * bodyMargin
     }
     
-    //MARK:- Formatting
+    //MARK: Formatting
     
     public func bold(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleBold()") { result, error in
@@ -451,7 +517,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK:- Selection state
+    //MARK: Selection state
     
     public func getSelectionState(handler: ((SelectionState)->Void)? = nil) {
         evaluateJavaScript("MU.getSelectionState()") { result, error in
@@ -538,7 +604,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return CGRect(origin: CGPoint(x: x, y: y), size: CGSize(width: width, height: height))
     }
     
-    //MARK:- Styling
+    //MARK: Styling
     
     public func replaceStyle(in selectionState: SelectionState, with newStyle: StyleContext, handler: (()->Void)? = nil) {
         let oldStyle = selectionState.style
@@ -572,22 +638,27 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
 extension MarkupWKWebView {
     
+    /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleBoldface(_ sender: Any?) {
         bold()
     }
     
+    /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleItalics(_ sender: Any?) {
         italic()
     }
     
+    /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleUnderline(_ sender: Any?) {
         underline()
     }
     
+    /// Replace standard action with the MarkupWKWebView implementation.
     public override func increaseSize(_ sender: Any?) {
         // Do nothing
     }
     
+    /// Replace standard action with the MarkupWKWebView implementation.
     public override func decreaseSize(_ sender: Any?) {
         // Do nothing
     }
@@ -598,27 +669,19 @@ extension MarkupWKWebView {
 
 extension MarkupWKWebView: UIDropInteractionDelegate {
     
-    //func configureInteractions() {
-    //    interactions.append(UIDropInteraction(delegate: self))
-    //}
-    //
-    //public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
-    //    return session.canLoadObjects(ofClass: GitLink.self)
-    //}
-    //
-    //public func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
-    //    return UIDropProposal(operation: .copy)
-    //}
-    //
-    //public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
-    //    session.loadObjects(ofClass: GitLink.self) { gitLinks in
-    //        //guard let self = self else { return }
-    //        guard let gitLink = gitLinks.first else { return }
-    //        let userInfo: [String : Any] = [
-    //            "gitLink" : gitLink
-    //        ]
-    //        NotificationCenter.default.post(name: .LinkDropped, object: nil, userInfo: userInfo)
-    //    }
-    //}
+    /// Delegate the handling decision for DropInteraction to the markupDelegate.
+    public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        markupDelegate?.markupDropInteraction(interaction, canHandle: session) ?? false
+    }
+    
+    /// Delegate the type of DropProposal to the markupDelegate, or return .copy by default.
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        markupDelegate?.markupDropInteraction(interaction, sessionDidUpdate: session) ?? UIDropProposal(operation: .copy)
+    }
+    
+    /// Delegate the actual drop action to the markupDelegate.
+    public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        markupDelegate?.markupDropInteraction(interaction, performDrop: session)
+    }
     
 }

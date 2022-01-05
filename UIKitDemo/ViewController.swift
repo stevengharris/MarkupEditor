@@ -77,7 +77,7 @@ class ViewController: UIViewController {
     func initializeStackView() {
         // Populate the overall vertical stack with the toolbarHolder, webView, and rawTextView
         stack.addArrangedSubview(toolbarHolder)
-        webView = MarkupWKWebView(html: demoContent(), resourcesUrl: resourcesUrl, id: "Document")
+        webView = MarkupWKWebView(html: demoContent(), resourcesUrl: resourcesUrl, id: "Document", markupDelegate: self)
         overlayTop(swiftUIView: subToolbar, on: webView)
         stack.addArrangedSubview(webView)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
@@ -152,6 +152,22 @@ extension ViewController: MarkupDelegate {
     func markupInput(_ view: MarkupWKWebView) {
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
+    }
+    
+    func markupImageAdded(url: URL) {
+        print("Image added from \(url.path)")
+    }
+    
+    func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        true
+    }
+    
+    func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        UIDropProposal(operation: .copy)
+    }
+    
+    func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        print("Dropping")
     }
     
 }

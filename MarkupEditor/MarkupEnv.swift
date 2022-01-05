@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
 
 /// The available environmentObjects for the MarkupEditor.
 ///
@@ -17,6 +18,7 @@ public class MarkupEnv: ObservableObject {
     public let toolbarPreference: ToolbarPreference
     public var toolbarPreferenceStyle: ToolbarPreference.Style { toolbarPreference.style }
     public let selectImage = SelectImage()
+    public let supportedImageTypes: [UTType] = [.image, .movie]
     
     public init(style: ToolbarPreference.Style = .compact) {
         toolbarPreference = ToolbarPreference(style: style)

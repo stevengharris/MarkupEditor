@@ -37,7 +37,7 @@ import WebKit
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     private var selectionState: SelectionState
-    public var webView: MarkupWKWebView!
+    weak public var webView: MarkupWKWebView!
     public var markupDelegate: MarkupDelegate?
     
     public init(selectionState: SelectionState, markupDelegate: MarkupDelegate? = nil, webView: MarkupWKWebView? = nil) {
@@ -45,10 +45,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         self.markupDelegate = markupDelegate
         self.webView = webView
         super.init()
-    }
-    
-    deinit {
-        print("deinit MarkupCoordinator")
     }
     
     private func updateHeight() {
@@ -59,7 +55,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     
     private func loadInitialHtml() {
         // Let the webView handle loading its own html
-        webView.loadInitialHtml(notifying: markupDelegate)
+        webView.loadInitialHtml()
     }
     
     /// Take action based on the message body received from JavaScript via the userContentController.
@@ -86,7 +82,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //print("* blur")
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
             markupDelegate?.markupLostFocus(webView)
-            // TODO:- Determine whether to clean up HTML or perhaps leave that to a markupDelegate
+            // TODO: Determine whether to clean up HTML or perhaps leave that to a markupDelegate
             // For now, we clean up the HTML when we lose focus
             //webView.cleanUpHtml() { error in
             //    if error != nil {
