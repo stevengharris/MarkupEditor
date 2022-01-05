@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-//MARK:- Table Icons
+//MARK: Table Icons
 
 struct TableCell: View {
     @State var width: CGFloat

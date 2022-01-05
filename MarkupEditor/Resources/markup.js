@@ -667,7 +667,7 @@ MU.editor.addEventListener('keydown', function(ev) {
                     (inTable && MU.increaseQuoteLevel());
             } else if (_keyModified('Meta', '=')) {
                 //} else if (_keyModified('Shift', 'Tab')) {
-                // TODO:- Shift Tab is never triggered. Instead it moves focus somewhere
+                // TODO: Shift Tab is never triggered. Instead it moves focus somewhere
                 //      For now, this is just a hack to use Meta+= as an alternative to exercise code
                 preventDefault =
                     (inList && _doListOutdent()) ||
@@ -1896,7 +1896,7 @@ const _cleanUpAttributesWithin = function(attribute, node) {
                                 
 /********************************************************************************
  * Explicit handling of multi-click
- * TODO:- Remove?
+ * TODO: Remove?
  */
 
 /**
@@ -3646,7 +3646,7 @@ const _unsetTag = function(oldElement, sel) {
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
     //
-    // TODO:- Deal with turning off a tag at at the end of a word; for example,
+    // TODO: Deal with turning off a tag at at the end of a word; for example,
     // type, CTRL-B turns bold on, type, then CTRL-B turns it off, but what was
     // bolded stays bolded.
     //

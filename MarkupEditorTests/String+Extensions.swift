@@ -11,7 +11,7 @@ import MarkupEditor
 
 extension String {
     
-    //MARK:- Html styling and formatting
+    //MARK: Html styling and formatting
     
     func untaggedHtml(removing tag: String) -> String? {
         guard let startRange = range(of: Self.startTagFor(tag)) else { return nil }
