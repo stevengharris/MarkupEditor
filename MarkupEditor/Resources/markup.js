@@ -890,8 +890,9 @@ MU.setBase = function(urlString) {
 /**
  * Make sure selection is set to something reasonable when starting
  * or setting HTML.
- * Something reasonable here means the front of the first text node,
- * and creating that element in an empty document if it doesn't exist.
+ * Something reasonable here means the front of the first text node
+ * or absent that, the firstChild in MU.editor. As a backup,
+ * we will create an empty document if neither of those exist.
  * We make the contentEditable editor have focus when done. From a
  * the iOS perspective, this doesn't mean we becomeFirstResponder.
  * This should be done at the application level when the MarkupDelegate
@@ -900,12 +901,13 @@ MU.setBase = function(urlString) {
  */
 const _initializeRange = function() {
     const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    const firstChild = firstTextNode ? firstTextNode : MU.editor.firstChild;
     const selection = document.getSelection();
     selection.removeAllRanges();
     const range = document.createRange();
-    if (firstTextNode) {
-        range.setStart(firstTextNode, 0);
-        range.setEnd(firstTextNode, 0);
+    if (firstChild) {
+        range.setStart(firstChild, 0);
+        range.setEnd(firstChild, 0);
         selection.addRange(range);
         _backupSelection();
     } else {
