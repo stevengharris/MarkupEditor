@@ -357,13 +357,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func insertLocalImage(url: URL, handler: (()->Void)? = nil) {
         // TODO: Use extended attributes for alt text if available
         // (see https://stackoverflow.com/a/38343753/8968411)
-        let cachedImageUrl = URL(fileURLWithPath: url.lastPathComponent, relativeTo: cacheUrl())
-        let fileManager = FileManager.default
-        try? fileManager.removeItem(at: cachedImageUrl)
+        // Make a new unique ID for the image to save in the cacheUrl directory
+        let path = "\(UUID().uuidString).\(url.pathExtension)"
+        var baseResourceUrl: URL
+        var relativeSrc: String
+        if let resourcesUrl = resourcesUrl {
+            baseResourceUrl = URL(fileURLWithPath: resourcesUrl.relativePath, relativeTo: cacheUrl())
+            relativeSrc = baseResourceUrl.appendingPathComponent(path).relativePath
+        } else {
+            baseResourceUrl = cacheUrl()
+            relativeSrc = path
+        }
+        let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: baseResourceUrl)
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
-            let relativeSrc = cachedImageUrl.relativePath
-            insertImage(src: relativeSrc, alt: nil, handler: handler)
+            insertImage(src: relativeSrc, alt: nil) {
+                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
+                handler?()
+            }
         } catch let error {
             print("Error inserting local image: \(error.localizedDescription)")
             handler?()

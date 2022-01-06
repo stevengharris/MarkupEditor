@@ -150,8 +150,8 @@ extension MarkupDelegate {
     
     /// By default, use the MarkupWKWebView's setup method to populate the cache directory resources.
     ///
-    /// Override if you need some custom behavior. For example, you might want to use the cache directory
-    /// as a cache for resources, not repopulate it every time.
+    /// Override if you need some custom behavior. For example, you might want to refresh the cache directory
+    /// with resources, not fully repopulate it every time, which is what happens in view.setup().
     public func markupSetup(_ view: MarkupWKWebView?) {
         view?.setup()
     }
@@ -159,7 +159,8 @@ extension MarkupDelegate {
     /// By default, use the MarkupWKWebView's teardown method to remove its entire cache directory.
     ///
     /// Override if you need some custom behavior. For example, you might want to use the cache directory
-    /// as a cache, not clean it up every time.
+    /// as a cache by leaving it in place and not cleaning it up every time. If so, you should also implement
+    /// markupSetup.
     public func markupTeardown(_ view: MarkupWKWebView?) {
         view?.teardown()
     }
