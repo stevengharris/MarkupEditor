@@ -57,7 +57,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String?, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.resourcesUrl = resourcesUrl
