@@ -6,7 +6,6 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import SwiftUI
 import WebKit
 
 /// Tracks changes to a single MarkupWKWebView, updating the selectionState and informing the MarkupDelegate of what happened.
