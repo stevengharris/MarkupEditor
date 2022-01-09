@@ -63,7 +63,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     
     override func setUpWithError() throws {
         continueAfterFailure = false
-        webView = MarkupWKWebView()
+        webView = MarkupWKWebView(html: nil, resourcesUrl: nil, id: nil, markupDelegate: self)
         coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
