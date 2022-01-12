@@ -310,6 +310,7 @@
 				AA652A07260E99FF000674B7 /* Resources */,
 				AA652A3B260E9B55000674B7 /* Selection */,
 				AA652A38260E9B24000674B7 /* Toolbars */,
+				AA1749E4269B9444005F0428 /* Utilities */,
 			);
 			path = MarkupEditor;
 			sourceTree = "<group>";
@@ -338,7 +339,6 @@
 				AA8EFACB261E068F008AE31E /* StyleToolbar.swift */,
 				AA9CDA8E268900380046D308 /* SubToolbar.swift */,
 				AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */,
-				AA1749E4269B9444005F0428 /* Utilities */,
 			);
 			name = Toolbars;
 			sourceTree = "<group>";
