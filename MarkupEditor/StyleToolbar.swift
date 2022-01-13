@@ -48,6 +48,7 @@ public struct StyleToolbar: View {
                 )
                 .stroke(Color.accentColor)
             )
+            .contentShape(Rectangle())
             .disabled(selectionState.style == .Undefined)
             Divider()
             ToolbarImageButton(
