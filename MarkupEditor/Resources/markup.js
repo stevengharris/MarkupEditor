@@ -644,7 +644,7 @@ MU.editor.addEventListener('keydown', function(ev) {
     if (!selNode) { return };
     if (key === 'Enter') {
         const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
-        if ((inList && _doListEnter()) || _doEnter()) {
+        if ((inList && _doListEnter()) || (!inList && _doEnter())) {
             ev.preventDefault();
         };
     } else {
@@ -900,8 +900,7 @@ MU.setBase = function(urlString) {
  * the application has to decide when to becomeFirstResponder.
  */
 const _initializeRange = function() {
-    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-    const firstChild = firstTextNode ? firstTextNode : MU.editor.firstChild;
+    const firstChild = _firstEditorElement();
     const selection = document.getSelection();
     selection.removeAllRanges();
     const range = document.createRange();
@@ -916,6 +915,11 @@ const _initializeRange = function() {
     MU.editor.focus({preventScroll:true});
     _callback('updateHeight');
 }
+
+const _firstEditorElement = function() {
+    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    return firstTextNode ? firstTextNode : MU.editor.firstChild;
+};
 
 /********************************************************************************
  * Formatting
@@ -1104,14 +1108,93 @@ MU.toggleListItem = function(newListType, undoable=true) {
             // CASE: We selected a list item inside of a list
             const listItemElement = _findFirstParentElementInNodeNames(selNode, ['LI']);
             if (oldListType === newListType) {
-                // We want to toggle it off and remove the list altogether if it's empty afterward
-                // NOTE: _unsetTag resets the selection properly itself. So, we don't
-                // set newSelNode in this case
-                _unsetTag(listItemElement, sel);
-                if (listItemElementCount === 1) {
-                    // There was only one list item, and we just removed it
-                    // So, unset the list
-                    _unsetTag(listElement, sel);
+                // We need to determine if we are in a node whose enclosing LI should be toggled
+                // off or on. This is made more complicated by the fact that selNode is not necessarily
+                // inside of any style tag (like <p>).
+                // Consider this case with the selection in 'Bar'. Here styleType will be null,
+                // and oldListType will be 'UL'. 'Bar' is a TEXT_NODE whose parentNode is <OL>, and
+                // we want to put it in an <LI>.
+                //  <ul>
+                //      <li>
+                //          <h5>Foo</h5>
+                //          <ol>
+                //              Bar
+                //              <li>Baz</li>
+                //          </ol>
+                //      </li>
+                //      <li><h5>Fiz</h5></li>
+                //  </ul>
+                // And then this one. Here styleType is 'P'. 'Bar' is a text node whose parentNode
+                // is <P>, and we want to put it in an <LI>
+                //  <ul>
+                //      <li>
+                //          <h5>Foo</h5>
+                //          <ol>
+                //              <p>Bar</p>
+                //              <li>Baz</li>
+                //          </ol>
+                //      </li>
+                //      <li><h5>Fiz</h5></li>
+                //  </ul>
+                // To make both of these cases work, find the parentNode that is in listStyleTags(). If
+                // there is one, then that parentNode is what we want to put in a newListItem. If there
+                // isn't one, then we just want to put selNode into it.
+                // But, now consider the same cases when selecting 'Baz'. The difference between 'Bar'
+                // and 'Baz' is that 'Bar' isn't in a <LI> inside of the <OL> or <UL>, the listElement.
+                // We need a way to determine if selNode is "naked" inside of a list (we know it is in
+                // a list). If it is naked, then the rule above works -- we always want do put it in a
+                // new <LI>. If it's not naked, we might still want to toggle it on, but only if it
+                // has a previousElementSibling, because it is by definition without a visible bullet
+                // or number.
+                const containingBlock = _findFirstParentElementInNodeNames(selNode, _listStyleTags())
+                const liChild = (containingBlock) ? containingBlock : selNode
+                //_consoleLog("liChild.outerHTML: " + liChild.outerHTML);
+                const naked = _isNakedListSelection(liChild, ['LI'], ['OL', 'UL']);
+                const previousSib = liChild.previousElementSibling;
+                if (previousSib || (naked && (listItemElementCount > 0))) {
+                    //_consoleLog("Toggle on")
+                    //_consoleLog(" previousSib: " + previousSib + ", naked: " + naked + ", listItemElementCount: " + listItemElementCount);
+                    //_consoleLog(" Setting tag for " + liChild);
+                    // We want to make the selNode into a new list item in the existing list.
+                    // But, we also want it to include all of its siblings.
+                    const newListItem = document.createElement('li');
+                    let nextSib = liChild.nextSibling;  // Get nextSib before we put it in the LI and it doesn't have any sibs any more
+                    //_consoleLog(" Appending " + liChild.textContent);
+                    newListItem.appendChild(liChild);
+                    let nextNextSib;
+                    while (nextSib && (nextSib.nodeName !== 'LI')) {
+                        nextNextSib = nextSib.nextSibling;
+                        //_consoleLog(" Appending " + nextSib.textContent);
+                        newListItem.appendChild(nextSib);
+                        nextSib = nextNextSib;
+                    }
+                    if (naked) {
+                        listElement.insertBefore(newListItem, nextSib);
+                    } else {
+                        listElement.insertBefore(newListItem, listItemElement.nextSibling);
+                    }
+                    //TODO: The caret goes missing afterwards.
+                    newSelNode = newListItem;
+                } else {
+                    //_consoleLog("Toggle off")
+                    if (listItemElementCount === 0) {
+                        //_consoleLog(" Unsetting tag for " + listElement.outerHTML);
+                        _unsetTag(listElement, sel);
+                    } else {
+                        //_consoleLog(" Unsetting tag for " + listItemElement.outerHTML);
+                        // We want to toggle it off and remove the list altogether if it's empty afterward
+                        // NOTE: _unsetTag resets the selection properly itself. So, we don't
+                        // set newSelNode in this case
+                        _unsetTag(listItemElement, sel);
+                        if (listItemElementCount === 1) {
+                            // There was only one list item, and we just removed it
+                            // So, unset the list. This seems like the right thing to do,
+                            // because it can be confusing visually to still have some kind
+                            // of list present without any list items in it. We don't have
+                            // to do this, but it just seems less confusing to an end user.
+                            _unsetTag(listElement, sel);
+                        }
+                    }
                 }
             } else {
                 if (listItemElementCount === 1) {
@@ -1187,6 +1270,16 @@ MU.toggleListItem = function(newListType, undoable=true) {
 };
 
 /**
+ * Return true if we don't encounter LI before we hit OL or UL starting at node.
+ * This happens when we have paragraphs or any other element inside of a list but
+ * not separately in an LI. For example, we have multiple paragraphs inside of a
+ * single LI.
+ */
+const _isNakedListSelection = function(node) {
+    return !(_findFirstParentElementInNodeNames(node, ['LI'], ['OL', 'UL']));
+};
+
+/**
  * We are inside of a list and hit Enter.
  *
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
@@ -1205,26 +1298,31 @@ const _doListEnter = function() {
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
-    let newElement = document.createElement('br');
+    const existingRange = sel.getRangeAt(0).cloneRange();
+    const beginningListNode = (existingRange.startOffset === 0) && (!selNode.previousSibling)
+    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)
+    if (!beginningListNode || !endingListNode) { return null };
+    const newElement = document.createElement('br');
     const newParagraph = document.createElement('p');
     const newListItem = document.createElement('li');
     newParagraph.appendChild(newElement);
     newListItem.appendChild(newParagraph);
-    const existingRange = sel.getRangeAt(0).cloneRange();
-    if ((existingRange.startOffset === 0) && (!selNode.previousSibling)) {
+    if (beginningListNode) {
         // We are at the beginning of a list node
         existingList.insertBefore(newListItem, existingListItem);
         _callback('input');
         // Leave selection alone
         return existingListItem;  // To preventDefault() on Enter
-    } else if ((selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)) {
+    } else if (endingListNode) {
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
         // First, move all of the siblings of selNode's parentNode to reside in the new list,
         // leaving selNode itself alone.
         let sib = selNode.parentNode.nextElementSibling;
+        let nextSib;
         while (sib) {
+            nextSib = sib.nextElementSibling;
             newListItem.appendChild(sib);
-            sib = selNode.parentNode.nextElementSibling;
+            sib = nextSib;
         }
         // Then, insert the newListItem with its new children into the list before the next list element.
         existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
@@ -1518,7 +1616,7 @@ const _splitList = function(listItemElement, newListType) {
 /**
  * Given a listItemElement in a UL or OL list, examine its parent's siblings and collapse
  * as many as possible into a single list when they are of the same type. For example, if
- * listItemElement in in a UL list surrounded by two other ULs, then listItemElement's parent
+ * listItemElement is in a UL list surrounded by two other ULs, then listItemElement's parent
  * will become be a single UL with the elements of all three ULs combined, and the
  * other ULs will be removed. Intervening white space and non-list elements are preserved.
  *
@@ -2063,6 +2161,16 @@ const _getSelectionState = function() {
     //}
     return state;
 };
+
+/**
+ * Return the array of element tags that represent styles, excluding list-related items.
+ * We use this to be able to search for style tags inside of lists.
+ *
+ * @return {[String]}       Tag names that represent styles on the Swift side.
+ */
+const _listStyleTags = function() {
+    return ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE']
+}
 
 /**
  * Return the array of element tags that are block-level and represent styles.
@@ -3400,6 +3508,22 @@ const _getFirstChildOfTypeBefore = function(element, nodeType) {
     return firstChildOfType;
 };
 
+/**
+ * Return the index of node in its parentNode by counting previousSiblings.
+ *
+ * @param   {HTML Node}     node        The node to find the index of in its parent.
+ * @return  {Int}                       The index of node in its parent's childNodes.
+ */
+const _childNodeIndex = function(node) {
+    let index = 0;
+    let prevSib = node.previousSibling;
+    while (prevSib) {
+        index++;
+        prevSib = prevSib.previousSibling;
+    }
+    return index;
+}
+
 /*
  * Return a number that is what is actually specified in the attribute.
  * Since all attributes are strings, using them in raw form can cause weird
@@ -3434,8 +3558,8 @@ const _elementAfterDeleting = function(element, direction) {
     if (nearestTextNode) {
         return nearestTextNode
     } else {
-        const sibling = (element.nextSibling) ? element.nextSibling : element.previousSibling;
-        if (sibling && (nextSibling.nodeName === 'BR')) {
+        const sibling = element.nextSibling ?? element.previousSibling;
+        if (sibling && (sibling.nodeName === 'BR')) {
             const newTextNode = document.createTextNode('');
             sibling.replaceWith(newTextNode);
             return newTextNode;
@@ -3647,17 +3771,24 @@ const _unsetTag = function(oldElement, sel) {
     const oldStartOffset = oldRange.startOffset;
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
+    // Hold onto the parentNode
+    const oldParentNode = oldElement.parentNode;
     //
     // TODO: Deal with turning off a tag at at the end of a word; for example,
     // type, CTRL-B turns bold on, type, then CTRL-B turns it off, but what was
     // bolded stays bolded.
     //
-    // Get a newElement from the innerHTML of the oldElement, but hold onto the parentNode
-    const oldParentNode = oldElement.parentNode;
+    // Get a newElement from the innerHTML of the oldElement
+    // Start by tracking the index of oldElement in oldParentNode's childNodes,
+    // so we know what element to select when we are done. The original oldElement
+    // will be replaced with template.content derived from oldElement's innerHTML.
+    const childNodeIndex = _childNodeIndex(oldElement);
     const template = document.createElement('template');
     template.innerHTML = oldElement.innerHTML;
     const newElement = template.content;
     oldElement.replaceWith(newElement);
+    const elementToSelect = oldParentNode.childNodes[childNodeIndex];
+    const offsetToSelect = oldStartOffset;
     // Now that oldElement has been replaced, we need to reset the selection.
     // We need to do everything from the oldParentNode, which remains unchanged.
     // Did we just eliminate the startContainer for the selection? Consider
@@ -3689,16 +3820,20 @@ const _unsetTag = function(oldElement, sel) {
         startContainer = newStartContainer;
         startOffset = oldStartOffset;
     } else {
-        startContainer = newElement;
-        startOffset = 0;
+        //_consoleLog("selecting start");
+        // Make the best choice for startContainer when we have removed everything from a list.
+        startContainer = elementToSelect;
+        startOffset = offsetToSelect;
     }
     const newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
     if (newEndContainer) {
         endContainer = newEndContainer;
         endOffset = oldEndOffset;
     } else {
-        endContainer = newElement;
-        endOffset = 0;
+        //_consoleLog("selecting end");
+        // Make the best choice for endContainer when we have removed everything from a list.
+        endContainer = elementToSelect;
+        endOffset = offsetToSelect;
     };
     // With the new range properties sorted out, create the new range and reset the selection
     range = document.createRange();
