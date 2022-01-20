@@ -648,7 +648,7 @@ MU.editor.addEventListener('keydown', function(ev) {
             ev.preventDefault();
         };
     } else {
-        const specialParent = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL', 'TABLE', 'BLOCKQUOTE']);
+        const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorEnterTags);
         if (specialParent) {
             const nodeName = specialParent.nodeName;
             const inList = (nodeName === 'UL') || (nodeName === 'OL')
@@ -1146,7 +1146,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
                 // new <LI>. If it's not naked, we might still want to toggle it on, but only if it
                 // has a previousElementSibling, because it is by definition without a visible bullet
                 // or number.
-                const containingBlock = _findFirstParentElementInNodeNames(selNode, _listStyleTags())
+                const containingBlock = _findFirstParentElementInNodeNames(selNode, _listStyleTags)
                 const liChild = (containingBlock) ? containingBlock : selNode
                 //_consoleLog("liChild.outerHTML: " + liChild.outerHTML);
                 const naked = _isNakedListSelection(liChild, ['LI'], ['OL', 'UL']);
@@ -1300,15 +1300,19 @@ const _doListEnter = function() {
     if (!existingList || !existingListItem) { return null };
     const existingRange = sel.getRangeAt(0).cloneRange();
     const beginningListNode = (existingRange.startOffset === 0) && (!selNode.previousSibling)
-    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)
-    if (!beginningListNode || !endingListNode) { return null };
-    const newElement = document.createElement('br');
-    const newParagraph = document.createElement('p');
+    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)
     const newListItem = document.createElement('li');
-    newParagraph.appendChild(newElement);
-    newListItem.appendChild(newParagraph);
+    const blockContainer = _findFirstParentElementInNodeNames(selNode, _listStyleTags);
+    let newElement;
+    if (blockContainer) {
+        newElement = document.createElement(blockContainer.nodeName);
+    } else {
+        newElement = document.createElement('p');
+    }
     if (beginningListNode) {
-        // We are at the beginning of a list node
+        // We are at the beginning of a list node, so insert the newListItem
+        newElement.appendChild(document.createElement('br'));
+        newListItem.appendChild(newElement);
         existingList.insertBefore(newListItem, existingListItem);
         _callback('input');
         // Leave selection alone
@@ -1317,9 +1321,11 @@ const _doListEnter = function() {
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
         // First, move all of the siblings of selNode's parentNode to reside in the new list,
         // leaving selNode itself alone.
+        newElement.appendChild(document.createElement('br'));
+        newListItem.appendChild(newElement);
         let sib = selNode.parentNode.nextElementSibling;
         let nextSib;
-        while (sib) {
+        while (sib && (sib.nodeName !== 'LI')) {
             nextSib = sib.nextElementSibling;
             newListItem.appendChild(sib);
             sib = nextSib;
@@ -1334,7 +1340,62 @@ const _doListEnter = function() {
         sel.addRange(range);
         _callback('input');
         return newElement;  // To preventDefault() on Enter
-    }
+    } else {
+        // We are somewhere in a list item
+        let sib, nextSib;
+        if (selNode.nodeType === Node.TEXT_NODE) {
+            let trailingContent = selNode.splitText(existingRange.startOffset);
+            const formatTags = _getFormatTags();
+            let innerElement = trailingContent;
+            let outerElement = selNode;
+            for (let i=0; i<formatTags.length; i++) {
+                newElement = document.createElement(formatTags[i]);
+                newElement.appendChild(innerElement);
+                innerElement = newElement;
+            };
+            if (formatTags.length > 0) {
+                outerElement = _findFirstParentElementInNodeNames(selNode, [formatTags[formatTags.length - 1]]);
+            };
+            if (blockContainer) {
+                // Make the newElement in the same style as its container.
+                newElement = document.createElement(blockContainer.nodeName);
+                newElement.appendChild(innerElement);
+            } else if (!newElement) {
+                // Make the newElement just an unstyled text node like it started.
+                newElement = document.createTextNode(trailingContent);
+            }
+            newListItem.appendChild(newElement);
+            // With trailingContent in newElement which is in newListItem,
+            // append all of selNode's siblings to newElement
+            sib = outerElement.nextSibling;
+            while (sib) {
+                nextSib = sib.nextSibling;
+                newElement.appendChild(sib);
+                sib = nextSib;
+            }
+            // And then make all of selNode's parentNode's siblings follow it in
+            // the same newListItem. For example, we might have nested lists
+            // below the text node we are splitting.
+            if (blockContainer) {
+                sib = blockContainer.nextSibling;
+                while (sib) {
+                    nextSib = sib.nextSibling;
+                    newListItem.appendChild(sib);
+                    sib = nextSib;
+                }
+            }
+            // Then, insert the newListItem with its new children into the list before the next list element.
+            existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
+            const range = document.createRange();
+            // And leave selection in the newElement
+            range.setStart(newElement, 0);
+            range.setEnd(newElement, 0);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            _callback('input');
+            return newElement;  // To preventDefault() on Enter
+        };
+    };
     return null;    // To let standard event handling happen
 };
 
@@ -2052,7 +2113,7 @@ const _doubleClickSelect = function(sel, selNode) {
  * @param {HTML Selection}  sel         The current selection
  */
 const _tripleClickSelect = function(sel) {
-    const nodeToSelect = _firstSelectionNodeMatching(_styleTags());
+    const nodeToSelect = _firstSelectionNodeMatching(_styleTags);
     if (nodeToSelect) {
         const elementRange = document.createRange();
         if (nodeToSelect.firstChild.nodeType === Node.TEXT_NODE) {
@@ -2083,6 +2144,23 @@ const _isWhiteSpace = function(s) {
 /********************************************************************************
  * Selection
  */
+
+/**
+ * Define various arrays of tags used to represent concepts on the Swift side.
+ *
+ * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
+ */
+const _listStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];
+
+const _styleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL'];
+
+const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];
+
+const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];
+
+const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+
+const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -2163,41 +2241,23 @@ const _getSelectionState = function() {
 };
 
 /**
- * Return the array of element tags that represent styles, excluding list-related items.
- * We use this to be able to search for style tags inside of lists.
- *
- * @return {[String]}       Tag names that represent styles on the Swift side.
- */
-const _listStyleTags = function() {
-    return ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE']
-}
-
-/**
- * Return the array of element tags that are block-level and represent styles.
- *
- * @return {[String]}       Tag names that represent styles on the Swift side.
- */
-const _styleTags = function() {
-    return ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL']
-}
-
-/**
  * Return the paragraph style at the selection.
  *
  * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
  */
 const _getParagraphStyle = function() {
-    return _firstSelectionTagMatching(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
+    return _firstSelectionTagMatching(_paragraphStyleTags);
 };
 
 /**
  * Return an array of format tags at the selection. For example, the selection could
- * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['B', 'I', 'U'].
+ * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['U', 'I', 'B'],
+ * from innermost to outermost tag.
  *
  * @return {[String]}       Tag names that represent the selection formatting on the Swift side.
  */
 const _getFormatTags = function() {
-    return _selectionTagsMatching(['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE']);
+    return _selectionTagsMatching(_formatTags);
 };
 
 /**
@@ -2207,7 +2267,7 @@ const _getFormatTags = function() {
  * @return {[String]}       Tag names that represent the selection table elements.
  */
 const _getTableTags = function() {
-    return _selectionTagsMatching(['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'])
+    return _selectionTagsMatching(_tableTags);
 };
 
 /**
@@ -2613,7 +2673,7 @@ MU.insertTable = function(rows, cols, undoable=true) {
         tbody.appendChild(tr);
     };
     table.appendChild(tbody);
-    const targetNode = _findFirstParentElementInNodeNames(selNode, _styleTags());
+    const targetNode = _findFirstParentElementInNodeNames(selNode, _styleTags);
     if (!targetNode) { return };
     targetNode.insertAdjacentHTML('afterend', table.outerHTML);
     // We need the new table that now exists at selection.
@@ -3416,14 +3476,11 @@ const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
 const _selectionTagsMatching = function(nodeNames) {
     const sel = document.getSelection();
     const tags = [];
-    if (sel) {
-        let focusNode = sel.focusNode;
-        while (focusNode) {
-            let selElement = _findFirstParentElementInNodeNames(focusNode, nodeNames);
-            if (selElement) {
-                tags.push(selElement.nodeName);
-            }
-            focusNode = focusNode.parentNode;
+    if (sel && sel.focusNode) {
+        let selElement = _findFirstParentElementInNodeNames(sel.focusNode, nodeNames);
+        while (selElement) {
+            tags.push(selElement.nodeName);
+            selElement = _findFirstParentElementInNodeNames(selElement.parentNode, nodeNames);
         }
     }
     return tags;
