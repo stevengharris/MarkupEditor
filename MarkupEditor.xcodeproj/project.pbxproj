@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		AA0BC27026F8F52500B90327 /* MarkupEnv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */; };
-		AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */; };
 		AA1749E12699128C005F0428 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
 		AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1749E2269B8EC3005F0428 /* Blur.swift */; };
 		AA1B80D82620ECD100891FFB /* TextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B80D72620ECD100891FFB /* TextView.swift */; };
@@ -36,18 +35,19 @@
 		AA408B362616686C00CAE8B9 /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA652A09260E99FF000674B7 /* markup.js */; };
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AA42FEBB26E2D53800D55E33 /* ToolbarPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */; };
+		AA4342FE279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
+		AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
+		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
+		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5EEF04264061B800B111A1 /* Image+Extensions.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
-		AA652945260E8114000674B7 /* SwiftUIDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652944260E8114000674B7 /* SwiftUIDemoApp.swift */; };
 		AA652949260E8114000674B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
 		AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA65294B260E8114000674B7 /* Preview Assets.xcassets */; };
 		AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* ViewController.swift */; };
-		AA6529AA260E8450000674B7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA6529A8260E8450000674B7 /* LaunchScreen.storyboard */; };
 		AA6529C5260E8B2B000674B7 /* UIViewController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */; };
-		AA6529CB260E8D69000674B7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA6529CA260E8D69000674B7 /* Main.storyboard */; };
 		AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA806A392652ED49008F60E2 /* Icons.swift */; };
 		AA8EFAC1261CD357008AE31E /* ToolbarTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */; };
 		AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFACB261E068F008AE31E /* StyleToolbar.swift */; };
@@ -85,7 +85,6 @@
 
 /* Begin PBXFileReference section */
 		AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEnv.swift; sourceTree = "<group>"; };
-		AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowSubToolbar.swift; sourceTree = "<group>"; };
 		AA1749E2269B8EC3005F0428 /* Blur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blur.swift; sourceTree = "<group>"; };
 		AA1B80C82620B62000891FFB /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		AA1B80CD2620C87C00891FFB /* FileToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileToolbar.swift; sourceTree = "<group>"; };
@@ -97,11 +96,12 @@
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarPreference.swift; sourceTree = "<group>"; };
+		AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorMenu.swift; sourceTree = "<group>"; };
+		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA5EEF04264061B800B111A1 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
 		AA652942260E8114000674B7 /* SwiftUIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA652944260E8114000674B7 /* SwiftUIDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIDemoApp.swift; sourceTree = "<group>"; };
 		AA652948260E8114000674B7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA65294B260E8114000674B7 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		AA65294D260E8114000674B7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -110,11 +110,9 @@
 		AA65299D260E8450000674B7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AA65299F260E8450000674B7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA6529A1260E8450000674B7 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		AA6529A9260E8450000674B7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AA6529AB260E8450000674B7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UIKitDemo.entitlements; sourceTree = "<group>"; };
 		AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extensions.swift"; sourceTree = "<group>"; };
-		AA6529CA260E8D69000674B7 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../MarkupEditorDemo/UIKitDemo/Main.storyboard; sourceTree = "<group>"; };
 		AA6529D0260E8E8E000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorTests.swift; sourceTree = "<group>"; };
 		AA652A00260E99FF000674B7 /* MarkupToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupToolbar.swift; sourceTree = "<group>"; };
@@ -187,7 +185,6 @@
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */,
-				AA1749DD268A6886005F0428 /* ShowSubToolbar.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
 				AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */,
@@ -199,10 +196,12 @@
 		AA1749E5269DFE84005F0428 /* SharedDemo */ = {
 			isa = PBXGroup;
 			children = (
+				AA65299D260E8450000674B7 /* AppDelegate.swift */,
 				AA652948260E8114000674B7 /* Assets.xcassets */,
 				AA1B816C26265CAD00891FFB /* demo.html */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
+				AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
@@ -249,7 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				AA65296E260E814A000674B7 /* SwiftUIDemo.entitlements */,
-				AA652944260E8114000674B7 /* SwiftUIDemoApp.swift */,
+				AA434304279F252E002E2AFD /* SceneDelegate.swift */,
 				AAD26E85264463A300908777 /* ContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
@@ -271,12 +270,9 @@
 			isa = PBXGroup;
 			children = (
 				AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */,
-				AA65299D260E8450000674B7 /* AppDelegate.swift */,
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* ViewController.swift */,
 				AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */,
-				AA6529CA260E8D69000674B7 /* Main.storyboard */,
-				AA6529A8260E8450000674B7 /* LaunchScreen.storyboard */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -516,10 +512,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA6529CB260E8D69000674B7 /* Main.storyboard in Resources */,
 				AAFB64DC277CEED80032E859 /* steve.png in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
-				AA6529AA260E8450000674B7 /* LaunchScreen.storyboard in Resources */,
 				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -553,7 +547,6 @@
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
-				AA1749DE268A6886005F0428 /* ShowSubToolbar.swift in Sources */,
 				AA0BC27026F8F52500B90327 /* MarkupEnv.swift in Sources */,
 				AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
@@ -575,10 +568,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
+				AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */,
 				AAD26E86264463A300908777 /* ContentView.swift in Sources */,
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
-				AA652945260E8114000674B7 /* SwiftUIDemoApp.swift in Sources */,
+				AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
+				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -590,6 +585,7 @@
 				AA6529A2260E8450000674B7 /* ViewController.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
+				AA4342FE279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */,
 				AA6529C5260E8B2B000674B7 /* UIViewController+Extensions.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,
@@ -619,17 +615,6 @@
 			targetProxy = AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		AA6529A8260E8450000674B7 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				AA6529A9260E8450000674B7 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		AA408B01261666D200CAE8B9 /* Debug */ = {

@@ -361,13 +361,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let path = "\(UUID().uuidString).\(url.pathExtension)"
         var baseResourceUrl: URL
         var relativeSrc: String
-        if let resourcesUrl = resourcesUrl {
-            baseResourceUrl = URL(fileURLWithPath: resourcesUrl.relativePath, relativeTo: cacheUrl())
-            relativeSrc = baseResourceUrl.appendingPathComponent(path).relativePath
-        } else {
+        //if let resourcesUrl = resourcesUrl {
+        //    baseResourceUrl = URL(fileURLWithPath: resourcesUrl.relativePath, relativeTo: cacheUrl())
+        //    relativeSrc = baseResourceUrl.appendingPathComponent(path).relativePath
+        //} else {
             baseResourceUrl = cacheUrl()
             relativeSrc = path
-        }
+        //}
         let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: baseResourceUrl)
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)

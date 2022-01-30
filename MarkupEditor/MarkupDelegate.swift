@@ -73,6 +73,9 @@ public protocol MarkupDelegate {
     /// A locally cached image/resource was added at the url.
     func markupImageAdded(url: URL)
     
+    /// A local image has been identified to add to the view.
+    func markupImageToAdd(_ view: MarkupWKWebView, url: URL)
+    
     /// Respond whether a drop interaction can be handled.
     ///
     /// Returning false, means that neither the markupDropInteraction(\_, sessionDidUpdate) nor
@@ -165,7 +168,19 @@ extension MarkupDelegate {
         view?.teardown()
     }
     
+    /// Take action after an image had been added, if needed; default is to do nothing.
+    ///
+    /// You might, for example, want to copy the image to somewhere, since the url passed-in
+    /// will be a location in the cache.
     public func markupImageAdded(url: URL) {}
+    
+    /// Take action needed to add the local image to the document being edited.
+    ///
+    /// By default, we insert the image at url into view by copying it from the source url here
+    /// to a cache. The document references the location relative to the html.
+    public func markupImageToAdd(_ view: MarkupWKWebView, url: URL) {
+        view.insertLocalImage(url: url)
+    }
     
     /// See important comments in the protocol. By default, DropInteraction is not supported; however, in SwiftUI you
     /// can use .onDrop on MarkupWebView without reimplementing this default method.

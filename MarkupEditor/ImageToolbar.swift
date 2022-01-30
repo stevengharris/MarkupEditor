@@ -14,6 +14,7 @@ public struct ImageToolbar: View {
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
     @EnvironmentObject private var selectImage: SelectImage
+    private var height: CGFloat { toolbarPreference.height() }
     private var initialSrc: String?
     private var initialAlt: String?
     private var initialScale: Int?
@@ -64,7 +65,7 @@ public struct ImageToolbar: View {
                     Divider()
                     Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
                         Text("\(scale)%")
-                            .frame(width: 40, height: 28, alignment: .trailing)
+                            .frame(width: 40, height: height, alignment: .trailing)
                     }
                     if toolbarPreference.allowLocalImages {
                         Divider()
@@ -78,7 +79,7 @@ public struct ImageToolbar: View {
                     ToolbarTextButton(title: "Cancel", action: { self.cancel() }) //, width: 50)
                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
-                .frame(height: 28)
+                .frame(height: height)
             case .labeled:
                 HStack(alignment: .bottom) {
                     GeometryReader { geometry in
@@ -105,7 +106,7 @@ public struct ImageToolbar: View {
                     LabeledToolbar(label: Text("Scale")) {
                         Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
                             Text("\(scale)%")
-                                .frame(width: 50, height: 28, alignment: .trailing)
+                                .frame(width: height, height: height, alignment: .trailing)
                         }
                     }
                     .padding([.bottom], 3)
@@ -118,7 +119,7 @@ public struct ImageToolbar: View {
                         .padding([.bottom], 4)
                         .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
-                .frame(height: 50)
+                .frame(height: height)
             }
         }
         .onChange(of: selectionState.src, perform: { value in

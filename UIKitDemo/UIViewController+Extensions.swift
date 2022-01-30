@@ -32,18 +32,21 @@ extension UIViewController {
     /// Overlay a SwiftUI `View` as a child of the input `UIView` at the top, across the full `UIView`.
     /// - Parameters:
     ///   - swiftUIView: The SwiftUI `View` to add as a child.
-    ///   - view: The `UIView` instance to which the view should be added.
-    func overlayTop<Content>(swiftUIView: Content, on view: UIView) where Content : View {
+    ///   - view: The `UIView` instance on which the view should be overlayed at the top.
+    /// - Returns: The UIView that is created inside of a UIHostingController, which may be useful, for example, to hide the view.
+    @discardableResult func overlayTop<Content>(swiftUIView: Content, on view: UIView, height: CGFloat) -> UIView where Content : View {
         let hostingController = UIHostingController(rootView: swiftUIView)
         addChild(hostingController)
         view.addSubview(hostingController.view)
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
+            hostingController.view.heightAnchor.constraint(equalToConstant: height),
             hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
             hostingController.view.leftAnchor.constraint(equalTo: view.leftAnchor),
             hostingController.view.rightAnchor.constraint(equalTo: view.rightAnchor)
         ])
         hostingController.didMove(toParent: self)
+        return hostingController.view
     }
     
 }

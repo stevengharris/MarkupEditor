@@ -16,12 +16,12 @@ import UniformTypeIdentifiers
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
 struct ContentView: View {
 
-    private let markupEnv = MarkupEnv(style: .compact)
+    @EnvironmentObject var markupEnv: MarkupEnv
+    @EnvironmentObject var selectImage: SelectImage
+    @EnvironmentObject var showSubToolbar: ShowSubToolbar
     private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
-    private let showSubToolbar = ShowSubToolbar()
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
-    @ObservedObject private var selectImage: SelectImage
     @State private var rawShowing: Bool = false
     @State private var demoContent: String
     @State private var droppingImage: Bool = false
@@ -82,8 +82,6 @@ struct ContentView: View {
         } else {
             _demoContent = State(initialValue: "")
         }
-        selectImage = markupEnv.selectImage
-        markupEnv.toolbarPreference.allowLocalImages = true
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -106,7 +104,8 @@ struct ContentView: View {
     }
     
     private func imageSelected(url: URL) {
-        selectedWebView?.insertLocalImage(url: url)
+        guard let view = selectedWebView else { return }
+        markupImageToAdd(view, url: url)
     }
     
 }
@@ -123,21 +122,14 @@ extension ContentView: MarkupDelegate {
         setRawText()
     }
     
+    /// Callback received after a local image has been added to the document.
+    ///
+    /// Note the URL will be to a copy of the image you identified, copied to the caches directory for the app.
+    /// You may want to copy this image to a proper storage location. For demo, I'm leaving the print statement
+    /// in to highlight what happened.
     func markupImageAdded(url: URL) {
         print("Image added from \(url.path)")
     }
-    
-    //func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
-    //    false
-    //}
-    //
-    //func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
-    //    UIDropProposal(operation: .copy)
-    //}
-    //
-    //func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
-    //    print("Dropped")
-    //}
 
 }
 

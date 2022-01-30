@@ -19,12 +19,17 @@ public class MarkupEnv: ObservableObject {
     public var toolbarPreferenceStyle: ToolbarPreference.Style { toolbarPreference.style }
     public let selectImage = SelectImage()
     public let supportedImageTypes: [UTType] = [.image, .movie]
+    public let showSubToolbar = ShowSubToolbar()
     
     public init(style: ToolbarPreference.Style = .compact) {
         toolbarPreference = ToolbarPreference(style: style)
     }
 }
 
+/// The observable object containing the selectedWebView.
+///
+/// In cases where a single MarkupToolbar is being used with multiple MarkupWKWebViews, we need
+/// to be able to track which is selected so that the MarkupToolbar reflects its state properly.
 public class ObservedWebView: ObservableObject, Identifiable {
     @Published public var selectedWebView: MarkupWKWebView?
     public var id: UUID = UUID()
@@ -34,10 +39,19 @@ public class ObservedWebView: ObservableObject, Identifiable {
     }
 }
 
+/// The observable object containing the Bool that tells us whether the DocumentPicker should be
+/// shown to select a local image.
 public class SelectImage: ObservableObject {
     @Published public var value: Bool
     
     public init(_ value: Bool = false) {
         self.value = value
     }
+}
+
+/// The observable object containing the type of SubToolbar to show, or nil for none.
+public class ShowSubToolbar: ObservableObject {
+    @Published public var type: SubToolbar.ToolbarType?
+    
+    public init() {}
 }

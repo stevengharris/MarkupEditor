@@ -287,6 +287,11 @@ const _undoOperation = function(undoerData) {
         case 'restoreTable':
             _restoreTable(undoerData);
             break;
+        case 'listEnter':
+            _restoreSelection();
+            _consoleLog("Now we need to delete");
+            _backupSelection();
+            break;
         default:
             _consoleLog('Error: Unknown undoOperation ' + undoerData.operation);
     };
@@ -346,6 +351,11 @@ const _redoOperation = function(undoerData) {
             break;
         case 'restoreTable':
             _restoreTable(undoerData);
+            break;
+        case 'listEnter':
+            _restoreSelection();
+            _consoleLog("Now we need to redo delete");
+            _backupSelection();
             break;
         default:
             _consoleLog('Error: Unknown redoOperation ' + undoerData.operation);
@@ -636,6 +646,9 @@ const _keyModified = function(modifier, key) {
  * This event is fired after, and in addition to, the one that tracks _hotKeyDown,
  * so we can examine the state of _hotKeyDown to determine what to do depending
  * on the context.
+ *
+ * Whenever we do special handling of keystrokes, we also have to deal with
+ * undo.
  */
 MU.editor.addEventListener('keydown', function(ev) {
     const key = ev.key;
@@ -1284,7 +1297,7 @@ const _isNakedListSelection = function(node) {
  *
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
-const _doListEnter = function() {
+const _doListEnter = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode) { return null };
@@ -1314,9 +1327,7 @@ const _doListEnter = function() {
         newElement.appendChild(document.createElement('br'));
         newListItem.appendChild(newElement);
         existingList.insertBefore(newListItem, existingListItem);
-        _callback('input');
         // Leave selection alone
-        return existingListItem;  // To preventDefault() on Enter
     } else if (endingListNode) {
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
         // First, move all of the siblings of selNode's parentNode to reside in the new list,
@@ -1338,8 +1349,6 @@ const _doListEnter = function() {
         range.setEnd(newElement, 0);
         sel.removeAllRanges();
         sel.addRange(range);
-        _callback('input');
-        return newElement;  // To preventDefault() on Enter
     } else {
         // We are somewhere in a list item
         let sib, nextSib;
@@ -1392,11 +1401,17 @@ const _doListEnter = function() {
             range.setEnd(newElement, 0);
             sel.removeAllRanges();
             sel.addRange(range);
-            _callback('input');
-            return newElement;  // To preventDefault() on Enter
         };
     };
-    return null;    // To let standard event handling happen
+    if (undoable) {
+        //_consoleLog("Pushing undoer data")
+        _backupSelection();
+        const undoerData = _undoerData('listEnter', null);
+        undoer.push(undoerData);
+        _restoreSelection();
+    }
+    _callback('input');
+    return newElement;      // To preventDefault() on Enter
 };
 
 /**
