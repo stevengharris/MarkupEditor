@@ -668,24 +668,21 @@ MU.editor.addEventListener('keydown', function(ev) {
             const inTable = nodeName === 'TABLE';
             const inBlockQuote = nodeName === 'BLOCKQUOTE';
             let preventDefault;
-            if (key === 'Tab') {
+            if ((key === 'Tab') && !_keyModified('Shift', 'Tab')) { // Have to exclude Shift+Tab
                 preventDefault =
                     (inList && _doListIndent()) ||
                     (inBlockQuote && MU.increaseQuoteLevel()) ||
                     (inTable && _doNextCell());
+            } else if (_keyModified('Shift', 'Tab')) {
+                preventDefault =
+                    (inList && _doListOutdent()) ||
+                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
+                    (inTable && _doPrevCell());
             } else if (_keyModified('Meta', ']')) {
                 preventDefault =
                     (inList && _doListIndent()) ||
                     (inBlockQuote && MU.increaseQuoteLevel()) ||
                     (inTable && MU.increaseQuoteLevel());
-            } else if (_keyModified('Meta', '=')) {
-                //} else if (_keyModified('Shift', 'Tab')) {
-                // TODO: Shift Tab is never triggered. Instead it moves focus somewhere
-                //      For now, this is just a hack to use Meta+= as an alternative to exercise code
-                preventDefault =
-                    (inList && _doListOutdent()) ||
-                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
-                    (inTable && _doPrevCell());
             } else if (_keyModified('Meta', '[')) {
                 preventDefault =
                     (inList && _doListOutdent()) ||
@@ -695,10 +692,8 @@ MU.editor.addEventListener('keydown', function(ev) {
             if (preventDefault) {
                 ev.preventDefault();
             };
-        } else if (
-            ((key === 'Tab') || _keyModified('Shift', 'Tab')) ||        // Do nothing for tab by default
-            (_keyModified('Meta', ']') && MU.increaseQuoteLevel()) ||
-            (_keyModified('Meta', '[') && MU.decreaseQuoteLevel())) {
+        } else if ((_keyModified('Meta', ']') && MU.increaseQuoteLevel()) ||
+                   (_keyModified('Meta', '[') && MU.decreaseQuoteLevel())) {
             ev.preventDefault();
         };
     };
