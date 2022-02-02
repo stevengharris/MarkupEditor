@@ -1397,8 +1397,6 @@ const _doListEnter = function(undoable=true) {
 
 /**
  * We are inside of a list and want to indent the selected item in it.
- *
- * @return  {HTML Node}   The existing node put in new list of the same type to preventDefault handling; else, null.
  */
 const _doListIndent = function(undoable=true) {
     let sel = document.getSelection();
@@ -1410,10 +1408,14 @@ const _doListIndent = function(undoable=true) {
     _backupSelection();
     if (_indentListItem(existingListItem, existingList)) {
         _restoreSelection();
+        if (undoable) {
+            _backupSelection();
+            const undoerData = _undoerData('indent', null);
+            undoer.push(undoerData);
+            _restoreSelection();
+        }
         _callback('input');
-        return selNode;  // To preventDefault() on Enter
     };
-    return null;
 };
 
 /**
@@ -1504,8 +1506,6 @@ const _indentListItem = function(existingListItem, existingList) {
 /**
  * We are inside of a list and want to outdent the selected item in it.
  * We can only outdent if the list we are in is contained in another list.
- *
- * @return  {HTML Node}   The existing node put in the containing list of the same type; else, null.
  */
 const _doListOutdent = function(undoable=true) {
     let sel = document.getSelection();
@@ -1517,10 +1517,14 @@ const _doListOutdent = function(undoable=true) {
     _backupSelection();
     if (_outdentListItem(existingListItem, existingList)) {
         _restoreSelection()
+        if (undoable) {
+            _backupSelection();
+            const undoerData = _undoerData('outdent', null);
+            undoer.push(undoerData);
+            _restoreSelection();
+        }
         _callback('input');
-        return selNode;  // To preventDefault() on Enter
     };
-    return null;
 };
 
 /**
