@@ -17,12 +17,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
     
+    //MARK: Menu and hotkey support
+    
     override func buildMenu(with builder: UIMenuBuilder) {
         super.buildMenu(with: builder)
         markupEditorMenu = MarkupEditorMenu(with: builder)
     }
     
-    func sceneDelegate() -> SceneDelegate? {
+    /// Let the sceneDelegate, which has access to MarkupEnv, decide whether an action can be performed.
+    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        sceneDelegate()?.canPerformAction(action, withSender: sender) ?? false
+    }
+    
+    private func sceneDelegate() -> SceneDelegate? {
         UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate
     }
     

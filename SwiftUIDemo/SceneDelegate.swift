@@ -53,12 +53,28 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         return Bundle.main.resourceURL?.appendingPathComponent("demo.html")
     }
     
+    //MARK: Menu actions
+    
+    /// Return false to disable various menu items depending on selectionState
+    @objc override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        //print(action.description)
+        let selectionState = markupEnv.selectionState
+        switch action {
+        case #selector(indent):
+            return true
+        case #selector(outdent):
+            return selectionState.isOutdentable
+        default:
+            return super.canPerformAction(action, withSender: sender)
+        }
+    }
+    
     @objc func indent() {
-        markupEnv.observedWebView.selectedWebView?.increaseQuoteLevel()
+        markupEnv.observedWebView.selectedWebView?.indent()
     }
     
     @objc func outdent() {
-        markupEnv.observedWebView.selectedWebView?.decreaseQuoteLevel()
+        markupEnv.observedWebView.selectedWebView?.outdent()
     }
     
 }

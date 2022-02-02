@@ -29,7 +29,7 @@ class MarkupEditorMenu {
             input: "]",
             modifierFlags: .command)
         let outdentCommand = UIKeyCommand(
-            title: "Indent",
+            title: "Outdent",
             image: nil,
             action: #selector(SceneDelegate.outdent),
             input: "[",

@@ -597,7 +597,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }
@@ -614,7 +614,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }
@@ -631,7 +631,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -648,7 +648,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -665,7 +665,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -682,7 +682,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }
@@ -727,7 +727,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }
@@ -744,7 +744,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }
@@ -761,7 +761,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -778,7 +778,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -795,7 +795,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.decreaseQuoteLevel() {
+                        self.webView.outdent() {
                             handler()
                         }
                     }
@@ -812,7 +812,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.increaseQuoteLevel() {
+                        self.webView.indent() {
                             handler()
                         }
                     }

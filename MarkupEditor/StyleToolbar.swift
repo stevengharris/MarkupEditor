@@ -65,17 +65,17 @@ public struct StyleToolbar: View {
             )
             ToolbarImageButton(
                 systemName: "increase.quotelevel",
-                action: { observedWebView.selectedWebView?.increaseQuoteLevel() },
+                action: { observedWebView.selectedWebView?.indent() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
             )
             ToolbarImageButton(
                 systemName: "decrease.quotelevel",
-                action: { observedWebView.selectedWebView?.decreaseQuoteLevel() },
+                action: { observedWebView.selectedWebView?.outdent() },
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
             )
-            .disabled(!selectionState.quote)
+            .disabled(!selectionState.isOutdentable)
         }
     }
     

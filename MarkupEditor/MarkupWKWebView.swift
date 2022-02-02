@@ -405,8 +405,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Table editing
     
-    public func insertTable(rows: Int, cols: Int, hander: (()->Void)? = nil) {
-        evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in hander?() }
+    public func nextCell(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.nextCell()") { result, error in handler?() }
+    }
+    
+    public func prevCell(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.prevCell()") { result, error in handler?() }
+    }
+    
+    public func insertTable(rows: Int, cols: Int, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in handler?() }
     }
     
     public func addRow(_ direction: TableDirection, handler: (()->Void)? = nil) {
@@ -617,6 +625,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Styling
     
+    /// Replace the existing style of the selection with the new style (e.g., from <p> to <h3>)
     public func replaceStyle(in selectionState: SelectionState, with newStyle: StyleContext, handler: (()->Void)? = nil) {
         let oldStyle = selectionState.style
         guard newStyle != oldStyle else { return }
@@ -625,20 +634,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Indent the selection based on the context.
+    ///
+    /// If in a list, move list item to the next nested level if appropriate.
+    /// Otherwise, increase the quote level by inserting a new blockquote.
+    public func indent(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.indent()") { result, error in
+            handler?()
+        }
+    }
+    
+    /// Outdent the selection based on the context.
+    ///
+    /// If in a list, move list item to the previous nested level if appropriate.
+    /// Otherwise, decrease the quote level by removing a blockquote if one exists.
+    public func outdent(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.outdent()") { result, error in
+            handler?()
+        }
+    }
+    
+    /// Switch between ordered and unordered list styles.
     public func toggleListItem(type: ListContext, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleListItem('\(type.tag)')") { result, error in
-            handler?()
-        }
-    }
-    
-    public func increaseQuoteLevel(_ handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.increaseQuoteLevel()") { result, error in
-            handler?()
-        }
-    }
-    
-    public func decreaseQuoteLevel(_ handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.decreaseQuoteLevel()") { result, error in
             handler?()
         }
     }

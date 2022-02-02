@@ -234,7 +234,7 @@ const _undoerData = function(operation, data, range=null) {
 
 /**
  * Undo the operation identified in undoerData. So, for example,
- * when operation is 'indent', we undo an indent by executing decreaseQuoteLevel.
+ * when operation is 'indent', we undo an indent by executing MU.outdent.
  *
  * @param {Object}  undoerData  The undoerData instance created at push time.
  */
@@ -263,7 +263,7 @@ const _undoOperation = function(undoerData) {
             break;
         case 'indent':
             _restoreSelection();
-            MU.decreaseQuoteLevel(false);
+            MU.outdent(false);
             _backupSelection();
             break;
         case 'insertLink':
@@ -299,7 +299,7 @@ const _undoOperation = function(undoerData) {
 
 /**
  * Redo the operation identified in undoerData. So, for example,
- * when operation is 'indent', we redo an indent by executing increaseQuoteLevel.
+ * when operation is 'indent', we redo an indent by executing MU.indent.
  *
  * @param {Object}  undoerData  The undoerData instance created at push time.
  */
@@ -328,7 +328,7 @@ const _redoOperation = function(undoerData) {
             break;
         case 'indent':
             _restoreSelection();
-            MU.increaseQuoteLevel(false);
+            MU.indent(false);
             _backupSelection();
             break;
         case 'insertLink':
@@ -607,12 +607,16 @@ MU.editor.addEventListener('click', function(ev) {
  * If we hold Shift and Meta and then press ], we end up with _hotKeyDown['Shift'] = ']'
  * AND _hotKeyDown['Meta'] = ']'. This approach precludes key combos other than the modifier
  * keys (i.e., no Control+P+Q).
+ *
+ * Be aware that while the the keydown event is always received for Shift, Meta, Alt, and Control,
+ * the accompanying printable character hotkey keydown event is not received at all when it is
+ * mapped (and enabled) on the Swift side to a UIKeyCommand in a menu.
  */
 var _hotKeyDown = {};
 const keyModifiers = ['Shift', 'Meta', 'Alt', 'Control'];
 const _trackHotKeyDown = function(ev) {
     const key = ev.key;
-    if (keyModifiers.includes(key)) { return };     // If pressing one of the modifiers, nothing to do
+    if (keyModifiers.includes(key)) { return };     // If not pressing one of the modifiers, nothing to do
     _hotKeyDown['Shift'] = (ev.shiftKey) ? key : null;
     _hotKeyDown['Meta'] = (ev.metaKey) ? key : null;
     _hotKeyDown['Alt'] = (ev.altKey) ? key : null;
@@ -649,53 +653,35 @@ const _keyModified = function(modifier, key) {
  *
  * Whenever we do special handling of keystrokes, we also have to deal with
  * undo.
+ *
+ * Note that when hotkeys are identified as part of menus and *are not disabled*,
+ * the keydown is never received here. For example, when Meta+] is a hotkey for
+ * indenting, then we receive keydown for Meta, but not for ] while Meta is down.
+ * Similarly, if Meta+[ is a hotkey for outdenting, but it is disabled because
+ * we are at the leftmost margin, then it *is* received here. Thus, the logic here
+ * only executes when the corresponding hot-keys are not defined or are disabled.
+ * Also note that Tab is still received and handled here, never on the Swift side.
  */
 MU.editor.addEventListener('keydown', function(ev) {
     const key = ev.key;
-    const sel = document.getSelection()
-    const selNode = (sel) ? sel.focusNode : null;
-    if (!selNode) { return };
-    if (key === 'Enter') {
-        const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
-        if ((inList && _doListEnter()) || (!inList && _doEnter())) {
-            ev.preventDefault();
-        };
-    } else {
-        const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorEnterTags);
-        if (specialParent) {
-            const nodeName = specialParent.nodeName;
-            const inList = (nodeName === 'UL') || (nodeName === 'OL')
-            const inTable = nodeName === 'TABLE';
-            const inBlockQuote = nodeName === 'BLOCKQUOTE';
-            let preventDefault;
-            if ((key === 'Tab') && !_keyModified('Shift', 'Tab')) { // Have to exclude Shift+Tab
-                preventDefault =
-                    (inList && _doListIndent()) ||
-                    (inBlockQuote && MU.increaseQuoteLevel()) ||
-                    (inTable && _doNextCell());
-            } else if (_keyModified('Shift', 'Tab')) {
-                preventDefault =
-                    (inList && _doListOutdent()) ||
-                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
-                    (inTable && _doPrevCell());
-            } else if (_keyModified('Meta', ']')) {
-                preventDefault =
-                    (inList && _doListIndent()) ||
-                    (inBlockQuote && MU.increaseQuoteLevel()) ||
-                    (inTable && MU.increaseQuoteLevel());
-            } else if (_keyModified('Meta', '[')) {
-                preventDefault =
-                    (inList && _doListOutdent()) ||
-                    (inBlockQuote && MU.decreaseQuoteLevel()) ||
-                    (inTable && MU.decreaseQuoteLevel());
-            };
-            if (preventDefault) {
+    switch (key) {
+        case 'Enter':
+            const sel = document.getSelection()
+            const selNode = (sel) ? sel.focusNode : null;
+            if (!selNode) { return };
+            const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+            if ((inList && _doListEnter()) || (!inList && _doEnter())) {
                 ev.preventDefault();
             };
-        } else if ((_keyModified('Meta', ']') && MU.increaseQuoteLevel()) ||
-                   (_keyModified('Meta', '[') && MU.decreaseQuoteLevel())) {
+            break;
+        case 'Tab':
+            if (_keyModified('Shift', 'Tab')) {
+                _doPrevCell();
+            } else {
+                _doNextCell();
+            };
             ev.preventDefault();
-        };
+            break;
     };
 });
 
@@ -1414,7 +1400,7 @@ const _doListEnter = function(undoable=true) {
  *
  * @return  {HTML Node}   The existing node put in new list of the same type to preventDefault handling; else, null.
  */
-const _doListIndent = function() {
+const _doListIndent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
@@ -1521,7 +1507,7 @@ const _indentListItem = function(existingListItem, existingList) {
  *
  * @return  {HTML Node}   The existing node put in the containing list of the same type; else, null.
  */
-const _doListOutdent = function() {
+const _doListOutdent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
@@ -1764,6 +1750,56 @@ const _replaceNodeWithListItem = function(selNode) {
 };
 
 /**
+ * Do a context-sensitive indent.
+ *
+ * If in a list, indent the item to a more nested level in the list if appropriate.
+ * If in a blockquote, add another blockquote to indent further.
+ * Else, put into a blockquote to indent.
+ *
+ */
+MU.indent = function(undoable=true) {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
+    const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
+    if (specialParent) {
+        const nodeName = specialParent.nodeName;
+        const inList = (nodeName === 'UL') || (nodeName === 'OL');
+        const inBlockQuote = nodeName === 'BLOCKQUOTE';
+        if (inList) {
+            _doListIndent(undoable);
+        } else if (inBlockQuote) {
+            _increaseQuoteLevel(undoable);
+        };
+    } else {
+        _increaseQuoteLevel(undoable);
+    };
+};
+
+/**
+ * Do a context-sensitive outdent.
+ *
+ * If in a list, outdent the item to a less nested level in the list if appropriate.
+ * If in a blockquote, remove a blockquote to outdent further.
+ * Else, do nothing.
+ *
+ */
+MU.outdent = function(undoable=true) {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.focusNode : null;
+    const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
+    if (specialParent) {
+        const nodeName = specialParent.nodeName;
+        const inList = (nodeName === 'UL') || (nodeName === 'OL');
+        const inBlockQuote = nodeName === 'BLOCKQUOTE';
+        if (inList) {
+            _doListOutdent(undoable);
+        } else if (inBlockQuote) {
+            _decreaseQuoteLevel(undoable);
+        };
+    };
+};
+
+/**
  * Add a new BLOCKQUOTE
  * This is a lot more like setting a style than a format, since it applies to the
  * selected element, not to the range of the selection.
@@ -1772,7 +1808,7 @@ const _replaceNodeWithListItem = function(selNode) {
  *
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
-MU.increaseQuoteLevel = function(undoable=true) {
+const _increaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
@@ -1850,7 +1886,7 @@ MU.increaseQuoteLevel = function(undoable=true) {
  *
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
-MU.decreaseQuoteLevel = function(undoable=true) {
+const _decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
@@ -2171,6 +2207,8 @@ const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];
 const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
 
 const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];
+
+const _monitorIndentTags = ['UL', 'OL', 'BLOCKQUOTE'];
 
 /**
  * Populate a dictionary of properties about the current selection

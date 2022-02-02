@@ -32,11 +32,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     //MARK: Menu
     
     @objc func indent() {
-        markupEnv.observedWebView.selectedWebView?.increaseQuoteLevel()
+        markupEnv.observedWebView.selectedWebView?.indent()
     }
     
     @objc func outdent() {
-        markupEnv.observedWebView.selectedWebView?.decreaseQuoteLevel()
+        markupEnv.observedWebView.selectedWebView?.outdent()
     }
 
 

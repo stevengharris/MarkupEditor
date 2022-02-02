@@ -46,16 +46,16 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     // Selection state queries
     public var isLinkable: Bool {
-        return href == nil          // Can't link when selection is in a link
+        href == nil          // Can't link when selection is in a link
     }
     public var isFollowable: Bool { // Whether selecting will follow the link
-         isInLink && selection == nil
+        isInLink && selection == nil
     }
     public var isInLink: Bool {
-        return link != nil && href != nil
+        link != nil && href != nil
     }
     public var isInsertable: Bool {
-        return selection == nil || selection?.isEmpty ?? true
+        selection == nil || selection?.isEmpty ?? true
     }
     public var isStyleNormal: Bool {
         style == .P || style == .Undefined
@@ -78,7 +78,10 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         src != nil  // Possible missing alt
     }
     public var isInTable: Bool {
-        return table
+        table
+    }
+    public var isOutdentable: Bool {
+        quote || isInList
     }
     
     // CustomStringConvertible conformance
