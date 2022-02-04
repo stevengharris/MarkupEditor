@@ -43,6 +43,13 @@ const MU = {};
  */
 MU.editor = document.getElementById('editor');
 
+const refocusPromise = new Promise((resolve, reject) => {
+    window.setTimeout(function() {
+        MU.editor.focus({preventScroll:true});
+        resolve();
+    }, 10);
+});
+
 /********************************************************************************
  * Undo/Redo
  */
@@ -156,45 +163,41 @@ class Undoer {
         return this._duringUpdate;
     }
     
+    enable() {
+        document.body.appendChild(this._ctrl);
+        _callback('enableUndo');
+    }
+    
     /**
      * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
      *
      * @param {T} data the data for this undo event
      * @param {!Node=} parent to add to, uses document.body by default
      */
-    push(data, parent) {
-        // nb. We can't remove this later: the only case we could is if the user undoes everything
-        // and then does some _other_ action (which we can't detect).
-        if (!this._ctrl.parentNode) {
-            // nb. we check parentNode as this would remove contentEditable's history
-            (parent || document.body).appendChild(this._ctrl);
-        };
-        
+    push(data) {
+        // The native Undo may not be enabled, particularly when a hot-key is used. We 'enableUndo'
+        // on the Swift side so that the next Undo will always be recognized as an event on the
+        // JavaScript side. If we don't do this, then Undo may be disabled, and when that happens,
+        // even though we have an item on this_stack and we executed 'insertText' to create
+        // a fake undoable change, we can't invoke Undo from the menu or from Ctrl-Z.
+        //_callback('enableUndo');
+        // Get the nextID, splice it along with the data into this._stack, and then update the
+        // contents of this._ctrl so that it pushes the change to nextID onto the undo stack.
         const nextID = this._depth + 1;
         this._stack.splice(nextID, this._stack.length - nextID, data);
+        this._duringUpdate = true;
+        this._ctrl.style.visibility = null;
+        // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
+        // When MU.editor gets the focus event, it will always reset so other focus events are not muted.
+        muteFocusBlur();
+        this._ctrl.focus({preventScroll: true});
+        document.execCommand('selectAll');
+        document.execCommand('insertText', false, nextID);
+        this._duringUpdate = false;
+        this._ctrl.style.visibility = 'hidden';
+        // Need to restore the previous selection after all this hocus pocus
+        _restoreSelection();
 
-        const previousFocus = document.activeElement;
-        try {
-            _backupSelection();   // Otherwise, when we refocus, it won't be set right
-            this._duringUpdate = true;
-            this._ctrl.style.visibility = null;
-            // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
-            // and the previousFocus (the MU.editor). When MU.editor gets the focus event, it will always
-            // reset so other focus events are not muted.
-            muteFocusBlur();
-            this._ctrl.focus({preventScroll: true});
-            document.execCommand('selectAll');
-            document.execCommand('insertText', false, nextID);
-        } finally {
-            this._duringUpdate = false;
-            this._ctrl.style.visibility = 'hidden';
-        }
-        //if (previousFocus) {
-        //    // And we need to mute again when regaining focus.
-        //    muteFocusBlur();
-        //    // The focus event in MU.editor does _restoreSelection
-        //    previousFocus.focus({preventScroll: true});
-        //};
     };
     
     testUndo() {
@@ -421,6 +424,7 @@ const _backupUndoerRange = function(undoerData) {
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
  */
 window.onload = function() {
+    undoer.enable();
     _callback('ready');
 };
 
@@ -666,6 +670,12 @@ MU.editor.addEventListener('keydown', function(ev) {
     const key = ev.key;
     switch (key) {
         case 'Enter':
+            // Seems super easy to get repeat Enter events, which I am declaring to
+            // be non-useful to avoid expensive processing in lists, etc.
+            if (ev.repeat) {
+                ev.preventDefault();
+                return;
+            }
             const sel = document.getSelection()
             const selNode = (sel) ? sel.focusNode : null;
             if (!selNode) { return };
@@ -675,12 +685,12 @@ MU.editor.addEventListener('keydown', function(ev) {
             };
             break;
         case 'Tab':
+            ev.preventDefault();
             if (_keyModified('Shift', 'Tab')) {
                 _doPrevCell();
             } else {
                 _doNextCell();
             };
-            ev.preventDefault();
             break;
     };
 });
@@ -725,8 +735,6 @@ const _doEnter = function() {
 /**
  * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
  * Clean up formatting if needed.
- * We do the clean up after Enter because the default behavior (like breaking paragraphs)
- * is generally correct and the selection is predictably left in a br or div.
  */
 MU.editor.addEventListener('keyup', function(ev) {
     const key = ev.key;
@@ -1385,7 +1393,7 @@ const _doListEnter = function(undoable=true) {
         };
     };
     if (undoable) {
-        //_consoleLog("Pushing undoer data")
+        _consoleLog("Pushing undoer data")
         _backupSelection();
         const undoerData = _undoerData('listEnter', null);
         undoer.push(undoerData);
@@ -1394,6 +1402,31 @@ const _doListEnter = function(undoable=true) {
     _callback('input');
     return newElement;      // To preventDefault() on Enter
 };
+
+/**
+ * On undo when doing special handling of the enter event, we need
+ * to invoke delete synthetically.
+ */
+const _doDelete = function() {
+    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Backspace'}));
+    /*
+  const event = new MouseEvent('click', {
+    view: window,
+    bubbles: true,
+    cancelable: true
+  });
+  const cb = document.getElementById('checkbox');
+  const cancelled = !cb.dispatchEvent(event);
+
+  if (cancelled) {
+    // A handler called preventDefault.
+    alert("cancelled");
+  } else {
+    // None of the handlers called preventDefault.
+    alert("not cancelled");
+  }
+     */
+}
 
 /**
  * We are inside of a list and want to indent the selected item in it.
