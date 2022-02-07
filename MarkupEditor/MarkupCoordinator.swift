@@ -116,13 +116,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //print("click")
             webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
-        case "enableUndo":
-            DispatchQueue.main.async {
-                //print("enableUndo")
-                webView.undoManager?.disableUndoRegistration()
-                webView.undoManager?.enableUndoRegistration()
-                webView.undoManager?.registerUndo(withTarget: self, handler: {_ in })
-            }
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {

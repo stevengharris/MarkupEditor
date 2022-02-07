@@ -43,13 +43,6 @@ const MU = {};
  */
 MU.editor = document.getElementById('editor');
 
-const refocusPromise = new Promise((resolve, reject) => {
-    window.setTimeout(function() {
-        MU.editor.focus({preventScroll:true});
-        resolve();
-    }, 10);
-});
-
 /********************************************************************************
  * Undo/Redo
  */
@@ -82,14 +75,7 @@ class Undoer {
             // Because the input can happen quickly after the push causes this._ctrl to get focus,
             // we need to do change the undoIndex in textContent after a timeout, similarly
             // to how the focus followed by immediate blur needs a timeout.
-            //
-            // Experimentation shows that a delay of 10 prevents the caret from disappearing,
-            // particularly for _toggleFormat. Not sure how reproducible it is or if there is
-            // a determinate way to do it, as this just seems like a hack.
-            window.setTimeout(function() {
-                muteFocusBlur();    // Will be unmuted after MU.editor receives focus
-                MU.editor.focus({preventScroll:true});
-            }, 10)
+            _focusOn(MU.editor);
         };
         
         // Using an input element rather than contentEditable div because parent is already a
@@ -163,24 +149,23 @@ class Undoer {
         return this._duringUpdate;
     }
     
+    /**
+     * Enable the undoer by making it part of the document body.
+     */
     enable() {
         document.body.appendChild(this._ctrl);
-        _callback('enableUndo');
     }
     
     /**
      * Pushes a new undoable event. Adds to the browser's native undo/redo stack.
      *
+     * Note: Caller needs to handle backing up selection before call and restoring
+     * it afterward.
+     *
      * @param {T} data the data for this undo event
      * @param {!Node=} parent to add to, uses document.body by default
      */
     push(data) {
-        // The native Undo may not be enabled, particularly when a hot-key is used. We 'enableUndo'
-        // on the Swift side so that the next Undo will always be recognized as an event on the
-        // JavaScript side. If we don't do this, then Undo may be disabled, and when that happens,
-        // even though we have an item on this_stack and we executed 'insertText' to create
-        // a fake undoable change, we can't invoke Undo from the menu or from Ctrl-Z.
-        //_callback('enableUndo');
         // Get the nextID, splice it along with the data into this._stack, and then update the
         // contents of this._ctrl so that it pushes the change to nextID onto the undo stack.
         const nextID = this._depth + 1;
@@ -190,14 +175,12 @@ class Undoer {
         // Avoid letting the MarkupEditor know about the focus-blur dance going on with this._ctrl
         // When MU.editor gets the focus event, it will always reset so other focus events are not muted.
         muteFocusBlur();
-        this._ctrl.focus({preventScroll: true});
-        document.execCommand('selectAll');
-        document.execCommand('insertText', false, nextID);
-        this._duringUpdate = false;
-        this._ctrl.style.visibility = 'hidden';
-        // Need to restore the previous selection after all this hocus pocus
-        _restoreSelection();
-
+        _focusOn(this._ctrl).then( () => {
+            document.execCommand('selectAll');
+            document.execCommand('insertText', false, nextID);
+            this._duringUpdate = false;
+            this._ctrl.style.visibility = 'hidden';
+        });
     };
     
     testUndo() {
@@ -391,6 +374,23 @@ MU.undo = function() {
  */
 MU.redo = function() {
     document.execCommand('redo', false, null);
+};
+
+/**
+ * Return a promise that will focus on target after a delay.
+ *
+ * The delay seems to be required by WebKit when blur is followed by
+ * Experimentation shows that a delay of 10 prevents the caret from disappearing,
+ * particularly for _toggleFormat. Not sure how reproducible it is or if there is
+ * a determinate way to do it, as this just seems like a hack.
+ */
+const _focusOn = function(target, delay=10) {
+    return new Promise((resolve, reject) => {
+        window.setTimeout(function() {
+            target.focus({ preventScroll:true });
+            resolve();
+        }, delay);
+    });
 };
 
 /**
@@ -1393,7 +1393,6 @@ const _doListEnter = function(undoable=true) {
         };
     };
     if (undoable) {
-        _consoleLog("Pushing undoer data")
         _backupSelection();
         const undoerData = _undoerData('listEnter', null);
         undoer.push(undoerData);
