@@ -274,9 +274,7 @@ const _undoOperation = function(undoerData) {
             _restoreTable(undoerData);
             break;
         case 'listEnter':
-            _restoreSelection();
-            _consoleLog("Now we need to delete");
-            _backupSelection();
+            _undoListEnter(undoerData);
             break;
         default:
             _consoleLog('Error: Unknown undoOperation ' + undoerData.operation);
@@ -339,9 +337,7 @@ const _redoOperation = function(undoerData) {
             _restoreTable(undoerData);
             break;
         case 'listEnter':
-            _restoreSelection();
-            _consoleLog("Now we need to redo delete");
-            _backupSelection();
+            _doListEnter(false);
             break;
         default:
             _consoleLog('Error: Unknown redoOperation ' + undoerData.operation);
@@ -1301,8 +1297,12 @@ const _doListEnter = function(undoable=true) {
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
     const existingRange = sel.getRangeAt(0).cloneRange();
-    const beginningListNode = (existingRange.startOffset === 0) && (!selNode.previousSibling)
-    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)
+    const startOffset = existingRange.startOffset;
+    const endOffset = existingRange.endOffset;
+    const outerHTML = existingList.outerHTML;
+    const childElementIndices = _childElementIndices(selNode, existingList.nodeName);
+    const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
+    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (endOffset === selNode.textContent.length)
     const newListItem = document.createElement('li');
     const blockContainer = _findFirstParentElementInNodeNames(selNode, _listStyleTags);
     let newElement;
@@ -1342,7 +1342,7 @@ const _doListEnter = function(undoable=true) {
         // We are somewhere in a list item
         let sib, nextSib;
         if (selNode.nodeType === Node.TEXT_NODE) {
-            let trailingContent = selNode.splitText(existingRange.startOffset);
+            let trailingContent = selNode.splitText(startOffset);
             const formatTags = _getFormatTags();
             let innerElement = trailingContent;
             let outerElement = selNode;
@@ -1394,7 +1394,7 @@ const _doListEnter = function(undoable=true) {
     };
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('listEnter', null);
+        const undoerData = _undoerData('listEnter', {outerHTML: outerHTML, childElementIndices: childElementIndices}, existingRange);
         undoer.push(undoerData);
         _restoreSelection();
     }
@@ -1403,29 +1403,115 @@ const _doListEnter = function(undoable=true) {
 };
 
 /**
- * On undo when doing special handling of the enter event, we need
- * to invoke delete synthetically.
+ * Undo the _doListEnter operation. Redo is just to _doListEnter again.
+ *
+ * We were in a list when we hit Enter, and we end up be in the same list afterward.
+ * The contents of the list changed, and the selection changed. The undoer.outerHTML
+ * contains the list outerHTML before Enter was pressed. To undo, we first
+ * restore the selection from undoer, so we are at the proper position in the list
+ * we started with, before hitting Enter. Then we delete the entire list and replace
+ * it with the outerHTML we captured in undoer. Now how to restore selection properly?
+ * Unlike TABLE, where we hold onto the row and col to reselect, in list we will
+ * identify the element to reselect based on indices into the list that were recorded
+ * at undo time.
+ *
+ * Because we use insertAdjacentHTML to put the outerHTML in place, we have replaced
+ * the existing list with a new one that looks the same as the one that existed when
+ * Enter was pressed, but is actually a different element. Thus, we need to patch up
+ * the range held in the undoerData when we are done. Remember, the undoerData used
+ * here reflects the state *before* _doListEnter, which is the same state as we are
+ * leaving when we are done undoing in this method.
  */
-const _doDelete = function() {
-    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Backspace'}));
-    /*
-  const event = new MouseEvent('click', {
-    view: window,
-    bubbles: true,
-    cancelable: true
-  });
-  const cb = document.getElementById('checkbox');
-  const cancelled = !cb.dispatchEvent(event);
+const _undoListEnter = function(undoerData) {
+    const oldRange = undoerData.range;
+    const oldStartContainer = oldRange.startContainer;
+    const oldStartOffset = oldRange.startOffset;
+    const oldEndContainer = oldRange.endContainer;
+    const oldEndOffset = oldRange.endOffset;
+    _restoreUndoerRange(undoerData);
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    if (!existingList || !existingListItem) { return null };
+    _deleteAndResetSelection(existingList, 'BEFORE');
+    sel = document.getSelection();
+    selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const targetNode = selNode.parentNode;
+    targetNode.insertAdjacentHTML('afterend', undoerData.data.outerHTML);
+    // We need the new list that now exists at selection.
+    const newList = _getFirstChildWithNameWithin(targetNode.nextSibling, existingList.nodeName);
+    // Find the selected element based on the indices into the list recorded at undo time
+    const selectedElement = _childElementIn(newList, undoerData.data.childElementIndices);
+    // And then restore the range
+    const range = document.createRange();
+    range.setStart(selectedElement, oldStartOffset);
+    range.setEnd(selectedElement, oldEndOffset);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    undoerData.range = sel.getRangeAt(0).cloneRange();
+    _backupSelection();
+    _callback('input');
+};
 
-  if (cancelled) {
-    // A handler called preventDefault.
-    alert("cancelled");
-  } else {
-    // None of the handlers called preventDefault.
-    alert("not cancelled");
-  }
-     */
+/**
+ * Return the child element in element by following indices into childNodes at each level.
+ */
+const _childElementIn = function(element, indices) {
+    let childElement = element
+    for (let i=0; i<indices.length; i++) {
+        childElement = childElement.childNodes[indices[i]];
+    };
+    return childElement;
 }
+
+/**
+ * Return an array of indices into the childNodes at each level below the parentNode
+ * that has a nodeName of nodeName, so as to locate a particular childNode within
+ * that parentNode.
+ *
+ * For example, say node is the textElement "With two items." in this unordered list:
+ *    <ul>
+ *        <li>
+ *            <h5>Here is a bulleted list with an item in <i>H5</i> paragraph style.</h5>
+ *            <ol>
+ *                <li>Here is a numbered sublist.</li>
+ *                <li>With two items.</li>
+ *            </ol>
+ *        </li>
+ *        <li><h5>The bulleted list has two items and a sublist that is numbered.</h5></li>
+ *    </ul>
+ *
+ * Then, _childElementIndices(node, 'OL') returns [1,0] because node is inside of the 2nd
+ * childNode of the OL and the 1st childNode of the LI in that OL. Similarly,
+ * _childElementIndices(node, 'UL') returns [0,1,1,0] because node is inside of the 1st
+ * childNode of the UL, whose 2nd childNode is OL, whose 1st childNode is LI, whose 2nd
+ * childNode is node ("With two items.").
+ */
+const _childElementIndices = function(node, nodeName) {
+    let _node = node;
+    let indices = [];
+    while (_node.nodeName !== nodeName) {
+        indices.unshift(_childElementIndex(_node)); // Put at beginning of indices
+        _node = _node.parentNode;
+    }
+    return indices;
+}
+
+/**
+ * Return the index in node.parentNode.childNodes where we will find node.
+ */
+const _childElementIndex = function(node) {
+    let _node = node;
+    let childCount = 0;
+    while (_node.previousSibling) {
+        childCount++;
+        _node = _node.previousSibling;
+    };
+    return childCount;
+};
 
 /**
  * We are inside of a list and want to indent the selected item in it.
@@ -2017,7 +2103,7 @@ const _restoreSelection = function() {
  *
  * @param {Object | HTML Range}     range   Something holding onto the startContainer, startOffset, endContainer, and endOffset
  */
-const _rangeString = function(range) {
+const _rangeString = function(range, title="") {
     const startContainer = range.startContainer;
     const endContainer = range.endContainer;
     let startContainerType, startContainerContent, endContainerType, endContainerContent;
@@ -2035,7 +2121,7 @@ const _rangeString = function(range) {
         endContainerType = '<' + endContainer.nodeName + '>';
         endContainerContent = endContainer.innerHTML;
     };
-    return '\n   startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n   startOffset: ' + range.startOffset + '\n   endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n   endOffset: ' + range.endOffset;
+    return title + '\n   startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n   startOffset: ' + range.startOffset + '\n   endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n   endOffset: ' + range.endOffset;
 };
 
 /********************************************************************************
@@ -3729,8 +3815,6 @@ const _elementAfterDeleting = function(element, direction) {
 const _deleteAndResetSelection = function(element, direction) {
     const nextEl = _elementAfterDeleting(element, direction);
     element.parentNode.removeChild(element);
-    const sel = document.getSelection();
-    sel.removeAllRanges();
     const newRange = document.createRange();
     if (direction === 'BEFORE') {
         newRange.setStart(nextEl, nextEl.textContent.length);
@@ -3739,6 +3823,8 @@ const _deleteAndResetSelection = function(element, direction) {
         newRange.setStart(nextEl, 0);
         newRange.setEnd(nextEl, 0);
     }
+    const sel = document.getSelection();
+    sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
 }
