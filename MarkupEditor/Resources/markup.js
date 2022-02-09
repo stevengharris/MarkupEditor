@@ -1300,7 +1300,7 @@ const _doListEnter = function(undoable=true) {
     const startOffset = existingRange.startOffset;
     const endOffset = existingRange.endOffset;
     const outerHTML = existingList.outerHTML;
-    const childElementIndices = _childElementIndices(selNode, existingList.nodeName);
+    const childNodeIndices = _childNodeIndices(selNode, existingList.nodeName);
     const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
     const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (endOffset === selNode.textContent.length)
     const newListItem = document.createElement('li');
@@ -1394,7 +1394,7 @@ const _doListEnter = function(undoable=true) {
     };
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('listEnter', {outerHTML: outerHTML, childElementIndices: childElementIndices}, existingRange);
+        const undoerData = _undoerData('listEnter', {outerHTML: outerHTML, childNodeIndices: childNodeIndices}, existingRange);
         undoer.push(undoerData);
         _restoreSelection();
     }
@@ -1444,7 +1444,7 @@ const _undoListEnter = function(undoerData) {
     // We need the new list that now exists at selection.
     const newList = _getFirstChildWithNameWithin(targetNode.nextSibling, existingList.nodeName);
     // Find the selected element based on the indices into the list recorded at undo time
-    const selectedElement = _childElementIn(newList, undoerData.data.childElementIndices);
+    const selectedElement = _childNodeIn(newList, undoerData.data.childNodeIndices);
     // And then restore the range
     const range = document.createRange();
     range.setStart(selectedElement, oldStartOffset);
@@ -1454,63 +1454,6 @@ const _undoListEnter = function(undoerData) {
     undoerData.range = sel.getRangeAt(0).cloneRange();
     _backupSelection();
     _callback('input');
-};
-
-/**
- * Return the child element in element by following indices into childNodes at each level.
- */
-const _childElementIn = function(element, indices) {
-    let childElement = element
-    for (let i=0; i<indices.length; i++) {
-        childElement = childElement.childNodes[indices[i]];
-    };
-    return childElement;
-}
-
-/**
- * Return an array of indices into the childNodes at each level below the parentNode
- * that has a nodeName of nodeName, so as to locate a particular childNode within
- * that parentNode.
- *
- * For example, say node is the textElement "With two items." in this unordered list:
- *    <ul>
- *        <li>
- *            <h5>Here is a bulleted list with an item in <i>H5</i> paragraph style.</h5>
- *            <ol>
- *                <li>Here is a numbered sublist.</li>
- *                <li>With two items.</li>
- *            </ol>
- *        </li>
- *        <li><h5>The bulleted list has two items and a sublist that is numbered.</h5></li>
- *    </ul>
- *
- * Then, _childElementIndices(node, 'OL') returns [1,0] because node is inside of the 2nd
- * childNode of the OL and the 1st childNode of the LI in that OL. Similarly,
- * _childElementIndices(node, 'UL') returns [0,1,1,0] because node is inside of the 1st
- * childNode of the UL, whose 2nd childNode is OL, whose 1st childNode is LI, whose 2nd
- * childNode is node ("With two items.").
- */
-const _childElementIndices = function(node, nodeName) {
-    let _node = node;
-    let indices = [];
-    while (_node.nodeName !== nodeName) {
-        indices.unshift(_childElementIndex(_node)); // Put at beginning of indices
-        _node = _node.parentNode;
-    }
-    return indices;
-}
-
-/**
- * Return the index in node.parentNode.childNodes where we will find node.
- */
-const _childElementIndex = function(node) {
-    let _node = node;
-    let childCount = 0;
-    while (_node.previousSibling) {
-        childCount++;
-        _node = _node.previousSibling;
-    };
-    return childCount;
 };
 
 /**
@@ -3736,20 +3679,75 @@ const _getFirstChildOfTypeBefore = function(element, nodeType) {
 };
 
 /**
- * Return the index of node in its parentNode by counting previousSiblings.
+ * Return the childNode in element by following indices into childNodes at each level.
+ *
+ * @param   {HTML Element}      element     The element to traverse using childNodes at each level
+ * @param   {Array of Int}      indices     The indices into element's childNodes to walk down toward the target childNode
+ * @return  {HTML Node}                     The node we found by following indices down childNodes at each level
+ */
+const _childNodeIn = function(element, indices) {
+    let childNode = element
+    for (let i=0; i<indices.length; i++) {
+        childNode = childNode.childNodes[indices[i]];
+    };
+    return childNode;
+};
+
+/**
+ * Return an array of indices into the childNodes at each level below the parentNode
+ * that has a nodeName of nodeName, so as to locate a particular childNode within
+ * that parentNode.
+ *
+ * We start at node and go upward to find a parentNode with nodeName === nodeName,
+ * recording the index into childNodes at each level by counting previousSiblings.
+ *
+ * For example, say node is the textElement "With two items." in this unordered list:
+ *    <ul>
+ *        <li>
+ *            <h5>Here is a bulleted list with an item in <i>H5</i> paragraph style.</h5>
+ *            <ol>
+ *                <li>Here is a numbered sublist.</li>
+ *                <li>With two items.</li>
+ *            </ol>
+ *        </li>
+ *        <li><h5>The bulleted list has two items and a sublist that is numbered.</h5></li>
+ *    </ul>
+ *
+ * Then, _childNodeIndices(node, 'OL') returns [1,0] because node is inside of the 2nd
+ * childNode of the OL and the 1st childNode of the LI in that OL. Similarly,
+ * _childNodeIndices(node, 'UL') returns [0,1,1,0] because node is inside of the 1st
+ * childNode of the UL, whose 2nd childNode is OL, whose 1st childNode is LI, whose 2nd
+ * childNode is node ("With two items.").
+ *
+ * @param   {HTML Node}     node        The node to move upward from until we find a parent with nodeName
+ * @param   {String}        nodeName    The type of nodeName we are looking for in the ancestors of node
+ * @return  {Array of Int}              The indices into the parent's childNodes (and their childNodes) to walk down to find node
+ */
+const _childNodeIndices = function(node, nodeName) {
+    let _node = node;
+    let indices = [];
+    while (_node.nodeName !== nodeName) {
+        indices.unshift(_childNodeIndex(_node)); // Put at beginning of indices
+        _node = _node.parentNode;
+    }
+    return indices;
+};
+
+/**
+ * Return the index in node.parentNode.childNodes where we will find node.
  *
  * @param   {HTML Node}     node        The node to find the index of in its parent.
  * @return  {Int}                       The index of node in its parent's childNodes.
  */
 const _childNodeIndex = function(node) {
-    let index = 0;
-    let prevSib = node.previousSibling;
-    while (prevSib) {
-        index++;
-        prevSib = prevSib.previousSibling;
-    }
-    return index;
-}
+    let _node = node;
+    let childCount = 0;
+    while (_node.previousSibling) {
+        childCount++;
+        _node = _node.previousSibling;
+    };
+    return childCount;
+};
 
 /*
  * Return a number that is what is actually specified in the attribute.
