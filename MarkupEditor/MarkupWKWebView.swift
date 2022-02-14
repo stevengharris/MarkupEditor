@@ -257,7 +257,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func testUndo(handler: (()->Void)? = nil) {
         // Invoke the _undoOperation directly, but delay to allow
         // the async operation being undone to have completed.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
         }
     }
@@ -265,7 +265,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func testRedo(handler: (()->Void)? = nil) {
         // Invoke the _redoOperation directly, but delay to allow
         // the async operation being undone to have completed.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
         }
     }

@@ -143,7 +143,7 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 ### Known Issues
 
 1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
-2. Caret occasionally goes missing. After some editing operations, the insertion point caret is properly placed but disappears. Moving the arrow keys or typing will reveal it.
+2. Caret occasionally goes missing. I think this problem has been fixed, but am not quite sure.
 3. Table editing
     * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
     * Headers are currently colspanning the full table, but this needs to be adjustable.
@@ -152,8 +152,6 @@ The labeled toolbar took up too much screen real estate in my other project, so 
     * Selection is funky. Should show the image itself being selected but does not.
     * Scaling is clunky. I plan to replace the Stepper with an overlay with handles on the image.
     * Save and cancel should go away in favor of immediate preview and undo.
-5. List editing
-    * Tab (&#8677;) indents list items, but &#8679;&#8677;; doesn't work. You can use &#8984;] to indent and &#8984;[ to outdent.
 
 ### Limitations
 

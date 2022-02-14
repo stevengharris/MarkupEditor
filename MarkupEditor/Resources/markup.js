@@ -252,6 +252,11 @@ const _undoOperation = function(undoerData) {
             MU.outdent(false);
             _backupSelection();
             break;
+        case 'outdent':
+            _restoreSelection();
+            MU.indent(false);
+            _backupSelection();
+            break;
         case 'insertLink':
             _redoDeleteLink(undoerData);
             break;
@@ -315,6 +320,11 @@ const _redoOperation = function(undoerData) {
             MU.indent(false);
             _backupSelection();
             break;
+        case 'outdent':
+            _restoreSelection();
+            MU.outdent(false);
+            _backupSelection();
+            break;
         case 'insertLink':
             _redoInsertLink(undoerData);
             break;
@@ -376,11 +386,11 @@ MU.redo = function() {
  * Return a promise that will focus on target after a delay.
  *
  * The delay seems to be required by WebKit when blur is followed by
- * Experimentation shows that a delay of 10 prevents the caret from disappearing,
+ * Experimentation shows that a delay of 20 prevents the caret from disappearing,
  * particularly for _toggleFormat. Not sure how reproducible it is or if there is
  * a determinate way to do it, as this just seems like a hack.
  */
-const _focusOn = function(target, delay=10) {
+const _focusOn = function(target, delay=20) {
     return new Promise((resolve, reject) => {
         window.setTimeout(function() {
             target.focus({ preventScroll:true });
@@ -612,7 +622,7 @@ MU.editor.addEventListener('click', function(ev) {
  * the accompanying printable character hotkey keydown event is not received at all when it is
  * mapped (and enabled) on the Swift side to a UIKeyCommand in a menu.
  */
-var _hotKeyDown = {};
+let _hotKeyDown = {};
 const keyModifiers = ['Shift', 'Meta', 'Alt', 'Control'];
 const _trackHotKeyDown = function(ev) {
     const key = ev.key;
@@ -899,10 +909,10 @@ MU.setBase = function(urlString) {
  */
 const _initializeRange = function() {
     const firstChild = _firstEditorElement();
-    const selection = document.getSelection();
-    selection.removeAllRanges();
-    const range = document.createRange();
     if (firstChild) {
+        const selection = document.getSelection();
+        selection.removeAllRanges();
+        const range = document.createRange();
         range.setStart(firstChild, 0);
         range.setEnd(firstChild, 0);
         selection.addRange(range);
@@ -910,8 +920,7 @@ const _initializeRange = function() {
     } else {
         MU.emptyDocument()
     }
-    MU.editor.focus({preventScroll:true});
-    _callback('updateHeight');
+    _focusOn(MU.editor).then(_callback('updateHeight'));
 }
 
 const _firstEditorElement = function() {
@@ -963,10 +972,48 @@ const _toggleFormat = function(type, undoable=true) {
     if (!sel || !selNode || !sel.rangeCount) { return };
     const existingElement = _findFirstParentElementInNodeNames(selNode, [type.toUpperCase()]);
     if (existingElement) {
-        _unsetTag(existingElement, sel);
+        const range = sel.getRangeAt(0).cloneRange();
+        let newRange;
+        const nextNode = existingElement.nextSibling;
+        const endOfNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
+        const emptyNextNode = nextNode && (nextNode.nodeType === Node.TEXT_NODE) && (nextNode.textContent.length === 0);
+        const placeholderChar = '\u200B';  // A zero width char (where '\u00A0' would be space)
+        if (endOfNode && emptyNextNode && range.collapsed) {
+            // We are at the end of a formatted piece of text, with nothing ahead of us.
+            // We want to allow continued typing in unformatted text.
+            // Append a zero width char and select after it. If we continue to type, text will be unformatted.
+            // The downside is that navigation with arrow keys knows there is a character there, but the user
+            // cannot see it (as is the case on inserting an empty formatting element like <b></b>. An
+            // alternative is to insert a space, which works okay, but would probably be unexpected by a user.
+            newRange = document.createRange();
+            const emptyTextNode = document.createTextNode(placeholderChar);
+            nextNode.parentNode.insertBefore(emptyTextNode, nextNode);
+            newRange.setStart(emptyTextNode, 1);
+            newRange.setEnd(emptyTextNode, 1);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+        } else if (!endOfNode) {
+            _unsetTag(existingElement, sel);
+        } else {
+            // The existingNode can contain only the placeholderChar, and if so, we need to unset it.
+            // This also ensure that undo works properly.
+            const textNode = existingElement.firstChild;
+            const cleanText = existingElement.textContent.replace(placeholderChar, '');
+            if (cleanText.length === 0) {
+                textNode.textContent = '';
+                newRange = document.createRange();
+                newRange.setStart(textNode, 0);
+                newRange.setEnd(textNode, 0);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                _unsetTag(existingElement, sel);
+            } else {
+                _unsetTag(existingElement, sel);
+            }
+        }
     } else {
         _setTag(type, sel);
-    }
+    };
     _backupSelection();
     if (undoable) {
         // Both _setTag and _unsetTag reset the selection when they're done;
@@ -1038,6 +1085,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     };
     if (existingElement) {
         _replaceTag(existingElement, (newStyle) ? newStyle.toUpperCase() : newStyle);
+        _backupSelection();
         if (undoable) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData);
@@ -1471,7 +1519,7 @@ const _doListIndent = function(undoable=true) {
         _restoreSelection();
         if (undoable) {
             _backupSelection();
-            const undoerData = _undoerData('indent', null);
+            const undoerData = _undoerData('indent');
             undoer.push(undoerData);
             _restoreSelection();
         }
@@ -1580,7 +1628,7 @@ const _doListOutdent = function(undoable=true) {
         _restoreSelection()
         if (undoable) {
             _backupSelection();
-            const undoerData = _undoerData('outdent', null);
+            const undoerData = _undoerData('outdent');
             undoer.push(undoerData);
             _restoreSelection();
         }
@@ -1915,7 +1963,13 @@ const _increaseQuoteLevel = function(undoable=true) {
         if (existingBlockQuote) {
             selNodeParent = existingBlockQuote;
         } else {
-            selNodeParent = selNode.parentNode;
+            // Handle nested format tags
+            const outermostFormatElement = _outermostFormatElement(selNode);
+            if (outermostFormatElement) {
+                selNodeParent = outermostFormatElement;
+            } else {
+                selNodeParent = selNode.parentNode;
+            }
         }
     }
     // Now create a new BLOCKQUOTE parent based, put the selNodeParent's outerHTML
@@ -1938,7 +1992,7 @@ const _increaseQuoteLevel = function(undoable=true) {
     sel.addRange(range);
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('indent', null);
+        const undoerData = _undoerData('indent');
         undoer.push(undoerData);
         _restoreSelection();
     }
@@ -1960,7 +2014,7 @@ const _decreaseQuoteLevel = function(undoable=true) {
         _unsetTag(existingElement, sel);
         if (undoable) {
             _backupSelection();
-            const undoerData = _undoerData('indent', null);
+            const undoerData = _undoerData('outdent');
             undoer.push(undoerData);
             _restoreSelection();
         }
@@ -2371,6 +2425,22 @@ const _getParagraphStyle = function() {
  */
 const _getFormatTags = function() {
     return _selectionTagsMatching(_formatTags);
+};
+
+/**
+ * Return the outermost element at the selection that corresponds to a format tag.
+ * For example, the selection could be in the word "Hello" in <B><I><U>Hello</U></I></B>,
+ * and the outermostFormatElement would be the HTMLBoldElement in <B><I><U>Hello</U></I></B>.
+ *
+ * @return {HTMLElement || null}    The ancestor HTML Element that is outermost from the selection or null if none.
+ */
+const _outermostFormatElement = function(selNode) {
+    const formatTags = _tagsMatching(selNode, _formatTags);
+    if (formatTags.length > 0) {
+        return _findFirstParentElementInNodeNames(selNode, [formatTags[formatTags.length - 1]]);
+    } else {
+        return null;
+    };
 };
 
 /**
@@ -3588,14 +3658,20 @@ const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
  */
 const _selectionTagsMatching = function(nodeNames) {
     const sel = document.getSelection();
-    const tags = [];
     if (sel && sel.focusNode) {
-        let selElement = _findFirstParentElementInNodeNames(sel.focusNode, nodeNames);
-        while (selElement) {
-            tags.push(selElement.nodeName);
-            selElement = _findFirstParentElementInNodeNames(selElement.parentNode, nodeNames);
-        }
-    }
+        return _tagsMatching(sel.focusNode, nodeNames);
+    } else {
+        return null;
+    };
+};
+
+const _tagsMatching = function(selNode, nodeNames) {
+    const tags = [];
+    let selElement = _findFirstParentElementInNodeNames(selNode, nodeNames);
+    while (selElement) {
+        tags.push(selElement.nodeName);
+        selElement = _findFirstParentElementInNodeNames(selElement.parentNode, nodeNames);
+    };
     return tags;
 };
 
@@ -3882,15 +3958,19 @@ const _setTag = function(type, sel) {
         // on the same location, which is a bit of a drag. See ancient WebKit discussion at:
         // https://bugs.webkit.org/show_bug.cgi?id=15256. This would lead you to think it
         // was fixed after 5 agonizing years, but it would appear not to me.
-        // We select the empty text character so that as soon as we type, it gets replaced.
-        // If we create the empty node (e.g., <b></b> but don't start typing to replace
-        // the empty text character, then we can "see" it show up when we select even tho
-        // it doesn't have any visibility on the screen.
-        // TODO - The cursor doesn't show up, dammit.
+        // If we select the empty text character so that as soon as we type, it gets replaced,
+        // everything works fine and it "goes away". Unfortunately, the cursor doesn't show
+        // up when the range covers the non-printing character (just like it doesn't show up
+        // when any range is selected). To avoid losing the cursor, we select the position
+        // after the zero-width space character. The zero-width character is a character, tho.
+        // For example, if we create the empty node (e.g., <b></b> but never start typing to
+        // to add more text, then we can "see" it show up when navigating with arrow keys, as
+        // the cursor stays in the same place twice.
         const emptyTextNode = document.createTextNode('\u200B');
         el.appendChild(emptyTextNode);
         range.insertNode(el);
-        newRange.selectNode(emptyTextNode);
+        newRange.setStart(el.firstChild, 1);    // Can't use emptyTextNode
+        newRange.setEnd(el.firstChild, 1);      // Can't use emptyTextNode
     } else if (tagWord) {
         const inWordOffset = range.startOffset - wordRange.startOffset;
         const wordNode = document.createTextNode(wordRange.toString());
@@ -3906,10 +3986,29 @@ const _setTag = function(type, sel) {
         //      <p><b>Hel|lo</b> wo|rld<p>
         // Where | shows the selection starting in the bold element and ending in text.
         // The extractContents-appendChild-insertNode for italic operation produces:
-        //      <p><b>Hel<i>lo</b> wo</i>rld<p>
+        //      <p><b>Hel</b><i><b>lo</b> wo</i>rld<p>
         el.appendChild(range.extractContents());
         range.insertNode(el);
         newRange.selectNode(el);
+        //let startNode, startOffset, endNode, endOffset;
+        //const firstChild = el.firstChild;
+        //if (firstChild && (firstChild.nodeType === Node.TEXT_NODE)) {
+        //    startNode = firstChild;
+        //    startOffset = 0;
+        //} else {
+        //    startNode = el;
+        //    startOffset = 0;
+        //};
+        //const lastChild = el.lastChild
+        //if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
+        //    endNode = lastChild;
+        //    endOffset = lastChild.textContent.length;
+        //} else {
+        //    startNode = el;
+        //    startOffset = el.childNodes.length;
+        //};
+        //newRange.setStart(startNode, startOffset);
+        //newRange.setEnd(endNode, endOffset);
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
@@ -4040,6 +4139,7 @@ const _unsetTag = function(oldElement, sel) {
     // So, we need to make sure the startOffset and endOffset make sense for the newElement
     // if it replaces the startContainer or endContainer.
     let range, startContainer, startOffset, endContainer, endOffset;
+    //TODO: This matching on child needs to be replaced with an exact childnode index
     const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
     if (newStartContainer) {
         startContainer = newStartContainer;
