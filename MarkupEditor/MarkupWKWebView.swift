@@ -255,17 +255,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func testUndo(handler: (()->Void)? = nil) {
-        // Invoke the _undoOperation directly.
-        // This is useful for testing because the execCommand used by the MU.undo function
-        // operates asynchronously, so its changes are not immediately available when testing.
-        evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+        // Invoke the _undoOperation directly, but delay to allow
+        // the async operation being undone to have completed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+        }
     }
     
     public func testRedo(handler: (()->Void)? = nil) {
-        // Invoke the _redoOperation directly.
-        // This is useful for testing because the execCommand used by the MU.redo function
-        // operates asynchronously, so its changes are not immediately available when testing.
-        evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
+        // Invoke the _redoOperation directly, but delay to allow
+        // the async operation being undone to have completed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
+        }
     }
     
     //MARK: Javascript interactions
@@ -628,7 +630,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Replace the existing style of the selection with the new style (e.g., from <p> to <h3>)
     public func replaceStyle(in selectionState: SelectionState, with newStyle: StyleContext, handler: (()->Void)? = nil) {
         let oldStyle = selectionState.style
-        guard newStyle != oldStyle else { return }
+        guard newStyle != oldStyle else {
+            handler?()
+            return
+        }
         evaluateJavaScript("MU.replaceStyle('\(oldStyle)', '\(newStyle)')") { result, error in
             handler?()
         }
