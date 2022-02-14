@@ -81,10 +81,252 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
     
+    func assertEqualStrings(expected: String, saw: String?) {
+        XCTAssert(expected == saw, "Expected \(expected), saw: \(saw ?? "nil")")
+    }
+    
     func testLoad() throws {
         // Do nothing other than run setupWithError
     }
 
+    func testFormats() throws {
+        // Select a range in a P styled string, apply a format to it
+        for format in FormatContext.AllCases {
+            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            let expectation = XCTestExpectation(description: "Format \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: test.startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoFormats() throws {
+        // Select a range in a P styled string, apply a format to it, and then undo
+        for format in FormatContext.AllCases {
+            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            let expectation = XCTestExpectation(description: "Undo formatting of \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: test.startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: test.startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUnformats() throws {
+        // Given a range of formatted text, toggle the format off
+        for format in FormatContext.AllCases {
+            let test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            let expectation = XCTestExpectation(description: "Format \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: test.startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoUnformats() throws {
+        // Given a range of formatted text, toggle the format off, then undo
+        for format in FormatContext.AllCases {
+            let rawString = "This is a start."
+            let test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
+            // The undo doesn't preserve the id that is injected by .forUnformatting, so construct startHTML
+            // below for comparison post-undo.
+            let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: nil)
+            let startHtml = formattedString.styledHtml(adding: .P)
+            let expectation = XCTestExpectation(description: "Format \(format.tag)")
+            webView.setTestHtml(value: test.startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: test.startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        XCTAssert(result)
+                        let formatFollowUp = {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                        switch format {
+                        case .B:
+                            self.webView.bold(handler: formatFollowUp)
+                        case .I:
+                            self.webView.italic(handler: formatFollowUp)
+                        case .U:
+                            self.webView.underline(handler: formatFollowUp)
+                        case .STRIKE:
+                            self.webView.strike(handler: formatFollowUp)
+                        case .SUB:
+                            self.webView.subscriptText(handler: formatFollowUp)
+                        case .SUP:
+                            self.webView.superscript(handler: formatFollowUp)
+                        case .CODE:
+                            self.webView.code(handler: formatFollowUp)
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testFormatSelections() throws {
+        // Select a caret location in a formatted string and make sure getSelection identifies the format properly
+        // This is important for the toolbar indication of formatting as the cursor selection changes
+        for format in FormatContext.AllCases {
+            let rawString = "This is a start."
+            let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: format.tag)
+            let startHtml = formattedString.styledHtml(adding: .P)
+            let expectation = XCTestExpectation(description: "Select inside of format \(format.tag)")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: format.tag, startOffset: 1, endId: format.tag, endOffset: 1) { result in
+                        XCTAssert(result)
+                        switch format {
+                        case .B:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.bold)
+                                expectation.fulfill()
+                            }
+                        case .I:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.italic)
+                                expectation.fulfill()
+                            }
+                        case .U:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.underline)
+                                expectation.fulfill()
+                            }
+                        case .STRIKE:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.strike)
+                                expectation.fulfill()
+                            }
+                        case .SUB:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.sub)
+                                expectation.fulfill()
+                            }
+                        case .SUP:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.sup)
+                                expectation.fulfill()
+                            }
+                        case .CODE:
+                            self.webView.getSelectionState() { selectionState in
+                                XCTAssert(selectionState.code)
+                                expectation.fulfill()
+                            }
+                        default:
+                            XCTFail("Unknown format action: \(format)")
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
     func testStyles() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
@@ -148,12 +390,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Setting and replacing styles")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml)
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -233,12 +475,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Undoing the setting and replacing of styles")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml)
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -250,244 +492,6 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     }
     
 
-    func testFormats() throws {
-        // Select a range in a P styled string, apply a format to it
-        for format in FormatContext.AllCases {
-            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
-            let expectation = XCTestExpectation(description: "Format \(format.tag)")
-            webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
-                    XCTAssert(contents == test.startHtml)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        XCTAssert(result)
-                        let formatFollowUp = {
-                            self.webView.getHtml { formatted in
-                                XCTAssert(formatted == test.endHtml)
-                                expectation.fulfill()
-                            }
-                        }
-                        switch format {
-                        case .B:
-                            self.webView.bold(handler: formatFollowUp)
-                        case .I:
-                            self.webView.italic(handler: formatFollowUp)
-                        case .U:
-                            self.webView.underline(handler: formatFollowUp)
-                        case .STRIKE:
-                            self.webView.strike(handler: formatFollowUp)
-                        case .SUB:
-                            self.webView.subscriptText(handler: formatFollowUp)
-                        case .SUP:
-                            self.webView.superscript(handler: formatFollowUp)
-                        case .CODE:
-                            self.webView.code(handler: formatFollowUp)
-                        default:
-                            XCTFail("Unknown format action: \(format)")
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
-    func testUndoFormats() throws {
-        // Select a range in a P styled string, apply a format to it, and then undo
-        for format in FormatContext.AllCases {
-            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
-            let expectation = XCTestExpectation(description: "Undo formatting of \(format.tag)")
-            webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
-                    XCTAssert(contents == test.startHtml)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        XCTAssert(result)
-                        let formatFollowUp = {
-                            self.webView.getHtml { formatted in
-                                XCTAssert(formatted == test.endHtml)
-                                self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
-                                        XCTAssert(unformatted == test.startHtml)
-                                        expectation.fulfill()
-                                    }
-                                }
-                            }
-                        }
-                        switch format {
-                        case .B:
-                            self.webView.bold(handler: formatFollowUp)
-                        case .I:
-                            self.webView.italic(handler: formatFollowUp)
-                        case .U:
-                            self.webView.underline(handler: formatFollowUp)
-                        case .STRIKE:
-                            self.webView.strike(handler: formatFollowUp)
-                        case .SUB:
-                            self.webView.subscriptText(handler: formatFollowUp)
-                        case .SUP:
-                            self.webView.superscript(handler: formatFollowUp)
-                        case .CODE:
-                            self.webView.code(handler: formatFollowUp)
-                        default:
-                            XCTFail("Unknown format action: \(format)")
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
-    func testUnformats() throws {
-        // Given a range of formatted text, toggle the format off
-        for format in FormatContext.AllCases {
-            let test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
-            let expectation = XCTestExpectation(description: "Format \(format.tag)")
-            webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
-                    XCTAssert(contents == test.startHtml)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        XCTAssert(result)
-                        let formatFollowUp = {
-                            self.webView.getHtml { formatted in
-                                XCTAssert(formatted == test.endHtml)
-                                expectation.fulfill()
-                            }
-                        }
-                        switch format {
-                        case .B:
-                            self.webView.bold(handler: formatFollowUp)
-                        case .I:
-                            self.webView.italic(handler: formatFollowUp)
-                        case .U:
-                            self.webView.underline(handler: formatFollowUp)
-                        case .STRIKE:
-                            self.webView.strike(handler: formatFollowUp)
-                        case .SUB:
-                            self.webView.subscriptText(handler: formatFollowUp)
-                        case .SUP:
-                            self.webView.superscript(handler: formatFollowUp)
-                        case .CODE:
-                            self.webView.code(handler: formatFollowUp)
-                        default:
-                            XCTFail("Unknown format action: \(format)")
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
-    func testUndoUnformats() throws {
-        // Given a range of formatted text, toggle the format off, then undo
-        for format in FormatContext.AllCases {
-            let rawString = "This is a start."
-            let test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
-            // The undo doesn't preserve the id that is injected by .forUnformatting, so construct startHTML
-            // below for comparison post-undo.
-            let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: nil)
-            let startHtml = formattedString.styledHtml(adding: .P)
-            let expectation = XCTestExpectation(description: "Format \(format.tag)")
-            webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
-                    XCTAssert(contents == test.startHtml)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        XCTAssert(result)
-                        let formatFollowUp = {
-                            self.webView.getHtml { formatted in
-                                XCTAssert(formatted == test.endHtml)
-                                self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
-                                        XCTAssert(unformatted == startHtml)
-                                        expectation.fulfill()
-                                    }
-                                }
-                            }
-                        }
-                        switch format {
-                        case .B:
-                            self.webView.bold(handler: formatFollowUp)
-                        case .I:
-                            self.webView.italic(handler: formatFollowUp)
-                        case .U:
-                            self.webView.underline(handler: formatFollowUp)
-                        case .STRIKE:
-                            self.webView.strike(handler: formatFollowUp)
-                        case .SUB:
-                            self.webView.subscriptText(handler: formatFollowUp)
-                        case .SUP:
-                            self.webView.superscript(handler: formatFollowUp)
-                        case .CODE:
-                            self.webView.code(handler: formatFollowUp)
-                        default:
-                            XCTFail("Unknown format action: \(format)")
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
-    func testFormatSelections() throws {
-        // Select a caret location in a formatted string and make sure getSelection identifies the format properly
-        // This is important for the toolbar indication of formatting as the cursor selection changes
-        for format in FormatContext.AllCases {
-            let rawString = "This is a start."
-            let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: format.tag)
-            let startHtml = formattedString.styledHtml(adding: .P)
-            let expectation = XCTestExpectation(description: "Select inside of format \(format.tag)")
-            webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml)
-                    self.webView.setTestRange(startId: format.tag, startOffset: 1, endId: format.tag, endOffset: 1) { result in
-                        XCTAssert(result)
-                        switch format {
-                        case .B:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.bold)
-                                expectation.fulfill()
-                            }
-                        case .I:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.italic)
-                                expectation.fulfill()
-                            }
-                        case .U:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.underline)
-                                expectation.fulfill()
-                            }
-                        case .STRIKE:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.strike)
-                                expectation.fulfill()
-                            }
-                        case .SUB:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.sub)
-                                expectation.fulfill()
-                            }
-                        case .SUP:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.sup)
-                                expectation.fulfill()
-                            }
-                        case .CODE:
-                            self.webView.getSelectionState() { selectionState in
-                                XCTAssert(selectionState.code)
-                                expectation.fulfill()
-                            }
-                        default:
-                            XCTFail("Unknown format action: \(format)")
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
     func testMultiElementSelections() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
@@ -565,12 +569,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Unformatting nested tags")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml)
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -695,12 +699,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -825,15 +829,15 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
-                                        XCTAssert(formatted == endHtml, "Expected start: \(startHtml), saw: \(unformatted ?? "nil")")
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
@@ -960,12 +964,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -1090,15 +1094,15 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
-                                        XCTAssert(unformatted == startHtml, "Expected start: \(startHtml), saw: \(unformatted ?? "nil")")
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
@@ -1169,12 +1173,12 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
@@ -1212,15 +1216,15 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
-                    XCTAssert(contents == startHtml, "Expected start: \(startHtml), saw: \(contents ?? "nil")")
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
-                                XCTAssert(formatted == endHtml, "Expected end: \(endHtml), saw: \(formatted ?? "nil")")
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
-                                        XCTAssert(unformatted == startHtml, "Expected start: \(startHtml), saw: \(formatted ?? "nil")")
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
