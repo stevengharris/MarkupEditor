@@ -281,6 +281,13 @@ const _undoOperation = function(undoerData) {
         case 'listEnter':
             _undoListEnter(undoerData);
             break;
+        case 'enter':
+            _undoEnter(undoerData);
+            break;
+        case 'deleteRangeSelection':
+            //TODO: Use this and make it work, or remove it
+            _restoreRangeSelection(undoerData);
+            break;
         default:
             _consoleLog('Error: Unknown undoOperation ' + undoerData.operation);
     };
@@ -348,6 +355,13 @@ const _redoOperation = function(undoerData) {
             break;
         case 'listEnter':
             _doListEnter(false);
+            break;
+        case 'enter':
+            _doEnter(false);
+            break;
+        case 'deleteRangeSelection':
+            //TODO: Use this and make it work, or remove it
+            _deleteRangeSelection(false);
             break;
         default:
             _consoleLog('Error: Unknown redoOperation ' + undoerData.operation);
@@ -704,23 +718,17 @@ MU.editor.addEventListener('keydown', function(ev) {
 /**
  * Handle the Enter key to avoid <div> being inserted instead of <p>
  *
- * @returns {HTML Paragraph Element}   The newly created P to preventDefault handling; else, null.
+ * @returns {HTML Paragraph Element || null}    The newly created P to preventDefault handling; else, null.
  */
-const _doEnter = function() {
+const _doEnter = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
-    if (!selNode) { return null };
-    // If sel is not collapsed, delete the entire selection and reset before continuing
-    if (!sel.isCollapsed) {
-        sel.deleteFromDocument();
-        sel = document.getSelection();
-        selNode = (sel) ? sel.focusNode : null;
-        if (!selNode) { return null };
-    };
+    if (!selNode || !sel.isCollapsed) { return null };
     const existingRange = sel.getRangeAt(0).cloneRange();
     if ((selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)) {
         // We are at the end of the last text node in some element, so we want to
-        // create a new <P> to keep typing
+        // create a new <P> to keep typing. Note this means we get <p> when hitting return
+        // at the end of, say, <H3>. I believe this is the "expected" behavior.
         const parent = selNode.parentNode;
         const p = document.createElement('p');
         p.appendChild(document.createElement('br'));
@@ -731,12 +739,36 @@ const _doEnter = function() {
         range.setEnd(p, 0);
         sel.removeAllRanges();
         sel.addRange(range);
+        if (undoable) {
+            _backupSelection();
+            const undoerData = _undoerData('enter');
+            undoer.push(undoerData);
+            _restoreSelection();
+        }
         _callback('input');
         return p;   // To preventDefault() on Enter
     };
     return null;    // Let the MarkupWKWebView do its normal thing
 }
 
+/**
+ * Undo Enter that was handled by _doEnter.
+ *
+ * By definition, _doEnter only preventsDefault when we are not in a list,
+ * the selection is collapsed, and we are at the end of a styled element.
+ * The behavior then always inserts a new paragraph. So, we restore the
+ * selection from the undoerData, find the paragraph and delete it, restoring
+ * the selection to the text element before it.
+ */
+const _undoEnter = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    let sel = document.getSelection();
+    let selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || !sel.isCollapsed) { return null };
+    const existingP = _findFirstParentElementInNodeNames(selNode, ['P'])
+    if (!existingP) { return null };
+    _deleteAndResetSelection(existingP, 'BEFORE');
+};
 
 /**
  * Monitor certain keyup events that follow actions that mess up simple HTML formatting.
@@ -4301,6 +4333,50 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     } else {
         return _findFirstParentElementInNodeNames(element.parentElement, matchNames, excludeNames);
     };
+};
+
+/**
+ * Delete a range selection in a way that is undoable.
+ *
+ * During certain operations (like _doListEnter), we first delete the selection if it is
+ * not collapsed. This is normally done by default when typing, but since we do it ourselves
+ * in JavaScript, we also have to support undo.
+ */
+//TODO: Use this and make it work, or remove it
+const _deleteRangeSelection = function(undoable=true) {
+    const sel = document.getSelection();
+    const range = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
+    if (!range || range.collapsed) { return };
+    const fragment = range.extractContents();
+    sel.deleteFromDocument();
+    if (undoable) {
+        const undoerData = _undoerData('deleteRangeSelection', fragment, range);
+        undoer.push(undoerData);
+    };
+    _consoleLog("Deleted range")
+};
+
+/**
+ * Restore the fragment contained in undoer.data after the undoerData.range
+ */
+//TODO: Use this and make it work, or remove it
+const _restoreRangeSelection = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    const sel = document.getSelection();
+    const selNode = (sel && sel.focusNode) ? sel.focusNode : null;
+    _consoleLog("selNode: " + selNode);
+    if (!selNode) { return };
+    const targetNode = (selNode.nextSibling) ? selNode.nextSibling : selNode.parentNode.nextSibling;
+    _consoleLog("targetNode.textContent: " + targetNode.textContent)
+    const range = document.createRange();
+    range.setStart(targetNode, 0);
+    range.setEnd(targetNode, 0);
+    _consoleLog(_rangeString(range));
+    _consoleLog('undoerData.data.textContent: ' + undoerData.data.textContent);
+    range.insertNode(undoerData.data);
+    _callback('input');
+    _backupUndoerRange(undoerData);
+    _consoleLog("Restored range");
 };
 
 /********************************************************************************
