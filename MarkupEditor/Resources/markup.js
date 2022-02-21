@@ -354,7 +354,7 @@ const _redoOperation = function(undoerData) {
             _restoreTable(undoerData);
             break;
         case 'listEnter':
-            _doListEnter(false);
+            _doListEnter(false, undoerData);
             break;
         case 'enter':
             _doEnter(false);
@@ -1357,32 +1357,90 @@ const _isNakedListSelection = function(node) {
     return !(_findFirstParentElementInNodeNames(node, ['LI'], ['OL', 'UL']));
 };
 
+const _rangeCopy = function() {
+    const sel = document.getSelection();
+    if (!sel || (!sel.rangeCount > 0)) { return null };
+    const selRange = sel.getRangeAt(0)
+    const rangeCopy = document.createRange();
+    rangeCopy.setStart(selRange.startContainer, selRange.startOffset);
+    rangeCopy.setEnd(selRange.endContainer, selRange.endOffset);
+    return rangeCopy;
+}
+
 /**
  * We are inside of a list and hit Enter.
  *
+ * The default behavior is to put in a div, but we want Enter to produce new list elements
+ * that match the existing selection. We also have to handle the case of the selection not
+ * being collapsed, by capturing the selection as a fragment, removing it, and then reinserting
+ * it on undo.
+ *
+ * When we repeat _doListEnter for redo, we set undoable to false, because we don't want to
+ * push anyother item onto the undo stack. However, we still need to patch up some things in
+ * the undoerData if it exists from the previous _doListEnter. For example, we need to replace
+ * the deletedFragment here once we delete it again, and we need to patch up the range.
+ *
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
-const _doListEnter = function(undoable=true) {
+const _doListEnter = function(undoable=true, oldUndoerData) {
+    _consoleLog("* _doListEnter(" + undoable + ")");
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode) { return null };
     // If sel is not collapsed, delete the entire selection and reset before continuing
+    let deletedFragment;
     if (!sel.isCollapsed) {
-        sel.deleteFromDocument();
+        _consoleLog("Deleting non-collapsed selection...")
+        deletedFragment = sel.getRangeAt(0).cloneRange().extractContents();
+        if (!undoable && oldUndoerData) {
+            oldUndoerData.data.deletedFragment = deletedFragment;
+            _consoleLog(" redo deletedFragment.textContent: " + deletedFragment.textContent);
+        }
+        //sel.deleteFromDocument();
         sel = document.getSelection();
         selNode = (sel) ? sel.focusNode : null;
         if (!selNode) { return null };
+        _consoleLog(" deletedFragment.textContent: " + deletedFragment.textContent);
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
-    const existingRange = sel.getRangeAt(0).cloneRange();
-    const startOffset = existingRange.startOffset;
-    const endOffset = existingRange.endOffset;
+    const rangeAfterEnter = sel.getRangeAt(0).cloneRange();
+    const startOffset = rangeAfterEnter.startOffset;
+    const endOffset = rangeAfterEnter.endOffset;
     const outerHTML = existingList.outerHTML;
     const childNodeIndices = _childNodeIndices(selNode, existingList.nodeName);
+    //if (!undoable && oldUndoerData) {
+    //    oldUndoerData.data.childNodeIndices = childNodeIndices;
+    //    _consoleLog(" redo patched childNodeIndices: " + childNodeIndices);
+    //} else {
+    //    _consoleLog(" childNodeIndices: " + childNodeIndices);
+    //}
+    _consoleLog("endOffset: " + endOffset);
+    _consoleLog("selNode: " + _textString(selNode))
+    const textNode = selNode.nodeType === Node.TEXT_NODE
+    _consoleLog("textNode: " + textNode);
+    if (textNode) { _consoleLog(" selNode.textContent.length: " + selNode.textContent.length) };
     const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
-    const endingListNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (endOffset === selNode.textContent.length)
+    _consoleLog("beginningListNode: " + beginningListNode)
+    const endOfTextNode = textNode && (endOffset === selNode.textContent.length);
+    _consoleLog("endOfTextNode: " + endOfTextNode);
+    const emptyNode = textNode && (selNode.textContent.length === 0);
+    _consoleLog("emptyNode: " + emptyNode);
+    const nextSib = selNode.nextSibling;
+    _consoleLog("nextSib: " + nextSib);
+    if (nextSib) { _consoleLog(_textString(nextSib, " nextSib: "))};
+    const nextParentSib = selNode.parentNode.nextSibling;
+    _consoleLog("nextParentSib: " + nextParentSib);
+    if (nextParentSib) {
+        _consoleLog(" nextParentSib.textContent: " + nextParentSib.textContent)
+        _consoleLog(" nextParentSib.textContent.trim().length: " + nextParentSib.textContent.trim().length)
+    }
+    // If there is no nextParentSib or if it is empty after trim(), then we are at the end of a list element
+    let endOfListElement = (!nextParentSib || (nextParentSib.textContent.trim().length === 0))
+    _consoleLog("endOfListElement: " + endOfListElement)
+    const endingListNode = (emptyNode && !nextSib) || (!emptyNode && endOfTextNode && !nextSib && !nextParentSib) || endOfListElement;
+    _consoleLog("endingListNode: " + endingListNode)
     const newListItem = document.createElement('li');
     const blockContainer = _findFirstParentElementInNodeNames(selNode, _listStyleTags);
     let newElement;
@@ -1392,23 +1450,33 @@ const _doListEnter = function(undoable=true) {
         newElement = document.createElement('p');
     }
     if (beginningListNode) {
+        _consoleLog("* beginningListNode");
+        if (!undoable && oldUndoerData) {
+            oldUndoerData.range = rangeAfterEnter;
+            _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
+        };
         // We are at the beginning of a list node, so insert the newListItem
         newElement.appendChild(document.createElement('br'));
         newListItem.appendChild(newElement);
         existingList.insertBefore(newListItem, existingListItem);
         // Leave selection alone
     } else if (endingListNode) {
+        _consoleLog("* endingListNode")
+        if (!undoable && oldUndoerData) {
+            oldUndoerData.range = rangeAfterEnter;
+            _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
+        };
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
         // First, move all of the siblings of selNode's parentNode to reside in the new list,
         // leaving selNode itself alone.
         newElement.appendChild(document.createElement('br'));
         newListItem.appendChild(newElement);
         let sib = selNode.parentNode.nextElementSibling;
-        let nextSib;
+        let nextElementSib;
         while (sib && (sib.nodeName !== 'LI')) {
-            nextSib = sib.nextElementSibling;
+            nextElementSib = sib.nextElementSibling;
             newListItem.appendChild(sib);
-            sib = nextSib;
+            sib = nextElementSib;
         }
         // Then, insert the newListItem with its new children into the list before the next list element.
         existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
@@ -1419,27 +1487,57 @@ const _doListEnter = function(undoable=true) {
         sel.removeAllRanges();
         sel.addRange(range);
     } else {
+        _consoleLog("* Splitting selNode")
         // We are somewhere in a list item
-        let sib, nextSib;
+        let sib, nextSib, innerElement, outerElement;
+        // Make sure innerElement is the next sibling, either by splitting the
+        // textNode or by grabbing the nextSibling when selNode is empty, or
+        // by creating a br node and making that the next sibling.
         if (selNode.nodeType === Node.TEXT_NODE) {
-            let trailingContent = selNode.splitText(startOffset);
+            if (selNode.textContent.length === 0) {
+                _consoleLog(" starting selNode was empty")
+                outerElement = selNode.previousSibling;
+                innerElement = selNode.nextSibling;
+                if (!outerElement) {
+                    outerElement = document.createElement('br');
+                    selNode.replaceWith(outerElement);
+                }
+                if (!innerElement) {
+                    innerElement = outerElement.parentNode.nextSibling;
+                    if (!innerElement) {
+                        innerElement = document.createElement('br');
+                        outerElement.parentNode.appendChild(innerElement);
+                    };
+                };
+            } else {
+                innerElement = selNode.splitText(startOffset);
+                outerElement = selNode;
+            };
+            _consoleLog(_textString(outerElement, " outerElement: "));
+            _consoleLog(_textString(innerElement, " innerElement: "));
+            if (!undoable && oldUndoerData) {
+                const redoRange = document.createRange();
+                redoRange.setStart(outerElement, outerElement.textContent.length);
+                redoRange.setEnd(outerElement, outerElement.textContent.length);
+                oldUndoerData.range = redoRange;
+                _consoleLog(_rangeString(redoRange, " redo undoerData.range: "))
+            }
             const formatTags = _getFormatTags();
-            let innerElement = trailingContent;
-            let outerElement = selNode;
             for (let i=0; i<formatTags.length; i++) {
                 newElement = document.createElement(formatTags[i]);
                 newElement.appendChild(innerElement);
                 innerElement = newElement;
             };
             if (formatTags.length > 0) {
-                outerElement = _findFirstParentElementInNodeNames(selNode, [formatTags[formatTags.length - 1]]);
+                outerElement = _findFirstParentElementInNodeNames(outerElement, [formatTags[formatTags.length - 1]]);
             };
             if (blockContainer) {
                 // Make the newElement in the same style as its container.
                 newElement = document.createElement(blockContainer.nodeName);
                 newElement.appendChild(innerElement);
             } else if (!newElement) {
-                // Make the newElement just an unstyled text node like it started.
+                // The newElement already exists if we were in formatTags
+                // Otherwise, make the newElement just an unstyled text node like it started.
                 newElement = document.createTextNode(trailingContent);
             }
             newListItem.appendChild(newElement);
@@ -1461,7 +1559,7 @@ const _doListEnter = function(undoable=true) {
                     newListItem.appendChild(sib);
                     sib = nextSib;
                 }
-            }
+            };
             // Then, insert the newListItem with its new children into the list before the next list element.
             existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
             const range = document.createRange();
@@ -1470,12 +1568,22 @@ const _doListEnter = function(undoable=true) {
             range.setEnd(newElement, 0);
             sel.removeAllRanges();
             sel.addRange(range);
+            _consoleLog("Done.")
         };
     };
+    _backupSelection();
     if (undoable) {
-        _backupSelection();
-        const undoerData = _undoerData('listEnter', {outerHTML: outerHTML, childNodeIndices: childNodeIndices}, existingRange);
+        const undoerData = _undoerData(
+                                'listEnter',
+                                {
+                                    outerHTML: outerHTML,
+                                    childNodeIndices: childNodeIndices,
+                                    deletedFragment: deletedFragment
+                                },
+                                rangeAfterEnter
+                            );
         undoer.push(undoerData);
+        _consoleLog(_rangeString(undoerData.range, "undoerData.range after creation..."));
         _restoreSelection();
     }
     _callback('input');
@@ -1503,6 +1611,15 @@ const _doListEnter = function(undoable=true) {
  * leaving when we are done undoing in this method.
  */
 const _undoListEnter = function(undoerData) {
+    _consoleLog("* _undoListEnter");
+    //const fragment = undoerData.data.deletedFragment;
+    //if (fragment)
+    //    if (fragment.textContent.length === 0) {
+    //        _consoleLog("fragment.textContent: Empty!!!")
+    //    } else {
+    //        _consoleLog("fragment.textContent: " + fragment.textContent)
+    //}
+    _consoleLog(_rangeString(undoerData.range, "undoerData.range at call"));
     const oldRange = undoerData.range;
     const oldStartContainer = oldRange.startContainer;
     const oldStartOffset = oldRange.startOffset;
@@ -1526,12 +1643,99 @@ const _undoListEnter = function(undoerData) {
     // Find the selected element based on the indices into the list recorded at undo time
     const selectedElement = _childNodeIn(newList, undoerData.data.childNodeIndices);
     // And then restore the range
-    const range = document.createRange();
+    let range = document.createRange();
     range.setStart(selectedElement, oldStartOffset);
     range.setEnd(selectedElement, oldEndOffset);
     sel.removeAllRanges();
     sel.addRange(range);
-    undoerData.range = sel.getRangeAt(0).cloneRange();
+    // If we deleted something before the operation, then put it back at the selection and
+    // restore the range
+    const deletedFragment = undoerData.data.deletedFragment;
+    if (deletedFragment) {
+        _consoleLog("Restoring deletedFragment...")
+        _consoleLog(" deletedFragment: " + deletedFragment)
+        _consoleLog(" deletedFragment.textContent: " + deletedFragment.textContent)
+        _consoleLog(" deletedFragment.childNodes.length: " + deletedFragment.childNodes.length);
+        _consoleLog(" deletedFragment.childNodes[deletedFragment.childNodes.length - 1]: " + deletedFragment.childNodes[deletedFragment.childNodes.length - 1]);
+        // After insertNode, the deletedFragment's childNodes will be in the range so we can select them.
+        // Note that these childNodes generally didn't exist when we did the Enter originally. They were
+        // extracted from the selection as the deletedFragment and then removed.
+        const firstChild = deletedFragment.childNodes[0];
+        const lastChild = deletedFragment.childNodes[deletedFragment.childNodes.length - 1];
+        range.insertNode(undoerData.data.deletedFragment);
+        // Now how to reselect the entire fragment, which can be as simple as a text node or very complex.
+        // We need to set the selection in terms of elements that exist before the insert, because on redo
+        // we will delete the selection again.
+        sel = document.getSelection();
+        selNode = (sel) ? sel.focusNode : null;
+        _consoleLog("selNode.textContent: " + selNode.textContent);
+        let newStartContainer, newStartOffset, newEndContainer, newEndOffset;
+        const startChild = (firstChild) ? firstChild : selNode;
+        const endChild = (lastChild) ? lastChild : selNode;
+        _consoleLog(" startChild.textContent: " + startChild.textContent)
+        
+        //  Just point directly at the thing we inserted...
+        newStartContainer = startChild;
+        newStartOffset = 0;
+        newEndContainer = endChild;
+        if (endChild.nodeType === Node.TEXT_NODE) {
+            newEndOffset = endChild.textContent.length;
+        } else {
+            newEndOffset = 0;
+        };
+        
+        /*
+        // Point to the things surrounding what we inserted...
+        if (startChild) {
+            const prevSib = startChild.previousSibling;
+            if (prevSib) {
+                if (prevSib.nodeType === Node.TEXT_NODE) {
+                    _consoleLog(" prevSib.textContent: " + prevSib.textContent)
+                    newStartContainer = prevSib;
+                    newStartOffset = prevSib.textContent.length;
+                } else {
+                    _consoleLog(" prevSib.outerHTML: " + prevSib.outerHTML)
+                    newStartContainer = prevSib;
+                    newStartOffset = 0;
+                }
+            } else {
+                newStartContainer = startChild;
+                newStartOffset = 0;
+            };
+        };
+        if (endChild) {
+            _consoleLog(" endChild.nextSibling.textContent: " + endChild.nextSibling.textContent)
+            const nextSib = endChild.nextSibling;
+            if (nextSib) {
+                newEndContainer = nextSib;
+                newEndOffset = 0;
+            } else {
+                newEndContainer = endChild;
+                if (endChild.nodeType === Node.TEXT_NODE) {
+                    newEndOffset = endChild.textContent.length;
+                } else {
+                    newEndOffset = 0;
+                };
+            };
+        };
+        */
+        
+        let newRange = document.createRange();
+        newRange.setStart(newStartContainer, newStartOffset);
+        newRange.setEnd(newEndContainer, newEndOffset);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        _backupUndoerRange(undoerData);
+        //_consoleLog(_rangeString(newRange, "after undelete"))
+        //let clonedRange = sel.getRangeAt(0).cloneRange();
+        //_consoleLog(_rangeString(clonedRange, "clonedRange"));
+        //undoerData.data.deletedFragment = clonedRange.extractContents();
+        //let newRangeAfterEnter = document.createRange();
+        //newRangeAfterEnter.setStart(newEndContainer, newEndOffset);
+        //newRangeAfterEnter.setEnd(newEndContainer, newEndOffset);
+        //undoerData.range = newRangeAfterEnter;
+        _consoleLog(_rangeString(undoerData.range, "undoerData.range after replacing deletedFragment"))
+    };
     _backupSelection();
     _callback('input');
 };
@@ -2126,6 +2330,14 @@ const _backupSelection = function() {
 const _restoreSelection = function() {
     _restoreRange(MU.currentSelection);
 };
+
+const _textString = function(node, title="") {
+    if (node.nodeType === Node.TEXT_NODE) {
+        return title + "[" + node.nodeName + "] \"" + node.textContent + "\""
+    } else {
+        return title + "[" + node.nodeName + "] " + node.outerHTML;
+    }
+}
 
 /**
  * Return a reasonably informative string describing the range, for debugging purposes
