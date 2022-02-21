@@ -1383,7 +1383,7 @@ const _rangeCopy = function() {
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
 const _doListEnter = function(undoable=true, oldUndoerData) {
-    _consoleLog("* _doListEnter(" + undoable + ")");
+    _consoleLog("\n* _doListEnter(" + undoable + ")");
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode) { return null };
@@ -1396,7 +1396,8 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
             oldUndoerData.data.deletedFragment = deletedFragment;
             _consoleLog(" redo deletedFragment.textContent: " + deletedFragment.textContent);
         }
-        //sel.deleteFromDocument();
+        // Even though we extractContents, we still need to deleteFromDocument or sel does not reflect the deletion
+        sel.deleteFromDocument();
         sel = document.getSelection();
         selNode = (sel) ? sel.focusNode : null;
         if (!selNode) { return null };
@@ -1416,6 +1417,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     //} else {
     //    _consoleLog(" childNodeIndices: " + childNodeIndices);
     //}
+    _consoleLog("startOffset: " + startOffset);
     _consoleLog("endOffset: " + endOffset);
     _consoleLog("selNode: " + _textString(selNode))
     const textNode = selNode.nodeType === Node.TEXT_NODE
@@ -1437,7 +1439,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         _consoleLog(" nextParentSib.textContent.trim().length: " + nextParentSib.textContent.trim().length)
     }
     // If there is no nextParentSib or if it is empty after trim(), then we are at the end of a list element
-    let endOfListElement = (!nextParentSib || (nextParentSib.textContent.trim().length === 0))
+    let endOfListElement = endOfTextNode && (!nextParentSib || (nextParentSib.textContent.trim().length === 0))
     _consoleLog("endOfListElement: " + endOfListElement)
     const endingListNode = (emptyNode && !nextSib) || (!emptyNode && endOfTextNode && !nextSib && !nextParentSib) || endOfListElement;
     _consoleLog("endingListNode: " + endingListNode)
@@ -1450,7 +1452,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         newElement = document.createElement('p');
     }
     if (beginningListNode) {
-        _consoleLog("* beginningListNode");
+        _consoleLog("- beginningListNode");
         if (!undoable && oldUndoerData) {
             oldUndoerData.range = rangeAfterEnter;
             _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
@@ -1461,7 +1463,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         existingList.insertBefore(newListItem, existingListItem);
         // Leave selection alone
     } else if (endingListNode) {
-        _consoleLog("* endingListNode")
+        _consoleLog("- endingListNode")
         if (!undoable && oldUndoerData) {
             oldUndoerData.range = rangeAfterEnter;
             _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
@@ -1487,7 +1489,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         sel.removeAllRanges();
         sel.addRange(range);
     } else {
-        _consoleLog("* Splitting selNode")
+        _consoleLog("- Splitting selNode")
         // We are somewhere in a list item
         let sib, nextSib, innerElement, outerElement;
         // Make sure innerElement is the next sibling, either by splitting the
@@ -1611,7 +1613,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
  * leaving when we are done undoing in this method.
  */
 const _undoListEnter = function(undoerData) {
-    _consoleLog("* _undoListEnter");
+    _consoleLog("\n* _undoListEnter");
     //const fragment = undoerData.data.deletedFragment;
     //if (fragment)
     //    if (fragment.textContent.length === 0) {
