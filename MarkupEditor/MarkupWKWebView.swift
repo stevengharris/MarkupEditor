@@ -248,26 +248,59 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
     }
     
-    public func setTestRange(startId: String, startOffset: Int, endId: String, endOffset: Int, handler: @escaping (Bool) -> Void) {
-        evaluateJavaScript("MU.setRange('\(startId)', '\(startOffset)', '\(endId)', '\(endOffset)')") { result, error in
+    /// Set the range for testing.
+    ///
+    /// If startChildNodeIndex is nil, then startOffset is the offset into the childNode with startId in parentNode;
+    /// if not, then the startOffset is the offset into parentNode.childNodes[startChildNodeIndex].
+    /// If endChildNodeIndex is nil, then endOffset is the offset into the childNode with endId parentNode;
+    /// if not, then the endOffset is the offset into parentNode.childNodes[endChildNodeIndex].
+    public func setTestRange(startId: String, startOffset: Int, endId: String, endOffset: Int, startChildNodeIndex: Int? = nil, endChildNodeIndex: Int? = nil, handler: @escaping (Bool) -> Void) {
+        var rangeCall = "MU.setRange('\(startId)', '\(startOffset)', '\(endId)', '\(endOffset)'"
+        if let startChildNodeIndex = startChildNodeIndex {
+            rangeCall += ", '\(startChildNodeIndex)'"
+            if let endChildNodeIndex = endChildNodeIndex {
+                rangeCall += ", '\(endChildNodeIndex)'"
+            }
+        } else if let endChildNodeIndex = endChildNodeIndex {
+            rangeCall += ", , '\(endChildNodeIndex)'"
+        }
+        rangeCall += ")"
+        evaluateJavaScript(rangeCall) { result, error in
             handler(result as? Bool ?? false)
         }
     }
     
-    public func testUndo(handler: (()->Void)? = nil) {
-        // Invoke the _undoOperation directly, but delay to allow
-        // the async operation being undone to have completed.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+    
+    /// Invoke the \_undoOperation directly.
+    ///
+    /// Delay to allow the async operation being done to have completed.
+    public func testUndo(_ immediate: Bool = false, handler: (()->Void)? = nil) {
+        if immediate {
             self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
+            }
         }
     }
     
+    /// Invoke the \_redoOperation directly.
+    ///
+    /// Delay to allow the async operation being undone to have completed.
     public func testRedo(handler: (()->Void)? = nil) {
-        // Invoke the _redoOperation directly, but delay to allow
-        // the async operation being undone to have completed.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
         }
+    }
+    
+    /// Invoke the \_doListEnter operation directly.
+    public func testListEnter(handler: (()->Void)? = nil) {
+        self.evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }
+    }
+    
+    /// Invoke the \_undoListEnter operation directly.
+    public func testUndoListEnter(handler: (()->Void)? = nil) {
+        self.evaluateJavaScript("MU.testUndoListEnter()") { result, error in handler?() }
     }
     
     //MARK: Javascript interactions

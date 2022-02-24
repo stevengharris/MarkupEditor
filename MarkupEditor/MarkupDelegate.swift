@@ -47,6 +47,9 @@ public protocol MarkupDelegate {
     /// Used to differentiate clicking on a link, image, table from selectionChange.
     func markupClicked(_ view: MarkupWKWebView)
     
+    /// Called when an operation on the view pushed something onto the undo stack managed by Undoer
+    func markupUndoSet(_ view: MarkupWKWebView)
+    
     /// Take action when the user selects a link.
     func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
     
@@ -127,6 +130,12 @@ extension MarkupDelegate {
             }
         }
     }
+    
+    /// An operation (like bold or listEnter) pushed data onto the Undoer's undo stack.
+    ///
+    /// The default is to do nothing, but we use this in testing and it might be useful for other integration
+    /// on the Swift side.
+    public func markupUndoSet(_ view: MarkupWKWebView) {}
     
     /// A link was selected, and selectionState contains information about it.
     ///

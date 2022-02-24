@@ -16,6 +16,8 @@ struct HtmlTest {
     var startOffset: Int
     var endId: String
     var endOffset: Int
+    var startChildNodeIndex: Int?
+    var endChildNodeIndex: Int?
     
     static func forFormatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int) -> HtmlTest {
         // Return an HTMLTest appropriate for formatting a range from startOffset to endOffset in styled HTML
@@ -60,6 +62,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
     var loadedExpectation: XCTestExpectation = XCTestExpectation(description: "Loaded")
+    var undoSetHandler: (()->Void)?
+    var inputHandler: (()->Void)?
     
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -77,12 +81,40 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         handler?()
     }
     
+    /// Execute the inputHandler once if defined, then nil it out
+    func markupInput(_ view: MarkupWKWebView) {
+        guard let inputHandler = inputHandler else {
+            return
+        }
+        //print("*** handling input")
+        inputHandler()
+        self.inputHandler = nil
+    }
+    
+    /// Use the inputHandlers in order, removing them as we use them
+    func markupUndoSet(_ view: MarkupWKWebView) {
+        guard let undoSetHandler = undoSetHandler else {
+            return
+        }
+        //print("*** handling undoSet")
+        undoSetHandler()
+        self.undoSetHandler = nil
+    }
+    
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
     
     func assertEqualStrings(expected: String, saw: String?) {
         XCTAssert(expected == saw, "Expected \(expected), saw: \(saw ?? "nil")")
+    }
+    
+    func addInputHandler(_ handler: @escaping (()->Void)) {
+        inputHandler = handler
+    }
+    
+    func addUndoSetHandler(_ handler: @escaping (()->Void)) {
+        undoSetHandler = handler
     }
     
     func testLoad() throws {
@@ -1112,6 +1144,296 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 }
             }
             wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testListEnterCollapsed() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        //
+        // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (   // Enter at end of h5
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5></li><li><h5><br></h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 3,
+                    endId: "h5",
+                    endOffset: 3,
+                    startChildNodeIndex: 2,
+                    endChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter at beginning of h5
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5><br></h5></li><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 0,
+                    endId: "h5",
+                    endOffset: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter in "Bul|leted item 1."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 3,
+                    endId: "h5",
+                    endOffset: 3
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter in "Bulleted item 1|."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "h5",
+                    endOffset: 2,
+                    startChildNodeIndex: 2,
+                    endChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter in italicized "item" in "Bulleted it|em 1."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">it</i></h5></li><li><h5><i>em</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter at end of unstyled "Numbered item 1."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li><p><br></p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 16,
+                    endId: "ol1",
+                    endOffset: 16
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Enter at beginning of unstyled "Numbered item 1."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li><p><br></p></li><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 0,
+                    endId: "ol1",
+                    endOffset: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (   // Split unstyled "Number|ed item 1."
+                HtmlTest(
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Number</li><li><p>ed item 1.</p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 6,
+                    endId: "ol1",
+                    endOffset: 6
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Enter being pressed in a list with various selections")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Execute the action to press Enter at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoListEnterCollapsed() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        //
+        // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
+        let htmlTests: [HtmlTest] = [
+            // Enter in "Bul|leted item 1."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "h5",
+                startOffset: 3,
+                endId: "h5",
+                endOffset: 3
+            ),
+            // Enter at end of h5
+            HtmlTest(
+                startHtml: "<p>Hello</p><ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<p>Hello</p><ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5></li><li><h5><br></h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "h5",
+                startOffset: 3,
+                endId: "h5",
+                endOffset: 3,
+                startChildNodeIndex: 2,
+                endChildNodeIndex: 2
+            ),
+            // Enter at beginning of h5
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li><h5><br></h5></li><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "h5",
+                startOffset: 0,
+                endId: "h5",
+                endOffset: 0
+            ),
+            // Enter in "Bulleted item 1|."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "h5",
+                startOffset: 2,
+                endId: "h5",
+                endOffset: 2,
+                startChildNodeIndex: 2,
+                endChildNodeIndex: 2
+            ),
+            // Enter in italicized "item" in "Bulleted it|em 1."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">it</i></h5></li><li><h5><i>em</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "i",
+                startOffset: 2,
+                endId: "i",
+                endOffset: 2
+            ),
+            // Enter at end of unstyled "Numbered item 1."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li><p><br></p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "ol1",
+                startOffset: 16,
+                endId: "ol1",
+                endOffset: 16
+            ),
+            // Enter at beginning of unstyled "Numbered item 1."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li><p><br></p></li><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "ol1",
+                startOffset: 0,
+                endId: "ol1",
+                endOffset: 0
+            ),
+            // Split unstyled "Number|ed item 1."
+            HtmlTest(
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Number</li><li><p>ed item 1.</p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "ol1",
+                startOffset: 6,
+                endId: "ol1",
+                endOffset: 6
+            ),
+        ]
+        for test in htmlTests {
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Undo enter being pressed in a list with various selections")
+            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _doListEnter.
+            // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
+            // When the undo is done, the html should be what we started with.
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Define the handler to execute after undoSet is received (i.e., once the undoData has
+                        // been pushed to the stack and can be executed).
+                        self.addUndoSetHandler {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                // Define the handler after input is received (i.e., once the undo is complete)
+                                self.addInputHandler {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                                // Kick off the undo operation in the list we did enter in
+                                self.webView.testUndoListEnter()
+                            }
+                        }
+                        // Kick off the enter operation in the list we selected
+                        self.webView.testListEnter()
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
         }
     }
     

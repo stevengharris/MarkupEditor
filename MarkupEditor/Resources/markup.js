@@ -75,7 +75,7 @@ class Undoer {
             // Because the input can happen quickly after the push causes this._ctrl to get focus,
             // we need to do change the undoIndex in textContent after a timeout, similarly
             // to how the focus followed by immediate blur needs a timeout.
-            _focusOn(MU.editor);
+            _focusOn(MU.editor).then(_callback('undoSet'));
         };
         
         // Using an input element rather than contentEditable div because parent is already a
@@ -192,6 +192,7 @@ class Undoer {
         _redoOperation(this._stack[this._depth]);
         this._setUndoIndex(this._depth - 1);
     };
+
 };
 
 /**
@@ -397,9 +398,11 @@ MU.redo = function() {
 };
 
 /**
- * Return a promise that will focus on target after a delay.
+ * Return a promise that delays focusing on a target.
  *
- * The delay seems to be required by WebKit when blur is followed by
+ * The delay seems to be required by WebKit because focus doesn't happen
+ * properly when blur is followed too closely by focus.
+ *
  * Experimentation shows that a delay of 20 prevents the caret from disappearing,
  * particularly for _toggleFormat. Not sure how reproducible it is or if there is
  * a determinate way to do it, as this just seems like a hack.
@@ -1383,25 +1386,22 @@ const _rangeCopy = function() {
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
 const _doListEnter = function(undoable=true, oldUndoerData) {
-    _consoleLog("\n* _doListEnter(" + undoable + ")");
+    //_consoleLog("\n* _doListEnter(" + undoable + ")");
     let sel = document.getSelection();
     let selNode = (sel) ? sel.focusNode : null;
     if (!selNode) { return null };
     // If sel is not collapsed, delete the entire selection and reset before continuing
     let deletedFragment;
     if (!sel.isCollapsed) {
-        _consoleLog("Deleting non-collapsed selection...")
         deletedFragment = sel.getRangeAt(0).cloneRange().extractContents();
         if (!undoable && oldUndoerData) {
             oldUndoerData.data.deletedFragment = deletedFragment;
-            _consoleLog(" redo deletedFragment.textContent: " + deletedFragment.textContent);
         }
         // Even though we extractContents, we still need to deleteFromDocument or sel does not reflect the deletion
         sel.deleteFromDocument();
         sel = document.getSelection();
         selNode = (sel) ? sel.focusNode : null;
         if (!selNode) { return null };
-        _consoleLog(" deletedFragment.textContent: " + deletedFragment.textContent);
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
@@ -1411,38 +1411,17 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     const endOffset = rangeAfterEnter.endOffset;
     const outerHTML = existingList.outerHTML;
     const childNodeIndices = _childNodeIndices(selNode, existingList.nodeName);
-    //if (!undoable && oldUndoerData) {
-    //    oldUndoerData.data.childNodeIndices = childNodeIndices;
-    //    _consoleLog(" redo patched childNodeIndices: " + childNodeIndices);
-    //} else {
-    //    _consoleLog(" childNodeIndices: " + childNodeIndices);
-    //}
-    _consoleLog("startOffset: " + startOffset);
-    _consoleLog("endOffset: " + endOffset);
-    _consoleLog("selNode: " + _textString(selNode))
     const textNode = selNode.nodeType === Node.TEXT_NODE
-    _consoleLog("textNode: " + textNode);
-    if (textNode) { _consoleLog(" selNode.textContent.length: " + selNode.textContent.length) };
     const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
-    _consoleLog("beginningListNode: " + beginningListNode)
     const endOfTextNode = textNode && (endOffset === selNode.textContent.length);
-    _consoleLog("endOfTextNode: " + endOfTextNode);
     const emptyNode = textNode && (selNode.textContent.length === 0);
-    _consoleLog("emptyNode: " + emptyNode);
     const nextSib = selNode.nextSibling;
-    _consoleLog("nextSib: " + nextSib);
-    if (nextSib) { _consoleLog(_textString(nextSib, " nextSib: "))};
     const nextParentSib = selNode.parentNode.nextSibling;
-    _consoleLog("nextParentSib: " + nextParentSib);
-    if (nextParentSib) {
-        _consoleLog(" nextParentSib.textContent: " + nextParentSib.textContent)
-        _consoleLog(" nextParentSib.textContent.trim().length: " + nextParentSib.textContent.trim().length)
-    }
+    const nextParentSibIsList = (nextParentSib !== null) && ((nextParentSib.nodeName === 'LI') || (nextParentSib.nodeName === 'OL') || (nextParentSib.nodeName === 'UL'));
+    const nextParentSibIsEmpty = (nextParentSib !== null) && ((nextParentSib.nodeType === Node.TEXT_NODE) && (nextParentSib.textContent.trim().length === 0));
     // If there is no nextParentSib or if it is empty after trim(), then we are at the end of a list element
-    let endOfListElement = endOfTextNode && (!nextParentSib || (nextParentSib.textContent.trim().length === 0))
-    _consoleLog("endOfListElement: " + endOfListElement)
+    let endOfListElement = endOfTextNode && !nextSib && (nextParentSibIsList || nextParentSibIsEmpty)
     const endingListNode = (emptyNode && !nextSib) || (!emptyNode && endOfTextNode && !nextSib && !nextParentSib) || endOfListElement;
-    _consoleLog("endingListNode: " + endingListNode)
     const newListItem = document.createElement('li');
     const blockContainer = _findFirstParentElementInNodeNames(selNode, _listStyleTags);
     let newElement;
@@ -1452,10 +1431,9 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         newElement = document.createElement('p');
     }
     if (beginningListNode) {
-        _consoleLog("- beginningListNode");
+        //_consoleLog("- beginningListNode");
         if (!undoable && oldUndoerData) {
             oldUndoerData.range = rangeAfterEnter;
-            _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
         };
         // We are at the beginning of a list node, so insert the newListItem
         newElement.appendChild(document.createElement('br'));
@@ -1463,10 +1441,9 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         existingList.insertBefore(newListItem, existingListItem);
         // Leave selection alone
     } else if (endingListNode) {
-        _consoleLog("- endingListNode")
+        //_consoleLog("- endingListNode")
         if (!undoable && oldUndoerData) {
             oldUndoerData.range = rangeAfterEnter;
-            _consoleLog(_rangeString(rangeAfterEnter, " redo undoerData.range: "))
         };
         // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
         // First, move all of the siblings of selNode's parentNode to reside in the new list,
@@ -1489,7 +1466,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         sel.removeAllRanges();
         sel.addRange(range);
     } else {
-        _consoleLog("- Splitting selNode")
+        //_consoleLog("- Splitting selNode")
         // We are somewhere in a list item
         let sib, nextSib, innerElement, outerElement;
         // Make sure innerElement is the next sibling, either by splitting the
@@ -1497,7 +1474,6 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         // by creating a br node and making that the next sibling.
         if (selNode.nodeType === Node.TEXT_NODE) {
             if (selNode.textContent.length === 0) {
-                _consoleLog(" starting selNode was empty")
                 outerElement = selNode.previousSibling;
                 innerElement = selNode.nextSibling;
                 if (!outerElement) {
@@ -1515,14 +1491,11 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
                 innerElement = selNode.splitText(startOffset);
                 outerElement = selNode;
             };
-            _consoleLog(_textString(outerElement, " outerElement: "));
-            _consoleLog(_textString(innerElement, " innerElement: "));
             if (!undoable && oldUndoerData) {
                 const redoRange = document.createRange();
                 redoRange.setStart(outerElement, outerElement.textContent.length);
                 redoRange.setEnd(outerElement, outerElement.textContent.length);
                 oldUndoerData.range = redoRange;
-                _consoleLog(_rangeString(redoRange, " redo undoerData.range: "))
             }
             const formatTags = _getFormatTags();
             for (let i=0; i<formatTags.length; i++) {
@@ -1570,7 +1543,6 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
             range.setEnd(newElement, 0);
             sel.removeAllRanges();
             sel.addRange(range);
-            _consoleLog("Done.")
         };
     };
     _backupSelection();
@@ -1585,10 +1557,10 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
                                 rangeAfterEnter
                             );
         undoer.push(undoerData);
-        _consoleLog(_rangeString(undoerData.range, "undoerData.range after creation..."));
         _restoreSelection();
     }
     _callback('input');
+    //_consoleLog("Done.")
     return newElement;      // To preventDefault() on Enter
 };
 
@@ -1613,15 +1585,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
  * leaving when we are done undoing in this method.
  */
 const _undoListEnter = function(undoerData) {
-    _consoleLog("\n* _undoListEnter");
-    //const fragment = undoerData.data.deletedFragment;
-    //if (fragment)
-    //    if (fragment.textContent.length === 0) {
-    //        _consoleLog("fragment.textContent: Empty!!!")
-    //    } else {
-    //        _consoleLog("fragment.textContent: " + fragment.textContent)
-    //}
-    _consoleLog(_rangeString(undoerData.range, "undoerData.range at call"));
+    //_consoleLog("\n* _undoListEnter");
     const oldRange = undoerData.range;
     const oldStartContainer = oldRange.startContainer;
     const oldStartOffset = oldRange.startOffset;
@@ -1637,11 +1601,25 @@ const _undoListEnter = function(undoerData) {
     _deleteAndResetSelection(existingList, 'BEFORE');
     sel = document.getSelection();
     selNode = (sel) ? sel.focusNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
+    if (!selNode) { return null };
     const targetNode = selNode.parentNode;
+    const parentNode = targetNode.parentNode;
     targetNode.insertAdjacentHTML('afterend', undoerData.data.outerHTML);
     // We need the new list that now exists at selection.
-    const newList = _getFirstChildWithNameWithin(targetNode.nextSibling, existingList.nodeName);
+    let newList;
+    if (sel.isCollapsed) {
+        // Normal insertion at a collapsed selection
+        newList = _getFirstChildWithNameWithin(targetNode.nextSibling, existingList.nodeName);
+    } else {
+        // Replacement insertion at a non-collapsed selection
+        // The only reason this happens is that we ended up with nothing to select when we
+        // deleted the list which we are about to undo the deletion of. At that point, we
+        // set selection to span across a single non-printing character in a paragraph.
+        // See the code in _deleteAndResetSelection when _elementAfterDeleting returns null.
+        // To leave just the list again, we need to remove the targetNode.
+        parentNode.removeChild(targetNode);
+        newList = _getFirstChildWithNameWithin(parentNode, existingList.nodeName);
+    };
     // Find the selected element based on the indices into the list recorded at undo time
     const selectedElement = _childNodeIn(newList, undoerData.data.childNodeIndices);
     // And then restore the range
@@ -1654,11 +1632,6 @@ const _undoListEnter = function(undoerData) {
     // restore the range
     const deletedFragment = undoerData.data.deletedFragment;
     if (deletedFragment) {
-        _consoleLog("Restoring deletedFragment...")
-        _consoleLog(" deletedFragment: " + deletedFragment)
-        _consoleLog(" deletedFragment.textContent: " + deletedFragment.textContent)
-        _consoleLog(" deletedFragment.childNodes.length: " + deletedFragment.childNodes.length);
-        _consoleLog(" deletedFragment.childNodes[deletedFragment.childNodes.length - 1]: " + deletedFragment.childNodes[deletedFragment.childNodes.length - 1]);
         // After insertNode, the deletedFragment's childNodes will be in the range so we can select them.
         // Note that these childNodes generally didn't exist when we did the Enter originally. They were
         // extracted from the selection as the deletedFragment and then removed.
@@ -1666,17 +1639,11 @@ const _undoListEnter = function(undoerData) {
         const lastChild = deletedFragment.childNodes[deletedFragment.childNodes.length - 1];
         range.insertNode(undoerData.data.deletedFragment);
         // Now how to reselect the entire fragment, which can be as simple as a text node or very complex.
-        // We need to set the selection in terms of elements that exist before the insert, because on redo
-        // we will delete the selection again.
         sel = document.getSelection();
         selNode = (sel) ? sel.focusNode : null;
-        _consoleLog("selNode.textContent: " + selNode.textContent);
         let newStartContainer, newStartOffset, newEndContainer, newEndOffset;
         const startChild = (firstChild) ? firstChild : selNode;
         const endChild = (lastChild) ? lastChild : selNode;
-        _consoleLog(" startChild.textContent: " + startChild.textContent)
-        
-        //  Just point directly at the thing we inserted...
         newStartContainer = startChild;
         newStartOffset = 0;
         newEndContainer = endChild;
@@ -1685,61 +1652,16 @@ const _undoListEnter = function(undoerData) {
         } else {
             newEndOffset = 0;
         };
-        
-        /*
-        // Point to the things surrounding what we inserted...
-        if (startChild) {
-            const prevSib = startChild.previousSibling;
-            if (prevSib) {
-                if (prevSib.nodeType === Node.TEXT_NODE) {
-                    _consoleLog(" prevSib.textContent: " + prevSib.textContent)
-                    newStartContainer = prevSib;
-                    newStartOffset = prevSib.textContent.length;
-                } else {
-                    _consoleLog(" prevSib.outerHTML: " + prevSib.outerHTML)
-                    newStartContainer = prevSib;
-                    newStartOffset = 0;
-                }
-            } else {
-                newStartContainer = startChild;
-                newStartOffset = 0;
-            };
-        };
-        if (endChild) {
-            _consoleLog(" endChild.nextSibling.textContent: " + endChild.nextSibling.textContent)
-            const nextSib = endChild.nextSibling;
-            if (nextSib) {
-                newEndContainer = nextSib;
-                newEndOffset = 0;
-            } else {
-                newEndContainer = endChild;
-                if (endChild.nodeType === Node.TEXT_NODE) {
-                    newEndOffset = endChild.textContent.length;
-                } else {
-                    newEndOffset = 0;
-                };
-            };
-        };
-        */
-        
         let newRange = document.createRange();
         newRange.setStart(newStartContainer, newStartOffset);
         newRange.setEnd(newEndContainer, newEndOffset);
         sel.removeAllRanges();
         sel.addRange(newRange);
         _backupUndoerRange(undoerData);
-        //_consoleLog(_rangeString(newRange, "after undelete"))
-        //let clonedRange = sel.getRangeAt(0).cloneRange();
-        //_consoleLog(_rangeString(clonedRange, "clonedRange"));
-        //undoerData.data.deletedFragment = clonedRange.extractContents();
-        //let newRangeAfterEnter = document.createRange();
-        //newRangeAfterEnter.setStart(newEndContainer, newEndOffset);
-        //newRangeAfterEnter.setEnd(newEndContainer, newEndOffset);
-        //undoerData.range = newRangeAfterEnter;
-        _consoleLog(_rangeString(undoerData.range, "undoerData.range after replacing deletedFragment"))
     };
     _backupSelection();
     _callback('input');
+    //_consoleLog("Done.")
 };
 
 /**
@@ -2321,6 +2243,8 @@ const _backupSelection = function() {
     const rangeProxy = _rangeProxy();
     MU.currentSelection = rangeProxy;
     if (!rangeProxy) {
+        _consoleLog("document.activeElement.id: " + document.activeElement.id)
+        _consoleLog("document.getSelection().rangeCount: " + document.getSelection().rangeCount)
         _consoleLog('Backed up null range');
         new Error('Backed up null range');
     };
@@ -2364,7 +2288,7 @@ const _rangeString = function(range, title="") {
         endContainerType = '<' + endContainer.nodeName + '>';
         endContainerContent = endContainer.innerHTML;
     };
-    return title + '\n   startContainer: ' + startContainerType + ', content: ' + startContainerContent + '\n   startOffset: ' + range.startOffset + '\n   endContainer: ' + endContainerType + ', content: ' + endContainerContent + '\n   endOffset: ' + range.endOffset;
+    return title + '\n   startContainer: ' + startContainerType + ', content: \"' + startContainerContent + '\"\n   startOffset: ' + range.startOffset + '\n   endContainer: ' + endContainerType + ', content: \"' + endContainerContent + '\"\n   endOffset: ' + range.endOffset;
 };
 
 /********************************************************************************
@@ -2712,23 +2636,41 @@ const _getSelectionText = function() {
     return '';
 };
 
+/********************************************************************************
+ * Testing support
+ */
+
 /**
  * For testing purposes, set selection based on elementIds and offsets
  * Like range, the startOffset and endOffset are number of characters
- * when startElement is #text; else, child number.
+ * when startElement is #text; else, child number. Optionally specify
+ * startChildNodeIndex and/or endChildNodeIndex to identify a child
+ * within startElement and/or endElement. These optional params are
+ * useful for list testing particularly.
  *
- * @param   {String}  startElementId      The id of the element to use as startContainer for the range.
- * @param   {Int}     startOffset         The offset into the startContainer for the range.
- * @param   {String}  endElementId        The id of the element to use as endContainer for the range.
- * @param   {Int}     endOffset           The offset into the endContainer for the range.
- * @return  {Boolean}                     True if both elements are found; else, false.
+ * @param   {String}  startElementId        The id of the element to use as startContainer for the range.
+ * @param   {Int}     startOffset           The offset into the startContainer for the range.
+ * @param   {String}  endElementId          The id of the element to use as endContainer for the range.
+ * @param   {Int}     endOffset             The offset into the endContainer for the range.
+ * @param   {Int}     startChildNodeIndex   Index into startElement.childNodes to find startChild.
+ * @param   {Int}     endChildNodeIndex     Index into endElement.childNodes to find endChild.
+ * @return  {Boolean}                       True if both elements are found; else, false.
  */
-MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
+MU.setRange = function(startElementId, startOffset, endElementId, endOffset, startChildNodeIndex, endChildNodeIndex) {
     const startElement = document.getElementById(startElementId);
     const endElement = document.getElementById(endElementId);
     if (!startElement || !endElement) { return false };
-    const startContainer = _firstTextNodeChild(startElement);
-    const endContainer = _firstTextNodeChild(endElement);
+    let startContainer, endContainer;
+    if (startChildNodeIndex) {
+        startContainer = startElement.childNodes[startChildNodeIndex];
+    } else {
+        startContainer = _firstTextNodeChild(startElement);
+    };
+    if (endChildNodeIndex) {
+        endContainer = startElement.childNodes[endChildNodeIndex];
+    } else {
+        endContainer = _firstTextNodeChild(endElement);
+    };
     if (!startContainer || !endContainer) { return false };
     const range = document.createRange();
     range.setStart(startContainer, startOffset);
@@ -2736,6 +2678,7 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset) {
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+    _backupSelection();
     return true;
 };
 
@@ -2753,6 +2696,23 @@ MU.testUndo = function() {
  */
 MU.testRedo = function() {
     undoer.testRedo();
+}
+
+/**
+ * For testing purposes, invoke _doListEnter programmatically.
+ *
+ * After the _doListEnter, subsequent ops for undo and redo need to
+ * be done using MU.testUndo
+ */
+MU.testListEnter = function() {
+    _doListEnter()
+}
+
+/**
+ * For testing purposes, undo _doListEnter by invoking standard undo.
+ */
+MU.testUndoListEnter = function() {
+    undoer.testUndo()
 }
 
 /********************************************************************************
@@ -3980,7 +3940,7 @@ const _getFirstChildOfTypeAfter = function(element, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's previous siblings.
+ * Return the first node of nodeType within element's previousElementSiblings.
  *
  * @param   {HTML Element}  element     The element to start looking at for previousSiblings.
  * @param   {String}        nodeType    The type of node we are looking for.
@@ -3994,7 +3954,7 @@ const _getFirstChildOfTypeBefore = function(element, nodeType) {
         if (firstChildOfType) {
             prevSib = null;
         } else {
-            prevSib = prevSib.prevElementSibling;
+            prevSib = prevSib.previousElementSibling;
         };
     };
     return firstChildOfType;
@@ -4087,15 +4047,21 @@ const _numberAttribute = function(element, attribute) {
 
 /**
  * Return the nearest text node to element.
+ *
  * Used for deleting element and leaving selection in a reasonable state.
  * If the nearest sibling is a BR, we will replace it with a text node
  * and return that text node.
  *
+ * Note that there is a case where determining the node that should be selected
+ * after deleting an element which is the only element in MU.editor (i.e., in test
+ * cases, but also possible in actual usage) always returns null.
+ *
  * @param   {HTML Element}      element     HTML element.
  * @param   {String}            direction   Either 'BEFORE' or 'AFTER' to identify which way to look for a text node
- * @return  {HTML Text Node | MU.editor}    The text node in the direction, or as fallback, the editor element
+ * @return  {HTML Text Node | null}         The text node in the direction or null if not able to determine it
  */
 const _elementAfterDeleting = function(element, direction) {
+    //_consoleLog("\n* elementAfterDeleting")
     let nearestTextNode;
     if (direction === 'BEFORE') {
         nearestTextNode = _getFirstChildOfTypeBefore(element, Node.TEXT_NODE);
@@ -4105,6 +4071,7 @@ const _elementAfterDeleting = function(element, direction) {
     if (nearestTextNode) {
         return nearestTextNode
     } else {
+        // Regardless of direction, find the nearest sibling if there is one
         const sibling = element.nextSibling ?? element.previousSibling;
         if (sibling && (sibling.nodeName === 'BR')) {
             const newTextNode = document.createTextNode('');
@@ -4113,13 +4080,8 @@ const _elementAfterDeleting = function(element, direction) {
         } else if (sibling) {
             return sibling;
         } else {
-            const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-            if (firstTextNode) {
-                return firstTextNode;
-            } else {
-                // Things are really messed up if this happens!
-                return MU.editor;
-            };
+            // Nothing will be left to select after deleting element
+            return null;
         };
     };
 };
@@ -4133,15 +4095,25 @@ const _elementAfterDeleting = function(element, direction) {
  * @param   {String}            direction   Either 'BEFORE' or 'AFTER' to identify where to put the selection
  */
 const _deleteAndResetSelection = function(element, direction) {
-    const nextEl = _elementAfterDeleting(element, direction);
+    //_consoleLog("\n* _deleteAndResetSelection")
+    let nextEl = _elementAfterDeleting(element, direction);
     element.parentNode.removeChild(element);
     const newRange = document.createRange();
-    if (direction === 'BEFORE') {
-        newRange.setStart(nextEl, nextEl.textContent.length);
-        newRange.setEnd(nextEl, nextEl.textContent.length);
+    if (!nextEl) {
+        MU.emptyDocument()
+        nextEl = _firstEditorElement().firstChild;
+        const emptyTextNode = document.createTextNode('\u200B');
+        nextEl.replaceWith(emptyTextNode);
+        newRange.setStart(emptyTextNode, 0);
+        newRange.setEnd(emptyTextNode, 1);
     } else {
-        newRange.setStart(nextEl, 0);
-        newRange.setEnd(nextEl, 0);
+        if (direction === 'BEFORE') {
+            newRange.setStart(nextEl, nextEl.textContent.length);
+            newRange.setEnd(nextEl, nextEl.textContent.length);
+        } else {
+            newRange.setStart(nextEl, 0);
+            newRange.setEnd(nextEl, 0);
+        }
     }
     const sel = document.getSelection();
     sel.removeAllRanges();

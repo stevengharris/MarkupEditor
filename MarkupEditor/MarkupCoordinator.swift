@@ -116,6 +116,9 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //print("click")
             webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
+        case "undoSet":
+            //print("undoSet")
+            markupDelegate?.markupUndoSet(webView)
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {
