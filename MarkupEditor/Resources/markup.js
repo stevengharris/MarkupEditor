@@ -285,10 +285,6 @@ const _undoOperation = function(undoerData) {
         case 'enter':
             _undoEnter(undoerData);
             break;
-        case 'deleteRangeSelection':
-            //TODO: Use this and make it work, or remove it
-            _restoreRangeSelection(undoerData);
-            break;
         default:
             _consoleLog('Error: Unknown undoOperation ' + undoerData.operation);
     };
@@ -359,10 +355,6 @@ const _redoOperation = function(undoerData) {
             break;
         case 'enter':
             _doEnter(false);
-            break;
-        case 'deleteRangeSelection':
-            //TODO: Use this and make it work, or remove it
-            _deleteRangeSelection(false);
             break;
         default:
             _consoleLog('Error: Unknown redoOperation ' + undoerData.operation);
@@ -1386,30 +1378,71 @@ const _rangeCopy = function() {
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
 const _doListEnter = function(undoable=true, oldUndoerData) {
-    //_consoleLog("\n* _doListEnter(" + undoable + ")");
+    _consoleLog("\n* _doListEnter(" + undoable + ")");
+    const redoing = !undoable && (oldUndoerData !== null);
+    _consoleLog(" redoing: " + redoing);
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
-    if (!selNode) { return null };
-    // If sel is not collapsed, delete the entire selection and reset before continuing
-    let deletedFragment;
+    let selNode = (sel) ? sel.anchorNode : null;
+    if (!selNode) {
+        _consoleLog("Error - no selection")
+        return null;
+    };
+    // If sel is not collapsed, delete the entire selection and reset before continuing.
+    // Track the deletedFragment and whether it came from a selection that spanned list items
+    let deletedFragment, selWithinListItem;
     if (!sel.isCollapsed) {
-        deletedFragment = sel.getRangeAt(0).cloneRange().extractContents();
-        if (!undoable && oldUndoerData) {
+        const selRange = sel.getRangeAt(0).cloneRange();
+        if (redoing) {
+            if (selRange.startContainer.nodeType === Node.TEXT_NODE) {
+                selRange.startContainer.parentNode.normalize();
+            } else {
+                selRange.startContainer.normalize();
+            };
+            if (selRange.endContainer.nodeType === Node.TEXT_NODE) {
+                selRange.endContainer.parentNode.normalize();
+            } else {
+                selRange.endContainer.normalize();
+            };
+            sel.removeAllRanges();
+            sel.addRange(selRange);
+        }
+        const selStartListItem = _findFirstParentElementInNodeNames(selRange.startContainer, ['LI']);
+        const selEndListItem = _findFirstParentElementInNodeNames(selRange.endContainer, ['LI']);
+        selWithinListItem = selStartListItem && selEndListItem && (selStartListItem === selEndListItem);
+        deletedFragment = selRange.extractContents();
+        if (redoing) {
             oldUndoerData.data.deletedFragment = deletedFragment;
         }
-        // Even though we extractContents, we still need to deleteFromDocument or sel does not reflect the deletion
-        sel.deleteFromDocument();
+        // The selection at this point is in the element that precedes what was previously selected,
+        // and what was deleted is captured as deletedFragment. Unfortunately, when the selection extends
+        // beyond the list item that the selection starts in, this does not result in the equivalent of
+        // pressing Delete on the selection, which is what we want. So, we need to patch things up a bit.
+        if (!selWithinListItem) {
+            _patchMultiListItemEnter(deletedFragment);
+        }
+        // Even now selection might not be collapsed if, for example, the selection was everything within a
+        // formatting node (like <b>).
+        if (!document.getSelection().isCollapsed) {
+            _patchEmptyFormatNodeEnter();
+        }
         sel = document.getSelection();
-        selNode = (sel) ? sel.focusNode : null;
-        if (!selNode) { return null };
+        selNode = (sel) ? sel.anchorNode : null;
+        // At this point, sel is collapsed and the document contents are the same as if we had
+        // hit Backspace (but not Enter yet) on the original non-collapsed selection.
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
-    if (!existingList || !existingListItem) { return null };
-    const rangeAfterEnter = sel.getRangeAt(0).cloneRange();
-    const startOffset = rangeAfterEnter.startOffset;
-    const endOffset = rangeAfterEnter.endOffset;
+    if (!existingList || !existingListItem) {
+        _consoleLog("Error - not in a list or a listItem")
+        return null;
+    };
+    const undoerRange = sel.getRangeAt(0).cloneRange();
+    const startOffset = undoerRange.startOffset;
+    const endOffset = undoerRange.endOffset;
     const outerHTML = existingList.outerHTML;
+    // Record the child node indices we can traverse from existingList to find selNode
+    // The childNodeIndices also reflect the state *after* a non-collapsed selection has
+    // been extracted into deletedFragment and the dom has been patched-up properly.
     const childNodeIndices = _childNodeIndices(selNode, existingList.nodeName);
     const textNode = selNode.nodeType === Node.TEXT_NODE
     const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
@@ -1431,32 +1464,85 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         newElement = document.createElement('p');
     }
     if (beginningListNode) {
-        //_consoleLog("- beginningListNode");
-        if (!undoable && oldUndoerData) {
-            oldUndoerData.range = rangeAfterEnter;
+        if (redoing) {
+            oldUndoerData.range = undoerRange;
         };
-        // We are at the beginning of a list node, so insert the newListItem
-        newElement.appendChild(document.createElement('br'));
-        newListItem.appendChild(newElement);
-        existingList.insertBefore(newListItem, existingListItem);
-        // Leave selection alone
+        _newListItemBefore(newElement, newListItem, existingListItem, existingList);
     } else if (endingListNode) {
-        //_consoleLog("- endingListNode")
-        if (!undoable && oldUndoerData) {
-            oldUndoerData.range = rangeAfterEnter;
+        if (redoing) {
+            oldUndoerData.range = undoerRange;
         };
-        // We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
-        // First, move all of the siblings of selNode's parentNode to reside in the new list,
-        // leaving selNode itself alone.
-        newElement.appendChild(document.createElement('br'));
-        newListItem.appendChild(newElement);
-        let sib = selNode.parentNode.nextElementSibling;
-        let nextElementSib;
-        while (sib && (sib.nodeName !== 'LI')) {
-            nextElementSib = sib.nextElementSibling;
-            newListItem.appendChild(sib);
-            sib = nextElementSib;
+        _newListItemAfter(newElement, newListItem, existingListItem, existingList);
+    } else if (selNode.nodeType === Node.TEXT_NODE) {
+        _consoleLog("- Splitting selNode")
+        // We are somewhere in a list item
+        let sib, nextSib, innerElement, outerElement;
+        // Make sure innerElement is the next sibling, either by splitting the
+        // textNode or by grabbing the nextSibling when selNode is empty, or
+        // by creating a br node and making that the next sibling.
+        if (selNode.textContent.length === 0) {
+            outerElement = selNode.previousSibling;
+            innerElement = selNode.nextSibling;
+            if (!outerElement) {
+                outerElement = document.createElement('br');
+                selNode.replaceWith(outerElement);
+            }
+            if (!innerElement) {
+                innerElement = outerElement.parentNode.nextSibling;
+                if (!innerElement) {
+                    innerElement = document.createElement('br');
+                    outerElement.parentNode.appendChild(innerElement);
+                };
+            };
+        } else {
+            innerElement = selNode.splitText(startOffset);
+            outerElement = selNode;
+        };
+        if (redoing) {
+            const redoRange = document.createRange();
+            redoRange.setStart(outerElement, outerElement.textContent.length);
+            redoRange.setEnd(outerElement, outerElement.textContent.length);
+            oldUndoerData.range = redoRange;
         }
+        // If we split a textNode that is inside of format tags, then we need to patch up
+        // innerElement and outerElement
+        const formatTags = _getFormatTags();
+        for (let i=0; i<formatTags.length; i++) {
+            newElement = document.createElement(formatTags[i]);
+            newElement.appendChild(innerElement);
+            innerElement = newElement;
+        };
+        if (formatTags.length > 0) {
+            const outermostFormatTag = formatTags[formatTags.length - 1];
+            outerElement = _findFirstParentElementInNodeNames(outerElement, [outermostFormatTag]);
+        };
+        if (blockContainer) {
+            // Make the newElement in the same style as its container.
+            newElement = document.createElement(blockContainer.nodeName);
+            newElement.appendChild(innerElement);
+        } else if (!newElement) {
+            // The newElement already exists if we were in formatTags
+            // Otherwise, make the newElement just an unstyled text node like it started.
+            newElement = document.createTextNode(trailingContent);
+        }
+        newListItem.appendChild(newElement);
+        // With trailingContent in newElement which is in newListItem,
+        // append all of selNode's siblings to newElement
+        sib = outerElement.nextSibling;
+        while (sib) {
+            newElement.appendChild(sib);
+            sib = outerElement.nextSibling;
+        }
+        // And then make all of selNode's parentNode's siblings follow it in
+        // the same newListItem. For example, we might have nested lists
+        // below the text node we are splitting.
+        if (blockContainer) {
+            sib = blockContainer.nextSibling;
+            while (sib) {
+                newListItem.appendChild(sib);
+                sib = blockContainer.nextSibling;
+            }
+        };
         // Then, insert the newListItem with its new children into the list before the next list element.
         existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
         const range = document.createRange();
@@ -1465,85 +1551,6 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         range.setEnd(newElement, 0);
         sel.removeAllRanges();
         sel.addRange(range);
-    } else {
-        //_consoleLog("- Splitting selNode")
-        // We are somewhere in a list item
-        let sib, nextSib, innerElement, outerElement;
-        // Make sure innerElement is the next sibling, either by splitting the
-        // textNode or by grabbing the nextSibling when selNode is empty, or
-        // by creating a br node and making that the next sibling.
-        if (selNode.nodeType === Node.TEXT_NODE) {
-            if (selNode.textContent.length === 0) {
-                outerElement = selNode.previousSibling;
-                innerElement = selNode.nextSibling;
-                if (!outerElement) {
-                    outerElement = document.createElement('br');
-                    selNode.replaceWith(outerElement);
-                }
-                if (!innerElement) {
-                    innerElement = outerElement.parentNode.nextSibling;
-                    if (!innerElement) {
-                        innerElement = document.createElement('br');
-                        outerElement.parentNode.appendChild(innerElement);
-                    };
-                };
-            } else {
-                innerElement = selNode.splitText(startOffset);
-                outerElement = selNode;
-            };
-            if (!undoable && oldUndoerData) {
-                const redoRange = document.createRange();
-                redoRange.setStart(outerElement, outerElement.textContent.length);
-                redoRange.setEnd(outerElement, outerElement.textContent.length);
-                oldUndoerData.range = redoRange;
-            }
-            const formatTags = _getFormatTags();
-            for (let i=0; i<formatTags.length; i++) {
-                newElement = document.createElement(formatTags[i]);
-                newElement.appendChild(innerElement);
-                innerElement = newElement;
-            };
-            if (formatTags.length > 0) {
-                outerElement = _findFirstParentElementInNodeNames(outerElement, [formatTags[formatTags.length - 1]]);
-            };
-            if (blockContainer) {
-                // Make the newElement in the same style as its container.
-                newElement = document.createElement(blockContainer.nodeName);
-                newElement.appendChild(innerElement);
-            } else if (!newElement) {
-                // The newElement already exists if we were in formatTags
-                // Otherwise, make the newElement just an unstyled text node like it started.
-                newElement = document.createTextNode(trailingContent);
-            }
-            newListItem.appendChild(newElement);
-            // With trailingContent in newElement which is in newListItem,
-            // append all of selNode's siblings to newElement
-            sib = outerElement.nextSibling;
-            while (sib) {
-                nextSib = sib.nextSibling;
-                newElement.appendChild(sib);
-                sib = nextSib;
-            }
-            // And then make all of selNode's parentNode's siblings follow it in
-            // the same newListItem. For example, we might have nested lists
-            // below the text node we are splitting.
-            if (blockContainer) {
-                sib = blockContainer.nextSibling;
-                while (sib) {
-                    nextSib = sib.nextSibling;
-                    newListItem.appendChild(sib);
-                    sib = nextSib;
-                }
-            };
-            // Then, insert the newListItem with its new children into the list before the next list element.
-            existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
-            const range = document.createRange();
-            // And leave selection in the newElement
-            range.setStart(newElement, 0);
-            range.setEnd(newElement, 0);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        };
     };
     _backupSelection();
     if (undoable) {
@@ -1552,16 +1559,154 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
                                 {
                                     outerHTML: outerHTML,
                                     childNodeIndices: childNodeIndices,
-                                    deletedFragment: deletedFragment
+                                    deletedFragment: deletedFragment,
+                                    selWithinListItem: selWithinListItem
                                 },
-                                rangeAfterEnter
+                                undoerRange
                             );
         undoer.push(undoerData);
         _restoreSelection();
     }
     _callback('input');
-    //_consoleLog("Done.")
+    _consoleLog("* Done _doListEnter")
     return newElement;      // To preventDefault() on Enter
+};
+
+/**
+ * The deletedFragment spanned list items. Leave to document looking like
+ * it would if we had pressed Backspace. This means the items at the focusNode
+ * get moved to be in the same list item as the anchorNode. By default, the
+ * contentEditable after extractContents leaves the focusNode in a non-list-element
+ * below the anchorNode list element.
+ */
+const _patchMultiListItemEnter = function(deletedFragment) {
+    // The selection at this point is in the element that precedes what was previously selected,
+    // and what was deleted is captured as deletedFragment. Unfortunately, when the selection extends
+    // beyond the list item that the selection starts in, this does not result in the equivalent of
+    // pressing Delete on the selection, which is what we want. So, we need to patch things up a bit.
+    _consoleLog("* _patchMultiListItemEnter");
+    _consoleLog(_fragmentString(deletedFragment, "deletedFragment: "))
+    const sel = document.getSelection();
+    const newSelRange = sel.getRangeAt(0);
+    _consoleLog(_rangeString(newSelRange, "newSelRange"))
+    // We want to move the newSelRange endContainer to be a child of the startContainer's parentNode
+    // so that it becomes part of the same list item the startContainer is in.
+    const mergedChild = newSelRange.endContainer;
+    const mergedChildParent = mergedChild.parentNode;
+    newSelRange.startContainer.parentNode.appendChild(mergedChild);
+    // If after merging the mergedChild, its parentNode is empty, then remove the mergedChild parentNode
+    if (mergedChildParent.childNodes.length === 0) {
+        _consoleLog(" removing " + mergedChildParent.outerHTML)
+        mergedChildParent.parentNode.removeChild(mergedChildParent);
+    }
+    // After we do that, if the existingList item where the selection ends is empty, then we need to remove it
+    // so that we don't end up with an empty list node.
+    const existingListItem = _findFirstParentElementInNodeNames(newSelRange.endContainer, ['LI']);
+    _consoleLog("existingListItem.outerHTML: " + existingListItem.outerHTML)
+    if (existingListItem.childNodes.length === 0) {
+        newSelRange.endContainer.parentNode.removeChild(newSelRange.endContainer);
+    }
+    const patchRange = document.createRange();
+    patchRange.setStart(newSelRange.startContainer, newSelRange.startOffset);
+    patchRange.setEnd(newSelRange.startContainer, newSelRange.startOffset)
+    sel.removeAllRanges();
+    sel.addRange(patchRange);
+    _consoleLog(_rangeString(patchRange, "patchRange"))
+    sel.anchorNode.parentNode.normalize();
+};
+
+/**
+ * The deletedFragment contains the entire contents within a format node (like <b>).
+ * We want the Enter to split the format node. To make that happen, insert a non-printing
+ * pair of characters inside of the format node, and position selection between them.
+ * Now when splitText happens, we end up with two text nodes and both are formatted
+ * like the original we extracted the deletedFragment from.
+ */
+const _patchEmptyFormatNodeEnter = function() {
+    _consoleLog("* _patchEmptyFormatNodeEnter")
+    const sel = document.getSelection();
+    const anchorNode = sel.anchorNode;  // Selection start
+    const focusNode = sel.focusNode;    // Selection end
+    const anchorIsEmpty = anchorNode.textContent.length === 0;
+    const focusIsEmpty = focusNode.textContent.length === 0;
+    const anchorIsInTag = _tagsMatching(anchorNode, _formatTags).length > 0
+    const focusIsInTag = _tagsMatching(focusNode, _formatTags).length > 0
+    if (!anchorIsEmpty && !focusIsEmpty) {
+        _consoleLog("Error - neither anchor nor focus is empty");
+        return;
+    };
+    const anchorParentIsSibling = anchorNode.parentNode.nextSibling !== focusNode.parentNode
+    const focusParentIsSibling = anchorNode.nextSibling !== focusNode.parentNode;
+    if (!anchorParentIsSibling && !focusParentIsSibling) {
+        _consoleLog("Error - anchor and focus are not siblings");
+    }
+    const npcPair = document.createTextNode('\u200B\u200B');
+    const range = document.createRange();
+    // The node that is an empty tag (likely) has an empty text node in it which we
+    // want to replace with the non-printing character pair so we can split them.
+    if (anchorIsInTag) {
+        if (anchorNode.parentNode.childNodes.length === 1) {
+            anchorNode.parentNode.childNodes[0].replaceWith(npcPair)
+        } else {
+            anchorNode.parentNode.appendChild(npcPair);
+        }
+        range.setStart(npcPair, 1);
+        range.setEnd(npcPair, 1);
+    } else if (focusIsInTag) {
+        if (focusNode.parentNode.childNodes.length === 1) {
+            focusNode.parentNode.childNodes[0].replaceWith(npcPair)
+        } else {
+            focusNode.parentNode.appendChild(npcPair);
+        }
+        range.setStart(npcPair, 1);
+        range.setEnd(npcPair, 1);
+    } else {
+        _consoleLog("Error - neither anchor nor focus is in a format tag");
+        return;
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _consoleLog("* Done _patchEmptyFormatNodeEnter")
+};
+
+/**
+ * We are at the beginning of a list node, so insert the newListItem
+ */
+const _newListItemBefore = function(newElement, newListItem, existingListItem, existingList) {
+    _consoleLog("- _newListItemBefore");
+    newElement.appendChild(document.createElement('br'));
+    newListItem.appendChild(newElement);
+    existingList.insertBefore(newListItem, existingListItem);
+    // Leave selection alone
+};
+
+/**
+ * Insert a new list item after the selection.
+ * We are at the end of a textNode in a list item (e.g., a <p> or just naked text)
+ * First, move all of the siblings of selNode's parentNode to reside in the new list,
+ * leaving selNode itself alone.
+ */
+const _newListItemAfter = function(newElement, newListItem, existingListItem, existingList) {
+    _consoleLog("- _newListItemAfter")
+    const sel = document.getSelection();
+    const selNode = sel.anchorNode;
+    newElement.appendChild(document.createElement('br'));
+    newListItem.appendChild(newElement);
+    let sib = selNode.parentNode.nextElementSibling;
+    let nextElementSib;
+    while (sib && (sib.nodeName !== 'LI')) {
+        nextElementSib = sib.nextElementSibling;
+        newListItem.appendChild(sib);
+        sib = nextElementSib;
+    }
+    // Then, insert the newListItem with its new children into the list before the next list element.
+    existingList.insertBefore(newListItem, existingListItem.nextElementSibling);
+    const range = document.createRange();
+    // And leave selection in the newElement
+    range.setStart(newElement, 0);
+    range.setEnd(newElement, 0);
+    sel.removeAllRanges();
+    sel.addRange(range);
 };
 
 /**
@@ -1585,7 +1730,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
  * leaving when we are done undoing in this method.
  */
 const _undoListEnter = function(undoerData) {
-    //_consoleLog("\n* _undoListEnter");
+    _consoleLog("\n* _undoListEnter");
     const oldRange = undoerData.range;
     const oldStartContainer = oldRange.startContainer;
     const oldStartOffset = oldRange.startOffset;
@@ -1622,46 +1767,134 @@ const _undoListEnter = function(undoerData) {
     };
     // Find the selected element based on the indices into the list recorded at undo time
     const selectedElement = _childNodeIn(newList, undoerData.data.childNodeIndices);
+    if (!selectedElement) {
+        new Error('child node could not be found in childNodeIndices');
+        _consoleLog("Error - child node could not be found in childNodeIndices")
+        return;
+    }
     // And then restore the range
     let range = document.createRange();
     range.setStart(selectedElement, oldStartOffset);
     range.setEnd(selectedElement, oldEndOffset);
     sel.removeAllRanges();
     sel.addRange(range);
-    // If we deleted something before the operation, then put it back at the selection and
-    // restore the range
+    // There is a special case where sel is at the beginning of a list element, but the
+    // initial textNode has blanks in front. In that case the oldStartOffset etc are zero,
+    // but if we check the range selection immediately after setting it, it shows offset
+    // to get to the first non-blank character.
+    // At this point, the document and selection look like the did before hitting Enter,
+    // unless there was a non-collapsed selection when Enter was hit. If so, this selection
+    // is held in deletedFragment, and it may span list items. In any case, we need to put it
+    // back at the current selection and restore the range.
     const deletedFragment = undoerData.data.deletedFragment;
     if (deletedFragment) {
         // After insertNode, the deletedFragment's childNodes will be in the range so we can select them.
-        // Note that these childNodes generally didn't exist when we did the Enter originally. They were
-        // extracted from the selection as the deletedFragment and then removed.
+        // Note that these childNodes were extracted from the selection as the deletedFragment.
         const firstChild = deletedFragment.childNodes[0];
         const lastChild = deletedFragment.childNodes[deletedFragment.childNodes.length - 1];
-        range.insertNode(undoerData.data.deletedFragment);
-        // Now how to reselect the entire fragment, which can be as simple as a text node or very complex.
-        sel = document.getSelection();
-        selNode = (sel) ? sel.focusNode : null;
-        let newStartContainer, newStartOffset, newEndContainer, newEndOffset;
-        const startChild = (firstChild) ? firstChild : selNode;
-        const endChild = (lastChild) ? lastChild : selNode;
-        newStartContainer = startChild;
-        newStartOffset = 0;
-        newEndContainer = endChild;
-        if (endChild.nodeType === Node.TEXT_NODE) {
-            newEndOffset = endChild.textContent.length;
-        } else {
-            newEndOffset = 0;
-        };
-        let newRange = document.createRange();
-        newRange.setStart(newStartContainer, newStartOffset);
-        newRange.setEnd(newEndContainer, newEndOffset);
-        sel.removeAllRanges();
-        sel.addRange(newRange);
+        _insertInList(deletedFragment);
         _backupUndoerRange(undoerData);
     };
     _backupSelection();
     _callback('input');
-    //_consoleLog("Done.")
+    _consoleLog("* Done _undoListEnter")
+};
+
+/**
+ * Insert fragment into the current selection point somewhere inside of a list.
+ *
+ * When we reach this point, we have undone the Enter that preceded and now need
+ * to re-insert the non-collapsed selection that we extracted and placed in fragment.
+ */
+const _insertInList = function(fragment) {
+    _consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0).cloneRange();
+    const selNode = (sel) ? sel.focusNode : null;
+    if (!selNode || (selNode.nodeType !== Node.TEXT_NODE)) {
+        new Error('SelNode prior to insertList is invalid.');
+        return;
+    };
+    // Handle specially if fragment contains no elements (i.e., just text nodes).
+    const simpleFragment = fragment.childElementCount === 0;
+    const singleListItemFragment = fragment.firstElementChild && (fragment.firstElementChild.nodeName !== 'LI');
+    if (simpleFragment || singleListItemFragment) {
+        const lastFragChild = fragment.lastChild;
+        range.insertNode(fragment); // fragment becomes selNode's nextSibling
+        const textRange = document.createRange();
+        textRange.setStart(selNode, selNode.textContent.length);
+        if (lastFragChild.nodeType === Node.TEXT_NODE) {
+            textRange.setEnd(lastFragChild, lastFragChild.textContent.length)
+        } else {
+            textRange.setEnd(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length)
+        }
+        //textRange.setEnd(selNode.nextSibling, selNode.nextSibling.textContent.length);
+        sel.removeAllRanges();
+        sel.addRange(textRange);
+        _consoleLog("* Done _insertInList (simple)")
+        return;
+    }
+    const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
+    const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
+    const firstFragEl = fragment.firstElementChild;
+    const lastFragEl = fragment.lastElementChild;
+    if (range.startOffset === 0) {
+        _consoleLog("******* TODO: At the beginning of a text node")
+    } else if (range.startOffset === selNode.textContent.length) {
+        _consoleLog("******* TODO: At the end of a text node")
+    } else {
+        _consoleLog("In the middle of a text node")
+        // Selection is within a text node that needs to be split
+        // and then merged with the fragment. After splitText,
+        // selNode contains the textNode before the selection.
+        const trailingText = selNode.splitText(range.startOffset);
+        const leadingTextLength = selNode.textContent.length;
+        const trailingTextLength = trailingText.textContent.length;
+        // Now insert all of the firstElFrag's childNodes before
+        // the trailingText. So, for example, if the firstElFrag is
+        // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
+        // gets put just after selNode (i.e., before trailingText).
+        const selNodeParent = selNode.parentNode;
+        const selNodeParentName = selNodeParent.nodeName;
+        let firstElChild = firstFragEl.firstChild;
+        while (firstElChild) {
+            if (firstElChild.nodeName === selNodeParentName) {
+                // When the fragment's firstChild matches selNode's parent type, then
+                // move all of the firstElChild contents into the selNodeParent
+                let firstElGrandChild = firstElChild.firstChild;
+                while (firstElGrandChild) {
+                    selNodeParent.insertBefore(firstElGrandChild, trailingText)
+                    firstElGrandChild = firstElChild.firstChild;
+                }
+                firstFragEl.removeChild(firstElChild);
+            } else {
+                // Otherwise, just put the firstElChild itself in selNodeParent
+                selNodeParent.insertBefore(firstElChild, trailingText)
+            };
+            firstElChild = firstFragEl.firstChild;
+        }
+        firstFragEl.parentNode.removeChild(firstFragEl);
+        // Now all the siblings of firstFragEl need to be added as siblings of selNode.parentNode
+        let nextFragSib = fragment.firstElementChild;
+        let nextListItem = existingListItem.nextSibling;
+        while (nextFragSib) {
+            existingListItem.parentNode.insertBefore(nextFragSib, nextListItem)
+            nextFragSib = fragment.firstElementChild;
+        };
+        // Now put the trailingText itself at the end of the lastFragEl.
+        let lastChildEl = lastFragEl.firstChild;
+        if (lastChildEl.nodeName === selNodeParentName) {
+            lastChildEl.appendChild(trailingText);
+        } else {
+            lastFragEl.appendChild(trailingText);
+        };
+        const newRange = document.createRange();
+        newRange.setStart(selNode, selNode.textContent.length);
+        newRange.setEnd(trailingText, 0);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    };
+    _consoleLog("* Done _insertInList")
 };
 
 /**
@@ -2258,6 +2491,7 @@ const _restoreSelection = function() {
 };
 
 const _textString = function(node, title="") {
+    if (!node) return title + "null"
     if (node.nodeType === Node.TEXT_NODE) {
         return title + "[" + node.nodeName + "] \"" + node.textContent + "\""
     } else {
@@ -2265,12 +2499,20 @@ const _textString = function(node, title="") {
     }
 }
 
+const _fragmentString = function(fragment, title="") {
+    if (!fragment) return title + "null"
+    let div = document.createElement('div');
+    div.appendChild(fragment.cloneNode(true));
+    return title + div.innerHTML;
+};
+
 /**
  * Return a reasonably informative string describing the range, for debugging purposes
  *
  * @param {Object | HTML Range}     range   Something holding onto the startContainer, startOffset, endContainer, and endOffset
  */
 const _rangeString = function(range, title="") {
+    if (!range) return title + "\n   null"
     const startContainer = range.startContainer;
     const endContainer = range.endContainer;
     let startContainerType, startContainerContent, endContainerType, endContainerContent;
@@ -4507,7 +4749,7 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     if (!node) { return null };
     let element;
     if (node.nodeType === Node.TEXT_NODE) {
-        element = node.parentElement;
+        element = node.parentNode;
     } else {
         element = node;
     };
@@ -4517,52 +4759,8 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     } else if (matchNames.includes(nodeName)) {
         return element;
     } else {
-        return _findFirstParentElementInNodeNames(element.parentElement, matchNames, excludeNames);
+        return _findFirstParentElementInNodeNames(element.parentNode, matchNames, excludeNames);
     };
-};
-
-/**
- * Delete a range selection in a way that is undoable.
- *
- * During certain operations (like _doListEnter), we first delete the selection if it is
- * not collapsed. This is normally done by default when typing, but since we do it ourselves
- * in JavaScript, we also have to support undo.
- */
-//TODO: Use this and make it work, or remove it
-const _deleteRangeSelection = function(undoable=true) {
-    const sel = document.getSelection();
-    const range = (sel && (sel.rangeCount > 0)) ? sel.getRangeAt(0).cloneRange() : null;
-    if (!range || range.collapsed) { return };
-    const fragment = range.extractContents();
-    sel.deleteFromDocument();
-    if (undoable) {
-        const undoerData = _undoerData('deleteRangeSelection', fragment, range);
-        undoer.push(undoerData);
-    };
-    _consoleLog("Deleted range")
-};
-
-/**
- * Restore the fragment contained in undoer.data after the undoerData.range
- */
-//TODO: Use this and make it work, or remove it
-const _restoreRangeSelection = function(undoerData) {
-    _restoreUndoerRange(undoerData);
-    const sel = document.getSelection();
-    const selNode = (sel && sel.focusNode) ? sel.focusNode : null;
-    _consoleLog("selNode: " + selNode);
-    if (!selNode) { return };
-    const targetNode = (selNode.nextSibling) ? selNode.nextSibling : selNode.parentNode.nextSibling;
-    _consoleLog("targetNode.textContent: " + targetNode.textContent)
-    const range = document.createRange();
-    range.setStart(targetNode, 0);
-    range.setEnd(targetNode, 0);
-    _consoleLog(_rangeString(range));
-    _consoleLog('undoerData.data.textContent: ' + undoerData.data.textContent);
-    range.insertNode(undoerData.data);
-    _callback('input');
-    _backupUndoerRange(undoerData);
-    _consoleLog("Restored range");
 };
 
 /********************************************************************************
