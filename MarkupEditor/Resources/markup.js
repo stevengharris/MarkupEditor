@@ -1378,9 +1378,9 @@ const _rangeCopy = function() {
  * @return  {HTML BR Element}   The BR in the newly created LI to preventDefault handling; else, null.
  */
 const _doListEnter = function(undoable=true, oldUndoerData) {
-    _consoleLog("\n* _doListEnter(" + undoable + ")");
+    //_consoleLog("\n* _doListEnter(" + undoable + ")");
     const redoing = !undoable && (oldUndoerData !== null);
-    _consoleLog(" redoing: " + redoing);
+    //_consoleLog(" redoing: " + redoing);
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode) {
@@ -1474,7 +1474,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         };
         _newListItemAfter(newElement, newListItem, existingListItem, existingList);
     } else if (selNode.nodeType === Node.TEXT_NODE) {
-        _consoleLog("- Splitting selNode")
+        //_consoleLog("- Splitting selNode")
         // We are somewhere in a list item
         let sib, nextSib, innerElement, outerElement;
         // Make sure innerElement is the next sibling, either by splitting the
@@ -1497,6 +1497,8 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         } else {
             innerElement = selNode.splitText(startOffset);
             outerElement = selNode;
+            innerElement.textContent = _patchWhiteSpace(innerElement.textContent);
+            outerElement.textContent = _patchWhiteSpace(outerElement.textContent);
         };
         if (redoing) {
             const redoRange = document.createRange();
@@ -1568,8 +1570,25 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         _restoreSelection();
     }
     _callback('input');
-    _consoleLog("* Done _doListEnter")
+    //_consoleLog("* Done _doListEnter")
     return newElement;      // To preventDefault() on Enter
+};
+
+const _patchWhiteSpace = function(str, end='BOTH') {
+    let patchedStr;
+    switch (end) {
+        case 'LEADING':
+            patchedStr = str.replace(/^\s+/g, '\xA0');
+            break;
+        case 'TRAILING':
+            patchedStr = str.replace(/\s+$/g, '\xA0');
+            break;
+        case 'BOTH':
+            patchedStr = str.replace(/^\s+/g, '\xA0');
+            patchedStr = patchedStr.replace(/\s+$/g, '\xA0');
+            break;
+    };
+    return patchedStr;
 };
 
 /**
@@ -1594,6 +1613,7 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     const mergedChild = newSelRange.endContainer;
     const mergedChildParent = mergedChild.parentNode;
     newSelRange.startContainer.parentNode.appendChild(mergedChild);
+    newSelRange.startContainer.parentNode.normalize();
     // If after merging the mergedChild, its parentNode is empty, then remove the mergedChild parentNode
     if (mergedChildParent.childNodes.length === 0) {
         _consoleLog(" removing " + mergedChildParent.outerHTML)
@@ -1612,7 +1632,8 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     sel.removeAllRanges();
     sel.addRange(patchRange);
     _consoleLog(_rangeString(patchRange, "patchRange"))
-    sel.anchorNode.parentNode.normalize();
+    _consoleLog(_rangeString(document.getSelection().getRangeAt(0), "from getSelection()"))
+    _consoleLog("* Done _patchMultiListItemEnter")
 };
 
 /**
@@ -1623,7 +1644,7 @@ const _patchMultiListItemEnter = function(deletedFragment) {
  * like the original we extracted the deletedFragment from.
  */
 const _patchEmptyFormatNodeEnter = function() {
-    _consoleLog("* _patchEmptyFormatNodeEnter")
+    //_consoleLog("* _patchEmptyFormatNodeEnter")
     const sel = document.getSelection();
     const anchorNode = sel.anchorNode;  // Selection start
     const focusNode = sel.focusNode;    // Selection end
@@ -1666,14 +1687,14 @@ const _patchEmptyFormatNodeEnter = function() {
     };
     sel.removeAllRanges();
     sel.addRange(range);
-    _consoleLog("* Done _patchEmptyFormatNodeEnter")
+    //_consoleLog("* Done _patchEmptyFormatNodeEnter")
 };
 
 /**
  * We are at the beginning of a list node, so insert the newListItem
  */
 const _newListItemBefore = function(newElement, newListItem, existingListItem, existingList) {
-    _consoleLog("- _newListItemBefore");
+    //_consoleLog("- _newListItemBefore");
     newElement.appendChild(document.createElement('br'));
     newListItem.appendChild(newElement);
     existingList.insertBefore(newListItem, existingListItem);
@@ -1687,7 +1708,7 @@ const _newListItemBefore = function(newElement, newListItem, existingListItem, e
  * leaving selNode itself alone.
  */
 const _newListItemAfter = function(newElement, newListItem, existingListItem, existingList) {
-    _consoleLog("- _newListItemAfter")
+    //_consoleLog("- _newListItemAfter")
     const sel = document.getSelection();
     const selNode = sel.anchorNode;
     newElement.appendChild(document.createElement('br'));
@@ -1730,7 +1751,7 @@ const _newListItemAfter = function(newElement, newListItem, existingListItem, ex
  * leaving when we are done undoing in this method.
  */
 const _undoListEnter = function(undoerData) {
-    _consoleLog("\n* _undoListEnter");
+    //_consoleLog("\n* _undoListEnter");
     const oldRange = undoerData.range;
     const oldStartContainer = oldRange.startContainer;
     const oldStartOffset = oldRange.startOffset;
@@ -1797,7 +1818,7 @@ const _undoListEnter = function(undoerData) {
     };
     _backupSelection();
     _callback('input');
-    _consoleLog("* Done _undoListEnter")
+    //_consoleLog("* Done _undoListEnter")
 };
 
 /**
@@ -1807,7 +1828,7 @@ const _undoListEnter = function(undoerData) {
  * to re-insert the non-collapsed selection that we extracted and placed in fragment.
  */
 const _insertInList = function(fragment) {
-    _consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
+    //_consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
     const sel = document.getSelection();
     const range = sel.getRangeAt(0).cloneRange();
     const selNode = (sel) ? sel.focusNode : null;
@@ -1831,7 +1852,7 @@ const _insertInList = function(fragment) {
         //textRange.setEnd(selNode.nextSibling, selNode.nextSibling.textContent.length);
         sel.removeAllRanges();
         sel.addRange(textRange);
-        _consoleLog("* Done _insertInList (simple)")
+        //_consoleLog("* Done _insertInList (simple)")
         return;
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
@@ -1843,7 +1864,7 @@ const _insertInList = function(fragment) {
     } else if (range.startOffset === selNode.textContent.length) {
         _consoleLog("******* TODO: At the end of a text node")
     } else {
-        _consoleLog("In the middle of a text node")
+        //_consoleLog("In the middle of a text node")
         // Selection is within a text node that needs to be split
         // and then merged with the fragment. After splitText,
         // selNode contains the textNode before the selection.
@@ -1894,7 +1915,7 @@ const _insertInList = function(fragment) {
         sel.removeAllRanges();
         sel.addRange(newRange);
     };
-    _consoleLog("* Done _insertInList")
+    //_consoleLog("* Done _insertInList")
 };
 
 /**
@@ -2901,25 +2922,44 @@ const _getSelectionText = function() {
 MU.setRange = function(startElementId, startOffset, endElementId, endOffset, startChildNodeIndex, endChildNodeIndex) {
     const startElement = document.getElementById(startElementId);
     const endElement = document.getElementById(endElementId);
-    if (!startElement || !endElement) { return false };
+    if (!startElement || !endElement) {
+        new Error('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
+        _consoleLog('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
+        return false;
+    };
     let startContainer, endContainer;
     if (startChildNodeIndex) {
-        startContainer = startElement.childNodes[startChildNodeIndex];
+        const startChild = startElement.childNodes[startChildNodeIndex];
+        if (startChild.nodeType === Node.TEXT_NODE) {
+            startContainer = startChild;
+        } else {
+            startContainer = _firstTextNodeChild(startChild);
+        };
     } else {
         startContainer = _firstTextNodeChild(startElement);
     };
     if (endChildNodeIndex) {
-        endContainer = startElement.childNodes[endChildNodeIndex];
+        const endChild = endElement.childNodes[endChildNodeIndex];
+        if (endChild.nodeType === Node.TEXT_NODE) {
+            endContainer = endChild;
+        } else {
+            endContainer = _firstTextNodeChild(endChild);
+        };
     } else {
         endContainer = _firstTextNodeChild(endElement);
     };
-    if (!startContainer || !endContainer) { return false };
+    if (!startContainer || !endContainer) {
+        new Error('Could not identify startContainer(' + startContainer + ') or endContainer(' + endContainer + ')');
+        _consoleLog('Could not identify startContainer(' + startContainer + ') or endContainer(' + endContainer + ')');
+        return false;
+    };
     const range = document.createRange();
     range.setStart(startContainer, startOffset);
     range.setEnd(endContainer, endOffset);
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+    //_consoleLog(_rangeString(range, "setRange to: "));
     _backupSelection();
     return true;
 };

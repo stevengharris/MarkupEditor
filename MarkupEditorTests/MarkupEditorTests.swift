@@ -10,6 +10,7 @@ import XCTest
 import MarkupEditor
 
 struct HtmlTest {
+    var description: String? = nil
     var startHtml: String
     var endHtml: String
     var startId: String
@@ -53,6 +54,10 @@ struct HtmlTest {
         let formattedWithId = rawString.formattedHtml(adding: format, startingAt: startOffset, endingAt: endOffset, withId: lcTag)
         let styledAndFormatted = formattedWithId.styledHtml(adding: style)
         return HtmlTest(startHtml: styledAndFormatted, endHtml: styledOnly, startId: lcTag, startOffset: 0, endId: lcTag, endOffset: endOffset - startOffset)
+    }
+    
+    func printDescription() {
+        if let description = description { print(" * Test: \(description)") }
     }
     
 }
@@ -364,8 +369,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Replace p with h1
+            (
                 HtmlTest(
+                    description: "Replace p with h1",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<h1><b id=\"b\"><i id=\"i\">Hello </i>world</b></h1>",
                     startId: "i",
@@ -381,8 +387,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Replace h2 with h6
+            (
                 HtmlTest(
+                    description: "Replace h2 with h6",
                     startHtml: "<h2 id=\"h2\">Hello world</h2>",
                     endHtml: "<h6>Hello world</h6>",
                     startId: "h2",
@@ -398,8 +405,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Replace h3 with p
+            (
                 HtmlTest(
+                    description: "Replace h3 with p",
                     startHtml: "<h3 id=\"h3\">Hello world</h3>",
                     endHtml: "<p>Hello world</p>",
                     startId: "h3",
@@ -417,6 +425,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Setting and replacing styles")
@@ -443,8 +452,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Replace p with h1
+            (
                 HtmlTest(
+                    description: "Replace p with h1",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     startId: "i",
@@ -462,8 +472,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Replace h2 with h6
+            (
                 HtmlTest(
+                    description: "Replace h2 with h6",
                     startHtml: "<h2 id=\"h2\">Hello world</h2>",
                     endHtml: "<h2>Hello world</h2>",
                     startId: "h2",
@@ -481,8 +492,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Replace h3 with p
+            (
                 HtmlTest(
+                    description: "Replace h3 with p",
                     startHtml: "<h3 id=\"h3\">Hello world</h3>",
                     endHtml: "<h3>Hello world</h3>",
                     startId: "h3",
@@ -502,6 +514,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Undoing the setting and replacing of styles")
@@ -529,8 +542,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // "He|llo " is italic and bold, "world" is bold; unformat italic
+            (
                 HtmlTest(
+                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat italic",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<p><b id=\"b\">Hello world</b></p>",
                     startId: "i",
@@ -542,8 +556,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     self.webView.italic() { handler() }
                 }
             ),
-            (   // "He|llo " is italic and bold, "world" is bold; unformat bold
+            (
                 HtmlTest(
+                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<p><i id=\"i\">Hello </i>world</p>",
                     startId: "i",
@@ -555,8 +570,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     self.webView.bold() { handler() }
                 }
             ),
-            (   // "world" is italic, select "|Hello <i>world</i>|" and format bold
+            (
                 HtmlTest(
+                    description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
                     startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
                     endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
                     startId: "p",
@@ -568,8 +584,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     self.webView.bold() { handler() }
                 }
             ),
-            (   // "Hello " is italic and bold, "wo|rld" is bold; unformat bold
+            (
                 HtmlTest(
+                    description: "\"Hello \" is italic and bold, \"wo|rld\" is bold; unformat bold",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<p><i id=\"i\">Hello </i>world</p>",
                     startId: "b",
@@ -581,8 +598,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     self.webView.bold() { handler() }
                 }
             ),
-            (   // "He|llo " is italic and bold, "world" is bold; unformat bold
+            (
                 HtmlTest(
+                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<p><i id=\"i\">Hello </i>world</p>",
                     startId: "i",
@@ -596,6 +614,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
         ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Unformatting nested tags")
@@ -622,8 +641,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Increase quote level, selection in text element
+            (
                 HtmlTest(
+                    description: "Increase quote level, selection in text element",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<blockquote><p id=\"p\">Hello <b id=\"b\">world</b></p></blockquote>",
                     startId: "p",
@@ -639,8 +659,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Increase quote level, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Increase quote level, selection in a non-text element",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -656,8 +677,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 1 to 0, selection in a non-text element, no styling
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 1 to 0, selection in a non-text element, no styling",
                     startHtml: "<blockquote><b id=\"b\"><i id=\"i\">Hello </i>world</b></blockquote>",
                     endHtml: "<b id=\"b\"><i id=\"i\">Hello </i>world</b>",
                     startId: "i",
@@ -673,8 +695,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 1 to 0, selection in a non-text element, with styling
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 1 to 0, selection in a non-text element, with styling",
                     startHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     startId: "i",
@@ -690,8 +713,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 2 to 1, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 2 to 1, selection in a non-text element",
                     startHtml: "<blockquote><blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote></blockquote>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -707,8 +731,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
                     startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
                     endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
@@ -726,6 +751,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
@@ -752,8 +778,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Increase quote level, selection in text element
+            (
                 HtmlTest(
+                    description: "Increase quote level, selection in text element",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<blockquote><p id=\"p\">Hello <b id=\"b\">world</b></p></blockquote>",
                     startId: "p",
@@ -769,8 +796,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Increase quote level, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Increase quote level, selection in a non-text element",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -786,8 +814,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 1 to 0, selection in a non-text element, no styling
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 1 to 0, selection in a non-text element, no styling",
                     startHtml: "<blockquote><b id=\"b\"><i id=\"i\">Hello </i>world</b></blockquote>",
                     endHtml: "<b id=\"b\"><i id=\"i\">Hello </i>world</b>",
                     startId: "i",
@@ -803,8 +832,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 1 to 0, selection in a non-text element, with styling
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 1 to 0, selection in a non-text element, with styling",
                     startHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     startId: "i",
@@ -820,8 +850,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Decrease quote level from 2 to 1, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Decrease quote level from 2 to 1, selection in a non-text element",
                     startHtml: "<blockquote><blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote></blockquote>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -837,8 +868,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element
+            (
                 HtmlTest(
+                    description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
                     startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
                     endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
@@ -856,6 +888,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
@@ -887,8 +920,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Make a paragraph into an ordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an ordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     startId: "p",
@@ -904,8 +938,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Make a paragraph into an unordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an unordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
                     startId: "p",
@@ -921,8 +956,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a single-element unordered list, thereby removing the list, too
+            (
                 HtmlTest(
+                    description: "Remove a list item from a single-element unordered list, thereby removing the list, too",
                     startHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
                     endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     startId: "p",
@@ -938,8 +974,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a single-element ordered list, thereby removing the list, too
+            (
                 HtmlTest(
+                    description: "Remove a list item from a single-element ordered list, thereby removing the list, too",
                     startHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     startId: "p",
@@ -955,8 +992,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a multi-element unordered list, leaving the list in place
+            (
                 HtmlTest(
+                    description: "Remove a list item from a multi-element unordered list, leaving the list in place",
                     startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
                     endHtml: "<ul><p>Hello <b id=\"b\">world1</b></p><li><p>Hello <b>world2</b></p></li></ul>",
                     startId: "b",
@@ -972,8 +1010,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Change one of the list items in a multi-element unordered list to an ordered list item
+            (
                 HtmlTest(
+                    description: "Change one of the list items in a multi-element unordered list to an ordered list item",
                     startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
                     endHtml: "<ol><li><p>Hello <b id=\"b\">world1</b></p></li></ol><ul><li><p>Hello <b>world2</b></p></li></ul>",
                     startId: "b",
@@ -991,6 +1030,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
@@ -1017,8 +1057,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Make a paragraph into an ordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an ordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     startId: "p",
@@ -1034,8 +1075,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Make a paragraph into an unordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an unordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
                     startId: "p",
@@ -1051,8 +1093,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a single-element unordered list, thereby removing the list, too
+            (
                 HtmlTest(
+                    description: "Remove a list item from a single-element unordered list, thereby removing the list, too",
                     startHtml: "<ul><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ul>",
                     endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     startId: "p",
@@ -1068,8 +1111,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a single-element ordered list, thereby removing the list, too
+            (
                 HtmlTest(
+                    description: "Remove a list item from a single-element ordered list, thereby removing the list, too",
                     startHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     endHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     startId: "p",
@@ -1085,8 +1129,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Remove a list item from a multi-element unordered list, leaving the list in place
+            (
                 HtmlTest(
+                    description: "Remove a list item from a multi-element unordered list, leaving the list in place",
                     startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
                     endHtml: "<ul><p>Hello <b id=\"b\">world1</b></p><li><p>Hello <b>world2</b></p></li></ul>",
                     startId: "b",
@@ -1102,8 +1147,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Change one of the list items in a multi-element unordered list to an ordered list item
+            (
                 HtmlTest(
+                    description: "Change one of the list items in a multi-element unordered list to an ordered list item",
                     startHtml: "<ul><li><p>Hello <b id=\"b\">world1</b></p></li><li><p>Hello <b>world2</b></p></li></ul>",
                     endHtml: "<ol><li><p>Hello <b id=\"b\">world1</b></p></li></ol><ul><li><p>Hello <b>world2</b></p></li></ul>",
                     startId: "b",
@@ -1121,6 +1167,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
@@ -1154,8 +1201,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         //
         // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Enter at end of h5
+            (
                 HtmlTest(
+                    description: "Enter at end of h5",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5></li><li><h5><br></h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "h5",
@@ -1173,8 +1221,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter at beginning of h5
+            (
                 HtmlTest(
+                    description: "Enter at beginning of h5",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li><h5><br></h5></li><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "h5",
@@ -1190,10 +1239,11 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter in "Bul|leted item 1."
+            (
                 HtmlTest(
+                    description: "Enter in \"Bul|leted item 1.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted&nbsp;<i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "h5",
                     startOffset: 3,
                     endId: "h5",
@@ -1207,10 +1257,11 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter in "Bulleted item 1|."
+            (
                 HtmlTest(
+                    description: "Enter in \"Bulleted item 1|.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i>&nbsp;1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "h5",
                     startOffset: 2,
                     endId: "h5",
@@ -1226,8 +1277,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter in italicized "item" in "Bulleted it|em 1."
+            (
                 HtmlTest(
+                    description: "Enter in italicized \"item\" in \"Bulleted it|em 1.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">it</i></h5></li><li><h5><i>em</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "i",
@@ -1243,8 +1295,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter at end of unstyled "Numbered item 1."
+            (
                 HtmlTest(
+                    description: "Enter at end of unstyled \"Numbered item 1.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li><p><br></p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "ol1",
@@ -1260,8 +1313,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Enter at beginning of unstyled "Numbered item 1."
+            (
                 HtmlTest(
+                    description: "Enter at beginning of unstyled \"Numbered item 1.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li><p><br></p></li><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "ol1",
@@ -1277,8 +1331,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            (   // Split unstyled "Number|ed item 1."
+            (
                 HtmlTest(
+                    description: "Split unstyled \"Number|ed item 1.\"",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Number</li><li><p>ed item 1.</p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     startId: "ol1",
@@ -1296,9 +1351,10 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
             ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Enter being pressed in a list with various selections")
+            let expectation = XCTestExpectation(description: "Enter being pressed in a list with various collapsed selections")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
@@ -1324,17 +1380,17 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         //
         // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
         let htmlTests: [HtmlTest] = [
-            // Enter in "Bul|leted item 1."
             HtmlTest(
+                description: "Enter in \"Bul|leted item 1.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted&nbsp;<i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "h5",
                 startOffset: 3,
                 endId: "h5",
                 endOffset: 3
             ),
-            // Enter at end of h5
             HtmlTest(
+                description: "Enter at end of h5",
                 startHtml: "<p>Hello</p><ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<p>Hello</p><ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5></li><li><h5><br></h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "h5",
@@ -1344,8 +1400,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 startChildNodeIndex: 2,
                 endChildNodeIndex: 2
             ),
-            // Enter at beginning of h5
             HtmlTest(
+                description: "Enter at beginning of h5",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li><h5><br></h5></li><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "h5",
@@ -1353,10 +1409,10 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 endId: "h5",
                 endOffset: 0
             ),
-            // Enter in "Bulleted item 1|."
             HtmlTest(
+                description: "Enter in \"Bulleted item 1|.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i>&nbsp;1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "h5",
                 startOffset: 2,
                 endId: "h5",
@@ -1364,8 +1420,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 startChildNodeIndex: 2,
                 endChildNodeIndex: 2
             ),
-            // Enter in italicized "item" in "Bulleted it|em 1."
             HtmlTest(
+                description: "Enter in italicized \"item\" in \"Bulleted it|em 1.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">it</i></h5></li><li><h5><i>em</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "i",
@@ -1373,8 +1429,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 endId: "i",
                 endOffset: 2
             ),
-            // Enter at end of unstyled "Numbered item 1."
             HtmlTest(
+                description: "Enter at end of unstyled \"Numbered item 1.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li><p><br></p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "ol1",
@@ -1382,8 +1438,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 endId: "ol1",
                 endOffset: 16
             ),
-            // Enter at beginning of unstyled "Numbered item 1."
             HtmlTest(
+                description: "Enter at beginning of unstyled \"Numbered item 1.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li><p><br></p></li><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "ol1",
@@ -1391,8 +1447,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 endId: "ol1",
                 endOffset: 0
             ),
-            // Split unstyled "Number|ed item 1."
             HtmlTest(
+                description: "Split unstyled \"Number|ed item 1.\"",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Number</li><li><p>ed item 1.</p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 startId: "ol1",
@@ -1402,9 +1458,10 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             ),
         ]
         for test in htmlTests {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Undo enter being pressed in a list with various selections")
+            let expectation = XCTestExpectation(description: "Undo enter being pressed in a list with various collapsed selections")
             // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _doListEnter.
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
@@ -1434,6 +1491,261 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                 }
             }
             wait(for: [expectation], timeout: 3)
+        }
+    }
+
+    func testListEnterRange() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        //
+        // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Word in single formatted list item",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P&nbsp;</p></li><li><p>item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",     // Select "Numbered "
+                    startOffset: 2,
+                    endId: "ol1",
+                    endOffset: 11,
+                    startChildNodeIndex: 0,
+                    endChildNodeIndex: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Word in single unformatted list item",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered&nbsp;</li><li><p>6.</p></li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol6",     // Select "item "
+                    startOffset: 9,
+                    endId: "ol6",
+                    endOffset: 14
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Part of a formatted item in a styled list item",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">i</i></h5></li><li><h5><i>m</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "i",     // Select "<i id=\"i\">i|te|m</i>" which is itself inside of an <h5>
+                    startOffset: 1,
+                    endId: "i",
+                    endOffset: 3
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "The entire formatted item in a styled list item (note the zero width chars in the result)",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">\u{200B}</i></h5></li><li><h5><i>\u{200B}</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "i",     // Select the entire "<i id=\"i\">item</i>" which is itself inside of an <h5>
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 4
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Begin selection in one formatted list item, end in another",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P&nbsp;</p></li><li><p>Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",     // Select "P |Numbered item 1."
+                    startOffset: 2,
+                    endId: "ol3",       // Select "P |Numbered item 3."
+                    endOffset: 2,
+                    startChildNodeIndex: 0,
+                    endChildNodeIndex: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            /*
+            (
+                HtmlTest(
+                    description: "Enter at beginning of h5",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5><br></h5></li><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 0,
+                    endId: "h5",
+                    endOffset: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Enter in \"Bul|leted item 1.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bul</h5></li><li><h5>leted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 3,
+                    endId: "h5",
+                    endOffset: 3
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Enter in \"Bulleted item 1|.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1</h5></li><li><h5>.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "h5",
+                    endOffset: 2,
+                    startChildNodeIndex: 2,
+                    endChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Enter in italicized \"item\" in \"Bulleted it|em 1.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">it</i></h5></li><li><h5><i>em</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Enter at end of unstyled \"Numbered item 1.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li><p><br></p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 16,
+                    endId: "ol1",
+                    endOffset: 16
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Enter at beginning of unstyled \"Numbered item 1.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li><p><br></p></li><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 0,
+                    endId: "ol1",
+                    endOffset: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Split unstyled \"Number|ed item 1.\"",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Number</li><li><p>ed item 1.</p></li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",
+                    startOffset: 6,
+                    endId: "ol1",
+                    endOffset: 6
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            */
+            ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Enter being pressed in a list with various range selections")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Execute the action to press Enter at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
         }
     }
     
@@ -1471,8 +1783,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
          Comment 38
          */
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Make a paragraph into an ordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an ordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     startId: "p",
@@ -1514,8 +1827,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     func testUndoInsertEmpty() throws {
         /* See the notes in testInsertEmpty */
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (   // Make a paragraph into an ordered list
+            (
                 HtmlTest(
+                    description: "Make a paragraph into an ordered list",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
                     startId: "p",
@@ -1533,6 +1847,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             )
         ]
         for (test, action) in htmlTestAndActions {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
