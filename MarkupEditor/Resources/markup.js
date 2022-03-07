@@ -1429,6 +1429,12 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         selNode = (sel) ? sel.anchorNode : null;
         // At this point, sel is collapsed and the document contents are the same as if we had
         // hit Backspace (but not Enter yet) on the original non-collapsed selection.
+        //
+        // DEBUGGING TIP:
+        // By executing an 'input' callback and returning true at this point, we can debug the
+        // result of various _patch* calls and ensure the result is the same as hitting Backspace.
+        //_callback('input');
+        //return true;
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
@@ -1592,6 +1598,26 @@ const _patchWhiteSpace = function(str, end='BOTH') {
 };
 
 /**
+ * Return true if element and all of its children are empty.
+ *
+ * For example, <li><p></p></li> is empty, as is <li></li>, while
+ * <li><p> <p></li> and <li> <li> will have text elements and are
+ * therefore not empty.
+ */
+const _isEmpty = function(element) {
+    const childNodes = element.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        const childNode = childNodes[i];
+        if ((childNode.nodeType === Node.ELEMENT_NODE) && !_isEmpty(childNode)) {
+            return false;
+        } else if ((childNode.nodeType === Node.TEXT_NODE) && (childNode.textContent.length > 0)) {
+            return false;
+        };
+    };
+    return true;
+};
+
+/**
  * The deletedFragment spanned list items. Leave to document looking like
  * it would if we had pressed Backspace. This means the items at the focusNode
  * get moved to be in the same list item as the anchorNode. By default, the
@@ -1603,11 +1629,30 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     // and what was deleted is captured as deletedFragment. Unfortunately, when the selection extends
     // beyond the list item that the selection starts in, this does not result in the equivalent of
     // pressing Delete on the selection, which is what we want. So, we need to patch things up a bit.
-    _consoleLog("* _patchMultiListItemEnter");
-    _consoleLog(_fragmentString(deletedFragment, "deletedFragment: "))
-    const sel = document.getSelection();
-    const newSelRange = sel.getRangeAt(0);
-    _consoleLog(_rangeString(newSelRange, "newSelRange"))
+    //_consoleLog("* _patchMultiListItemEnter");
+    //_consoleLog(_fragmentString(deletedFragment, "deletedFragment: "))
+    let sel = document.getSelection();
+    let newSelRange = sel.getRangeAt(0);
+    const newEndContainer = newSelRange.endContainer;
+    const newEndOffset = newSelRange.endOffset;
+    let listItem = _findFirstParentElementInNodeNames(newSelRange.startContainer, ['LI']);
+    const endListItem = _findFirstParentElementInNodeNames(newSelRange.endContainer, ['LI']);
+    let newListItem;
+    while (listItem && _isEmpty(listItem) && (listItem !== endListItem)) {
+        newListItem = listItem.nextElementSibling ?? endListItem;
+        //_consoleLog("Removing " + listItem.outerHTML);
+        listItem.parentNode.removeChild(listItem);
+        listItem = newListItem;
+    }
+    if (newListItem) {
+        newSelRange = document.createRange();
+        const firstChild = newListItem.firstChild;
+        const newStartContainer = firstChild ?? newListItem;
+        newSelRange.setStart(newStartContainer, 0);
+        newSelRange.setEnd(newEndContainer, newEndOffset);
+    };
+    //_consoleLog(_rangeString(newSelRange, "after newSelRange"))
+    //_consoleLog("after newSelRange.startContainer.parentNode.outerHTML: " +  newSelRange.startContainer.parentNode.outerHTML)
     // We want to move the newSelRange endContainer to be a child of the startContainer's parentNode
     // so that it becomes part of the same list item the startContainer is in.
     const mergedChild = newSelRange.endContainer;
@@ -1616,13 +1661,13 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     newSelRange.startContainer.parentNode.normalize();
     // If after merging the mergedChild, its parentNode is empty, then remove the mergedChild parentNode
     if (mergedChildParent.childNodes.length === 0) {
-        _consoleLog(" removing " + mergedChildParent.outerHTML)
+        //_consoleLog(" removing " + mergedChildParent.outerHTML)
         mergedChildParent.parentNode.removeChild(mergedChildParent);
     }
     // After we do that, if the existingList item where the selection ends is empty, then we need to remove it
     // so that we don't end up with an empty list node.
     const existingListItem = _findFirstParentElementInNodeNames(newSelRange.endContainer, ['LI']);
-    _consoleLog("existingListItem.outerHTML: " + existingListItem.outerHTML)
+    //_consoleLog("existingListItem.outerHTML: " + existingListItem.outerHTML)
     if (existingListItem.childNodes.length === 0) {
         newSelRange.endContainer.parentNode.removeChild(newSelRange.endContainer);
     }
@@ -1631,9 +1676,9 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     patchRange.setEnd(newSelRange.startContainer, newSelRange.startOffset)
     sel.removeAllRanges();
     sel.addRange(patchRange);
-    _consoleLog(_rangeString(patchRange, "patchRange"))
-    _consoleLog(_rangeString(document.getSelection().getRangeAt(0), "from getSelection()"))
-    _consoleLog("* Done _patchMultiListItemEnter")
+    //_consoleLog(_rangeString(patchRange, "patchRange"))
+    //_consoleLog(_rangeString(document.getSelection().getRangeAt(0), "from getSelection()"))
+    //_consoleLog("* Done _patchMultiListItemEnter")
 };
 
 /**
