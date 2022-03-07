@@ -258,11 +258,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         var rangeCall = "MU.setRange('\(startId)', '\(startOffset)', '\(endId)', '\(endOffset)'"
         if let startChildNodeIndex = startChildNodeIndex {
             rangeCall += ", '\(startChildNodeIndex)'"
-            if let endChildNodeIndex = endChildNodeIndex {
-                rangeCall += ", '\(endChildNodeIndex)'"
-            }
-        } else if let endChildNodeIndex = endChildNodeIndex {
-            rangeCall += ", , '\(endChildNodeIndex)'"
+        } else {
+            rangeCall += ", null"
+        }
+        if let endChildNodeIndex = endChildNodeIndex {
+            rangeCall += ", '\(endChildNodeIndex)'"
+        } else {
+            rangeCall += ", null"
         }
         rangeCall += ")"
         evaluateJavaScript(rangeCall) { result, error in
