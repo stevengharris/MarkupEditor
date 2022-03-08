@@ -1442,7 +1442,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         _consoleLog("Error - not in a list or a listItem")
         return null;
     };
-    const undoerRange = sel.getRangeAt(0).cloneRange();
+    let undoerRange = sel.getRangeAt(0).cloneRange();
     const startOffset = undoerRange.startOffset;
     const endOffset = undoerRange.endOffset;
     const outerHTML = existingList.outerHTML;
@@ -1505,6 +1505,13 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
             outerElement = selNode;
             innerElement.textContent = _patchWhiteSpace(innerElement.textContent);
             outerElement.textContent = _patchWhiteSpace(outerElement.textContent);
+            // After patching whitespace, the undoerRange itself has to be patched
+            const selRange = document.createRange();
+            selRange.setStart(outerElement, outerElement.textContent.length);
+            selRange.setEnd(outerElement, outerElement.textContent.length);
+            sel.removeAllRanges();
+            sel.addRange(selRange);
+            undoerRange = selRange;
         };
         if (redoing) {
             const redoRange = document.createRange();
@@ -1873,7 +1880,7 @@ const _undoListEnter = function(undoerData) {
  * to re-insert the non-collapsed selection that we extracted and placed in fragment.
  */
 const _insertInList = function(fragment) {
-    //_consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
+    _consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
     const sel = document.getSelection();
     const range = sel.getRangeAt(0).cloneRange();
     const selNode = (sel) ? sel.focusNode : null;
@@ -1885,6 +1892,8 @@ const _insertInList = function(fragment) {
     const simpleFragment = fragment.childElementCount === 0;
     const singleListItemFragment = fragment.firstElementChild && (fragment.firstElementChild.nodeName !== 'LI');
     if (simpleFragment || singleListItemFragment) {
+        _consoleLog("* _insertInList (simple)")
+        _consoleLog(_rangeString(range, "range for insert"))
         const lastFragChild = fragment.lastChild;
         range.insertNode(fragment); // fragment becomes selNode's nextSibling
         const textRange = document.createRange();
@@ -1897,7 +1906,7 @@ const _insertInList = function(fragment) {
         //textRange.setEnd(selNode.nextSibling, selNode.nextSibling.textContent.length);
         sel.removeAllRanges();
         sel.addRange(textRange);
-        //_consoleLog("* Done _insertInList (simple)")
+        _consoleLog("* Done _insertInList (simple)")
         return;
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
@@ -1960,7 +1969,7 @@ const _insertInList = function(fragment) {
         sel.removeAllRanges();
         sel.addRange(newRange);
     };
-    //_consoleLog("* Done _insertInList")
+    _consoleLog("* Done _insertInList")
 };
 
 /**
