@@ -245,7 +245,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK: Testing support
     
     public func setTestHtml(value: String, handler: (() -> Void)? = nil) {
-        evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
+        }
     }
     
     /// Set the range for testing.
