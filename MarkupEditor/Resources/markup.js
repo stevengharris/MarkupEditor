@@ -1483,36 +1483,22 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         //_consoleLog("- Splitting selNode")
         // We are somewhere in a list item
         let sib, nextSib, innerElement, outerElement;
-        // Make sure innerElement is the next sibling, either by splitting the
-        // textNode or by grabbing the nextSibling when selNode is empty, or
-        // by creating a br node and making that the next sibling.
-        if (selNode.textContent.length === 0) {
-            outerElement = selNode.previousSibling;
-            innerElement = selNode.nextSibling;
-            if (!outerElement) {
-                outerElement = document.createElement('br');
-                selNode.replaceWith(outerElement);
-            }
-            if (!innerElement) {
-                innerElement = outerElement.parentNode.nextSibling;
-                if (!innerElement) {
-                    innerElement = document.createElement('br');
-                    outerElement.parentNode.appendChild(innerElement);
-                };
-            };
-        } else {
-            innerElement = selNode.splitText(startOffset);
-            outerElement = selNode;
-            innerElement.textContent = _patchWhiteSpace(innerElement.textContent);
-            outerElement.textContent = _patchWhiteSpace(outerElement.textContent);
-            // After patching whitespace, the undoerRange itself has to be patched
-            const selRange = document.createRange();
-            selRange.setStart(outerElement, outerElement.textContent.length);
-            selRange.setEnd(outerElement, outerElement.textContent.length);
-            sel.removeAllRanges();
-            sel.addRange(selRange);
-            undoerRange = selRange;
-        };
+        // innerElement is always the next sibling of outerElement
+        innerElement = selNode.splitText(startOffset);
+        outerElement = selNode;
+        let innerTextContent = _patchWhiteSpace(innerElement.textContent);
+        let outerTextContent = _patchWhiteSpace(outerElement.textContent);
+        if (innerTextContent.length === 0) { innerTextContent = '\u200B' }
+        if (outerTextContent.length === 0) { outerTextContent = '\u200B' }
+        innerElement.textContent = innerTextContent;
+        outerElement.textContent = outerTextContent;
+        // After patching whitespace, the undoerRange itself has to be patched
+        const selRange = document.createRange();
+        selRange.setStart(outerElement, outerElement.textContent.length);
+        selRange.setEnd(outerElement, outerElement.textContent.length);
+        sel.removeAllRanges();
+        sel.addRange(selRange);
+        undoerRange = selRange;
         if (redoing) {
             const redoRange = document.createRange();
             redoRange.setStart(outerElement, outerElement.textContent.length);
@@ -1635,7 +1621,7 @@ const _isEmpty = function(element) {
 };
 
 /**
- * The deletedFragment spanned list items. Leave to document looking like
+ * The deletedFragment spanned list items. Leave the document looking like
  * it would if we had pressed Backspace. This means the items at the focusNode
  * get moved to be in the same list item as the anchorNode. By default, the
  * contentEditable after extractContents leaves the focusNode in a non-list-element
@@ -1672,10 +1658,20 @@ const _patchMultiListItemEnter = function(deletedFragment) {
     //_consoleLog("after newSelRange.startContainer.parentNode.outerHTML: " +  newSelRange.startContainer.parentNode.outerHTML)
     // We want to move the newSelRange endContainer to be a child of the startContainer's parentNode
     // so that it becomes part of the same list item the startContainer is in.
-    const mergedChild = newSelRange.endContainer;
+    const startContainer = newSelRange.startContainer;
+    let startContainerParent = startContainer.parentNode;
+    const styleParent = _findFirstParentElementInNodeNames(startContainer, _styleTags);
+    if (styleParent) { startContainerParent = styleParent };
+    const formatElement = _outermostFormatElement(startContainer);
+    if (formatElement) { startContainerParent = formatElement.parentNode };
+    let mergedChild = newSelRange.endContainer;
     const mergedChildParent = mergedChild.parentNode;
-    newSelRange.startContainer.parentNode.appendChild(mergedChild);
-    newSelRange.startContainer.parentNode.normalize();
+    while (mergedChild && (mergedChild !== startContainer)) {
+        let nextSib = mergedChild.nextSibling;
+        startContainerParent.insertBefore(mergedChild, startContainer.nextSibling);
+        mergedChild = nextSib;
+    }
+    startContainerParent.normalize();
     // If after merging the mergedChild, its parentNode is empty, then remove the mergedChild parentNode
     if (mergedChildParent.childNodes.length === 0) {
         //_consoleLog(" removing " + mergedChildParent.outerHTML)
@@ -1890,7 +1886,7 @@ const _undoListEnter = function(undoerData) {
  * to re-insert the non-collapsed selection that we extracted and placed in fragment.
  */
 const _insertInList = function(fragment) {
-    _consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
+    //_consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
     const sel = document.getSelection();
     const range = sel.getRangeAt(0).cloneRange();
     const anchorNode = (sel) ? sel.anchorNode : null;   // Selection is collapsed
@@ -1902,8 +1898,7 @@ const _insertInList = function(fragment) {
     const simpleFragment = fragment.childElementCount === 0;
     const singleListItemFragment = (fragment.childElementCount === 1) && (fragment.firstElementChild.nodeName !== 'LI');
     if (simpleFragment || singleListItemFragment) {
-        _consoleLog("* _insertInList (simple)")
-        _consoleLog(_rangeString(range, "range for insert"))
+        //_consoleLog("* _insertInList (simple)")
         const lastFragChild = fragment.lastChild;
         range.insertNode(fragment); // fragment becomes anchorNode's nextSibling
         _stripZeroWidthChars(anchorNode.parentNode);
@@ -1916,7 +1911,7 @@ const _insertInList = function(fragment) {
         }
         sel.removeAllRanges();
         sel.addRange(textRange);
-        _consoleLog("* Done _insertInList (simple)")
+        //_consoleLog("* Done _insertInList (simple)")
         return;
     }
     const existingList = _findFirstParentElementInNodeNames(anchorNode, ['UL', 'OL'])
@@ -1940,97 +1935,101 @@ const _insertInList = function(fragment) {
         newRange.setEnd(existingListItem, 0);
         sel.removeAllRanges();
         sel.addRange(newRange);
-    } else if (range.startOffset === anchorNode.textContent.length) {
-        _consoleLog("******* TODO: At the end of a text node")
     } else {
-        _consoleLog("In the middle of a text node")
+        //_consoleLog("In the middle of a text node")
         // Selection starts within a text node that needs to be split
         // and then merged with the fragment. After splitText,
         // anchorNode contains the textNode before the selection.
-        const trailingText = anchorNode.splitText(range.startOffset);
-        // Now insert all of the firstElFrag's childNodes before
+        let trailingText = anchorNode.splitText(range.startOffset);
+        // We have a case where the selection is at the end of a textNode, so trailingText
+        // ends up with zero length. This means we have to set the target for insertBefore
+        // not to trailingText but to its parentNode's nextSibling.
+        if (trailingText.length === 0) {
+            trailingText = trailingText.parentNode.nextSibling;
+        }
+        // FIRST, insert all of the firstElFrag's childNodes before
         // the trailingText. So, for example, if the firstElFrag is
         // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
         // gets put just after anchorNode (i.e., before trailingText).
         const anchorNodeParent = anchorNode.parentNode;
         const anchorNodeParentName = anchorNodeParent.nodeName;
         let firstElChild = firstFragEl.firstChild;
-        _consoleLog("anchorNodeParent.outerHTML: " + anchorNodeParent.outerHTML)
         while (firstElChild) {
-            _consoleLog(" inserting " + _textString(firstElChild))
             if ((firstElChild.nodeType === Node.ELEMENT_NODE) && (firstElChild.nodeName === anchorNodeParent.nodeName)) {
                 let nextChild = firstElChild.firstChild;
                 while (nextChild) {
-                    anchorNodeParent.insertBefore(nextChild, trailingText)
+                    anchorNode.parentNode.appendChild(nextChild)
                     nextChild = firstElChild.firstChild;
                 }
                 firstElChild.parentNode.removeChild(firstElChild);
             } else {
-                anchorNodeParent.insertBefore(firstElChild, trailingText)
+                trailingText.parentNode.insertBefore(firstElChild, trailingText)
             }
             firstElChild = firstFragEl.firstChild;
         }
         firstFragEl.parentNode.removeChild(firstFragEl);
-        _consoleLog("anchorNodeParent.outerHTML: " + anchorNodeParent.outerHTML);
-        // Now all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
+        // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
         // The siblings start with what is now fragment.firstChild.
         let nextFragSib = fragment.firstChild;
         let nextSib = trailingText.parentNode.nextSibling;
-        _consoleLog("existingListItem.outerHTML: " + existingListItem.outerHTML)
         const nextListItem = existingListItem.nextSibling;
         while (nextFragSib) {
-            _consoleLog(" nextFragSib.outerHTML: " + nextFragSib.outerHTML);
-            _consoleLog("  anchorNodeParent.nodeName: " + anchorNodeParent.nodeName);
-            _consoleLog("  nextFragSib.nodeName: " + nextFragSib.nodeName)
-            _consoleLog("  nextListItem: " + nextListItem)
-            if (nextListItem) { _consoleLog("   nextListItem.outerHTML: " + nextListItem.outerHTML) }
             if (nextFragSib.nodeName === 'LI') {
                 // This is the case when selection spans list items within a single list type
                 existingListItem.parentNode.insertBefore(nextFragSib, nextListItem)
-            } else {
+            } else if ((nextFragSib.nodeName === 'OL') || (nextFragSib.nodeName === 'UL')) {
                 // The selection crosses into another list. So, we were inserting list
-                // items, and now this list item contains another list.
-                //TODO: Need special logic for this case????
-                existingListItem.parentNode.insertBefore(nextFragSib, nextListItem)
-                //anchorNodeParent.insertBefore(nextFragSib, nextSib)
+                // items, and now this list item contains another list. Rather than
+                // inserting it before the nextListItem, a sublist needs to be inside
+                // of the current list item.
+                // Handle styling in list item or no styling
+                const styleElement = _findFirstParentElementInNodeNames(anchorNode, _styleTags)
+                let insertBeforeNode;
+                if (styleElement) {
+                    insertBeforeNode = styleElement.nextSibling;
+                } else {
+                    insertBeforeNode = anchorNode.nextSibling
+                }
+                existingListItem.insertBefore(nextFragSib, insertBeforeNode);
+            } else {
+                _consoleLog("Error: unexpected nextFragSib")
             }
             nextFragSib = fragment.firstChild;
         };
-        // Now put the trailingText itself at the end of the lastFragEl.
+        // THIRD, put the trailingText itself at the end of the lastFragEl along
+        // with all of its parentNode's nextSiblings.
         let lastChildEl = lastFragEl.lastChild;
-        _consoleLog("lastFragEl.outerHTML: " + lastFragEl.outerHTML)
-        _consoleLog("trailingtext: " + trailingText + ", trailingText.textContent: " + trailingText.textContent)
-        _consoleLog("lastChildEl: " + lastChildEl)
+        let appendTrailingTarget;
         if (lastChildEl.nodeType === Node.TEXT_NODE) {
-            lastChildEl.parentNode.appendChild(trailingText);
-        } else {
-            lastChildEl.appendChild(trailingText);
+            appendTrailingTarget = lastChildEl.parentNode;
+        } else if (lastChildEl.nodeType === Node.ELEMENT_NODE) {
+            const lastChildChild = lastChildEl.lastChild;
+            if (lastChildChild.nodeType === Node.TEXT_NODE) {
+                appendTrailingTarget = lastChildChild.parentNode;
+            } else {
+                appendTrailingTarget = lastChildChild;
+            }
         }
-        // If we ended up with two lists of the same type as siblings, then merge them
-        _consoleLog("lastChildEl.parentNode.outerHTML: " + lastChildEl.parentNode.outerHTML)
+        // TODO: Maybe have to deal with siblings
+        appendTrailingTarget.appendChild(trailingText);
+        // FINALLY, if we ended up with two lists of the same type as siblings, then merge them
         const currentList = _findFirstParentElementInNodeNames(lastChildEl, ['OL', 'UL']);
-        _consoleLog("currentList: " + currentList)
-        _consoleLog("currentList.outerHTML: " + currentList.outerHTML)
         const nextList = currentList.nextSibling;
-        _consoleLog("nextList: " + nextList)
-        if (nextList) { _consoleLog("nextList.outerHTML: " + nextList.outerHTML) }
         if (nextList && (currentList.nodeName === nextList.nodeName)) {
-            _consoleLog("merging lists")
             let nextListChild = nextList.firstChild;
             while (nextListChild) {
                 currentList.appendChild(nextListChild);
                 nextListChild = nextList.firstChild;
             }
             nextList.parentNode.removeChild(nextList);
-        }
-        _consoleLog("anchorNode: " + _textString(anchorNode));
+        };
         const newRange = document.createRange();
         newRange.setStart(anchorNode, anchorNode.textContent.length);
         newRange.setEnd(trailingText, 0);
         sel.removeAllRanges();
         sel.addRange(newRange);
     };
-    _consoleLog("* Done _insertInList")
+    //_consoleLog("* Done _insertInList")
 };
 
 /**
@@ -2700,9 +2699,12 @@ const _cleanUpSpans = function() {
     const selNode = (sel) ? sel.focusNode : null;
     const startNode = (selNode) ? selNode.parentNode : MU.editor;
     if (startNode) {
-        const spansRemoved = _cleanUpSpansWithin(startNode);
-        if (spansRemoved > 0) {
-            _callback('input');
+        const styleParent = _findFirstParentElementInNodeNames(startNode, _styleTags)
+        if (styleParent) {
+            const spansRemoved = _cleanUpSpansWithin(styleParent);
+            if (spansRemoved > 0) {
+                _callback('input');
+            };
         };
     };
 };
