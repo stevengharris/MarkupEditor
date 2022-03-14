@@ -129,7 +129,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     func testFormats() throws {
         // Select a range in a P styled string, apply a format to it
         for format in FormatContext.AllCases {
-            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            var test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Format \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
                 self.webView.getHtml { contents in
@@ -142,6 +142,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                                 expectation.fulfill()
                             }
                         }
+                        test.description = "Set format to \(format.description)"
+                        test.printDescription()
                         switch format {
                         case .B:
                             self.webView.bold(handler: formatFollowUp)
@@ -170,7 +172,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     func testUndoFormats() throws {
         // Select a range in a P styled string, apply a format to it, and then undo
         for format in FormatContext.AllCases {
-            let test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            var test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Undo formatting of \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
                 self.webView.getHtml { contents in
@@ -188,6 +190,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                                 }
                             }
                         }
+                        test.description = "Undo set format to \(format.description)"
+                        test.printDescription()
                         switch format {
                         case .B:
                             self.webView.bold(handler: formatFollowUp)
@@ -216,7 +220,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
     func testUnformats() throws {
         // Given a range of formatted text, toggle the format off
         for format in FormatContext.AllCases {
-            let test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
+            var test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Format \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
                 self.webView.getHtml { contents in
@@ -229,6 +233,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                                 expectation.fulfill()
                             }
                         }
+                        test.description = "Unformat from \(format.description)"
+                        test.printDescription()
                         switch format {
                         case .B:
                             self.webView.bold(handler: formatFollowUp)
@@ -258,7 +264,7 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
         // Given a range of formatted text, toggle the format off, then undo
         for format in FormatContext.AllCases {
             let rawString = "This is a start."
-            let test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
+            var test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
             // The undo doesn't preserve the id that is injected by .forUnformatting, so construct startHTML
             // below for comparison post-undo.
             let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: nil)
@@ -280,6 +286,8 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
                                 }
                             }
                         }
+                        test.description = "Undo unformat from \(format.description)"
+                        test.printDescription()
                         switch format {
                         case .B:
                             self.webView.bold(handler: formatFollowUp)
@@ -312,7 +320,9 @@ class MarkupEditorTests: XCTestCase, MarkupDelegate {
             let rawString = "This is a start."
             let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: format.tag)
             let startHtml = formattedString.styledHtml(adding: .P)
-            let expectation = XCTestExpectation(description: "Select inside of format \(format.tag)")
+            let description = "Select inside of format \(format.tag)"
+            print(" * Test: \(description)")
+            let expectation = XCTestExpectation(description: description)
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
