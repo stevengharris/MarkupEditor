@@ -879,9 +879,8 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
  * Undo the paste operation after it was done via _pasteText.
  */
 const _undoPasteText = function(undoerData) {
-    // The pasted text data was placed before the range.startOffset in startContainer
-    // Make sure it's still there and if so, remove it, leaving the selection
-    // TODO: Handle non-collapsed ranges
+    // The pasted text data was placed before the undoerData.date.offset in startContainer.
+    // It should still be in the same place, but we double-check before undoing.
     const startContainer = undoerData.range.startContainer;
     const text = undoerData.data.text;
     const offset = undoerData.data.offset;
@@ -899,9 +898,30 @@ const _undoPasteText = function(undoerData) {
         const selection = document.getSelection();
         selection.removeAllRanges();
         selection.addRange(newRange);
+        // At this point, the selection is set properly if there is no deletedFragment.
+        // If there is a deletedFragment, we can insert it at the selection point,
+        // and since the deletedFragment was selected at paste time (i.e., it was what
+        // we overwrote with the text), we need to reselect it.
+        const deletedFragment = undoerData.data.deletedFragment;
+        if (deletedFragment) {
+            const startContainer = deletedFragment.firstChild;
+            const endContainer = deletedFragment.lastChild;
+            newRange.insertNode(deletedFragment);
+            const deletedRange = document.createRange();
+            deletedRange.setStart(startContainer, 0);
+            if (endContainer.nodeType === Node.TEXT_NODE) {
+                deletedRange.setEnd(endContainer, endContainer.textContent.length);
+            } else {
+                deletedRange.setEnd(endContainer, endContainer.childNodes.length);
+            };
+            selection.removeAllRanges();
+            selection.addRange(deletedRange);
+        };
         _backupSelection();
         _callback('input');
     } else {
+        // This should never happen, but if it does, we need to do something reasonable.
+        // TODO: Do something reasonable
         _consoleLog('undo pasteText mismatch: ' + pastedContent);
     };
 };

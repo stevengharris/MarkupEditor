@@ -554,7 +554,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         } else if pasteboard.contains(pasteboardTypes: ["public.html"]) {
             if let data = pasteboard.data(forPasteboardType: "public.html"), String(data: data, encoding: .utf8) != nil {
                 // We have HTML, which we will have to sanitize before pasting
-                return .Image
+                return .Html
             }
         } else if pasteboard.string != nil {
             // We have a string that we can paste
