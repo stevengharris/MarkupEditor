@@ -231,7 +231,7 @@ const _undoOperation = function(undoerData) {
     const data = undoerData.data;
     switch (operation) {
         case 'pasteText':
-            _undoPasteText(range, data);
+            _undoPasteText(undoerData);
             break;
         case 'format':
             _restoreSelection();
@@ -302,7 +302,7 @@ const _redoOperation = function(undoerData) {
     const data = undoerData.data;
     switch (undoerData.operation) {
         case 'pasteText':
-            _redoPasteText(range, data);
+            _redoPasteText(undoerData);
             break;
         case 'format':
             _restoreSelection();
@@ -778,17 +778,10 @@ MU.editor.addEventListener('keyup', function(ev) {
 });
 
 /**
- * Do a custom paste operation to avoid polluting the document with arbitrary HTML
+ * Prevent all default paste events. Paste is invoked from the Swift side.
  */
 MU.editor.addEventListener('paste', function(ev) {
-   ev.preventDefault();
-   let pastedText = undefined;
-   if (ev.clipboardData && ev.clipboardData.getData) {
-       pastedText = ev.clipboardData.getData('text/plain');
-   };
-   const undoerData = _undoerData('pasteText', pastedText);
-   undoer.push(undoerData);
-   _redoOperation(undoerData);
+    ev.preventDefault();
 });
 
 /********************************************************************************
@@ -796,54 +789,129 @@ MU.editor.addEventListener('paste', function(ev) {
  */
 
 /**
- * Do or redo the paste operation.
- *
- * @param   {HTML Range}    range       The range to pasting into.
- * @param   {String}        data        The text to paste.
+ * Do a custom paste operation of text only.
  */
-const _redoPasteText = function(range, data) {
-    // Paste the undoerData.data text after the range.endOffset or range.endContainer
-    // TODO: Handle non-collapsed ranges
-    const originalText = range.endContainer.textContent;
-    const newText = originalText.substring(0, range.endOffset) + data + originalText.substr(range.endOffset);
-    range.endContainer.textContent = newText;
-    const newRange = document.createRange();
-    newRange.setStart(range.endContainer, range.endOffset + data.length);
-    newRange.setEnd(range.endContainer, range.endOffset + data.length);
-    const selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-    _callback('input');
+MU.pasteText = function(text) {
+    _pasteText(text);
 };
 
 /**
- * Undo the paste operation after it was done via _redoPasteText.
- *
- * @param   {HTML Range}    range       The range to pasting into.
- * @param   {String}        data        The text to paste.
- *
+ * Do a custom paste operation of html.
  */
-const _undoPasteText = function(range, data) {
-    // The pasted text data was placed after the range.endOffset in endContainer
+MU.pasteHTML = function(html) {
+    _pasteHTML(html);
+}
+
+/**
+ * Paste the text at the current selection point, populate undoerData.
+ */
+const _pasteText = function(text, oldUndoerData, undoable=true) {
+    const redoing = !undoable && (oldUndoerData !== null);
+    let sel = document.getSelection();
+    let anchorNode = (sel) ? sel.anchorNode : null;
+    if (!anchorNode) {
+        _consoleLog("Error - no selection")
+        return null;
+    };
+    let selRange = sel.getRangeAt(0).cloneRange();
+    // If sel is not collapsed, delete the entire selection and reset before continuing.
+    // Track the deletedFragment.
+    let deletedFragment;
+    if (!sel.isCollapsed) {
+        if (redoing) {
+            if (selRange.startContainer.nodeType === Node.TEXT_NODE) {
+                selRange.startContainer.parentNode.normalize();
+            } else {
+                selRange.startContainer.normalize();
+            };
+            if (selRange.endContainer.nodeType === Node.TEXT_NODE) {
+                selRange.endContainer.parentNode.normalize();
+            } else {
+                selRange.endContainer.normalize();
+            };
+            sel.removeAllRanges();
+            sel.addRange(selRange);
+        }
+        deletedFragment = selRange.extractContents();
+        if (redoing) {
+            oldUndoerData.data.deletedFragment = deletedFragment;
+        };
+        // Even now selection might not be collapsed if, for example, the selection was everything within a
+        // formatting node (like <b>).
+        if (!document.getSelection().isCollapsed) {
+            _patchEmptyFormatNodeEnter();
+        }
+        sel = document.getSelection();
+        anchorNode = (sel) ? sel.anchorNode : null;
+        selRange = sel.getRangeAt(0).cloneRange();
+        // At this point, sel is collapsed and the document contents are the same as if we had
+        // hit Backspace (but not Enter yet) on the original non-collapsed selection.
+        //
+        // DEBUGGING TIP:
+        // By executing an 'input' callback and returning true at this point, we can debug the
+        // result of various _patch* calls and ensure the result is the same as hitting Backspace.
+        //_callback('input');
+        //return true;
+    };
+    const originalText = anchorNode.textContent;
+    const newOffset = selRange.startOffset + text.length;
+    const newText = originalText.substring(0, selRange.startOffset) + text + originalText.substr(selRange.endOffset);
+    anchorNode.textContent = newText;
+    const newRange = document.createRange();
+    newRange.setStart(anchorNode, newOffset);
+    newRange.setEnd(anchorNode, newOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    _backupSelection();
+    if (undoable) {
+        const undoerData = _undoerData('pasteText', {text: text, offset: newOffset, deletedFragment: deletedFragment});
+        undoer.push(undoerData);
+    }
+    _callback('input');
+    return true
+};
+
+const _pasteHTML = function(html, oldUndoerData, undoable=true) {
+    _consoleLog("*** implement _pasteHTML")
+};
+
+/**
+ * Undo the paste operation after it was done via _pasteText.
+ */
+const _undoPasteText = function(undoerData) {
+    // The pasted text data was placed before the range.startOffset in startContainer
     // Make sure it's still there and if so, remove it, leaving the selection
     // TODO: Handle non-collapsed ranges
-    const textContent = range.endContainer.textContent;
-    const existingText = textContent.slice(range.endOffset, range.endOffset + data.length);
-    if (existingText === data) {
-        const startText = textContent.slice(0, range.endOffset);
-        const endText = textContent.slice(range.endOffset + data.length);
-        range.endContainer.textContent = startText + endText;
+    const startContainer = undoerData.range.startContainer;
+    const text = undoerData.data.text;
+    const offset = undoerData.data.offset;
+    const textContent = startContainer.textContent;
+    const startPastedContent = offset - text.length;
+    const endPastedContent = offset;
+    const pastedContent = textContent.slice(startPastedContent, endPastedContent);
+    if (pastedContent === text) {
+        const startText = textContent.slice(0, startPastedContent);         // text before pastedContent
+        const endText = textContent.slice(endPastedContent);                // text after pastedContent
+        startContainer.textContent = startText + endText;
         const newRange = document.createRange();
-        newRange.setStart(range.endContainer, range.endOffset);
-        newRange.setEnd(range.endContainer, range.endOffset);
+        newRange.setStart(startContainer, startPastedContent);
+        newRange.setEnd(startContainer, startPastedContent);
         const selection = document.getSelection();
         selection.removeAllRanges();
         selection.addRange(newRange);
+        _backupSelection();
         _callback('input');
     } else {
-        _consoleLog('undo pasteText mismatch: ' + existingText);
+        _consoleLog('undo pasteText mismatch: ' + pastedContent);
     };
 };
+
+/**
+ * Redo the paste operation after it has been undone by _undoPasteText.
+ */
+const _redoPasteText = function(undoerData) {
+    _pasteText(undoerData.data.text, undoerData, false)
+}
 
 /********************************************************************************
  * Getting and setting document contents

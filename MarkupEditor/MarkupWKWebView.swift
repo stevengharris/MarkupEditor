@@ -46,6 +46,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
     private var markupDelegate: MarkupDelegate?
+    /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
+    var pastedAsync = false;
+    /// Types of content that can be pasted in a MarkupWKWebView
+    public enum PasteableType {
+        case Text
+        case Html
+        case Image
+        case Url
+    }
     
     public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         super.init(frame: frame, configuration: configuration)
@@ -531,6 +540,61 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return clientHeight + 2 * bodyMargin
     }
     
+    //MARK: Paste
+    
+    /// Return the Pasteable type based on the types found in the UIPasteboard.general
+    public func pasteableType() -> PasteableType? {
+        let pasteboard = UIPasteboard.general
+        if pasteboard.image != nil {
+            // We have copied an image into the pasteboard
+            return .Image
+        } else if pasteboard.url != nil {
+            // We have a url which we assume identifies an image we can display
+            return .Url
+        } else if pasteboard.contains(pasteboardTypes: ["public.html"]) {
+            if let data = pasteboard.data(forPasteboardType: "public.html"), String(data: data, encoding: .utf8) != nil {
+                // We have HTML, which we will have to sanitize before pasting
+                return .Image
+            }
+        } else if pasteboard.string != nil {
+            // We have a string that we can paste
+            return .Text
+        }
+        return nil
+    }
+    
+    public func pasteText(_ text: String?, handler: (()->Void)? = nil) {
+        guard let text = text, !pastedAsync else { return }
+        pastedAsync = true
+        evaluateJavaScript("MU.pasteText('\(text.escaped)')") { result, error in
+            self.pastedAsync = false
+            handler?()
+        }
+    }
+    
+    public func pasteHtml(_ html: String?, handler: (()->Void)? = nil) {
+        guard let html = html, !pastedAsync else { return }
+        pastedAsync = true
+        evaluateJavaScript("MU.pasteHTML('\(html.escaped)')") { result, error in
+            self.pastedAsync = false
+            handler?()
+        }
+    }
+    
+    public func pasteImage(_ image: UIImage?, handler: (()->Void)? = nil) {
+        guard let image = image, !pastedAsync else { return }
+        //TODO: Make it work
+        print("If supported, save the \(image.size) image as a file and then insert image")
+        pastedAsync = false
+    }
+    
+    public func pasteImageUrl(_ url: URL?, handler: (()->Void)? = nil) {
+        guard let url = url, !pastedAsync else { return }
+        //TODO: Make it work
+        print("Save the image url: \(url)")
+        pastedAsync = false
+    }
+    
     //MARK: Formatting
     
     public func bold(handler: (()->Void)? = nil) {
@@ -732,6 +796,38 @@ extension MarkupWKWebView {
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func decreaseSize(_ sender: Any?) {
         // Do nothing
+    }
+    
+    /// Invoke the paste method in the editor directly, passing the clipboard contents
+    /// that would otherwise be obtained via the JavaScript event.
+    ///
+    /// Customize the type of paste operation on the JavaScript side based on the type
+    /// of data available in UIPasteboard.general.
+    public override func paste(_ sender: Any?) {
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = UIPasteboard.general
+        switch pasteableType {
+        case .Text:
+            pasteText(pasteboard.string)
+        case .Html:
+            if let data = pasteboard.data(forPasteboardType: "public.html") {
+                pasteHtml(String(data: data, encoding: .utf8))
+            }
+        case .Image:
+            pasteImage(pasteboard.image)
+        case .Url:
+            pasteImageUrl(pasteboard.url)
+        }
+    }
+    
+    /// Paste the text only from the clipboard.
+    public override func pasteAndMatchStyle(_ sender: Any?) {
+        pasteText(UIPasteboard.general.string)
+    }
+    
+    //TODO: This is really checking for drag/drop and needs to be fixed
+    public override func canPaste(_ itemProviders: [NSItemProvider]) -> Bool {
+        pasteableType() != nil
     }
     
 }
