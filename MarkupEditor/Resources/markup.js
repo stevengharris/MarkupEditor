@@ -43,6 +43,45 @@ const MU = {};
  */
 MU.editor = document.getElementById('editor');
 
+/**
+ * MUError captures internal errors and makes it easy to communicate them to the
+ * Swift side.
+ *
+ * Usage is generally via the statics defined here, altho supplementary info can
+ * be provided to the MUError instance when useful.
+ */
+class MUError {
+    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range');
+    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range');
+    static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices');
+    static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
+    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found');
+    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found');
+    
+    constructor(name, message, info) {
+        this.name = name;
+        this.message = message;
+        this.info = info
+    };
+    
+    setInfo(info) {
+        this.info = info
+    };
+    
+    messageDict() {
+        return {
+            'messageType' : 'error',
+            'code' : this.name,
+            'message' : this.message,
+            'info' : this.info
+        };
+    };
+    
+    callback() {
+        _callback(JSON.stringify(this.messageDict()));
+    };
+};
+
 /********************************************************************************
  * Undo/Redo
  */
@@ -1935,8 +1974,7 @@ const _undoListEnter = function(undoerData) {
     // Find the selected element based on the indices into the list recorded at undo time
     const selectedElement = _childNodeIn(newList, undoerData.data.childNodeIndices);
     if (!selectedElement) {
-        new Error('child node could not be found in childNodeIndices');
-        _consoleLog("Error - child node could not be found in childNodeIndices")
+        MUError.CantUndoListEnter.callback();
         return;
     }
     // And then restore the range
@@ -1979,7 +2017,7 @@ const _insertInList = function(fragment) {
     const range = sel.getRangeAt(0).cloneRange();
     const anchorNode = (sel) ? sel.anchorNode : null;   // Selection is collapsed
     if (!sel.isCollapsed || !anchorNode || (anchorNode.nodeType != Node.TEXT_NODE)) {
-        new Error('Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
+        MUError.CantInsertInList.callback();
         return;
     };
     // Handle specially if fragment contains no elements (i.e., just text nodes).
@@ -2687,8 +2725,7 @@ const _restoreRange = function(rangeProxy) {
         selection.removeAllRanges();
         selection.addRange(range);
     } else {
-        _consoleLog('Attempt to restore null range');
-        new Error('Attempt to restore null range');
+        MUError.RestoreNullRange.callback();
     };
 };
 
@@ -2699,10 +2736,9 @@ const _backupSelection = function() {
     const rangeProxy = _rangeProxy();
     MU.currentSelection = rangeProxy;
     if (!rangeProxy) {
-        _consoleLog("document.activeElement.id: " + document.activeElement.id)
-        _consoleLog("document.getSelection().rangeCount: " + document.getSelection().rangeCount)
-        _consoleLog('Backed up null range');
-        new Error('Backed up null range');
+        const error = MUError.BackupNullRange;
+        error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
+        error.callback();
     };
 };
 
@@ -3128,8 +3164,9 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
     const startElement = document.getElementById(startElementId);
     const endElement = document.getElementById(endElementId);
     if (!startElement || !endElement) {
-        new Error('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
-        _consoleLog('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
+        let error = MUError.CantFindElement;
+        error.setInfo('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
+        error.callback();
         return false;
     };
     let startContainer, endContainer;
@@ -3154,8 +3191,9 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
         endContainer = _firstTextNodeChild(endElement);
     };
     if (!startContainer || !endContainer) {
-        new Error('Could not identify startContainer(' + startContainer + ') or endContainer(' + endContainer + ')');
-        _consoleLog('Could not identify startContainer(' + startContainer + ') or endContainer(' + endContainer + ')');
+        let error = MUError.CantFindContainer;
+        error.setInfo('Could not identify startContainer(' + startContainer + ') or endContainer(' + endContainer + ')');
+        error.callback();
         return false;
     };
     const range = document.createRange();

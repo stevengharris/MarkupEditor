@@ -147,11 +147,20 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
         switch messageType {
         case "action":
-            print(messageData["action"] as? String ?? "Bad action message")
+            print(messageData["action"] as? String ?? "Bad action message.")
         case "log":
-            print(messageData["log"] as? String ?? "Bad log message")
+            print(messageData["log"] as? String ?? "Bad log message.")
+        case "error":
+            guard let code = messageData["code"] as? String, let message = messageData["message"] as? String else {
+                print("Bad error message.")
+                return
+            }
+            print("Error \(code): \(message)")
+            let info = messageData["info"] as? String
+            if info != nil { print(" \(info!)") }
+            markupDelegate?.markupError(code: code, message: message, info: info)
         default:
-            print("Unknown message of type \(messageType): \(messageData)")
+            print("Unknown message of type \(messageType): \(messageData).")
         }
     }
     

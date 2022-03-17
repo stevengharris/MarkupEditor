@@ -98,6 +98,9 @@ public protocol MarkupDelegate {
     /// Perform the drop
     func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession)
     
+    /// An error occurred on the JavaScript side
+    func markupError(code: String, message: String, info: String?)
+    
 }
 
 extension MarkupDelegate {
@@ -205,5 +208,8 @@ extension MarkupDelegate {
     
     /// Override this method to perform the drop.
     public func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {}
+    
+    /// By default, do nothing on the Swift side when an error occurs on the JavaScript side.
+    public func markupError(code: String, message: String, info: String?) {}
     
 }
