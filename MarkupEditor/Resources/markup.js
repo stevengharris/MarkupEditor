@@ -35,6 +35,7 @@
  * Public functions called from Swift are MU.*
  * Private functions used internally are const _*
  */
+//MARK: Bootstrapping
 
 const MU = {};
 
@@ -44,6 +45,14 @@ const MU = {};
 MU.editor = document.getElementById('editor');
 
 /**
+ * The 'ready' callback lets Swift know the editor and this js is properly loaded
+ */
+window.onload = function() {
+    undoer.enable();
+    _callback('ready');
+};
+
+/**
  * MUError captures internal errors and makes it easy to communicate them to the
  * Swift side.
  *
@@ -51,12 +60,13 @@ MU.editor = document.getElementById('editor');
  * be provided to the MUError instance when useful.
  */
 class MUError {
-    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range');
-    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range');
-    static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices');
+    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.');
+    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range.');
+    static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices.');
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
-    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found');
-    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found');
+    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
+    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
+    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.')
     
     constructor(name, message, info) {
         this.name = name;
@@ -81,10 +91,6 @@ class MUError {
         _callback(JSON.stringify(this.messageDict()));
     };
 };
-
-/********************************************************************************
- * Undo/Redo
- */
 
 /*
  * The Undoer class below was adopted from https://github.com/samthor/undoer
@@ -233,6 +239,11 @@ class Undoer {
     };
 
 };
+
+/********************************************************************************
+ * Undo/Redo
+ */
+//MARK: Undo/Redo
 
 /**
  * Return the populated undoerData object held on the Undoer._stack.
@@ -475,14 +486,6 @@ const _backupUndoerRange = function(undoerData) {
 };
 
 /**
- * The 'ready' callback lets Swift know the editor and this js is properly loaded
- */
-window.onload = function() {
-    undoer.enable();
-    _callback('ready');
-};
-
-/**
  * Callback into Swift.
  * The message is handled by the WKScriptMessageHandler.
  * In our case, the WKScriptMessageHandler is the MarkupCoordinator,
@@ -498,6 +501,7 @@ const _callback = function(message) {
 /********************************************************************************
  * Event Listeners
  */
+//MARK: Event Listeners
 
 /**
  * The selectionChange callback is expensive on the Swift side, because it
@@ -826,6 +830,7 @@ MU.editor.addEventListener('paste', function(ev) {
 /********************************************************************************
  * Paste
  */
+//MARK: Paste
 
 /**
  * Do a custom paste operation of text only.
@@ -911,7 +916,8 @@ const _pasteText = function(text, oldUndoerData, undoable=true) {
 };
 
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
-    _consoleLog("*** implement _pasteHTML")
+    const error = new MUError('NotImplemented', '_pasteHTML')
+    error.callback();
 };
 
 /**
@@ -959,9 +965,11 @@ const _undoPasteText = function(undoerData) {
         _backupSelection();
         _callback('input');
     } else {
-        // This should never happen, but if it does, we need to do something reasonable.
-        // TODO: Do something reasonable
-        _consoleLog('undo pasteText mismatch: ' + pastedContent);
+        // This should never happen, but if it does, the best we can do is to let
+        // the Swift side know.
+        let error = MUError.PasteMismatch
+        error.setInfo('Failed to paste: \(pastedContent)');
+        error.callback();
     };
 };
 
@@ -975,6 +983,7 @@ const _redoPasteText = function(undoerData) {
 /********************************************************************************
  * Getting and setting document contents
  */
+//MARK: Getting and Setting Document Contents
 
 /**
  * Clean out the MU.editor and replace it with an empty paragraph
@@ -1082,11 +1091,21 @@ const _firstEditorElement = function() {
     return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
 
+/**
+ * Return a marginally prettier version of the raw editor contents.
+ *
+ * @return {String}     A string showing the raw HTML with tags, etc.
+ */
+MU.getPrettyHTML = function() {
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+};
+
 /********************************************************************************
  * Formatting
  * 1. Formats (B, I, U, DEL, CODE, SUB, SUP) are toggled off and on
  * 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
  */
+//MARK: Formatting
 
 MU.toggleBold = function() {
     _toggleFormat('b');
@@ -1183,42 +1202,12 @@ const _toggleFormat = function(type, undoable=true) {
 }
 
 /********************************************************************************
- * Raw and formatted text
- */
-
-//const _prettify = function(html) {
-//    // A hack to prettify MU.editor.innerHTML.
-//    // From https://stackoverflow.com/a/60338028/8968411.
-//    const tab = '\t';
-//    const result = '';
-//    const indent= '';
-//    html.split(/>\s*</).forEach(function(element) {
-//        if (element.match( /^\/\w/ )) {
-//            indent = indent.substring(tab.length);
-//        }
-//        result += indent + '<' + element + '>\n\n';
-//        if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith('input')  ) {
-//            indent += tab;
-//        }
-//    });
-//    return result.substring(1, result.length-3);
-//}
-
-/**
- * Return a marginally prettier version of the raw editor contents.
- *
- * @return {String}     A string showing the raw HTML with tags, etc.
- */
-MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
-};
-
-/********************************************************************************
  * Styling
  * 1. Styles (P, H1-H6) are applied to blocks
  * 2. Unlike formats, styles are never nested (so toggling makes no sense)
  * 3. Every block should have some style
  */
+//MARK: Styling
 
 /**
  * Find/verify the oldStyle for the selection and replace it with newStyle.
@@ -1274,6 +1263,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
 /********************************************************************************
  * Nestables, including lists and block quotes
  */
+//MARK: Nestables, Including Lists and BlockQuotes
 
 /**
  * Turn the list tag off and on for selection, doing the right thing
@@ -1373,7 +1363,6 @@ MU.toggleListItem = function(newListType, undoable=true) {
                     } else {
                         listElement.insertBefore(newListItem, listItemElement.nextSibling);
                     }
-                    //TODO: The caret goes missing afterwards.
                     newSelNode = newListItem;
                 } else {
                     //_consoleLog("Toggle off")
@@ -2681,6 +2670,7 @@ const _decreaseQuoteLevel = function(undoable=true) {
 /********************************************************************************
  * Range operations
  */
+//MARK: Range Operations
 
 const _reselect = function(sel, range) {
     sel.removeAllRanges();
@@ -2795,6 +2785,7 @@ const _rangeString = function(range, title="") {
 /********************************************************************************
  * Clean up to avoid ugly HTML
  */
+//MARK: Clean Up
 
 /**
  * Due to the presence of "-webkit-text-size-adjust: 100%;" in css,
@@ -2898,6 +2889,7 @@ const _cleanUpAttributesWithin = function(attribute, node) {
  * Explicit handling of multi-click
  * TODO: Remove?
  */
+//MARK: Explicit Handling of Multi-click
 
 /**
  * We received a double or triple click event.
@@ -2970,19 +2962,10 @@ const _tripleClickSelect = function(sel) {
     }
 };
 
-/**
- * Return a boolean indicating if s is a white space
- *
- * @param   {String}      s     The string that might be white space
- * @return {Boolean}            Whether it's white space
- */
-const _isWhiteSpace = function(s) {
-    return /\s/g.test(s);
-};
-
 /********************************************************************************
  * Selection
  */
+//MARK: Selection
 
 /**
  * Define various arrays of tags used to represent concepts on the Swift side.
@@ -3143,6 +3126,7 @@ const _getSelectionText = function() {
 /********************************************************************************
  * Testing support
  */
+//MARK: Testing Support
 
 /**
  * For testing purposes, set selection based on elementIds and offsets
@@ -3243,6 +3227,7 @@ MU.testUndoListEnter = function() {
 /********************************************************************************
  * Links
  */
+//MARK: Links
 
 /**
  * Insert a link to url. The selection has to be across a range.
@@ -3374,6 +3359,7 @@ const _redoDeleteLink = function(undoerData) {
 /********************************************************************************
  * Images
  */
+//MARK: Images
 
 /**
  * Insert the image at src with alt text, signaling updateHeight when done loading.
@@ -3557,6 +3543,7 @@ const _redoModifyImage = function(undoerData) {
 /********************************************************************************
  * Tables
  */
+//MARK: Tables
 
 /**
  * Insert an empty table with the specified number of rows and cols.
@@ -4336,9 +4323,20 @@ const _doPrevCell = function() {
 /********************************************************************************
  * Common private functions
  */
+//MARK: Common Private Functions
 
 /**
- * Callback into Swift to show a string in the XCode console, like console.log()
+ * Return a boolean indicating if s is a white space
+ *
+ * @param   {String}      s     The string that might be white space
+ * @return {Boolean}            Whether it's white space
+ */
+const _isWhiteSpace = function(s) {
+    return /\s/g.test(s);
+};
+
+/**
+ * Callback into Swift to show a string in the Xcode console, like console.log()
  */
 const _consoleLog = function(string) {
     let messageDict = {
@@ -4840,11 +4838,6 @@ const _unsetTag = function(oldElement, sel) {
     const oldEndOffset = oldRange.endOffset;
     // Hold onto the parentNode
     const oldParentNode = oldElement.parentNode;
-    //
-    // TODO: Deal with turning off a tag at at the end of a word; for example,
-    // type, CTRL-B turns bold on, type, then CTRL-B turns it off, but what was
-    // bolded stays bolded.
-    //
     // Get a newElement from the innerHTML of the oldElement
     // Start by tracking the index of oldElement in oldParentNode's childNodes,
     // so we know what element to select when we are done. The original oldElement
@@ -5049,153 +5042,16 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
 };
 
 /********************************************************************************
- * Unused?
- * TODO - Remove
- */
-
-MU.setFontSize = function(size) {
-    MU.editor.style.fontSize = size;
-};
-
-MU.setBackgroundColor = function(color) {
-    MU.editor.style.backgroundColor = color;
-};
-
-MU.setHeight = function(size) {
-    MU.editor.style.height = size;
-};
-
-MU.customAction = function(action) {
-    let messageDict = {
-        'messageType' : 'action',
-        'action' : action
-    }
-    _callback(JSON.stringify(messageDict));
-};
-
-/// Returns the cursor position relative to its current position onscreen.
-/// Can be negative if it is above what is visible
-MU.getRelativeCaretYPosition = function() {
-    let y = 0;
-    const sel = document.getSelection();
-    if (sel.rangeCount) {
-        const range = sel.getRangeAt(0);
-        const needsWorkAround = (range.startOffset == 0);
-        /* Removing fixes bug when node name other than 'div' */
-        // && range.startContainer.nodeName.toLowerCase() == 'div');
-        if (needsWorkAround) {
-            y = range.startContainer.offsetTop - window.pageYOffset;
-        } else {
-            if (range.getClientRects) {
-                const rects = range.getClientRects();
-                if (rects.length > 0) {
-                    y = rects[0].top;
-                };
-            };
-        };
-    };
-    return y;
-};
-
-/// Looks specifically for a Range selection and not a Caret selection
-MU.rangeSelectionExists = function() {
-    //!! coerces a null to bool
-    const sel = document.getSelection();
-    if (sel && sel.type == 'Range') {
-        return true;
-    }
-    return false;
-};
-
-/// Return the first tag the selection is inside of
-MU.selectionTag = function() {
-    const sel = document.getSelection();
-    if (sel) {
-        if (sel.type === 'None') {
-            return '';
-        } else {    // sel.type will be Caret or Range
-            const focusNode = sel.focusNode;
-            if (focusNode) {
-                const selElement = focusNode.parentElement;
-                if (selElement) {
-                    return selElement.nodeName;
-                }
-            }
-        }
-    }
-    return '';
-};
-
-MU.getLineHeight = function() {
-    return MU.editor.style.lineHeight;
-};
-
-MU.setLineHeight = function(height) {
-    MU.editor.style.lineHeight = height;
-};
-
-MU.getText = function() {
-    return MU.editor.innerText;
-};
-
-MU.setBaseTextColor = function(color) {
-    MU.editor.style.color  = color;
-};
-
-MU.setOrderedList = function() {
-    document.execCommand('insertOrderedList', false, null);
-};
-
-MU.setUnorderedList = function() {
-    document.execCommand('insertUnorderedList', false, null);
-};
-
-MU.setBlockquote = function() {
-    document.execCommand('formatBlock', false, '<blockquote>');
-};
-
-MU.setTextColor = function(color) {
-    _restoreSelection();
-    document.execCommand('styleWithCSS', null, true);
-    document.execCommand('foreColor', false, color);
-    document.execCommand('styleWithCSS', null, false);
-};
-
-MU.setTextBackgroundColor = function(color) {
-    _restoreSelection();
-    document.execCommand('styleWithCSS', null, true);
-    document.execCommand('hiliteColor', false, color);
-    document.execCommand('styleWithCSS', null, false);
-};
-
-MU.setIndent = function() {
-    document.execCommand('indent', false, null);
-};
-
-MU.setOutdent = function() {
-    document.execCommand('outdent', false, null);
-};
-
-MU.setJustifyLeft = function() {
-    document.execCommand('justifyLeft', false, null);
-};
-
-MU.setJustifyCenter = function() {
-    document.execCommand('justifyCenter', false, null);
-};
-
-MU.setJustifyRight = function() {
-    document.execCommand('justifyRight', false, null);
-};
-
-/********************************************************************************
+ * Xcode Formatting Hack
+ *
  * This is so pathetic, I cannot believe I am doing it.
- * But, wherever the / shows up in JavaScript, XCode messes
+ * But, wherever the / shows up in JavaScript, Xcode messes
  * up all subsequent formatting and it becomes pretty unbearable
  * to deal with the indentation it forces on you.
  * So, I'm putting the only methods where I divide at the bottom of the
  * file and using these methods rather than inlining above.
  */
+//MARK: Xcode Formatting Hack
 
 /**
  * Return the scale as a percentage based on naturalWidth.
