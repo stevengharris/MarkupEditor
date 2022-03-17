@@ -209,7 +209,13 @@ extension MarkupDelegate {
     /// Override this method to perform the drop.
     public func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {}
     
-    /// By default, do nothing on the Swift side when an error occurs on the JavaScript side.
-    public func markupError(code: String, message: String, info: String?) {}
+    /// By default, print to the console when an error occurs on the JavaScript side of the MarkupEditor.
+    ///
+    /// These errors are internal and should never occur. However, if one does, and you want to let your user know
+    /// about it, then override this method in your delegate.
+    public func markupError(code: String, message: String, info: String?) {
+        print("Error \(code): \(message)")
+        if let info = info { print(" info: \(info)") }
+    }
     
 }
