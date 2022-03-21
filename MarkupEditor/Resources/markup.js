@@ -45,6 +45,19 @@ const MU = {};
 MU.editor = document.getElementById('editor');
 
 /**
+ * Callback into Swift.
+ * The message is handled by the WKScriptMessageHandler.
+ * In our case, the WKScriptMessageHandler is the MarkupCoordinator,
+ * and the userContentController(_ userContentController:didReceive:)
+ * function receives message as a WKScriptMessage.
+ *
+ * @param {String} message     The message, which might be a JSONified string
+ */
+const _callback = function(message) {
+    window.webkit.messageHandlers.markup.postMessage(message);
+};
+
+/**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded
  */
 window.onload = function() {
@@ -66,7 +79,10 @@ class MUError {
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
     static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
     static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
-    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.')
+    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.');
+    static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
+    static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
+    static PatchFormatNodeNotSiblings = new MUError('PatchFormatNodeNotSiblings', 'The anchorNode and focusNode are not siblings.')
     
     constructor(name, message, info) {
         this.name = name;
@@ -283,6 +299,9 @@ const _undoOperation = function(undoerData) {
         case 'pasteText':
             _undoPasteText(undoerData);
             break;
+        case 'pasteHTML':
+            _undoPasteHTML(undoerData);
+            break;
         case 'format':
             _restoreSelection();
             _toggleFormat(data, false);
@@ -353,6 +372,9 @@ const _redoOperation = function(undoerData) {
     switch (undoerData.operation) {
         case 'pasteText':
             _redoPasteText(undoerData);
+            break;
+        case 'pasteHTML':
+            _redoPasteHTML(undoerData);
             break;
         case 'format':
             _restoreSelection();
@@ -483,19 +505,6 @@ const _backupUndoerRange = function(undoerData) {
     if (sel && (sel.rangeCount > 0)) {
         undoerData.range = sel.getRangeAt(0).cloneRange();
     };
-};
-
-/**
- * Callback into Swift.
- * The message is handled by the WKScriptMessageHandler.
- * In our case, the WKScriptMessageHandler is the MarkupCoordinator,
- * and the userContentController(_ userContentController:didReceive:)
- * function receives message as a WKScriptMessage.
- *
- * @param {String} message     The message, which might be a JSONified string
- */
-const _callback = function(message) {
-    window.webkit.messageHandlers.markup.postMessage(message);
 };
 
 /********************************************************************************
@@ -854,7 +863,7 @@ const _pasteText = function(text, oldUndoerData, undoable=true) {
     let sel = document.getSelection();
     let anchorNode = (sel) ? sel.anchorNode : null;
     if (!anchorNode) {
-        _consoleLog("Error - no selection")
+        MUError.NoSelection.callback();
         return null;
     };
     let selRange = sel.getRangeAt(0).cloneRange();
@@ -862,38 +871,19 @@ const _pasteText = function(text, oldUndoerData, undoable=true) {
     // Track the deletedFragment.
     let deletedFragment;
     if (!sel.isCollapsed) {
-        if (redoing) {
-            if (selRange.startContainer.nodeType === Node.TEXT_NODE) {
-                selRange.startContainer.parentNode.normalize();
-            } else {
-                selRange.startContainer.normalize();
-            };
-            if (selRange.endContainer.nodeType === Node.TEXT_NODE) {
-                selRange.endContainer.parentNode.normalize();
-            } else {
-                selRange.endContainer.normalize();
-            };
-            sel.removeAllRanges();
-            sel.addRange(selRange);
-        }
         deletedFragment = selRange.extractContents();
         if (redoing) {
             oldUndoerData.data.deletedFragment = deletedFragment;
         };
-        // Even now selection might not be collapsed if, for example, the selection was everything within a
-        // formatting node (like <b>).
-        if (!document.getSelection().isCollapsed) {
-            _patchEmptyFormatNodeEnter();
-        }
         sel = document.getSelection();
         anchorNode = (sel) ? sel.anchorNode : null;
         selRange = sel.getRangeAt(0).cloneRange();
         // At this point, sel is collapsed and the document contents are the same as if we had
-        // hit Backspace (but not Enter yet) on the original non-collapsed selection.
+        // hit Backspace (but not paste yet) on the original non-collapsed selection.
         //
         // DEBUGGING TIP:
         // By executing an 'input' callback and returning true at this point, we can debug the
-        // result of various _patch* calls and ensure the result is the same as hitting Backspace.
+        // result ensure it is the same as hitting Backspace.
         //_callback('input');
         //return true;
     };
@@ -916,8 +906,79 @@ const _pasteText = function(text, oldUndoerData, undoable=true) {
 };
 
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
-    const error = new MUError('NotImplemented', '_pasteHTML')
-    error.callback();
+    const redoing = !undoable && (oldUndoerData !== null);
+    let sel = document.getSelection();
+    let anchorNode = (sel) ? sel.anchorNode : null;
+    if (!anchorNode) {
+        MUError.NoSelection.callback();
+        return null;
+    };
+    let focusNode = sel.focusNode;
+    let selRange = sel.getRangeAt(0).cloneRange();
+    let startOffset = selRange.startOffset;
+    // If sel is not collapsed, delete the entire selection and reset before continuing.
+    // Track the deletedFragment.
+    let deletedFragment;
+    if (!sel.isCollapsed) {
+        deletedFragment = selRange.extractContents();
+        if (redoing) {
+            oldUndoerData.data.deletedFragment = deletedFragment;
+        };
+        sel = document.getSelection();
+        anchorNode = sel.anchorNode;
+        focusNode = sel.focusNode;
+        selRange = sel.getRangeAt(0).cloneRange();
+        // At this point, sel is collapsed and the document contents are the same as if we had
+        // hit Backspace (but not paste yet) on the original non-collapsed selection.
+        //
+        // DEBUGGING TIP:
+        // By executing an 'input' callback and returning true at this point, we can debug the
+        // result ensure it is the same as hitting Backspace.
+        //_callback('input');
+        //return true;
+    };
+    const newElement = _patchPasteHTML(html)
+    const newRange = document.createRange();
+    const lastChild = newElement.lastChild;
+    let offset = 0;
+    if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
+        offset = lastChild.textContent.length;
+    } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
+        offset = lastChild.childNodes.length;
+    }
+    if ((anchorNode.nodeType === Node.ELEMENT_NODE) && _isEmpty(anchorNode)) {
+        _consoleLog("empty")
+        anchorNode.replaceWith(newElement);
+    } else {
+        _consoleLog("not empty: " + anchorNode.textContent)
+        selRange.insertNode(newElement);
+    }
+    newRange.setStart(lastChild, offset);
+    newRange.setEnd(lastChild, offset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    _backupSelection();
+    if (undoable) {
+        const undoerData = _undoerData('pasteHTML', {html: html, offset: startOffset, deletedFragment: deletedFragment});
+        undoer.push(undoerData);
+    }
+    _callback('input');
+    return true
+};
+
+/**
+ * Patch html by removing all of the spans, etc, so that a template created from it
+ * is "clean" by MarkupEditor standards.
+ */
+const _patchPasteHTML = function(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const element = template.content;
+    _cleanUpSpansWithin(element);
+    _cleanUpAttributesWithin('style', element);
+    _cleanUpAttributesWithin('class', element);
+    _cleanUpMetas(element);
+    return element;
 };
 
 /**
@@ -1500,7 +1561,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode) {
-        _consoleLog("Error - no selection")
+        MUError.NoSelection.callback();
         return null;
     };
     // If sel is not collapsed, delete the entire selection and reset before continuing.
@@ -1575,8 +1636,9 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     const nextParentSibIsList = (nextParentSib !== null) && ((nextParentSib.nodeName === 'LI') || (nextParentSib.nodeName === 'OL') || (nextParentSib.nodeName === 'UL'));
     const nextParentSibIsEmpty = (nextParentSib !== null) && ((nextParentSib.nodeType === Node.TEXT_NODE) && (nextParentSib.textContent.trim().length === 0));
     // If there is no nextParentSib or if it is empty after trim(), then we are at the end of a list element
-    let endOfListElement = endOfTextNode && !nextSib && (nextParentSibIsList || nextParentSibIsEmpty)
+    const endOfListElement = endOfTextNode && !nextSib && (nextParentSibIsList || nextParentSibIsEmpty)
     const endingListNode = (emptyNode && !nextSib) || (!emptyNode && endOfTextNode && !nextSib && !nextParentSib) || endOfListElement;
+    const emptyListItem = beginningListNode && _isEmpty(existingListItem);
     const newListItem = document.createElement('li');
     const blockContainer = _findFirstParentElementInNodeNames(selNode, _listStyleTags);
     let newElement;
@@ -1585,7 +1647,11 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     } else {
         newElement = document.createElement('p');
     }
-    if (beginningListNode) {
+    if (emptyListItem) {
+        _doListOutdent(undoable);
+        // We return here because we want _doListOutdent to handle all the undoing logic
+        return true;
+    } else if (beginningListNode) {
         if (redoing) {
             oldUndoerData.range = undoerRange;
         };
@@ -1827,13 +1893,14 @@ const _patchEmptyFormatNodeEnter = function() {
     const anchorIsInTag = _tagsMatching(anchorNode, _formatTags).length > 0
     const focusIsInTag = _tagsMatching(focusNode, _formatTags).length > 0
     if (!anchorIsEmpty && !focusIsEmpty) {
-        _consoleLog("Error - neither anchor nor focus is empty");
+        MUError.PatchFormatNodeNotEmpty.callback();
         return;
     };
     const anchorParentIsSibling = anchorNode.parentNode.nextSibling !== focusNode.parentNode
     const focusParentIsSibling = anchorNode.nextSibling !== focusNode.parentNode;
     if (!anchorParentIsSibling && !focusParentIsSibling) {
-        _consoleLog("Error - anchor and focus are not siblings");
+        MU.Error.PatchFormatNodeNotSiblings.callback();
+        return;
     }
     const npcPair = document.createTextNode('\u200B\u200B');
     const range = document.createRange();
@@ -2803,6 +2870,21 @@ MU.cleanUpHTML = function() {
 };
 
 /**
+ * Remove meta tags contained in node, typically a document fragment.
+ */
+const _cleanUpMetas = function(node) {
+    const childNodes = node.childNodes;
+    for (let i=0; i < childNodes.length; i++) {
+        const child = childNodes[i];
+        if (child.nodeName === 'META') {
+            node.removeChild(child);
+        } else {
+            _cleanUpMetas(child);
+        }
+    };
+};
+
+/**
  * Standard webkit editing may leave messy and useless SPANs all over the place.
  * This method just cleans them all up and notifies Swift that the content
  * has changed. Start with the selection focusNode's parent, so as to make
@@ -2878,7 +2960,7 @@ const _cleanUpAttributesWithin = function(attribute, node) {
             attributesRemoved += _cleanUpAttributesWithin(attribute, children[i]);
         };
     };
-    if (node.hasAttribute(attribute)) {
+    if ((node.nodeType === Node.ELEMENT_NODE) && (node.hasAttribute(attribute))) {
         attributesRemoved++;
         node.removeAttribute(attribute);
     };
@@ -3163,6 +3245,9 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
         };
     } else {
         startContainer = _firstTextNodeChild(startElement);
+        if (!startContainer) {
+            startContainer = startElement;
+        }
     };
     if (endChildNodeIndex) {
         const endChild = endElement.childNodes[endChildNodeIndex];
@@ -3173,6 +3258,9 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
         };
     } else {
         endContainer = _firstTextNodeChild(endElement);
+        if (!endContainer) {
+            endContainer = endElement;
+        }
     };
     if (!startContainer || !endContainer) {
         let error = MUError.CantFindContainer;

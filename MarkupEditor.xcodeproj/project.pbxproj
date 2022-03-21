@@ -48,6 +48,7 @@
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* ViewController.swift */; };
 		AA6529C5260E8B2B000674B7 /* UIViewController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */; };
+		AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA806A392652ED49008F60E2 /* Icons.swift */; };
 		AA8EFAC1261CD357008AE31E /* ToolbarTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */; };
 		AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFACB261E068F008AE31E /* StyleToolbar.swift */; };
@@ -59,7 +60,6 @@
 		AABAF15F264B07D100DC02C6 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
-		AAFADF4F2615250B0024F2DC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AAFADF56261525110024F2DC /* MarkupEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */; };
 		AAFB64DB277CEED70032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64DC277CEED80032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
@@ -73,6 +73,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
 			remoteInfo = MarkupEditor;
+		};
+		AA74CF6A27E68032006A5865 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
+		};
+		AA74CF6C27E90FCF006A5865 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA65299A260E8450000674B7;
+			remoteInfo = UIKitDemo;
 		};
 		AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -433,6 +447,8 @@
 			buildRules = (
 			);
 			dependencies = (
+				AA74CF6B27E68032006A5865 /* PBXTargetDependency */,
+				AA74CF6D27E90FCF006A5865 /* PBXTargetDependency */,
 			);
 			name = MarkupEditorTests;
 			productName = FooTests;
@@ -445,7 +461,7 @@
 		AA652923260E80EE000674B7 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1250;
+				LastSwiftUpdateCheck = 1330;
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
 					AA408AFA261666D200CAE8B9 = {
@@ -459,6 +475,7 @@
 					};
 					AAFADF40261524AE0024F2DC = {
 						CreatedOnToolsVersion = 12.4;
+						TestTargetID = AA652941260E8113000674B7;
 					};
 				};
 			};
@@ -596,8 +613,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */,
 				AAFADF56261525110024F2DC /* MarkupEditorTests.swift in Sources */,
-				AAFADF4F2615250B0024F2DC /* String+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -608,6 +625,16 @@
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */;
+		};
+		AA74CF6B27E68032006A5865 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AA74CF6A27E68032006A5865 /* PBXContainerItemProxy */;
+		};
+		AA74CF6D27E90FCF006A5865 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA65299A260E8450000674B7 /* UIKitDemo */;
+			targetProxy = AA74CF6C27E90FCF006A5865 /* PBXContainerItemProxy */;
 		};
 		AA8EFBAB2620B379008AE31E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -901,11 +928,12 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.2;
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Debug;
 		};
@@ -921,11 +949,12 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.2;
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Release;
 		};
