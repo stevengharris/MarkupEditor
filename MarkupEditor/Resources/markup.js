@@ -76,11 +76,14 @@ class MUError {
     static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.');
     static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range.');
     static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices.');
+    static CantInsertHtml = new MUError('CantInsertHtml', 'Top-level element could not be found from selection point.');
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
     static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
     static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
-    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.');
+    static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
+    static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
+    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.');
     static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
     static PatchFormatNodeNotSiblings = new MUError('PatchFormatNodeNotSiblings', 'The anchorNode and focusNode are not siblings.')
     
@@ -769,10 +772,13 @@ MU.editor.addEventListener('keydown', function(ev) {
  */
 const _doEnter = function(undoable=true) {
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
+    let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const existingRange = sel.getRangeAt(0).cloneRange();
-    if ((selNode.nodeType === Node.TEXT_NODE) && (!selNode.nextSibling) && (existingRange.endOffset === selNode.textContent.length)) {
+    const selectionIsText = selNode.nodeType === Node.TEXT_NODE;
+    const selectionAtEnd = existingRange.endOffset === selNode.textContent.length;
+    const nextSiblingIsEmpty = (!selNode.nextSibling) || _isEmpty(selNode.nextSibling);
+    if (selectionIsText && selectionAtEnd && nextSiblingIsEmpty) {
         // We are at the end of the last text node in some element, so we want to
         // create a new <P> to keep typing. Note this means we get <p> when hitting return
         // at the end of, say, <H3>. I believe this is the "expected" behavior.
@@ -938,23 +944,36 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         //return true;
     };
     const newElement = _patchPasteHTML(html)
-    const newRange = document.createRange();
-    const lastChild = newElement.lastChild;
-    let offset = 0;
-    if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
-        offset = lastChild.textContent.length;
-    } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
-        offset = lastChild.childNodes.length;
-    }
-    if ((anchorNode.nodeType === Node.ELEMENT_NODE) && _isEmpty(anchorNode)) {
-        _consoleLog("empty")
-        anchorNode.replaceWith(newElement);
+    const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
+    const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
+    const anchorIsEmpty = _isEmpty(anchorNode);
+    let newRange;
+    if (anchorIsElement && firstChildIsElement && anchorIsEmpty) {
+        // We are in an empty paragraph, typically, like <p><br></p>. Replace it with the newElement
+        // manually by replacing the anchor with the firstChild, followed by all of its siblings.
+        let lastChild = newElement.firstChild;
+        let nextSib = newElement.firstChild.nextSibling;
+        const beforeTarget = anchorNode.nextElementSibling;
+        anchorNode.replaceWith(newElement.firstChild);
+        // Now we need put the rest of the newElement fragment in as siblings
+        while (nextSib) {
+            lastChild = nextSib;
+            beforeTarget.parentNode.insertBefore(nextSib, beforeTarget);
+            nextSib = newElement.firstChild;
+        };
+        newRange = document.createRange();
+        let offset = 0;
+        if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
+            offset = lastChild.textContent.length;
+        } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
+            offset = lastChild.childNodes.length;
+        }
+        newRange.setStart(lastChild, offset);
+        newRange.setEnd(lastChild, offset);
     } else {
-        _consoleLog("not empty: " + anchorNode.textContent)
-        selRange.insertNode(newElement);
-    }
-    newRange.setStart(lastChild, offset);
-    newRange.setEnd(lastChild, offset);
+        _insertHTML(newElement);
+        newRange = document.getSelection().getRangeAt(0);
+    };
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
@@ -963,7 +982,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         undoer.push(undoerData);
     }
     _callback('input');
-    return true
+    return true;
 };
 
 /**
@@ -978,7 +997,201 @@ const _patchPasteHTML = function(html) {
     _cleanUpAttributesWithin('style', element);
     _cleanUpAttributesWithin('class', element);
     _cleanUpMetas(element);
+    _cleanUpBRs(element);
     return element;
+};
+
+const _insertHTML = function(fragment) {
+    //_consoleLog("* _insertHTML")
+    let sel = document.getSelection();
+    let anchorNode = (sel) ? sel.anchorNode : null;
+    if (!anchorNode) {
+        MUError.NoSelection.callback();
+        return null;
+    };
+    let direction;
+    let firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
+    if (firstFragEl && _isEmpty(firstFragEl)) {
+        fragment.removeChild(firstFragEl);
+        firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
+        direction = 'AFTER';
+    }
+    let lastFragEl = (fragment.lastChild && (fragment.lastChild.nodeType === Node.ELEMENT_NODE)) ? fragment.lastChild : null;
+    if (lastFragEl && _isEmpty(lastFragEl)) {
+        fragment.removeChild(lastFragEl);
+        direction = direction || 'BEFORE';  // Only reset if we didn't already set
+    }
+    let selRange = sel.getRangeAt(0).cloneRange();
+    // Handle specially if fragment contains no elements (i.e., just text nodes).
+    const simpleFragment = fragment.childElementCount === 0;
+    if (simpleFragment) {
+        const lastFragChild = fragment.lastChild;
+        selRange.insertNode(fragment); // fragment becomes anchorNode's nextSibling
+        _stripZeroWidthChars(anchorNode.parentNode);
+        const textRange = document.createRange();
+        if (lastFragChild.nodeType === Node.TEXT_NODE) {
+            textRange.setStart(lastFragChild, lastFragChild.textContent.length)
+            textRange.setEnd(lastFragChild, lastFragChild.textContent.length)
+        } else {
+            textRange.setStart(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length)
+            textRange.setEnd(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length)
+        }
+        sel.removeAllRanges();
+        sel.addRange(textRange);
+        //_consoleLog("* Done _insertHTML (simple)")
+        return;
+    }
+    const existingTopLevelItem = _findFirstParentElementInNodeNames(anchorNode, _topLevelTags);
+    const nextTopLevelItem = existingTopLevelItem.nextElementSibling;
+    // Selection is within a text node that needs to be split and then merged with the fragment.
+    // See _splitTextNode comments, but it recreates the node heirarchy at the selection up
+    // to and including the topLevelNode, leaving the selection set in the direction specified.
+    // Like splitText, _splitTextNode returns the trailingText and leaves anchorNode containing
+    // the textNode before the selection.
+    const topLevelNode = _findFirstParentElementInNodeNames(anchorNode, _topLevelTags);
+    if (!topLevelNode) {
+        MUError.CantInsertHtml.callback();
+        return null;
+    };
+    let trailingText = _splitTextNode(anchorNode, selRange.startOffset, topLevelNode.nodeName, direction);
+    sel = document.getSelection();
+    anchorNode = sel.anchorNode;
+    selRange = sel.getRangeAt(0).cloneRange();
+    // Now the selection has been split and left at the beginning of trailingText, which is
+    // where we want to paste the fragment contents.
+    // FIRST, insert all of the firstElFrag's childNodes before
+    // the trailingText. So, for example, if the firstElFrag is
+    // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
+    // gets put just after anchorNode (i.e., before trailingText).
+    const anchorNodeParent = anchorNode.parentNode;
+    const anchorNodeParentName = anchorNodeParent.nodeName;
+    if (firstFragEl) {
+        let firstElChild = firstFragEl.firstChild;
+        while (firstElChild) {
+            if ((firstElChild.nodeType === Node.ELEMENT_NODE) && (firstElChild.nodeName === anchorNodeParent.nodeName)) {
+                let nextChild = firstElChild.firstChild;
+                while (nextChild) {
+                    anchorNode.parentNode.appendChild(nextChild)
+                    nextChild = firstElChild.firstChild;
+                }
+                firstElChild.parentNode.removeChild(firstElChild);
+            } else {
+                trailingText.parentNode.insertBefore(firstElChild, trailingText)
+            }
+            firstElChild = firstFragEl.firstChild;
+        };
+        fragment.removeChild(firstFragEl);
+    };
+    // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
+    // The siblings start with what is now fragment.firstChild.
+    let nextFragSib = fragment.firstChild;
+    while (nextFragSib) {
+        if (_topLevelTags.includes(nextFragSib.nodeName)) {
+            existingTopLevelItem.insertBefore(nextFragSib, nextTopLevelItem)
+        } else {
+            trailingText.parentNode.insertBefore(nextFragSib, trailingText);
+        }
+        nextFragSib = fragment.firstChild;
+    };
+    const textRange = document.createRange();
+    textRange.setStart(trailingText, 0);
+    textRange.setEnd(trailingText, 0);
+    sel.removeAllRanges();
+    sel.addRange(textRange);
+    //_consoleLog("* Done _insertHTML")
+};
+
+/**
+ * Split the textNode at offset, but also split its parents up to and
+ * including the parent with name rootName.
+ *
+ * For example...
+ *      <p>Hello <b>bo|ld</b> world</p>
+ * when split at the | would result in...
+ *      <p>Hello <b>bo</b></p><p><b>ld</b> world</p>
+ *
+ * Direction identifies whether selection is reset at just BEFORE the
+ * offset or AFTER the offset, and is always reset.
+ *
+ * The behavior here is very much like pressing Enter. There are several
+ * cases (Enter and Paste) where I wish I could get the default Enter behavior
+ * and then take action afterward. There is no way to create a trusted
+ * Enter event from JavaScript, so this is the rough equivalent.
+ *
+ * Like splitText, return the trailingText (result of textNode.splitText(offset)),
+ * and leave textNode as the leadingText after the split. Note, however, unlike
+ * splitText, trailingText might be embedded in a new element, not just be
+ * a text node in the existing element. The leadingText remains where it was in
+ * terms of the document structure, altho it might be empty depending on offset.
+ */
+const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTER') {
+    if (textNode.nodeType !== Node.TEXT_NODE) {
+        const error = MUError.InvalidSplitTextNode;
+        error.setInfo('Node name was ' + textNode.nodeName);
+        error.callback();
+        return textNode;    // Seems least problematic
+    }
+    const rootNode = _findFirstParentElementInNodeNames(textNode, [rootName]);
+    if (rootName && !rootNode) {
+        const error = MUError.InvalidSplitTextRoot;
+        error.setInfo('The rootName was ' + rootName);
+        error.callback();
+        return textNode;    // Seems least problematic
+    }
+    // Note that trailingText or leadingText can be empty text nodes when
+    // offset is 0 or textNode.textContent.length
+    const trailingText = textNode.splitText(offset);
+    const leadingText = textNode;   // Use leadingText name for clarity
+    if (rootNode) {
+        // We want to recreate the node heirarchy up to and including rootNode.
+        // Moving up from trailingText, put all the intermediate parents into
+        // a newContainer, resulting in a newContainer with nodeName = rootName.
+        // To move siblings afterward, track the nextSib of trailingText before
+        // putting trailingText in the newContainer. For example,
+        // for <p>Hello <b>bo|ld</b> world</p>, nextSib has to be <b> so
+        // that we move the " world" after it. In a nested case, like
+        // <p>Hello <i><b>bo|ld</b></i> world</p>, it needs to be <i>. OTOH,
+        // for <p>Hel|lo <b>bold</b> world<p>, nextSib needs to be "Hel",
+        // and sibs include <b>bold</b>, and " world".
+        let existingContainer = trailingText.parentNode;
+        let existingContainerName = existingContainer.nodeName;
+        let newContainer = document.createElement(existingContainerName);
+        let nextSib = trailingText.nextSibling;
+        newContainer.appendChild(trailingText);
+        let nestedContainer = newContainer;
+        while (existingContainerName !== rootName) {
+            nextSib = existingContainer.nextSibling;
+            existingContainer = existingContainer.parentNode;
+            existingContainerName = existingContainer.nodeName;
+            newContainer = document.createElement(existingContainerName);
+            newContainer.appendChild(nestedContainer);
+            nestedContainer = newContainer;
+        };
+        // Put the newContainer in the right place.
+        rootNode.parentNode.insertBefore(newContainer, rootNode.nextSibling);
+        // And then append all of the nextSiblings
+        let nextNextSib;
+        while (nextSib) {
+            nextNextSib = nextSib.nextSibling;
+            newContainer.appendChild(nextSib);
+            nextSib = nextNextSib;
+        };
+    };
+    const range = document.createRange();
+    let rangeContainer, rangeOffset;
+    if (direction === 'AFTER') {
+        rangeContainer = trailingText;
+        rangeOffset = 0;
+    } else {
+        rangeContainer = leadingText;
+        rangeOffset = leadingText.textContent.length;
+    }
+    range.setStart(rangeContainer, rangeOffset);
+    range.setEnd(rangeContainer, rangeOffset);
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return trailingText;
 };
 
 /**
@@ -1783,13 +1996,17 @@ const _stripZeroWidthChars = function(element) {
 }
 
 /**
- * Return true if element and all of its children are empty.
+ * Return true if element and all of its children are empty or
+ * if it is an empty text node.
  *
  * For example, <li><p></p></li> is empty, as is <li></li>, while
  * <li><p> <p></li> and <li> <li> will have text elements and are
  * therefore not empty.
  */
 const _isEmpty = function(element) {
+    if (element.nodeType === Node.TEXT_NODE) {
+        return _isWhiteSpace(element.textContent);
+    }
     const childNodes = element.childNodes;
     for (let i=0; i<childNodes.length; i++) {
         const childNode = childNodes[i];
@@ -2884,6 +3101,22 @@ const _cleanUpMetas = function(node) {
     };
 };
 
+/*
+ * Put any direct childNodes of node that are BRs into paragraphs.
+ */
+const _cleanUpBRs = function(node) {
+    const childNodes = node.childNodes;
+    for (i=0; i < childNodes.length; i++) {
+        const child = childNodes[i];
+        const childName = child.nodeName;
+        if (childName === 'BR') {
+            const p = document.createElement('p');
+            node.insertBefore(p, child);
+            p.appendChild(child);
+        };
+    };
+};
+
 /**
  * Standard webkit editing may leave messy and useless SPANs all over the place.
  * This method just cleans them all up and notifies Swift that the content
@@ -2911,13 +3144,14 @@ const _cleanUpSpans = function() {
  *
  * @return {Int}    The number of spans removed
  */
-const _cleanUpSpansWithin = function(node) {
-    let spansRemoved = 0;
-    const children = node.children;
-    if (children.length > 0) {
-        for (let i=0; i<children.length; i++) {
-            spansRemoved += _cleanUpSpansWithin(children[i]);
-        };
+const _cleanUpSpansWithin = function(node, spansRemoved) {
+    spansRemoved = spansRemoved ?? 0;
+    // Spans are not elements, so have no children; however, nested
+    // spans do show up as childNodes of a span.
+    const childNodes = node.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        const child = childNodes[i];
+        spansRemoved = _cleanUpSpansWithin(child, spansRemoved);
     };
     if (node.nodeName === 'SPAN') {
         spansRemoved++;
@@ -3054,19 +3288,21 @@ const _tripleClickSelect = function(sel) {
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
  */
-const _listStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];
+const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];      // All paragraph styles
 
-const _styleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'OL', 'UL'];
+const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);          // Possible containing blocks in a list
 
-const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];
+const _styleTags = _paragraphStyleTags.concat(['LI', 'BLOCKQUOTE', 'OL', 'UL']);    // Identify insert-before point in table/list
 
-const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];
+const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];           // All possible (nestable) formats
 
-const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];           // All tags associated with tables
 
-const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];
+const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];              // Tags we monitor for Enter
 
-const _monitorIndentTags = ['UL', 'OL', 'BLOCKQUOTE'];
+const _monitorIndentTags = ['UL', 'OL', 'BLOCKQUOTE'];                      // Tags we monitor for Tab or Ctrl+]
+
+const _topLevelTags = _paragraphStyleTags.concat(['OL', 'UL', 'TABLE']);    // Allowed top-level tags within editor
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -3364,7 +3600,7 @@ MU.deleteLink = function(undoable=true) {
     // When we call this method, sel is the text inside of an anchorNode
     _restoreSelection();
     const sel = document.getSelection();
-    if (sel) {
+    if (sel && sel.anchorNode && sel.anchorNode.parentElement) {
         const element = sel.anchorNode.parentElement;
         if ('A' === element.nodeName) {
             // Before we _unsetTag, we know what element is and can determine what to select
@@ -3400,7 +3636,7 @@ MU.deleteLink = function(undoable=true) {
 const _getLinkAttributesAtSelection = function() {
     const link = {};
     const sel = document.getSelection();
-    if (sel) {
+    if (sel && sel.anchorNode && sel.anchorNode.parentElement) {
         const element = sel.anchorNode.parentElement;
         if ('A' === element.nodeName) {
             link['href'] = element.getAttribute('href');
@@ -4478,7 +4714,7 @@ const _selectionTagsMatching = function(nodeNames) {
     if (sel && sel.focusNode) {
         return _tagsMatching(sel.focusNode, nodeNames);
     } else {
-        return null;
+        return [];
     };
 };
 
@@ -4740,7 +4976,7 @@ const _deleteAndResetSelection = function(element, direction) {
  */
 const _getElementAtSelection = function(nodeName) {
     const sel = document.getSelection();
-    if (sel) {  // Removed check on && isCollapsed
+    if (sel && sel.anchorNode) {  // Removed check on && isCollapsed
         const node = sel.anchorNode;
         const anchorOffset = sel.anchorOffset;
         if ((node.nodeType === Node.TEXT_NODE) && (sel.isCollapsed)) {
