@@ -1041,8 +1041,6 @@ const _insertHTML = function(fragment) {
         //_consoleLog("* Done _insertHTML (simple)")
         return;
     }
-    const existingTopLevelItem = _findFirstParentElementInNodeNames(anchorNode, _topLevelTags);
-    const nextTopLevelItem = existingTopLevelItem.nextElementSibling;
     // Selection is within a text node that needs to be split and then merged with the fragment.
     // See _splitTextNode comments, but it recreates the node heirarchy at the selection up
     // to and including the topLevelNode, leaving the selection set in the direction specified.
@@ -1060,34 +1058,27 @@ const _insertHTML = function(fragment) {
     // Now the selection has been split and left at the beginning of trailingText, which is
     // where we want to paste the fragment contents.
     // FIRST, insert all of the firstElFrag's childNodes before
-    // the trailingText. So, for example, if the firstElFrag is
+    // the trailingText if the nodeNames match. So, for example, if the firstElFrag is
     // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
-    // gets put just after anchorNode (i.e., before trailingText).
+    // gets put just before trailingText if being inserted into an h5.
     const anchorNodeParent = anchorNode.parentNode;
     const anchorNodeParentName = anchorNodeParent.nodeName;
-    if (firstFragEl) {
+    if (firstFragEl && (firstFragEl.nodeName === anchorNodeParentName)) {
         let firstElChild = firstFragEl.firstChild;
         while (firstElChild) {
-            if ((firstElChild.nodeType === Node.ELEMENT_NODE) && (firstElChild.nodeName === anchorNodeParent.nodeName)) {
-                let nextChild = firstElChild.firstChild;
-                while (nextChild) {
-                    anchorNode.parentNode.appendChild(nextChild)
-                    nextChild = firstElChild.firstChild;
-                }
-                firstElChild.parentNode.removeChild(firstElChild);
-            } else {
-                trailingText.parentNode.insertBefore(firstElChild, trailingText)
-            }
+            trailingText.parentNode.insertBefore(firstElChild, trailingText);
             firstElChild = firstFragEl.firstChild;
         };
         fragment.removeChild(firstFragEl);
     };
     // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
-    // The siblings start with what is now fragment.firstChild.
+    // The siblings start with what is now fragment.firstChild. If the nodeTypes didn't match, then
+    // this will be the same as firstFragEl.
     let nextFragSib = fragment.firstChild;
+    const existingTopLevelItem = _findFirstParentElementInNodeNames(trailingText, _topLevelTags);
     while (nextFragSib) {
         if (_topLevelTags.includes(nextFragSib.nodeName)) {
-            existingTopLevelItem.insertBefore(nextFragSib, nextTopLevelItem)
+            existingTopLevelItem.parentNode.insertBefore(nextFragSib, existingTopLevelItem)
         } else {
             trailingText.parentNode.insertBefore(nextFragSib, trailingText);
         }
