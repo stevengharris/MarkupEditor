@@ -3097,7 +3097,7 @@ const _cleanUpMetas = function(node) {
  */
 const _cleanUpBRs = function(node) {
     const childNodes = node.childNodes;
-    for (i=0; i < childNodes.length; i++) {
+    for (let i=0; i < childNodes.length; i++) {
         const child = childNodes[i];
         const childName = child.nodeName;
         if (childName === 'BR') {
