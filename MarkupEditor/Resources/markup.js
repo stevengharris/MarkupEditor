@@ -1269,6 +1269,7 @@ const _undoPasteText = function(undoerData) {
  * Redo the paste operation after it has been undone by _undoPasteText.
  */
 const _redoPasteText = function(undoerData) {
+    _restoreUndoerRange(undoerData);
     _pasteText(undoerData.data.text, undoerData, false)
 }
 
@@ -1285,22 +1286,22 @@ const _undoPasteHTML = function(undoerData) {
     sel.removeAllRanges();
     sel.addRange(pasteRange);
     pasteRange.deleteContents();
+    if (deletedFragment) {
+        _insertHTML(deletedFragment);
+        sel = document.getSelection();
+    };
     const newRange = document.createRange();
     newRange.setStart(sel.anchorNode, offset);
-    if (deletedFragment) {
-        sel.insertNode(deletedFragment);
-        newRange.setEnd(sel.focusNode, 0);
-    } else {
-        newRange.setEnd(sel.anchorNode, offset);
-    };
+    newRange.setEnd(sel.anchorNode, offset);
     sel.removeAllRanges();
     sel.addRange(newRange);
+    _backupSelection();
+    _callback('input');
 };
 
 const _redoPasteHTML = function(undoerData) {
-    const html = undoerData.data.html;
     _restoreUndoerRange(undoerData);
-    _pasteHTML(html, undoerData, false);
+    _pasteHTML(undoerData.data.html, undoerData, false);
 };
 
 /********************************************************************************
