@@ -80,9 +80,11 @@ class MUError {
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
     static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
     static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
+    static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
+    static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
     static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.');
     static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
     static PatchFormatNodeNotSiblings = new MUError('PatchFormatNodeNotSiblings', 'The anchorNode and focusNode are not siblings.')
@@ -921,7 +923,6 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     };
     let focusNode = sel.focusNode;
     let selRange = sel.getRangeAt(0).cloneRange();
-    let startOffset = selRange.startOffset;
     // If sel is not collapsed, delete the entire selection and reset before continuing.
     // Track the deletedFragment.
     let deletedFragment;
@@ -947,7 +948,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
     const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
     const anchorIsEmpty = _isEmpty(anchorNode);
-    let newSelRange, pasteRange;
+    let newSelRange, pasteRange, rootName;
     if (anchorIsElement && firstChildIsElement && anchorIsEmpty) {
         // We are in an empty paragraph, typically, like <p><br></p>. Replace it with the newElement
         // manually by replacing the anchor with the firstChild, followed by all of its siblings.
@@ -976,13 +977,28 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         }
         newSelRange.setStart(lastChild, offset);
         newSelRange.setEnd(lastChild, offset);
+        pasteRange.setStart(lastChild, offset);
         pasteRange.setEnd(lastChild, offset);
+        rootName = null;
     } else {
-        pasteRange = _insertHTML(newElement);
+        const insertResults = _insertHTML(newElement);
+        if (insertResults) {
+            pasteRange = insertResults.insertedRange;
+            rootName = insertResults.rootName;
+        };
         newSelRange = document.getSelection().getRangeAt(0);
     };
+    // As we patch up the results of pasting later, the offsets in the undoerData.range get
+    // set to zero, even tho the startContainer and endContainer remain valid. We hold onto
+    // them separately in undoerData so we can restore them later.
+    const startOffset = pasteRange.startOffset;
+    const endOffset = pasteRange.endOffset;
     if (redoing) {
-        oldUndoerData.data.pasteRange = pasteRange;
+        oldUndoerData.range = pasteRange;
+        oldUndoerData.data.startOffset = startOffset;
+        oldUndoerData.data.endOffset = endOffset;
+        _consoleLog(_rangeString(pasteRange, "redo"));
+        _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
     }
     sel.removeAllRanges();
     sel.addRange(newSelRange);
@@ -991,8 +1007,11 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         // html - What was pasted, probably contains spans, styles and other cruft
         // offset - The offset into the (text) anchorNode at the starting selection
         // deletedFragment - What (if anything) we deleted before pasting
-        // pasteRange - Range that contains what we pasted after all the shenanigans are over
-        const undoerData = _undoerData('pasteHTML', {html: html, offset: startOffset, deletedFragment: deletedFragment, pasteRange: pasteRange});
+        // rootName - The name of the node we splitText up to, or null if we didn't splitText
+        // pasteRange - (saved as undoerData.range) Range that contains what we pasted
+        _consoleLog(_rangeString(pasteRange, "do"));
+        _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
+        const undoerData = _undoerData('pasteHTML', {html: html, startOffset: startOffset, endOffset: endOffset, deletedFragment: deletedFragment, rootName: rootName}, pasteRange);
         undoer.push(undoerData);
     }
     _callback('input');
@@ -1018,7 +1037,9 @@ const _patchPasteHTML = function(html) {
 /**
  * Insert the fragment at the current selection point.
  *
- * Return a range containing the fragment that was inserted.
+ * Return a range containing the fragment that was inserted and whether the selection
+ * was split into multiple elements using _splitTextNode. If so, then on undo, we
+ * can tell whether we should unsplit them.
  */
 const _insertHTML = function(fragment) {
     //_consoleLog("* _insertHTML")
@@ -1028,7 +1049,7 @@ const _insertHTML = function(fragment) {
         MUError.NoSelection.callback();
         return null;
     };
-    let selRange = sel.getRangeAt(0).cloneRange();
+    let selRange = sel.getRangeAt(0);
     let direction;
     let firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
     if (firstFragEl && _isEmpty(firstFragEl)) {
@@ -1042,10 +1063,21 @@ const _insertHTML = function(fragment) {
         direction = direction || 'BEFORE';  // Only reset if we didn't already set
     }
     // Handle specially if fragment contains no elements (i.e., just text nodes).
-    const simpleFragment = fragment.childElementCount === 0;
+    // TODO: Could just use noTopLevelChildren
+    // However, not sure if this is really right in cases with things like lists included, which
+    // don't work properly now anyway.
+    const noChildElements = fragment.childElementCount === 0;
+    let noTopLevelChildren = true;
+    const fragChildNodes = fragment.childNodes;
+    for (let i=0; i < fragChildNodes.length; i++) {
+        if (_topLevelTags.includes(fragChildNodes[i].nodeName)) {
+            noTopLevelChildren = false;
+            break;
+        }
+    };
     const newSelRange = document.createRange();     // Collapsed at the end of the fragment
     const insertedRange = document.createRange();   // Spanning the fragment
-    if (simpleFragment) {
+    if (noChildElements || noTopLevelChildren) {
         const lastFragChild = fragment.lastChild;
         selRange.insertNode(fragment); // fragment becomes anchorNode's nextSibling
         _stripZeroWidthChars(anchorNode.parentNode);
@@ -1062,7 +1094,7 @@ const _insertHTML = function(fragment) {
         sel.removeAllRanges();
         sel.addRange(newSelRange);
         //_consoleLog("* Done _insertHTML (simple)")
-        return insertedRange;
+        return {insertedRange: insertedRange, rootName: null};
     }
     // Selection is within a text node that needs to be split and then merged with the fragment.
     // See _splitTextNode comments, but it recreates the node heirarchy at the selection up
@@ -1074,7 +1106,8 @@ const _insertHTML = function(fragment) {
         MUError.CantInsertHtml.callback();
         return null;
     };
-    let trailingText = _splitTextNode(anchorNode, selRange.startOffset, topLevelNode.nodeName, direction);
+    const rootName = topLevelNode.nodeName;
+    let trailingText = _splitTextNode(anchorNode, selRange.startOffset, rootName, direction);
     // Regardless of what we do now to insert the fragment, the trailingText and anchorNode define
     // the span of the fragment which will sit between those points.
     insertedRange.setStart(anchorNode, anchorNode.textContent.length);
@@ -1083,17 +1116,18 @@ const _insertHTML = function(fragment) {
     anchorNode = sel.anchorNode;
     selRange = sel.getRangeAt(0).cloneRange();
     // Now the selection has been split and left at the beginning of trailingText, which is
-    // where we want to paste the fragment contents.
-    // FIRST, insert all of the firstElFrag's childNodes before
-    // the trailingText if the nodeNames match. So, for example, if the firstElFrag is
+    // where we generally want to paste the fragment contents.
+    // FIRST, insert all of the firstElFrag's childNodes at the end of anchodNode
+    // if the nodeNames match. So, for example, if the firstElFrag is
     // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
-    // gets put just before trailingText if being inserted into an h5.
+    // gets put at the end of the anchorNode.
     const anchorNodeParent = anchorNode.parentNode;
     const anchorNodeParentName = anchorNodeParent.nodeName;
     if (firstFragEl && (firstFragEl.nodeName === anchorNodeParentName)) {
         let firstElChild = firstFragEl.firstChild;
         while (firstElChild) {
-            trailingText.parentNode.insertBefore(firstElChild, trailingText);
+            anchorNodeParent.appendChild(firstElChild);
+            //trailingText.parentNode.insertBefore(firstElChild, trailingText);
             firstElChild = firstFragEl.firstChild;
         };
         fragment.removeChild(firstFragEl);
@@ -1101,6 +1135,12 @@ const _insertHTML = function(fragment) {
     // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
     // The siblings start with what is now fragment.firstChild. If the nodeTypes didn't match, then
     // this will be the same as firstFragEl.
+    // TODO: This is wrong, at least for the case of multiple paragraphs being pasted as the
+    // end of another paragraph. In that case, trailingText is an empty text in an empty paragraph.
+    // In that case, it seems like the firstFragEl business above should be appending children to
+    // the end of anchorNodeParent, not before trailingText. Then this SECOND logic putting things
+    // in front of trailingText would be correct. Need to think about whether I'm now forgetting
+    // some other case!!!!
     let nextFragSib = fragment.firstChild;
     const existingTopLevelItem = _findFirstParentElementInNodeNames(trailingText, _topLevelTags);
     while (nextFragSib) {
@@ -1116,7 +1156,7 @@ const _insertHTML = function(fragment) {
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
-    return insertedRange;
+    return {insertedRange: insertedRange, rootName: rootName}
 };
 
 /**
@@ -1213,17 +1253,143 @@ const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTE
 };
 
 /**
+ * Join the parents of leadingNode and trailingNode at their parentNode with name rootName.
+ *
+ * For example, in <p>Hello <b>bo|ld</b> world</p> when splitTextNode at |, we end up with
+ * <p>Hello <b>bo</b></p><p><b>ld</b> world</p>, with the selection anchorNode at
+ * <p>Hello <b>bo|</b></p> and the selection focusNode at <p><b>|ld</b> world</p>.
+ * If we _joinNodes(anchorNode, focusNode, 'P'), then we end back up with
+ * <p>Hello <b>bo|ld</b> world</p>.
+ *
+ * This is like the _splitTextNode equivalent of normalize() for _splitText.
+ *
+ * As we move contents from the trailingRoot into the leadingRoot, the selection will remain
+ * valid unless we combine text nodes my modifying textContent. In that case, we need to reset
+ * the selection. If we just move nodes around using appendChild or insertBefore, the selection
+ * remains valid; if it was in the trailingRoot before, when done it will be in the leadingRoot.
+ */
+const _joinNodes = function(leadingNode, trailingNode, rootName) {
+    const leadingRoot = _findFirstParentElementInNodeNames(leadingNode, [rootName]);
+    const trailingRoot = _findFirstParentElementInNodeNames(trailingNode, [rootName]);
+    // We need to be able to locate leadingRoot and trailingRoot above the leadingNode and trailingNode.
+    if (!(leadingRoot && trailingRoot)) {
+        const error = MUError.InvalidJoinNodes;
+        error.setInfo('Could not join at ' + rootName + ' (leadingRoot: ' + leadingRoot + ', trailingRoot: ' + trailingRoot + ').');
+        error.callback();
+        return;
+    };
+    // The lastChild within leadingRoot has to be the same nodeName as the firstChild of trailingRoot.
+    // If they are not the same nodeName, then they were not created using splitTextNode or are otherwise
+    // violating the assumptions used when joining them. For example, starting with <p><b>bo|ld</b></p>
+    // which is then splitTextNode at 'P' into <p><b>bo</b></p><p><b>ld</b></p>, leadingNode will be
+    // <b>bo</b> and trailingNode will be <b>ld</b>, and the lastLeadingChild and firstTrailingChild will
+    // both be the same 'B' nodeName. However, when starting with <p><i><b>bo|ld</b><i></p> which is then
+    // splitTextNode at 'P' into <p><i><b>bo</b></i></p><p><i><b>ld</b></i></p>, leadingNode and trailingNode
+    // will be the same as before, but lastLeadingChild will be <i><b>bo</b></i> and firstTrailingChild will
+    // be <i><b>ld</b></i>. This is an important distinction because we want to fold the contents of
+    // firstTrailingChild into the lastLeadingChild.
+    const lastLeadingChild = leadingRoot.lastChild;
+    const firstTrailingChild = trailingRoot.firstChild;
+    if (lastLeadingChild.nodeName !== firstTrailingChild.nodeName) {
+        const error = MU.InvalidJoinNodes;
+        error.setInfo('Could not join at ' + rootName + ' (lastLeadingChild: ' + lastLeadingChild + ', firstTrailingChild: ' + firstTrailingChild + ').');
+        error.callback();
+        return;
+    }
+    _consoleLog("* _joinNodes(" + leadingNode + ", " + trailingNode + ", " + rootName);
+    // Start by treating firstTrailingChild specially.
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0);
+    const originalStartContainer = range.startContainer;
+    const originalStartOffset = range.startOffset;
+    const originalEndContainer = range.endContainer;
+    const originalEndOffset = range.endOffset;
+    let newStartContainer = originalStartContainer;
+    let newStartOffset = originalStartOffset;
+    let newEndContainer = originalEndContainer;
+    let newEndOffset = originalEndOffset;
+    // The next two consts tell us whether the lastLeadingChild needs to replace the startContainer.
+    // or endContainer. Exactly how we do it depends on what we encounter.
+    const startWithFirstChild = (originalStartContainer === firstTrailingChild) || ((originalStartContainer === trailingRoot) && (originalStartOffset === 0));
+    const endWithFirstChild = (originalEndContainer === firstTrailingChild) || ((originalEndContainer === trailingRoot) && (originalEndOffset === 0));
+    if (firstTrailingChild.nodeType === Node.TEXT_NODE) {
+        // We just have to append text from the firstTrailingChild to the lastLeadingChild
+        if (startWithFirstChild) {
+            newStartContainer = lastLeadingChild;
+            newStartOffset = lastLeadingChild.textContent.length + originalStartOffset;
+        }
+        if (endWithFirstChild) {
+            newEndContainer = lastLeadingChild;
+            newEndOffset = lastLeadingChild.textContent.length + originalEndOffset;
+        }
+        lastLeadingChild.textContent = lastLeadingChild.textContent + firstTrailingChild.textContent;
+        // Remove the firstTrailingChild so that it's no longer in trailingRoot
+        trailingRoot.removeChild(firstTrailingChild);
+    } else if (firstTrailingChild.nodeType === Node.ELEMENT_NODE) {
+        // We have some kind of nested elements (like <i><b>Hello</b></i> that we need to walk down to find
+        // the embedded text element we are going to join to the corresponding lastLeadingChild's nested
+        // element. The nesting needs to match (as it will for splitTextNode), or our assumptions have been
+        // violated.
+        let lastLeadingGrandchild = lastLeadingChild.firstChild;
+        let firstTrailingGrandchild = firstTrailingChild.firstChild;
+        while (firstTrailingGrandchild) {
+            if (lastLeadingGrandchild.nodeName !== firstTrailingGrandchild.nodeName) {
+                const error = MU.InvalidJoinNodes;
+                error.setInfo('Could not join at ' + rootName + ' (lastLeadingGrandchild: ' + lastLeadingGrandchild + ', firstTrailingGrandchild: ' + firstTrailingGrandchild + ').');
+                error.callback();
+                return;
+            };
+            if (firstTrailingGrandchild.nodeType === Node.TEXT_NODE) {
+                if (startWithFirstChild) {
+                    newStartContainer = lastLeadingGrandchild;
+                    newStartOffset = lastLeadingGrandchild.textContent.length;
+                };
+                if (endWithFirstChild) {
+                    newEndContainer = lastLeadingGrandchild;
+                    newEndOffset = lastLeadingGrandchild.textContent.length;
+                };
+                lastLeadingGrandchild.textContent = lastLeadingGrandchild.textContent + firstTrailingGrandchild.textContent;
+                firstTrailingGrandchild = null;
+            } else {
+                lastLeadingGrandchild = lastLeadingGrandchild.firstChild;
+                firstTrailingGrandchild = firstTrailingGrandchild.firstChild;
+            };
+        };
+        // Remove the firstTrailingChild so that it's no longer in trailingRoot
+        trailingRoot.removeChild(firstTrailingChild);
+    };
+    // Now we can just appendChild all the childNodes of trailingRoot to leadingRoot.
+    // If we joined text together, the original firstTrailingChild was removed.
+    // It's theoretically possible that firstTrailingChild was a <br>. If so, we will
+    // append here, not previously.
+    let trailingChild = trailingRoot.firstChild;
+    while (trailingChild) {
+        leadingRoot.appendChild(trailingChild);
+        trailingChild = trailingRoot.firstChild;
+    }
+    // Remove the now-empty trailingRoot and patch up the selection
+    trailingRoot.parentNode.removeChild(trailingRoot);
+    const newSel = document.getSelection();
+    const newRange = document.createRange();
+    newRange.setStart(newStartContainer, newStartOffset);
+    newRange.setEnd(newEndContainer, newEndOffset);
+    newSel.removeAllRanges();
+    newSel.addRange(newRange);
+    _consoleLog("* Done _joinNodes")
+}
+
+/**
  * Undo the paste operation after it was done via _pasteText.
  */
 const _undoPasteText = function(undoerData) {
-    // The pasted text data was placed before the undoerData.date.offset in startContainer.
+    // The pasted text data was placed before the undoerData.date.startOffset in startContainer.
     // It should still be in the same place, but we double-check before undoing.
     const startContainer = undoerData.range.startContainer;
     const text = undoerData.data.text;
-    const offset = undoerData.data.offset;
+    const startOffset = undoerData.data.startOffset;
     const textContent = startContainer.textContent;
-    const startPastedContent = offset - text.length;
-    const endPastedContent = offset;
+    const startPastedContent = startOffset - text.length;
+    const endPastedContent = startOffset;
     const pastedContent = textContent.slice(startPastedContent, endPastedContent);
     if (pastedContent === text) {
         const startText = textContent.slice(0, startPastedContent);         // text before pastedContent
@@ -1276,23 +1442,36 @@ const _redoPasteText = function(undoerData) {
 const _undoPasteHTML = function(undoerData) {
     // The undoerData contains:
     //  html - What was pasted, probably contains spans, styles and other cruft
-    //  offset - The offset into the (text) anchorNode at the starting selection
+    //  startOffset - The offset into the (text) anchorNode at the starting selection
+    //  endOffset - The offset into the (text) focusNode at the starting selection
     //  deletedFragment - What (if anything) we deleted before pasting
-    //  pasteRange - Range that contains what we pasted after all the shenanigans are over
-    const pasteRange = undoerData.data.pasteRange;
-    const offset = undoerData.data.offset;
+    //  rootName - The name of the node we splitText up to, or null if we didn't splitText
+    //  pasteRange - (saved as undoerData.range) Range that contains what we pasted
+    const pasteRange = undoerData.range;
+    const rootName = undoerData.data.rootName;
     const deletedFragment = undoerData.data.deletedFragment;
-    let sel = document.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(pasteRange);
-    pasteRange.deleteContents();
+    // Before undoing, patch up the undoerData.range with the startOffset and endOffset.
+    const startOffset = undoerData.data.startOffset;
+    const endOffset = undoerData.data.endOffset;
+    pasteRange.setStart(pasteRange.startContainer, startOffset);
+    pasteRange.setEnd(pasteRange.endContainer, endOffset);
+    _consoleLog(_rangeString(pasteRange, "undo"));
+    _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
+    _deleteRange(pasteRange, rootName);
+    // At this point, what was pasted-in is gone, and the document looks like if it had
+    // never been pasted-in, except for the deletedFragment if there was one.
+    const sel = document.getSelection();
+    let newRange = sel.getRangeAt(0);
     if (deletedFragment) {
-        _insertHTML(deletedFragment);
-        sel = document.getSelection();
+        // We previously had deleted some selected text when pasting.
+        // Re-insert the deletedFragment. This will reset the selection
+        // and return a range that surrounds the now-inserted deletedFragment,
+        // which is what we want to select when done.
+        const insertResults = _insertHTML(deletedFragment);
+        if (insertResults) {
+            newRange = insertResults.insertedRange;
+        };
     };
-    const newRange = document.createRange();
-    newRange.setStart(sel.anchorNode, offset);
-    newRange.setEnd(sel.anchorNode, offset);
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
@@ -1303,6 +1482,118 @@ const _redoPasteHTML = function(undoerData) {
     _restoreUndoerRange(undoerData);
     _pasteHTML(undoerData.data.html, undoerData, false);
 };
+
+const _rangeFor = function(node, direction="START") {
+    const range = document.createRange();
+    let offset;
+    if (direction === "START") {
+        offset = 0;
+    } else {
+        if (node.nodeType === Node.TEXT_NODE) {
+            offset = node.textContent.length;
+        } else {
+            offset = node.childNodes.length;
+        };
+    }
+    range.setStart(node, offset);
+    range.setEnd(node, offset);
+    return range;
+}
+
+/**
+ * Delete the range and reset selection if needed.
+ *
+ * If the selection anchorNode is empty after deleting range, then
+ * delete the anchorNode and reset the selection to the nearest sibling,
+ * preferring the end of the previousSibling if it exists.
+ *
+ * If rootName is not null, then it identifies the nodeName that was split
+ * up-to when range was inserted. For example, in <p>Hello <b>bo|ld</b> world</p>
+ * when split at |, we ended up with <p>Hello <b>bo</b></p><p><b>ld</b> world</p>,
+ * and the range would span from the end of <b>bo</b> to the beginning of <b>ld</b>.
+ * Then we pasted in some fragment, which we are now deleting. After we delete range,
+ * we end up with <p>Hello <b>bo</b></p><p><b>ld</b> world</p> when what we want is
+ * <p>Hello <b>bo|ld</b> world</p>. If rootName is specified as 'P', then this
+ * tells us we need to combine the P that <b>bo</b> is in with the P that <b>ld</b>
+ * is in. This is kind of like the _splitTextNode equivalent of normalize()
+ * for _splitText.
+ *
+ * In all cases, it's important to patch up the range that is passed-in so that it is
+ * still valid and represents the selection after deleting the range.
+ */
+const _deleteRange = function(range, rootName) {
+    let leadingNode = range.startContainer;
+    let trailingNode = range.endContainer;
+    range.deleteContents();
+    const sel = document.getSelection();
+    const anchorNode = sel.anchorNode;
+    let newRange;
+    if (anchorNode && _isEmpty(anchorNode)) {
+        const prevSib = anchorNode.previousSibling;
+        const nextSib = anchorNode.nextSibling;
+        const parentNode = anchorNode.parentNode;
+        parentNode.removeChild(anchorNode);
+        if (prevSib) {
+            newRange = _rangeFor(prevSib, 'END');
+        } else if (nextSib) {
+            newRange = _rangeFor(nextSib, 'START');
+        } else {
+            newRange = _rangeFor(parentNode, 'START');
+        };
+    } else {
+        newRange = document.createRange();
+        newRange.setStart(leadingNode, leadingNode.textContent.length);
+        newRange.setEnd(trailingNode, 0);
+    };
+    range.setStart(newRange.startContainer, newRange.startOffset);
+    range.setEnd(newRange.endContainer, newRange.endOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    leadingNode = newRange.startContainer;  // because it might have changed
+    trailingNode = newRange.endContainer;   // because it might have changed
+    if (rootName && (leadingNode !== trailingNode)) {
+        _joinNodes(leadingNode, trailingNode, rootName);
+        newRange = document.getSelection().getRangeAt(0);
+        range.setStart(newRange.startContainer, newRange.startOffset);
+        range.setEnd(newRange.endContainer, newRange.endOffset);
+        _consoleLog(_rangeString(range, "after _joinNodes"));
+    }
+};
+
+/*
+const _deleteRange = function(range, rootName) {
+    let leadingNode = range.startContainer;
+    let trailingNode = range.endContainer;
+    range.deleteContents();
+    const sel = document.getSelection();
+    const anchorNode = sel.anchorNode;
+    let newRange;
+    if (anchorNode && _isEmpty(anchorNode)) {
+        const prevSib = anchorNode.previousSibling;
+        const nextSib = anchorNode.nextSibling;
+        const parentNode = anchorNode.parentNode;
+        parentNode.removeChild(anchorNode);
+        if (prevSib) {
+            newRange = _rangeFor(prevSib, 'END');
+        } else if (nextSib) {
+            newRange = _rangeFor(nextSib, 'START');
+        } else {
+            newRange = _rangeFor(parentNode, 'START');
+        };
+    } else {
+        newRange = document.createRange();
+        newRange.setStart(leadingNode, leadingNode.textContent.length);
+        newRange.setEnd(trailingNode, 0);
+    };
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    if (rootName) {
+        leadingNode = newRange.startContainer;  // because it might have changed
+        trailingNode = newRange.endContainer;   // because it might have changed
+        _joinNodes(leadingNode, trailingNode, rootName);
+    }
+};
+ */
 
 /********************************************************************************
  * Getting and setting document contents
@@ -1879,7 +2170,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) {
-        _consoleLog("Error - not in a list or a listItem")
+        MUError.NotInList.callback();
         return null;
     };
     let undoerRange = sel.getRangeAt(0).cloneRange();
@@ -2055,16 +2346,11 @@ const _stripZeroWidthChars = function(element) {
  */
 const _isEmpty = function(element) {
     if (element.nodeType === Node.TEXT_NODE) {
-        return _isWhiteSpace(element.textContent);
+        return element.textContent.trim().length === 0;
     }
     const childNodes = element.childNodes;
     for (let i=0; i<childNodes.length; i++) {
-        const childNode = childNodes[i];
-        if ((childNode.nodeType === Node.ELEMENT_NODE) && !_isEmpty(childNode)) {
-            return false;
-        } else if ((childNode.nodeType === Node.TEXT_NODE) && (childNode.textContent.length > 0)) {
-            return false;
-        };
+        return _isEmpty(childNodes[i]);
     };
     return true;
 };
@@ -2166,7 +2452,7 @@ const _patchEmptyFormatNodeEnter = function() {
     const anchorParentIsSibling = anchorNode.parentNode.nextSibling !== focusNode.parentNode
     const focusParentIsSibling = anchorNode.nextSibling !== focusNode.parentNode;
     if (!anchorParentIsSibling && !focusParentIsSibling) {
-        MU.Error.PatchFormatNodeNotSiblings.callback();
+        MUError.PatchFormatNodeNotSiblings.callback();
         return;
     }
     const npcPair = document.createTextNode('\u200B\u200B');

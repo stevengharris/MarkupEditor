@@ -215,7 +215,7 @@ extension MarkupDelegate {
     /// about it, then override this method in your delegate.
     public func markupError(code: String, message: String, info: String?) {
         print("Error \(code): \(message)")
-        if let info = info { print(" info: \(info)") }
+        if let info = info { print(" \(info)") }
     }
     
 }
