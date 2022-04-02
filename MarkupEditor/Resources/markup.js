@@ -948,36 +948,34 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
     const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
     const anchorIsEmpty = _isEmpty(anchorNode);
-    let newSelRange, pasteRange, rootName;
+    let pasteRange = selRange.cloneRange();
+    let newSelRange, rootName, replacedEmpty;
     if (anchorIsElement && firstChildIsElement && anchorIsEmpty) {
         // We are in an empty paragraph, typically, like <p><br></p>. Replace it with the newElement
         // manually by replacing the anchor with the firstChild, followed by all of its siblings.
-        pasteRange = document.createRange();
-        if (newElement.firstChild.nodeType === Node.TEXT_NODE) {
-            pasteRange.setStart(newElement.firstChild, newElement.firstChild.textContent.length);
-        } else {
-            pasteRange.setStart(newElement.firstChild, newElement.firstChild.childNodes.length);
-        };
+        // Unfortunately, we have no way to know if we did this on undo unless we track it in
+        // undoerData, which we do by placing the anchorNode.nodeName in replacedEmpty.
+        replacedEmpty = anchorNode.nodeName;
+        let offset = 0;
         let lastChild = newElement.firstChild;
-        let nextSib = newElement.firstChild.nextSibling;
+        let nextSib = lastChild.nextSibling;
         const beforeTarget = anchorNode.nextElementSibling;
-        anchorNode.replaceWith(newElement.firstChild);
-        // Now we need put the rest of the newElement fragment in as siblings
+        anchorNode.replaceWith(lastChild);
+        // Now we need put the rest of the newElement fragment in as siblings,
+        // tracking lastChild as we go thru them.
         while (nextSib) {
             lastChild = nextSib;
             beforeTarget.parentNode.insertBefore(nextSib, beforeTarget);
             nextSib = newElement.firstChild;
         };
         newSelRange = document.createRange();
-        let offset = 0;
         if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
             offset = lastChild.textContent.length;
         } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
             offset = lastChild.childNodes.length;
-        }
+        };
         newSelRange.setStart(lastChild, offset);
         newSelRange.setEnd(lastChild, offset);
-        pasteRange.setStart(lastChild, offset);
         pasteRange.setEnd(lastChild, offset);
         rootName = null;
     } else {
@@ -985,7 +983,10 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         if (insertResults) {
             pasteRange = insertResults.insertedRange;
             rootName = insertResults.rootName;
-        };
+        } else {
+            return null;        // Something went wrong in insertHTML, so let default happen.
+        }
+        replacedEmpty = null;
         newSelRange = document.getSelection().getRangeAt(0);
     };
     // As we patch up the results of pasting later, the offsets in the undoerData.range get
@@ -997,6 +998,8 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         oldUndoerData.range = pasteRange;
         oldUndoerData.data.startOffset = startOffset;
         oldUndoerData.data.endOffset = endOffset;
+        oldUndoerData.data.rootName = rootName;
+        oldUndoerData.data.replacedEmpty = replacedEmpty;
         _consoleLog(_rangeString(pasteRange, "redo"));
         _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
     }
@@ -1008,10 +1011,11 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         // offset - The offset into the (text) anchorNode at the starting selection
         // deletedFragment - What (if anything) we deleted before pasting
         // rootName - The name of the node we splitText up to, or null if we didn't splitText
+        // replacedEmpty - The name of the empty node we replaced, or null if we didn't
         // pasteRange - (saved as undoerData.range) Range that contains what we pasted
         _consoleLog(_rangeString(pasteRange, "do"));
         _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
-        const undoerData = _undoerData('pasteHTML', {html: html, startOffset: startOffset, endOffset: endOffset, deletedFragment: deletedFragment, rootName: rootName}, pasteRange);
+        const undoerData = _undoerData('pasteHTML', {html: html, startOffset: startOffset, endOffset: endOffset, deletedFragment: deletedFragment, rootName: rootName, replacedEmpty: replacedEmpty}, pasteRange);
         undoer.push(undoerData);
     }
     _callback('input');
@@ -1042,7 +1046,7 @@ const _patchPasteHTML = function(html) {
  * can tell whether we should unsplit them.
  */
 const _insertHTML = function(fragment) {
-    //_consoleLog("* _insertHTML")
+    _consoleLog("* _insertHTML")
     let sel = document.getSelection();
     let anchorNode = (sel) ? sel.anchorNode : null;
     if (!anchorNode) {
@@ -1050,7 +1054,12 @@ const _insertHTML = function(fragment) {
         return null;
     };
     let selRange = sel.getRangeAt(0);
-    let direction;
+    let direction = null;
+    // Remove any empty leading or trailing children and identify the direction to
+    // reset selection in afterward. If we deleted a leading fragment because it was
+    // empty, this indicates we want the selection at the beginning of trailingText
+    // after we splitTextNode; else, we will put it at the end of the anchorNode.
+    // If direction is not null, then we will force flow thru splitTextNode.
     let firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
     if (firstFragEl && _isEmpty(firstFragEl)) {
         fragment.removeChild(firstFragEl);
@@ -1062,40 +1071,59 @@ const _insertHTML = function(fragment) {
         fragment.removeChild(lastFragEl);
         direction = direction || 'BEFORE';  // Only reset if we didn't already set
     }
-    // Handle specially if fragment contains no elements (i.e., just text nodes).
+    // We will need to define a new range for selection and track the insertedRange
+    const newSelRange = document.createRange();     // Collapsed at the end of the fragment
+    const insertedRange = document.createRange();   // Spanning the fragment
+    // Handle specially if fragment is "simple" (i.e., has noChildElements or noTopLevelChildren).
     // TODO: Could just use noTopLevelChildren
     // However, not sure if this is really right in cases with things like lists included, which
     // don't work properly now anyway.
     const noChildElements = fragment.childElementCount === 0;
     let noTopLevelChildren = true;
-    const fragChildNodes = fragment.childNodes;
-    for (let i=0; i < fragChildNodes.length; i++) {
-        if (_topLevelTags.includes(fragChildNodes[i].nodeName)) {
-            noTopLevelChildren = false;
-            break;
-        }
+    if (!noChildElements) {
+        const fragChildren = fragment.children;
+        for (let i=0; i < fragChildren.length; i++) {
+            if (_topLevelTags.includes(fragChildren[i].nodeName)) {
+                noTopLevelChildren = false;
+                break;
+            };
+        };
     };
-    const newSelRange = document.createRange();     // Collapsed at the end of the fragment
-    const insertedRange = document.createRange();   // Spanning the fragment
-    if (noChildElements || noTopLevelChildren) {
-        const lastFragChild = fragment.lastChild;
-        selRange.insertNode(fragment); // fragment becomes anchorNode's nextSibling
-        _stripZeroWidthChars(anchorNode.parentNode);
-        insertedRange.setStart(anchorNode, anchorNode.textContent.length);
-        if (lastFragChild.nodeType === Node.TEXT_NODE) {
-            newSelRange.setStart(lastFragChild, lastFragChild.textContent.length);
-            newSelRange.setEnd(lastFragChild, lastFragChild.textContent.length);
-            insertedRange.setEnd(lastFragChild, lastFragChild.textContent.length);
+    if ((direction === null) && (noChildElements || noTopLevelChildren)) {
+        _consoleLog("Simple")
+        const firstFragChild = fragment.firstChild;
+        const shouldJoin = _isTextNode(anchorNode) && !_isTextNode(firstFragChild) && (anchorNode.parentNode.nodeName === firstFragChild.nodeName)
+        if (shouldJoin) {
+            _consoleLog(" Joining")
+            // Fragment is merged in with anchorNode
+            const originalAnchorLength = anchorNode.textContent.length;
+            _joinNodes(anchorNode.parentNode, firstFragChild, anchorNode.parentNode.nodeName);
+            insertedRange.setStart(anchorNode, originalAnchorLength);
+            insertedRange.setEnd(anchorNode, anchorNode.textContent.length);
+            newSelRange.setStart(anchorNode, anchorNode.textContent.length);
+            newSelRange.setEnd(anchorNode, anchorNode.textContent.length);
         } else {
-            newSelRange.setStart(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length);
-            newSelRange.setEnd(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length);
-            insertedRange.setEnd(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length);
-        }
+            _consoleLog(" Inserting")
+            // Fragment becomes anchorNode's nextSibling
+            selRange.insertNode(fragment);
+            // TODO: Why do this now, cannot remember. Is it needed above?
+            _stripZeroWidthChars(anchorNode.parentNode);
+            if (firstFragChild.nodeType === Node.TEXT_NODE) {
+                newSelRange.setStart(firstFragChild, firstFragChild.textContent.length);
+                newSelRange.setEnd(firstFragChild, firstFragChild.textContent.length);
+                insertedRange.setEnd(firstFragChild, firstFragChild.textContent.length);
+            } else {
+                newSelRange.setStart(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
+                newSelRange.setEnd(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
+                insertedRange.setEnd(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
+            };
+            insertedRange.setStart(anchorNode, anchorNode.textContent.length);
+        };
         sel.removeAllRanges();
         sel.addRange(newSelRange);
         //_consoleLog("* Done _insertHTML (simple)")
         return {insertedRange: insertedRange, rootName: null};
-    }
+    };
     // Selection is within a text node that needs to be split and then merged with the fragment.
     // See _splitTextNode comments, but it recreates the node heirarchy at the selection up
     // to and including the topLevelNode, leaving the selection set in the direction specified.
@@ -1106,10 +1134,13 @@ const _insertHTML = function(fragment) {
         MUError.CantInsertHtml.callback();
         return null;
     };
+    _consoleLog(" Complex")
     const rootName = topLevelNode.nodeName;
     let trailingText = _splitTextNode(anchorNode, selRange.startOffset, rootName, direction);
     // Regardless of what we do now to insert the fragment, the trailingText and anchorNode define
-    // the span of the fragment which will sit between those points.
+    // the span of the fragment which will sit between those points. However, if the trailingText
+    // is empty, then we won't be able to set selection properly into it. In that case,
+    // we will adjust it later after we insert the fragment.
     insertedRange.setStart(anchorNode, anchorNode.textContent.length);
     insertedRange.setEnd(trailingText, 0);
     sel = document.getSelection();
@@ -1127,7 +1158,6 @@ const _insertHTML = function(fragment) {
         let firstElChild = firstFragEl.firstChild;
         while (firstElChild) {
             anchorNodeParent.appendChild(firstElChild);
-            //trailingText.parentNode.insertBefore(firstElChild, trailingText);
             firstElChild = firstFragEl.firstChild;
         };
         fragment.removeChild(firstFragEl);
@@ -1135,12 +1165,7 @@ const _insertHTML = function(fragment) {
     // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
     // The siblings start with what is now fragment.firstChild. If the nodeTypes didn't match, then
     // this will be the same as firstFragEl.
-    // TODO: This is wrong, at least for the case of multiple paragraphs being pasted as the
-    // end of another paragraph. In that case, trailingText is an empty text in an empty paragraph.
-    // In that case, it seems like the firstFragEl business above should be appending children to
-    // the end of anchorNodeParent, not before trailingText. Then this SECOND logic putting things
-    // in front of trailingText would be correct. Need to think about whether I'm now forgetting
-    // some other case!!!!
+    // TODO: Determine if this works properly in a list
     let nextFragSib = fragment.firstChild;
     const existingTopLevelItem = _findFirstParentElementInNodeNames(trailingText, _topLevelTags);
     while (nextFragSib) {
@@ -1151,11 +1176,24 @@ const _insertHTML = function(fragment) {
         }
         nextFragSib = fragment.firstChild;
     };
-    newSelRange.setStart(trailingText, 0);
-    newSelRange.setEnd(trailingText, 0);
+    // If trailingText is empty, then we need to insert a <BR> in it so that the selection
+    // works properly (similar to how Enter produces a <p><br></p>).
+    if (trailingText.length === 0) {
+        const trailingTextParent = trailingText.parentNode;
+        const br = document.createElement('br');
+        trailingTextParent.appendChild(br);
+        trailingTextParent.removeChild(trailingText);
+        newSelRange.setStart(trailingTextParent, 0);
+        newSelRange.setEnd(trailingTextParent, 0);
+        insertedRange.setStart(anchorNode, anchorNode.textContent.length);
+        insertedRange.setEnd(trailingTextParent, 0);
+    } else {
+        newSelRange.setStart(trailingText, 0);
+        newSelRange.setEnd(trailingText, 0);
+    };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
-    //_consoleLog("* Done _insertHTML")
+    _consoleLog("* Done _insertHTML")
     return {insertedRange: insertedRange, rootName: rootName}
 };
 
@@ -1446,9 +1484,11 @@ const _undoPasteHTML = function(undoerData) {
     //  endOffset - The offset into the (text) focusNode at the starting selection
     //  deletedFragment - What (if anything) we deleted before pasting
     //  rootName - The name of the node we splitText up to, or null if we didn't splitText
+    //  replacedEmpty - The name of the empty node we replaced, or null if we didn't
     //  pasteRange - (saved as undoerData.range) Range that contains what we pasted
     const pasteRange = undoerData.range;
     const rootName = undoerData.data.rootName;
+    const replacedEmpty = undoerData.data.replacedEmpty;
     const deletedFragment = undoerData.data.deletedFragment;
     // Before undoing, patch up the undoerData.range with the startOffset and endOffset.
     const startOffset = undoerData.data.startOffset;
@@ -1458,10 +1498,22 @@ const _undoPasteHTML = function(undoerData) {
     _consoleLog(_rangeString(pasteRange, "undo"));
     _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
     _deleteRange(pasteRange, rootName);
-    // At this point, what was pasted-in is gone, and the document looks like if it had
-    // never been pasted-in, except for the deletedFragment if there was one.
     const sel = document.getSelection();
     let newRange = sel.getRangeAt(0);
+    if (replacedEmpty) {
+        const newEmptyElement = document.createElement(replacedEmpty);
+        const br = document.createElement('br');
+        newEmptyElement.appendChild(br);
+        const topLevelNode = _findFirstParentElementInNodeNames(newRange.startContainer, _topLevelTags);
+        if (topLevelNode) {
+            topLevelNode.parentNode.insertBefore(newEmptyElement, topLevelNode.nextSibling);
+            newRange.setStart(newEmptyElement, 0);
+            newRange.setEnd(newEmptyElement, 0);
+            undoerData.range = newRange;
+        };
+    };
+    // At this point, what was pasted-in is gone, and the document looks like if it had
+    // never been pasted-in, except for the deletedFragment if there was one.
     if (deletedFragment) {
         // We previously had deleted some selected text when pasting.
         // Re-insert the deletedFragment. This will reset the selection
@@ -4984,6 +5036,20 @@ const _doPrevCell = function() {
  * Common private functions
  */
 //MARK: Common Private Functions
+
+/**
+ * Return whether node is a textNode or not
+ */
+const _isTextNode = function(node) {
+    return node.nodeType === Node.TEXT_NODE;
+};
+
+/***
+ * Return whether node is an ELEMENT_NODE or not
+ */
+const _isElementNode = function (node) {
+    return node.nodeType === Node.ELEMENT_NODE;
+};
 
 /**
  * Return a boolean indicating if s is a white space
