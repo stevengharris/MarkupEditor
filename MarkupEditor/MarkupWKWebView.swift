@@ -820,9 +820,20 @@ extension MarkupWKWebView {
         }
     }
     
-    /// Paste the text only from the clipboard.
+    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
     public override func pasteAndMatchStyle(_ sender: Any?) {
-        pasteText(UIPasteboard.general.string)
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = UIPasteboard.general
+        switch pasteableType {
+        case .Text:
+            pasteText(pasteboard.string)
+        case .Html:
+            if let data = pasteboard.data(forPasteboardType: "public.html") {
+                pasteText(String(data: data, encoding: .utf8))
+            }
+        default:
+            break
+        }
     }
     
     //TODO: This is really checking for drag/drop and needs to be fixed

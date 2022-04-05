@@ -80,6 +80,7 @@ class MUError {
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
     static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
     static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
+    static InvalidFillEmpty = new MUError('InvalidFillEmpty', 'The node was not an ELEMENT_NODE or was not empty.');
     static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
@@ -301,9 +302,6 @@ const _undoOperation = function(undoerData) {
     const range = undoerData.range;
     const data = undoerData.data;
     switch (operation) {
-        case 'pasteText':
-            _undoPasteText(undoerData);
-            break;
         case 'pasteHTML':
             _undoPasteHTML(undoerData);
             break;
@@ -375,9 +373,6 @@ const _redoOperation = function(undoerData) {
     const range = undoerData.range;
     const data = undoerData.data;
     switch (undoerData.operation) {
-        case 'pasteText':
-            _redoPasteText(undoerData);
-            break;
         case 'pasteHTML':
             _redoPasteHTML(undoerData);
             break;
@@ -850,10 +845,92 @@ MU.editor.addEventListener('paste', function(ev) {
 //MARK: Paste
 
 /**
- * Do a custom paste operation of text only.
+ * Do a custom paste operation of "text only", which we will extract from the html
+ * ourselves. The pasteboard text has newlines removed and we want something
+ * prettier that behaves well in the MarkupEditor.
+ *
+ * The trick here is that we want to use the same code to paste text as we do for
+ * HTML, but we want to paste something that is the MarkupEditor-equivalent of
+ * unformatted text.
  */
-MU.pasteText = function(text) {
-    _pasteText(text);
+MU.pasteText = function(html) {
+    const fragment = _patchPasteHTML(html);     // Remove all the cruft first
+    const minimalHTML = _minimalHTML(fragment);
+    _pasteHTML(minimalHTML);
+};
+
+/**
+ * Return a minimal "unformatted equivalent" version of the HTML that is in fragment.
+ *
+ * This equivalent is derived by making all top-level nodes into <P> and removing
+ * formatting and links. However, we leave TABLE, UL, and OL alone, so they still
+ * come in as tables and lists, but with formatting removed.
+ */
+const _minimalHTML = function(fragment) {
+    // Create a div to hold fragment so that we can getElementsByTagName on it
+    const div = document.createElement('div');
+    div.appendChild(fragment);
+    // Then run thru the various minimization steps on the div
+    _minimalStyle(div);
+    _minimalFormat(div);
+    _minimalLink(div);
+    return div.innerHTML;
+};
+
+/**
+ * Replace all styles in the div with 'P'.
+ */
+const _minimalStyle = function(div) {
+    _minimalStyleTags.forEach(tag => {
+        // Reset elements using getElementsByTagName as we go along or the
+        // replaceWith potentially messes the up loop over elements.
+        let elements = div.getElementsByTagName(tag);
+        let element = (elements.length > 0) ? elements[0] : null;
+        while (element) {
+            let newElement = document.createElement('P');
+            newElement.innerHTML = element.innerHTML;
+            element.replaceWith(newElement);
+            elements = div.getElementsByTagName(tag);
+            element = (elements.length > 0) ? elements[0] : null;
+        };
+    });
+};
+
+/**
+ * Replace all formats in the div with unformatted text
+ */
+const _minimalFormat = function(div) {
+    _formatTags.forEach(tag => {
+        // Reset elements using getElementsByTagName as we go along or the
+        // replaceWith potentially messes the up loop over elements.
+        let elements = div.getElementsByTagName(tag);
+        let element = (elements.length > 0) ? elements[0] : null;
+        while (element) {
+            let template = document.createElement('template');
+            template.innerHTML = element.innerHTML;
+            const newElement = template.content;
+            element.replaceWith(newElement);
+            elements = div.getElementsByTagName(tag);
+            element = (elements.length > 0) ? elements[0] : null;
+        };
+    });
+};
+
+/**
+ * Replace all links with their text only
+ */
+const _minimalLink = function(div) {
+    // Reset elements using getElementsByTagName as we go along or the
+    // replaceWith potentially messes the up loop over elements.
+    let elements = div.getElementsByTagName('A');
+    let element = (elements.length > 0) ? elements[0] : null;
+    while (element) {
+        if (element.getAttribute('href')) {
+            element.replaceWith(document.createTextNode(element.text));
+            elements = div.getElementsByTagName('A');
+            element = (elements.length > 0) ? elements[0] : null;
+        };
+    };
 };
 
 /**
@@ -862,56 +939,6 @@ MU.pasteText = function(text) {
 MU.pasteHTML = function(html) {
     _pasteHTML(html);
 }
-
-/**
- * Paste the text at the current selection point, populate undoerData.
- */
-const _pasteText = function(text, oldUndoerData, undoable=true) {
-    const redoing = !undoable && (oldUndoerData !== null);
-    let sel = document.getSelection();
-    let anchorNode = (sel) ? sel.anchorNode : null;
-    if (!anchorNode) {
-        MUError.NoSelection.callback();
-        return null;
-    };
-    let selRange = sel.getRangeAt(0).cloneRange();
-    // If sel is not collapsed, delete the entire selection and reset before continuing.
-    // Track the deletedFragment.
-    let deletedFragment;
-    if (!sel.isCollapsed) {
-        deletedFragment = selRange.extractContents();
-        if (redoing) {
-            oldUndoerData.data.deletedFragment = deletedFragment;
-        };
-        sel = document.getSelection();
-        anchorNode = (sel) ? sel.anchorNode : null;
-        selRange = sel.getRangeAt(0).cloneRange();
-        // At this point, sel is collapsed and the document contents are the same as if we had
-        // hit Backspace (but not paste yet) on the original non-collapsed selection.
-        //
-        // DEBUGGING TIP:
-        // By executing an 'input' callback and returning true at this point, we can debug the
-        // result ensure it is the same as hitting Backspace.
-        //_callback('input');
-        //return true;
-    };
-    const originalText = anchorNode.textContent;
-    const newOffset = selRange.startOffset + text.length;
-    const newText = originalText.substring(0, selRange.startOffset) + text + originalText.substr(selRange.endOffset);
-    anchorNode.textContent = newText;
-    const newRange = document.createRange();
-    newRange.setStart(anchorNode, newOffset);
-    newRange.setEnd(anchorNode, newOffset);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    _backupSelection();
-    if (undoable) {
-        const undoerData = _undoerData('pasteText', {text: text, offset: newOffset, deletedFragment: deletedFragment});
-        undoer.push(undoerData);
-    }
-    _callback('input');
-    return true
-};
 
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const redoing = !undoable && (oldUndoerData !== null);
@@ -1056,10 +1083,11 @@ const _insertHTML = function(fragment) {
     let selRange = sel.getRangeAt(0);
     let direction = null;
     // Remove any empty leading or trailing children and identify the direction to
-    // reset selection in afterward. If we deleted a leading fragment because it was
+    // reset selection afterward. If we deleted a leading fragment because it was
     // empty, this indicates we want the selection at the beginning of trailingText
-    // after we splitTextNode; else, we will put it at the end of the anchorNode.
-    // If direction is not null, then we will force flow thru splitTextNode.
+    // after we splitTextNode (direction='BEFORE'); else, we will put it at the end
+    // of the anchorNode (direction='AFTER'). If direction is not null, then we will
+    // force flow thru splitTextNode.
     let firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
     if (firstFragEl && _isEmpty(firstFragEl)) {
         fragment.removeChild(firstFragEl);
@@ -1072,7 +1100,7 @@ const _insertHTML = function(fragment) {
         direction = direction || 'BEFORE';  // Only reset if we didn't already set
     }
     // We will need to define a new range for selection and track the insertedRange
-    const newSelRange = document.createRange();     // Collapsed at the end of the fragment
+    let newSelRange = document.createRange();       // Collapsed at the end of the fragment
     const insertedRange = document.createRange();   // Spanning the fragment
     // Handle specially if fragment is "simple" (i.e., has noChildElements or noTopLevelChildren).
     // TODO: Could just use noTopLevelChildren
@@ -1143,12 +1171,9 @@ const _insertHTML = function(fragment) {
     // we will adjust it later after we insert the fragment.
     insertedRange.setStart(anchorNode, anchorNode.textContent.length);
     insertedRange.setEnd(trailingText, 0);
-    sel = document.getSelection();
-    anchorNode = sel.anchorNode;
-    selRange = sel.getRangeAt(0).cloneRange();
     // Now the selection has been split and left at the beginning of trailingText, which is
     // where we generally want to paste the fragment contents.
-    // FIRST, insert all of the firstElFrag's childNodes at the end of anchodNode
+    // FIRST, insert all of the firstElFrag's childNodes at the end of anchorNode
     // if the nodeNames match. So, for example, if the firstElFrag is
     // <h5 id="h5">ted <i id="i">item</i> 1.</h5>, the "ted <i id="i">item</i> 1."
     // gets put at the end of the anchorNode.
@@ -1180,13 +1205,23 @@ const _insertHTML = function(fragment) {
     // works properly (similar to how Enter produces a <p><br></p>).
     if (trailingText.length === 0) {
         const trailingTextParent = trailingText.parentNode;
-        const br = document.createElement('br');
-        trailingTextParent.appendChild(br);
-        trailingTextParent.removeChild(trailingText);
-        newSelRange.setStart(trailingTextParent, 0);
-        newSelRange.setEnd(trailingTextParent, 0);
+        const modRange = _fillEmpty(trailingTextParent);
+        if (modRange) {
+            newSelRange = modRange;
+        } else {
+            newSelRange = document.getSelection().getRangeAt(0);
+        };
         insertedRange.setStart(anchorNode, anchorNode.textContent.length);
         insertedRange.setEnd(trailingTextParent, 0);
+    } else if (anchorNode.length === 0) {
+        const modRange = _fillEmpty(anchorNodeParent);
+        if (modRange) {
+            newSelRange = modRange;
+        } else {
+            newSelRange = document.getSelection().getRangeAt(0);
+        };
+        insertedRange.setStart(anchorNodeParent, 0);
+        insertedRange.setEnd(trailingText, 0);
     } else {
         newSelRange.setStart(trailingText, 0);
         newSelRange.setEnd(trailingText, 0);
@@ -1417,65 +1452,61 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
 }
 
 /**
- * Undo the paste operation after it was done via _pasteText.
+ * Fill an empty element with a br and patch up the selection if needed.
+ *
+ * Return a range that selects the empty element. Selection won't be affected
+ * unless the changes to element necessitate it.
+ *
+ * In cases where element is empty, we cannot select inside of it. For example,
+ * <p></p> is valid html, but we cannot set the selection inside of it. Instead,
+ * when we want to select inside of it, we have to populate it with a <BR> and
+ * then select.
  */
-const _undoPasteText = function(undoerData) {
-    // The pasted text data was placed before the undoerData.date.startOffset in startContainer.
-    // It should still be in the same place, but we double-check before undoing.
-    const startContainer = undoerData.range.startContainer;
-    const text = undoerData.data.text;
-    const startOffset = undoerData.data.startOffset;
-    const textContent = startContainer.textContent;
-    const startPastedContent = startOffset - text.length;
-    const endPastedContent = startOffset;
-    const pastedContent = textContent.slice(startPastedContent, endPastedContent);
-    if (pastedContent === text) {
-        const startText = textContent.slice(0, startPastedContent);         // text before pastedContent
-        const endText = textContent.slice(endPastedContent);                // text after pastedContent
-        startContainer.textContent = startText + endText;
-        const newRange = document.createRange();
-        newRange.setStart(startContainer, startPastedContent);
-        newRange.setEnd(startContainer, startPastedContent);
-        const selection = document.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        // At this point, the selection is set properly if there is no deletedFragment.
-        // If there is a deletedFragment, we can insert it at the selection point,
-        // and since the deletedFragment was selected at paste time (i.e., it was what
-        // we overwrote with the text), we need to reselect it.
-        const deletedFragment = undoerData.data.deletedFragment;
-        if (deletedFragment) {
-            const startContainer = deletedFragment.firstChild;
-            const endContainer = deletedFragment.lastChild;
-            newRange.insertNode(deletedFragment);
-            const deletedRange = document.createRange();
-            deletedRange.setStart(startContainer, 0);
-            if (endContainer.nodeType === Node.TEXT_NODE) {
-                deletedRange.setEnd(endContainer, endContainer.textContent.length);
-            } else {
-                deletedRange.setEnd(endContainer, endContainer.childNodes.length);
-            };
-            selection.removeAllRanges();
-            selection.addRange(deletedRange);
-        };
-        _backupSelection();
-        _callback('input');
-    } else {
-        // This should never happen, but if it does, the best we can do is to let
-        // the Swift side know.
-        let error = MUError.PasteMismatch
-        error.setInfo('Failed to paste: \(pastedContent)');
-        error.callback();
+const _fillEmpty = function(element) {
+    if (!_isElementNode(element)) {
+        MUError.InvalidFillEmpty.callback();
+        return null;
     };
+    if (!_isEmpty(element) || (element.childNodes.length > 1)) { return null };
+    const sel = document.getSelection();
+    let resetStart = false;
+    let resetEnd = false;
+    let startContainer, startOffset, endContainer, endOffset;
+    if (sel && (sel.rangeCount > 0)) {
+        const range = sel.getRangeAt(0);
+        startContainer = range.startContainer;
+        startOffset = range.startOffset;
+        endContainer = range.endContainer;
+        endOffset = range.endOffset;
+        resetStart = (element === startContainer) || (element.firstChild === startContainer);
+        resetEnd = (element === endContainer) || (element.firstChild === endContainer);
+    };
+    const br = document.createElement('br');
+    if (element.childNodes.length === 1) {
+        element.childNodes[0].replaceWith(br);
+    } else {
+        element.appendChild(br);
+    };
+    const newRange = document.createRange();
+    if (resetStart || resetEnd) {
+        if (elementIsStart) {
+            newRange.setStart(element, 0);
+        } else {
+            newRange.setStart(startContainer, startOffset);
+        }
+        if (elementIsEnd) {
+            newRange.setEnd(element, 0);
+        } else {
+            newRange.setEnd(endContainer, endOffset);
+        }
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    } else {
+        newRange.setStart(element, 0);
+        newRange.setEnd(element, 0);
+    }
+    return newRange;
 };
-
-/**
- * Redo the paste operation after it has been undone by _undoPasteText.
- */
-const _redoPasteText = function(undoerData) {
-    _restoreUndoerRange(undoerData);
-    _pasteText(undoerData.data.text, undoerData, false)
-}
 
 const _undoPasteHTML = function(undoerData) {
     // The undoerData contains:
@@ -3679,6 +3710,8 @@ const _tripleClickSelect = function(sel) {
 const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];      // All paragraph styles
 
 const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);          // Possible containing blocks in a list
+
+const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];       // Convert to 'P' for MU.pasteText
 
 const _styleTags = _paragraphStyleTags.concat(['LI', 'BLOCKQUOTE', 'OL', 'UL']);    // Identify insert-before point in table/list
 
