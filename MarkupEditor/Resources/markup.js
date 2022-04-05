@@ -1062,6 +1062,8 @@ const _patchPasteHTML = function(html) {
     _cleanUpAttributesWithin('class', element);
     _cleanUpMetas(element);
     _cleanUpBRs(element);
+    _cleanUpPREs(element);
+    _cleanUpAliases(element);
     return element;
 };
 
@@ -3536,6 +3538,47 @@ const _cleanUpBRs = function(node) {
     };
 };
 
+/*
+ * Replace PREs with Ps. They should only occur at the top level.
+ */
+const _cleanUpPREs = function(node) {
+    let childNodes = node.childNodes;
+    for (let i=0; i < childNodes.length; i++) {
+        const child = childNodes[i];
+        const childName = child.nodeName;
+        if (childName === 'PRE') {
+            const p = document.createElement('p');
+            const template = document.createElement('template');
+            template.innerHTML = child.innerHTML;
+            const newElement = template.content;
+            p.appendChild(newElement);
+            child.replaceWith(p);
+        };
+    };
+};
+
+/**
+ * Replace all elements with names we don't recognize with ones we do.
+ *
+ * These are currently <strong> -> <b> and <em> -> <i>.
+ */
+const _cleanUpAliases = function(node) {
+    const _aliases = {'STRONG' : 'B', 'EM' : 'I'}
+    let childNodes = node.childNodes;
+    for (let i=0; i < childNodes.length; i++) {
+        _cleanUpAliases(childNodes[i]);
+    };
+    let alias = _aliases[node.nodeName];
+    if (alias) {
+        const aliasElement = document.createElement(alias);
+        const template = document.createElement('template');
+        template.innerHTML = node.innerHTML;
+        const newElement = template.content;
+        aliasElement.appendChild(newElement);
+        node.replaceWith(aliasElement);
+    };
+};
+
 /**
  * Standard webkit editing may leave messy and useless SPANs all over the place.
  * This method just cleans them all up and notifies Swift that the content
@@ -3709,13 +3752,13 @@ const _tripleClickSelect = function(sel) {
  */
 const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];      // All paragraph styles
 
+const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];           // All possible (nestable) formats
+
 const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);          // Possible containing blocks in a list
 
 const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];       // Convert to 'P' for MU.pasteText
 
 const _styleTags = _paragraphStyleTags.concat(['LI', 'BLOCKQUOTE', 'OL', 'UL']);    // Identify insert-before point in table/list
-
-const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];           // All possible (nestable) formats
 
 const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];           // All tags associated with tables
 
