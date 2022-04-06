@@ -27,9 +27,14 @@ let package = Package(
             path: "MarkupEditor",
             resources: [.process("Resources")]),
         .testTarget(
-            name: "MarkupEditorTests",
+            name: "BasicTests",
             dependencies: ["MarkupEditor"],
-            path: "MarkupEditorTests"
-            )
+            path: "BasicTests"
+            ),
+        .testTarget(
+            name: "UndoTests",
+            dependencies: ["MarkupEditor"],
+            path: "UndoTests"
+            ),
     ]
 )

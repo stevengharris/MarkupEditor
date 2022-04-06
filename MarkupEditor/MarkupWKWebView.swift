@@ -283,6 +283,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Invoke the preprocessing step for MU.pasteHTML directly.
+    public func testPasteHtmlPreprocessing(html: String, handler: ((String?)->Void)? = nil) {
+        evaluateJavaScript("MU.testPasteHTMLPreprocessing('\(html.escaped)')") { result, error in
+            handler?(result as? String)
+        }
+    }
+    
+    /// Invoke the preprocessing step for MU.pasteText directly.
+    public func testPasteTextPreprocessing(html: String, handler: ((String?)->Void)? = nil) {
+        evaluateJavaScript("MU.testPasteTextPreprocessing('\(html.escaped)')") { result, error in
+            handler?(result as? String)
+        }
+    }
     
     /// Invoke the \_undoOperation directly.
     ///

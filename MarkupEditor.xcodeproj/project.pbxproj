@@ -19,6 +19,10 @@
 		AA1B818126273D9200891FFB /* demo.html in Resources */ = {isa = PBXBuildFile; fileRef = AA1B816C26265CAD00891FFB /* demo.html */; };
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
+		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
+		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
+		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
+		AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA408B192616683B00CAE8B9 /* MarkupEditor.h in Headers */ = {isa = PBXBuildFile; fileRef = AAFADF64261525B90024F2DC /* MarkupEditor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA408B202616685B00CAE8B9 /* MarkupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A13260E9A00000674B7 /* MarkupCoordinator.swift */; };
 		AA408B242616685B00CAE8B9 /* MarkupWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A11260E9A00000674B7 /* MarkupWebView.swift */; };
@@ -60,13 +64,20 @@
 		AABAF15F264B07D100DC02C6 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
-		AAFADF56261525110024F2DC /* MarkupEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */; };
+		AAFADF56261525110024F2DC /* BasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D3260E8E8E000674B7 /* BasicTests.swift */; };
 		AAFB64DB277CEED70032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64DC277CEED80032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E87264463AA00908777 /* DocumentPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AA2FA8AE27FE45F70068828F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
+		};
 		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
@@ -107,6 +118,9 @@
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
+		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
+		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarPreference.swift; sourceTree = "<group>"; };
@@ -128,7 +142,7 @@
 		AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UIKitDemo.entitlements; sourceTree = "<group>"; };
 		AA6529C4260E8B2A000674B7 /* UIViewController+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extensions.swift"; sourceTree = "<group>"; };
 		AA6529D0260E8E8E000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
-		AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorTests.swift; sourceTree = "<group>"; };
+		AA6529D3260E8E8E000674B7 /* BasicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicTests.swift; sourceTree = "<group>"; };
 		AA652A00260E99FF000674B7 /* MarkupToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupToolbar.swift; sourceTree = "<group>"; };
 		AA652A05260E99FF000674B7 /* ImageToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageToolbar.swift; sourceTree = "<group>"; };
 		AA652A06260E99FF000674B7 /* StyleContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StyleContext.swift; sourceTree = "<group>"; };
@@ -156,12 +170,19 @@
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
-		AAFADF41261524AE0024F2DC /* MarkupEditorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkupEditorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAFADF41261524AE0024F2DC /* BasicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BasicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAFADF64261525B90024F2DC /* MarkupEditor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MarkupEditor.h; sourceTree = "<group>"; };
 		AAFB64DA277CEECB0032E859 /* steve.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = steve.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AA2FA8A427FE44C90068828F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA408AF8261666D200CAE8B9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -221,6 +242,14 @@
 			path = SharedDemo;
 			sourceTree = "<group>";
 		};
+		AA2FA8A827FE44C90068828F /* UndoTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA2FA8A927FE44C90068828F /* UndoTests.swift */,
+			);
+			path = UndoTests;
+			sourceTree = "<group>";
+		};
 		AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */ = {
 			isa = PBXGroup;
 			children = (
@@ -240,7 +269,8 @@
 				AA1749E5269DFE84005F0428 /* SharedDemo */,
 				AA652943260E8114000674B7 /* SwiftUIDemo */,
 				AA65299C260E8450000674B7 /* UIKitDemo */,
-				AA6529CF260E8E8E000674B7 /* MarkupEditorTests */,
+				AA6529CF260E8E8E000674B7 /* BasicTests */,
+				AA2FA8A827FE44C90068828F /* UndoTests */,
 				AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */,
 				AA65292C260E80EE000674B7 /* Products */,
 				AA6529BF260E8AEC000674B7 /* Frameworks */,
@@ -252,8 +282,9 @@
 			children = (
 				AA652942260E8114000674B7 /* SwiftUIDemo.app */,
 				AA65299B260E8450000674B7 /* UIKitDemo.app */,
-				AAFADF41261524AE0024F2DC /* MarkupEditorTests.xctest */,
+				AAFADF41261524AE0024F2DC /* BasicTests.xctest */,
 				AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */,
+				AA2FA8A727FE44C90068828F /* UndoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -299,13 +330,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		AA6529CF260E8E8E000674B7 /* MarkupEditorTests */ = {
+		AA6529CF260E8E8E000674B7 /* BasicTests */ = {
 			isa = PBXGroup;
 			children = (
 				AA6529D0260E8E8E000674B7 /* String+Extensions.swift */,
-				AA6529D3260E8E8E000674B7 /* MarkupEditorTests.swift */,
+				AA6529D3260E8E8E000674B7 /* BasicTests.swift */,
+				AA2FA8A127FE43A50068828F /* HtmlTest.swift */,
 			);
-			path = MarkupEditorTests;
+			path = BasicTests;
 			sourceTree = "<group>";
 		};
 		AA6529FE260E99FF000674B7 /* MarkupEditor */ = {
@@ -378,6 +410,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		AA2FA8A627FE44C90068828F /* UndoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */;
+			buildPhases = (
+				AA2FA8A327FE44C90068828F /* Sources */,
+				AA2FA8A427FE44C90068828F /* Frameworks */,
+				AA2FA8A527FE44C90068828F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA2FA8AF27FE45F70068828F /* PBXTargetDependency */,
+			);
+			name = UndoTests;
+			productName = UndoTests;
+			productReference = AA2FA8A727FE44C90068828F /* UndoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		AA408AFA261666D200CAE8B9 /* MarkupEditor */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA408B00261666D200CAE8B9 /* Build configuration list for PBXNativeTarget "MarkupEditor" */;
@@ -436,9 +486,9 @@
 			productReference = AA65299B260E8450000674B7 /* UIKitDemo.app */;
 			productType = "com.apple.product-type.application";
 		};
-		AAFADF40261524AE0024F2DC /* MarkupEditorTests */ = {
+		AAFADF40261524AE0024F2DC /* BasicTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AAFADF46261524AE0024F2DC /* Build configuration list for PBXNativeTarget "MarkupEditorTests" */;
+			buildConfigurationList = AAFADF46261524AE0024F2DC /* Build configuration list for PBXNativeTarget "BasicTests" */;
 			buildPhases = (
 				AAFADF3D261524AE0024F2DC /* Sources */,
 				AAFADF3E261524AE0024F2DC /* Frameworks */,
@@ -450,9 +500,9 @@
 				AA74CF6B27E68032006A5865 /* PBXTargetDependency */,
 				AA74CF6D27E90FCF006A5865 /* PBXTargetDependency */,
 			);
-			name = MarkupEditorTests;
+			name = BasicTests;
 			productName = FooTests;
-			productReference = AAFADF41261524AE0024F2DC /* MarkupEditorTests.xctest */;
+			productReference = AAFADF41261524AE0024F2DC /* BasicTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -464,6 +514,10 @@
 				LastSwiftUpdateCheck = 1330;
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
+					AA2FA8A627FE44C90068828F = {
+						CreatedOnToolsVersion = 13.3;
+						TestTargetID = AA652941260E8113000674B7;
+					};
 					AA408AFA261666D200CAE8B9 = {
 						CreatedOnToolsVersion = 12.4;
 					};
@@ -496,13 +550,21 @@
 			targets = (
 				AA652941260E8113000674B7 /* SwiftUIDemo */,
 				AA65299A260E8450000674B7 /* UIKitDemo */,
-				AAFADF40261524AE0024F2DC /* MarkupEditorTests */,
 				AA408AFA261666D200CAE8B9 /* MarkupEditor */,
+				AAFADF40261524AE0024F2DC /* BasicTests */,
+				AA2FA8A627FE44C90068828F /* UndoTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AA2FA8A527FE44C90068828F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA408AF9261666D200CAE8B9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -546,6 +608,16 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AA2FA8A327FE44C90068828F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */,
+				AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */,
+				AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA408AF7261666D200CAE8B9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -614,13 +686,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */,
-				AAFADF56261525110024F2DC /* MarkupEditorTests.swift in Sources */,
+				AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */,
+				AAFADF56261525110024F2DC /* BasicTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AA2FA8AF27FE45F70068828F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AA2FA8AE27FE45F70068828F /* PBXContainerItemProxy */;
+		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
@@ -644,6 +722,44 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		AA2FA8AC27FE44C90068828F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7XXG4VJQ59;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
+			};
+			name = Debug;
+		};
+		AA2FA8AD27FE44C90068828F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7XXG4VJQ59;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
+			};
+			name = Release;
+		};
 		AA408B01261666D200CAE8B9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -967,6 +1083,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA2FA8AC27FE44C90068828F /* Debug */,
+				AA2FA8AD27FE44C90068828F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AA408B00261666D200CAE8B9 /* Build configuration list for PBXNativeTarget "MarkupEditor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1003,7 +1128,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AAFADF46261524AE0024F2DC /* Build configuration list for PBXNativeTarget "MarkupEditorTests" */ = {
+		AAFADF46261524AE0024F2DC /* Build configuration list for PBXNativeTarget "BasicTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AAFADF47261524AE0024F2DC /* Debug */,

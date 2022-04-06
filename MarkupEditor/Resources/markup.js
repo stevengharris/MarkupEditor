@@ -1027,8 +1027,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         oldUndoerData.data.endOffset = endOffset;
         oldUndoerData.data.rootName = rootName;
         oldUndoerData.data.replacedEmpty = replacedEmpty;
-        _consoleLog(_rangeString(pasteRange, "redo"));
-        _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
+        //_consoleLog(_rangeString(pasteRange, "redo"));
     }
     sel.removeAllRanges();
     sel.addRange(newSelRange);
@@ -1040,8 +1039,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         // rootName - The name of the node we splitText up to, or null if we didn't splitText
         // replacedEmpty - The name of the empty node we replaced, or null if we didn't
         // pasteRange - (saved as undoerData.range) Range that contains what we pasted
-        _consoleLog(_rangeString(pasteRange, "do"));
-        _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
+        //_consoleLog(_rangeString(pasteRange, "do"));
         const undoerData = _undoerData('pasteHTML', {html: html, startOffset: startOffset, endOffset: endOffset, deletedFragment: deletedFragment, rootName: rootName, replacedEmpty: replacedEmpty}, pasteRange);
         undoer.push(undoerData);
     }
@@ -1075,7 +1073,7 @@ const _patchPasteHTML = function(html) {
  * can tell whether we should unsplit them.
  */
 const _insertHTML = function(fragment) {
-    _consoleLog("* _insertHTML")
+    //_consoleLog("* _insertHTML")
     let sel = document.getSelection();
     let anchorNode = (sel) ? sel.anchorNode : null;
     if (!anchorNode) {
@@ -1120,11 +1118,11 @@ const _insertHTML = function(fragment) {
         };
     };
     if ((direction === null) && (noChildElements || noTopLevelChildren)) {
-        _consoleLog("Simple")
+        //_consoleLog("Simple")
         const firstFragChild = fragment.firstChild;
         const shouldJoin = _isTextNode(anchorNode) && !_isTextNode(firstFragChild) && (anchorNode.parentNode.nodeName === firstFragChild.nodeName)
         if (shouldJoin) {
-            _consoleLog(" Joining")
+            //_consoleLog(" Joining")
             // Fragment is merged in with anchorNode
             const originalAnchorLength = anchorNode.textContent.length;
             _joinNodes(anchorNode.parentNode, firstFragChild, anchorNode.parentNode.nodeName);
@@ -1133,7 +1131,7 @@ const _insertHTML = function(fragment) {
             newSelRange.setStart(anchorNode, anchorNode.textContent.length);
             newSelRange.setEnd(anchorNode, anchorNode.textContent.length);
         } else {
-            _consoleLog(" Inserting")
+            //_consoleLog(" Inserting")
             // Fragment becomes anchorNode's nextSibling
             selRange.insertNode(fragment);
             // TODO: Why do this now, cannot remember. Is it needed above?
@@ -1164,7 +1162,7 @@ const _insertHTML = function(fragment) {
         MUError.CantInsertHtml.callback();
         return null;
     };
-    _consoleLog(" Complex")
+    //_consoleLog(" Complex")
     const rootName = topLevelNode.nodeName;
     let trailingText = _splitTextNode(anchorNode, selRange.startOffset, rootName, direction);
     // Regardless of what we do now to insert the fragment, the trailingText and anchorNode define
@@ -1230,7 +1228,7 @@ const _insertHTML = function(fragment) {
     };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
-    _consoleLog("* Done _insertHTML")
+    //_consoleLog("* Done _insertHTML")
     return {insertedRange: insertedRange, rootName: rootName}
 };
 
@@ -1528,8 +1526,7 @@ const _undoPasteHTML = function(undoerData) {
     const endOffset = undoerData.data.endOffset;
     pasteRange.setStart(pasteRange.startContainer, startOffset);
     pasteRange.setEnd(pasteRange.endContainer, endOffset);
-    _consoleLog(_rangeString(pasteRange, "undo"));
-    _consoleLog("startOffset: " + startOffset + ", endOffset: " + endOffset);
+    //_consoleLog(_rangeString(pasteRange, "undo"));
     _deleteRange(pasteRange, rootName);
     const sel = document.getSelection();
     let newRange = sel.getRangeAt(0);
@@ -4011,6 +4008,32 @@ MU.testListEnter = function() {
 MU.testUndoListEnter = function() {
     undoer.testUndo()
 }
+
+/**
+ * For testing purposes, execute _patchPasteHTML and return the resulting
+ * html as a string. Testing in this way lets us do simple pasteHTML tests with
+ * clean HTML and test the _patchPasteHTML functionality separately. The
+ * purpose of _patchPasteHTML is to return "clean" HTML from arbitrary HTML
+ * (typically) obtained from the paste buffer on the Swift side.
+ */
+MU.testPasteHTMLPreprocessing = function(html) {
+    const fragment = _patchPasteHTML(html);
+    return _fragmentString(fragment);
+};
+
+/**
+ * For testing purposes, execute _patchPasteHTML followed by _minimalHTML
+ * and return the resulting html as a string. Testing in this way lets us do
+ * simple pasteText tests with clean HTML and test the preprocessing functionality
+ * separately. The purpose of _patchPasteHTML is to return "clean" HTML from
+ * arbitrary HTML (typically) obtained from the paste buffer on the Swift side,
+ * which is then combined with _minimalHTML to get a MarkupEditor-equivalent of
+ * unformatted text.
+ */
+MU.testPasteTextPreprocessing = function(html) {
+    const fragment = _patchPasteHTML(html);
+    return _minimalHTML(fragment);
+};
 
 /********************************************************************************
  * Links

@@ -33,8 +33,18 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AAFADF40261524AE0024F2DC"
-               BuildableName = "MarkupEditorTests.xctest"
-               BlueprintName = "MarkupEditorTests"
+               BuildableName = "MarkupEditorBasicTests.xctest"
+               BlueprintName = "BasicTests"
+               ReferencedContainer = "container:MarkupEditor.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA2FA8A627FE44C90068828F"
+               BuildableName = "UndoTests.xctest"
+               BlueprintName = "UndoTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </TestableReference>
