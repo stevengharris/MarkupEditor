@@ -251,6 +251,17 @@ extension ViewController: MarkupDelegate {
         print("Dropping")
     }
     
+    /// Override the default behavior for when the MarkupEditor encounters an error.
+    ///
+    /// In the event of a MUError.Alert, play an alert sound.
+    func markupError(code: String, message: String, info: String?, alert: Bool) {
+        print("Error \(code): \(message)")
+        if let info = info { print(" \(info)") }
+        if (alert) {
+            AudioPlayer.shared.playSound(filename: "alert.wav")
+        }
+    }
+    
 }
 
 extension ViewController: FileToolbarDelegate {

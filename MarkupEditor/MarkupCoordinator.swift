@@ -155,7 +155,9 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 print("Bad error message.")
                 return
             }
-            markupDelegate?.markupError(code: code, message: message, info: messageData["info"] as? String)
+            let info = messageData["info"] as? String
+            let alert = (messageData["alert"] as? Bool) ?? true
+            markupDelegate?.markupError(code: code, message: message, info: info, alert: alert)
         default:
             print("Unknown message of type \(messageType): \(messageData).")
         }

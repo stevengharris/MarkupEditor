@@ -71,29 +71,34 @@ window.onload = function() {
  *
  * Usage is generally via the statics defined here, altho supplementary info can
  * be provided to the MUError instance when useful.
+ *
+ * Alert is set to true when the user might want to know an error occurred. Because
+ * this is generally the case, it's set to true by default and certain MUErrors that
+ * are more informational in nature are set to false. For example, BackupNullRange
+ * happens when the user clicks outside of text, etc, so is fairly normal.
  */
 class MUError {
-    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.');
-    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range.');
+    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.', null, false);
+    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range.', null, false);
     static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices.');
     static CantInsertHtml = new MUError('CantInsertHtml', 'Top-level element could not be found from selection point.');
     static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
-    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.');
-    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.');
+    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.', null, false);
+    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.', null, false);
     static InvalidFillEmpty = new MUError('InvalidFillEmpty', 'The node was not an ELEMENT_NODE or was not empty.');
     static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
     static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
-    static PasteMismatch = new MUError('PasteMismatch', 'Pasted content did not match current selection.');
     static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
     static PatchFormatNodeNotSiblings = new MUError('PatchFormatNodeNotSiblings', 'The anchorNode and focusNode are not siblings.')
     
-    constructor(name, message, info) {
+    constructor(name, message, info, alert=true) {
         this.name = name;
         this.message = message;
-        this.info = info
+        this.info = info;
+        this.alert = alert;
     };
     
     setInfo(info) {
@@ -105,7 +110,8 @@ class MUError {
             'messageType' : 'error',
             'code' : this.name,
             'message' : this.message,
-            'info' : this.info
+            'info' : this.info,
+            'alert' : this.alert
         };
     };
     
@@ -3431,6 +3437,7 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
+        MUError.Alert.callback();   // Let the Swift side decide whether to present an alert.
     };
 };
 

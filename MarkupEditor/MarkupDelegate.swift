@@ -99,7 +99,7 @@ public protocol MarkupDelegate {
     func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession)
     
     /// An error occurred on the JavaScript side
-    func markupError(code: String, message: String, info: String?)
+    func markupError(code: String, message: String, info: String?, alert: Bool)
     
 }
 
@@ -211,9 +211,10 @@ extension MarkupDelegate {
     
     /// By default, print to the console when an error occurs on the JavaScript side of the MarkupEditor.
     ///
-    /// These errors are internal and should never occur. However, if one does, and you want to let your user know
-    /// about it, then override this method in your delegate.
-    public func markupError(code: String, message: String, info: String?) {
+    /// Most errors are internal and should never occur. See MUError in markup.js for details. The value of alert can be used to filter out
+    /// informational errors vs ones you might want to alert users about. If you want to let your user know about an error, then override this
+    /// method in your delegate.
+    public func markupError(code: String, message: String, info: String?, alert: Bool) {
         print("Error \(code): \(message)")
         if let info = info { print(" \(info)") }
     }
