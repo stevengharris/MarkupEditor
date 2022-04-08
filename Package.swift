@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "MarkupEditor",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v11),
         .iOS(.v14)
     ],
     products: [
@@ -26,15 +26,17 @@ let package = Package(
             dependencies: [],
             path: "MarkupEditor",
             resources: [.process("Resources")]),
+        .target(
+            name: "SharedTest",
+            dependencies: ["MarkupEditor"],
+            path: "MarkupEditorTests/Shared"),
         .testTarget(
             name: "BasicTests",
-            dependencies: ["MarkupEditor"],
-            path: "BasicTests"
-            ),
+            dependencies: ["MarkupEditor", "SharedTest"],
+            path: "MarkupEditorTests/BasicTests"),
         .testTarget(
             name: "UndoTests",
-            dependencies: ["MarkupEditor"],
-            path: "UndoTests"
-            ),
+            dependencies: ["MarkupEditor", "SharedTest"],
+            path: "MarkupEditorTests/UndoTests"),
     ]
 )

@@ -29,17 +29,21 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "YES"
+            testExecutionOrdering = "random">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AAFADF40261524AE0024F2DC"
-               BuildableName = "MarkupEditorBasicTests.xctest"
+               BuildableName = "BasicTests.xctest"
                BlueprintName = "BasicTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "YES"
+            testExecutionOrdering = "random">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA2FA8A627FE44C90068828F"

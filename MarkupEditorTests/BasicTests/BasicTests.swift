@@ -24,7 +24,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        wait(for: [loadedExpectation], timeout: 1)
+        wait(for: [loadedExpectation], timeout: 10)
     }
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
@@ -69,7 +69,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         undoSetHandler = handler
     }
     
-    @MainActor func testLoad() throws {
+    func testLoad() throws {
         print("Test: Ensure loadInitialHtml has run.")
         // Do nothing other than run setupWithError
     }

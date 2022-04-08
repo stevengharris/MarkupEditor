@@ -65,9 +65,12 @@
 		AA8EFAF4261E0EA9008AE31E /* LinkToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAF3261E0EA9008AE31E /* LinkToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
 		AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CDA8E268900380046D308 /* SubToolbar.swift */; };
-		AABAF15F264B07D100DC02C6 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
+		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
+		AAD4559D2800CE3300270E4C /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AAD455A12800CE5800270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
+		AAD455A22800CE5800270E4C /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AAFADF56261525110024F2DC /* BasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D3260E8E8E000674B7 /* BasicTests.swift */; };
 		AAFB64DB277CEED70032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64DC277CEED80032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
@@ -75,33 +78,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AA2FA8AE27FE45F70068828F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA652923260E80EE000674B7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA652941260E8113000674B7;
-			remoteInfo = SwiftUIDemo;
-		};
 		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
 			remoteInfo = MarkupEditor;
-		};
-		AA74CF6A27E68032006A5865 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA652923260E80EE000674B7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA652941260E8113000674B7;
-			remoteInfo = SwiftUIDemo;
-		};
-		AA74CF6C27E90FCF006A5865 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA652923260E80EE000674B7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA65299A260E8450000674B7;
-			remoteInfo = UIKitDemo;
 		};
 		AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -110,7 +92,46 @@
 			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
 			remoteInfo = MarkupEditor;
 		};
+		AAD455AB2800DACC00270E4C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
+		};
+		AAD455AD2800DAF200270E4C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AAD455A02800CE3300270E4C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AAD4559D2800CE3300270E4C /* MarkupEditor.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAD455A52800CE5800270E4C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AAD455A22800CE5800270E4C /* MarkupEditor.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEnv.swift; sourceTree = "<group>"; };
@@ -200,6 +221,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +229,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AAD455A12800CE5800270E4C /* MarkupEditor.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +281,25 @@
 			path = UndoTests;
 			sourceTree = "<group>";
 		};
+		AA2FA8C227FFAA370068828F /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				AA6529D0260E8E8E000674B7 /* String+Extensions.swift */,
+				AA2FA8A127FE43A50068828F /* HtmlTest.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		AA2FA8C327FFAA500068828F /* MarkupEditorTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA2FA8C227FFAA370068828F /* Shared */,
+				AA6529CF260E8E8E000674B7 /* BasicTests */,
+				AA2FA8A827FE44C90068828F /* UndoTests */,
+			);
+			path = MarkupEditorTests;
+			sourceTree = "<group>";
+		};
 		AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */ = {
 			isa = PBXGroup;
 			children = (
@@ -277,8 +319,7 @@
 				AA1749E5269DFE84005F0428 /* SharedDemo */,
 				AA652943260E8114000674B7 /* SwiftUIDemo */,
 				AA65299C260E8450000674B7 /* UIKitDemo */,
-				AA6529CF260E8E8E000674B7 /* BasicTests */,
-				AA2FA8A827FE44C90068828F /* UndoTests */,
+				AA2FA8C327FFAA500068828F /* MarkupEditorTests */,
 				AA408AFC261666D200CAE8B9 /* MarkupEditorFramework */,
 				AA65292C260E80EE000674B7 /* Products */,
 				AA6529BF260E8AEC000674B7 /* Frameworks */,
@@ -341,9 +382,7 @@
 		AA6529CF260E8E8E000674B7 /* BasicTests */ = {
 			isa = PBXGroup;
 			children = (
-				AA6529D0260E8E8E000674B7 /* String+Extensions.swift */,
 				AA6529D3260E8E8E000674B7 /* BasicTests.swift */,
-				AA2FA8A127FE43A50068828F /* HtmlTest.swift */,
 			);
 			path = BasicTests;
 			sourceTree = "<group>";
@@ -429,7 +468,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AA2FA8AF27FE45F70068828F /* PBXTargetDependency */,
+				AAD455AE2800DAF200270E4C /* PBXTargetDependency */,
 			);
 			name = UndoTests;
 			productName = UndoTests;
@@ -461,6 +500,7 @@
 				AA65293E260E8113000674B7 /* Sources */,
 				AA65293F260E8113000674B7 /* Frameworks */,
 				AA652940260E8113000674B7 /* Resources */,
+				AAD455A02800CE3300270E4C /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -481,6 +521,7 @@
 				AA652997260E8450000674B7 /* Sources */,
 				AA652998260E8450000674B7 /* Frameworks */,
 				AA652999260E8450000674B7 /* Resources */,
+				AAD455A52800CE5800270E4C /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -505,8 +546,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AA74CF6B27E68032006A5865 /* PBXTargetDependency */,
-				AA74CF6D27E90FCF006A5865 /* PBXTargetDependency */,
+				AAD455AC2800DACC00270E4C /* PBXTargetDependency */,
 			);
 			name = BasicTests;
 			productName = FooTests;
@@ -524,7 +564,6 @@
 				TargetAttributes = {
 					AA2FA8A627FE44C90068828F = {
 						CreatedOnToolsVersion = 13.3;
-						TestTargetID = AA652941260E8113000674B7;
 					};
 					AA408AFA261666D200CAE8B9 = {
 						CreatedOnToolsVersion = 12.4;
@@ -537,7 +576,6 @@
 					};
 					AAFADF40261524AE0024F2DC = {
 						CreatedOnToolsVersion = 12.4;
-						TestTargetID = AA652941260E8113000674B7;
 					};
 				};
 			};
@@ -611,7 +649,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AABAF15F264B07D100DC02C6 /* markup.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -622,8 +659,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */,
 				AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */,
+				AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */,
 				AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -706,30 +743,25 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AA2FA8AF27FE45F70068828F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
-			targetProxy = AA2FA8AE27FE45F70068828F /* PBXContainerItemProxy */;
-		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */;
 		};
-		AA74CF6B27E68032006A5865 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
-			targetProxy = AA74CF6A27E68032006A5865 /* PBXContainerItemProxy */;
-		};
-		AA74CF6D27E90FCF006A5865 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA65299A260E8450000674B7 /* UIKitDemo */;
-			targetProxy = AA74CF6C27E90FCF006A5865 /* PBXContainerItemProxy */;
-		};
 		AA8EFBAB2620B379008AE31E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */;
+		};
+		AAD455AC2800DACC00270E4C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AAD455AB2800DACC00270E4C /* PBXContainerItemProxy */;
+		};
+		AAD455AE2800DAF200270E4C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AAD455AD2800DAF200270E4C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -742,14 +774,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Debug;
 		};
@@ -761,14 +791,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Release;
 		};
@@ -784,8 +812,6 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -815,8 +841,6 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -959,8 +983,6 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -986,8 +1008,6 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1011,8 +1031,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1035,8 +1053,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1062,12 +1078,10 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Debug;
 		};
@@ -1083,12 +1097,10 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftUIDemo.app/SwiftUIDemo";
 			};
 			name = Release;
 		};

@@ -252,9 +252,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Testing support
-    
+
+    /// Set the html content for testing after a delay.
+    ///
+    /// The small delay seems to avoid intermitted problems when running many tests together.
     public func setTestHtml(value: String, handler: (() -> Void)? = nil) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.evaluateJavaScript("MU.setHTML('\(value.escaped)')") { result, error in handler?() }
         }
     }
