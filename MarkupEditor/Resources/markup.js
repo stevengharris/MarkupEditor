@@ -58,12 +58,14 @@ const _callback = function(message) {
 };
 
 /**
- * The 'ready' callback lets Swift know the editor and this js is properly loaded
+ * The 'ready' callback lets Swift know the editor and this js is properly loaded.
+ *
+ * Note for history, replaced window.onload with this eventListener.
  */
-window.onload = function() {
+window.addEventListener('load', function () {
     undoer.enable();
     _callback('ready');
-};
+});
 
 /**
  * MUError captures internal errors and makes it easy to communicate them to the
