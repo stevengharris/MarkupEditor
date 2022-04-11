@@ -12,6 +12,7 @@ struct HtmlTest {
     var description: String? = nil
     var startHtml: String
     var endHtml: String
+    var undoHtml: String?
     var startId: String
     var startOffset: Int
     var endId: String

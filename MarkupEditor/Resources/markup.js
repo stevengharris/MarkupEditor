@@ -1473,7 +1473,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     newRange.setEnd(newEndContainer, newEndOffset);
     newSel.removeAllRanges();
     newSel.addRange(newRange);
-    _consoleLog("* Done _joinNodes")
+    //_consoleLog("* Done _joinNodes")
 }
 
 /**

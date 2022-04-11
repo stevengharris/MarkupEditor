@@ -1002,6 +1002,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 description: "P in P - Paste simple paragraph at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
                 endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello world</p>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
                 startId: "blank",     // Select "|<br>"
                 startOffset: 0,
                 endId: "blank",
@@ -1012,6 +1013,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 description: "P in P - Paste paragraph with children at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
                 endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello <b>bold</b> world</p>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
                 startId: "blank",     // Select "|This"
                 startOffset: 0,
                 endId: "blank",
@@ -1022,6 +1024,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 description: "H5 in P - Paste simple h5 at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
                 endHtml: "<p id=\"p\">This is just a simple paragraph.</p><h5>Hello world</h5>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
                 startId: "blank",     // Select "|<br>"
                 startOffset: 0,
                 endId: "blank",
@@ -1032,6 +1035,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 description: "H5 in P - Paste h5 with children at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
                 endHtml: "<p id=\"p\">This is just a simple paragraph.</p><h5>Hello <b>bold</b> world</h5>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
                 startId: "blank",     // Select "|This"
                 startOffset: 0,
                 endId: "blank",
@@ -1043,6 +1047,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Undo paste of various things in various places")
             // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _pasteHTML.
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
@@ -1059,7 +1064,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
-                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
