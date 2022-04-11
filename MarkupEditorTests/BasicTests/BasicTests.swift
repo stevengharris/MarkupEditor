@@ -1366,7 +1366,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 pasteString: "<p>Hello <i>bold</i> world</p>"
             ),
             HtmlTest(
-                description: "P in P - Paste paragraph with emmbedded italic at insertion point in a bolded word",
+                description: "P in P - Paste paragraph with embedded italic at insertion point in a bolded word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is juHello <b>bold</b> world</p><p>st a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "

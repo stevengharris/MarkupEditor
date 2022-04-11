@@ -875,5 +875,205 @@ class UndoTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 2)
         }
     }
+    
+    func testUndoPasteHtml() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "P in P - Paste simple text at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste text with embedded bold at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello <b>bold</b> worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello <b>bold</b> world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple text at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello worldst</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "Hello world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste text with embedded italic at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello <i>bold</i> worldst</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "Hello <i>bold</i> world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello <b>bold</b> world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello <i>bold</i> world</p><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<p>Hello <i>bold</i> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with embedded italic at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello <b>bold</b> world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at beginning of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at beginning of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello <b>bold</b> world</p><p>This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at end of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p><p><br></p>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at end of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello <b>bold</b> world</p><p><br></p>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello world</p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello <b>bold</b> world</p>",
+                startId: "blank",     // Select "|This"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "H5 in P - Paste simple h5 at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><h5>Hello world</h5>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h5>Hello world</h5>"
+            ),
+            HtmlTest(
+                description: "H5 in P - Paste h5 with children at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><h5>Hello <b>bold</b> world</h5>",
+                startId: "blank",     // Select "|This"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h5>Hello <b>bold</b> world</h5>"
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Undo paste of various things in various places")
+            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _pasteHTML.
+            // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
+            // When the undo is done, the html should be what we started with.
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Define the handler to execute after undoSet is received (i.e., once the undoData has
+                        // been pushed to the stack and can be executed).
+                        self.addUndoSetHandler {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                // Define the handler after input is received (i.e., once the undo is complete)
+                                self.addInputHandler {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                                // Kick off the undo operation on the paste
+                                self.webView.testUndo()
+                            }
+                        }
+                        // Kick off the paste operation
+                        self.webView.pasteHtml(test.pasteString)
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
 
 }

@@ -1031,8 +1031,6 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const endOffset = pasteRange.endOffset;
     if (redoing) {
         oldUndoerData.range = pasteRange;
-        oldUndoerData.data.startOffset = startOffset;
-        oldUndoerData.data.endOffset = endOffset;
         oldUndoerData.data.rootName = rootName;
         oldUndoerData.data.replacedEmpty = replacedEmpty;
         //_consoleLog(_rangeString(pasteRange, "redo"));
@@ -1042,13 +1040,12 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     _backupSelection();
     if (undoable) {
         // html - What was pasted, probably contains spans, styles and other cruft
-        // offset - The offset into the (text) anchorNode at the starting selection
         // deletedFragment - What (if anything) we deleted before pasting
         // rootName - The name of the node we splitText up to, or null if we didn't splitText
         // replacedEmpty - The name of the empty node we replaced, or null if we didn't
         // pasteRange - (saved as undoerData.range) Range that contains what we pasted
         //_consoleLog(_rangeString(pasteRange, "do"));
-        const undoerData = _undoerData('pasteHTML', {html: html, startOffset: startOffset, endOffset: endOffset, deletedFragment: deletedFragment, rootName: rootName, replacedEmpty: replacedEmpty}, pasteRange);
+        const undoerData = _undoerData('pasteHTML', {html: html, deletedFragment: deletedFragment, rootName: rootName, replacedEmpty: replacedEmpty}, pasteRange);
         undoer.push(undoerData);
     }
     _callback('input');
@@ -1128,6 +1125,7 @@ const _insertHTML = function(fragment) {
     if ((direction === null) && (noChildElements || noTopLevelChildren)) {
         //_consoleLog("Simple")
         const firstFragChild = fragment.firstChild;
+        const lastFragChild = fragment.lastChild;
         const shouldJoin = _isTextNode(anchorNode) && !_isTextNode(firstFragChild) && (anchorNode.parentNode.nodeName === firstFragChild.nodeName)
         if (shouldJoin) {
             //_consoleLog(" Joining")
@@ -1140,20 +1138,19 @@ const _insertHTML = function(fragment) {
             newSelRange.setEnd(anchorNode, anchorNode.textContent.length);
         } else {
             //_consoleLog(" Inserting")
-            // Fragment becomes anchorNode's nextSibling
+            // Fragment becomes anchorNode's nextSibling, selection set to end
             selRange.insertNode(fragment);
-            // TODO: Why do this now, cannot remember. Is it needed above?
             _stripZeroWidthChars(anchorNode.parentNode);
-            if (firstFragChild.nodeType === Node.TEXT_NODE) {
-                newSelRange.setStart(firstFragChild, firstFragChild.textContent.length);
-                newSelRange.setEnd(firstFragChild, firstFragChild.textContent.length);
-                insertedRange.setEnd(firstFragChild, firstFragChild.textContent.length);
+            insertedRange.setStart(firstFragChild, 0);
+            if (_isTextNode(lastFragChild)) {
+                newSelRange.setStart(lastFragChild, lastFragChild.textContent.length);
+                newSelRange.setEnd(lastFragChild, lastFragChild.textContent.length);
+                insertedRange.setEnd(lastFragChild, lastFragChild.textContent.length);
             } else {
-                newSelRange.setStart(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
-                newSelRange.setEnd(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
-                insertedRange.setEnd(firstFragChild.parentNode, firstFragChild.parentNode.childNodes.length);
+                newSelRange.setStart(lastFragChild, lastFragChild.childNodes.length);
+                newSelRange.setEnd(lastFragChild, lastFragChild.childNodes.length);
+                insertedRange.setEnd(lastFragChild, lastFragChild.childNodes.length);
             };
-            insertedRange.setStart(anchorNode, anchorNode.textContent.length);
         };
         sel.removeAllRanges();
         sel.addRange(newSelRange);
@@ -1350,6 +1347,7 @@ const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTE
  * remains valid; if it was in the trailingRoot before, when done it will be in the leadingRoot.
  */
 const _joinNodes = function(leadingNode, trailingNode, rootName) {
+    //_consoleLog("* _joinNodes(" + _textString(leadingNode) + ", " + _textString(trailingNode) + ", " + rootName);
     const leadingRoot = _findFirstParentElementInNodeNames(leadingNode, [rootName]);
     const trailingRoot = _findFirstParentElementInNodeNames(trailingNode, [rootName]);
     // We need to be able to locate leadingRoot and trailingRoot above the leadingNode and trailingNode.
@@ -1359,6 +1357,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
         error.callback();
         return;
     };
+    //_consoleLog("  leadingRoot: " + _textString(leadingRoot) + ", trailingRoot: " + _textString(trailingRoot));
     // The lastChild within leadingRoot has to be the same nodeName as the firstChild of trailingRoot.
     // If they are not the same nodeName, then they were not created using splitTextNode or are otherwise
     // violating the assumptions used when joining them. For example, starting with <p><b>bo|ld</b></p>
@@ -1369,15 +1368,19 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     // will be the same as before, but lastLeadingChild will be <i><b>bo</b></i> and firstTrailingChild will
     // be <i><b>ld</b></i>. This is an important distinction because we want to fold the contents of
     // firstTrailingChild into the lastLeadingChild.
+    // There is also a case where the leadingRoot is empty, like <p></p>. This happens because we might
+    // have deleted a range, leaving an empty paragraph. In this case, we still want to join the nodes, but
+    // the lastLeadingChild is null.
     const lastLeadingChild = leadingRoot.lastChild;
+    const lastLeadingChildNodeName = (lastLeadingChild) ? lastLeadingChild.nodeName : null;
     const firstTrailingChild = trailingRoot.firstChild;
-    if (lastLeadingChild.nodeName !== firstTrailingChild.nodeName) {
-        const error = MU.InvalidJoinNodes;
+    const firstTrailingChildNodeName = (firstTrailingChild) ? firstTrailingChild.nodeName : null;
+    if (lastLeadingChild && firstTrailingChild && (lastLeadingChildNodeName !== firstTrailingChildNodeName)) {
+        const error = MUError.InvalidJoinNodes;
         error.setInfo('Could not join at ' + rootName + ' (lastLeadingChild: ' + lastLeadingChild + ', firstTrailingChild: ' + firstTrailingChild + ').');
         error.callback();
         return;
     }
-    _consoleLog("* _joinNodes(" + leadingNode + ", " + trailingNode + ", " + rootName);
     // Start by treating firstTrailingChild specially.
     const sel = document.getSelection();
     const range = sel.getRangeAt(0);
@@ -1396,16 +1399,30 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     if (firstTrailingChild.nodeType === Node.TEXT_NODE) {
         // We just have to append text from the firstTrailingChild to the lastLeadingChild
         if (startWithFirstChild) {
-            newStartContainer = lastLeadingChild;
-            newStartOffset = lastLeadingChild.textContent.length + originalStartOffset;
+            if (lastLeadingChild) {
+                newStartContainer = lastLeadingChild;
+                newStartOffset = lastLeadingChild.textContent.length + originalStartOffset;
+            } else {
+                newStartContainer = leadingRoot;
+                newStartOffset = 0;
+            };
         }
         if (endWithFirstChild) {
-            newEndContainer = lastLeadingChild;
-            newEndOffset = lastLeadingChild.textContent.length + originalEndOffset;
+            if (lastLeadingChild) {
+                newEndContainer = lastLeadingChild;
+                newEndOffset = lastLeadingChild.textContent.length + originalEndOffset;
+            } else {
+                newEndContainer = leadingRoot;
+                newEndOffset = originalEndOffset;
+            };
         }
-        lastLeadingChild.textContent = lastLeadingChild.textContent + firstTrailingChild.textContent;
-        // Remove the firstTrailingChild so that it's no longer in trailingRoot
-        trailingRoot.removeChild(firstTrailingChild);
+        if (lastLeadingChild) {
+            lastLeadingChild.textContent = lastLeadingChild.textContent + firstTrailingChild.textContent;
+            // Remove the firstTrailingChild so that it's no longer in trailingRoot
+            trailingRoot.removeChild(firstTrailingChild);
+        } else {
+            leadingRoot.appendChild(firstTrailingChild);
+        }
     } else if (firstTrailingChild.nodeType === Node.ELEMENT_NODE) {
         // We have some kind of nested elements (like <i><b>Hello</b></i> that we need to walk down to find
         // the embedded text element we are going to join to the corresponding lastLeadingChild's nested
@@ -1519,21 +1536,15 @@ const _fillEmpty = function(element) {
 const _undoPasteHTML = function(undoerData) {
     // The undoerData contains:
     //  html - What was pasted, probably contains spans, styles and other cruft
-    //  startOffset - The offset into the (text) anchorNode at the starting selection
-    //  endOffset - The offset into the (text) focusNode at the starting selection
     //  deletedFragment - What (if anything) we deleted before pasting
     //  rootName - The name of the node we splitText up to, or null if we didn't splitText
     //  replacedEmpty - The name of the empty node we replaced, or null if we didn't
     //  pasteRange - (saved as undoerData.range) Range that contains what we pasted
+    //_consoleLog("* _undoPasteHTML")
     const pasteRange = undoerData.range;
     const rootName = undoerData.data.rootName;
     const replacedEmpty = undoerData.data.replacedEmpty;
     const deletedFragment = undoerData.data.deletedFragment;
-    // Before undoing, patch up the undoerData.range with the startOffset and endOffset.
-    const startOffset = undoerData.data.startOffset;
-    const endOffset = undoerData.data.endOffset;
-    pasteRange.setStart(pasteRange.startContainer, startOffset);
-    pasteRange.setEnd(pasteRange.endContainer, endOffset);
     //_consoleLog(_rangeString(pasteRange, "undo"));
     _deleteRange(pasteRange, rootName);
     const sel = document.getSelection();
@@ -1612,6 +1623,7 @@ const _rangeFor = function(node, direction="START") {
  * still valid and represents the selection after deleting the range.
  */
 const _deleteRange = function(range, rootName) {
+    //_consoleLog("* _deleteRange");
     let leadingNode = range.startContainer;
     let trailingNode = range.endContainer;
     range.deleteContents();
@@ -1646,44 +1658,10 @@ const _deleteRange = function(range, rootName) {
         newRange = document.getSelection().getRangeAt(0);
         range.setStart(newRange.startContainer, newRange.startOffset);
         range.setEnd(newRange.endContainer, newRange.endOffset);
-        _consoleLog(_rangeString(range, "after _joinNodes"));
-    }
-};
-
-/*
-const _deleteRange = function(range, rootName) {
-    let leadingNode = range.startContainer;
-    let trailingNode = range.endContainer;
-    range.deleteContents();
-    const sel = document.getSelection();
-    const anchorNode = sel.anchorNode;
-    let newRange;
-    if (anchorNode && _isEmpty(anchorNode)) {
-        const prevSib = anchorNode.previousSibling;
-        const nextSib = anchorNode.nextSibling;
-        const parentNode = anchorNode.parentNode;
-        parentNode.removeChild(anchorNode);
-        if (prevSib) {
-            newRange = _rangeFor(prevSib, 'END');
-        } else if (nextSib) {
-            newRange = _rangeFor(nextSib, 'START');
-        } else {
-            newRange = _rangeFor(parentNode, 'START');
-        };
-    } else {
-        newRange = document.createRange();
-        newRange.setStart(leadingNode, leadingNode.textContent.length);
-        newRange.setEnd(trailingNode, 0);
+        //_consoleLog(_rangeString(range, "after _joinNodes"));
     };
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    if (rootName) {
-        leadingNode = newRange.startContainer;  // because it might have changed
-        trailingNode = newRange.endContainer;   // because it might have changed
-        _joinNodes(leadingNode, trailingNode, rootName);
-    }
+    //_consoleLog("* Done _deleteRange");
 };
- */
 
 /********************************************************************************
  * Getting and setting document contents
