@@ -20,7 +20,6 @@
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
 		AA2548772805FAE300C9DEB2 /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
-		AA25487D2805FB0E00C9DEB2 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */; };
 		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -51,6 +50,7 @@
 		AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
+		AA52F321280634B200EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
 		AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5EEF04264061B800B111A1 /* Image+Extensions.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
@@ -154,7 +154,6 @@
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
-		AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RedoTests.swift; path = ../MarkupEditorTests/RedoTests/RedoTests.swift; sourceTree = "<group>"; };
 		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -166,6 +165,7 @@
 		AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarPreference.swift; sourceTree = "<group>"; };
 		AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorMenu.swift; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		AA52F320280634B200EEC655 /* RedoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedoTests.swift; sourceTree = "<group>"; };
 		AA5EEF04264061B800B111A1 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
@@ -294,15 +294,6 @@
 			path = SharedDemo;
 			sourceTree = "<group>";
 		};
-		AA2548742805FAE300C9DEB2 /* RedoTests */ = {
-			isa = PBXGroup;
-			children = (
-				AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */,
-			);
-			name = RedoTests;
-			path = ../RedoTests;
-			sourceTree = "<group>";
-		};
 		AA2FA8A827FE44C90068828F /* UndoTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -323,10 +314,10 @@
 		AA2FA8C327FFAA500068828F /* MarkupEditorTests */ = {
 			isa = PBXGroup;
 			children = (
+				AA52F31F280634B200EEC655 /* RedoTests */,
 				AA2FA8C227FFAA370068828F /* Shared */,
 				AA6529CF260E8E8E000674B7 /* BasicTests */,
 				AA2FA8A827FE44C90068828F /* UndoTests */,
-				AA2548742805FAE300C9DEB2 /* RedoTests */,
 			);
 			path = MarkupEditorTests;
 			sourceTree = "<group>";
@@ -338,6 +329,14 @@
 				AAFADF64261525B90024F2DC /* MarkupEditor.h */,
 			);
 			path = MarkupEditorFramework;
+			sourceTree = "<group>";
+		};
+		AA52F31F280634B200EEC655 /* RedoTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA52F320280634B200EEC655 /* RedoTests.swift */,
+			);
+			path = RedoTests;
 			sourceTree = "<group>";
 		};
 		AA652922260E80EE000674B7 = {
@@ -722,7 +721,6 @@
 			files = (
 				AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */,
 				AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */,
-				AA25487D2805FB0E00C9DEB2 /* RedoTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -747,6 +745,7 @@
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
 				AA408B242616685B00CAE8B9 /* MarkupWebView.swift in Sources */,
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
+				AA52F321280634B200EEC655 /* RedoTests.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
