@@ -38,5 +38,9 @@ let package = Package(
             name: "UndoTests",
             dependencies: ["MarkupEditor", "SharedTest"],
             path: "MarkupEditorTests/UndoTests"),
+        .testTarget(
+            name: "RedoTests",
+            dependencies: ["MarkupEditor", "SharedTest"],
+            path: "MarkupEditorTests/RedoTests"),
     ]
 )

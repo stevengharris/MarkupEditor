@@ -260,7 +260,6 @@ class Undoer {
     
     testUndo() {
         _undoOperation(this._stack[this._depth]);
-        this._setUndoIndex(this._depth - 1);
     };
     
     testRedo() {

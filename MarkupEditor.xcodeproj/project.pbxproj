@@ -19,6 +19,10 @@
 		AA1B818126273D9200891FFB /* demo.html in Resources */ = {isa = PBXBuildFile; fileRef = AA1B816C26265CAD00891FFB /* demo.html */; };
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
+		AA2548772805FAE300C9DEB2 /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
+		AA25487D2805FB0E00C9DEB2 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */; };
+		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
+		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -78,6 +82,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AA2548782805FAE300C9DEB2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
+			remoteInfo = MarkupEditor;
+		};
 		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
@@ -143,6 +154,8 @@
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
+		AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RedoTests.swift; path = ../MarkupEditorTests/RedoTests/RedoTests.swift; sourceTree = "<group>"; };
+		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
@@ -203,6 +216,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AA2548702805FAE300C9DEB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA2548772805FAE300C9DEB2 /* MarkupEditor.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA2FA8A427FE44C90068828F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -273,6 +294,15 @@
 			path = SharedDemo;
 			sourceTree = "<group>";
 		};
+		AA2548742805FAE300C9DEB2 /* RedoTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA25486D2805FA4C00C9DEB2 /* RedoTests.swift */,
+			);
+			name = RedoTests;
+			path = ../RedoTests;
+			sourceTree = "<group>";
+		};
 		AA2FA8A827FE44C90068828F /* UndoTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -296,6 +326,7 @@
 				AA2FA8C227FFAA370068828F /* Shared */,
 				AA6529CF260E8E8E000674B7 /* BasicTests */,
 				AA2FA8A827FE44C90068828F /* UndoTests */,
+				AA2548742805FAE300C9DEB2 /* RedoTests */,
 			);
 			path = MarkupEditorTests;
 			sourceTree = "<group>";
@@ -334,6 +365,7 @@
 				AAFADF41261524AE0024F2DC /* BasicTests.xctest */,
 				AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */,
 				AA2FA8A727FE44C90068828F /* UndoTests.xctest */,
+				AA2548732805FAE300C9DEB2 /* RedoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -457,6 +489,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		AA2548722805FAE300C9DEB2 /* RedoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA25487A2805FAE300C9DEB2 /* Build configuration list for PBXNativeTarget "RedoTests" */;
+			buildPhases = (
+				AA25486F2805FAE300C9DEB2 /* Sources */,
+				AA2548702805FAE300C9DEB2 /* Frameworks */,
+				AA2548712805FAE300C9DEB2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA2548792805FAE300C9DEB2 /* PBXTargetDependency */,
+			);
+			name = RedoTests;
+			productName = RedoTests;
+			productReference = AA2548732805FAE300C9DEB2 /* RedoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		AA2FA8A627FE44C90068828F /* UndoTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */;
@@ -562,6 +612,9 @@
 				LastSwiftUpdateCheck = 1330;
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
+					AA2548722805FAE300C9DEB2 = {
+						CreatedOnToolsVersion = 13.3;
+					};
 					AA2FA8A627FE44C90068828F = {
 						CreatedOnToolsVersion = 13.3;
 					};
@@ -599,11 +652,19 @@
 				AA408AFA261666D200CAE8B9 /* MarkupEditor */,
 				AAFADF40261524AE0024F2DC /* BasicTests */,
 				AA2FA8A627FE44C90068828F /* UndoTests */,
+				AA2548722805FAE300C9DEB2 /* RedoTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AA2548712805FAE300C9DEB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA2FA8A527FE44C90068828F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -655,6 +716,16 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AA25486F2805FAE300C9DEB2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */,
+				AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */,
+				AA25487D2805FB0E00C9DEB2 /* RedoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA2FA8A327FE44C90068828F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -743,6 +814,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AA2548792805FAE300C9DEB2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
+			targetProxy = AA2548782805FAE300C9DEB2 /* PBXContainerItemProxy */;
+		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
@@ -766,6 +842,42 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		AA25487B2805FAE300C9DEB2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7XXG4VJQ59;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.RedoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA25487C2805FAE300C9DEB2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7XXG4VJQ59;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.RedoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		AA2FA8AC27FE44C90068828F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1107,6 +1219,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AA25487A2805FAE300C9DEB2 /* Build configuration list for PBXNativeTarget "RedoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA25487B2805FAE300C9DEB2 /* Debug */,
+				AA25487C2805FAE300C9DEB2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

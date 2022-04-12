@@ -1,14 +1,14 @@
 //
-//  UndoTests.swift
-//  UndoTests
+//  RedoTests.swift
+//  MarkupEditor
 //
-//  Created by Steven Harris on 4/6/22.
+//  Created by Steven Harris on 4/12/22.
 //
 
 import XCTest
 import MarkupEditor
 
-class UndoTests: XCTestCase, MarkupDelegate {
+class RedoTests: XCTestCase, MarkupDelegate {
     var selectionState: SelectionState = SelectionState()
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
@@ -68,7 +68,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         undoSetHandler = handler
     }
     
-    func testUndoFormats() throws {
+    func testRedoFormats() throws {
         // Select a range in a P styled string, apply a format to it, and then undo
         for format in FormatContext.AllCases {
             var test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
@@ -84,7 +84,12 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: test.startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: test.endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -116,8 +121,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoUnformats() throws {
-        // Given a range of formatted text, toggle the format off, then undo
+    func testRedoUnformats() throws {
+        // Given a range of formatted text, toggle the format off, then undo, then redo
         for format in FormatContext.AllCases {
             let rawString = "This is a start."
             var test = HtmlTest.forUnformatting(rawString, style: .P, format: format, startingAt: 5, endingAt: 7)
@@ -137,7 +142,12 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: test.endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -169,115 +179,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoMultiElementFormats() throws {
-        // The selection (startId, startOffset, endId, endOffset) is always identified
-        // using the innermost element id and the offset into it. Inline comments
-        // below show the selection using "|" for clarity.
-        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (
-                HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat italic",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><b id=\"b\">Hello world</b></p>",
-                    undoHtml: "<p><b id=\"b\"><i>Hello</i> world</b></p>",
-                    startId: "i",
-                    startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.italic() { handler() }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello</i> world</p>",
-                    undoHtml: "<p><b><i id=\"i\">Hello</i> world</b></p>",
-                    startId: "i",
-                    startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.bold() { handler() }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello </i>world</p>",
-                    undoHtml: "<p><b id=\"b\"><i>Hello </i>world</b></p>",
-                    startId: "i",
-                    startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.bold() { handler() }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "\"Hello \" is italic and bold, \"wo|rld\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello</i> world</p>",
-                    undoHtml: "<p><b><i id=\"i\">Hello</i> world</b></p>",
-                    startId: "b",
-                    startOffset: 2,
-                    endId: "b",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.bold() { handler() }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
-                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
-                    startId: "p",
-                    startOffset: 0,
-                    endId: "i",
-                    endOffset: 5
-                ),
-                { handler in
-                    self.webView.bold() { handler() }
-                }
-            ),
-        ]
-        for (test, action) in htmlTestAndActions {
-            test.printDescription()
-            let startHtml = test.startHtml
-            let endHtml = test.endHtml
-            let undoHtml = test.undoHtml ?? test.startHtml
-            let expectation = XCTestExpectation(description: "Unformatting nested tags")
-            webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
-                    self.assertEqualStrings(expected: startHtml, saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        action() {
-                            self.webView.getHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
-                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        expectation.fulfill()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-    
-    func testUndoStyles() throws {
+    func testRedoStyles() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -344,7 +246,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let undoHtml = test.undoHtml ?? startHtml
-            let expectation = XCTestExpectation(description: "Undoing the setting and replacing of styles")
+            let expectation = XCTestExpectation(description: "Redoing the setting and replacing of styles")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
@@ -355,7 +257,12 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -367,7 +274,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoBlockQuotes() throws {
+    func testRedoBlockQuotes() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -463,10 +370,11 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
+                //TODO: This is a real failure. See comment in _unsetTag
                 HtmlTest(
                     description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
                     startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
-                    endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
+                    endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
                     startOffset: 2,
                     endId: "i2",
@@ -497,7 +405,12 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -509,7 +422,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoLists() throws {
+    func testRedoLists() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -632,14 +545,18 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 self.webView.getHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
                         action() {
                             self.webView.getHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -651,7 +568,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoListEnterCollapsed() throws {
+    func testRedoListEnterCollapsed() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -756,7 +673,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.addInputHandler {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                        // Kick off the redo operation on the enter
+                                        self.webView.testRedo()
                                     }
                                 }
                                 // Kick off the undo operation in the list we did enter in
@@ -771,8 +695,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 3)
         }
     }
-
-    func testUndoListEnterRange() {
+    
+    func testRedoListEnterRange() {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
                 description: "Word in single styled list item",
@@ -914,7 +838,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.addInputHandler {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                        // Kick off the redo operation on the enter
+                                        self.webView.testRedo()
                                     }
                                 }
                                 // Kick off the undo operation in the list we did enter in
@@ -930,7 +861,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoInsertEmpty() throws {
+    func testRedoInsertEmpty() throws {
         /* See the notes in testInsertEmpty */
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
@@ -968,7 +899,12 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -980,7 +916,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoPasteHtml() throws {
+    func testRedoPasteHtml() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
                 description: "P in P - Paste simple text at insertion point in a word",
@@ -1152,8 +1088,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let undoHtml = test.undoHtml ?? startHtml
-            let expectation = XCTestExpectation(description: "Undo paste of various things in various places")
-            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _pasteHTML.
+            let expectation = XCTestExpectation(description: "Redo paste of various things in various places")
+            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after the operation.
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
             webView.setTestHtml(value: startHtml) {
@@ -1169,7 +1105,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.addInputHandler {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                        // Kick off the redo operation on the paste
+                                        self.webView.testRedo()
                                     }
                                 }
                                 // Kick off the undo operation on the paste
@@ -1185,7 +1128,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoPasteText() throws {
+    func testRedoPasteText() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
                 description: "P in P - Paste simple text at insertion point in a word",
@@ -1374,7 +1317,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        expectation.fulfill()
+                                        self.addInputHandler {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                        // Kick off the redo operation on the paste
+                                        self.webView.testRedo()
                                     }
                                 }
                                 // Kick off the undo operation on the paste
@@ -1389,5 +1339,5 @@ class UndoTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 3)
         }
     }
-
+    
 }

@@ -350,18 +350,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-//    public func getMarkdown(_ handler: ((String?)->Void)?) {
-//        evaluateJavaScript("MU.getMarkdown()") { result, error in
-//            handler?(result as? String)
-//        }
-//    }
-//
-//    public func getRoundTrip(_ handler: ((String?)->Void)?) {
-//        evaluateJavaScript("MU.getRoundTrip()") { result, error in
-//            handler?(result as? String)
-//        }
-//    }
-    
     public func emptyDocument(handler: (()->Void)?) {
         evaluateJavaScript("MU.emptyDocument()") { result, error in
             handler?()

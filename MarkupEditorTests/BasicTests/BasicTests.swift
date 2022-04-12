@@ -221,90 +221,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testStyles() throws {
-        // The selection (startId, startOffset, endId, endOffset) is always identified
-        // using the innermost element id and the offset into it. Inline comments
-        // below show the selection using "|" for clarity.
-        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (
-                HtmlTest(
-                    description: "Replace p with h1",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
-                    endHtml: "<h1><b id=\"b\"><i id=\"i\">Hello </i>world</b></h1>",
-                    startId: "i",
-                    startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
-                            handler()
-                        }
-                    }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "Replace h2 with h6",
-                    startHtml: "<h2 id=\"h2\">Hello world</h2>",
-                    endHtml: "<h6>Hello world</h6>",
-                    startId: "h2",
-                    startOffset: 0,
-                    endId: "h2",
-                    endOffset: 10
-                ),
-                { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H6) {
-                            handler()
-                        }
-                    }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "Replace h3 with p",
-                    startHtml: "<h3 id=\"h3\">Hello world</h3>",
-                    endHtml: "<p>Hello world</p>",
-                    startId: "h3",
-                    startOffset: 2,
-                    endId: "h3",
-                    endOffset: 8
-                ),
-                { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .P) {
-                            handler()
-                        }
-                    }
-                }
-            ),
-            ]
-        for (test, action) in htmlTestAndActions {
-            test.printDescription()
-            let startHtml = test.startHtml
-            let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Setting and replacing styles")
-            webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
-                    self.assertEqualStrings(expected: startHtml, saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
-                        action() {
-                            self.webView.getHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
-                        }
-                    }
-                }
-            }
-            wait(for: [expectation], timeout: 2)
-        }
-    }
-
-    func testMultiElementSelections() throws {
+    func testMultiElementFormats() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -403,6 +320,89 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testStyles() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Replace p with h1",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<h1><b id=\"b\"><i id=\"i\">Hello </i>world</b></h1>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "i",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Replace h2 with h6",
+                    startHtml: "<h2 id=\"h2\">Hello world</h2>",
+                    endHtml: "<h6>Hello world</h6>",
+                    startId: "h2",
+                    startOffset: 0,
+                    endId: "h2",
+                    endOffset: 10
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H6) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Replace h3 with p",
+                    startHtml: "<h3 id=\"h3\">Hello world</h3>",
+                    endHtml: "<p>Hello world</p>",
+                    startId: "h3",
+                    startOffset: 2,
+                    endId: "h3",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .P) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Setting and replacing styles")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+
     func testBlockQuotes() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
@@ -1207,6 +1207,13 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    /// Test preprocessing of HTML that is performed before pasting.
+    ///
+    /// Text that comes in via the pasteboard contains a "proper" HTML document, including meta tags and extensive
+    /// styling to capture the state from the source document. The MarkupEditor strictly controls the styling and other
+    /// content of the document it works on, so much of this content needs to be stripped from the incoming HTML
+    /// before pasting. By testing the preprocessing itself, the tests for HTML paste (and the corresponding text paste)
+    /// can be done using "clean" strings.
     func testPasteHtmlPreprocessing() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
@@ -1243,49 +1250,6 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Cleaning up html we get from the paste buffer")
             self.webView.testPasteHtmlPreprocessing(html: startHtml) { cleaned in
-                self.assertEqualStrings(expected: endHtml, saw: cleaned)
-                expectation.fulfill()
-            }
-            wait(for: [expectation], timeout: 3)
-        }
-    }
-    
-    func testPasteTextPreprocessing() throws {
-        let htmlTests: [HtmlTest] = [
-            HtmlTest(
-                description: "Clean HTML should not change",
-                startHtml: "<h5 id=\"h5\">This is just a simple paragraph.</h5>",
-                endHtml: "<p>This is just a simple paragraph.</p>",
-                startId: "h5",
-                startOffset: 10,
-                endId: "h5",
-                endOffset: 10
-            ),
-            HtmlTest(
-                description: "Clean up a simple copy buffer of h1 from the MarkupEditor",
-                startHtml: "<h1 id=\"h1\" style=\"font-size: 2.5em; font-weight: bold; margin: 0px 0px 10px; caret-color: rgb(0, 0, 255); color: rgba(0, 0, 0, 0.847); font-family: UICTFontTextStyleBody; font-style: normal; font-variant-caps: normal; letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: none; -webkit-text-stroke-width: 0px; text-decoration: none;\">Welcome to the MarkupEditor Demo</h1><br class=\"Apple-interchange-newline\">",
-                endHtml: "<p>Welcome to the MarkupEditor Demo</p><p><br></p>",
-                startId: "h1",
-                startOffset: 10,
-                endId: "h1",
-                endOffset: 10
-            ),
-            HtmlTest(
-                description: "Clean up complex content from StackOverflow",
-                startHtml: "<meta charset=\"UTF-8\"><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">List of One Liners</strong></p><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\">Let\'s solve this problem for this array:</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\"><span class=\"hljs-keyword\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-keyword);\">var</span> array = [<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'A\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'C\'</span>];\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">1. Remove only the first:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">indexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">2. Remove only the last:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">lastIndexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">3. Remove all occurrences:</strong></p><pre class=\"lang-js s-code-block\" style=\"margin: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array = array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">filter</span>(<span class=\"hljs-function\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\"><span class=\"hljs-params\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\">v</span> =&gt;</span> v !== <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>); </code></pre>",
-                endHtml: "<p>List of One Liners</p><p>Let\'s solve this problem for this array:</p><p>var array = [\'A\', \'B\', \'C\'];\n</p><p>1. Remove only the first:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.indexOf(\'B\'), 1);\n</p><p>2. Remove only the last:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.lastIndexOf(\'B\'), 1);\n</p><p>3. Remove all occurrences:</p><p>array = array.filter(v =&gt; v !== \'B\'); </p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
-            ),
-        ]
-        for test in htmlTests {
-            test.printDescription()
-            let startHtml = test.startHtml
-            let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Get \"unformatted text\" from the paste buffer")
-            self.webView.testPasteTextPreprocessing(html: startHtml) { cleaned in
                 self.assertEqualStrings(expected: endHtml, saw: cleaned)
                 expectation.fulfill()
             }
@@ -1466,6 +1430,242 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         self.webView.pasteHtml(test.pasteString) {
+                            self.webView.getHtml() { pasted in
+                                self.assertEqualStrings(expected: endHtml, saw: pasted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
+    
+    /// Test preprocessing of HTML that is performed before pasting text (aka "Paste and Match Style").
+    ///
+    /// See comments in the `testPasteHtmlPreprocessing` method.
+    ///
+    /// The "pasteText" function (via the "Paste and Match Style" edit menu) pastes the MarkupEditor
+    /// equivalent of plain text. To do that, it uses <p> for all styling and removes all formatting (e.g., <b>, <i>, etc).
+    /// The text preprocessing does the same preprocessing as the HTML preprocessing, plus this additional
+    /// style and format removal, along with link removal.
+    func testPasteTextPreprocessing() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Clean HTML should not change",
+                startHtml: "<h5 id=\"h5\">This is just a simple paragraph.</h5>",
+                endHtml: "<p>This is just a simple paragraph.</p>",
+                startId: "h5",
+                startOffset: 10,
+                endId: "h5",
+                endOffset: 10
+            ),
+            HtmlTest(
+                description: "Clean up a simple copy buffer of h1 from the MarkupEditor",
+                startHtml: "<h1 id=\"h1\" style=\"font-size: 2.5em; font-weight: bold; margin: 0px 0px 10px; caret-color: rgb(0, 0, 255); color: rgba(0, 0, 0, 0.847); font-family: UICTFontTextStyleBody; font-style: normal; font-variant-caps: normal; letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: none; -webkit-text-stroke-width: 0px; text-decoration: none;\">Welcome to the MarkupEditor Demo</h1><br class=\"Apple-interchange-newline\">",
+                endHtml: "<p>Welcome to the MarkupEditor Demo</p><p><br></p>",
+                startId: "h1",
+                startOffset: 10,
+                endId: "h1",
+                endOffset: 10
+            ),
+            HtmlTest(
+                description: "Clean up complex content from StackOverflow",
+                startHtml: "<meta charset=\"UTF-8\"><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">List of One Liners</strong></p><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\">Let\'s solve this problem for this array:</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\"><span class=\"hljs-keyword\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-keyword);\">var</span> array = [<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'A\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'C\'</span>];\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">1. Remove only the first:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">indexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">2. Remove only the last:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">lastIndexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">3. Remove all occurrences:</strong></p><pre class=\"lang-js s-code-block\" style=\"margin: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array = array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">filter</span>(<span class=\"hljs-function\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\"><span class=\"hljs-params\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\">v</span> =&gt;</span> v !== <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>); </code></pre>",
+                endHtml: "<p>List of One Liners</p><p>Let\'s solve this problem for this array:</p><p>var array = [\'A\', \'B\', \'C\'];\n</p><p>1. Remove only the first:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.indexOf(\'B\'), 1);\n</p><p>2. Remove only the last:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.lastIndexOf(\'B\'), 1);\n</p><p>3. Remove all occurrences:</p><p>array = array.filter(v =&gt; v !== \'B\'); </p>",
+                startId: "p",
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Get \"unformatted text\" from the paste buffer")
+            self.webView.testPasteTextPreprocessing(html: startHtml) { cleaned in
+                self.assertEqualStrings(expected: endHtml, saw: cleaned)
+                expectation.fulfill()
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
+    
+    func testPasteText() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "P in P - Paste simple text at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste text with embedded bold at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello bold worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello <b>bold</b> world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple text at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello worldst</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "Hello world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste text with embedded italic at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello bold worldst</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "Hello <i>bold</i> world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello bold world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello bold world</p><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st "
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<p>Hello <i>bold</i> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with embedded italic at insertion point in a bolded word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello bold world</p><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at beginning of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at beginning of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello bold world</p><p>This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at end of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p><p><br></p>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at end of another",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello bold world</p><p><br></p>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste simple paragraph at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello world</p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste paragraph with children at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello bold world</p>",
+                startId: "blank",     // Select "|This"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello <b>bold</b> world</p>"
+            ),
+            HtmlTest(
+                description: "H5 in P - Paste simple h5 at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello world</p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h5>Hello world</h5>"
+            ),
+            HtmlTest(
+                description: "H5 in P - Paste h5 with children at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><p>Hello bold world</p>",
+                startId: "blank",     // Select "|This"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h5>Hello <b>bold</b> world</h5>"
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Paste various html at various places")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        self.webView.pasteText(test.pasteString) {
                             self.webView.getHtml() { pasted in
                                 self.assertEqualStrings(expected: endHtml, saw: pasted)
                                 expectation.fulfill()

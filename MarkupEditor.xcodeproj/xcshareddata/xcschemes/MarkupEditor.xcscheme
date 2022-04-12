@@ -52,6 +52,16 @@
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA2548722805FAE300C9DEB2"
+               BuildableName = "RedoTests.xctest"
+               BlueprintName = "RedoTests"
+               ReferencedContainer = "container:MarkupEditor.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
