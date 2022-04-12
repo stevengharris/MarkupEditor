@@ -50,7 +50,7 @@
 		AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
-		AA52F321280634B200EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
+		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
 		AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5EEF04264061B800B111A1 /* Image+Extensions.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
@@ -314,10 +314,10 @@
 		AA2FA8C327FFAA500068828F /* MarkupEditorTests */ = {
 			isa = PBXGroup;
 			children = (
-				AA52F31F280634B200EEC655 /* RedoTests */,
 				AA2FA8C227FFAA370068828F /* Shared */,
 				AA6529CF260E8E8E000674B7 /* BasicTests */,
 				AA2FA8A827FE44C90068828F /* UndoTests */,
+				AA52F31F280634B200EEC655 /* RedoTests */,
 			);
 			path = MarkupEditorTests;
 			sourceTree = "<group>";
@@ -720,6 +720,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */,
+				AA52F3222806354000EEC655 /* RedoTests.swift in Sources */,
 				AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -745,7 +746,6 @@
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
 				AA408B242616685B00CAE8B9 /* MarkupWebView.swift in Sources */,
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
-				AA52F321280634B200EEC655 /* RedoTests.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
