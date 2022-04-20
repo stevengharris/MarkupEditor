@@ -370,11 +370,10 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                //TODO: This is a real failure. See comment in _unsetTag
                 HtmlTest(
                     description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
-                    startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
-                    endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
+                    startHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
+                    endHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
                     startOffset: 2,
                     endId: "i2",

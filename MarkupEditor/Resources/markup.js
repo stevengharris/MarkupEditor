@@ -313,9 +313,7 @@ const _undoOperation = function(undoerData) {
             _undoPasteHTML(undoerData);
             break;
         case 'format':
-            _restoreSelection();
-            _toggleFormat(data, false);
-            _backupSelection();
+            _undoToggleFormat(undoerData);
             break;
         case 'style':
             _restoreSelection();
@@ -384,9 +382,7 @@ const _redoOperation = function(undoerData) {
             _redoPasteHTML(undoerData);
             break;
         case 'format':
-            _restoreSelection();
-            _toggleFormat(data, false);
-            _backupSelection();
+            _redoToggleFormat(undoerData);
             break;
         case 'style':
             _restoreSelection();
@@ -1583,20 +1579,29 @@ const _redoPasteHTML = function(undoerData) {
     _pasteHTML(undoerData.data.html, undoerData, false);
 };
 
-const _rangeFor = function(node, direction="START") {
+const _rangeFor = function(node, direction='START') {
     const range = document.createRange();
-    let offset;
-    if (direction === "START") {
-        offset = 0;
-    } else {
+    let startOffset, endOffset;
+    if (direction === 'START') {
+        startOffset = 0;
+        endOffset = 0;
+    } else if (direction === 'END'){
         if (node.nodeType === Node.TEXT_NODE) {
-            offset = node.textContent.length;
+            startOffset = node.textContent.length;
         } else {
-            offset = node.childNodes.length;
+            startOffset = node.childNodes.length;
+        };
+        endOffset = startOffset;
+    } else {    // Range across node
+        startOffset = 0;
+        if (node.nodeType === Node.TEXT_NODE) {
+            endOffset = node.textContent.length;
+        } else {
+            endOffset = node.childNodes.length;
         };
     }
-    range.setStart(node, offset);
-    range.setEnd(node, offset);
+    range.setStart(node, startOffset);
+    range.setEnd(node, endOffset);
     return range;
 }
 
@@ -1790,47 +1795,57 @@ MU.getPrettyHTML = function() {
 //MARK: Formatting
 
 MU.toggleBold = function() {
-    _toggleFormat('b');
+    _toggleFormat('B');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormat('i');
+    _toggleFormat('I');
 };
 
 MU.toggleUnderline = function() {
-    _toggleFormat('u');
+    _toggleFormat('U');
 };
 
 MU.toggleStrike = function() {
-    _toggleFormat('del');
+    _toggleFormat('DEL');
 };
 
 MU.toggleCode = function() {
-    _toggleFormat('code');
+    _toggleFormat('CODE');
 };
 
 MU.toggleSubscript = function() {
-    _toggleFormat('sub');
+    _toggleFormat('SUB');
 };
 
 MU.toggleSuperscript = function() {
-    _toggleFormat('sup');
+    _toggleFormat('SUP');
 };
 
 /**
  * Turn the format tag off and on for selection.
  * Called directly on undo/redo so that nothing new is pushed onto the undo stack
+ *
+ * type must be called using uppercase
  */
 const _toggleFormat = function(type, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.focusNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    const existingElement = _findFirstParentElementInNodeNames(selNode, [type.toUpperCase()]);
+    const range = sel.getRangeAt(0);
+    let tagRange; // startIndices, startOffset, endIndices, endOffset;
+    const existingElement = _findFirstParentElementInNodeNames(selNode, [type]);
+    const newSelRange = sel.getRangeAt(0);
+    const commonAncestor = newSelRange.commonAncestorContainer;
+    const ancestor = _findFirstParentElementInNodeNames(commonAncestor, _styleTags);
+    const startIndices = _childNodeIndicesByParent(newSelRange.startContainer, ancestor);
+    const startOffset = newSelRange.startOffset;
+    const endIndices = _childNodeIndicesByParent(newSelRange.endContainer, ancestor);
+    const endOffset = newSelRange.endOffset;
     if (existingElement) {
-        const range = sel.getRangeAt(0).cloneRange();
         let newRange;
         const nextNode = existingElement.nextSibling;
-        const endOfNode = (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
+        const endOfNode = sel.isCollapsed && (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
         const emptyNextNode = nextNode && (nextNode.nodeType === Node.TEXT_NODE) && (nextNode.textContent.length === 0);
         const placeholderChar = '\u200B';  // A zero width char (where '\u00A0' would be space)
         if (endOfNode && emptyNextNode && range.collapsed) {
@@ -1847,11 +1862,12 @@ const _toggleFormat = function(type, undoable=true) {
             newRange.setEnd(emptyTextNode, 1);
             sel.removeAllRanges();
             sel.addRange(newRange);
+            undoable = false;       // Doesn't make sense to undo this operation
         } else if (!endOfNode) {
-            _unsetTag(existingElement, sel);
+            tagRange = _unsetTag(existingElement, sel);
         } else {
             // The existingNode can contain only the placeholderChar, and if so, we need to unset it.
-            // This also ensure that undo works properly.
+            // This also ensures that undo works properly.
             const textNode = existingElement.firstChild;
             const cleanText = existingElement.textContent.replace(placeholderChar, '');
             if (cleanText.length === 0) {
@@ -1861,13 +1877,13 @@ const _toggleFormat = function(type, undoable=true) {
                 newRange.setEnd(textNode, 0);
                 sel.removeAllRanges();
                 sel.addRange(newRange);
-                _unsetTag(existingElement, sel);
+                tagRange = _unsetTag(existingElement, sel);
             } else {
-                _unsetTag(existingElement, sel);
-            }
-        }
+                tagRange = _unsetTag(existingElement, sel);
+            };
+        };
     } else {
-        _setTag(type, sel);
+        tagRange = _setTag(type, sel);
     };
     _backupSelection();
     if (undoable) {
@@ -1877,10 +1893,157 @@ const _toggleFormat = function(type, undoable=true) {
         // selected between characters in a word will toggleFormat for the word, but leave
         // the selection at the same place in that word. Also, toggleFormat when a word
         // has a range selected will leave the same range selected.
-        const undoerData = _undoerData('format', type);
+        const undoerData = _undoerData('format', {type: type, tagRange: tagRange, ancestor: ancestor, startIndices: startIndices, startOffset: startOffset, endIndices: endIndices, endOffset: endOffset});
         undoer.push(undoerData);
     }
     _callback('input');
+    return tagRange;
+}
+
+/**
+ * Undo of the toggleFormat operation.
+ *
+ * The tagRange tells us what we need to select before using toggleFormat
+ * to undo an earlier toggleFormat operation.
+ *
+ * The difficult part is restoring the selection across undo/redo/undo.
+ * At "do" time, we set the indices and offsets that were present before we
+ * perform the operation. So, for example, if we have selected a point in the
+ * middle of a word, then the tagRange encompasses the word, while the indices
+ * and offsets tell us how to set the selection *before* the operation is
+ * performed. For undo and redo, then we select the tag range and when done,
+ * we use the indices and offsets to set the selection. This leaves the
+ * selection in the place it started before ever "did" the operation. Consider:
+ *
+ *  <p>Hello <b>bold and <i>ita|lic</i> world</b></p>
+ *
+ * Now "do" untag of ita|lic. We end up with:
+ *
+ *  <p>Hello <b>bold and ita|lic world</b></p>
+ *
+ * The tagRange was returned from the _unsetTag method. It captures
+ * the range to be used later in the undo of untag. When performing the untag,
+ * we set the undoerData with a tagRange of "italic" *after* the untag.
+ * In contract, indices and offsets measured are from <p> to locate <i>ita|lic</i>
+ * in the original *before* the untag. When undoing the untag, we are starting from:
+ *
+ *  <p>Hello <b>bold and ita|lic world</b></p>
+ *
+ * We set the selection using tagRange and invoke _toggleFormat without pushing
+ * anything onto the undo stack. The _toggleFormat uses the fully selected "|italic|",
+ * not the collapsed "ita|lic". Unfortunately, this means that the "before" state when
+ * entering _toggleFormat does *not* represent what we want to select when we undo
+ * later. We have to capture that before we set the tagRange selection. When we are done
+ * toggling for undo here, then  we can use the indices and offsets we captured here
+ * to set the selection to "ita|lic" inside of the new <b> that was restored. But
+ * now that we have done undo untag, the tagRange and indices are wrong for redo.
+ * The tagRange needed to be set to what was returned from the _toggleFormat on undo,
+ * and the indices and offsets needed to be reset to the values based on when we
+ * called _undoToggleFormat.
+ */
+const _undoToggleFormat = function(undoerData) {
+    _restoreUndoerRange(undoerData)
+    const sel = document.getSelection();
+    if (!sel || !sel.rangeCount) { return };
+    // We are going to toggle this type of element at the selection
+    const type = undoerData.data.type;
+    // We are about to set the selection to the tagRange, so before we do that, let's
+    // capture the ancestor, indices, and offset to update undoerData with.
+    const newSelRange = sel.getRangeAt(0);
+    const commonAncestor = newSelRange.commonAncestorContainer;
+    const ancestor = _findFirstParentElementInNodeNames(commonAncestor, _styleTags);
+    let startIndices = _childNodeIndicesByParent(newSelRange.startContainer, ancestor);
+    let startOffset = newSelRange.startOffset;
+    let endIndices = _childNodeIndicesByParent(newSelRange.endContainer, ancestor);
+    let endOffset = newSelRange.endOffset;
+    // Start by setting the selection to the tagRange, which encompasses
+    // the area to _toggleFormat on.
+    const tagRange = undoerData.data.tagRange;
+    sel.removeAllRanges();
+    sel.addRange(tagRange);
+    // Now tag the format across the tagRange and update undoerData
+    const newTagRange = _toggleFormat(type, false);
+    undoerData.data.tagRange = newTagRange;
+    // The entire range is selected at this point, and we need to reselect
+    // based on the startIndices and endIndices. The problem is that we either added
+    // a new container or eliminated one.
+    const newSel = document.getSelection();
+    const toggledNode = _findFirstParentElementInNodeNames(sel.anchorNode, [type]);
+    if (!toggledNode) {
+        // We toggled off. The last entry in startIndices and endIndices leads to the
+        // container we just toggled off. Update the undoerData so that redo will work
+        // properly.
+        undoerData.data.startIndices = startIndices;
+        undoerData.data.startOffset = startOffset;
+        undoerData.data.endIndices = endIndices;
+        undoerData.data.endOffset = endOffset;
+        startIndices.pop();
+        endIndices.pop();
+    } else {
+        // We toggled on. Use the undoerData.
+        startIndices = undoerData.data.startIndices;
+        startOffset = undoerData.data.startOffset;
+        endIndices = undoerData.data.endIndices;
+        endOffset = undoerData.data.endOffset;
+    }
+    // Now we can locate the new selection and we are set for another undo or redo
+    const startContainer = _childNodeIn(ancestor, startIndices);
+    const endContainer = _childNodeIn(ancestor, endIndices);
+    const range = document.createRange();
+    range.setStart(startContainer, startOffset);
+    range.setEnd(endContainer, endOffset);
+    undoerData.range = range;
+    sel.removeAllRanges();
+    sel.addRange(range);
+};
+
+const _redoToggleFormat = function(undoerData) {
+    _restoreUndoerRange(undoerData)
+    const sel = document.getSelection();
+    if (!sel || !sel.rangeCount) { return };
+    // We are going to toggle this type of element at the selection
+    const type = undoerData.data.type;
+    const ancestor = undoerData.data.ancestor;
+    let startIndices = undoerData.data.startIndices;
+    const startOffset = undoerData.data.startOffset;
+    let endIndices = undoerData.data.endIndices;
+    const endOffset = undoerData.data.endOffset;
+    const originalStartContainer = _childNodeIn(ancestor, startIndices);
+    const originalEndContainer = _childNodeIn(ancestor, endIndices);
+    // Start by setting the selection to the tagRange, which encompasses
+    // the area to _toggleFormat on.
+    const tagRange = undoerData.data.tagRange;
+    sel.removeAllRanges();
+    sel.addRange(tagRange);
+    // Now tag the format across the tagRange and update undoerData
+    const newTagRange = _toggleFormat(type, false);
+    undoerData.data.tagRange = newTagRange;
+    // The entire range is selected at this point, and we need to reselect
+    // based on the startIndices and endIndices. The problem is that we either added
+    // a new container or eliminated one.
+    const newSel = document.getSelection();
+    const toggledNode = _findFirstParentElementInNodeNames(sel.anchorNode, [type]);
+    let startContainer, endContainer;
+    if (!toggledNode) {
+        // We toggled off. Use the original containers.
+        startContainer = originalStartContainer;
+        endContainer = originalEndContainer;
+    } else {
+        // We toggled on. Use the adjusted undoerData with a new container on the end.
+        startIndices = [...undoerData.data.startIndices];
+        startIndices.push(0);
+        endIndices = [...undoerData.data.endIndices];
+        endIndices.push(0);
+        startContainer = _childNodeIn(ancestor, startIndices);
+        endContainer = _childNodeIn(ancestor, endIndices);
+    }
+    // Now we can locate the new selection and we are set for another undo or redo
+    const range = document.createRange();
+    range.setStart(startContainer, startOffset);
+    range.setEnd(endContainer, endOffset);
+    undoerData.range = range;
+    sel.removeAllRanges();
+    sel.addRange(range);
 }
 
 /********************************************************************************
@@ -2247,7 +2410,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     // Record the child node indices we can traverse from existingList to find selNode
     // The childNodeIndices also reflect the state *after* a non-collapsed selection has
     // been extracted into deletedFragment and the dom has been patched-up properly.
-    const childNodeIndices = _childNodeIndices(selNode, existingList.nodeName);
+    const childNodeIndices = _childNodeIndicesByName(selNode, existingList.nodeName);
     const textNode = selNode.nodeType === Node.TEXT_NODE
     const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
     const endOfTextNode = textNode && (endOffset === selNode.textContent.length);
@@ -2412,14 +2575,18 @@ const _stripZeroWidthChars = function(element) {
  * therefore not empty.
  */
 const _isEmpty = function(element) {
+    let empty;
     if (element.nodeType === Node.TEXT_NODE) {
-        return element.textContent.trim().length === 0;
+        empty = element.textContent.trim().length === 0;
+    } else {
+        empty = true;
+        const childNodes = element.childNodes;
+        for (let i=0; i<childNodes.length; i++) {
+            empty = _isEmpty(childNodes[i]);
+            if (!empty) { break };
+        };
     }
-    const childNodes = element.childNodes;
-    for (let i=0; i<childNodes.length; i++) {
-        return _isEmpty(childNodes[i]);
-    };
-    return true;
+    return empty;
 };
 
 /**
@@ -3416,7 +3583,6 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
-        MUError.Alert.callback();   // Let the Swift side decide whether to present an alert.
     };
 };
 
@@ -5339,7 +5505,7 @@ const _childNodeIn = function(element, indices) {
  * @param   {String}        nodeName    The type of nodeName we are looking for in the ancestors of node
  * @return  {Array of Int}              The indices into the parent's childNodes (and their childNodes) to walk down to find node
  */
-const _childNodeIndices = function(node, nodeName) {
+const _childNodeIndicesByName = function(node, nodeName) {
     let _node = node;
     let indices = [];
     while (_node.nodeName !== nodeName) {
@@ -5348,6 +5514,23 @@ const _childNodeIndices = function(node, nodeName) {
     }
     return indices;
 };
+
+/**
+ * Return an array of indices into the childNodes at each level below the parentNode
+ * so as to locate a particular childNode within that parentNode.
+ *
+ * See comments under _childNodeIndicesByName for discussion.
+ *
+ */
+const _childNodeIndicesByParent = function(node, parentNode) {
+    let _node = node;
+    let indices = [];
+    while (_node !== parentNode) {
+        indices.unshift(_childNodeIndex(_node)); // Put at beginning of indices
+        _node = _node.parentNode;
+    }
+    return indices;
+}
 
 /**
  * Return the index in node.parentNode.childNodes where we will find node.
@@ -5493,12 +5676,13 @@ const _getElementAtSelection = function(nodeName) {
  * @param   {HTML Selection}    sel     The current selection.
  */
 const _setTag = function(type, sel) {
-    const range = sel.getRangeAt(0).cloneRange();
+    const range = sel.getRangeAt(0);
     const el = document.createElement(type);
     const wordRange = _wordRangeAtCaret();
     const startNewTag = range.collapsed && !wordRange;
     const tagWord = range.collapsed && wordRange;
     const newRange = document.createRange();
+    let tagRange;
     // In all cases, el is the new element with nodeName type and range will have
     // been modified to have the new element appropriately inserted. The
     // newRange is set appropriately depending on the case.
@@ -5523,6 +5707,7 @@ const _setTag = function(type, sel) {
         range.insertNode(el);
         newRange.setStart(el.firstChild, 1);    // Can't use emptyTextNode
         newRange.setEnd(el.firstChild, 1);      // Can't use emptyTextNode
+        tagRange = newRange;
     } else if (tagWord) {
         const inWordOffset = range.startOffset - wordRange.startOffset;
         const wordNode = document.createTextNode(wordRange.toString());
@@ -5531,6 +5716,7 @@ const _setTag = function(type, sel) {
         wordRange.insertNode(el);
         newRange.setStart(wordNode, inWordOffset);
         newRange.setEnd(wordNode, inWordOffset);
+        tagRange = wordRange;
     } else {
         // Why not just range.surroundContents(el)?
         // Because for selections that span elements, it doesn't work.
@@ -5542,25 +5728,22 @@ const _setTag = function(type, sel) {
         el.appendChild(range.extractContents());
         range.insertNode(el);
         newRange.selectNode(el);
-        //let startNode, startOffset, endNode, endOffset;
-        //const firstChild = el.firstChild;
-        //if (firstChild && (firstChild.nodeType === Node.TEXT_NODE)) {
-        //    startNode = firstChild;
-        //    startOffset = 0;
-        //} else {
-        //    startNode = el;
-        //    startOffset = 0;
-        //};
-        //const lastChild = el.lastChild
-        //if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
-        //    endNode = lastChild;
-        //    endOffset = lastChild.textContent.length;
-        //} else {
-        //    startNode = el;
-        //    startOffset = el.childNodes.length;
-        //};
-        //newRange.setStart(startNode, startOffset);
-        //newRange.setEnd(endNode, endOffset);
+        // Extracting the contents of range leaves empty text node placeholders
+        // where things used to be, and these mess up any references by indices.
+        _removeEmptyTextNodes(range);
+        newRange.selectNode(el);
+        tagRange = newRange;
+        // By extractingContents, we may have left range's startContainer and/or
+        // endContainer empty. If so, we need to remove them to avoid messing up
+        // future navigation by indices from parents in undo.
+        const startContainer = range.startContainer;
+        const endContainer = range.endContainer;
+        if (_isEmpty(startContainer)) {
+            startContainer.parentNode.removeChild(startContainer);
+        };
+        if ((startContainer !== endContainer) && _isEmpty(endContainer)) {
+            endContainer.parentNode.removeChild(endContainer);
+        };
     }
     sel.removeAllRanges();
     sel.addRange(newRange);
@@ -5588,7 +5771,36 @@ const _setTag = function(type, sel) {
             nextSib.parentNode.removeChild(nextSib);
         };
     };
+    return tagRange;
 };
+
+/**
+ * Remove all the empty text nodes found in range.
+ *
+ * This is needed because range.extractContents leaves empty textNode
+ * placeholders that serve no purpose and mess up later childNode
+ * index-based access.
+ */
+const _removeEmptyTextNodes = function(range) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    let child = startContainer.firstChild;
+    while (child) {
+        let nextChild = child.nextSibling;
+        if (_isEmpty(child)) {
+            startContainer.removeChild(child);
+        }
+        child = nextChild;
+    };
+    child = endContainer.firstChild;
+    while (child) {
+        let nextChild = child.nextSibling;
+        if (_isEmpty(child)) {
+            endContainer.removeChild(child);
+        };
+        child = nextChild;
+    };
+}
 
 /**
  * When selection is collapsed and in or next to a word, return the range
@@ -5624,95 +5836,69 @@ const _wordRangeAtCaret = function() {
 };
 
 /**
- * Remove the tag from the oldElement. The oldRange startContainer might or might not be
- * the oldElement passed-in. In all cases, though, oldRange starts at some offset into text.
- * The element passed-in has the tag we are removing, so replacing outerHTML with inner removes
- * the outermost in place. A simple reassignment still leaves references the element type
- * unchanged (see https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML#notes).
- * So, we need to do a proper replace.
+ * Remove the tag from the oldElement.
+ *
+ * The oldRange startContainer might or might not be the oldElement passed-in. In all cases,
+ * though, oldRange starts at some offset into text. The element passed-in has the tag we are
+ * removing, so we move its childNodes to follow oldElement and then remove oldElement. This
+ * also allows us to set the selection properly since the startContainer and endContainer
+ * will still exist even though they have moved.
+ *
+ * When undoing, we need the range that surrounds the content that was changed. For example,
+ * consider <p><b><i>Hello</i> wo|rld</b></p>. When we untag, we get <p><i>Hello</i> wo|rld</p>,
+ * with selection still in "world". However, when we undo just by toggling the format at the
+ * selection, we end up with <p><i>Hello</i> <b>wo|rld</b></p> because the selection is
+ * collapsed in "world", and we only format the word it's within. For this reason, we return
+ * the tagRange here that the sender can save in undoerData.
  *
  * @param   {HTML Element}      oldElement      The element we are removing the tag from.
  * @param   {HTML Selection}    sel             The current selection.
+ * @return  {HTML Range}        tagRange        Range used to setTag on undo
  */
 const _unsetTag = function(oldElement, sel) {
-    const oldRange = sel.getRangeAt(0).cloneRange();
-    // Note: I thought cloneRange() does copy by value.
-    // Per https://developer.mozilla.org/en-us/docs/Web/API/Range/cloneRange...
-    //   The returned clone is copied by value, not reference, so a change in either Range
-    //   does not affect the other.
-    // But this doesn't seem to be true in practice. In practice, oldRange properties get
-    // changed after we do replaceWith below. We need to hold onto the values explicitly
-    // so we can assign them properly to the new range after unsetting the tag.
+    const oldRange = sel.getRangeAt(0);
     const oldStartContainer = oldRange.startContainer;
     const oldStartOffset = oldRange.startOffset;
     const oldEndContainer = oldRange.endContainer;
     const oldEndOffset = oldRange.endOffset;
-    // Hold onto the parentNode
+    // Hold onto the parentNode and the nextSibling so we know where to
+    // insert the oldElement's childNodes.
     const oldParentNode = oldElement.parentNode;
-    // Get a newElement from the innerHTML of the oldElement
-    // Start by tracking the index of oldElement in oldParentNode's childNodes,
-    // so we know what element to select when we are done. The original oldElement
-    // will be replaced with template.content derived from oldElement's innerHTML.
-    const childNodeIndex = _childNodeIndex(oldElement);
-    const template = document.createElement('template');
-    template.innerHTML = oldElement.innerHTML;
-    const newElement = template.content;
-    oldElement.replaceWith(newElement);
-    const elementToSelect = oldParentNode.childNodes[childNodeIndex];
-    const offsetToSelect = oldStartOffset;
-    // Now that oldElement has been replaced, we need to reset the selection.
-    // We need to do everything from the oldParentNode, which remains unchanged.
-    // Did we just eliminate the startContainer for the selection? Consider
-    // element is a bolded word and selection (| = caret) is collapsed in it:
-    //      "hello <b>wo|rld</b>"
-    // becomes:
-    //      "hello wo|rld"
-    // But, if the selection is nested and we remove bold, it might start like:
-    //      "hello <i><b>wo|rld</b></i>"
-    // and become:
-    //      "hello <i>wo|rld</i>"
-    // And a more complicated case could be:
-    //      "<i>hello <b>wo|rld</b></i>
-    // In all these cases, the existing range.startContainer is the same -
-    // a text node - and the startOffset is 2. However, the newElement we
-    // is either another text node (the 1st case), an element node (the 2nd),
-    // or a text node (the 3rd) embedded in an element node.
-    // Note from https://developer.mozilla.org/en-US/docs/Web/API/Range/startOffset:
-    //      If the startContainer is a Node of type Text, Comment, or CDATASection, then
-    //      the offset is the number of characters from the start of the startContainer to
-    //      the boundary point of the Range. For other Node types, the startOffset is the
-    //      number of child nodes between the start of the startContainer and the boundary
-    //      point of the Range.
-    // So, we need to make sure the startOffset and endOffset make sense for the newElement
-    // if it replaces the startContainer or endContainer.
-    let range, startContainer, startOffset, endContainer, endOffset;
-    //TODO: This matching on child needs to be replaced with an exact childnode index
-    const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
-    if (newStartContainer) {
-        startContainer = newStartContainer;
-        startOffset = oldStartOffset;
-    } else {
-        //_consoleLog("selecting start");
-        // Make the best choice for startContainer when we have removed everything from a list.
-        startContainer = elementToSelect;
-        startOffset = offsetToSelect;
-    }
-    const newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
-    if (newEndContainer) {
-        endContainer = newEndContainer;
-        endOffset = oldEndOffset;
-    } else {
-        //_consoleLog("selecting end");
-        // Make the best choice for endContainer when we have removed everything from a list.
-        endContainer = elementToSelect;
-        endOffset = offsetToSelect;
+    const oldNextSibling = oldElement.nextSibling;
+    // Establish the tagRange as we move childNodes.
+    const tagRange = document.createRange();
+    let child = oldElement.firstChild;
+    let setStart = true;
+    while (child) {
+        oldParentNode.insertBefore(child, oldNextSibling);
+        if (setStart) {
+            tagRange.setStart(child, 0);
+            setStart = false;
+        };
+        if (oldElement.firstChild) {
+            child = oldElement.firstChild;
+        } else {
+            if (_isTextNode(child)) {
+                tagRange.setEnd(child, child.textContent.length);
+            } else {
+                tagRange.setEnd(child, child.childNodes.length);
+            }
+            child = null;
+        };
     };
-    // With the new range properties sorted out, create the new range and reset the selection
-    range = document.createRange();
-    range.setStart(startContainer, startOffset);
-    range.setEnd(endContainer, endOffset);
+    oldParentNode.removeChild(oldElement);  // Because oldElement is now empty
+    // Note the obvious: oldParentNode has a different set of childNodes when done, so
+    // any external usage of indices into it will be wrong. We can fix this by
+    // normalizing oldParentNode, but this messes with selection. Furthermore, the
+    // selection on undo or redo is set to the tagRange before _unsetTag is called,
+    // so it is not meaningful in those cases other than to ensure the proper range
+    // is untagged.
+    const range = document.createRange();
+    range.setStart(oldStartContainer, oldStartOffset);
+    range.setEnd(oldEndContainer, oldEndOffset);
     sel.removeAllRanges();
     sel.addRange(range);
+    return tagRange;
 };
 
 /**

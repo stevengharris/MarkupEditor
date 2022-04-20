@@ -206,14 +206,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello </i>world</p>",
-                    undoHtml: "<p><b id=\"b\"><i>Hello </i>world</b></p>",
-                    startId: "i",
-                    startOffset: 2,
+                    description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
+                    undoHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    startId: "p",
+                    startOffset: 0,
                     endId: "i",
-                    endOffset: 2
+                    endOffset: 5
                 ),
                 { handler in
                     self.webView.bold() { handler() }
@@ -465,8 +465,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             (
                 HtmlTest(
                     description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
-                    startHtml:  "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
-                    endHtml:    "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
+                    startHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
+                    endHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
                     startOffset: 2,
                     endId: "i2",
