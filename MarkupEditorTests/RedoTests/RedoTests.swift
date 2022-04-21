@@ -650,6 +650,17 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 endId: "ol1",
                 endOffset: 6
             ),
+            /* Note: the following test in BasicTests is not undoable, so is commented out here
+            HtmlTest(
+                description: "Enter in empty list item at end of list.",
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5 id=\"h52\"><br></h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li></ul><h5 id=\"h52\"><br></h5>",
+                startId: "h52",
+                startOffset: 0,
+                endId: "h52",
+                endOffset: 0
+            ),
+            */
         ]
         for test in htmlTests {
             test.printDescription()

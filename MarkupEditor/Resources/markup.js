@@ -3136,16 +3136,20 @@ const _doListOutdent = function(undoable=true) {
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!(existingList && existingListItem)) { return null };
     _backupSelection();
-    if (_outdentListItem(existingListItem, existingList)) {
-        _restoreSelection()
+    const outdentedItem = _outdentListItem(existingListItem, existingList);
+    _restoreSelection()
+    // When outdenting to get out of a list, we will always end up in a
+    // style tag of some kind. The operation will not be undoable.
+    // User can undo by pressing the delete key to get back in the list.
+    if (outdentedItem && (!_styleTags.includes(outdentedItem.nodeName))) {
         if (undoable) {
             _backupSelection();
             const undoerData = _undoerData('outdent');
             undoer.push(undoerData);
             _restoreSelection();
         }
-        _callback('input');
     };
+    _callback('input');
 };
 
 /**
@@ -3270,7 +3274,7 @@ const _splitList = function(listItemElement, newListType) {
         if (postList.children.length > 0) {
             insertionPoint = postList;
         } else {
-            insertionPoint = oldList.nextSibling ?? MU.editor;
+            insertionPoint = oldList.nextSibling ?? MU.editor.lastChild;
         };
         let child;
         const firstChild = listItemElement.firstChild;

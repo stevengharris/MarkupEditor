@@ -832,25 +832,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            //TODO: Make this test work. It works fine manually, but the expected html doesn't match when run from XCTest
-            //(
-            //    HtmlTest(
-            //        description: "Enter in empty list item at end of list.",
-            //        startHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbere//item 2.</li></ol></li><li id=\"ul2\"><h5 id=\"h52\"><br></h5></li></ul>",
-            //        endHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbere//item 2.</li></ol></li></ul><h5><br></h5>",
-            //        startId: "h52",
-            //        startOffset: 0,
-            //        endId: "h52",
-            //        endOffset: 0
-            //    ),
-            //    { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.testListEnter {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            (
+                HtmlTest(
+                    description: "Enter in empty list item at end of list.",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li><li id=\"ul2\"><h5 id=\"h52\"><br></h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h51\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\">Numbered item 1.</li><li id=\"ol2\">Numbered item 2.</li></ol></li></ul><h5 id=\"h52\"><br></h5>",
+                    startId: "h52",
+                    startOffset: 0,
+                    endId: "h52",
+                    endOffset: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
