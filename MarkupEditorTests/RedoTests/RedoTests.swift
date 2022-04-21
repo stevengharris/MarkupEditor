@@ -820,6 +820,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Undo enter being pressed in a list with various collapsed selections")
             // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _doListEnter.
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
@@ -836,7 +837,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
                                     self.webView.getHtml { unformatted in
-                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         self.addInputHandler {
                                             self.webView.getHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)

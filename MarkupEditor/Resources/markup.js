@@ -1274,7 +1274,7 @@ const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTE
     const trailingText = textNode.splitText(offset);
     const leadingText = textNode;   // Use leadingText name for clarity
     if (rootNode) {
-        // We want to recreate the node heirarchy up to and including rootNode.
+        // We want to recreate the node hierarchy up to and including rootNode.
         // Moving up from trailingText, put all the intermediate parents into
         // a newContainer, resulting in a newContainer with nodeName = rootName.
         // To move siblings afterward, track the nextSib of trailingText before
@@ -2838,8 +2838,6 @@ const _undoListEnter = function(undoerData) {
     if (deletedFragment) {
         // After insertNode, the deletedFragment's childNodes will be in the range so we can select them.
         // Note that these childNodes were extracted from the selection as the deletedFragment.
-        const firstChild = deletedFragment.childNodes[0];
-        const lastChild = deletedFragment.childNodes[deletedFragment.childNodes.length - 1];
         _insertInList(deletedFragment);
         _backupUndoerRange(undoerData);
     };
@@ -2868,16 +2866,33 @@ const _insertInList = function(fragment) {
     const singleListItemFragment = (fragment.childElementCount === 1) && (fragment.firstElementChild.nodeName !== 'LI');
     if (simpleFragment || singleListItemFragment) {
         //_consoleLog("* _insertInList (simple)")
+        const firstFragChild = fragment.firstChild;
         const lastFragChild = fragment.lastChild;
         range.insertNode(fragment); // fragment becomes anchorNode's nextSibling
         _stripZeroWidthChars(anchorNode.parentNode);
+        // Setting the selection is a challenge because (at least in a list) when we have
+        // trailing blank characters, we can set to encompass them, but the document.getSelection()
+        // afterward will not include the blank character. Perhaps this has to do with the nature of
+        // lists, but in any case, this forces us to use the locations surrounding the inserted
+        // fragment to set the selection and using normalize to combine text nodes.
         const textRange = document.createRange();
-        textRange.setStart(anchorNode, anchorNode.textContent.length);
-        if (lastFragChild.nodeType === Node.TEXT_NODE) {
-            textRange.setEnd(lastFragChild, lastFragChild.textContent.length)
+        const prevSib = firstFragChild.previousSibling;
+        const nextSib = lastFragChild.nextSibling;
+        if (prevSib) {
+            if (prevSib.nodeType === Node.TEXT_NODE) {
+                textRange.setStart(prevSib, prevSib.textContent.length);
+            } else {
+                textRange.setStart(prevSib, prevSib.childNodes.length);
+            };
         } else {
-            textRange.setEnd(lastFragChild.parentNode, lastFragChild.parentNode.childNodes.length)
+            textRange.setStart(firstFragChild, firstFragChild.textContent.length);
+        };
+        if (nextSib) {
+            textRange.setEnd(nextSib, 0);
+        } else {
+            textRange.setEnd(lastFragChild, lastFragChild.textContent.length);
         }
+        anchorNode.parentNode.normalize();
         sel.removeAllRanges();
         sel.addRange(textRange);
         //_consoleLog("* Done _insertInList (simple)")
