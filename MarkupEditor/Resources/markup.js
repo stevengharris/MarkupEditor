@@ -3146,8 +3146,7 @@ const _doListOutdent = function(undoable=true) {
             _backupSelection();
             const undoerData = _undoerData('outdent');
             undoer.push(undoerData);
-            _restoreSelection();
-        }
+        };
     };
     _callback('input');
 };
@@ -4358,7 +4357,6 @@ const _redoDeleteLink = function(undoerData) {
  * @return {HTML Image Element}             The image element that was created, used for undo/redo.
  */
 MU.insertImage = function(src, alt, scale=100, undoable=true) {
-    _restoreSelection();
     const sel = document.getSelection();
     const range = sel.getRangeAt(0).cloneRange();
     const img = document.createElement('img');
@@ -4421,7 +4419,6 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
  * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
-    _restoreSelection();
     const img = _getElementAtSelection('IMG');
     if (img) {
         if (src) {
@@ -5438,42 +5435,70 @@ const _getFirstChildOfTypeWithin = function(node, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's next siblings.
+ * Return the first node of nodeType within element's nextSiblings.
+ *
+ * Note that when looking for text nodes, a sibling is sometimes an empty text node.
+ * The whole point of identifying the child is to set the selection, so we skip
+ * these because we cannot select in an empty text node. Such nodes are "normal" to
+ * be found between styled sections and are not useful in any case.
  *
  * @param   {HTML Element}  element     The element to start looking at for nextSiblings.
  * @param   {String}        nodeType    The type of node we are looking for.
  * @return  {HTML Node | null}          The node we found, or null.
  */
 const _getFirstChildOfTypeAfter = function(element, nodeType) {
+    const nextSibs = [];
     let nextSib = element.nextSibling;
-    let firstChildOfType;
     while (nextSib) {
-        firstChildOfType = _getFirstChildOfTypeWithin(nextSib, nodeType);
-        if (firstChildOfType) {
-            nextSib = null;
-        } else {
-            nextSib = nextSib.nextSibling;
+        nextSibs.push(nextSib);
+        nextSib = nextSib.nextSibling;
+    }
+    let firstChildOfType;
+    for (let i = 0; i < nextSibs.length; i++) {
+        firstChildOfType = nextSibs[i];
+        if (firstChildOfType.nodeType === nodeType) {
+            if ((nodeType !== Node.TEXT_NODE) || (!_isEmpty(firstChildOfType))) {
+                break;
+            };
+        };
+        if (firstChildOfType.nodeType === Node.ELEMENT_NODE) {
+            firstChildOfType = _getFirstChildOfTypeWithin(firstChildOfType, nodeType);
+            if (firstChildOfType) { break };
         };
     };
     return firstChildOfType;
 };
 
 /**
- * Return the first node of nodeType within element's previousElementSiblings.
+ * Return the first node of nodeType within element's previousSiblings.
+ *
+ * Note that when looking for text nodes, a sibling is sometimes an empty text node.
+ * The whole point of identifying the child is to set the selection, so we skip
+ * these because we cannot select in an empty text node. Such nodes are "normal" to
+ * be found between styled sections and are not useful in any case.
  *
  * @param   {HTML Element}  element     The element to start looking at for previousSiblings.
  * @param   {String}        nodeType    The type of node we are looking for.
  * @return  {HTML Node | null}          The node we found, or null.
  */
 const _getFirstChildOfTypeBefore = function(element, nodeType) {
-    let prevSib = element.previousElementSibling;
-    let firstChildOfType;
+    const prevSibs = [];
+    let prevSib = element.previousSibling;
     while (prevSib) {
-        firstChildOfType = _getFirstChildOfTypeWithin(prevSib, nodeType);
-        if (firstChildOfType) {
-            prevSib = null;
-        } else {
-            prevSib = prevSib.previousElementSibling;
+        prevSibs.push(prevSib);
+        prevSib = prevSib.previousSibling;
+    }
+    let firstChildOfType;
+    for (let i = 0; i < prevSibs.length; i++) {
+        firstChildOfType = prevSibs[i];
+        if (firstChildOfType.nodeType === nodeType) {
+            if ((nodeType !== Node.TEXT_NODE) || (!_isEmpty(firstChildOfType))) {
+                break;
+            };
+        };
+        if (firstChildOfType.nodeType === Node.ELEMENT_NODE) {
+            firstChildOfType = _getFirstChildOfTypeWithin(firstChildOfType, nodeType);
+            if (firstChildOfType) { break };
         };
     };
     return firstChildOfType;

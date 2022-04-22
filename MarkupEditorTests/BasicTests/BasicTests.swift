@@ -1676,5 +1676,49 @@ class BasicTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 3)
         }
     }
+    
+    func testPasteImage() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Image in P - Paste image at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let expectation = XCTestExpectation(description: "Paste an image")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        self.webView.pasteImage(UIImage(systemName: "calendar")) {
+                            self.webView.getHtml() { pasted in
+                                // This is pretty brittle, but the image file name is a generated UUID. The test just makes
+                                // sure that the <img> element is where we expect in this simple case and the file actually
+                                // exists.
+                                if let pasted = pasted {
+                                    XCTAssertTrue(pasted.contains("<img src=\""))
+                                    XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
+                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -42)
+                                    let imageFileName = String(pasted[imageFileRange])
+                                    XCTAssertTrue(self.webView.resourceExists(imageFileName))
+                                    expectation.fulfill()
+                                } else {
+                                    XCTFail("The pasted HTML was not returned properly.")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
 
 }

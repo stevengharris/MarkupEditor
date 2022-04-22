@@ -179,6 +179,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Return whether a resource file exists where it is expected.
+    ///
+    /// Resources are referenced relative to the cacheUrl, and we use this method during testing.
+    public func resourceExists(_ fileName: String) -> Bool {
+        return FileManager.default.fileExists(atPath: cacheUrl().appendingPathComponent(fileName).path)
+    }
+    
     /// Tear down what we set up to use the MarkupEditor.
     ///
     /// By default, we remove everything at cacheUrl. Fail silently if there is a problem.
@@ -411,19 +418,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // (see https://stackoverflow.com/a/38343753/8968411)
         // Make a new unique ID for the image to save in the cacheUrl directory
         let path = "\(UUID().uuidString).\(url.pathExtension)"
-        var baseResourceUrl: URL
-        var relativeSrc: String
-        //if let resourcesUrl = resourcesUrl {
-        //    baseResourceUrl = URL(fileURLWithPath: resourcesUrl.relativePath, relativeTo: cacheUrl())
-        //    relativeSrc = baseResourceUrl.appendingPathComponent(path).relativePath
-        //} else {
-            baseResourceUrl = cacheUrl()
-            relativeSrc = path
-        //}
-        let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: baseResourceUrl)
+        let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: cacheUrl())
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
-            insertImage(src: relativeSrc, alt: nil) {
+            insertImage(src: path, alt: nil) {
                 self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
                 handler?()
             }
@@ -586,10 +584,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func pasteImage(_ image: UIImage?, handler: (()->Void)? = nil) {
-        guard let image = image, !pastedAsync else { return }
-        //TODO: Make it work
-        print("If supported, save the \(image.size) image as a file and then insert image")
-        pastedAsync = false
+        guard let image = image, let contents = image.pngData(), !pastedAsync else { return }
+        // Make a new unique ID for the image to save in the cacheUrl directory
+        pastedAsync = true
+        let path = "\(UUID().uuidString).png"
+        let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: cacheUrl())
+        do {
+            if FileManager.default.fileExists(atPath: path) {
+                // Update an existing data file (Which should never happen!)
+                try contents.write(to: cachedImageUrl)
+            } else {
+                // Create a new data file
+                FileManager.default.createFile(atPath: cachedImageUrl.path, contents: contents, attributes: nil)
+            }
+            insertImage(src: path, alt: nil) {
+                self.pastedAsync = false
+                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
+                handler?()
+            }
+        } catch let error {
+            print("Error inserting local image: \(error.localizedDescription)")
+            handler?()
+        }
     }
     
     public func pasteImageUrl(_ url: URL?, handler: (()->Void)? = nil) {
@@ -838,11 +854,6 @@ extension MarkupWKWebView {
         default:
             break
         }
-    }
-    
-    //TODO: This is really checking for drag/drop and needs to be fixed
-    public override func canPaste(_ itemProviders: [NSItemProvider]) -> Bool {
-        pasteableType() != nil
     }
     
 }
