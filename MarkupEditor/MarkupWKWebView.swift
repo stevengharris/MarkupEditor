@@ -751,10 +751,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Replace the existing style of the selection with the new style (e.g., from <p> to <h3>)
     public func replaceStyle(in selectionState: SelectionState, with newStyle: StyleContext, handler: (()->Void)? = nil) {
         let oldStyle = selectionState.style
-        guard newStyle != oldStyle else {
-            handler?()
-            return
-        }
         evaluateJavaScript("MU.replaceStyle('\(oldStyle)', '\(newStyle)')") { result, error in
             handler?()
         }

@@ -28,7 +28,7 @@ public struct StyleToolbar: View {
             // Like other uses of Button, I added contentShape here try to prevent responsiveness
             // problems per https://stackoverflow.com/a/67377002/8968411
             Menu {
-                ForEach(StyleContext.StyleCases.filter( { $0 != selectionState.style }) , id: \.self) { styleContext in
+                ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
                     Button(action: { observedWebView.selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
                         Text(styleContext.name)
                             .font(.system(size: styleContext.fontSize))

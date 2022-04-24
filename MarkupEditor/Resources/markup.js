@@ -91,6 +91,7 @@ class MUError {
     static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
+    static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
     static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
     static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
@@ -747,7 +748,7 @@ MU.editor.addEventListener('keydown', function(ev) {
                 return;
             }
             const sel = document.getSelection()
-            const selNode = (sel) ? sel.focusNode : null;
+            const selNode = (sel) ? sel.anchorNode : null;
             if (!selNode) { return };
             const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
             if ((inList && _doListEnter()) || (!inList && _doEnter())) {
@@ -816,7 +817,7 @@ const _doEnter = function(undoable=true) {
 const _undoEnter = function(undoerData) {
     _restoreUndoerRange(undoerData);
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
+    let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const existingP = _findFirstParentElementInNodeNames(selNode, ['P'])
     if (!existingP) { return null };
@@ -1419,7 +1420,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
             leadingRoot.appendChild(firstTrailingChild);
         }
     } else if (firstTrailingChild.nodeType === Node.ELEMENT_NODE) {
-        // We have some kind of nested elements (like <i><b>Hello</b></i> that we need to walk down to find
+        // We have some kind of nested elements (like <i><b>Hello</b> world</i> that we need to walk down to find
         // the embedded text element we are going to join to the corresponding lastLeadingChild's nested
         // element. The nesting needs to match (as it will for splitTextNode), or our assumptions have been
         // violated.
@@ -1432,6 +1433,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
                 error.callback();
                 return;
             };
+            //TODO: This almost certainly doesn't work on triple nested format elements
             if (firstTrailingGrandchild.nodeType === Node.TEXT_NODE) {
                 if (startWithFirstChild) {
                     newStartContainer = lastLeadingGrandchild;
@@ -1442,6 +1444,12 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
                     newEndOffset = lastLeadingGrandchild.textContent.length;
                 };
                 lastLeadingGrandchild.textContent = lastLeadingGrandchild.textContent + firstTrailingGrandchild.textContent;
+                let trailingSib = firstTrailingGrandchild.parentNode.nextSibling;
+                const insertTarget = lastLeadingGrandchild.parentNode.nextSibling;
+                while (trailingSib) {
+                    lastLeadingGrandchild.parentNode.parentNode.insertBefore(trailingSib, insertTarget);
+                    trailingSib = trailingSib.nextSibling;
+                }
                 firstTrailingGrandchild = null;
             } else {
                 lastLeadingGrandchild = lastLeadingGrandchild.firstChild;
@@ -1830,7 +1838,7 @@ MU.toggleSuperscript = function() {
  */
 const _toggleFormat = function(type, undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
     const range = sel.getRangeAt(0);
     let tagRange; // startIndices, startOffset, endIndices, endOffset;
@@ -2063,8 +2071,16 @@ const _redoToggleFormat = function(undoerData) {
  * @param {Boolean} undoable    True if we should push undoerData onto the undo stack.
  */
 MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
+    if (!newStyle) {
+        MUError.NoNewTag.callback();
+        return;
+    };
+    if (_selectionSpansParagraphs()) {
+        _replaceAllStyles(newStyle, undoable);
+        return;
+    };
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode) { return };
     let existingElement = null;
     if (oldStyle) {
@@ -2072,7 +2088,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         existingElement = _findFirstParentElementInNodeNames(selNode, [oldStyle.toUpperCase()]);
     };
     if (existingElement) {
-        _replaceTag(existingElement, (newStyle) ? newStyle.toUpperCase() : newStyle);
+        _replaceTag(existingElement, newStyle);
         _backupSelection();
         if (undoable) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
@@ -2105,6 +2121,17 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
     }
 };
 
+/**
+ * Make all styled elements within a selection that spans paragraphs into newStyle.
+ */
+const _replaceAllStyles = function(newStyle, undoable=true) {
+    const selectedParagraphElements = _selectedParagraphElements();
+    for (let i = 0; i < selectedParagraphElements.length; i++) {
+        _replaceTag(selectedParagraphElements[i], newStyle.toUpperCase());
+    };
+    return;
+}
+
 /********************************************************************************
  * Nestables, including lists and block quotes
  */
@@ -2121,7 +2148,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
  */
 MU.toggleListItem = function(newListType, undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
     // Capture the range settings for the selection
     const range = sel.getRangeAt(0).cloneRange();
@@ -2787,14 +2814,14 @@ const _undoListEnter = function(undoerData) {
     const oldEndOffset = oldRange.endOffset;
     _restoreUndoerRange(undoerData);
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
+    let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
     _deleteAndResetSelection(existingList, 'BEFORE');
     sel = document.getSelection();
-    selNode = (sel) ? sel.focusNode : null;
+    selNode = (sel) ? sel.anchorNode : null;
     if (!selNode) { return null };
     const targetNode = selNode.parentNode;
     const parentNode = targetNode.parentNode;
@@ -3021,7 +3048,7 @@ const _insertInList = function(fragment) {
  */
 const _doListIndent = function(undoable=true) {
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
+    let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
@@ -3130,7 +3157,7 @@ const _indentListItem = function(existingListItem, existingList) {
  */
 const _doListOutdent = function(undoable=true) {
     let sel = document.getSelection();
-    let selNode = (sel) ? sel.focusNode : null;
+    let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
@@ -3387,7 +3414,7 @@ const _replaceNodeWithListItem = function(selNode) {
  */
 MU.indent = function(undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
     if (specialParent) {
         const nodeName = specialParent.nodeName;
@@ -3413,7 +3440,7 @@ MU.indent = function(undoable=true) {
  */
 MU.outdent = function(undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
     if (specialParent) {
         const nodeName = specialParent.nodeName;
@@ -3438,7 +3465,7 @@ MU.outdent = function(undoable=true) {
  */
 const _increaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
     const selectionState = _getSelectionState();
     // Capture the range settings for the selection
@@ -3522,7 +3549,7 @@ const _increaseQuoteLevel = function(undoable=true) {
  */
 const _decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
     const existingElement = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
     if (existingElement) {
@@ -3749,13 +3776,13 @@ const _cleanUpAliases = function(node) {
 /**
  * Standard webkit editing may leave messy and useless SPANs all over the place.
  * This method just cleans them all up and notifies Swift that the content
- * has changed. Start with the selection focusNode's parent, so as to make
- * sure to get all its siblings. If there is no focusNode, fix the entire
+ * has changed. Start with the selection anchorNode's parent, so as to make
+ * sure to get all its siblings. If there is no anchorNode, fix the entire
  * editor.
  */
 const _cleanUpSpans = function() {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     const startNode = (selNode) ? selNode.parentNode : MU.editor;
     if (startNode) {
         const styleParent = _findFirstParentElementInNodeNames(startNode, _styleTags)
@@ -3794,13 +3821,13 @@ const _cleanUpSpansWithin = function(node, spansRemoved) {
 
 /**
  * Do a depth-first traversal from selection, removing attributes
- * from the focusNode and its siblings. If there is no focusNode,
+ * from the anchorNode and its siblings. If there is no anchorNode,
  * fix the entire editor.
  * If any attributes were removed, then notify Swift of a content change
  */
 const _cleanUpAttributes = function(attribute) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     const startNode = (selNode) ? selNode.parentNode : MU.editor;
     if (startNode) {
         const attributesRemoved = _cleanUpAttributesWithin(attribute, startNode);
@@ -3847,7 +3874,7 @@ const _cleanUpAttributesWithin = function(attribute, node) {
  */
 const _multiClickSelect = function(nClicks) {
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     if (selNode) {
         if (nClicks === 3) {
             _tripleClickSelect(sel);
@@ -4541,7 +4568,7 @@ MU.insertTable = function(rows, cols, undoable=true) {
     if ((rows < 1) || (cols < 1)) { return };
     _restoreSelection();
     const sel = document.getSelection();
-    const selNode = (sel) ? sel.focusNode : null;
+    const selNode = (sel) ? sel.anchorNode : null;
     const table = document.createElement('table');
     const tbody = document.createElement('tbody');
     for (let row=0; row<rows; row++) {
@@ -5305,6 +5332,87 @@ const _doPrevCell = function() {
 //MARK: Common Private Functions
 
 /**
+ * Return true if the selection spans _paragraphStyleTags.
+ *
+ * It's possible (due to pasting) that we end up with a selection in a text
+ * node that is not inside of a paragraph style tag. Since we are only going to
+ * apply multiple operations at the paragraph style level, we will return
+ * false here in that case.
+ */
+const _selectionSpansParagraphs = function() {
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.anchorNode === sel.focusNode)) { return false };
+    const anchorStyleParent = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
+    const focusStyleParent = _findFirstParentElementInNodeNames(sel.focusNode, _paragraphStyleTags);
+    return (!anchorStyleParent || !focusStyleParent || (anchorStyleParent !== focusStyleParent));
+};
+
+/**
+ * Return an array of paragraph-styled Elements that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection doesn't span paragraphs, return an empty array. We do this even though
+ * the selection is within a paragraph. This is because the function is used for operations
+ * that span paragraphs.
+ */
+const _selectedParagraphElements = function() {
+    let elements = [];
+    if (!_selectionSpansParagraphs()) { return elements };
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    const selAtParagraphStart = (startOffset === 0) && (!startContainer.previousSibling);
+    let selAtParagraphEnd;
+    if (_isTextNode(endContainer)) {
+        selAtParagraphEnd = (endOffset === endContainer.textContent.length) && (!endContainer.nextSibling);
+    } else {
+        selAtParagraphEnd = (endOffset === endContainer.children.length) && (!endContainer.nextSibling);
+    };
+    const fragment = range.extractContents();
+    elements = _allChildElementsWithNodeNames(fragment, _paragraphStyleTags)
+    range.insertNode(fragment);
+    // When the fragment splits a node at the beginning or end, we need to join
+    // them back together or we end up with new paragraphs and the changes to
+    // the beginning and ending paragraphs will not be applied to the surrounding
+    // ones that were split-off.
+    const leadingParagraph = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
+    const leadingNodeName = leadingParagraph && leadingParagraph.nodeName;
+    const fragLeadingParagraph = leadingParagraph && leadingParagraph.nextElementSibling;
+    if (!selAtParagraphStart && leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
+        _joinNodes(leadingParagraph, fragLeadingParagraph, leadingNodeName);
+        elements[0] = leadingParagraph;
+    };
+    const trailingParagraph = _findFirstParentElementInNodeNames(sel.focusNode, _paragraphStyleTags);
+    const trailingNodeName = trailingParagraph && trailingParagraph.nodeName;
+    const fragTrailingParagraph = trailingParagraph && trailingParagraph.previousElementSibling;
+    if (!selAtParagraphEnd && trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
+        _joinNodes(fragTrailingParagraph, trailingParagraph, trailingNodeName);
+    }
+    return elements;
+}
+
+/**
+ * Return all elements within element that have nodeName.
+ */
+const _allChildElementsWithNodeNames = function(element, nodeNames, existingElements=[]) {
+    if (nodeNames.includes(element.nodeName)) { existingElements.push(element) };
+    const children = element.children;
+    for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        if (_isElementNode(child)) {
+           existingElements = _allChildElementsWithNodeNames(child, nodeNames, existingElements);
+        };
+    };
+    return existingElements;
+}
+
+/**
  * Return whether node is a textNode or not
  */
 const _isTextNode = function(node) {
@@ -5361,9 +5469,9 @@ const _firstSelectionTagMatching = function(matchNames, excludeNames) {
 const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
     const sel = document.getSelection();
     if (sel) {
-        const focusNode = sel.focusNode
-        if (focusNode) {
-            const selElement = _findFirstParentElementInNodeNames(focusNode, matchNames, excludeNames);
+        const anchorNode = sel.anchorNode
+        if (anchorNode) {
+            const selElement = _findFirstParentElementInNodeNames(anchorNode, matchNames, excludeNames);
             if (selElement) {
                 return selElement;
             }
@@ -5380,8 +5488,8 @@ const _firstSelectionNodeMatching = function(matchNames, excludeNames) {
  */
 const _selectionTagsMatching = function(nodeNames) {
     const sel = document.getSelection();
-    if (sel && sel.focusNode) {
-        return _tagsMatching(sel.focusNode, nodeNames);
+    if (sel && sel.anchorNode) {
+        return _tagsMatching(sel.anchorNode, nodeNames);
     } else {
         return [];
     };
@@ -5552,11 +5660,12 @@ const _childNodeIn = function(element, indices) {
 const _childNodeIndicesByName = function(node, nodeName) {
     let _node = node;
     let indices = [];
-    while (_node.nodeName !== nodeName) {
+    while (_node && (_node.nodeName !== nodeName)) {
         indices.unshift(_childNodeIndex(_node)); // Put at beginning of indices
         _node = _node.parentNode;
     }
-    return indices;
+    // If we never find parentNode, return an empty array
+    return (_node) ? indices : [];
 };
 
 /**
@@ -5569,11 +5678,12 @@ const _childNodeIndicesByName = function(node, nodeName) {
 const _childNodeIndicesByParent = function(node, parentNode) {
     let _node = node;
     let indices = [];
-    while (_node !== parentNode) {
+    while (_node && (_node !== parentNode)) {
         indices.unshift(_childNodeIndex(_node)); // Put at beginning of indices
         _node = _node.parentNode;
     }
-    return indices;
+    // If we never find parentNode, return an empty array
+    return (_node) ? indices : [];
 }
 
 /**
@@ -5948,49 +6058,48 @@ const _unsetTag = function(oldElement, sel) {
 /**
  * Given an element with a tag, replace its tag with the new nodeName.
  *
+ * If the current selection is within the oldElement, then patch it up to sit in
+ * the right place in the newElement. It's important not to change selection if
+ * this is not the case, because we iterate over _replaceTag when doing selection
+ * across multiple paragraphs.
+ *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
  * @param   {String}        nodeName    The type of element we want; e.g., 'B'.
  *
  */
 const _replaceTag = function(oldElement, nodeName) {
-    const sel = document.getSelection();
-    const oldParentNode = oldElement.parentNode;
-    const oldRange = sel.getRangeAt(0).cloneRange();
-    const oldStartContainer = oldRange.startContainer;
-    const oldStartOffset = oldRange.startOffset;
-    const oldEndContainer = oldRange.endContainer;
-    const oldEndOffset = oldRange.endOffset;
-    let newElement;
-    if (nodeName) {
-        newElement = document.createElement(nodeName);
-        newElement.innerHTML = oldElement.innerHTML;
-    } else {
-        newElement = document.createTextNode(oldElement.innerHTML)
-    }
-    oldElement.replaceWith(newElement);
-    let startContainer, startOffset, endContainer, endOffset;
-    const newStartContainer = _firstChildMatchingContainer(oldParentNode, oldStartContainer);
-    if (newStartContainer) {
-        startContainer = newStartContainer;
-        startOffset = oldStartOffset;
-    } else {
-        startContainer = newElement;
-        startOffset = 0;
-    }
-    const newEndContainer = _firstChildMatchingContainer(oldParentNode, oldEndContainer);
-    if (newEndContainer) {
-        endContainer = newEndContainer;
-        endOffset = oldEndOffset;
-    } else {
-        endContainer = newElement;
-        endOffset = 0;
+    if (!nodeName) {
+        MUError.NoNewTag.callback();
+        return;
     };
-    // With the new range properties sorted out, create the new range and reset the selection
-    const range = document.createRange();
-    range.setStart(startContainer, startOffset);
-    range.setEnd(endContainer, endOffset);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    const sel = document.getSelection();
+    const oldRange = sel.getRangeAt(0).cloneRange();
+    const startContainer = oldRange.startContainer;
+    const startOffset = oldRange.startOffset;
+    const endContainer = oldRange.endContainer;
+    const endOffset = oldRange.endOffset;
+    // Create and update newRange if we can find either startContainer or
+    // endContainer within oldElement. If we can, then we can reset the
+    // selection by locating the proper element inside of newElement using
+    // the indices we obtained from oldElement.
+    const newRange = oldRange.cloneRange();
+    const startIndices = _childNodeIndicesByParent(startContainer, oldElement);
+    const endIndices = _childNodeIndicesByParent(endContainer, oldElement);
+    const patchStart = startIndices.length > 0;
+    const patchEnd = endIndices.length > 0;
+    const newElement = document.createElement(nodeName);
+    newElement.innerHTML = oldElement.innerHTML;
+    oldElement.replaceWith(newElement);
+    if (patchStart) {
+        newRange.setStart(_childNodeIn(newElement, startIndices), startOffset);
+    };
+    if (patchEnd) {
+        newRange.setEnd(_childNodeIn(newElement, endIndices), endOffset);
+    }
+    if (patchStart || patchEnd) {
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    };
     return newElement;
 };
 
