@@ -19,10 +19,12 @@ public class ToolbarPreference: ObservableObject {
     
     public init() {
         self.style = .labeled
+        self.allowLocalImages = false
     }
     
-    public init(style: Style) {
+    public init(style: Style, allowLocalImages: Bool = false) {
         self.style = style
+        self.allowLocalImages = allowLocalImages
     }
     
     public func height() -> CGFloat {

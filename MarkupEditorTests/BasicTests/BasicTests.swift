@@ -1580,6 +1580,15 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endId: "p",
                 endOffset: 10
             ),
+            HtmlTest(
+                description: "Clean up some text from Xcode",
+                startHtml: "const _pasteHTML = function(html, oldUndoerData, undoable=true) {\n    const redoing = !undoable && (oldUndoerData !== null);\n    let sel = document.getSelection();\n    let anchorNode = (sel) ? sel.anchorNode : null;\n    if (!anchorNode) {\n        MUError.NoSelection.callback();\n        return null;\n    };",
+                endHtml: "const _pasteHTML = function(html, oldUndoerData, undoable=true) {<br>&nbsp;&nbsp;&nbsp;&nbsp;const redoing = !undoable &amp;&amp; (oldUndoerData !== null);<br>&nbsp;&nbsp;&nbsp;&nbsp;let sel = document.getSelection();<br>&nbsp;&nbsp;&nbsp;&nbsp;let anchorNode = (sel) ? sel.anchorNode : null;<br>&nbsp;&nbsp;&nbsp;&nbsp;if (!anchorNode) {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MUError.NoSelection.callback();<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return null;<br>&nbsp;&nbsp;&nbsp;&nbsp;};",
+                startId: "h1",
+                startOffset: 10,
+                endId: "h1",
+                endOffset: 10
+            ),
         ]
         for test in htmlTests {
             test.printDescription()

@@ -858,7 +858,7 @@ MU.editor.addEventListener('paste', function(ev) {
  * unformatted text.
  */
 MU.pasteText = function(html) {
-    const fragment = _patchPasteHTML(html);     // Remove all the cruft first
+    const fragment = _patchPasteHTML(html);            // Remove all the cruft first, leaving BRs
     const minimalHTML = _minimalHTML(fragment);
     _pasteHTML(minimalHTML);
 };
@@ -1196,8 +1196,10 @@ const _insertHTML = function(fragment) {
     const existingTopLevelItem = _findFirstParentElementInNodeNames(trailingText, _topLevelTags);
     while (nextFragSib) {
         if (_topLevelTags.includes(nextFragSib.nodeName)) {
+            //_consoleLog(" inserting " + _textString(nextFragSib) + " before " + _textString(existingTopLevelItem) + " in " + _textString(existingTopLevelItem.parentNode));
             existingTopLevelItem.parentNode.insertBefore(nextFragSib, existingTopLevelItem)
         } else {
+            //_consoleLog(" inserting " + _textString(nextFragSib) + " before " + _textString(trailingText) + " in " + _textString(trailingText.parentNode));
             trailingText.parentNode.insertBefore(nextFragSib, trailingText);
         }
         nextFragSib = fragment.firstChild;
@@ -2566,21 +2568,72 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     return newElement;      // To preventDefault() on Enter
 };
 
+/**
+ * Replace leading and/or trailing blanks with nbsp equivalent
+ */
 const _patchWhiteSpace = function(str, end='BOTH') {
     let patchedStr;
     switch (end) {
         case 'LEADING':
-            patchedStr = str.replace(/^\s+/g, '\xA0');
+            patchedStr = str.replace(/ /gy, '\xA0');
             break;
         case 'TRAILING':
             patchedStr = str.replace(/\s+$/g, '\xA0');
             break;
         case 'BOTH':
-            patchedStr = str.replace(/^\s+/g, '\xA0');
+            patchedStr = str.replace(/ /gy, '\xA0');
             patchedStr = patchedStr.replace(/\s+$/g, '\xA0');
             break;
     };
     return patchedStr;
+};
+
+/**
+ * Replace newlines with <br> in a text node; return trailingText if patched, else node
+ */
+const _patchNewlines = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    const rawContent = node.textContent;
+    const leadingNl = rawContent.slice(1) === '\n';
+    const trailingNl = rawContent.slice(-1) === '\n';
+    const lines = rawContent.split('\n');
+    if (lines.length === 1) { return node };
+    const insertTarget = node.nextSibling;
+    let textNode;
+    let initialI = 0;
+    if (leadingNl) {
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        node.parentNode.insertBefore(p, insertTarget);
+        initialI = 1;
+    };
+    for (let i = initialI; i < lines.length; i++) {
+        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
+        node.parentNode.insertBefore(textNode, insertTarget);
+        if (i < lines.length - 1) {
+            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
+        };
+    };
+    if (trailingNl) {
+        const p = document.createElement('p');
+        textNode = document.createElement('br')
+        p.appendChild(textNode);
+        node.parentNode.insertBefore(p, insertTarget);
+    }
+    node.parentNode.removeChild(node);
+    return textNode;
+};
+
+const _patchAngleBrackets = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    let rawContent = node.textContent;
+    rawContent = rawContent.replace('<', '&lt;');
+    rawContent = rawContent.replace('>', '&gt;');
+    node.textContent = rawContent;
 };
 
 const _stripZeroWidthChars = function(element) {
@@ -3717,17 +3770,28 @@ const _cleanUpMetas = function(node) {
 };
 
 /*
- * Put any direct childNodes of node that are BRs into paragraphs.
+ * Put any direct childNodes of node that are in "standalone" BRs into paragraphs
+ * and patch up text nodes with newlines and embedded angle brackets.
  */
 const _cleanUpBRs = function(node) {
     const childNodes = node.childNodes;
-    for (let i=0; i < childNodes.length; i++) {
-        const child = childNodes[i];
-        const childName = child.nodeName;
-        if (childName === 'BR') {
-            const p = document.createElement('p');
-            node.insertBefore(p, child);
-            p.appendChild(child);
+    let child = node.firstChild;
+    while (child) {
+        if (child.nodeName === 'BR') {
+            const nextChild = child.nextSibling;
+            const nextNextChild = (nextChild) ? nextChild.nextSibling : null;
+            if ((!nextChild) || (nextChild && (nextChild.nodeType !== Node.TEXT_NODE))) {
+                // This BR is not part of a text string, it's just sitting alone
+                const p = document.createElement('p');
+                p.appendChild(document.createElement('br'));
+                child.replaceWith(p);
+            };
+            child = nextNextChild;
+        } else if (child.nodeType === Node.TEXT_NODE) {
+            _patchAngleBrackets(child);
+            child = _patchNewlines(child).nextSibling;
+        } else {
+            child = child.nextSibling;
         };
     };
 };

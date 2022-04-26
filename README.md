@@ -76,36 +76,39 @@ Clone this repository and build the MarkupFramework target in Xcode. Add the Mar
 
 When consuming the MarkupEditor in SwiftUI, you can use the `MarkupToolbar` and `MarkupWebView` directly in your own View. The `MarkupWebView` is a UIViewRepresentable for the `MarkupWKWebView` and deals with setting up the `MarkupCoordinator` itself.
 
-In the simplest case, just add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. The `selectionState` and `selectedWebView` have to be accessed by both the `MarkupToolbar` and `MarkupWebView`, so can be held as state in `ContentView`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. (If you have multiple `MarkupWebViews` and a single `MarkupToolbar`, you can use the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
+In the simplest case, just add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. We let the transient `SubToolbar` (used to create and edit images, links, and tables) be an overlay of `MarkupWebView`. The `selectedWebView` has to be accessed by both the `MarkupToolbar` and `MarkupWebView`, and is accessible via the `MarkupEnv`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. (If you have multiple `MarkupWebViews` and a single `MarkupToolbar`, you can use the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
 
 ```
 import SwiftUI
 import MarkupEditor
 
 struct ContentView: View {
-    @StateObject var selectionState = SelectionState()
-    @State var selectedWebView: MarkupWKWebView?
+    private let markupEnv = MarkupEnv(style: .compact)
+    private let showSubToolbar = ShowSubToolbar()
+    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
+    @State private var demoContent: String = "<p>Hello world</p>"
     
     var body: some View {
-        VStack {
-            MarkupToolbar(
-                selectionState: selectionState,
-                selectedWebView: $selectedWebView,
-                markupDelegate: self
-            )
-            MarkupWebView(
-                selectionState: selectionState,
-                selectedWebView: $selectedWebView,
-                markupDelegate: self,
-                initialContent: "<h1>Hello world!</h1>"
-            )
+        VStack(spacing: 0) {
+            MarkupToolbar(markupDelegate: self)
+                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+            Divider()
+            MarkupWebView(markupDelegate: self, boundContent: $demoContent)
+                .overlay(
+                    SubToolbar(markupDelegate: self),
+                    alignment: .topLeading)
         }
+        .environmentObject(markupEnv)
+        .environmentObject(showSubToolbar)
+        .environmentObject(markupEnv.toolbarPreference)
+        .environmentObject(markupEnv.selectionState)
+        .environmentObject(markupEnv.observedWebView)
     }
 }
 
 extension ContentView: MarkupDelegate {
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        selectedWebView = view
+        markupEnv.observedWebView.selectedWebView = view
     }
 }
 ```
@@ -114,17 +117,45 @@ extension ContentView: MarkupDelegate {
 
 The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code for a detailed example. I'd like there to be less boilerplate code, but I'm also planning on using the MarkupEditor in a SwiftUI app so am likely not to put a lot of effort into that.
 
+## Local Images
+
+Being able to insert an image into a document you are editing is fundamental. In Markdown, you do this by referencing a URL, and the URL can point to a file on your local file system. The MarkupEditor can do the same, of course, but when you insert an image into a document in even the simplest WYSIWYG editor, you don't normally have to think, "Hmm, I'll have to remember to copy this file around with my document when I move my document" or "Hmm, where can I stash this image so it will be accessible across the Internet in the future."  From an end-user perspective, the image is just part of the document. Furthermore, you expect to be able to paste images into your document that you copied from elsewhere. Nobody wants to think about creating and tracking a local file in that case.
+
+The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your MarkupWKWebView when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your MarkupDelegate receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
+
+Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill our would like to preclude its use. For this reason, there is a ToolbarPreference to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
+
+A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
+
+## Tests
+
+There are three test targets: `BasicTests`, `UndoTests`, and `RedoTests`. Proper undo and redo has been one of the more challenging parts of the project. Essentially, every time the MarkupEditor implements changes to the underlying DOM, it also has to support undoing and redoing those changes. (As a historical aside, the MarkupEditor does not use the deprecated HTML `document.execCommand`, except in a very limited way. The `execCommand` takes care of undo and redo for anything you use it for. For example, if you use `document.execCommand('bold')` to bold the document selection, undo and redo "just work", albeit leaving behind various spans and styles in their wake. Because the MarkupEditor doesn't use `execCommand`, the undo and redo logic for every operation supported by the MarkupEditor has been hand-crafted with a mixture of love, frustration, and occasional anger.)
+
+The `BasicTests` target tests the "do" operations; i.e., the operations you can perform via the MarkupWKWebView API or one of the toolbars. The `UndoTests` do all the "do" operations of the BasicTests, _plus_ the "undo" of each one to make sure the original HTML is restored. The `RedoTests` do all the "do" and "undo" operations, _plus_ the "redo" of each one to make sure the results of the original "undo" are restored. As a result, running just the `RedoTests` will also do the equivalent of the `UndoTests`, and running `UndoTests` will also do the the equivalent of running `BasicTests`. The `RedoTests` take a while to run and can be considered to be a comprehensive run through the MarkupEditor functionality.
+
 ## Demos
 
-If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I find it to be a lot less hassle when developing the project overall, especially in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated.
+If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I find it to be a lot less hassle when developing the project overall, especially in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated. The demos have a dependency on the MarkupEditor.framework.
 
 The demos open `demo.html`, which contains information about how to use the MarkupEditor as an end user and shows you the capabilities.
 
 ## Status
 
-The current version is very much a work in progress. The work is a back-and-forth between the MarkupEditor package proper and the two demos. I am now consuming it in another project I am developing, so changes here are going to be driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
+The current version is closing in on feature-complete. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
 
 ### History
+
+#### Version 0.3.1
+
+This version is getting closer feature-complete on Mac Catalyst. There have been some API changes from the 0.2 version, primarily driven by the new support for local images.
+
+* Support local images in the edited document, the ability to insert an image from file as opposed to an external URL.
+* Refactor tests into BasicTests, UndoTests, and RedoTests. Tests have no dependency on a host app.
+* All operations support undo/redo properly (with the exception of selections across paragraphs, as cited in Known Issues).
+* Support pasting HTML and images. (Previously only plain text was supported.)
+* Menus work in the demos but are still incomplete.
+* List editing responds properly to the Enter key at beginning, inside, and end of list items. Enter in an empty list item outdents until exiting the list.
+* Tab is now strictly a table navigation mechanism and is no longer associated with indent/outdent operations.
 
 #### Version 0.2.2
 
@@ -143,21 +174,22 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 ### Known Issues
 
 1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
-2. Caret occasionally goes missing. I think this problem has been fixed, but am not quite sure.
-3. Table editing
+2. Table editing
     * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
     * Headers are currently colspanning the full table, but this needs to be adjustable.
-    * Tab (&#8677;) navigates forward in the table, but &#8679;&#8677; doesn't work properly. You can use &#8984;= as a hack to navigate back for now.
-4. Image editing
+3. Image editing
     * Selection is funky. Should show the image itself being selected but does not.
     * Scaling is clunky. I plan to replace the Stepper with an overlay with handles on the image.
     * Save and cancel should go away in favor of immediate preview and undo.
+    * The UI to deal with local images vs external image references is rough.
+4. Multi-element selections are a work in progress. For example, selecting multiple paragraphs and changing their style works, but undo/redo of the same does not. Operations performed for selections across lists and tables will result in unpredicatable behavior and attempts to undo may make things worse.
+5. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
 
 ### Limitations
 
-1. Needs to support text justification. Initially I thought I could live without it, since it's not properly supported in Markdown. But, especially with tables, it is really a must-have.
-2. Preferences. I need to preference all the things.
-3. Menus are not done properly.
+1. Probably needs to support text justification, but I may not do so.
+2. Preferences. Some things are properly configurable via ToolbarPreferences, but this needs to be expanded.
+3. Menus are incomplete, but the scaffolding is in place to be filled-out.
 
 ## Legacy and Acknowledgements
 
