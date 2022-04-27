@@ -321,6 +321,9 @@ const _undoOperation = function(undoerData) {
             MU.replaceStyle(data.newStyle, data.oldStyle, false);
             _backupSelection();
             break;
+        case 'multiStyle':
+            _undoMultiStyle(undoerData);
+            break;
         case 'list':
             _restoreSelection();
             MU.toggleListItem(data.oldListType, false);
@@ -389,6 +392,9 @@ const _redoOperation = function(undoerData) {
             _restoreSelection();
             MU.replaceStyle(data.oldStyle, data.newStyle, false);
             _backupSelection();
+            break;
+        case 'multiStyle':
+            _redoMultiStyle(undoerData);
             break;
         case 'list':
             _restoreSelection();
@@ -2127,12 +2133,47 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
  * Make all styled elements within a selection that spans paragraphs into newStyle.
  */
 const _replaceAllStyles = function(newStyle, undoable=true) {
-    const selectedParagraphElements = _selectedParagraphElements();
-    for (let i = 0; i < selectedParagraphElements.length; i++) {
-        _replaceTag(selectedParagraphElements[i], newStyle.toUpperCase());
+    const selectedParagraphs = _selectedParagraphs();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    let oldStyles = [];
+    let indices = []
+    for (let i = 0; i < selectedParagraphs.length; i++) {
+        const selectedParagraph = selectedParagraphs[i]
+        oldStyles.push(selectedParagraph.nodeName);
+        indices.push(_childNodeIndicesByParent(selectedParagraph, commonAncestor));
+        _replaceTag(selectedParagraph, newStyle.toUpperCase());
     };
-    return;
-}
+    if (undoable) {
+        _backupSelection()
+        const undoerData = _undoerData('multiStyle', {commonAncestor: commonAncestor, newStyle: newStyle, oldStyles: oldStyles, indices: indices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
+
+const _undoMultiStyle = function(undoerData) {
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldStyles = undoerData.data.oldStyles;
+    const indices = undoerData.data.indices;
+    for (let i = 0; i < indices.length; i++) {
+        const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
+        _replaceTag(selectedParagraph, oldStyles[i].toUpperCase());
+    };
+};
+
+const _redoMultiStyle = function(undoerData) {
+    const commonAncestor = undoerData.data.commonAncestor;
+    const newStyle = undoerData.data.newStyle;
+    const indices = undoerData.data.indices;
+    for (let i = 0; i < indices.length; i++) {
+        const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
+        _replaceTag(selectedParagraph, newStyle.toUpperCase());
+    };
+};
 
 /********************************************************************************
  * Nestables, including lists and block quotes
@@ -5419,7 +5460,7 @@ const _selectionSpansParagraphs = function() {
  * the selection is within a paragraph. This is because the function is used for operations
  * that span paragraphs.
  */
-const _selectedParagraphElements = function() {
+const _selectedParagraphs = function() {
     let elements = [];
     if (!_selectionSpansParagraphs()) { return elements };
     const sel = document.getSelection();

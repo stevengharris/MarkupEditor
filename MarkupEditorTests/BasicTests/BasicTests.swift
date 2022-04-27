@@ -403,7 +403,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testMultiParagraphStyles() throws {
+    func testMultiStyles() throws {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
                 HtmlTest(

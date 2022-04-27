@@ -367,6 +367,113 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testUndoMultiStyles() throws {
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection in embedded format",
+                    startHtml: "<p><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></p><p><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></p>",
+                    endHtml: "<h1><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></h1><h1><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></h1><h1><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></h1>",
+                    startId: "i1",
+                    startOffset: 2,
+                    endId: "i3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection outside embedded format both ends",
+                    startHtml: "<p><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></p><p><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></p>",
+                    endHtml: "<h1><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></h1><h1><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></h1><h1><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></h1>",
+                    startId: "b1",
+                    startOffset: 1,
+                    endId: "b3",
+                    endOffset: 1,
+                    startChildNodeIndex: 2,
+                    endChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection outside embedded format at start",
+                    startHtml: "<p><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></p><p><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></p>",
+                    endHtml: "<h1><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></h1><h1><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></h1><h1><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></h1>",
+                    startId: "b1",
+                    startOffset: 1,
+                    endId: "i3",
+                    endOffset: 2,
+                    startChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection outside embedded format at end",
+                    startHtml: "<p><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></p><p><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></p>",
+                    endHtml: "<h1><b id=\"b1\"><i id=\"i1\">Hello </i>world1</b></h1><h1><b id=\"b2\"><i id=\"i2\">Hello </i>world2</b></h1><h1><b id=\"b3\"><i id=\"i3\">Hello </i>world3</b></h1>",
+                    startId: "i1",
+                    startOffset: 2,
+                    endId: "b3",
+                    endOffset: 2,
+                    endChildNodeIndex: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(in: state, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Setting and replacing styles across multiple paragraphs")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
+    
     func testUndoBlockQuotes() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
