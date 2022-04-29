@@ -782,6 +782,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
+
+    /// Supply an accessoryView to override the inputAccesoryView of UIResponder.
+    var accessoryView: UIView?
+    
+    public override var inputAccessoryView: UIView? {
+        // remove/replace the default accessory view
+        return accessoryView
+    }
     
 }
 
