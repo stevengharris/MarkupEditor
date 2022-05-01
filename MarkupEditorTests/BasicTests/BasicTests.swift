@@ -258,7 +258,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 HtmlTest(
                     description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
                     startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
+                    endHtml: "<p id=\"p\"><b>Hello</b><i id=\"i\"><b>world</b></i></p>",
                     startId: "p",
                     startOffset: 0,
                     endId: "i",
@@ -291,6 +291,21 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     startOffset: 2,
                     endId: "i",
                     endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Span paragraphs from unformatted to nested formatted",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b>world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\">Hello <i id=\"i2\"><b>wo</b>rld</i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "i2",
+                    endOffset: 2,
+                    startChildNodeIndex: 0
                 ),
                 { handler in
                     self.webView.bold() { handler() }

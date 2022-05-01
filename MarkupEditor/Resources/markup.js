@@ -1237,7 +1237,7 @@ const _insertHTML = function(fragment) {
     };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
-    //_consoleLog("* Done _insertHTML")
+    _consoleLog("* Done _insertHTML")
     return {insertedRange: insertedRange, rootName: rootName}
 };
 
@@ -1845,6 +1845,10 @@ MU.toggleSuperscript = function() {
  * type must be called using uppercase
  */
 const _toggleFormat = function(type, undoable=true) {
+    if (_selectionSpansTextNodes()) {
+        _multiFormat(type, undoable);
+        return;
+    };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
@@ -2060,7 +2064,75 @@ const _redoToggleFormat = function(undoerData) {
     undoerData.range = range;
     sel.removeAllRanges();
     sel.addRange(range);
-}
+};
+
+/**
+ * Make all text elements within a selection that spans text nodes into newFormat.
+ *
+ */
+const _multiFormat = function(newFormat, undoable=true) {
+    const selectedTextNodes = _selectedTextNodes();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    }
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = range.commonAncestorContainer;
+    let oldFormats = [];
+    let indices = []
+    let newStartContainer, newEndContainer;
+    for (let i = 0; i < selectedTextNodes.length; i++) {
+        const selectedTextNode = selectedTextNodes[i];
+        // If the selectedTextNode is not within newFormat, then track its format at #text,
+        // signifying that it will be inserted into a newFormat block. If it is within
+        // the newFormat, then put that into the oldFormats array.
+        const existingFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        const existingFormat = (existingFormatElement) ? existingFormatElement.nodeName : selectedTextNode.nodeName;
+        oldFormats.push(existingFormat);
+        indices.push(_childNodeIndicesByParent(selectedTextNode, commonAncestor));
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+        const newEndContainer = (i === selectedTextNodes.length - 1) && (selectedTextNode === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedTextNode, startOffset);
+        } else {
+            tagRange.setStart(selectedTextNode, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedTextNode, endOffset);
+        } else {
+            tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        if (existingFormatElement) {
+            _unsetTag(existingFormatElement, sel);
+        } else {
+            _setTag(newFormat, sel);
+        };
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
+    if (undoable) {
+        _backupSelection()
+        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
 
 /********************************************************************************
  * Styling
@@ -2083,8 +2155,8 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
         MUError.NoNewTag.callback();
         return;
     };
-    if (_selectionSpansParagraphs()) {
-        _replaceAllStyles(newStyle, undoable);
+    if (_selectionSpansStyles()) {
+        _multiStyle(newStyle, undoable);
         return;
     };
     const sel = document.getSelection();
@@ -2126,25 +2198,30 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
             undoer.push(undoerData);
         }
         _callback('input');
-    }
+    };
 };
 
 /**
- * Make all styled elements within a selection that spans paragraphs into newStyle.
+ * Make all styled elements within a selection that spans paragraph styles into newStyle.
+ *
+ * For undo, capture the commonAncestor, the newStyle, all the oldStyles that
+ * existed before changing to newStyle. For each paragraph element (e.g., <p>, <h1>-<h6>),
+ * capture the indices to reach that element from commonAncestor (which will not
+ * change).
  */
-const _replaceAllStyles = function(newStyle, undoable=true) {
-    const selectedParagraphs = _selectedParagraphs();
+const _multiStyle = function(newStyle, undoable=true) {
+    const selectedStyleElements = _selectedStyles();
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
     const range = sel.getRangeAt(0);
     const commonAncestor = range.commonAncestorContainer;
     let oldStyles = [];
     let indices = []
-    for (let i = 0; i < selectedParagraphs.length; i++) {
-        const selectedParagraph = selectedParagraphs[i]
-        oldStyles.push(selectedParagraph.nodeName);
-        indices.push(_childNodeIndicesByParent(selectedParagraph, commonAncestor));
-        _replaceTag(selectedParagraph, newStyle.toUpperCase());
+    for (let i = 0; i < selectedStyleElements.length; i++) {
+        const selectedStyleElement = selectedStyleElements[i]
+        oldStyles.push(selectedStyleElement.nodeName);
+        indices.push(_childNodeIndicesByParent(selectedStyleElement, commonAncestor));
+        _replaceTag(selectedStyleElement, newStyle.toUpperCase());
     };
     if (undoable) {
         _backupSelection()
@@ -2155,6 +2232,12 @@ const _replaceAllStyles = function(newStyle, undoable=true) {
     _callback('input');
 };
 
+/**
+ * Undo the previous multiStyle operation.
+ *
+ * From undoerData, use the indices to find the element below
+ * commonAncestor, then just replaceTag to the oldStyle.
+ */
 const _undoMultiStyle = function(undoerData) {
     const commonAncestor = undoerData.data.commonAncestor;
     const oldStyles = undoerData.data.oldStyles;
@@ -2165,6 +2248,12 @@ const _undoMultiStyle = function(undoerData) {
     };
 };
 
+/**
+ * Redo the previous multiStyle operation.
+ *
+ * From undoerData, use the indices to find the element below
+ * commonAncestor, then just replaceTag to the newStyle.
+ */
 const _redoMultiStyle = function(undoerData) {
     const commonAncestor = undoerData.data.commonAncestor;
     const newStyle = undoerData.data.newStyle;
@@ -5444,7 +5533,7 @@ const _doPrevCell = function() {
  * apply multiple operations at the paragraph style level, we will return
  * false here in that case.
  */
-const _selectionSpansParagraphs = function() {
+const _selectionSpansStyles = function() {
     const sel = document.getSelection();
     if (!sel || sel.isCollapsed || (sel.anchorNode === sel.focusNode)) { return false };
     const anchorStyleParent = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
@@ -5456,13 +5545,13 @@ const _selectionSpansParagraphs = function() {
  * Return an array of paragraph-styled Elements that the selection spans, including ones it
  * only partially encompasses.
  *
- * If the selection doesn't span paragraphs, return an empty array. We do this even though
+ * If the selection doesn't span paragraph styles, return an empty array. We do this even though
  * the selection is within a paragraph. This is because the function is used for operations
  * that span paragraphs.
  */
-const _selectedParagraphs = function() {
+const _selectedStyles = function() {
     let elements = [];
-    if (!_selectionSpansParagraphs()) { return elements };
+    if (!_selectionSpansStyles()) { return elements };
     const sel = document.getSelection();
     if (!sel || (sel.rangeCount === 0)) { return elements };
     const range = sel.getRangeAt(0);
@@ -5480,27 +5569,146 @@ const _selectedParagraphs = function() {
         selAtParagraphEnd = (endOffset === endContainer.children.length) && (!endContainer.nextSibling);
     };
     const fragment = range.extractContents();
-    elements = _allChildElementsWithNodeNames(fragment, _paragraphStyleTags)
+    elements = _allChildElementsWithNodeNames(fragment, _paragraphStyleTags);
     range.insertNode(fragment);
-    // When the fragment splits a node at the beginning or end, we need to join
-    // them back together or we end up with new paragraphs and the changes to
-    // the beginning and ending paragraphs will not be applied to the surrounding
-    // ones that were split-off.
-    const leadingParagraph = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
-    const leadingNodeName = leadingParagraph && leadingParagraph.nodeName;
-    const fragLeadingParagraph = leadingParagraph && leadingParagraph.nextElementSibling;
-    if (!selAtParagraphStart && leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
-        _joinNodes(leadingParagraph, fragLeadingParagraph, leadingNodeName);
-        elements[0] = leadingParagraph;
-    };
-    const trailingParagraph = _findFirstParentElementInNodeNames(sel.focusNode, _paragraphStyleTags);
-    const trailingNodeName = trailingParagraph && trailingParagraph.nodeName;
-    const fragTrailingParagraph = trailingParagraph && trailingParagraph.previousElementSibling;
-    if (!selAtParagraphEnd && trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
-        _joinNodes(fragTrailingParagraph, trailingParagraph, trailingNodeName);
-    }
+    const joinedElements = _patchInsertFragment();
+    if (joinedElements.joinedLeadingParagraph) { elements[0] = joinedElements.joinedLeadingParagraph };
     return elements;
+};
+
+const _selectionSpansTextNodes = function() {
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return false };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    return (startContainer.nodeType === Node.TEXT_NODE) && (startContainer !== endContainer);
 }
+
+/**
+ * Return an array of text nodes that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection is collapsed or resides within a single text node, then return
+ * an empty array. We do this because the "normal" formatting logic applies within
+ * a single text node, whereas we use this method to deal with selection that
+ * spans across multiple text nodes. The text nodes we return may already reside
+ * in formatting elements (e.g., <B>, <I>, etc).
+ */
+const _selectedTextNodes = function() {
+    let nodes = [];
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
+    let range = sel.getRangeAt(0);
+    if ((range.startContainer.nodeType === Node.TEXT_NODE) && (range.startContainer === range.endContainer)) { return nodes };
+    const fragment = range.extractContents();
+    // At this point, the range has changed and may be empty, in which case we want to clean it
+    // up to select a single br which we will then replace when we re-insert the fragment.
+    //const startContainer = range.startContainer;
+    //if (_isEmpty(startContainer)) {
+    //    const emptyContainer = document.createElement(startContainer.nodeName);
+    //    const br = document.createElement('br');
+    //    emptyContainer.appendChild(br);
+    //    startContainer.replaceWith(emptyContainer);
+    //    range = document.createRange();
+    //    range.setStart(emptyContainer, 0);
+    //    range.setEnd(emptyContainer, 1);
+    //    sel.removeAllRanges();
+    //    sel.addRange(range);
+    //};
+    nodes = _allChildElementsWithNodeType(fragment, Node.TEXT_NODE);
+    range.insertNode(fragment);
+    const joinedElements = _patchInsertFragment();
+    // After patching the fragment, we need to reset the first node because it
+    // was derived from the fragment but has been joined with its previousSibling
+    nodes[0] = _isElementNode(sel.anchorNode) ? _firstTextNodeChild(sel.sel.anchorNode) : sel.anchorNode;
+    nodes[nodes.length-1] = _isElementNode(sel.focusNode) ? _firstTextNodeChild(sel.focusNode) : sel.focusNode;
+    //if (joinedElements.joinedLeadingText) { nodes[0] = joinedElements.joinedLeadingText };
+    //if (joinedElements.joinedTrailingText) { nodes[nodes.length-1] = joinedElements.joinedTrailingText };
+    _removeEmptyTextNodes(range);
+    // On return, filter for empty text nodes, which may occur because of newlines
+    // between paragraph elements.
+    return nodes.filter(textNode => !_isEmpty(textNode));
+};
+
+/**
+ * After we range.extractContents() to get a fragment and then do range.insertNode(fragment), the
+ * operation will split paragraphs if the selection at either end was not at the beginning of a
+ * paragraph. When this happens, we need to join them back together to leave things as they
+ * started.
+ *
+ * This method implicitly assumes the selection identified the fragment that was previously
+ * extracted and subsequently inserted. IOW, it has to be called immediately following the
+ * range.insertNode(fragment) call.
+ *
+ * In some cases, we need to use the elements that were joined together, either at the leading
+ * part of the fragment or the trailing part. So, we return those if they were joined.
+ */
+const _patchInsertFragment = function() {
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    // The startContainer and endContainer are just outside of the original fragment.
+    const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    let joinedLeadingParagraph, joinedTrailingParagraph, joinedLeadingText, joinedTrailingText;
+    if (startParagraph === endParagraph) {
+        // If the startContainer and endContainer are in the same paragraphStyleTag, then we may
+        // need to patch up text nodes.
+        const fragLeadingText = startContainer.nextSibling;
+        if (_isTextNode(fragLeadingText) && _isTextNode(startContainer)) {
+            const newStartOffset = startContainer.textContent.length;
+            startContainer.textContent = startContainer.textContent + fragLeadingText.textContent;
+            fragLeadingText.parentNode.removeChild(fragLeadingText);
+            range.setStart(startContainer, newStartOffset);
+            joinedLeadingText = startContainer;
+        };
+        const fragTrailingText = endContainer.previousSibling;
+        if (_isTextNode(fragTrailingText) && _isTextNode(endContainer)) {
+            const newEndOffset = fragTrailingText.textContent.length;
+            fragTrailingText.textContent = fragTrailingText.textContent + endContainer.textContent;
+            endContainer.parentNode.removeChild(endContainer);
+            range.setEnd(fragTrailingText, newEndOffset);
+            joinedTrailingText = fragTrailingText;
+        };
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else {
+        // Remember, the startContainer and endContainer are just outside of the original fragment, so
+        // the logic to determine if we were at the start or end of a paragraph is different than
+        // it would be based on a selection that is inside of what was a fragment.
+        /*
+        const selAtParagraphStart = (startOffset === 0) && (!startContainer.previousSibling);
+        let selAtParagraphEnd;
+        if (_isTextNode(endContainer)) {
+            selAtParagraphEnd = (endOffset === endContainer.textContent.length) && (!endContainer.nextSibling);
+        } else {
+            selAtParagraphEnd = (endOffset === endContainer.children.length) && (!endContainer.nextSibling);
+        };
+        */
+        const leadingParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+        const leadingNodeName = leadingParagraph && leadingParagraph.nodeName;
+        const fragLeadingParagraph = leadingParagraph && leadingParagraph.nextElementSibling;
+        //if (!selAtParagraphStart && leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
+        if (leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
+            _joinNodes(leadingParagraph, fragLeadingParagraph, leadingNodeName);
+            joinedLeadingParagraph = leadingParagraph;
+        };
+        const trailingParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+        const trailingNodeName = trailingParagraph && trailingParagraph.nodeName;
+        const fragTrailingParagraph = trailingParagraph && trailingParagraph.previousElementSibling;
+        //if (!selAtParagraphEnd && trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
+        if (trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
+            _joinNodes(fragTrailingParagraph, trailingParagraph, trailingNodeName);
+            joinedTrailingParagraph = fragTrailingParagraph;
+        };
+    }
+    return { joinedLeadingParagraph: joinedLeadingParagraph, joinedTrailingParagraph: joinedTrailingParagraph, joinedLeadingText: joinedLeadingText, joinedTrailingText: joinedTrailingText };
+};
 
 /**
  * Return all elements within element that have nodeName.
@@ -5518,17 +5726,33 @@ const _allChildElementsWithNodeNames = function(element, nodeNames, existingElem
 }
 
 /**
+ * Return all elements within element that have nodeType.
+ */
+const _allChildElementsWithNodeType = function(element, nodeType, existingElements=[]) {
+    if (element.nodeType === nodeType) {
+        existingElements.push(element)
+        if (element.nodeType !== Node.ELEMENT_NODE) { return existingElements };
+    };
+    const childNodes = element.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        let child = childNodes[i];
+        existingElements = _allChildElementsWithNodeType(child, nodeType, existingElements);
+    };
+    return existingElements;
+}
+
+/**
  * Return whether node is a textNode or not
  */
 const _isTextNode = function(node) {
-    return node.nodeType === Node.TEXT_NODE;
+    return node && (node.nodeType === Node.TEXT_NODE);
 };
 
 /***
  * Return whether node is an ELEMENT_NODE or not
  */
 const _isElementNode = function (node) {
-    return node.nodeType === Node.ELEMENT_NODE;
+    return node && (node.nodeType === Node.ELEMENT_NODE);
 };
 
 /**
@@ -6003,7 +6227,7 @@ const _setTag = function(type, sel) {
         if ((startContainer !== endContainer) && _isEmpty(endContainer)) {
             endContainer.parentNode.removeChild(endContainer);
         };
-    }
+    };
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
@@ -6041,25 +6265,71 @@ const _setTag = function(type, sel) {
  * index-based access.
  */
 const _removeEmptyTextNodes = function(range) {
-    const startContainer = range.startContainer;
-    const endContainer = range.endContainer;
-    let child = startContainer.firstChild;
+    const rangeStartContainer = range.startContainer;
+    const rangeStartOffset = range.startOffset;
+    const rangeEndContainer = range.endContainer;
+    const rangeEndOffset = range.endOffset;
+    const sel = document.getSelection();
+    let selRange, selStartContainer, selStartOffset, selEndContainer, selEndOffset;
+    let newSelStartContainer, newSelStartOffset, newSelEndContainer, newSelEndOffset;
+    if (sel && (sel.rangeCount > 0)) {
+        selRange = sel.getRangeAt(0);
+        selStartContainer = selRange.startContainer;
+        selStartOffset = selRange.startOffset;
+        selEndContainer = selRange.endContainer;
+        selEndOffset = selRange.endOffset;
+    };
+    let child = rangeStartContainer.firstChild;
     while (child) {
         let nextChild = child.nextSibling;
         if (_isEmpty(child)) {
-            startContainer.removeChild(child);
+            if (child === selStartContainer) {
+                if (nextChild) {
+                    newSelStartContainer = nextChild;
+                    newSelStartOffset = 0;
+                } else {
+                    newSelStartContainer = child.previousSibling ?? selStartContainer;
+                    newSelStartOffset = _endOffsetFor(newSelStartContainer);
+                };
+            };
+            rangeStartContainer.removeChild(child);
         }
         child = nextChild;
     };
-    child = endContainer.firstChild;
+    child = rangeEndContainer.firstChild;
     while (child) {
         let nextChild = child.nextSibling;
         if (_isEmpty(child)) {
-            endContainer.removeChild(child);
+            if (child === selEndContainer) {
+                if (nextChild) {
+                    newSelEndContainer = nextChild;
+                    newSelEndOffset = 0;
+                } else {
+                    newSelEndContainer = child.previousSibling ?? selEndContainer;
+                    newSelEndOffset = _endOffsetFor(newSelEndContainer);
+                };
+            };
+            rangeEndContainer.removeChild(child);
         };
         child = nextChild;
     };
-}
+    if (newSelStartContainer || newSelEndContainer) {
+        selRange.setStart(newSelStartContainer ?? selStartContainer, newSelStartOffset ?? selStartOffset);
+        selRange.setEnd(newSelEndContainer ?? selEndContainer, newSelEndOffset ?? selEndOffset);
+        sel.removeAllRanges();
+        sel.addRange(selRange);
+    };
+};
+
+const _endOffsetFor = function(node) {
+    if (_isTextNode(node)) {
+        return node.textContent.length;
+    } else if (_isElementNode) {
+        return node.childNodes.length;
+    } else {
+        return 0;
+    };
+};
 
 /**
  * When selection is collapsed and in or next to a word, return the range
@@ -6283,6 +6553,7 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     let element;
     if (node.nodeType === Node.TEXT_NODE) {
         element = node.parentNode;
+        if (!element) return null;
     } else {
         element = node;
     };
