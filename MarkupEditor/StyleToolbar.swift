@@ -14,7 +14,9 @@ public struct StyleToolbar: View {
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
     @State private var hoverLabel: Text = Text("Paragraph Style")
-    
+
+    public init() {}
+
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
             // I spent a long time trying to make the drop-down buttons show in the proper font.
