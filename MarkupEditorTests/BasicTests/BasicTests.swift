@@ -221,11 +221,37 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testMultiElementFormats() throws {
-        // The selection (startId, startOffset, endId, endOffset) is always identified
-        // using the innermost element id and the offset into it. Inline comments
-        // below show the selection using "|" for clarity.
+    func testMultiFormats() throws {
+        // Inline comments show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Unselect outer formatting across elements with nested formatting",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo</u></b><u>rd 1</u><u> Word 2 </u><u id=\"u3\">Wo</u><b><u>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Unselect part of outer formatting within nested formatting",
+                    startHtml: "<b>Hello <u id=\"u\">bold and underline</u> world</b>",
+                    endHtml: "<b>Hello <u id=\"u\">bold </u></b><u>and</u><b><u> underline</u> world</b>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
             (
                 HtmlTest(
                     description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat italic",
@@ -258,7 +284,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 HtmlTest(
                     description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
                     startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    endHtml: "<p id=\"p\"><b>Hello</b><i id=\"i\"><b>world</b></i></p>",
+                    endHtml: "<p id=\"p\"><b>Hello </b><i id=\"i\"><b>world</b></i></p>",
                     startId: "p",
                     startOffset: 0,
                     endId: "i",
@@ -299,13 +325,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             (
                 HtmlTest(
                     description: "Span paragraphs from unformatted to nested formatted",
-                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b>world</b></i></p>",
-                    endHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\">Hello <i id=\"i2\"><b>wo</b>rld</i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\">Hello <i id=\"i2\">wo<b>rld</b></i></p>",
                     startId: "p1",
                     startOffset: 0,
-                    endId: "i2",
-                    endOffset: 2,
-                    startChildNodeIndex: 0
+                    endId: "b1",
+                    endOffset: 2
                 ),
                 { handler in
                     self.webView.bold() { handler() }

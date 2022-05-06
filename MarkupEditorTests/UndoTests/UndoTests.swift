@@ -169,7 +169,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoMultiElementFormats() throws {
+    func testUndoMultiFormats() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.

@@ -1237,7 +1237,7 @@ const _insertHTML = function(fragment) {
     };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
-    _consoleLog("* Done _insertHTML")
+    //_consoleLog("* Done _insertHTML")
     return {insertedRange: insertedRange, rootName: rootName}
 };
 
@@ -1434,38 +1434,30 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
         // violated.
         let lastLeadingGrandchild = lastLeadingChild.firstChild;
         let firstTrailingGrandchild = firstTrailingChild.firstChild;
-        while (firstTrailingGrandchild) {
-            if (lastLeadingGrandchild.nodeName !== firstTrailingGrandchild.nodeName) {
-                const error = MU.InvalidJoinNodes;
-                error.setInfo('Could not join at ' + rootName + ' (lastLeadingGrandchild: ' + lastLeadingGrandchild + ', firstTrailingGrandchild: ' + firstTrailingGrandchild + ').');
-                error.callback();
-                return;
-            };
-            //TODO: This almost certainly doesn't work on triple nested format elements
-            if (firstTrailingGrandchild.nodeType === Node.TEXT_NODE) {
-                if (startWithFirstChild) {
-                    newStartContainer = lastLeadingGrandchild;
-                    newStartOffset = lastLeadingGrandchild.textContent.length;
-                };
-                if (endWithFirstChild) {
-                    newEndContainer = lastLeadingGrandchild;
-                    newEndOffset = lastLeadingGrandchild.textContent.length;
-                };
-                lastLeadingGrandchild.textContent = lastLeadingGrandchild.textContent + firstTrailingGrandchild.textContent;
-                let trailingSib = firstTrailingGrandchild.parentNode.nextSibling;
-                const insertTarget = lastLeadingGrandchild.parentNode.nextSibling;
-                while (trailingSib) {
-                    lastLeadingGrandchild.parentNode.parentNode.insertBefore(trailingSib, insertTarget);
-                    trailingSib = trailingSib.nextSibling;
-                }
-                firstTrailingGrandchild = null;
-            } else {
-                lastLeadingGrandchild = lastLeadingGrandchild.firstChild;
-                firstTrailingGrandchild = firstTrailingGrandchild.firstChild;
-            };
+        if (lastLeadingGrandchild.nodeName !== firstTrailingGrandchild.nodeName) {
+            const error = MU.InvalidJoinNodes;
+            error.setInfo('Could not join at ' + rootName + ' (lastLeadingGrandchild: ' + lastLeadingGrandchild + ', firstTrailingGrandchild: ' + firstTrailingGrandchild + ').');
+            error.callback();
+            return;
         };
-        // Remove the firstTrailingChild so that it's no longer in trailingRoot
-        trailingRoot.removeChild(firstTrailingChild);
+        // We need to find the text nodes that we want to join, even though they are somewhere inside of
+        // an element node both in firstTrailingChild and lastLeadingChild.
+        const firstTrailingTextNodeChild = _firstTextNodeChild(firstTrailingChild);
+        const lastLeadingTextNodeChild = _firstTextNodeChild(lastLeadingChild);
+        const lastLeadingTextNodeChildLength = lastLeadingTextNodeChild.textContent.length;
+        lastLeadingTextNodeChild.textContent = lastLeadingTextNodeChild.textContent + firstTrailingTextNodeChild.textContent;
+        if (startWithFirstChild) {
+            newStartContainer = lastLeadingTextNodeChild;
+            newStartOffset = lastLeadingTextNodeChildLength;
+        };
+        if (endWithFirstChild) {
+            newEndContainer = lastLeadingTextNodeChild;
+            newEndOffset = lastLeadingTextNodeChildLength;
+        };
+        // Remove the firstTrailingTextNodeChild from its parent, since we moved its content
+        firstTrailingTextNodeChild.parentNode.removeChild(firstTrailingTextNodeChild);
+        // Then, if firstTrailingChild is empty, get rid of it, too.
+        if (_isEmpty(firstTrailingChild)) { firstTrailingChild.parentNode.removeChild(firstTrailingChild) };
     };
     // Now we can just appendChild all the childNodes of trailingRoot to leadingRoot.
     // If we joined text together, the original firstTrailingChild was removed.
@@ -1475,7 +1467,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     while (trailingChild) {
         leadingRoot.appendChild(trailingChild);
         trailingChild = trailingRoot.firstChild;
-    }
+    };
     // Remove the now-empty trailingRoot and patch up the selection
     trailingRoot.parentNode.removeChild(trailingRoot);
     const newSel = document.getSelection();
@@ -1485,7 +1477,7 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     newSel.removeAllRanges();
     newSel.addRange(newRange);
     //_consoleLog("* Done _joinNodes")
-}
+};
 
 /**
  * Fill an empty element with a br and patch up the selection if needed.
@@ -1854,7 +1846,7 @@ const _toggleFormat = function(type, undoable=true) {
     if (!sel || !selNode || !sel.rangeCount) { return };
     const range = sel.getRangeAt(0);
     let tagRange; // startIndices, startOffset, endIndices, endOffset;
-    const existingElement = _findFirstParentElementInNodeNames(selNode, [type]);
+    let existingElement = _findFirstParentElementInNodeNames(selNode, [type]);
     const newSelRange = sel.getRangeAt(0);
     const commonAncestor = newSelRange.commonAncestorContainer;
     const ancestor = _findFirstParentElementInNodeNames(commonAncestor, _styleTags);
@@ -1863,6 +1855,12 @@ const _toggleFormat = function(type, undoable=true) {
     const endIndices = _childNodeIndicesByParent(newSelRange.endContainer, ancestor);
     const endOffset = newSelRange.endOffset;
     if (existingElement) {
+        // The selection can be within a single text node but only encompass part of it.
+        // In this case, we will split that text node and reassign existingElement
+        // before proceeding.
+        if (!sel.isCollapsed) {
+            existingElement = _selectedSubTextElement(sel, type);
+        };
         let newRange;
         const nextNode = existingElement.nextSibling;
         const endOfNode = sel.isCollapsed && (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
@@ -2068,7 +2066,6 @@ const _redoToggleFormat = function(undoerData) {
 
 /**
  * Make all text elements within a selection that spans text nodes into newFormat.
- *
  */
 const _multiFormat = function(newFormat, undoable=true) {
     const selectedTextNodes = _selectedTextNodes();
@@ -2076,7 +2073,7 @@ const _multiFormat = function(newFormat, undoable=true) {
     if (!sel || sel.rangeCount === 0) {
         MUError.NoSelection.callback();
         return;
-    }
+    };
     const range = sel.getRangeAt(0);
     const startContainer = range.startContainer;
     const startOffset = range.startOffset;
@@ -2111,9 +2108,22 @@ const _multiFormat = function(newFormat, undoable=true) {
         sel.removeAllRanges();
         sel.addRange(tagRange);
         if (existingFormatElement) {
-            _unsetTag(existingFormatElement, sel);
+            // We may need to select a part of the selectedTextNode (or perhaps all of it,
+            // depending on tagRange). If necessary, _selectedSubTextElement subdivides
+            // selectedTextNode into 2 or 3 nodes while leaving sel set to the subnode that needs
+            // to be untagged, so we need to reset indices and selectedTextNodes.
+            const newFormatElement = _subTextElementInRange(tagRange, newFormat);
+            tagRange = document.getSelection().getRangeAt(0);
+            selectedTextNodes[i] = tagRange.startContainer;
+            indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor)
+            _unsetTagInRange(newFormatElement, tagRange);
         } else {
-            _setTag(newFormat, sel);
+            // Set tags using tagRange, not the selection.
+            // When the selection includes leading or trailing blanks, the startOffset and endOffsets
+            // from document.getSelection are inset from the ends. So, we can't rely on it being
+            // correct when looping over elements. If we rely on the selection, then the insets
+            // can end up removing blanks between words.
+            _setTagInRange(newFormat, tagRange);
         };
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
@@ -2132,6 +2142,120 @@ const _multiFormat = function(newFormat, undoable=true) {
         _restoreSelection()
     };
     _callback('input');
+};
+
+/**
+ * Return a text node that the range contains or null if the range is
+ * not within a single text node or is collapsed.
+ *
+ * When the range is within a single text node but only encompasses part of it,
+ * we need to split it into multiple text nodes and return the one that contains
+ * the range. We do this for formatting.
+ */
+const _subTextElementInRange = function(range, type) {
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    if ((range.collapsed) || (startContainer !== endContainer) || (!_isTextNode(startContainer))) { return null };
+    const splitLeading = startOffset !== 0;
+    const splitTrailing = endOffset !== endContainer.textContent.length;
+    let leadingTextNode = range.startContainer;
+    let subTextNode = leadingTextNode;
+    if (splitLeading) {
+        // The startOffset is after the beginning of an existingElement, so we need
+        // to split at startOffset and get the trailingTextNode
+        const trailingTextNode = _splitTextNode(leadingTextNode, startOffset, type, 'BEFORE');
+        if (splitTrailing) {
+            // The endOffset is before the end of an existingElement, so we need to
+            // split the trailingTextNode, too.
+            _splitTextNode(trailingTextNode, endOffset - startOffset, type, 'AFTER');
+        };
+        // The trailingTextNode now contains only the text that was selected
+        subTextNode = trailingTextNode;
+    } else if (splitTrailing) {
+        // The endOffset is before the end of an existingElement, so split the
+        // leadingTextNode, and what is left in leadingTextNode is what need to be untagged.
+        _splitTextNode(leadingTextNode, endOffset, type, 'AFTER');
+        subTextNode = leadingTextNode;
+    };
+    const sel = document.getSelection();
+    range.selectNode(subTextNode);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return unNest(subTextNode, type);
+}
+
+/**
+ * Return a text node that the selection contains or null if the selection is
+ * not within a single text node or is collapsed.
+ *
+ * When the selection is within a single text node but only encompasses part of it,
+ * we need to split it into multiple text nodes and return the one that contains
+ * the selection. We do this for formatting.
+ */
+const _selectedSubTextElement = function(sel, type) {
+    const range = sel.getRangeAt(0);
+    return _subTextElementInRange(range, type);
+};
+
+const unNest = function(textNode, type) {
+    //_consoleLog("* _unNest(" + _textString(textNode) + ", " + type + ")");
+    const formatTags = _tagsMatching(textNode, _formatTags);
+    const inNestedTags = (formatTags.length > 1) && (formatTags[0] !== type);
+    const formatFollows = _isFormatElement(textNode.nextSibling);
+    const formatPrecedes = _isFormatElement(textNode.previousSibling);
+    let existingElement;
+    if (inNestedTags) {
+        // The selection is of type, but type is in an outer element. The leadingTextNode is
+        // part of a different format element. We need to split the existingElement of type
+        // into two elements starting after the innermost formatElement selection is in. Consider
+        // <b>Hello <u>bold |and| underline</u> world</b>. We eventually want to return
+        // the <b><u>and</u><b> element from the splitFormatElement result of
+        // <b>Hello <u>bold </u></b><b><u>and</u></b><u><b> underline</u> world</b>
+        existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
+        const childFormatElement = _findFirstParentElementInNodeNames(textNode, [formatTags[0]]); // The innermost tag
+        _splitFormatElement(existingElement, childFormatElement);
+    } else if (formatFollows) {
+        existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
+        const sibFormatElement = textNode.nextSibling;
+        _splitFormatElement(existingElement, sibFormatElement, 'BEFORE');
+    } else if (formatPrecedes) {
+        existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
+        const sibFormatElement = textNode.previousSibling;
+        _splitFormatElement(existingElement, sibFormatElement, 'AFTER');
+    } else {
+        existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
+    }
+    //_consoleLog("* Done _unNest (returning " + _textString(existingElement));
+    return existingElement;
+}
+
+const _splitFormatElement = function(parentFormatElement, childFormatElement, direction='AFTER') {
+    //_consoleLog("* _splitFormatElement(" + _textString(parentFormatElement) + ", " + _textString(childFormatElement) + ", \'" + direction + "\')");
+    const parentName = parentFormatElement.nodeName;
+    const insertTarget = parentFormatElement.nextSibling;
+    let element;
+    if (direction === 'AFTER') {
+        element = childFormatElement.nextElementSibling ?? childFormatElement.nextSibling;
+    } else {
+        element = childFormatElement;
+    };
+    // Element can be null, in which case we don't split anything
+    while (element) {
+        const newFormatElement = document.createElement(parentName);
+        let nextElement = element.nextElementSibling;
+        let nextChild = element.nextSibling;
+        newFormatElement.appendChild(element);
+        parentFormatElement.parentNode.insertBefore(newFormatElement, insertTarget);
+        while (nextChild && !_isFormatElement(nextChild)) {
+            let nextNextChild = nextChild.nextSibling;
+            newFormatElement.appendChild(nextChild);
+            nextChild = nextNextChild;
+        };
+        element = nextElement;
+    };
+    //_consoleLog("* Done _splitFormatElement (with parentFormatElement now: " + _textString(parentFormatElement) + ")")
 };
 
 /********************************************************************************
@@ -4022,10 +4146,18 @@ const _cleanUpSpansWithin = function(node, spansRemoved) {
 const _cleanUpAttributes = function(attribute) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
-    const startNode = (selNode) ? selNode.parentNode : MU.editor;
+    let startNode;
+    if (selNode === MU.editor) {
+        startNode = MU.editor;
+    } else {
+        startNode = (selNode) ? selNode.parentNode : MU.editor;
+    };
     if (startNode) {
         const attributesRemoved = _cleanUpAttributesWithin(attribute, startNode);
         if (attributesRemoved > 0) {
+            _callback('input');
+        } else if ((startNode === MU.editor) && (startNode.childNodes.length === 0)) {
+            _initializeRange();
             _callback('input');
         };
     };
@@ -5556,24 +5688,15 @@ const _selectedStyles = function() {
     if (!sel || (sel.rangeCount === 0)) { return elements };
     const range = sel.getRangeAt(0);
     const startContainer = range.startContainer;
-    const startOffset = range.startOffset;
     const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
     const endContainer = range.endContainer;
-    const endOffset = range.endOffset;
     const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    const selAtParagraphStart = (startOffset === 0) && (!startContainer.previousSibling);
-    let selAtParagraphEnd;
-    if (_isTextNode(endContainer)) {
-        selAtParagraphEnd = (endOffset === endContainer.textContent.length) && (!endContainer.nextSibling);
-    } else {
-        selAtParagraphEnd = (endOffset === endContainer.children.length) && (!endContainer.nextSibling);
-    };
-    const fragment = range.extractContents();
-    elements = _allChildElementsWithNodeNames(fragment, _paragraphStyleTags);
-    range.insertNode(fragment);
-    const joinedElements = _patchInsertFragment();
-    if (joinedElements.joinedLeadingParagraph) { elements[0] = joinedElements.joinedLeadingParagraph };
-    return elements;
+    // Selection has to start and end in some kind of paragraph or we do nothing
+    if (!startParagraph || !endParagraph) { return elements };
+    const paragraphRange = document.createRange();
+    paragraphRange.setStart(startParagraph, 0);
+    paragraphRange.setEnd(endParagraph, 0);
+    return _nodesWithNamesInRange(paragraphRange, _paragraphStyleTags);
 };
 
 const _selectionSpansTextNodes = function() {
@@ -5596,139 +5719,138 @@ const _selectionSpansTextNodes = function() {
  * in formatting elements (e.g., <B>, <I>, etc).
  */
 const _selectedTextNodes = function() {
-    let nodes = [];
-    const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
-    let range = sel.getRangeAt(0);
-    if ((range.startContainer.nodeType === Node.TEXT_NODE) && (range.startContainer === range.endContainer)) { return nodes };
-    const fragment = range.extractContents();
-    // At this point, the range has changed and may be empty, in which case we want to clean it
-    // up to select a single br which we will then replace when we re-insert the fragment.
-    //const startContainer = range.startContainer;
-    //if (_isEmpty(startContainer)) {
-    //    const emptyContainer = document.createElement(startContainer.nodeName);
-    //    const br = document.createElement('br');
-    //    emptyContainer.appendChild(br);
-    //    startContainer.replaceWith(emptyContainer);
-    //    range = document.createRange();
-    //    range.setStart(emptyContainer, 0);
-    //    range.setEnd(emptyContainer, 1);
-    //    sel.removeAllRanges();
-    //    sel.addRange(range);
-    //};
-    nodes = _allChildElementsWithNodeType(fragment, Node.TEXT_NODE);
-    range.insertNode(fragment);
-    const joinedElements = _patchInsertFragment();
-    // After patching the fragment, we need to reset the first node because it
-    // was derived from the fragment but has been joined with its previousSibling
-    nodes[0] = _isElementNode(sel.anchorNode) ? _firstTextNodeChild(sel.sel.anchorNode) : sel.anchorNode;
-    nodes[nodes.length-1] = _isElementNode(sel.focusNode) ? _firstTextNodeChild(sel.focusNode) : sel.focusNode;
-    //if (joinedElements.joinedLeadingText) { nodes[0] = joinedElements.joinedLeadingText };
-    //if (joinedElements.joinedTrailingText) { nodes[nodes.length-1] = joinedElements.joinedTrailingText };
-    _removeEmptyTextNodes(range);
-    // On return, filter for empty text nodes, which may occur because of newlines
-    // between paragraph elements.
+    const nodes = _selectedNodesNamed('#text');
     return nodes.filter(textNode => !_isEmpty(textNode));
 };
 
 /**
- * After we range.extractContents() to get a fragment and then do range.insertNode(fragment), the
- * operation will split paragraphs if the selection at either end was not at the beginning of a
- * paragraph. When this happens, we need to join them back together to leave things as they
- * started.
+ * Return all nodes in a selection whose nodeName is name.
  *
- * This method implicitly assumes the selection identified the fragment that was previously
- * extracted and subsequently inserted. IOW, it has to be called immediately following the
- * range.insertNode(fragment) call.
- *
- * In some cases, we need to use the elements that were joined together, either at the leading
- * part of the fragment or the trailing part. So, we return those if they were joined.
+ * Selection must span nodes (i.e., startContainer !== endContainer).
+ * Traverse depthwise, including startContainer and endContainer even though
+ * the selection only partially covers them.
  */
-const _patchInsertFragment = function() {
+const _selectedNodesNamed = function(name, nodes=[]) {
+    return _selectedNodesWithNames([name], nodes);
+};
+
+/**
+ * Return all nodes in a selection whose nodeName is included in names.
+ *
+ * Selection must span nodes (i.e., startContainer !== endContainer).
+ * Traverse depthwise, including startContainer and endContainer even though
+ * the selection only partially covers them.
+ */
+const _selectedNodesWithNames = function(names, nodes=[]) {
     const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return };
-    const range = sel.getRangeAt(0);
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
+    let range = sel.getRangeAt(0);
+    return _nodesWithNamesInRange(range, names, nodes);
+};
+
+/**
+ * Return all nodes in range whose nodeName is included in names.
+ *
+ * Range must span nodes (i.e., startContainer !== endContainer).
+ * Traverse depthwise, including startContainer and endContainer even though
+ * the range only partially covers them.
+ */
+const _nodesWithNamesInRange = function(range, names, nodes=[]) {
     const startContainer = range.startContainer;
-    const startOffset = range.startOffset;
     const endContainer = range.endContainer;
-    const endOffset = range.endOffset;
-    // The startContainer and endContainer are just outside of the original fragment.
-    const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    let joinedLeadingParagraph, joinedTrailingParagraph, joinedLeadingText, joinedTrailingText;
-    if (startParagraph === endParagraph) {
-        // If the startContainer and endContainer are in the same paragraphStyleTag, then we may
-        // need to patch up text nodes.
-        const fragLeadingText = startContainer.nextSibling;
-        if (_isTextNode(fragLeadingText) && _isTextNode(startContainer)) {
-            const newStartOffset = startContainer.textContent.length;
-            startContainer.textContent = startContainer.textContent + fragLeadingText.textContent;
-            fragLeadingText.parentNode.removeChild(fragLeadingText);
-            range.setStart(startContainer, newStartOffset);
-            joinedLeadingText = startContainer;
+    if (startContainer === endContainer) { return nodes };
+    // Gather nodes at startContainer and its siblings first
+    let child = startContainer;
+    while (child && (child !== endContainer)) {
+        if (names.includes(child.nodeName)) { nodes.push(child) };
+        if (_isElementNode(child) && (child.childNodes.length > 0)) {
+            let subNodes = _allChildNodesWithNames(child, names);
+            for (let i = 0; i < subNodes.length; i++) {
+                let subChild = subNodes[i];
+                if (subChild === endContainer) {
+                    child = subChild;
+                    break;  // Don't add endContainer to nodes yet
+                };
+                if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
+            };
         };
-        const fragTrailingText = endContainer.previousSibling;
-        if (_isTextNode(fragTrailingText) && _isTextNode(endContainer)) {
-            const newEndOffset = fragTrailingText.textContent.length;
-            fragTrailingText.textContent = fragTrailingText.textContent + endContainer.textContent;
-            endContainer.parentNode.removeChild(endContainer);
-            range.setEnd(fragTrailingText, newEndOffset);
-            joinedTrailingText = fragTrailingText;
+        child = (child === endContainer) ? child : child.nextSibling;
+    };
+    // If child===endContainer, we are done; else, we need to start at the
+    // next branch below commonAncestor to find endContainer, gathering
+    // nodes along the way.
+    if (child !== endContainer) {
+        const commonAncestor = range.commonAncestorContainer;
+        // Go up to the commonAncestor, identifying the starting child below it.
+        // If we are already
+        let parent = startContainer.parentNode;
+        child = parent.nextSibling;
+        while (parent && (parent !== commonAncestor)) {
+            if (parent.parentNode === commonAncestor) {
+                // We are at the level below commonAncestor, so our nextSibling
+                // is where we want to start drilling down until we find endContainer
+                child = parent.nextSibling;
+                parent = null;
+            } else {
+                parent = parent.parentNode;
+            };
         };
-        sel.removeAllRanges();
-        sel.addRange(range);
+        // Child is now a node below commonAncestor, adjacent to the branch where
+        // startContainer exists.
+        while (child && (child !== endContainer)) {
+            if (names.includes(child.nodeName)) { nodes.push(child) };
+            if (_isElementNode(child) && (child.childNodes.length > 0)) {
+                let subNodes = _allChildNodesWithNames(child, names);
+                for (let i = 0; i < subNodes.length; i++) {
+                    let subChild = subNodes[i];
+                    if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
+                    if (subChild === endContainer) {
+                        child = subChild;
+                        break;
+                    };
+                };
+            };
+            child = (child === endContainer) ? child : child.nextSibling;
+        };
     } else {
-        // Remember, the startContainer and endContainer are just outside of the original fragment, so
-        // the logic to determine if we were at the start or end of a paragraph is different than
-        // it would be based on a selection that is inside of what was a fragment.
-        /*
-        const selAtParagraphStart = (startOffset === 0) && (!startContainer.previousSibling);
-        let selAtParagraphEnd;
-        if (_isTextNode(endContainer)) {
-            selAtParagraphEnd = (endOffset === endContainer.textContent.length) && (!endContainer.nextSibling);
-        } else {
-            selAtParagraphEnd = (endOffset === endContainer.children.length) && (!endContainer.nextSibling);
-        };
-        */
-        const leadingParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-        const leadingNodeName = leadingParagraph && leadingParagraph.nodeName;
-        const fragLeadingParagraph = leadingParagraph && leadingParagraph.nextElementSibling;
-        //if (!selAtParagraphStart && leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
-        if (leadingParagraph && fragLeadingParagraph && (leadingNodeName === fragLeadingParagraph.nodeName)) {
-            _joinNodes(leadingParagraph, fragLeadingParagraph, leadingNodeName);
-            joinedLeadingParagraph = leadingParagraph;
-        };
-        const trailingParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-        const trailingNodeName = trailingParagraph && trailingParagraph.nodeName;
-        const fragTrailingParagraph = trailingParagraph && trailingParagraph.previousElementSibling;
-        //if (!selAtParagraphEnd && trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
-        if (trailingParagraph && fragTrailingParagraph && (trailingNodeName === fragTrailingParagraph.nodeName)) {
-            _joinNodes(fragTrailingParagraph, trailingParagraph, trailingNodeName);
-            joinedTrailingParagraph = fragTrailingParagraph;
-        };
+        if (child && (names.includes(child.nodeName))) { nodes.push(child) };
     }
-    return { joinedLeadingParagraph: joinedLeadingParagraph, joinedTrailingParagraph: joinedTrailingParagraph, joinedLeadingText: joinedLeadingText, joinedTrailingText: joinedTrailingText };
+    return nodes;
+};
+
+/**
+ * Return all nodes within element that have nodeName, not including element.
+ */
+const _allChildNodesWithNames = function(element, nodeNames, existingNodes=[]) {
+    if (!_isElementNode(element)) { return existingNodes };
+    const childNodes = element.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        let child = childNodes[i];
+        if (nodeNames.includes(child.nodeName)) { existingNodes.push(child) };
+        existingNodes = _allChildNodesWithNames(child, nodeNames, existingNodes);
+    };
+    return existingNodes;
 };
 
 /**
  * Return all elements within element that have nodeName.
  */
-const _allChildElementsWithNodeNames = function(element, nodeNames, existingElements=[]) {
+const _allChildElementsWithNames = function(element, nodeNames, existingElements=[]) {
     if (nodeNames.includes(element.nodeName)) { existingElements.push(element) };
     const children = element.children;
     for (let i = 0; i < children.length; i++) {
         let child = children[i];
         if (_isElementNode(child)) {
-           existingElements = _allChildElementsWithNodeNames(child, nodeNames, existingElements);
+           existingElements = _allChildElementsWithNames(child, nodeNames, existingElements);
         };
     };
     return existingElements;
-}
+};
 
 /**
  * Return all elements within element that have nodeType.
  */
-const _allChildElementsWithNodeType = function(element, nodeType, existingElements=[]) {
+const _allChildElementsWithType = function(element, nodeType, existingElements=[]) {
     if (element.nodeType === nodeType) {
         existingElements.push(element)
         if (element.nodeType !== Node.ELEMENT_NODE) { return existingElements };
@@ -5736,10 +5858,10 @@ const _allChildElementsWithNodeType = function(element, nodeType, existingElemen
     const childNodes = element.childNodes;
     for (let i = 0; i < childNodes.length; i++) {
         let child = childNodes[i];
-        existingElements = _allChildElementsWithNodeType(child, nodeType, existingElements);
+        existingElements = _allChildElementsWithType(child, nodeType, existingElements);
     };
     return existingElements;
-}
+};
 
 /**
  * Return whether node is a textNode or not
@@ -5748,11 +5870,18 @@ const _isTextNode = function(node) {
     return node && (node.nodeType === Node.TEXT_NODE);
 };
 
-/***
+/**
  * Return whether node is an ELEMENT_NODE or not
  */
-const _isElementNode = function (node) {
+const _isElementNode = function(node) {
     return node && (node.nodeType === Node.ELEMENT_NODE);
+};
+
+/**
+ * Return whether node is a format element; i.e., its nodeName is in _formatTags
+ */
+const _isFormatElement = function(node) {
+    return _isElementNode(node) && _formatTags.includes(node.nodeName);
 };
 
 /**
@@ -6151,15 +6280,14 @@ const _getElementAtSelection = function(nodeName) {
 };
 
 /**
- * Put the tag around the current selection, or the word if range.collapsed
+ * Put the tag around the range, or the word if range.collapsed
  * If not in a word or in a non-collapsed range, create an empty element of
  * type tag and select it so that new input begins in that element immediately.
  *
  * @param   {String}            type    The tag name to set; e.g., 'B'.
- * @param   {HTML Selection}    sel     The current selection.
+ * @param   {HTML Range}        range   The range, typically the current selection.
  */
-const _setTag = function(type, sel) {
-    const range = sel.getRangeAt(0);
+const _setTagInRange = function(type, range) {
     const el = document.createElement(type);
     const wordRange = _wordRangeAtCaret();
     const startNewTag = range.collapsed && !wordRange;
@@ -6228,6 +6356,7 @@ const _setTag = function(type, sel) {
             endContainer.parentNode.removeChild(endContainer);
         };
     };
+    const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
@@ -6255,6 +6384,18 @@ const _setTag = function(type, sel) {
         };
     };
     return tagRange;
+};
+
+/**
+ * Put the tag around the current selection, or the word if range.collapsed
+ * If not in a word or in a non-collapsed range, create an empty element of
+ * type tag and select it so that new input begins in that element immediately.
+ *
+ * @param   {String}            type    The tag name to set; e.g., 'B'.
+ * @param   {HTML Selection}    sel     The current selection.
+ */
+const _setTag = function(type, sel) {
+    return _setTagInRange(type, sel.getRangeAt(0));
 };
 
 /**
@@ -6367,8 +6508,8 @@ const _wordRangeAtCaret = function() {
 /**
  * Remove the tag from the oldElement.
  *
- * The oldRange startContainer might or might not be the oldElement passed-in. In all cases,
- * though, oldRange starts at some offset into text. The element passed-in has the tag we are
+ * The range might or might not be the oldElement passed-in. In all cases,
+ * though, range starts at some offset into text. The element passed-in has the tag we are
  * removing, so we move its childNodes to follow oldElement and then remove oldElement. This
  * also allows us to set the selection properly since the startContainer and endContainer
  * will still exist even though they have moved.
@@ -6381,15 +6522,14 @@ const _wordRangeAtCaret = function() {
  * the tagRange here that the sender can save in undoerData.
  *
  * @param   {HTML Element}      oldElement      The element we are removing the tag from.
- * @param   {HTML Selection}    sel             The current selection.
+ * @param   {HTML Range}        range           The range to untag, typically the current selection.
  * @return  {HTML Range}        tagRange        Range used to setTag on undo
  */
-const _unsetTag = function(oldElement, sel) {
-    const oldRange = sel.getRangeAt(0);
-    const oldStartContainer = oldRange.startContainer;
-    const oldStartOffset = oldRange.startOffset;
-    const oldEndContainer = oldRange.endContainer;
-    const oldEndOffset = oldRange.endOffset;
+const _unsetTagInRange = function(oldElement, range) {
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
     // Hold onto the parentNode and the nextSibling so we know where to
     // insert the oldElement's childNodes.
     const oldParentNode = oldElement.parentNode;
@@ -6422,12 +6562,38 @@ const _unsetTag = function(oldElement, sel) {
     // selection on undo or redo is set to the tagRange before _unsetTag is called,
     // so it is not meaningful in those cases other than to ensure the proper range
     // is untagged.
-    const range = document.createRange();
-    range.setStart(oldStartContainer, oldStartOffset);
-    range.setEnd(oldEndContainer, oldEndOffset);
+    const sel = document.getSelection();
+    const newRange = document.createRange();
+    newRange.setStart(startContainer, startOffset);
+    newRange.setEnd(endContainer, endOffset);
     sel.removeAllRanges();
-    sel.addRange(range);
+    sel.addRange(newRange);
     return tagRange;
+}
+
+/**
+ * Remove the tag from the oldElement.
+ *
+ * The oldRange startContainer might or might not be the oldElement passed-in. In all cases,
+ * though, oldRange starts at some offset into text. The element passed-in has the tag we are
+ * removing, so we move its childNodes to follow oldElement and then remove oldElement. This
+ * also allows us to set the selection properly since the startContainer and endContainer
+ * will still exist even though they have moved.
+ *
+ * When undoing, we need the range that surrounds the content that was changed. For example,
+ * consider <p><b><i>Hello</i> wo|rld</b></p>. When we untag, we get <p><i>Hello</i> wo|rld</p>,
+ * with selection still in "world". However, when we undo just by toggling the format at the
+ * selection, we end up with <p><i>Hello</i> <b>wo|rld</b></p> because the selection is
+ * collapsed in "world", and we only format the word it's within. For this reason, we return
+ * the tagRange here that the sender can save in undoerData.
+ *
+ * @param   {HTML Element}      oldElement      The element we are removing the tag from.
+ * @param   {HTML Selection}    sel             The current selection.
+ * @return  {HTML Range}        tagRange        Range used to setTag on undo
+ */
+const _unsetTag = function(oldElement, sel) {
+    const range = sel.getRangeAt(0);
+    return _unsetTagInRange(oldElement, range);
 };
 
 /**
