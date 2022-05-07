@@ -1242,244 +1242,6 @@ const _insertHTML = function(fragment) {
 };
 
 /**
- * Split the textNode at offset, but also split its parents up to and
- * including the parent with name rootName.
- *
- * For example...
- *      <p>Hello <b>bo|ld</b> world</p>
- * when split at the | would result in...
- *      <p>Hello <b>bo</b></p><p><b>ld</b> world</p>
- *
- * Direction identifies whether selection is reset at just BEFORE the
- * offset or AFTER the offset, and is always reset.
- *
- * The behavior here is very much like pressing Enter. There are several
- * cases (Enter and Paste) where I wish I could get the default Enter behavior
- * and then take action afterward. There is no way to create a trusted
- * Enter event from JavaScript, so this is the rough equivalent.
- *
- * Like splitText, return the trailingText (result of textNode.splitText(offset)),
- * and leave textNode as the leadingText after the split. Note, however, unlike
- * splitText, trailingText might be embedded in a new element, not just be
- * a text node in the existing element. The leadingText remains where it was in
- * terms of the document structure, altho it might be empty depending on offset.
- */
-const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTER') {
-    if (textNode.nodeType !== Node.TEXT_NODE) {
-        const error = MUError.InvalidSplitTextNode;
-        error.setInfo('Node name was ' + textNode.nodeName);
-        error.callback();
-        return textNode;    // Seems least problematic
-    }
-    const rootNode = _findFirstParentElementInNodeNames(textNode, [rootName]);
-    if (rootName && !rootNode) {
-        const error = MUError.InvalidSplitTextRoot;
-        error.setInfo('The rootName was ' + rootName);
-        error.callback();
-        return textNode;    // Seems least problematic
-    }
-    // Note that trailingText or leadingText can be empty text nodes when
-    // offset is 0 or textNode.textContent.length
-    const trailingText = textNode.splitText(offset);
-    const leadingText = textNode;   // Use leadingText name for clarity
-    if (rootNode) {
-        // We want to recreate the node hierarchy up to and including rootNode.
-        // Moving up from trailingText, put all the intermediate parents into
-        // a newContainer, resulting in a newContainer with nodeName = rootName.
-        // To move siblings afterward, track the nextSib of trailingText before
-        // putting trailingText in the newContainer. For example,
-        // for <p>Hello <b>bo|ld</b> world</p>, nextSib has to be <b> so
-        // that we move the " world" after it. In a nested case, like
-        // <p>Hello <i><b>bo|ld</b></i> world</p>, it needs to be <i>. OTOH,
-        // for <p>Hel|lo <b>bold</b> world<p>, nextSib needs to be "Hel",
-        // and sibs include <b>bold</b>, and " world".
-        let existingContainer = trailingText.parentNode;
-        let existingContainerName = existingContainer.nodeName;
-        let newContainer = document.createElement(existingContainerName);
-        let nextSib = trailingText.nextSibling;
-        newContainer.appendChild(trailingText);
-        let nestedContainer = newContainer;
-        while (existingContainerName !== rootName) {
-            nextSib = existingContainer.nextSibling;
-            existingContainer = existingContainer.parentNode;
-            existingContainerName = existingContainer.nodeName;
-            newContainer = document.createElement(existingContainerName);
-            newContainer.appendChild(nestedContainer);
-            nestedContainer = newContainer;
-        };
-        // Put the newContainer in the right place.
-        rootNode.parentNode.insertBefore(newContainer, rootNode.nextSibling);
-        // And then append all of the nextSiblings
-        let nextNextSib;
-        while (nextSib) {
-            nextNextSib = nextSib.nextSibling;
-            newContainer.appendChild(nextSib);
-            nextSib = nextNextSib;
-        };
-    };
-    const range = document.createRange();
-    let rangeContainer, rangeOffset;
-    if (direction === 'AFTER') {
-        rangeContainer = trailingText;
-        rangeOffset = 0;
-    } else {
-        rangeContainer = leadingText;
-        rangeOffset = leadingText.textContent.length;
-    }
-    range.setStart(rangeContainer, rangeOffset);
-    range.setEnd(rangeContainer, rangeOffset);
-    const sel = document.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    return trailingText;
-};
-
-/**
- * Join the parents of leadingNode and trailingNode at their parentNode with name rootName.
- *
- * For example, in <p>Hello <b>bo|ld</b> world</p> when splitTextNode at |, we end up with
- * <p>Hello <b>bo</b></p><p><b>ld</b> world</p>, with the selection anchorNode at
- * <p>Hello <b>bo|</b></p> and the selection focusNode at <p><b>|ld</b> world</p>.
- * If we _joinNodes(anchorNode, focusNode, 'P'), then we end back up with
- * <p>Hello <b>bo|ld</b> world</p>.
- *
- * This is like the _splitTextNode equivalent of normalize() for _splitText.
- *
- * As we move contents from the trailingRoot into the leadingRoot, the selection will remain
- * valid unless we combine text nodes my modifying textContent. In that case, we need to reset
- * the selection. If we just move nodes around using appendChild or insertBefore, the selection
- * remains valid; if it was in the trailingRoot before, when done it will be in the leadingRoot.
- */
-const _joinNodes = function(leadingNode, trailingNode, rootName) {
-    //_consoleLog("* _joinNodes(" + _textString(leadingNode) + ", " + _textString(trailingNode) + ", " + rootName);
-    const leadingRoot = _findFirstParentElementInNodeNames(leadingNode, [rootName]);
-    const trailingRoot = _findFirstParentElementInNodeNames(trailingNode, [rootName]);
-    // We need to be able to locate leadingRoot and trailingRoot above the leadingNode and trailingNode.
-    if (!(leadingRoot && trailingRoot)) {
-        const error = MUError.InvalidJoinNodes;
-        error.setInfo('Could not join at ' + rootName + ' (leadingRoot: ' + leadingRoot + ', trailingRoot: ' + trailingRoot + ').');
-        error.callback();
-        return;
-    };
-    //_consoleLog("  leadingRoot: " + _textString(leadingRoot) + ", trailingRoot: " + _textString(trailingRoot));
-    // The lastChild within leadingRoot has to be the same nodeName as the firstChild of trailingRoot.
-    // If they are not the same nodeName, then they were not created using splitTextNode or are otherwise
-    // violating the assumptions used when joining them. For example, starting with <p><b>bo|ld</b></p>
-    // which is then splitTextNode at 'P' into <p><b>bo</b></p><p><b>ld</b></p>, leadingNode will be
-    // <b>bo</b> and trailingNode will be <b>ld</b>, and the lastLeadingChild and firstTrailingChild will
-    // both be the same 'B' nodeName. However, when starting with <p><i><b>bo|ld</b><i></p> which is then
-    // splitTextNode at 'P' into <p><i><b>bo</b></i></p><p><i><b>ld</b></i></p>, leadingNode and trailingNode
-    // will be the same as before, but lastLeadingChild will be <i><b>bo</b></i> and firstTrailingChild will
-    // be <i><b>ld</b></i>. This is an important distinction because we want to fold the contents of
-    // firstTrailingChild into the lastLeadingChild.
-    // There is also a case where the leadingRoot is empty, like <p></p>. This happens because we might
-    // have deleted a range, leaving an empty paragraph. In this case, we still want to join the nodes, but
-    // the lastLeadingChild is null.
-    const lastLeadingChild = leadingRoot.lastChild;
-    const lastLeadingChildNodeName = (lastLeadingChild) ? lastLeadingChild.nodeName : null;
-    const firstTrailingChild = trailingRoot.firstChild;
-    const firstTrailingChildNodeName = (firstTrailingChild) ? firstTrailingChild.nodeName : null;
-    if (lastLeadingChild && firstTrailingChild && (lastLeadingChildNodeName !== firstTrailingChildNodeName)) {
-        const error = MUError.InvalidJoinNodes;
-        error.setInfo('Could not join at ' + rootName + ' (lastLeadingChild: ' + lastLeadingChild + ', firstTrailingChild: ' + firstTrailingChild + ').');
-        error.callback();
-        return;
-    }
-    // Start by treating firstTrailingChild specially.
-    const sel = document.getSelection();
-    const range = sel.getRangeAt(0);
-    const originalStartContainer = range.startContainer;
-    const originalStartOffset = range.startOffset;
-    const originalEndContainer = range.endContainer;
-    const originalEndOffset = range.endOffset;
-    let newStartContainer = originalStartContainer;
-    let newStartOffset = originalStartOffset;
-    let newEndContainer = originalEndContainer;
-    let newEndOffset = originalEndOffset;
-    // The next two consts tell us whether the lastLeadingChild needs to replace the startContainer.
-    // or endContainer. Exactly how we do it depends on what we encounter.
-    const startWithFirstChild = (originalStartContainer === firstTrailingChild) || ((originalStartContainer === trailingRoot) && (originalStartOffset === 0));
-    const endWithFirstChild = (originalEndContainer === firstTrailingChild) || ((originalEndContainer === trailingRoot) && (originalEndOffset === 0));
-    if (firstTrailingChild.nodeType === Node.TEXT_NODE) {
-        // We just have to append text from the firstTrailingChild to the lastLeadingChild
-        if (startWithFirstChild) {
-            if (lastLeadingChild) {
-                newStartContainer = lastLeadingChild;
-                newStartOffset = lastLeadingChild.textContent.length + originalStartOffset;
-            } else {
-                newStartContainer = leadingRoot;
-                newStartOffset = 0;
-            };
-        }
-        if (endWithFirstChild) {
-            if (lastLeadingChild) {
-                newEndContainer = lastLeadingChild;
-                newEndOffset = lastLeadingChild.textContent.length + originalEndOffset;
-            } else {
-                newEndContainer = leadingRoot;
-                newEndOffset = originalEndOffset;
-            };
-        }
-        if (lastLeadingChild) {
-            lastLeadingChild.textContent = lastLeadingChild.textContent + firstTrailingChild.textContent;
-            // Remove the firstTrailingChild so that it's no longer in trailingRoot
-            trailingRoot.removeChild(firstTrailingChild);
-        } else {
-            leadingRoot.appendChild(firstTrailingChild);
-        }
-    } else if (firstTrailingChild.nodeType === Node.ELEMENT_NODE) {
-        // We have some kind of nested elements (like <i><b>Hello</b> world</i> that we need to walk down to find
-        // the embedded text element we are going to join to the corresponding lastLeadingChild's nested
-        // element. The nesting needs to match (as it will for splitTextNode), or our assumptions have been
-        // violated.
-        let lastLeadingGrandchild = lastLeadingChild.firstChild;
-        let firstTrailingGrandchild = firstTrailingChild.firstChild;
-        if (lastLeadingGrandchild.nodeName !== firstTrailingGrandchild.nodeName) {
-            const error = MU.InvalidJoinNodes;
-            error.setInfo('Could not join at ' + rootName + ' (lastLeadingGrandchild: ' + lastLeadingGrandchild + ', firstTrailingGrandchild: ' + firstTrailingGrandchild + ').');
-            error.callback();
-            return;
-        };
-        // We need to find the text nodes that we want to join, even though they are somewhere inside of
-        // an element node both in firstTrailingChild and lastLeadingChild.
-        const firstTrailingTextNodeChild = _firstTextNodeChild(firstTrailingChild);
-        const lastLeadingTextNodeChild = _firstTextNodeChild(lastLeadingChild);
-        const lastLeadingTextNodeChildLength = lastLeadingTextNodeChild.textContent.length;
-        lastLeadingTextNodeChild.textContent = lastLeadingTextNodeChild.textContent + firstTrailingTextNodeChild.textContent;
-        if (startWithFirstChild) {
-            newStartContainer = lastLeadingTextNodeChild;
-            newStartOffset = lastLeadingTextNodeChildLength;
-        };
-        if (endWithFirstChild) {
-            newEndContainer = lastLeadingTextNodeChild;
-            newEndOffset = lastLeadingTextNodeChildLength;
-        };
-        // Remove the firstTrailingTextNodeChild from its parent, since we moved its content
-        firstTrailingTextNodeChild.parentNode.removeChild(firstTrailingTextNodeChild);
-        // Then, if firstTrailingChild is empty, get rid of it, too.
-        if (_isEmpty(firstTrailingChild)) { firstTrailingChild.parentNode.removeChild(firstTrailingChild) };
-    };
-    // Now we can just appendChild all the childNodes of trailingRoot to leadingRoot.
-    // If we joined text together, the original firstTrailingChild was removed.
-    // It's theoretically possible that firstTrailingChild was a <br>. If so, we will
-    // append here, not previously.
-    let trailingChild = trailingRoot.firstChild;
-    while (trailingChild) {
-        leadingRoot.appendChild(trailingChild);
-        trailingChild = trailingRoot.firstChild;
-    };
-    // Remove the now-empty trailingRoot and patch up the selection
-    trailingRoot.parentNode.removeChild(trailingRoot);
-    const newSel = document.getSelection();
-    const newRange = document.createRange();
-    newRange.setStart(newStartContainer, newStartOffset);
-    newRange.setEnd(newEndContainer, newEndOffset);
-    newSel.removeAllRanges();
-    newSel.addRange(newRange);
-    //_consoleLog("* Done _joinNodes")
-};
-
-/**
  * Fill an empty element with a br and patch up the selection if needed.
  *
  * Return a range that selects the empty element. Selection won't be affected
@@ -2066,8 +1828,18 @@ const _redoToggleFormat = function(undoerData) {
 
 /**
  * Make all text elements within a selection that spans text nodes into newFormat.
+ *
+ * Elements that are already in newFormat are not changed, but we track them. The
+ * net effect is that everything is set to newFormat, whether it started that way
+ * or not. Then, when turning off formatting, it's all turned off. Therefore if
+ * user selects across text that has various embedded bolds and then bolds once,
+ * everything is bolded, but selecting bold again unbolds everything. This is the
+ * way other text editors work to allow easy "format everything" and "remove
+ * all formatting" across a selection (as opposed to toggling the items in the
+ * selection).
  */
 const _multiFormat = function(newFormat, undoable=true) {
+    // Find all the text nodes within the selection
     const selectedTextNodes = _selectedTextNodes();
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) {
@@ -2083,6 +1855,8 @@ const _multiFormat = function(newFormat, undoable=true) {
     let oldFormats = [];
     let indices = []
     let newStartContainer, newEndContainer;
+    const formattedElements = selectedTextNodes.filter( textNode => _findFirstParentElementInNodeNames(textNode, [newFormat]) );
+    const unsetAll = formattedElements.length === selectedTextNodes.length;
     for (let i = 0; i < selectedTextNodes.length; i++) {
         const selectedTextNode = selectedTextNodes[i];
         // If the selectedTextNode is not within newFormat, then track its format at #text,
@@ -2107,7 +1881,7 @@ const _multiFormat = function(newFormat, undoable=true) {
         };
         sel.removeAllRanges();
         sel.addRange(tagRange);
-        if (existingFormatElement) {
+        if (unsetAll) {
             // We may need to select a part of the selectedTextNode (or perhaps all of it,
             // depending on tagRange). If necessary, _selectedSubTextElement subdivides
             // selectedTextNode into 2 or 3 nodes while leaving sel set to the subnode that needs
@@ -2117,7 +1891,7 @@ const _multiFormat = function(newFormat, undoable=true) {
             selectedTextNodes[i] = tagRange.startContainer;
             indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor)
             _unsetTagInRange(newFormatElement, tagRange);
-        } else {
+        } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
             // When the selection includes leading or trailing blanks, the startOffset and endOffsets
             // from document.getSelection are inset from the ends. So, we can't rely on it being
@@ -4449,6 +4223,8 @@ const _getSelectionText = function() {
 MU.setRange = function(startElementId, startOffset, endElementId, endOffset, startChildNodeIndex, endChildNodeIndex) {
     const startElement = document.getElementById(startElementId);
     const endElement = document.getElementById(endElementId);
+    //_consoleLog(_textString(startElement, "startElement: ") + ", " + _textString(endElement, "endElement: "));
+    //_consoleLog("startChildNodeIndex: " + startChildNodeIndex + ", endChildNodeIndex: " + endChildNodeIndex);
     if (!startElement || !endElement) {
         let error = MUError.CantFindElement;
         error.setInfo('Could not identify startElement(' + startElement + ') or endElement(' + endElement + ')');
@@ -4458,7 +4234,7 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
     let startContainer, endContainer;
     if (startChildNodeIndex) {
         const startChild = startElement.childNodes[startChildNodeIndex];
-        if (startChild.nodeType === Node.TEXT_NODE) {
+        if (_isTextNode(startChild)) {
             startContainer = startChild;
         } else {
             startContainer = _firstTextNodeChild(startChild);
@@ -4471,7 +4247,7 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
     };
     if (endChildNodeIndex) {
         const endChild = endElement.childNodes[endChildNodeIndex];
-        if (endChild.nodeType === Node.TEXT_NODE) {
+        if (_isTextNode(endChild)) {
             endContainer = endChild;
         } else {
             endContainer = _firstTextNodeChild(endChild);
@@ -5658,6 +5434,244 @@ const _doPrevCell = function() {
 //MARK: Common Private Functions
 
 /**
+ * Split the textNode at offset, but also split its parents up to and
+ * including the parent with name rootName.
+ *
+ * For example...
+ *      <p>Hello <b>bo|ld</b> world</p>
+ * when split at the | would result in...
+ *      <p>Hello <b>bo</b></p><p><b>ld</b> world</p>
+ *
+ * Direction identifies whether selection is reset at just BEFORE the
+ * offset or AFTER the offset, and is always reset.
+ *
+ * The behavior here is very much like pressing Enter. There are several
+ * cases (Enter and Paste) where I wish I could get the default Enter behavior
+ * and then take action afterward. There is no way to create a trusted
+ * Enter event from JavaScript, so this is the rough equivalent.
+ *
+ * Like splitText, return the trailingText (result of textNode.splitText(offset)),
+ * and leave textNode as the leadingText after the split. Note, however, unlike
+ * splitText, trailingText might be embedded in a new element, not just be
+ * a text node in the existing element. The leadingText remains where it was in
+ * terms of the document structure, altho it might be empty depending on offset.
+ */
+const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTER') {
+    if (textNode.nodeType !== Node.TEXT_NODE) {
+        const error = MUError.InvalidSplitTextNode;
+        error.setInfo('Node name was ' + textNode.nodeName);
+        error.callback();
+        return textNode;    // Seems least problematic
+    }
+    const rootNode = _findFirstParentElementInNodeNames(textNode, [rootName]);
+    if (rootName && !rootNode) {
+        const error = MUError.InvalidSplitTextRoot;
+        error.setInfo('The rootName was ' + rootName);
+        error.callback();
+        return textNode;    // Seems least problematic
+    }
+    // Note that trailingText or leadingText can be empty text nodes when
+    // offset is 0 or textNode.textContent.length
+    const trailingText = textNode.splitText(offset);
+    const leadingText = textNode;   // Use leadingText name for clarity
+    if (rootNode) {
+        // We want to recreate the node hierarchy up to and including rootNode.
+        // Moving up from trailingText, put all the intermediate parents into
+        // a newContainer, resulting in a newContainer with nodeName = rootName.
+        // To move siblings afterward, track the nextSib of trailingText before
+        // putting trailingText in the newContainer. For example,
+        // for <p>Hello <b>bo|ld</b> world</p>, nextSib has to be <b> so
+        // that we move the " world" after it. In a nested case, like
+        // <p>Hello <i><b>bo|ld</b></i> world</p>, it needs to be <i>. OTOH,
+        // for <p>Hel|lo <b>bold</b> world<p>, nextSib needs to be "Hel",
+        // and sibs include <b>bold</b>, and " world".
+        let existingContainer = trailingText.parentNode;
+        let existingContainerName = existingContainer.nodeName;
+        let newContainer = document.createElement(existingContainerName);
+        let nextSib = trailingText.nextSibling;
+        newContainer.appendChild(trailingText);
+        let nestedContainer = newContainer;
+        while (existingContainerName !== rootName) {
+            nextSib = existingContainer.nextSibling;
+            existingContainer = existingContainer.parentNode;
+            existingContainerName = existingContainer.nodeName;
+            newContainer = document.createElement(existingContainerName);
+            newContainer.appendChild(nestedContainer);
+            nestedContainer = newContainer;
+        };
+        // Put the newContainer in the right place.
+        rootNode.parentNode.insertBefore(newContainer, rootNode.nextSibling);
+        // And then append all of the nextSiblings
+        let nextNextSib;
+        while (nextSib) {
+            nextNextSib = nextSib.nextSibling;
+            newContainer.appendChild(nextSib);
+            nextSib = nextNextSib;
+        };
+    };
+    const range = document.createRange();
+    let rangeContainer, rangeOffset;
+    if (direction === 'AFTER') {
+        rangeContainer = trailingText;
+        rangeOffset = 0;
+    } else {
+        rangeContainer = leadingText;
+        rangeOffset = leadingText.textContent.length;
+    }
+    range.setStart(rangeContainer, rangeOffset);
+    range.setEnd(rangeContainer, rangeOffset);
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return trailingText;
+};
+
+/**
+ * Join the parents of leadingNode and trailingNode at their parentNode with name rootName.
+ *
+ * For example, in <p>Hello <b>bo|ld</b> world</p> when splitTextNode at |, we end up with
+ * <p>Hello <b>bo</b></p><p><b>ld</b> world</p>, with the selection anchorNode at
+ * <p>Hello <b>bo|</b></p> and the selection focusNode at <p><b>|ld</b> world</p>.
+ * If we _joinNodes(anchorNode, focusNode, 'P'), then we end back up with
+ * <p>Hello <b>bo|ld</b> world</p>.
+ *
+ * This is like the _splitTextNode equivalent of normalize() for _splitText.
+ *
+ * As we move contents from the trailingRoot into the leadingRoot, the selection will remain
+ * valid unless we combine text nodes my modifying textContent. In that case, we need to reset
+ * the selection. If we just move nodes around using appendChild or insertBefore, the selection
+ * remains valid; if it was in the trailingRoot before, when done it will be in the leadingRoot.
+ */
+const _joinNodes = function(leadingNode, trailingNode, rootName) {
+    //_consoleLog("* _joinNodes(" + _textString(leadingNode) + ", " + _textString(trailingNode) + ", " + rootName);
+    const leadingRoot = _findFirstParentElementInNodeNames(leadingNode, [rootName]);
+    const trailingRoot = _findFirstParentElementInNodeNames(trailingNode, [rootName]);
+    // We need to be able to locate leadingRoot and trailingRoot above the leadingNode and trailingNode.
+    if (!(leadingRoot && trailingRoot)) {
+        const error = MUError.InvalidJoinNodes;
+        error.setInfo('Could not join at ' + rootName + ' (leadingRoot: ' + leadingRoot + ', trailingRoot: ' + trailingRoot + ').');
+        error.callback();
+        return;
+    };
+    //_consoleLog("  leadingRoot: " + _textString(leadingRoot) + ", trailingRoot: " + _textString(trailingRoot));
+    // The lastChild within leadingRoot has to be the same nodeName as the firstChild of trailingRoot.
+    // If they are not the same nodeName, then they were not created using splitTextNode or are otherwise
+    // violating the assumptions used when joining them. For example, starting with <p><b>bo|ld</b></p>
+    // which is then splitTextNode at 'P' into <p><b>bo</b></p><p><b>ld</b></p>, leadingNode will be
+    // <b>bo</b> and trailingNode will be <b>ld</b>, and the lastLeadingChild and firstTrailingChild will
+    // both be the same 'B' nodeName. However, when starting with <p><i><b>bo|ld</b><i></p> which is then
+    // splitTextNode at 'P' into <p><i><b>bo</b></i></p><p><i><b>ld</b></i></p>, leadingNode and trailingNode
+    // will be the same as before, but lastLeadingChild will be <i><b>bo</b></i> and firstTrailingChild will
+    // be <i><b>ld</b></i>. This is an important distinction because we want to fold the contents of
+    // firstTrailingChild into the lastLeadingChild.
+    // There is also a case where the leadingRoot is empty, like <p></p>. This happens because we might
+    // have deleted a range, leaving an empty paragraph. In this case, we still want to join the nodes, but
+    // the lastLeadingChild is null.
+    const lastLeadingChild = leadingRoot.lastChild;
+    const lastLeadingChildNodeName = (lastLeadingChild) ? lastLeadingChild.nodeName : null;
+    const firstTrailingChild = trailingRoot.firstChild;
+    const firstTrailingChildNodeName = (firstTrailingChild) ? firstTrailingChild.nodeName : null;
+    if (lastLeadingChild && firstTrailingChild && (lastLeadingChildNodeName !== firstTrailingChildNodeName)) {
+        const error = MUError.InvalidJoinNodes;
+        error.setInfo('Could not join at ' + rootName + ' (lastLeadingChild: ' + lastLeadingChild + ', firstTrailingChild: ' + firstTrailingChild + ').');
+        error.callback();
+        return;
+    }
+    // Start by treating firstTrailingChild specially.
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0);
+    const originalStartContainer = range.startContainer;
+    const originalStartOffset = range.startOffset;
+    const originalEndContainer = range.endContainer;
+    const originalEndOffset = range.endOffset;
+    let newStartContainer = originalStartContainer;
+    let newStartOffset = originalStartOffset;
+    let newEndContainer = originalEndContainer;
+    let newEndOffset = originalEndOffset;
+    // The next two consts tell us whether the lastLeadingChild needs to replace the startContainer.
+    // or endContainer. Exactly how we do it depends on what we encounter.
+    const startWithFirstChild = (originalStartContainer === firstTrailingChild) || ((originalStartContainer === trailingRoot) && (originalStartOffset === 0));
+    const endWithFirstChild = (originalEndContainer === firstTrailingChild) || ((originalEndContainer === trailingRoot) && (originalEndOffset === 0));
+    if (firstTrailingChild.nodeType === Node.TEXT_NODE) {
+        // We just have to append text from the firstTrailingChild to the lastLeadingChild
+        if (startWithFirstChild) {
+            if (lastLeadingChild) {
+                newStartContainer = lastLeadingChild;
+                newStartOffset = lastLeadingChild.textContent.length + originalStartOffset;
+            } else {
+                newStartContainer = leadingRoot;
+                newStartOffset = 0;
+            };
+        }
+        if (endWithFirstChild) {
+            if (lastLeadingChild) {
+                newEndContainer = lastLeadingChild;
+                newEndOffset = lastLeadingChild.textContent.length + originalEndOffset;
+            } else {
+                newEndContainer = leadingRoot;
+                newEndOffset = originalEndOffset;
+            };
+        }
+        if (lastLeadingChild) {
+            lastLeadingChild.textContent = lastLeadingChild.textContent + firstTrailingChild.textContent;
+            // Remove the firstTrailingChild so that it's no longer in trailingRoot
+            trailingRoot.removeChild(firstTrailingChild);
+        } else {
+            leadingRoot.appendChild(firstTrailingChild);
+        }
+    } else if (firstTrailingChild.nodeType === Node.ELEMENT_NODE) {
+        // We have some kind of nested elements (like <i><b>Hello</b> world</i> that we need to walk down to find
+        // the embedded text element we are going to join to the corresponding lastLeadingChild's nested
+        // element. The nesting needs to match (as it will for splitTextNode), or our assumptions have been
+        // violated.
+        let lastLeadingGrandchild = lastLeadingChild.firstChild;
+        let firstTrailingGrandchild = firstTrailingChild.firstChild;
+        if (lastLeadingGrandchild.nodeName !== firstTrailingGrandchild.nodeName) {
+            const error = MU.InvalidJoinNodes;
+            error.setInfo('Could not join at ' + rootName + ' (lastLeadingGrandchild: ' + lastLeadingGrandchild + ', firstTrailingGrandchild: ' + firstTrailingGrandchild + ').');
+            error.callback();
+            return;
+        };
+        // We need to find the text nodes that we want to join, even though they are somewhere inside of
+        // an element node both in firstTrailingChild and lastLeadingChild.
+        const firstTrailingTextNodeChild = _firstTextNodeChild(firstTrailingChild);
+        const lastLeadingTextNodeChild = _firstTextNodeChild(lastLeadingChild);
+        const lastLeadingTextNodeChildLength = lastLeadingTextNodeChild.textContent.length;
+        lastLeadingTextNodeChild.textContent = lastLeadingTextNodeChild.textContent + firstTrailingTextNodeChild.textContent;
+        if (startWithFirstChild) {
+            newStartContainer = lastLeadingTextNodeChild;
+            newStartOffset = lastLeadingTextNodeChildLength;
+        };
+        if (endWithFirstChild) {
+            newEndContainer = lastLeadingTextNodeChild;
+            newEndOffset = lastLeadingTextNodeChildLength;
+        };
+        // Remove the firstTrailingTextNodeChild from its parent, since we moved its content
+        firstTrailingTextNodeChild.parentNode.removeChild(firstTrailingTextNodeChild);
+        // Then, if firstTrailingChild is empty, get rid of it, too.
+        if (_isEmpty(firstTrailingChild)) { firstTrailingChild.parentNode.removeChild(firstTrailingChild) };
+    };
+    // Now we can just appendChild all the childNodes of trailingRoot to leadingRoot.
+    // If we joined text together, the original firstTrailingChild was removed.
+    // It's theoretically possible that firstTrailingChild was a <br>. If so, we will
+    // append here, not previously.
+    let trailingChild = trailingRoot.firstChild;
+    while (trailingChild) {
+        leadingRoot.appendChild(trailingChild);
+        trailingChild = trailingRoot.firstChild;
+    };
+    // Remove the now-empty trailingRoot and patch up the selection
+    trailingRoot.parentNode.removeChild(trailingRoot);
+    const newSel = document.getSelection();
+    const newRange = document.createRange();
+    newRange.setStart(newStartContainer, newStartOffset);
+    newRange.setEnd(newEndContainer, newEndOffset);
+    newSel.removeAllRanges();
+    newSel.addRange(newRange);
+    //_consoleLog("* Done _joinNodes")
+};
+
+/**
  * Return true if the selection spans _paragraphStyleTags.
  *
  * It's possible (due to pasting) that we end up with a selection in a text
@@ -5759,62 +5773,39 @@ const _nodesWithNamesInRange = function(range, names, nodes=[]) {
     const startContainer = range.startContainer;
     const endContainer = range.endContainer;
     if (startContainer === endContainer) { return nodes };
-    // Gather nodes at startContainer and its siblings first
     let child = startContainer;
-    while (child && (child !== endContainer)) {
+    while (child && (child != endContainer)) {
         if (names.includes(child.nodeName)) { nodes.push(child) };
+        // If this child has children, the use _allChildNodesWithNames to get them all
+        // but stop if we find endContainer in them
         if (_isElementNode(child) && (child.childNodes.length > 0)) {
             let subNodes = _allChildNodesWithNames(child, names);
             for (let i = 0; i < subNodes.length; i++) {
                 let subChild = subNodes[i];
                 if (subChild === endContainer) {
-                    child = subChild;
-                    break;  // Don't add endContainer to nodes yet
+                    child = subChild;   // Will stop the while loop
+                    break;              // Don't add endContainer to nodes yet
                 };
                 if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
             };
         };
-        child = (child === endContainer) ? child : child.nextSibling;
-    };
-    // If child===endContainer, we are done; else, we need to start at the
-    // next branch below commonAncestor to find endContainer, gathering
-    // nodes along the way.
-    if (child !== endContainer) {
-        const commonAncestor = range.commonAncestorContainer;
-        // Go up to the commonAncestor, identifying the starting child below it.
-        // If we are already
-        let parent = startContainer.parentNode;
-        child = parent.nextSibling;
-        while (parent && (parent !== commonAncestor)) {
-            if (parent.parentNode === commonAncestor) {
-                // We are at the level below commonAncestor, so our nextSibling
-                // is where we want to start drilling down until we find endContainer
-                child = parent.nextSibling;
-                parent = null;
-            } else {
+        // If we did not find endContainer, then go to child's nextSibling and
+        // continue. If there is no nextSibling, then go up to the parent and
+        // find its nextSibling. Keep going up until we find something above us
+        // that has a nextSibling and go on from there. By definition, the nodes
+        // above us are not in the range, but all of their siblings are in the range
+        // until we locate endContainer.
+        if (child !== endContainer) {
+            let parent = child.parentNode;
+            child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
+            while (parent && !child) {
                 parent = parent.parentNode;
+                child = parent.nextSibling;
             };
         };
-        // Child is now a node below commonAncestor, adjacent to the branch where
-        // startContainer exists.
-        while (child && (child !== endContainer)) {
-            if (names.includes(child.nodeName)) { nodes.push(child) };
-            if (_isElementNode(child) && (child.childNodes.length > 0)) {
-                let subNodes = _allChildNodesWithNames(child, names);
-                for (let i = 0; i < subNodes.length; i++) {
-                    let subChild = subNodes[i];
-                    if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
-                    if (subChild === endContainer) {
-                        child = subChild;
-                        break;
-                    };
-                };
-            };
-            child = (child === endContainer) ? child : child.nextSibling;
-        };
-    } else {
-        if (child && (names.includes(child.nodeName))) { nodes.push(child) };
-    }
+    };
+    // Child should always be non-null and === endContainer at this point, or it is an error.
+    if (child && (names.includes(child.nodeName))) { nodes.push(child) };
     return nodes;
 };
 
