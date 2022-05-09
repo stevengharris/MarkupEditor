@@ -48,6 +48,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
     var pastedAsync = false;
+    /// An accessoryView to override the inputAccesoryView of UIResponder.
+    var accessoryView: UIView?
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
         case Text
@@ -256,6 +258,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public override var canResignFirstResponder: Bool {
         return !hasFocus
+    }
+    
+    public override var inputAccessoryView: UIView? {
+        // remove/replace the default accessory view
+        return accessoryView
     }
     
     //MARK: Testing support
@@ -781,14 +788,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.toggleListItem('\(type.tag)')") { result, error in
             handler?()
         }
-    }
-
-    /// Supply an accessoryView to override the inputAccesoryView of UIResponder.
-    var accessoryView: UIView?
-    
-    public override var inputAccessoryView: UIView? {
-        // remove/replace the default accessory view
-        return accessoryView
     }
     
 }
