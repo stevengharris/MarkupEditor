@@ -781,15 +781,14 @@ const _doEnter = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
-    const existingRange = sel.getRangeAt(0).cloneRange();
-    const selectionIsText = selNode.nodeType === Node.TEXT_NODE;
-    const selectionAtEnd = existingRange.endOffset === selNode.textContent.length;
+    const existingRange = sel.getRangeAt(0);
+    const selectionAtEnd = _isTextNode(selNode) && (existingRange.endOffset === selNode.textContent.length);
     const nextSiblingIsEmpty = (!selNode.nextSibling) || _isEmpty(selNode.nextSibling);
-    if (selectionIsText && selectionAtEnd && nextSiblingIsEmpty) {
+    const parent = _findFirstParentElementInNodeNames(selNode, _paragraphStyleTags);
+    if (selectionAtEnd && nextSiblingIsEmpty && parent) {
         // We are at the end of the last text node in some element, so we want to
         // create a new <P> to keep typing. Note this means we get <p> when hitting return
         // at the end of, say, <H3>. I believe this is the "expected" behavior.
-        const parent = selNode.parentNode;
         const p = document.createElement('p');
         p.appendChild(document.createElement('br'));
         parent.parentNode.insertBefore(p, parent.nextSibling);
