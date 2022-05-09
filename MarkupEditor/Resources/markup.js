@@ -1625,8 +1625,8 @@ const _toggleFormat = function(type, undoable=true) {
         };
         let newRange;
         const nextNode = existingElement.nextSibling;
-        const endOfNode = sel.isCollapsed && (selNode.nodeType === Node.TEXT_NODE) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
-        const emptyNextNode = nextNode && (nextNode.nodeType === Node.TEXT_NODE) && (nextNode.textContent.length === 0);
+        const endOfNode = sel.isCollapsed && _isTextNode(selNode) && !(selNode.nextSibling) && (range.endOffset === selNode.textContent.length);
+        const emptyNextNode = !nextNode || (nextNode && _isTextNode(nextNode) && (nextNode.textContent.length === 0));
         const placeholderChar = '\u200B';  // A zero width char (where '\u00A0' would be space)
         if (endOfNode && emptyNextNode && range.collapsed) {
             // We are at the end of a formatted piece of text, with nothing ahead of us.
@@ -1637,7 +1637,7 @@ const _toggleFormat = function(type, undoable=true) {
             // alternative is to insert a space, which works okay, but would probably be unexpected by a user.
             newRange = document.createRange();
             const emptyTextNode = document.createTextNode(placeholderChar);
-            nextNode.parentNode.insertBefore(emptyTextNode, nextNode);
+            existingElement.parentNode.insertBefore(emptyTextNode, nextNode);
             newRange.setStart(emptyTextNode, 1);
             newRange.setEnd(emptyTextNode, 1);
             sel.removeAllRanges();
