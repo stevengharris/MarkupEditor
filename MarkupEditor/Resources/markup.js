@@ -316,6 +316,9 @@ const _undoOperation = function(undoerData) {
         case 'format':
             _undoToggleFormat(undoerData);
             break;
+        case 'multiFormat':
+            _undoMultiFormat(undoerData);
+            break;
         case 'style':
             _restoreSelection();
             MU.replaceStyle(data.newStyle, data.oldStyle, false);
@@ -387,6 +390,9 @@ const _redoOperation = function(undoerData) {
             break;
         case 'format':
             _redoToggleFormat(undoerData);
+            break;
+        case 'multiFormat':
+            _redoMultiFormat(undoerData);
             break;
         case 'style':
             _restoreSelection();
@@ -1828,9 +1834,9 @@ const _redoToggleFormat = function(undoerData) {
 /**
  * Make all text elements within a selection that spans text nodes into newFormat.
  *
- * Elements that are already in newFormat are not changed, but we track them. The
- * net effect is that everything is set to newFormat, whether it started that way
- * or not. Then, when turning off formatting, it's all turned off. Therefore if
+ * Elements that are already in newFormat are not changed. The net effect
+ * is that everything is set to newFormat, whether it started that way or not.
+ * Then, when turning off formatting, it's all turned off. Therefore if
  * user selects across text that has various embedded bolds and then bolds once,
  * everything is bolded, but selecting bold again unbolds everything. This is the
  * way other text editors work to allow easy "format everything" and "remove
@@ -1850,11 +1856,21 @@ const _multiFormat = function(newFormat, undoable=true) {
     const startOffset = range.startOffset;
     const endContainer = range.endContainer;
     const endOffset = range.endOffset;
-    const commonAncestor = range.commonAncestorContainer;
+    let commonAncestor = range.commonAncestorContainer;
+    // If commonAncestor has a _formatTag, we might be mucking with it as we use _subTextElementInRange
+    // later in such a way that it is no longer a common ancestor of elements across the range. To prevent
+    // any problems, use the style above it if commonAncestor has a _formatTag.
+    if (_isFormatElement(commonAncestor)) {
+        const styleParent = _findFirstParentElementInNodeNames(commonAncestor, _paragraphStyleTags);
+        commonAncestor = styleParent ?? MU.editor;     // MU.editor as a last ditch attempt to avoid problems
+    };
     let oldFormats = [];
     let indices = []
     let newStartContainer, newEndContainer;
     const formattedElements = selectedTextNodes.filter( textNode => _findFirstParentElementInNodeNames(textNode, [newFormat]) );
+    // If all nodes are of the same newFormat already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all nodes will be set to newFormat, with the ones
+    // that are already in newFormat left alone. We need to know what unsetAll was in undo also.
     const unsetAll = formattedElements.length === selectedTextNodes.length;
     for (let i = 0; i < selectedTextNodes.length; i++) {
         const selectedTextNode = selectedTextNodes[i];
@@ -1863,8 +1879,6 @@ const _multiFormat = function(newFormat, undoable=true) {
         // the newFormat, then put that into the oldFormats array.
         const existingFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
         const existingFormat = (existingFormatElement) ? existingFormatElement.nodeName : selectedTextNode.nodeName;
-        oldFormats.push(existingFormat);
-        indices.push(_childNodeIndicesByParent(selectedTextNode, commonAncestor));
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
         const newEndContainer = (i === selectedTextNodes.length - 1) && (selectedTextNode === endContainer);
@@ -1883,13 +1897,15 @@ const _multiFormat = function(newFormat, undoable=true) {
         if (unsetAll) {
             // We may need to select a part of the selectedTextNode (or perhaps all of it,
             // depending on tagRange). If necessary, _selectedSubTextElement subdivides
-            // selectedTextNode into 2 or 3 nodes while leaving sel set to the subnode that needs
-            // to be untagged, so we need to reset indices and selectedTextNodes.
+            // selectedTextNode into 2 nodes while leaving sel set to the subnode that needs
+            // to be untagged.
             const newFormatElement = _subTextElementInRange(tagRange, newFormat);
             tagRange = document.getSelection().getRangeAt(0);
-            selectedTextNodes[i] = tagRange.startContainer;
-            indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor)
             _unsetTagInRange(newFormatElement, tagRange);
+            // But then, after unsetting the tag, we need to track oldFormats and indices.
+            tagRange = document.getSelection().getRangeAt(0);
+            oldFormats.push(existingFormat);
+            indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
             // When the selection includes leading or trailing blanks, the startOffset and endOffsets
@@ -1897,6 +1913,11 @@ const _multiFormat = function(newFormat, undoable=true) {
             // correct when looping over elements. If we rely on the selection, then the insets
             // can end up removing blanks between words.
             _setTagInRange(newFormat, tagRange);
+            // After we set the tag, we need to track the oldFormat and indices, since they
+            // are changed when we set the tag.
+            tagRange = document.getSelection().getRangeAt(0);
+            oldFormats.push(existingFormat);
+            indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         };
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
@@ -1910,10 +1931,139 @@ const _multiFormat = function(newFormat, undoable=true) {
     sel.addRange(range);
     if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices});
+        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices, unsetAll: unsetAll});
         undoer.push(undoerData);
         _restoreSelection()
     };
+    _callback('input');
+};
+
+/**
+ * Undo the previous multiFormat operation.
+ *
+ * From undoerData, use the indices to find the element below
+ * commonAncestor, and toggles or forces.
+ */
+const _undoMultiFormat = function(undoerData) {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldFormats = undoerData.data.oldFormats;
+    const newFormat = undoerData.data.newFormat;
+    const indices = undoerData.data.indices;
+    const unsetAll = undoerData.data.unsetAll;
+    // If !unsetAll, then we only setTag for elements that were not already in newFormat,
+    // and now we want to untag only those elements.
+    // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
+    for (let i = 0; i < indices.length; i++) {
+        const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+        const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
+        const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedTextNode, startOffset);
+        } else {
+            tagRange.setStart(selectedTextNode, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedTextNode, endOffset);
+        } else {
+            tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        if (untag) {
+            _unsetTagInRange(newFormatElement, tagRange);
+        } else if (unsetAll) {
+            _setTagInRange(newFormat, tagRange);
+        };
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _callback('input');
+};
+
+/**
+ * Redo the previous multiFormat operation.
+ *
+ * From undoerData, use the indices to find the element below
+ * commonAncestor, then just replaceTag to the newStyle.
+ */
+const _redoMultiFormat = function(undoerData) {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldFormats = undoerData.data.oldFormats;
+    const newFormat = undoerData.data.newFormat;
+    const indices = undoerData.data.indices;
+    const unsetAll = undoerData.data.unsetAll;
+    // If unsetAll, then all elements identified by indices should be in an
+    // existingFormatElement that needs to be untagged.
+    // If !unsetAll, then 
+    // If !unsetAll, then we only setTag for elements that were not already in newFormat,
+    // and now we want to untag only those elements.
+    // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
+    for (let i = 0; i < indices.length; i++) {
+        const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+        const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
+        const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedTextNode, startOffset);
+        } else {
+            tagRange.setStart(selectedTextNode, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedTextNode, endOffset);
+        } else {
+            tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        if (untag) {
+            _unsetTagInRange(newFormatElement, tagRange);
+        } else if (unsetAll) {
+            _setTagInRange(newFormat, tagRange);
+        };
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
     _callback('input');
 };
 
