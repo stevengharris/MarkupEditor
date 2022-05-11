@@ -5832,11 +5832,24 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
  * false here in that case.
  */
 const _selectionSpansStyles = function() {
+    const styles = _selectionStartAndEndStyle();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    return startStyle && endStyle && (startStyle !== endStyle)
+};
+
+/**
+ * Return the paragraph style element the selection starts in and ends in
+ */
+const _selectionStartAndEndStyle = function() {
     const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.anchorNode === sel.focusNode)) { return false };
-    const anchorStyleParent = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
-    const focusStyleParent = _findFirstParentElementInNodeNames(sel.focusNode, _paragraphStyleTags);
-    return (!anchorStyleParent || !focusStyleParent || (anchorStyleParent !== focusStyleParent));
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endContainer = range.endContainer;
+    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    return {startStyle: startStyle, endStyle: endStyle};
 };
 
 /**
@@ -5850,28 +5863,17 @@ const _selectionSpansStyles = function() {
 const _selectedStyles = function() {
     let elements = [];
     if (!_selectionSpansStyles()) { return elements };
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    const endContainer = range.endContainer;
-    const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    // Selection has to start and end in some kind of paragraph or we do nothing
-    if (!startParagraph || !endParagraph) { return elements };
-    const paragraphRange = document.createRange();
-    paragraphRange.setStart(startParagraph, 0);
-    paragraphRange.setEnd(endParagraph, 0);
-    return _nodesWithNamesInRange(paragraphRange, _paragraphStyleTags);
+    const styles = _selectionStartAndEndStyle();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    const styleRange = document.createRange();
+    styleRange.setStart(startStyle, 0);
+    styleRange.setEnd(endStyle, 0);
+    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
 };
 
 const _selectionSpansTextNodes = function() {
-    const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return false };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const endContainer = range.endContainer;
-    return (startContainer.nodeType === Node.TEXT_NODE) && (startContainer !== endContainer);
+    return _selectedTextNodes().length > 1;
 }
 
 /**
