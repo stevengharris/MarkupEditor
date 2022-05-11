@@ -179,6 +179,350 @@ class RedoTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testRedoMultiFormats() throws {
+        // The selection (startId, startOffset, endId, endOffset) is always identified
+        // using the innermost element id and the offset into it. Inline comments
+        // below show the selection using "|" for clarity.
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Bold <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo</u></b><u>rd 1</u><u> Word 2 </u><u id=\"u3\">Wo</u><b><u>rd 3</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">Wo</u></b><u><b>rd 1</b></u><u><b> Word 2 </b></u><u id=\"u3\"><b>Wo</b></u><b><u>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo</u>rd 1 Word 2 Wo<u>rd 3</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">Wo</u><u>rd 1</u><u> Word 2 </u><u>Wo</u><u>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo<i>rd 1</i></u><u><i> Word 2 </i></u><u id=\"u3\"><i>Wo</i>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold </u></b><u>and</u><b><u> underline</u> world</b></p>",
+                    undoHtml: "<p><b>Hello <u id=\"u\">bold </u></b><u><b>and</b></u><b><u> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold </u>and<u> underline</u> world</b></p>",
+                    undoHtml: "<p><b>Hello <u id=\"u\">bold </u><u>and</u><u> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold <i>and</i> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">He</i></b><i>llo </i>wo<b>rld</b></p>",
+                    undoHtml: "<p><b id=\"b\"><i id=\"i\">He</i></b><i><b>llo </b></i><b>wo</b><b>rld</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">He<u>llo </u></i><u>wo</u>rld</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i><i>wo</i>rld</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><b>Hello </b><i id=\"i\"><b>world</b></i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><u>Hello </u><i id=\"i\"><u>world</u></i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><i>Hello </i><i id=\"i\">world</i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He</u></b><u>llo </u><u id=\"u2\">wo</u><b><u>rld</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">He</u></b><u><b>llo </b></u><u id=\"u2\"><b>wo</b></u><b><u>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He</u>llo </b><b>wo<u>rld</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">He</u><u>llo </u></b><b><u>wo</u><u>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He<i>llo </i></u></b><b><u id=\"u2\"><i>wo</i>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><u>Hello </u><i id=\"i1\"><u>world</u></i></p><p id=\"p2\"><b><u>Hello </u></b><i id=\"i2\"><b id=\"b1\"><u>wo</u>rld</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><i>Hello </i><i id=\"i1\">world</i></p><p id=\"p2\"><b><i>Hello </i></b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\">Hello <i id=\"i2\">world</i></p>",
+                    undoHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b>world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b><u>Hello </u></b><i id=\"i1\"><b><u>world</u></b></i></p><p id=\"p2\"><b><u>Hello </u></b><i id=\"i2\"><b id=\"b1\"><u>world</u></b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b><i>Hello </i></b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b><i>Hello </i></b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+        ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? test.startHtml
+            let expectation = XCTestExpectation(description: "Unformatting nested tags")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
     func testRedoStyles() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
@@ -529,7 +873,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2)
+            wait(for: [expectation], timeout: 3)
         }
     }
     

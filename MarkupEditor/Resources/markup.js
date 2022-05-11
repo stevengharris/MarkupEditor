@@ -1940,9 +1940,6 @@ const _multiFormat = function(newFormat, undoable=true) {
 
 /**
  * Undo the previous multiFormat operation.
- *
- * From undoerData, use the indices to find the element below
- * commonAncestor, and toggles or forces.
  */
 const _undoMultiFormat = function(undoerData) {
     const sel = document.getSelection();
@@ -1960,14 +1957,10 @@ const _undoMultiFormat = function(undoerData) {
     const newFormat = undoerData.data.newFormat;
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
-    // If !unsetAll, then we only setTag for elements that were not already in newFormat,
-    // and now we want to untag only those elements.
-    // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
     for (let i = 0; i < indices.length; i++) {
         const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
         const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
-        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
         const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
@@ -1983,11 +1976,21 @@ const _undoMultiFormat = function(undoerData) {
         };
         sel.removeAllRanges();
         sel.addRange(tagRange);
+        // If !unsetAll, then we only setTag for elements that were not already in newFormat,
+        // and now we want to untag only those elements.
+        // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
+        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
         if (untag) {
             _unsetTagInRange(newFormatElement, tagRange);
         } else if (unsetAll) {
             _setTagInRange(newFormat, tagRange);
         };
+        // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
+        // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
+        // redo.
+        tagRange = document.getSelection().getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+        undoerData.data.unsetAll = !unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2003,9 +2006,6 @@ const _undoMultiFormat = function(undoerData) {
 
 /**
  * Redo the previous multiFormat operation.
- *
- * From undoerData, use the indices to find the element below
- * commonAncestor, then just replaceTag to the newStyle.
  */
 const _redoMultiFormat = function(undoerData) {
     const sel = document.getSelection();
@@ -2023,17 +2023,10 @@ const _redoMultiFormat = function(undoerData) {
     const newFormat = undoerData.data.newFormat;
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
-    // If unsetAll, then all elements identified by indices should be in an
-    // existingFormatElement that needs to be untagged.
-    // If !unsetAll, then 
-    // If !unsetAll, then we only setTag for elements that were not already in newFormat,
-    // and now we want to untag only those elements.
-    // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
     for (let i = 0; i < indices.length; i++) {
         const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
         const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
-        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
         const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
@@ -2049,11 +2042,21 @@ const _redoMultiFormat = function(undoerData) {
         };
         sel.removeAllRanges();
         sel.addRange(tagRange);
+        // If unsetAll, then all elements identified by indices need to be put back in
+        // newFormat.
+        // If !unsetAll, only the elements in newFormat need to be untagged.
+        const untag = !unsetAll && newFormatElement;
         if (untag) {
             _unsetTagInRange(newFormatElement, tagRange);
         } else if (unsetAll) {
             _setTagInRange(newFormat, tagRange);
         };
+        // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
+        // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
+        // undo.
+        tagRange = document.getSelection().getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+        undoerData.data.unsetAll = !unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
