@@ -5873,6 +5873,9 @@ const _selectedStyles = function() {
     return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
 };
 
+/**
+ * Return whether the selection contains multiple text nodes
+ */
 const _selectionSpansTextNodes = function() {
     return _selectedTextNodes().length > 1;
 }
@@ -5892,9 +5895,115 @@ const _selectedTextNodes = function() {
     return nodes.filter(textNode => !_isEmpty(textNode));
 };
 
+/**
+ * Return whether the selection includes multiple list tags or top-level styles,
+ * both of which can be acted upon in _multiList()
+ */
 const _selectionSpansLists = function() {
-    const nodes = _selectedNodesWithNames(_listTags);
-    return nodes.length > 1;
+    const selectionMultiList = _selectionMultiList();
+    const startListOrStyle = selectionMultiList.startList ?? selectionMultiList.startStyle;
+    const endListOrStyle = selectionMultiList.endList ?? selectionMultiList.endStyle;
+    let spansListOrStyle = startListOrStyle && endListOrStyle && (startListOrStyle !== endListOrStyle);
+    if (spansListOrStyle) {
+        return true;
+    } else {
+        // We might be in a list with the selection spanning items, and these list items
+        // can themselves contain lists, so if we are in different items, return true
+        // even tho we might be in one UL or OL.
+        const startListItem = selectionMultiList.startListItem;
+        const endListItem = selectionMultiList.endListItem;
+        return startListItem && endListItem && (startListItem !== endListItem);
+    };
+};
+
+/**
+ * Return the paragraph style or list element the selection starts in and ends in.
+ *
+ * If we are in a list, we return the list element we are in (UL or OL) and the
+ * list item we are in. Otherwise, as long as we are not in a table, we return
+ * the paragraph element we are in. This gives us the "top level" elements we can
+ * change to lists or change from lists, without including the ones that are embedded in
+ * lists or tables.
+ */
+const _selectionMultiList = function() {
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    let startList, startListItem, startStyle, endList, endListItem, endStyle;
+    startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (startList) {
+        startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        const startTable = _findFirstParentElementInNodeNames(startContainer, _tableTags);
+        if (!startTable) {
+            startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+        };
+    };
+    const endContainer = range.endContainer;
+    endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (endList) {
+        endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        const endTable = _findFirstParentElementInNodeNames(endContainer, _tableTags);
+        if (!endTable) {
+            endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+        };
+    };
+    return {startList: startList, startListItem: startListItem, startStyle: startStyle, endList: endList, endListItem: endListItem, endStyle: endStyle};
+};
+
+const _selectedNodesWithNamesExcluding = function(names, excluding, nodes=[]) {
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
+    let range = sel.getRangeAt(0);
+    return _nodesWithNamesInRangeExcluding(range, names, excluding, nodes);
+};
+
+const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=[]) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    if (startContainer === endContainer) { return nodes };
+    let child = startContainer;
+    let excluded;
+    while (child && (child != endContainer)) {
+        excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+        if (!excluded) {
+            if (names.includes(child.nodeName)) { nodes.push(child) };
+            // If this child has children, the use _allChildNodesWithNames to get them all
+            // but stop (and include if proper) when we find endContainer in them
+            if (_isElementNode(child) && (child.childNodes.length > 0)) {
+                let traversalData = _allChildNodesWithNames(child, names, endContainer);
+                let subNodes = traversalData.nodes;
+                if (subNodes.length > 0) {
+                    nodes.push(...subNodes);
+                };
+                // If we found endContainer, then .stopped is true; else, we need to keep looking
+                if (traversalData.stopped) { child = endContainer };
+            };
+        };
+        // If we did not find endContainer, then go to child's nextSibling and
+        // continue. If there is no nextSibling, then go up to the parent and
+        // find its nextSibling. Keep going up until we find something above us
+        // that has a nextSibling and go on from there. By definition, the nodes
+        // above us are not in the range, but all of their siblings are in the range
+        // until we locate endContainer.
+        if (child !== endContainer) {
+            let parent = child.parentNode;
+            child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
+            while (parent && !child) {
+                parent = parent.parentNode;
+                child = parent && parent.nextSibling;
+            };
+            // We should have found some child, whether it is excluded or not
+            excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+            if (!excluded && (child === endContainer) && (names.includes(child.nodeName))) { nodes.push(child) };
+        };
+    };
+    // It's fine if we found nothing, but if we found the startContainer, then we should have found
+    // the endContainer d
+    //if (child && (nodes.length > 0) && (child !== endContainer)) { MUError.NoEndContainerInRange.callback() };
+    return nodes;
 };
 
 /**
@@ -5930,58 +6039,35 @@ const _selectedNodesWithNames = function(names, nodes=[]) {
  * the range only partially covers them.
  */
 const _nodesWithNamesInRange = function(range, names, nodes=[]) {
-    const startContainer = range.startContainer;
-    const endContainer = range.endContainer;
-    if (startContainer === endContainer) { return nodes };
-    let child = startContainer;
-    while (child && (child != endContainer)) {
-        if (names.includes(child.nodeName)) { nodes.push(child) };
-        // If this child has children, the use _allChildNodesWithNames to get them all
-        // but stop (and include if proper) when we find endContainer in them
-        if (_isElementNode(child) && (child.childNodes.length > 0)) {
-            let subNodes = _allChildNodesWithNames(child, names, endContainer);
-            if (subNodes.length > 0) {
-                child = subNodes[subNodes.length - 1];
-                nodes.push(...subNodes);
-            };
-        };
-        // If we did not find endContainer, then go to child's nextSibling and
-        // continue. If there is no nextSibling, then go up to the parent and
-        // find its nextSibling. Keep going up until we find something above us
-        // that has a nextSibling and go on from there. By definition, the nodes
-        // above us are not in the range, but all of their siblings are in the range
-        // until we locate endContainer.
-        if (child !== endContainer) {
-            let parent = child.parentNode;
-            child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
-            while (parent && !child) {
-                parent = parent.parentNode;
-                child = parent && parent.nextSibling;
-            };
-            if (child && (child === endContainer) && (names.includes(child.nodeName))) { nodes.push(child) };
-        };
-    };
-    // Child should always be non-null and === endContainer at this point, or it is an error.
-    if (!child || (child !== endContainer)) { MUError.NoEndContainerInRange.callback() };
-    return nodes;
+    return _nodesWithNamesInRangeExcluding(range, names, [], nodes);
 };
 
 /**
  * Return all nodes within element that have nodeName, not including element.
  *
+ * We need to indicate whether we found stoppingAfter (since it might not be part
+ * of the existingNodes we return), so we return both existingNodes and whether we
+ * stopped the traversal because we found stoppingAfter.
+ *
  * If stoppingAfter is provided, it indicates when traversal should terminate (including
  * that child if it is in nodeNames).
  */
 const _allChildNodesWithNames = function(element, nodeNames, stoppingAfter, existingNodes=[]) {
-    if (!_isElementNode(element)) { return existingNodes };
+    if (!_isElementNode(element)) { return {nodes: existingNodes, stopped: false} };
     const childNodes = element.childNodes;
+    let stopped = false;
     for (let i = 0; i < childNodes.length; i++) {
         let child = childNodes[i];
         if (nodeNames.includes(child.nodeName)) { existingNodes.push(child) };
-        if (child === stoppingAfter) { break };
-        existingNodes = _allChildNodesWithNames(child, nodeNames, stoppingAfter, existingNodes);
+        if (child === stoppingAfter) {
+            stopped = true;
+            break;
+        };
+        let traversalData = _allChildNodesWithNames(child, nodeNames, stoppingAfter, existingNodes);
+        stopped = traversalData.stopped;
+        existingNodes = traversalData.nodes;
     };
-    return existingNodes;
+    return {nodes: existingNodes, stopped: stopped};
 };
 
 /**
