@@ -91,6 +91,7 @@ class MUError {
     static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
+    static NoEndContainerInRange = new MUError('NoEndContainerInRange', 'Range endContainer not found in _nodesWithNamesInRange');
     static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
     static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
@@ -1612,7 +1613,7 @@ const _toggleFormat = function(type, undoable=true) {
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
     const range = sel.getRangeAt(0);
-    let tagRange; // startIndices, startOffset, endIndices, endOffset;
+    let tagRange;
     let existingElement = _findFirstParentElementInNodeNames(selNode, [type]);
     const newSelRange = sel.getRangeAt(0);
     const commonAncestor = newSelRange.commonAncestorContainer;
@@ -2332,6 +2333,10 @@ MU.toggleListItem = function(newListType, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
+    if (_selectionSpansLists()) {
+        _multiList(newListType, undoable);
+        return;
+    };
     // Capture the range settings for the selection
     const range = sel.getRangeAt(0).cloneRange();
     const oldStartContainer = range.startContainer;
@@ -2512,6 +2517,10 @@ MU.toggleListItem = function(newListType, undoable=true) {
     _callback('input');
 };
 
+const _multiList = function(newListType, undoable) {
+    _consoleLog("_multiList")
+};
+
 /**
  * Return true if we don't encounter LI before we hit OL or UL starting at node.
  * This happens when we have paragraphs or any other element inside of a list but
@@ -2521,16 +2530,6 @@ MU.toggleListItem = function(newListType, undoable=true) {
 const _isNakedListSelection = function(node) {
     return !(_findFirstParentElementInNodeNames(node, ['LI'], ['OL', 'UL']));
 };
-
-const _rangeCopy = function() {
-    const sel = document.getSelection();
-    if (!sel || (!sel.rangeCount > 0)) { return null };
-    const selRange = sel.getRangeAt(0)
-    const rangeCopy = document.createRange();
-    rangeCopy.setStart(selRange.startContainer, selRange.startOffset);
-    rangeCopy.setEnd(selRange.endContainer, selRange.endOffset);
-    return rangeCopy;
-}
 
 /**
  * We are inside of a list and hit Enter.
@@ -4192,27 +4191,29 @@ const _tripleClickSelect = function(sel) {
 //MARK: Selection
 
 /**
- * Define various arrays of tags used to represent concepts on the Swift side.
+ * Define various arrays of tags used to represent concepts on the Swift side and internally.
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
  */
-const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];      // All paragraph styles
+const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];                  // All paragraph styles
 
-const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];           // All possible (nestable) formats
+const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];                       // All possible (nestable) formats
 
-const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);          // Possible containing blocks in a list
+const _listTags = ['UL', 'OL'];                                                         // Types of lists
 
-const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];       // Convert to 'P' for MU.pasteText
+const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];                       // All tags associated with tables
 
-const _styleTags = _paragraphStyleTags.concat(['LI', 'BLOCKQUOTE', 'OL', 'UL']);    // Identify insert-before point in table/list
+const _styleTags = _paragraphStyleTags.concat(_listTags.concat(['LI', 'BLOCKQUOTE']));  // Identify insert-before point in table/list
 
-const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];           // All tags associated with tables
+const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);                      // Possible containing blocks in a list
 
-const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];              // Tags we monitor for Enter
+const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];           // Convert to 'P' for MU.pasteText
 
-const _monitorIndentTags = ['UL', 'OL', 'BLOCKQUOTE'];                      // Tags we monitor for Tab or Ctrl+]
+const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);                    // Tags we monitor for Enter
 
-const _topLevelTags = _paragraphStyleTags.concat(['OL', 'UL', 'TABLE']);    // Allowed top-level tags within editor
+const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
+
+const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE']));          // Allowed top-level tags within editor
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -5891,6 +5892,11 @@ const _selectedTextNodes = function() {
     return nodes.filter(textNode => !_isEmpty(textNode));
 };
 
+const _selectionSpansLists = function() {
+    const nodes = _selectedNodesWithNames(_listTags);
+    return nodes.length > 1;
+};
+
 /**
  * Return all nodes in a selection whose nodeName is name.
  *
@@ -5931,16 +5937,12 @@ const _nodesWithNamesInRange = function(range, names, nodes=[]) {
     while (child && (child != endContainer)) {
         if (names.includes(child.nodeName)) { nodes.push(child) };
         // If this child has children, the use _allChildNodesWithNames to get them all
-        // but stop if we find endContainer in them
+        // but stop (and include if proper) when we find endContainer in them
         if (_isElementNode(child) && (child.childNodes.length > 0)) {
-            let subNodes = _allChildNodesWithNames(child, names);
-            for (let i = 0; i < subNodes.length; i++) {
-                let subChild = subNodes[i];
-                if (subChild === endContainer) {
-                    child = subChild;   // Will stop the while loop
-                    break;              // Don't add endContainer to nodes yet
-                };
-                if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
+            let subNodes = _allChildNodesWithNames(child, names, endContainer);
+            if (subNodes.length > 0) {
+                child = subNodes[subNodes.length - 1];
+                nodes.push(...subNodes);
             };
         };
         // If we did not find endContainer, then go to child's nextSibling and
@@ -5954,25 +5956,30 @@ const _nodesWithNamesInRange = function(range, names, nodes=[]) {
             child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
             while (parent && !child) {
                 parent = parent.parentNode;
-                child = parent.nextSibling;
+                child = parent && parent.nextSibling;
             };
+            if (child && (child === endContainer) && (names.includes(child.nodeName))) { nodes.push(child) };
         };
     };
     // Child should always be non-null and === endContainer at this point, or it is an error.
-    if (child && (names.includes(child.nodeName))) { nodes.push(child) };
+    if (!child || (child !== endContainer)) { MUError.NoEndContainerInRange.callback() };
     return nodes;
 };
 
 /**
  * Return all nodes within element that have nodeName, not including element.
+ *
+ * If stoppingAfter is provided, it indicates when traversal should terminate (including
+ * that child if it is in nodeNames).
  */
-const _allChildNodesWithNames = function(element, nodeNames, existingNodes=[]) {
+const _allChildNodesWithNames = function(element, nodeNames, stoppingAfter, existingNodes=[]) {
     if (!_isElementNode(element)) { return existingNodes };
     const childNodes = element.childNodes;
     for (let i = 0; i < childNodes.length; i++) {
         let child = childNodes[i];
         if (nodeNames.includes(child.nodeName)) { existingNodes.push(child) };
-        existingNodes = _allChildNodesWithNames(child, nodeNames, existingNodes);
+        if (child === stoppingAfter) { break };
+        existingNodes = _allChildNodesWithNames(child, nodeNames, stoppingAfter, existingNodes);
     };
     return existingNodes;
 };
