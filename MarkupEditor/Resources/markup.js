@@ -333,6 +333,9 @@ const _undoOperation = function(undoerData) {
             MU.toggleListItem(data.oldListType, false);
             _backupSelection();
             break;
+        case 'multiList':
+            _undoMultiList(undoerData);
+            break;
         case 'indent':
             _restoreSelection();
             MU.outdent(false);
@@ -407,6 +410,9 @@ const _redoOperation = function(undoerData) {
             _restoreSelection();
             MU.toggleListItem(data.newListType, false);
             _backupSelection();
+            break;
+        case 'multiList':
+            _redoMultiList(undoerData);
             break;
         case 'indent':
             _restoreSelection();
@@ -2333,7 +2339,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
-    if (_selectionSpansLists()) {
+    if (_selectionSpansListables()) {
         _multiList(newListType, undoable);
         return;
     };
@@ -2398,7 +2404,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
                 const containingBlock = _findFirstParentElementInNodeNames(selNode, _listStyleTags)
                 const liChild = (containingBlock) ? containingBlock : selNode
                 //_consoleLog("liChild.outerHTML: " + liChild.outerHTML);
-                const naked = _isNakedListSelection(liChild, ['LI'], ['OL', 'UL']);
+                const naked = _isNakedListSelection(liChild);
                 const previousSib = liChild.previousElementSibling;
                 if (previousSib || (naked && (listItemElementCount > 0))) {
                     //_consoleLog("Toggle on")
@@ -2517,8 +2523,80 @@ MU.toggleListItem = function(newListType, undoable=true) {
     _callback('input');
 };
 
+/**
+ * Turn the elements found in _selectedListables into list of type newListType.
+ *
+ * Listables are paragraph elements that are not within lists, and well as lists themselves.
+ * When listables are elementSiblings, we want them to end up in the same list.
+ */
 const _multiList = function(newListType, undoable) {
-    _consoleLog("_multiList")
+    const selectedListables = _selectedListables();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    let oldListables = [];
+    let indices = [];
+    const initialListable = selectedListables[0];
+    let currentList;
+    _backupSelection();
+    for (let i = 0; i < selectedListables.length; i++) {
+        const selectedListable = selectedListables[i];
+        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
+        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
+        oldListables.push(selectedListable.nodeName);
+        indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
+        if (!currentList) {
+            if (_isListElement(selectedListable)) {
+                currentList = selectedListable;
+                if (selectedListable.nodeName !== newListType) {
+                    _replaceTag(selectedListable, newListType.toUpperCase());
+                };
+            } else {
+                currentList = document.createElement(newListType);
+                selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                let newListItem = document.createElement('LI');
+                currentList.appendChild(newListItem);
+                newListItem.appendChild(selectedListable);
+            };
+        } else {
+            if (_isListElement(selectedListable)) {
+                let childNodes = selectedListable.childNodes;
+                for (let i = 0; i < childNodes.length; i++) {
+                    currentList.appendChild(childNodes[i]);
+                };
+                if (_isEmpty(selectedListable)) {
+                    selectedListable.parentNode.removeChild(selectedListable);
+                };
+            } else {
+                let newListItem = document.createElement('LI');
+                currentList.appendChild(newListItem);
+                newListItem.appendChild(selectedListable);
+            };
+        };
+        // If the next selectedListable we are going to see is a sibling element of currentList,
+        // then leave currentList the same so it gets appended; else set currentList to null
+        // so that the next loop will create a new list as needed.
+        if (!nextIsSibling) {
+            currentList = null;
+        };
+    };
+    _restoreSelection();
+    if (undoable) {
+        _backupSelection()
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, indices: indices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
+
+const _undoMultiList = function(undoerData) {
+    _consoleLog("Implement _undoMultiList");
+};
+
+const _redoMultiList = function(undoerData) {
+    _consoleLog("Implement _redoMultiList");
 };
 
 /**
@@ -5895,23 +5973,37 @@ const _selectedTextNodes = function() {
     return nodes.filter(textNode => !_isEmpty(textNode));
 };
 
+const _selectedListables = function() {
+    let elements = [];
+    if (!_selectionSpansListables()) { return elements };
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    const listableRange = document.createRange();
+    listableRange.setStart(startListable, 0);
+    listableRange.setEnd(endListable, 0);
+    let lists = _nodesWithNamesInRange(listableRange, _listTags);
+    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
+    return lists.concat(...styles);
+};
+
 /**
  * Return whether the selection includes multiple list tags or top-level styles,
  * both of which can be acted upon in _multiList()
  */
-const _selectionSpansLists = function() {
-    const selectionMultiList = _selectionMultiList();
-    const startListOrStyle = selectionMultiList.startList ?? selectionMultiList.startStyle;
-    const endListOrStyle = selectionMultiList.endList ?? selectionMultiList.endStyle;
-    let spansListOrStyle = startListOrStyle && endListOrStyle && (startListOrStyle !== endListOrStyle);
-    if (spansListOrStyle) {
+const _selectionSpansListables = function() {
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    let spansListables = startListable && endListable && (startListable !== endListable);
+    if (spansListables) {
         return true;
     } else {
         // We might be in a list with the selection spanning items, and these list items
         // can themselves contain lists, so if we are in different items, return true
         // even tho we might be in one UL or OL.
-        const startListItem = selectionMultiList.startListItem;
-        const endListItem = selectionMultiList.endListItem;
+        const startListItem = selectionListables.startListItem;
+        const endListItem = selectionListables.endListItem;
         return startListItem && endListItem && (startListItem !== endListItem);
     };
 };
@@ -5919,13 +6011,12 @@ const _selectionSpansLists = function() {
 /**
  * Return the paragraph style or list element the selection starts in and ends in.
  *
- * If we are in a list, we return the list element we are in (UL or OL) and the
- * list item we are in. Otherwise, as long as we are not in a table, we return
- * the paragraph element we are in. This gives us the "top level" elements we can
- * change to lists or change from lists, without including the ones that are embedded in
- * lists or tables.
+ * If we are in a list, we return the list elements we are in (UL or OL) and the
+ * list items we are in. Otherwise, we return the paragraph element we are in.
+ * This gives us the "top level" elements we can change to lists or change from lists,
+ * without including the ones that are already embedded in lists.
  */
-const _selectionMultiList = function() {
+const _selectionListables = function() {
     const sel = document.getSelection();
     if (!sel || (sel.rangeCount === 0)) { return elements };
     const range = sel.getRangeAt(0);
@@ -5935,24 +6026,26 @@ const _selectionMultiList = function() {
     if (startList) {
         startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
     } else {
-        const startTable = _findFirstParentElementInNodeNames(startContainer, _tableTags);
-        if (!startTable) {
-            startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-        };
+        startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
     };
     const endContainer = range.endContainer;
     endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
     if (endList) {
         endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
     } else {
-        const endTable = _findFirstParentElementInNodeNames(endContainer, _tableTags);
-        if (!endTable) {
-            endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-        };
+        endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
     };
     return {startList: startList, startListItem: startListItem, startStyle: startStyle, endList: endList, endListItem: endListItem, endStyle: endStyle};
 };
 
+
+/**
+ * Return the nodes with names in selection, but exclude any that reside within
+ * nodes with names in excluding. Excluding is empty by default.
+ *
+ * For example, for multiList operations, we want all _paragraphStyles in the
+ * selection, but do not want any inside of lists.
+ */
 const _selectedNodesWithNamesExcluding = function(names, excluding, nodes=[]) {
     const sel = document.getSelection();
     if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
@@ -5960,13 +6053,28 @@ const _selectedNodesWithNamesExcluding = function(names, excluding, nodes=[]) {
     return _nodesWithNamesInRangeExcluding(range, names, excluding, nodes);
 };
 
+/**
+ * Return the nodes with names in range, but exclude any that reside within
+ * nodes with names in excluding. Excluding is empty by default.
+ *
+ * For example, for multiList operations, we want all _paragraphStyles in the
+ * range, but do not want any inside of lists.
+ */
 const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=[]) {
     const startContainer = range.startContainer;
     const endContainer = range.endContainer;
-    if (startContainer === endContainer) { return nodes };
     let child = startContainer;
     let excluded;
-    while (child && (child != endContainer)) {
+    if (startContainer === endContainer) {
+        excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+        if (!excluded && _isFractal(child)) {
+            if (names.includes(child.nodeName)) { nodes.push(child) };
+            let subNodes = _allChildNodesWithNames(child, names, endContainer).nodes;
+            nodes.push(...subNodes);
+        };
+        return nodes;
+    };
+    while (child) {
         excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
         if (!excluded) {
             if (names.includes(child.nodeName)) { nodes.push(child) };
@@ -5979,7 +6087,7 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
                     nodes.push(...subNodes);
                 };
                 // If we found endContainer, then .stopped is true; else, we need to keep looking
-                if (traversalData.stopped) { child = endContainer };
+                if (traversalData.stopped) { child = null };
             };
         };
         // If we did not find endContainer, then go to child's nextSibling and
@@ -5988,7 +6096,7 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
         // that has a nextSibling and go on from there. By definition, the nodes
         // above us are not in the range, but all of their siblings are in the range
         // until we locate endContainer.
-        if (child !== endContainer) {
+        if (child) {
             let parent = child.parentNode;
             child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
             while (parent && !child) {
@@ -5997,7 +6105,10 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
             };
             // We should have found some child, whether it is excluded or not
             excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
-            if (!excluded && (child === endContainer) && (names.includes(child.nodeName))) { nodes.push(child) };
+            if (child && (child === endContainer)) {
+                if (!excluded && (names.includes(child.nodeName))) { nodes.push(child) };
+                child = null;
+            };
         };
     };
     // It's fine if we found nothing, but if we found the startContainer, then we should have found
@@ -6120,6 +6231,29 @@ const _isElementNode = function(node) {
  */
 const _isFormatElement = function(node) {
     return _isElementNode(node) && _formatTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether node is a list element (i.e., either UL or OL)
+ */
+const _isListElement = function(node) {
+    return node && _listTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether node can hold other elements like it.
+ *
+ * TODO: Can I just explicitly use _isListElement or are there others?
+ * Sorry, running out of words that make sense, since I already used nestable.
+ * For example, a UL can have LIs inside it that have ULs. We use this
+ * flag to determine if we should look for elements of a type within
+ * a range if startContainer===endContainer. If startContainer can
+ * contain nodes that are like it and endContainer, then we still need
+ * to look into startContainer even though the range begins and ends
+ * in the same container.
+ */
+const _isFractal = function(node) {
+    return _isListElement(node);
 };
 
 /**
@@ -6837,9 +6971,10 @@ const _unsetTag = function(oldElement, sel) {
 /**
  * Given an element with a tag, replace its tag with the new nodeName.
  *
- * If the current selection is within the oldElement, then patch it up to sit in
- * the right place in the newElement. It's important not to change selection if
- * this is not the case, because we iterate over _replaceTag when doing selection
+ * If the current selection is within the oldElement, it travels with the
+ * childNodes as they are moved to the newElement. If the current selection
+ * is the oldElement, then fix it so it is in the newElement. It's important
+ * not to change selection because we iterate over _replaceTag when doing selection
  * across multiple paragraphs.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
@@ -6851,36 +6986,30 @@ const _replaceTag = function(oldElement, nodeName) {
         MUError.NoNewTag.callback();
         return;
     };
+    if (oldElement.nodeName === nodeName) { return oldElement };
     const sel = document.getSelection();
     const oldRange = sel.getRangeAt(0).cloneRange();
     const startContainer = oldRange.startContainer;
     const startOffset = oldRange.startOffset;
     const endContainer = oldRange.endContainer;
     const endOffset = oldRange.endOffset;
-    // Create and update newRange if we can find either startContainer or
-    // endContainer within oldElement. If we can, then we can reset the
-    // selection by locating the proper element inside of newElement using
-    // the indices we obtained from oldElement.
-    const newRange = oldRange.cloneRange();
-    const startIndices = _childNodeIndicesByParent(startContainer, oldElement);
-    const endIndices = _childNodeIndicesByParent(endContainer, oldElement);
-    const patchStart = startIndices.length > 0;
-    const patchEnd = endIndices.length > 0;
+    const newStartContainer = (startContainer === oldElement) ? newElement : startContainer;
+    const newEndContainer = (endContainer === oldElement) ? newElement : endContainer;
     const newElement = document.createElement(nodeName);
-    newElement.innerHTML = oldElement.innerHTML;
-    oldElement.replaceWith(newElement);
-    if (patchStart) {
-        newRange.setStart(_childNodeIn(newElement, startIndices), startOffset);
+    oldElement.parentNode.insertBefore(newElement, oldElement.nextSibling);
+    let child = oldElement.firstChild;
+    while (child) {
+        newElement.appendChild(child);
+        child = oldElement.firstChild;
     };
-    if (patchEnd) {
-        newRange.setEnd(_childNodeIn(newElement, endIndices), endOffset);
-    }
-    if (patchStart || patchEnd) {
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-    };
+    oldElement.parentNode.removeChild(oldElement);
+    const newRange = document.createRange();
+    newRange.setStart(newStartContainer, startOffset);
+    newRange.setEnd(newEndContainer, endOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
     return newElement;
-};
+}
 
 /**
  * Return the count of the element's children that have the nodeName.
