@@ -2537,15 +2537,14 @@ const _multiList = function(newListType, undoable) {
     const commonAncestor = range.commonAncestorContainer;
     let oldListables = [];
     let indices = [];
-    const initialListable = selectedListables[0];
     let currentList;
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use backupSelection() and restoreSelection() to preserve selection.
     _backupSelection();
     for (let i = 0; i < selectedListables.length; i++) {
         const selectedListable = selectedListables[i];
         const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
         const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
-        oldListables.push(selectedListable.nodeName);
-        indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
         if (!currentList) {
             if (_isListElement(selectedListable)) {
                 currentList = selectedListable;
@@ -2574,6 +2573,9 @@ const _multiList = function(newListType, undoable) {
                 newListItem.appendChild(selectedListable);
             };
         };
+        // The selectedListable's location in the DOM has likely changed, so push now.
+        oldListables.push(selectedListable.nodeName);
+        indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
         // If the next selectedListable we are going to see is a sibling element of currentList,
         // then leave currentList the same so it gets appended; else set currentList to null
         // so that the next loop will create a new list as needed.
@@ -2591,11 +2593,53 @@ const _multiList = function(newListType, undoable) {
     _callback('input');
 };
 
+/**
+ * Undo the previous multiList operation.
+ *
+ * A list-specific complication is that when we do multi-list, we combine elements into
+ * a single list if we can. Consider the original with selection at |:
+ *
+ *  <p>He|llo paragraph</p>
+ *  <ul><li><h5>He|llo header in list</h5></li></ul>
+ *
+ * which when changed to <UL> becomes (without the nice formatting):
+ *
+ *  <ul>
+ *      <li><p>He|llo paragraph</p></li>
+ *      <li><h5>He|llo header in list</h5></li>
+ *  </ul>
+ *
+ */
 const _undoMultiList = function(undoerData) {
+    /*
+     const _undoMultiStyle = function(undoerData) {
+         const commonAncestor = undoerData.data.commonAncestor;
+         const oldStyles = undoerData.data.oldStyles;
+         const indices = undoerData.data.indices;
+         for (let i = 0; i < indices.length; i++) {
+             const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
+             _replaceTag(selectedParagraph, oldStyles[i].toUpperCase());
+         };
+     };
+     */
     _consoleLog("Implement _undoMultiList");
 };
 
+/**
+ * Redo the previous undo of the multiList operation.
+ */
 const _redoMultiList = function(undoerData) {
+    /*
+     const _redoMultiStyle = function(undoerData) {
+         const commonAncestor = undoerData.data.commonAncestor;
+         const newStyle = undoerData.data.newStyle;
+         const indices = undoerData.data.indices;
+         for (let i = 0; i < indices.length; i++) {
+             const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
+             _replaceTag(selectedParagraph, newStyle.toUpperCase());
+         };
+     };
+     */
     _consoleLog("Implement _redoMultiList");
 };
 
@@ -5974,8 +6018,7 @@ const _selectedTextNodes = function() {
 };
 
 const _selectedListables = function() {
-    let elements = [];
-    if (!_selectionSpansListables()) { return elements };
+    if (!_selectionSpansListables()) { return [] };
     const selectionListables = _selectionListables();
     const startListable = selectionListables.startList ?? selectionListables.startStyle;
     const endListable = selectionListables.endList ?? selectionListables.endStyle;
@@ -5984,7 +6027,71 @@ const _selectedListables = function() {
     listableRange.setEnd(endListable, 0);
     let lists = _nodesWithNamesInRange(listableRange, _listTags);
     let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
-    return lists.concat(...styles);
+    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
+    // are not interleaved in order they are encountered. This matters because the ordering
+    // determines whether the listables can be combined into the same list or not.
+    // It's quite a hack, but rather than write yet another method to do the traversal,
+    // we use the _childIndices on each element to reassemble them in order.
+    const commonAncestor = listableRange.commonAncestorContainer;
+    let indices = [];
+    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
+    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
+    // Consider:
+    //  <div>
+    //      ...<4 intervening childNodes>...
+    //      <p>Top-level paragraph 1</p>
+    //      <ul>
+    //          <li><p>Unordered list paragraph 1</p></li>
+    //          <ol>
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </ul>
+    //      <p>Top-level paragraph 2</p>
+    //      <ol>
+    //          <li><p>Ordered list paragraph 1</p></li>
+    //      </ol>
+    //  </div>
+    // Then indices from the commonAncestor div at this point will be:
+    //  [[6], [6, 3], [10], [4], [8]]
+    // Note that the indices count childNodes, including empty text for the newlines.
+    // The first three items point at lists. The last two point at styles.
+    // We want:
+    //  [[4], [6], [6, 3], [8], [10]]
+    // We get the order using the _compareIndices function.
+    const sortedIndices = indices.sort(_compareIndices);
+    // Then we reassemble the listables in that order and return them
+    const sortedListables = [];
+    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
+    return sortedListables;
+};
+
+/**
+ * Compare two indices found from _childNodeIndicesByParent to determine which
+ * one will be encountered first below a common ancestor.
+ *
+ * Return -1 if a comes before b
+ * Return 1 if a comes after b
+ * Return 0 if they are the same
+ */
+const _compareIndices = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    const shorter = (aLength <= bLength) ? a.length : b.length;
+    for (let i = 0; i < shorter; i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    return 0;
 };
 
 /**

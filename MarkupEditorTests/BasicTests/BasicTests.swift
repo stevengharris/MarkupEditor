@@ -1004,6 +1004,86 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testMultiLists() throws {
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo world1</p><p>He|llo world2</p>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    endHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><p id=\"p2\">Hello world2</p></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo world1</p><h5>He|llo world2</h5>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
+                    endHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><h5 id=\"p2\">Hello world2</h5></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "List operations with selections spanning multiple elements")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
     func testListEnterCollapsed() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
