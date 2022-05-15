@@ -1046,7 +1046,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 HtmlTest(
                     description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                     startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
-                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></ul>",
                     startId: "p",
                     startOffset: 2,
                     endId: "h",
@@ -1055,6 +1055,60 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 { handler in
                     self.webView.getSelectionState() { state in
                         self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<ol><li><p id=\"p\">Hello paragraph</p></li><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></ol>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p></li><ul><li><p>Unordered list paragraph 1</p></li><ul><li><p>Ordered sublist paragraph</p></li></ul></ul><li><p>Top-level paragraph 2</p></li><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p></li><ol><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ol><li><p>Top-level paragraph 2</p></li><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
                             handler()
                         }
                     }

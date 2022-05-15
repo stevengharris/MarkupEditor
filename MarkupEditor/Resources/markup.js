@@ -2542,14 +2542,14 @@ const _multiList = function(newListType, undoable) {
     // so we can use backupSelection() and restoreSelection() to preserve selection.
     _backupSelection();
     for (let i = 0; i < selectedListables.length; i++) {
-        const selectedListable = selectedListables[i];
+        let selectedListable = selectedListables[i];
         const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
         const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
         if (!currentList) {
             if (_isListElement(selectedListable)) {
                 currentList = selectedListable;
                 if (selectedListable.nodeName !== newListType) {
-                    _replaceTag(selectedListable, newListType.toUpperCase());
+                    selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
                 };
             } else {
                 currentList = document.createElement(newListType);
@@ -2560,13 +2560,10 @@ const _multiList = function(newListType, undoable) {
             };
         } else {
             if (_isListElement(selectedListable)) {
-                let childNodes = selectedListable.childNodes;
-                for (let i = 0; i < childNodes.length; i++) {
-                    currentList.appendChild(childNodes[i]);
+                if (selectedListable.nodeName !== newListType) {
+                    selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
                 };
-                if (_isEmpty(selectedListable)) {
-                    selectedListable.parentNode.removeChild(selectedListable);
-                };
+                currentList.appendChild(selectedListable);
             } else {
                 let newListItem = document.createElement('LI');
                 currentList.appendChild(newListItem);
@@ -6055,10 +6052,13 @@ const _selectedListables = function() {
     //  [[6], [6, 3], [10], [4], [8]]
     // Note that the indices count childNodes, including empty text for the newlines.
     // The first three items point at lists. The last two point at styles.
-    // We want:
+    // Top-to-bottom readingwise, we would want depthwise traversal:
     //  [[4], [6], [6, 3], [8], [10]]
-    // We get the order using the _compareIndices function.
-    const sortedIndices = indices.sort(_compareIndices);
+    // However, we want siblings at a given level to follow one another in the list,
+    // so we want breadthwise traversal:
+    //  [[4], [6], [8], [10], [6, 3]]
+    // We get the order using the _compareIndices* function.
+    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
     // Then we reassemble the listables in that order and return them
     const sortedListables = [];
     sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
@@ -6067,13 +6067,17 @@ const _selectedListables = function() {
 
 /**
  * Compare two indices found from _childNodeIndicesByParent to determine which
- * one will be encountered first below a common ancestor.
+ * one will be encountered first below a common ancestor using depthwise
+ * traversal. In a list, the order is what you see visually on the screen from
+ * top to bottom.
+ * For example, [[6], [6, 3], [10], [4], [8]].sort(_compareIndicesDepthwise)
+ * returns [[4], [6], [6, 3], [8], [10]].
  *
  * Return -1 if a comes before b
  * Return 1 if a comes after b
  * Return 0 if they are the same
  */
-const _compareIndices = function(a, b) {
+const _compareIndicesDepthwise = function(a, b) {
     const aLength = a.length;
     const bLength = b.length;
     const shorter = (aLength <= bLength) ? a.length : b.length;
@@ -6091,6 +6095,37 @@ const _compareIndices = function(a, b) {
     } else if (aLength > bLength) {
         return 1;
     }
+    return 0;
+};
+
+/**
+ * Compare two indices found from _childNodeIndicesByParent to determine which
+ * one will be encountered first below a common ancestor using breadthwise
+ * traversal. In a list, the order is sibling-order at each level.
+ * For example, [[6], [6, 3], [10], [4], [8]].sort(_compareIndicesBreadthwise)
+ * returns [[4], [6], [8], [10], [6, 3]].
+ *
+ * Return -1 if a comes before b
+ * Return 1 if a comes after b
+ * Return 0 if they are the same
+ */
+const _compareIndicesBreadthwise = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    for (let i = 0; i < aLength; i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
     return 0;
 };
 
@@ -6172,9 +6207,9 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
     const endContainer = range.endContainer;
     let child = startContainer;
     let excluded;
-    if (startContainer === endContainer) {
+    if (_equalsOrIsContainedIn(startContainer, endContainer)) {
         excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
-        if (!excluded && _isFractal(child)) {
+        if (!excluded) {
             if (names.includes(child.nodeName)) { nodes.push(child) };
             let subNodes = _allChildNodesWithNames(child, names, endContainer).nodes;
             nodes.push(...subNodes);
@@ -6345,22 +6380,6 @@ const _isFormatElement = function(node) {
  */
 const _isListElement = function(node) {
     return node && _listTags.includes(node.nodeName);
-};
-
-/**
- * Return whether node can hold other elements like it.
- *
- * TODO: Can I just explicitly use _isListElement or are there others?
- * Sorry, running out of words that make sense, since I already used nestable.
- * For example, a UL can have LIs inside it that have ULs. We use this
- * flag to determine if we should look for elements of a type within
- * a range if startContainer===endContainer. If startContainer can
- * contain nodes that are like it and endContainer, then we still need
- * to look into startContainer even though the range begins and ends
- * in the same container.
- */
-const _isFractal = function(node) {
-    return _isListElement(node);
 };
 
 /**
@@ -7205,6 +7224,17 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     } else {
         return _findFirstParentElementInNodeNames(element.parentNode, matchNames, excludeNames);
     };
+};
+
+/**
+ * Return whether startContainer===endContainer or if startContainer contains endContainer
+ */
+const _equalsOrIsContainedIn = function(startContainer, endContainer) {
+    let parent = endContainer;
+    while (parent && (parent !== startContainer)) {
+        parent = parent.parentNode;
+    };
+    return parent === startContainer;
 };
 
 /********************************************************************************
