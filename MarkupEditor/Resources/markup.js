@@ -1,5 +1,5 @@
 /**
- * Copyright © 2021 Steven Harris. All rights reserved.
+ * Copyright © 2021-2022 Steven Harris. All rights reserved.
  *
  * This code was inspired by the original RichEditorView by cjwirth
  * at https://github.com/cjwirth/RichEditorView. Subsequent versions by cbess
@@ -277,6 +277,24 @@ class Undoer {
 //MARK: Undo/Redo
 
 /**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _undoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.undo = function() {
+    document.execCommand('undo', false, null);
+};
+
+/**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _redoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.redo = function() {
+    document.execCommand('redo', false, null);
+};
+
+/**
  * Return the populated undoerData object held on the Undoer._stack.
  * If range is not passed-in, then populate range from document.getSelection().
  *
@@ -467,24 +485,6 @@ const _redoOperation = function(undoerData) {
 const undoer = new Undoer(_undoOperation, _redoOperation, null);
 
 /**
- * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
- * event to be triggered from Swift. Note that the _undoOperation gets called when it has
- * been placed in the stack with undoer.push (for example, for formatting or pasting).
- */
-MU.undo = function() {
-    document.execCommand('undo', false, null);
-};
-
-/**
- * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
- * event to be triggered from Swift. Note that the _redoOperation gets called when it has
- * been placed in the stack with undoer.push (for example, for formatting or pasting).
- */
-MU.redo = function() {
-    document.execCommand('redo', false, null);
-};
-
-/**
  * Return a promise that delays focusing on a target.
  *
  * The delay seems to be required by WebKit because focus doesn't happen
@@ -635,14 +635,6 @@ MU.editor.addEventListener('focus', function(ev) {
     unmuteFocusBlur();
 });
 
-//MU.editor.addEventListener('focusout', function(ev) {
-//    _consoleLog("focusout: " + ev.target.id);
-//});
-//
-//MU.editor.addEventListener('focusin', function(ev) {
-//    _consoleLog("focusin: " + ev.target.id);
-//});
-
 /**
  * Capture the current selection using backupSelection and then let Swift know blur happened.
  * The blur during the undoer.push operation will always be followed by a focus, where
@@ -666,7 +658,7 @@ MU.editor.addEventListener('blur', function(ev) {
     };
     if (!_muteFocusBlur) {
         _callback('blur');
-    }
+    };
 });
 
 /**
@@ -681,7 +673,7 @@ MU.editor.addEventListener('click', function(ev) {
         _callback('click');
     } else {
         //_multiClickSelect(nclicks);
-    }
+    };
 });
 
 /**
@@ -821,7 +813,7 @@ const _doEnter = function(undoable=true) {
         return p;   // To preventDefault() on Enter
     };
     return null;    // Let the MarkupWKWebView do its normal thing
-}
+};
 
 /**
  * Undo Enter that was handled by _doEnter.
@@ -879,6 +871,13 @@ MU.pasteText = function(html) {
     const fragment = _patchPasteHTML(html);            // Remove all the cruft first, leaving BRs
     const minimalHTML = _minimalHTML(fragment);
     _pasteHTML(minimalHTML);
+};
+
+/**
+ * Do a custom paste operation of html.
+ */
+MU.pasteHTML = function(html) {
+    _pasteHTML(html);
 };
 
 /**
@@ -954,13 +953,6 @@ const _minimalLink = function(div) {
         };
     };
 };
-
-/**
- * Do a custom paste operation of html.
- */
-MU.pasteHTML = function(html) {
-    _pasteHTML(html);
-}
 
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const redoing = !undoable && (oldUndoerData !== null);
@@ -1112,12 +1104,12 @@ const _insertHTML = function(fragment) {
         fragment.removeChild(firstFragEl);
         firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
         direction = 'AFTER';
-    }
+    };
     let lastFragEl = (fragment.lastChild && (fragment.lastChild.nodeType === Node.ELEMENT_NODE)) ? fragment.lastChild : null;
     if (lastFragEl && _isEmpty(lastFragEl)) {
         fragment.removeChild(lastFragEl);
         direction = direction || 'BEFORE';  // Only reset if we didn't already set
-    }
+    };
     // We will need to define a new range for selection and track the insertedRange
     let newSelRange = document.createRange();       // Collapsed at the end of the fragment
     const insertedRange = document.createRange();   // Spanning the fragment
@@ -1250,7 +1242,7 @@ const _insertHTML = function(fragment) {
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
-    return {insertedRange: insertedRange, rootName: rootName}
+    return {insertedRange: insertedRange, rootName: rootName};
 };
 
 /**
@@ -1385,7 +1377,7 @@ const _rangeFor = function(node, direction='START') {
     range.setStart(node, startOffset);
     range.setEnd(node, endOffset);
     return range;
-}
+};
 
 /**
  * Delete the range and reset selection if needed.
@@ -1505,26 +1497,12 @@ MU.getHTML = function() {
 };
 
 /**
- * Set the base element for the document to the urlString.
- * URLs within the html will be interpreted relative to this urlString.
- * For example, and <img src="foo.png"> will be loaded from the location
- * identified by urlString.
+ * Return a marginally prettier version of the raw editor contents.
  *
- * @param {String} urlString The full string for base (e.g., 'file:///<path>')
+ * @return {String}     A string showing the raw HTML with tags, etc.
  */
-MU.setBase = function(urlString) {
-    const existingBase = document.getElementsByTagName('base')
-    if (existingBase.length > 0) {
-        _consoleLog("Existing base href was " + existingBase[0].href);
-        _consoleLog("Resetting base.href to " + urlString);
-        existingBase[0].href = urlString;
-    } else {
-        _consoleLog("Setting base.href to " + urlString);
-        const base = document.createElement('base');
-        base.href = urlString;
-        document.getElementsByTagName('head')[0].appendChild(base);
-    }
-    _consoleLog(" Done.");
+MU.getPrettyHTML = function() {
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
 
 /**
@@ -1553,20 +1531,14 @@ const _initializeRange = function() {
         MU.emptyDocument()
     }
     _focusOn(MU.editor).then(_callback('updateHeight'));
-}
-
-const _firstEditorElement = function() {
-    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-    return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
 
 /**
- * Return a marginally prettier version of the raw editor contents.
- *
- * @return {String}     A string showing the raw HTML with tags, etc.
+ * Return the first text node within MU.editor if possible, else its first child
  */
-MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+const _firstEditorElement = function() {
+    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
 
 /********************************************************************************
@@ -2084,6 +2056,13 @@ const _redoMultiFormat = function(undoerData) {
  * When the range is within a single text node but only encompasses part of it,
  * we need to split it into multiple text nodes and return the one that contains
  * the range. We do this for formatting.
+ *
+ * Consider:
+ *      <b>Hello <u>bold |and| underline</u> world</b>
+ * where we want to unbold "and". We use _splitTextNode twice to produce:
+ *      <b>Hello <u>bold </u></b><b><u>and</u></b><u><b> underline</u> world</b>
+ * in the document. We need to return the text node "and" without the tag "type" so
+ * that it is unformatted without affecting the surrounding text formatting.
  */
 const _subTextElementInRange = function(range, type) {
     const startContainer = range.startContainer;
@@ -2116,7 +2095,7 @@ const _subTextElementInRange = function(range, type) {
     range.selectNode(subTextNode);
     sel.removeAllRanges();
     sel.addRange(range);
-    return unNest(subTextNode, type);
+    return _unNest(subTextNode, type);
 }
 
 /**
@@ -2132,7 +2111,24 @@ const _selectedSubTextElement = function(sel, type) {
     return _subTextElementInRange(range, type);
 };
 
-const unNest = function(textNode, type) {
+/**
+ * Un-nest the textNode from within nested formatting.
+ *
+ * Consider:
+ *      <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>
+ *
+ * In this case, there are originally three text nodes which are all bolded because
+ * of the outer <b>, but are individually underlined. We might want to unbold or ununderline.
+ * To do this, we have to split "Word 1" into two text nodes like:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u><u>Wo|rd 3</u></b></p>
+ * Now we can change the format of "rd 1". For "Word 2", we don't need to split the text
+ * node itself, but we do need to "un-nest" the bolding to get:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u></b><b><u>Wo|rd 3</u></b></p>
+ * and then we need to split the "Word 3" text node:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u></b><b><u>Wo</u></b><b><u>rd 3</u></b></p>
+ * so that the "Wo" portion-only can be formatted.
+ */
+const _unNest = function(textNode, type) {
     //_consoleLog("* _unNest(" + _textString(textNode) + ", " + type + ")");
     const formatTags = _tagsMatching(textNode, _formatTags);
     const inNestedTags = (formatTags.length > 1) && (formatTags[0] !== type);
@@ -2142,10 +2138,7 @@ const unNest = function(textNode, type) {
     if (inNestedTags) {
         // The selection is of type, but type is in an outer element. The leadingTextNode is
         // part of a different format element. We need to split the existingElement of type
-        // into two elements starting after the innermost formatElement selection is in. Consider
-        // <b>Hello <u>bold |and| underline</u> world</b>. We eventually want to return
-        // the <b><u>and</u><b> element from the splitFormatElement result of
-        // <b>Hello <u>bold </u></b><b><u>and</u></b><u><b> underline</u> world</b>
+        // into two elements starting after the innermost formatElement selection is in.
         existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
         const childFormatElement = _findFirstParentElementInNodeNames(textNode, [formatTags[0]]); // The innermost tag
         _splitFormatElement(existingElement, childFormatElement);
@@ -2160,10 +2153,15 @@ const unNest = function(textNode, type) {
     } else {
         existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
     }
-    //_consoleLog("* Done _unNest (returning " + _textString(existingElement));
+    //_consoleLog("* Done _unNest (returning " + _textString(existingElement) + ")");
     return existingElement;
-}
+};
 
+/**
+ * Split a format element that contains a child of a different format.
+ *
+ * See the comments in unNest and subTextElementInRange for context.
+ */
 const _splitFormatElement = function(parentFormatElement, childFormatElement, direction='AFTER') {
     //_consoleLog("* _splitFormatElement(" + _textString(parentFormatElement) + ", " + _textString(childFormatElement) + ", \'" + direction + "\')");
     const parentName = parentFormatElement.nodeName;
@@ -2322,9 +2320,9 @@ const _redoMultiStyle = function(undoerData) {
 };
 
 /********************************************************************************
- * Nestables, including lists and block quotes
+ * Lists
  */
-//MARK: Nestables, Including Lists and BlockQuotes
+//MARK: Lists
 
 /**
  * Turn the list tag off and on for selection, doing the right thing
@@ -2884,87 +2882,6 @@ const _patchWhiteSpace = function(str, end='BOTH') {
             break;
     };
     return patchedStr;
-};
-
-/**
- * Replace newlines with <br> in a text node; return trailingText if patched, else node
- */
-const _patchNewlines = function(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    const rawContent = node.textContent;
-    const leadingNl = rawContent.slice(1) === '\n';
-    const trailingNl = rawContent.slice(-1) === '\n';
-    const lines = rawContent.split('\n');
-    if (lines.length === 1) { return node };
-    const insertTarget = node.nextSibling;
-    let textNode;
-    let initialI = 0;
-    if (leadingNl) {
-        const p = document.createElement('p');
-        p.appendChild(document.createElement('br'));
-        node.parentNode.insertBefore(p, insertTarget);
-        initialI = 1;
-    };
-    for (let i = initialI; i < lines.length; i++) {
-        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
-        node.parentNode.insertBefore(textNode, insertTarget);
-        if (i < lines.length - 1) {
-            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
-        };
-    };
-    if (trailingNl) {
-        const p = document.createElement('p');
-        textNode = document.createElement('br')
-        p.appendChild(textNode);
-        node.parentNode.insertBefore(p, insertTarget);
-    }
-    node.parentNode.removeChild(node);
-    return textNode;
-};
-
-const _patchAngleBrackets = function(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    let rawContent = node.textContent;
-    rawContent = rawContent.replace('<', '&lt;');
-    rawContent = rawContent.replace('>', '&gt;');
-    node.textContent = rawContent;
-};
-
-const _stripZeroWidthChars = function(element) {
-    const childNodes = element.childNodes;
-    for (let i=0; i<childNodes.length; i++) {
-        const childNode = childNodes[i];
-        if (childNode.nodeType === Node.TEXT_NODE) {
-            childNode.textContent = childNode.textContent.replace(/\u200B/g, '');
-        };
-    };
-}
-
-/**
- * Return true if element and all of its children are empty or
- * if it is an empty text node.
- *
- * For example, <li><p></p></li> is empty, as is <li></li>, while
- * <li><p> <p></li> and <li> <li> will have text elements and are
- * therefore not empty.
- */
-const _isEmpty = function(element) {
-    let empty;
-    if (element.nodeType === Node.TEXT_NODE) {
-        empty = element.textContent.trim().length === 0;
-    } else {
-        empty = true;
-        const childNodes = element.childNodes;
-        for (let i=0; i<childNodes.length; i++) {
-            empty = _isEmpty(childNodes[i]);
-            if (!empty) { break };
-        };
-    }
-    return empty;
 };
 
 /**
@@ -3755,6 +3672,11 @@ const _replaceNodeWithListItem = function(selNode) {
     return newListItemElement;
 };
 
+/********************************************************************************
+ * Indenting and Outdenting (for blockquotes and lists)
+ */
+//MARK: Indenting and Outdenting (for blockquotes and lists)
+
 /**
  * Do a context-sensitive indent.
  *
@@ -4225,6 +4147,54 @@ const _cleanUpAttributesWithin = function(attribute, node) {
         node.removeAttribute(attribute);
     };
     return attributesRemoved;
+};
+
+/**
+ * Replace newlines with <br> in a text node; return trailingText if patched, else node
+ */
+const _patchNewlines = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    const rawContent = node.textContent;
+    const leadingNl = rawContent.slice(1) === '\n';
+    const trailingNl = rawContent.slice(-1) === '\n';
+    const lines = rawContent.split('\n');
+    if (lines.length === 1) { return node };
+    const insertTarget = node.nextSibling;
+    let textNode;
+    let initialI = 0;
+    if (leadingNl) {
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        node.parentNode.insertBefore(p, insertTarget);
+        initialI = 1;
+    };
+    for (let i = initialI; i < lines.length; i++) {
+        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
+        node.parentNode.insertBefore(textNode, insertTarget);
+        if (i < lines.length - 1) {
+            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
+        };
+    };
+    if (trailingNl) {
+        const p = document.createElement('p');
+        textNode = document.createElement('br')
+        p.appendChild(textNode);
+        node.parentNode.insertBefore(p, insertTarget);
+    }
+    node.parentNode.removeChild(node);
+    return textNode;
+};
+
+const _patchAngleBrackets = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    let rawContent = node.textContent;
+    rawContent = rawContent.replace('<', '&lt;');
+    rawContent = rawContent.replace('>', '&gt;');
+    node.textContent = rawContent;
 };
                                 
 /********************************************************************************
@@ -4993,169 +4963,6 @@ MU.deleteTable = function(undoable=true) {
     };
 };
 
-/*
- * If the selection is inside a TABLE, populate attributes with the information
- * about the table and what is selected in it.
- * Note that the table likely has empty #text elements in it depending on how the
- * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
- * The values in elements are JavaScript objects of various kinds; however, the
- * values in attributes have to be consumable on the Swift side. So, for example,
- * the elements['thead'] is the HTML Table Header Element, whereas attributes['thead']
- * is either true or false indicating whether the selection is in the header.
- * Similarly, elements['header'] and ['colspan'] are true or false so
- * can be stored in attributes directly.
- *
- * @return {String : T}     Dictionary with keys of various types consumable in Swift
- */
-const _getTableAttributesAtSelection = function() {
-    const attributes = {};
-    const elements = _getTableElementsAtSelection();
-    attributes['table'] = elements['table'] != null;
-    if (!attributes['table']) { return attributes };
-    attributes['thead'] = elements['thead'] != null;
-    attributes['tbody'] = elements['tbody'] != null;
-    attributes['header'] = elements['header'];
-    attributes['colspan'] = elements['colspan'];
-    attributes['cols'] = elements['cols'];
-    attributes['rows'] = elements['rows'];
-    attributes['row'] = elements['row'];
-    attributes['col'] = elements['col'];
-    return attributes;
-};
-
-/**
- * Return all the table elements at the selection.
- * The selection has to be in a TD or TH element. Then, we
- * walk up the parent chain to TABLE, populating elements
- * as we go. We compute the row and col of the selection, too.
- * If anything is unexpected along the way, we return an empty
- * dictionary.
- *
- * @return {String : T}     Dictionary with keys of types consumable here in JavaScript
- */
-const _getTableElementsAtSelection = function() {
-    const elements = {};
-    const cell = _firstSelectionNodeMatching(['TD', 'TH']);
-    if (cell) {
-        let _cell = cell;
-        // Track the cell the selection is in
-        if (cell.nodeName === 'TD') {
-            elements['td'] = cell;
-        } else {
-            elements['th'] = cell;
-        }
-        // Find the column the selection is in, since we know it immediately
-        let colCount = 0;
-        while (_cell.previousElementSibling) {
-            _cell = _cell.previousElementSibling;
-            if (_cell.nodeType === cell.nodeType) { colCount++; };
-        };
-        elements['col'] = colCount;
-        // Track the row the selection is in
-        const row = cell.parentNode;
-        if (row.nodeName === 'TR') {
-            elements['tr'] = row;
-        } else {
-            return {};
-        }
-        // Track whether we are in the header or body
-        const section = row.parentNode;
-        if (section.nodeName === 'TBODY') {
-            elements['tbody'] = section;
-            // If the selection is in the body, then we can find the row
-            let _row = row;
-            let rowCount = 0;
-            while (_row.previousElementSibling) {
-                _row = _row.previousElementSibling;
-                if (_row.nodeType === row.nodeType) { rowCount++; };
-            };
-            elements['row'] = rowCount;
-        } else if (section.nodeName === 'THEAD') {
-            elements['thead'] = section;
-        } else {
-            return {};
-        };
-        // Track the selected table
-        const table = section.parentNode;
-        if (table.nodeName === 'TABLE') {
-            elements['table'] = table;
-        } else {
-            return {};
-        }
-        // Track the size of the table and whether the header spans columns
-        const [rows, cols, header, colspan] = _getRowsCols(table);
-        elements['rows'] = rows;
-        elements['cols'] = cols;
-        elements['header'] = header
-        elements['colspan'] = colspan;
-    };
-    return elements;
-};
-
-/**
- * Since we might select an element in the header or the body of table, we need a single
- * way to get the size of the table body in terms rows and cols regardless of what was
- * selected. The header always has one row that is not counted in terms of the table size.
- * When we have a TBODY, it always defines rowCount and colCount. If we have a THEAD and
- * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
- * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
- * is zero. The colspan value is returned so we know if the header spans columns.
- * Externally, we only need to know if a header exists. Internally in JavaScript, we can
- * always _getSection for the table to find out.
- *
- * @param {HTML Table Element}  table   The table being examined
- * @return {[T]}                        Array with number of rows and cols and whether a header with or without colSpan exists
- */
-const _getRowsCols = function(table) {
-    let rowCount = 0;
-    let colCount = 0;
-    let headerExists = false;
-    let colspan = null;
-    const children = table.children;
-    for (let i=0; i<children.length; i++) {
-        let section = children[i];
-        let rows = section.children;
-        if (rows.length > 0) {
-            let row = rows[0];
-            let cols = row.children;
-            if (section.nodeName === 'TBODY') {
-                rowCount = rows.length;
-                colCount = cols.length;
-            } else if (section.nodeName === 'THEAD') {
-                headerExists = true;
-                if (cols.length > 0) {
-                    colspan = _numberAttribute(cols[0], 'colspan');
-                };
-                if (colspan && (colCount === 0)) {
-                    colCount = colspan;
-                } else if (colCount === 0) {
-                    colCount = cols.length;
-                };
-            };
-        };
-    };
-    const colSpanExists = colspan != null;
-    return [ rowCount, colCount, headerExists, colSpanExists ];
-}
-
-/**
- * Return the section of the table identified by node name
- *
- * @param {HTML Table Element}  table   The table being examined.
- * @param {String}              name    The desired section, either 'THEAD' or 'TBODY'.
- * @return {HTML Table Header | HTML Table Body | null}
- */
-const _getSection = function(table, name) {
-    const children = table.children;
-    for (let i=0; i<children.length; i++) {
-        let section = children[i];
-        if (section.nodeName === name) {
-            return section;
-        };
-    };
-    return null;
-};
-
 /**
  * Add a row before or after the current selection, whether it's in the header or body.
  * For rows, AFTER = below; otherwise above.
@@ -5485,6 +5292,169 @@ MU.deleteCol = function(undoable=true) {
     _callback('input');
 };
 
+/*
+ * If the selection is inside a TABLE, populate attributes with the information
+ * about the table and what is selected in it.
+ * Note that the table likely has empty #text elements in it depending on how the
+ * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
+ * The values in elements are JavaScript objects of various kinds; however, the
+ * values in attributes have to be consumable on the Swift side. So, for example,
+ * the elements['thead'] is the HTML Table Header Element, whereas attributes['thead']
+ * is either true or false indicating whether the selection is in the header.
+ * Similarly, elements['header'] and ['colspan'] are true or false so
+ * can be stored in attributes directly.
+ *
+ * @return {String : T}     Dictionary with keys of various types consumable in Swift
+ */
+const _getTableAttributesAtSelection = function() {
+    const attributes = {};
+    const elements = _getTableElementsAtSelection();
+    attributes['table'] = elements['table'] != null;
+    if (!attributes['table']) { return attributes };
+    attributes['thead'] = elements['thead'] != null;
+    attributes['tbody'] = elements['tbody'] != null;
+    attributes['header'] = elements['header'];
+    attributes['colspan'] = elements['colspan'];
+    attributes['cols'] = elements['cols'];
+    attributes['rows'] = elements['rows'];
+    attributes['row'] = elements['row'];
+    attributes['col'] = elements['col'];
+    return attributes;
+};
+
+/**
+ * Return all the table elements at the selection.
+ * The selection has to be in a TD or TH element. Then, we
+ * walk up the parent chain to TABLE, populating elements
+ * as we go. We compute the row and col of the selection, too.
+ * If anything is unexpected along the way, we return an empty
+ * dictionary.
+ *
+ * @return {String : T}     Dictionary with keys of types consumable here in JavaScript
+ */
+const _getTableElementsAtSelection = function() {
+    const elements = {};
+    const cell = _firstSelectionNodeMatching(['TD', 'TH']);
+    if (cell) {
+        let _cell = cell;
+        // Track the cell the selection is in
+        if (cell.nodeName === 'TD') {
+            elements['td'] = cell;
+        } else {
+            elements['th'] = cell;
+        }
+        // Find the column the selection is in, since we know it immediately
+        let colCount = 0;
+        while (_cell.previousElementSibling) {
+            _cell = _cell.previousElementSibling;
+            if (_cell.nodeType === cell.nodeType) { colCount++; };
+        };
+        elements['col'] = colCount;
+        // Track the row the selection is in
+        const row = cell.parentNode;
+        if (row.nodeName === 'TR') {
+            elements['tr'] = row;
+        } else {
+            return {};
+        }
+        // Track whether we are in the header or body
+        const section = row.parentNode;
+        if (section.nodeName === 'TBODY') {
+            elements['tbody'] = section;
+            // If the selection is in the body, then we can find the row
+            let _row = row;
+            let rowCount = 0;
+            while (_row.previousElementSibling) {
+                _row = _row.previousElementSibling;
+                if (_row.nodeType === row.nodeType) { rowCount++; };
+            };
+            elements['row'] = rowCount;
+        } else if (section.nodeName === 'THEAD') {
+            elements['thead'] = section;
+        } else {
+            return {};
+        };
+        // Track the selected table
+        const table = section.parentNode;
+        if (table.nodeName === 'TABLE') {
+            elements['table'] = table;
+        } else {
+            return {};
+        }
+        // Track the size of the table and whether the header spans columns
+        const [rows, cols, header, colspan] = _getRowsCols(table);
+        elements['rows'] = rows;
+        elements['cols'] = cols;
+        elements['header'] = header
+        elements['colspan'] = colspan;
+    };
+    return elements;
+};
+
+/**
+ * Since we might select an element in the header or the body of table, we need a single
+ * way to get the size of the table body in terms rows and cols regardless of what was
+ * selected. The header always has one row that is not counted in terms of the table size.
+ * When we have a TBODY, it always defines rowCount and colCount. If we have a THEAD and
+ * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
+ * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
+ * is zero. The colspan value is returned so we know if the header spans columns.
+ * Externally, we only need to know if a header exists. Internally in JavaScript, we can
+ * always _getSection for the table to find out.
+ *
+ * @param {HTML Table Element}  table   The table being examined
+ * @return {[T]}                        Array with number of rows and cols and whether a header with or without colSpan exists
+ */
+const _getRowsCols = function(table) {
+    let rowCount = 0;
+    let colCount = 0;
+    let headerExists = false;
+    let colspan = null;
+    const children = table.children;
+    for (let i=0; i<children.length; i++) {
+        let section = children[i];
+        let rows = section.children;
+        if (rows.length > 0) {
+            let row = rows[0];
+            let cols = row.children;
+            if (section.nodeName === 'TBODY') {
+                rowCount = rows.length;
+                colCount = cols.length;
+            } else if (section.nodeName === 'THEAD') {
+                headerExists = true;
+                if (cols.length > 0) {
+                    colspan = _numberAttribute(cols[0], 'colspan');
+                };
+                if (colspan && (colCount === 0)) {
+                    colCount = colspan;
+                } else if (colCount === 0) {
+                    colCount = cols.length;
+                };
+            };
+        };
+    };
+    const colSpanExists = colspan != null;
+    return [ rowCount, colCount, headerExists, colSpanExists ];
+}
+
+/**
+ * Return the section of the table identified by node name
+ *
+ * @param {HTML Table Element}  table   The table being examined.
+ * @param {String}              name    The desired section, either 'THEAD' or 'TBODY'.
+ * @return {HTML Table Header | HTML Table Body | null}
+ */
+const _getSection = function(table, name) {
+    const children = table.children;
+    for (let i=0; i<children.length; i++) {
+        let section = children[i];
+        if (section.nodeName === name) {
+            return section;
+        };
+    };
+    return null;
+};
+
 /**
  * Given a row, tr, select at the beginning of the first text element in col, or
  * the entire first element if not a text element.
@@ -5704,6 +5674,46 @@ const _doPrevCell = function() {
  * Common private functions
  */
 //MARK: Common Private Functions
+
+/**
+ * Return true if element and all of its children are empty or
+ * if it is an empty text node.
+ *
+ * For example, <li><p></p></li> is empty, as is <li></li>, while
+ * <li><p> <p></li> and <li> <li> will have text elements and are
+ * therefore not empty.
+ */
+const _isEmpty = function(element) {
+    let empty;
+    if (element.nodeType === Node.TEXT_NODE) {
+        empty = element.textContent.trim().length === 0;
+    } else {
+        empty = true;
+        const childNodes = element.childNodes;
+        for (let i=0; i<childNodes.length; i++) {
+            empty = _isEmpty(childNodes[i]);
+            if (!empty) { break };
+        };
+    }
+    return empty;
+};
+
+/**
+ * Remove all non-printing zero-width chars in element.
+ *
+ * The zero-width chars get inserted during editing as formatting changes (e.g.,
+ * "<type some> CTRL+B <type more> CTRL+B" results in non-printing chars being
+ * inserted to allow the selection to be maintained properly.
+ */
+const _stripZeroWidthChars = function(element) {
+    const childNodes = element.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        const childNode = childNodes[i];
+        if (childNode.nodeType === Node.TEXT_NODE) {
+            childNode.textContent = childNode.textContent.replace(/\u200B/g, '');
+        };
+    };
+};
 
 /**
  * Split the textNode at offset, but also split its parents up to and
@@ -5997,7 +6007,7 @@ const _selectedStyles = function() {
  */
 const _selectionSpansTextNodes = function() {
     return _selectedTextNodes().length > 1;
-}
+};
 
 /**
  * Return an array of text nodes that the selection spans, including ones it
@@ -6640,7 +6650,7 @@ const _childNodeIndicesByParent = function(node, parentNode) {
     }
     // If we never find parentNode, return an empty array
     return (_node) ? indices : [];
-}
+};
 
 /**
  * Return the index in node.parentNode.childNodes where we will find node.
@@ -6746,7 +6756,7 @@ const _deleteAndResetSelection = function(element, direction) {
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
-}
+};
 
 /**
  * Get the element with nodeName at the selection point if one exists.
@@ -6960,6 +6970,10 @@ const _removeEmptyTextNodes = function(range) {
     };
 };
 
+/**
+ * Return the offset that represents the "end" of a range for node, which depends on whether
+ * it is a text node or element node.
+ */
 const _endOffsetFor = function(node) {
     if (_isTextNode(node)) {
         return node.textContent.length;
@@ -7135,7 +7149,7 @@ const _replaceTag = function(oldElement, nodeName) {
     sel.removeAllRanges();
     sel.addRange(newRange);
     return newElement;
-}
+};
 
 /**
  * Return the count of the element's children that have the nodeName.
@@ -7150,7 +7164,7 @@ const _childrenWithNodeNameCount = function(element, nodeName) {
         if (children[i].nodeName === nodeName) { count++ };
     }
     return count;
-}
+};
 
 /**
  * Find the first child of element whose textContent matches the container passed-in.
@@ -7176,7 +7190,7 @@ const _firstChildMatchingContainer = function(element, container) {
         }
     }
     return null;
-}
+};
 
 /**
  * Return the first child within element that is a textNode using depth-first traversal.
@@ -7263,7 +7277,7 @@ const _imgScale = function(element) {
     } else {
         return null;
     }
-}
+};
 
 /**
  * Return percent of int; e.g., 80 percent of 10 is 8.
@@ -7274,5 +7288,5 @@ const _imgScale = function(element) {
  */
 const _percentInt = function(percent, int) {
     return int * percent / 100;
-}
+};
 
