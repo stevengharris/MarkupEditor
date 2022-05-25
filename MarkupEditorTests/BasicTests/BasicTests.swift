@@ -1026,9 +1026,45 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+                    startHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><p id=\"p2\">Hello world2</p></li></ul>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
                     description: "UL <p>He|llo world1</p><h5>He|llo world2</h5>",
                     startHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
                     endHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><h5 id=\"p2\">Hello world2</h5></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+                    startHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><h5 id=\"p2\">Hello world2</h5></li></ul>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
                     startId: "p1",
                     startOffset: 2,
                     endId: "p2",
@@ -1062,9 +1098,45 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+                    startHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></ul>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><h5 id=\"h\">Hello header in list</h5>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
                     description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                     startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
                     endHtml: "<ol><li><p id=\"p\">Hello paragraph</p></li><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></ol>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove OL <ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
+                    startHtml: "<ol><li><p id=\"p\">Hello paragraph</p></li><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></ol>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><h5 id=\"h\">Hello header in list</h5>",
                     startId: "p",
                     startOffset: 2,
                     endId: "h",
@@ -1098,9 +1170,45 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
+                    description: "Remove UL interleaved paragraphs and lists",
+                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p></li><ul><li><p>Unordered list paragraph 1</p></li><ul><li><p>Ordered sublist paragraph</p></li></ul></ul><li><p>Top-level paragraph 2</p></li><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></ul>",
+                    endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
                     description: "OL interleaved paragraphs and lists",
                     startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
                     endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p></li><ol><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ol><li><p>Top-level paragraph 2</p></li><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove OL interleaved paragraphs and lists",
+                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p></li><ol><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ol><li><p>Top-level paragraph 2</p></li><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></ol>",
+                    endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
                     startId: "p1",
                     startOffset: 2,
                     endId: "p2",

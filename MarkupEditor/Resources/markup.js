@@ -1881,10 +1881,6 @@ const _multiFormat = function(newFormat, undoable=true) {
             const newFormatElement = _subTextElementInRange(tagRange, newFormat);
             tagRange = document.getSelection().getRangeAt(0);
             _unsetTagInRange(newFormatElement, tagRange);
-            // But then, after unsetting the tag, we need to track oldFormats and indices.
-            tagRange = document.getSelection().getRangeAt(0);
-            oldFormats.push(existingFormat);
-            indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
             // When the selection includes leading or trailing blanks, the startOffset and endOffsets
@@ -1892,12 +1888,12 @@ const _multiFormat = function(newFormat, undoable=true) {
             // correct when looping over elements. If we rely on the selection, then the insets
             // can end up removing blanks between words.
             _setTagInRange(newFormat, tagRange);
-            // After we set the tag, we need to track the oldFormat and indices, since they
-            // are changed when we set the tag.
-            tagRange = document.getSelection().getRangeAt(0);
-            oldFormats.push(existingFormat);
-            indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         };
+        // After we set or unset the tag, we need to track the oldFormat and indices, since they
+        // are changed when we set the tag.
+        tagRange = document.getSelection().getRangeAt(0);
+        oldFormats.push(existingFormat);
+        indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2536,36 +2532,62 @@ const _multiList = function(newListType, undoable) {
     let oldListables = [];
     let indices = [];
     let currentList;
+    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType]) );
+    // If all elements are of the same newListType already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all elements will be set to newListType, with the ones
+    // that are already in newListType left alone. We need to know what unsetAll was in undo also.
+    const unsetAll = listableElements.length === selectedListables.length;
     // Altho the selectedListables will change position in the DOM, they will still exist,
     // so we can use backupSelection() and restoreSelection() to preserve selection.
     _backupSelection();
+    const tagRange = document.createRange();
     for (let i = 0; i < selectedListables.length; i++) {
-        let selectedListable = selectedListables[i];
+        let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
+        const isListElement = _isListElement(selectedListable);
         const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
         const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
-        if (!currentList) {
-            if (_isListElement(selectedListable)) {
-                currentList = selectedListable;
-                if (selectedListable.nodeName !== newListType) {
-                    selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+        if (unsetAll) {
+            // Every selectedListable is a UL or OL that we are going to remove
+            // First, eliminate all the list items, which should hold styled elements
+            let childNode = selectedListable.firstChild;
+            while (childNode) {
+                let nextChildNode = childNode.nextSibling;
+                if (_isListItemElement(childNode)) {
+                    tagRange.selectNode(childNode);
+                    _unsetTagInRange(childNode, tagRange);
                 };
-            } else {
-                currentList = document.createElement(newListType);
-                selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
-                let newListItem = document.createElement('LI');
-                currentList.appendChild(newListItem);
-                newListItem.appendChild(selectedListable);
+                childNode = nextChildNode;
             };
+            // Then, remove the selectedListable
+            tagRange.selectNode(selectedListable);
+            _unsetTagInRange(selectedListable, tagRange);
         } else {
-            if (_isListElement(selectedListable)) {
-                if (selectedListable.nodeName !== newListType) {
-                    selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+            // We are only going to set the ones that are not of newListType, adding them to
+            // the list we are currently in, or creating a new currentList as needed
+            if (!currentList) {
+                if (isListElement) {
+                    currentList = selectedListable;
+                    if (selectedListable.nodeName !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                } else {
+                    currentList = document.createElement(newListType);
+                    selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                    let newListItem = document.createElement('LI');
+                    currentList.appendChild(newListItem);
+                    newListItem.appendChild(selectedListable);
                 };
-                currentList.appendChild(selectedListable);
             } else {
-                let newListItem = document.createElement('LI');
-                currentList.appendChild(newListItem);
-                newListItem.appendChild(selectedListable);
+                if (isListElement) {
+                    if (selectedListable.nodeName !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                    currentList.appendChild(selectedListable);
+                } else {
+                    let newListItem = document.createElement('LI');
+                    currentList.appendChild(newListItem);
+                    newListItem.appendChild(selectedListable);
+                };
             };
         };
         // The selectedListable's location in the DOM has likely changed, so push now.
@@ -2581,7 +2603,7 @@ const _multiList = function(newListType, undoable) {
     _restoreSelection();
     if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, indices: indices});
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, indices: indices, unsetAll: unsetAll});
         undoer.push(undoerData);
         _restoreSelection()
     };
@@ -2606,18 +2628,72 @@ const _multiList = function(newListType, undoable) {
  *
  */
 const _undoMultiList = function(undoerData) {
-    /*
-     const _undoMultiStyle = function(undoerData) {
-         const commonAncestor = undoerData.data.commonAncestor;
-         const oldStyles = undoerData.data.oldStyles;
-         const indices = undoerData.data.indices;
-         for (let i = 0; i < indices.length; i++) {
-             const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
-             _replaceTag(selectedParagraph, oldStyles[i].toUpperCase());
-         };
-     };
-     */
-    _consoleLog("Implement _undoMultiList");
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldListables = undoerData.data.oldListables;
+    const newListType = undoerData.data.newListType;
+    const indices = undoerData.data.indices;
+    const unsetAll = undoerData.data.unsetAll;
+    // Find all the listables first, because once we start mucking around with the list, we won't
+    // be able to find them from indices any more. The "mucking around" involves removing things
+    // from lists, splitting them, etc. While we are mucking around, the listables themselves will
+    // still exist, but their location in the DOM will be changed.
+    const selectedListables = [];
+    for (let i = 0; i < indices.length; i++) {
+        selectedListables.push(_childNodeIn(commonAncestor, indices[i]));
+    };
+    for (let i = 0; i < selectedListables.length; i++) {
+        const selectedListable = selectedListables[i];
+        const oldListable = oldListables[i];    // oldListable was what the selectedListable was before setting
+        const newListableElement = _findFirstParentElementInNodeNames(selectedListable, [newListType]);
+        let newListItemElement = _findFirstParentElementInNodeNames(selectedListable, ['LI']);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedListable === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedListable === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedListable, startOffset);
+        } else {
+            tagRange.setStart(selectedListable, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedListable, endOffset);
+        } else {
+            tagRange.setEnd(selectedListable, _endOffsetFor(selectedListable));
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        let newSelectedListable;
+        if (_listTags.includes(oldListable)) {
+            // The old listable was OL or UL, not a P
+            const listItemElement = _splitList(newListItemElement, oldListable);
+            newSelectedListable = _findFirstParentElementInNodeNames(listItemElement, [oldListable]);
+        } else {
+            newSelectedListable = _splitList(newListItemElement);
+        }
+        // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
+        // untagging or tagging may change the indices.
+        tagRange = document.getSelection().getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(newSelectedListable, commonAncestor);
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _callback('input');
 };
 
 /**
@@ -6390,6 +6466,13 @@ const _isFormatElement = function(node) {
  */
 const _isListElement = function(node) {
     return node && _listTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether a node is a list item element (LI)
+ */
+const _isListItemElement = function(node) {
+    return node && (node.nodeName == 'LI');
 };
 
 /**
