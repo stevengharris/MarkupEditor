@@ -2528,15 +2528,22 @@ const _multiList = function(newListType, undoable) {
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
     const range = sel.getRangeAt(0);
-    const commonAncestor = range.commonAncestorContainer;
+    let commonAncestor = range.commonAncestorContainer;
     let oldListables = [];
     let indices = [];
+    let depths = [];
     let currentList;
     const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType]) );
     // If all elements are of the same newListType already, then unsetAll===true; otherwise,
     // unsetAll===false indicates that all elements will be set to newListType, with the ones
     // that are already in newListType left alone. We need to know what unsetAll was in undo also.
     const unsetAll = listableElements.length === selectedListables.length;
+    // If we are unsetting all and commonAncestor is in _listTags, we might be mucking with the commonAncestor
+    // itself as we untag things in such a way that it is no longer a common ancestor of elements across the range.
+    // To prevent any problems, use the commonAncestor's parent.
+    if (unsetAll && _isListElement(commonAncestor)) {
+        commonAncestor = commonAncestor.parentNode ?? MU.editor;     // MU.editor as a last ditch attempt to avoid problems
+    };
     // Altho the selectedListables will change position in the DOM, they will still exist,
     // so we can use backupSelection() and restoreSelection() to preserve selection.
     _backupSelection();
@@ -2547,20 +2554,33 @@ const _multiList = function(newListType, undoable) {
         const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
         const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
         if (unsetAll) {
-            // Every selectedListable is a UL or OL that we are going to remove
+            // Every selectedListable is of newListType, that we are going to remove.
             // First, eliminate all the list items, which should hold styled elements
+            // and hold onto all the styled elements we end up with in unsetChildren.
+            const depth = _depthWithin(selectedListable, _listTags);
+            const unsetChildren = [];
             let childNode = selectedListable.firstChild;
             while (childNode) {
                 let nextChildNode = childNode.nextSibling;
                 if (_isListItemElement(childNode)) {
                     tagRange.selectNode(childNode);
-                    _unsetTagInRange(childNode, tagRange);
+                    let styledElementRange = _unsetTagInRange(childNode, tagRange);
+                    let styledElement = styledElementRange.startContainer;
+                    unsetChildren.push(styledElement);
                 };
                 childNode = nextChildNode;
             };
-            // Then, remove the selectedListable
+            // Then, remove the selectedListable by removing its tag.
             tagRange.selectNode(selectedListable);
             _unsetTagInRange(selectedListable, tagRange);
+            // And track the unsetChildren (i.e., new top-level paragraph styles) that we have left over
+            // so that we can retag them on undo.
+            for (let j = 0; j < unsetChildren.length; j++) {
+                let unsetChild = unsetChildren[j];
+                oldListables.push(newListType);     // Remains the same for each child
+                depths.push(depth);                 // Remains the same for each child
+                indices.push(_childNodeIndicesByParent(unsetChild, commonAncestor));
+            };
         } else {
             // We are only going to set the ones that are not of newListType, adding them to
             // the list we are currently in, or creating a new currentList as needed
@@ -2589,10 +2609,11 @@ const _multiList = function(newListType, undoable) {
                     newListItem.appendChild(selectedListable);
                 };
             };
+            // The selectedListable's location in the DOM has likely changed, so push now.
+            oldListables.push(selectedListable.nodeName);
+            depths.push(_depthWithin(selectedListable, _listTags));
+            indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
         };
-        // The selectedListable's location in the DOM has likely changed, so push now.
-        oldListables.push(selectedListable.nodeName);
-        indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
         // If the next selectedListable we are going to see is a sibling element of currentList,
         // then leave currentList the same so it gets appended; else set currentList to null
         // so that the next loop will create a new list as needed.
@@ -2603,7 +2624,7 @@ const _multiList = function(newListType, undoable) {
     _restoreSelection();
     if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, indices: indices, unsetAll: unsetAll});
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, depths: depths, indices: indices, unsetAll: unsetAll});
         undoer.push(undoerData);
         _restoreSelection()
     };
@@ -2640,20 +2661,34 @@ const _undoMultiList = function(undoerData) {
     const endOffset = range.endOffset;
     const commonAncestor = undoerData.data.commonAncestor;
     const oldListables = undoerData.data.oldListables;
+    const depths = undoerData.data.depths;
     const newListType = undoerData.data.newListType;
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use backupSelection() and restoreSelection() to preserve selection.
+    _backupSelection();
     // Find all the listables first, because once we start mucking around with the list, we won't
     // be able to find them from indices any more. The "mucking around" involves removing things
     // from lists, splitting them, etc. While we are mucking around, the listables themselves will
     // still exist, but their location in the DOM will be changed.
     const selectedListables = [];
+    let currentList;
     for (let i = 0; i < indices.length; i++) {
         selectedListables.push(_childNodeIn(commonAncestor, indices[i]));
     };
     for (let i = 0; i < selectedListables.length; i++) {
         const selectedListable = selectedListables[i];
+        const depth = depths[i];
         const oldListable = oldListables[i];    // oldListable was what the selectedListable was before setting
+        const isListElement = _isListElement(selectedListable);
+        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
+        const nextDepth = (i < selectedListables.length - 1) ? depths[i + 1] : null;
+        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
+        const nextIsSameDepth = (nextDepth !== null) && (depth === nextDepth);
+        // We can end up with a case of the selectedListable being a <P> (i.e., a top-level paragraph),
+        // but the newListType being <UL> or <OL>. In this case, we won't find a newListableElement
+        // or a newListItem, since the selectedListable isn't in a list at all.
         const newListableElement = _findFirstParentElementInNodeNames(selectedListable, [newListType]);
         let newListItemElement = _findFirstParentElementInNodeNames(selectedListable, ['LI']);
         let tagRange = document.createRange();
@@ -2671,18 +2706,55 @@ const _undoMultiList = function(undoerData) {
         };
         sel.removeAllRanges();
         sel.addRange(tagRange);
+        // If !unsetAll, then we only set the new list type for OL or UL that are different
+        // from the oldListable. When the oldListable was not a OL or UL (e.g., it was P or Hx),
+        // we remove it from the list. We use the existing splitList method to do the hard work.
+        // If unsetAll, then we removed all lists, and now we need to make all of them back into items.
+        const untag = !unsetAll && newListableElement && (oldListable !== newSelectedListable.nodeName);
         let newSelectedListable;
-        if (_listTags.includes(oldListable)) {
-            // The old listable was OL or UL, not a P
-            const listItemElement = _splitList(newListItemElement, oldListable);
-            newSelectedListable = _findFirstParentElementInNodeNames(listItemElement, [oldListable]);
-        } else {
-            newSelectedListable = _splitList(newListItemElement);
-        }
+        if (untag) {
+            if (newListItemElement) {
+                // The old listable was OL or UL, not a P
+                const listItemElement = _splitList(newListItemElement, oldListable);
+                newSelectedListable = _findFirstParentElementInNodeNames(listItemElement, [oldListable]);
+            } else {
+                newSelectedListable = _splitList(newListItemElement);
+            };
+        } else if (unsetAll) {
+            // We know each selectedListable was previously unset, so now we need to reset them
+            // all to the original list type. We need to use depth to track whether we add the
+            // selectedListable to the currentList or we have to create a new one.
+            if (!currentList) {
+                currentList = _findFirstParentElementInNodeNames(selectedListable, _listTags);  // Probably null
+            }
+            let currentDepth = currentList && _depthWithin(selectedListable, _listTags);
+            if (!currentList) {
+                currentList = document.createElement(newListType);
+                selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                let newListItem = document.createElement('LI');
+                currentList.appendChild(newListItem);
+                newListItem.appendChild(selectedListable);
+            } else {
+                let newListItem = document.createElement('LI');
+                currentList.appendChild(newListItem);
+                newListItem.appendChild(selectedListable);
+            };
+            // The selectedListable's location in the DOM has likely changed, so push now.
+            oldListables.push(selectedListable.nodeName);
+            depths.push(_depthWithin(selectedListable, _listTags));
+            indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
+            // If the next selectedListable we are going to see is a sibling element of currentList,
+            // then leave currentList the same so it gets appended; else set currentList to null
+            // so that the next loop will create a new list as needed.
+            if (!nextIsSibling || !(nextIsSibling && nextIsSameDepth)) {
+                currentList = null;
+            };
+        };
         // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
         // untagging or tagging may change the indices.
         tagRange = document.getSelection().getRangeAt(0);
         undoerData.data.indices[i] = _childNodeIndicesByParent(newSelectedListable, commonAncestor);
+        undoerData.data.unsetAll = !unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2691,8 +2763,7 @@ const _undoMultiList = function(undoerData) {
             range.setEnd(newRange.endContainer, newRange.endOffset);
         };
     };
-    sel.removeAllRanges();
-    sel.addRange(range);
+    _restoreSelection();
     _callback('input');
 };
 
@@ -5750,6 +5821,20 @@ const _doPrevCell = function() {
  * Common private functions
  */
 //MARK: Common Private Functions
+
+/**
+ * Return the depth of node in parents contained in nodeNames. If the node is
+ * a top-level element, then depth===0.
+ */
+const _depthWithin = function(node, nodeNames) {
+    let depth = 0;
+    let parentElement = _findFirstParentElementInNodeNames(node.parentNode, nodeNames);
+    while (parentElement) {
+        depth++;
+        parentElement = _findFirstParentElementInNodeNames(parentElement.parentNode, nodeNames);
+    };
+    return depth;
+};
 
 /**
  * Return true if element and all of its children are empty or
