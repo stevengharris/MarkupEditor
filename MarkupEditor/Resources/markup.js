@@ -348,7 +348,7 @@ const _undoOperation = function(undoerData) {
             break;
         case 'list':
             _restoreSelection();
-            MU.toggleListItem(data.oldListType, false);
+            MU.toggleListItem(data.oldListType, data.removedContainingList, false);
             _backupSelection();
             break;
         case 'multiList':
@@ -2329,7 +2329,7 @@ const _redoMultiStyle = function(undoerData) {
  * @param {String}  newListType     The kind of list we want the list item to be in if we are turning it on or changing it.
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
-MU.toggleListItem = function(newListType, undoable=true) {
+MU.toggleListItem = function(newListType, restoreContainingList=false, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
@@ -2349,6 +2349,8 @@ MU.toggleListItem = function(newListType, undoable=true) {
     const isInListItem = selectionState['li'];
     // We will capture the newSelNode for restoring the selection along the way
     let newSelNode = null;
+    // Track whether we removed a list containing a list so we can restore on undo
+    let removedContainingList = false;
     if (oldListType) {
         // TOP-LEVEL CASE: We selected something in a list
         const listElement = _findFirstParentElementInNodeNames(selNode, [oldListType]);
@@ -2441,6 +2443,9 @@ MU.toggleListItem = function(newListType, undoable=true) {
                             // of list present without any list items in it. We don't have
                             // to do this, but it just seems less confusing to an end user.
                             _unsetTag(listElement, sel);
+                            // We need to track that we removed the list so that we can put any contained
+                            // list back in as its child when we undo
+                            removedContainingList = true;
                         }
                     }
                 }
@@ -2488,11 +2493,19 @@ MU.toggleListItem = function(newListType, undoable=true) {
         // TOP-LEVEL CASE: We selected something outside of any list
         // By definition, we want to put it in a newListType list
         const styledElement = _findFirstParentElementInNodeNames(selNode, [styleType]);
+        let nextElementSib;
         if (styledElement) {
+            nextElementSib = styledElement.nextElementSibling;
             newSelNode = _replaceNodeWithList(newListType, styledElement);
         } else {
+            nextElementSib = selNode.nextElementSibling;
             newSelNode = _replaceNodeWithList(newListType, selNode);
-        }
+        };
+        // If the nextElementSibling of what we just put into a list is also a list,
+        // then make it a child of the new list.
+        if (_isListElement(nextElementSib) && restoreContainingList) {
+            newSelNode.appendChild(nextElementSib);
+        };
     };
     // If we captured the newSelNode, then reset the selection based on it
     if (newSelNode) {
@@ -2510,7 +2523,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
     }
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType});
+        const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType, removedContainingList: removedContainingList});
         undoer.push(undoerData);
         _restoreSelection();
     }
@@ -2545,8 +2558,9 @@ const _multiList = function(newListType, undoable) {
         commonAncestor = commonAncestor.parentNode ?? MU.editor;     // MU.editor as a last ditch attempt to avoid problems
     };
     // Altho the selectedListables will change position in the DOM, they will still exist,
-    // so we can use backupSelection() and restoreSelection() to preserve selection.
-    _backupSelection();
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
     const tagRange = document.createRange();
     for (let i = 0; i < selectedListables.length; i++) {
         let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
@@ -2621,7 +2635,7 @@ const _multiList = function(newListType, undoable) {
             currentList = null;
         };
     };
-    _restoreSelection();
+    _restoreRange(savedRange);
     if (undoable) {
         _backupSelection()
         const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, depths: depths, indices: indices, unsetAll: unsetAll});
@@ -2666,8 +2680,9 @@ const _undoMultiList = function(undoerData) {
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
     // Altho the selectedListables will change position in the DOM, they will still exist,
-    // so we can use backupSelection() and restoreSelection() to preserve selection.
-    _backupSelection();
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
     // Find all the listables first, because once we start mucking around with the list, we won't
     // be able to find them from indices any more. The "mucking around" involves removing things
     // from lists, splitting them, etc. While we are mucking around, the listables themselves will
@@ -2677,6 +2692,7 @@ const _undoMultiList = function(undoerData) {
     for (let i = 0; i < indices.length; i++) {
         selectedListables.push(_childNodeIn(commonAncestor, indices[i]));
     };
+    const newSelectedListables = [];
     for (let i = 0; i < selectedListables.length; i++) {
         const selectedListable = selectedListables[i];
         const depth = depths[i];
@@ -2707,25 +2723,21 @@ const _undoMultiList = function(undoerData) {
         sel.removeAllRanges();
         sel.addRange(tagRange);
         // If !unsetAll, then we only set the new list type for OL or UL that are different
-        // from the oldListable. When the oldListable was not a OL or UL (e.g., it was P or Hx),
-        // we remove it from the list. We use the existing splitList method to do the hard work.
+        // from the oldListable. We use the existing splitList method to do the hard work.
         // If unsetAll, then we removed all lists, and now we need to make all of them back into items.
-        const untag = !unsetAll && newListableElement && (oldListable !== newSelectedListable.nodeName);
-        let newSelectedListable;
+        const untag = !unsetAll && newListableElement && newListItemElement && (oldListable !== newListableElement.nodeName);
+        const outdent = !unsetAll && newListableElement && (oldListable === newListableElement.nodeName);
         if (untag) {
-            if (newListItemElement) {
-                // The old listable was OL or UL, not a P
-                const listItemElement = _splitList(newListItemElement, oldListable);
-                newSelectedListable = _findFirstParentElementInNodeNames(listItemElement, [oldListable]);
-            } else {
-                newSelectedListable = _splitList(newListItemElement);
-            };
+            let styleElement = _splitList(newListItemElement);
+            newSelectedListables.push(styleElement);
+        } else if (outdent) {
+            _doListOutdent(false);
         } else if (unsetAll) {
             // We know each selectedListable was previously unset, so now we need to reset them
             // all to the original list type. We need to use depth to track whether we add the
             // selectedListable to the currentList or we have to create a new one.
             if (!currentList) {
-                currentList = _findFirstParentElementInNodeNames(selectedListable, _listTags);  // Probably null
+                currentList = _findFirstParentElementInNodeNames(selectedListable, _listTags);
             }
             let currentDepth = currentList && _depthWithin(selectedListable, _listTags);
             if (!currentList) {
@@ -2734,27 +2746,20 @@ const _undoMultiList = function(undoerData) {
                 let newListItem = document.createElement('LI');
                 currentList.appendChild(newListItem);
                 newListItem.appendChild(selectedListable);
+                newSelectedListables.push(currentList);     // Track the new list we just created
             } else {
                 let newListItem = document.createElement('LI');
                 currentList.appendChild(newListItem);
                 newListItem.appendChild(selectedListable);
             };
-            // The selectedListable's location in the DOM has likely changed, so push now.
-            oldListables.push(selectedListable.nodeName);
-            depths.push(_depthWithin(selectedListable, _listTags));
-            indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
-            // If the next selectedListable we are going to see is a sibling element of currentList,
-            // then leave currentList the same so it gets appended; else set currentList to null
-            // so that the next loop will create a new list as needed.
+            // If the next selectedListable we are going to see is a not a sibling element, or if
+            // it's a sibling but not at the same depth, then set currentList to null to
+            // force creation and insertion of a new list; else just keep adding new list
+            // items to currentList.
             if (!nextIsSibling || !(nextIsSibling && nextIsSameDepth)) {
                 currentList = null;
             };
         };
-        // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
-        // untagging or tagging may change the indices.
-        tagRange = document.getSelection().getRangeAt(0);
-        undoerData.data.indices[i] = _childNodeIndicesByParent(newSelectedListable, commonAncestor);
-        undoerData.data.unsetAll = !unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2763,7 +2768,18 @@ const _undoMultiList = function(undoerData) {
             range.setEnd(newRange.endContainer, newRange.endOffset);
         };
     };
-    _restoreSelection();
+    // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
+    // the listables, depths, and indices of the elements have changed after undo.
+    undoerData.data.oldListables = [];
+    undoerData.data.depths = [];
+    undoerData.data.indices = [];
+    newSelectedListables.forEach(newSelectedListable => {
+        undoerData.data.oldListables.push(newSelectedListable.nodeName);
+        undoerData.data.depths.push(_depthWithin(newSelectedListable, _listTags));
+        undoerData.data.indices.push(_childNodeIndicesByParent(newSelectedListable, commonAncestor));
+    });
+    undoerData.data.unsetAll = !unsetAll;
+    _restoreRange(savedRange);
     _callback('input');
 };
 
@@ -3464,7 +3480,7 @@ const _insertInList = function(fragment) {
 const _doListIndent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
+    if (!selNode) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
@@ -3573,22 +3589,28 @@ const _indentListItem = function(existingListItem, existingList) {
 const _doListOutdent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
+    if (!selNode) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!(existingList && existingListItem)) { return null };
     _backupSelection();
     const outdentedItem = _outdentListItem(existingListItem, existingList);
-    _restoreSelection()
+    _restoreSelection();
     // When outdenting to get out of a list, we will always end up in a
-    // style tag of some kind. The operation will not be undoable.
-    // User can undo by pressing the delete key to get back in the list.
-    if (outdentedItem && (!_styleTags.includes(outdentedItem.nodeName))) {
-        if (undoable) {
-            _backupSelection();
-            const undoerData = _undoerData('outdent');
-            undoer.push(undoerData);
+    // paragraph style tag of some kind. If that's the case, then treat the operation
+    // like toggleListItem so we get the proper undo behavior that restores any
+    // previously nested list.
+    const outdentedFromList = outdentedItem && _paragraphStyleTags.includes(outdentedItem.nodeName);
+    if (outdentedItem && undoable) {
+        _backupSelection();
+        let undoerData;
+        if (outdentedFromList) {
+            const removedContainingList = _isListElement(outdentedItem.nextElementSibling);
+            undoerData = _undoerData('list', {newListType: outdentedItem.nodeName, oldListType: existingList.nodeName, removedContainingList: removedContainingList});
+        } else {
+            undoerData = _undoerData('outdent');
         };
+        undoer.push(undoerData);
     };
     _callback('input');
 };
@@ -3637,9 +3659,10 @@ const _outdentListItem = function(existingListItem, existingList) {
     // To do this, find the existingListItem and the existingList it is inside of.
     // The existingList's parentNode's nextSibling is what we want to put the
     // existingListItem before. However, before we do that, move all of existingListItem's
-    // nextSiblings to be its children, thereby "moving down" any nodes below it in the
+    // nextElementSiblings to be its children, thereby "moving down" any nodes below it in the
     // existingList. When done, if existingList is empty, remove it.
-    const nextListItem = existingList.parentNode.nextElementSibling;
+    let nextListItem = existingList.parentNode.nextElementSibling;
+    if (!_isListItemElement(nextListItem)) { nextListItem = null };
     let sib = existingListItem.nextElementSibling;
     if (sib) {
         const newList = document.createElement(existingList.nodeName);
@@ -3708,7 +3731,7 @@ const _splitList = function(listItemElement, newListType) {
         oldList.replaceWith(newList);
         return listItemElement;
     } else {
-        // We want the contents of listItemElement to be embedded between
+        // We want the contents of listItemElement to be embedded
         // at the right place in the document, which varies depending on
         // whether there was a postList to mark the location.
         let insertionPoint;
@@ -5828,7 +5851,7 @@ const _doPrevCell = function() {
  */
 const _depthWithin = function(node, nodeNames) {
     let depth = 0;
-    let parentElement = _findFirstParentElementInNodeNames(node.parentNode, nodeNames);
+    let parentElement = _findFirstParentElementInNodeNames(node, nodeNames);
     while (parentElement) {
         depth++;
         parentElement = _findFirstParentElementInNodeNames(parentElement.parentNode, nodeNames);
@@ -6389,19 +6412,21 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
     };
     while (child) {
         excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
-        if (!excluded) {
-            if (names.includes(child.nodeName)) { nodes.push(child) };
-            // If this child has children, the use _allChildNodesWithNames to get them all
-            // but stop (and include if proper) when we find endContainer in them
-            if (_isElementNode(child) && (child.childNodes.length > 0)) {
-                let traversalData = _allChildNodesWithNames(child, names, endContainer);
+        // Even tho child might be embedded in the exclusion list, we still need to look thru its children
+        // to stop traversal if we encounter endContainer.
+        if (!excluded && (names.includes(child.nodeName))) { nodes.push(child) };
+        // If this child has children, the use _allChildNodesWithNames to get them all
+        // but stop (and include if proper) when we find endContainer in them
+        if (_isElementNode(child) && (child.childNodes.length > 0)) {
+            let traversalData = _allChildNodesWithNames(child, names, endContainer);
+            if (!excluded) {
                 let subNodes = traversalData.nodes;
                 if (subNodes.length > 0) {
                     nodes.push(...subNodes);
                 };
-                // If we found endContainer, then .stopped is true; else, we need to keep looking
-                if (traversalData.stopped) { child = null };
             };
+            // If we found endContainer, then .stopped is true; else, we need to keep looking
+            if (traversalData.stopped) { child = null };
         };
         // If we did not find endContainer, then go to child's nextSibling and
         // continue. If there is no nextSibling, then go up to the parent and
