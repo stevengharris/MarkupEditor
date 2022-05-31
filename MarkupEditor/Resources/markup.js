@@ -3606,7 +3606,7 @@ const _doListOutdent = function(undoable=true) {
         let undoerData;
         if (outdentedFromList) {
             const removedContainingList = _isListElement(outdentedItem.nextElementSibling);
-            undoerData = _undoerData('list', {newListType: outdentedItem.nodeName, oldListType: existingList.nodeName, removedContainingList: removedContainingList});
+            undoerData = _undoerData('list', {newListType: existingList.nodeName, oldListType: existingList.nodeName, removedContainingList: removedContainingList});
         } else {
             undoerData = _undoerData('outdent');
         };
