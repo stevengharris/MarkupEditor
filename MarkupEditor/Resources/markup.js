@@ -2541,37 +2541,43 @@ const _multiList = function(newListType, undoable) {
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
     const range = sel.getRangeAt(0);
-    let commonAncestor = range.commonAncestorContainer;
-    let oldListables = [];
-    let indices = [];
-    let depths = [];
-    let currentList;
     const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType]) );
     // If all elements are of the same newListType already, then unsetAll===true; otherwise,
     // unsetAll===false indicates that all elements will be set to newListType, with the ones
     // that are already in newListType left alone. We need to know what unsetAll was in undo also.
     const unsetAll = listableElements.length === selectedListables.length;
-    // If we are unsetting all and commonAncestor is in _listTags, we might be mucking with the commonAncestor
-    // itself as we untag things in such a way that it is no longer a common ancestor of elements across the range.
-    // To prevent any problems, use the commonAncestor's parent.
-    if (unsetAll && _isListElement(commonAncestor)) {
-        commonAncestor = commonAncestor.parentNode ?? MU.editor;     // MU.editor as a last ditch attempt to avoid problems
+    // Rather than use the range.commonAncestorContainer, we use MU.editor because it's too
+    // easy for the common ancestor to end up being something we change.
+    const commonAncestor = MU.editor;
+    // Record the indices of selectedListables before we modify them, because this tells us how
+    // to reassemble them on undo. The multilist operation may change the number of listables, so
+    // "originalIndices" here refers to what exists when we start. As we loop over selectedListables,
+    // we will be creating newListableElements, and for each of those we track the originalIndices
+    // entry they were derived from in "oldIndices". This tells us the location and depth in the list
+    // they were derived from to use during undo.
+    const originalIndices = [];  // So we can tell how to reassemble on undo
+    for (let i = 0; i < selectedListables.length; i++) {
+        originalIndices[i] = _childNodeIndicesByParent(selectedListables[i], commonAncestor)
     };
     // Altho the selectedListables will change position in the DOM, they will still exist,
     // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
     // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
     const savedRange = _rangeProxy();
     const tagRange = document.createRange();
+    const newListableElements = [];
+    const oldListables = [];
+    const oldIndices = [];
+    let currentList, currentListItem;
     for (let i = 0; i < selectedListables.length; i++) {
         let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
         const isListElement = _isListElement(selectedListable);
+        const oldIndex = originalIndices[i];
         const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
         const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
         if (unsetAll) {
             // Every selectedListable is of newListType, that we are going to remove.
             // First, eliminate all the list items, which should hold styled elements
             // and hold onto all the styled elements we end up with in unsetChildren.
-            const depth = _depthWithin(selectedListable, _listTags);
             const unsetChildren = [];
             let childNode = selectedListable.firstChild;
             while (childNode) {
@@ -2591,56 +2597,107 @@ const _multiList = function(newListType, undoable) {
             // so that we can retag them on undo.
             for (let j = 0; j < unsetChildren.length; j++) {
                 let unsetChild = unsetChildren[j];
-                oldListables.push(newListType);     // Remains the same for each child
-                depths.push(depth);                 // Remains the same for each child
-                indices.push(_childNodeIndicesByParent(unsetChild, commonAncestor));
+                oldListables.push(newListType);                 // Remains the same for each child
+                oldIndices.push(oldIndex);                      // Remains the same for each child
+                newListableElements.push(unsetChild);           // Track so we can get indices when done
             };
         } else {
             // We are only going to set the ones that are not of newListType, adding them to
             // the list we are currently in, or creating a new currentList as needed
+            let oldListable = selectedListable.nodeName;
             if (!currentList) {
                 if (isListElement) {
                     currentList = selectedListable;
-                    if (selectedListable.nodeName !== newListType) {
+                    if (oldListable !== newListType) {
                         selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
                     };
                 } else {
                     currentList = document.createElement(newListType);
                     selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
-                    let newListItem = document.createElement('LI');
-                    currentList.appendChild(newListItem);
-                    newListItem.appendChild(selectedListable);
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
                 };
             } else {
                 if (isListElement) {
-                    if (selectedListable.nodeName !== newListType) {
+                    if (oldListable !== newListType) {
                         selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
                     };
-                    currentList.appendChild(selectedListable);
+                    if (currentListItem) {
+                        currentListItem.appendChild(selectedListable);  // Should always be true
+                    } else {
+                        currentList.appendChild(selectedListable);
+                    };
                 } else {
-                    let newListItem = document.createElement('LI');
-                    currentList.appendChild(newListItem);
-                    newListItem.appendChild(selectedListable);
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
                 };
             };
             // The selectedListable's location in the DOM has likely changed, so push now.
-            oldListables.push(selectedListable.nodeName);
-            depths.push(_depthWithin(selectedListable, _listTags));
-            indices.push(_childNodeIndicesByParent(selectedListable, commonAncestor));
+            oldListables.push(oldListable);
+            oldIndices.push(oldIndex);
+            newListableElements.push(selectedListable);
         };
         // If the next selectedListable we are going to see is a sibling element of currentList,
         // then leave currentList the same so it gets appended; else set currentList to null
         // so that the next loop will create a new list as needed.
         if (!nextIsSibling) {
             currentList = null;
+            currentListItem = null;
         };
     };
+    // Now find indices after looping over all the original selectedListables
+    const indices = [];
+    for (let i = 0; i < newListableElements.length; i++) {
+        indices.push(_childNodeIndicesByParent(newListableElements[i], commonAncestor));
+    };
+    // For posterity, even though it looks visually like OL/UL are at a lower level in a nested list
+    // hierarchy than P, they are not. Consider:
+    //  <p id="p1">Top-level paragraph 1</p>
+    //  <ul id="ul1">
+    //      <li>
+    //          <p id="p2>Unordered list paragraph 1</p>
+    //          <ol id="ol1">
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </li>
+    //  </ul>
+    //  <p id="p3">Top-level paragraph 2</p>
+    //  <ol id="ol2">
+    //      <li><p>Ordered list paragraph 1</p></li>
+    //  </ol>
+    // In this arrangement, p1, ul1, p3, and ol2 are siblings, and p2 and ol1 are siblings. This is
+    // structurally true even though ul1 looks like it is indented compared to p1, and even though
+    // ol1 looks like it is indented compared to p2. In the above, the listables are, in breadthwise
+    // order: p1, ul1, p3, ol2, ol1. Now if all of those listables are set to UL using multilist,
+    // we end up with (preserving the ids even though all list types are now UL):
+    //  <ul id="ul0">
+    //      <li>
+    //          <p id="p1">Top-level paragraph 1</p>
+    //          <ul id="ul1">
+    //              <li>
+    //                  <p id="p2">Unordered list paragraph 1</p>
+    //                  <ul id="ol1">
+    //                      <li><p>Ordered sublist paragraph</p></li>
+    //                  </ul>
+    //              </li>
+    //          </ul>
+    //      </li>
+    //      <li>
+    //          <p id="p3">Top-level paragraph 2</p>
+    //          <ul id="ol2">
+    //              <li><p>Ordered list paragraph 1</p></li>
+    //          </ul>
+    //      </li>
+    //  </ul>
+    // Note that p1 and ul1 are now siblings, and p3 and ol2 are now siblings.
     _restoreRange(savedRange);
     if (undoable) {
-        _backupSelection()
-        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, depths: depths, indices: indices, unsetAll: unsetAll});
+        _backupSelection();
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, oldIndices: oldIndices, indices: indices, unsetAll: unsetAll});
         undoer.push(undoerData);
-        _restoreSelection()
+        _restoreSelection();
     };
     _callback('input');
 };
@@ -2675,7 +2732,8 @@ const _undoMultiList = function(undoerData) {
     const endOffset = range.endOffset;
     const commonAncestor = undoerData.data.commonAncestor;
     const oldListables = undoerData.data.oldListables;
-    const depths = undoerData.data.depths;
+    const oldIndices = undoerData.data.oldIndices;
+    const oldContainerIndices = _containerIndices(oldIndices);    // Points to containing elements in oldIndices
     const newListType = undoerData.data.newListType;
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
@@ -2688,25 +2746,30 @@ const _undoMultiList = function(undoerData) {
     // from lists, splitting them, etc. While we are mucking around, the listables themselves will
     // still exist, but their location in the DOM will be changed.
     const selectedListables = [];
-    let currentList;
     for (let i = 0; i < indices.length; i++) {
-        selectedListables.push(_childNodeIn(commonAncestor, indices[i]));
+        let selectedListable = _childNodeIn(commonAncestor, indices[i]);
+        selectedListables.push(selectedListable);
     };
+    let currentList, currentListItem;
     const newSelectedListables = [];
     for (let i = 0; i < selectedListables.length; i++) {
         const selectedListable = selectedListables[i];
-        const depth = depths[i];
-        const oldListable = oldListables[i];    // oldListable was what the selectedListable was before setting
+        const oldIndex = oldIndices[i];         // oldIndex is what indices to selectedListable were before setting
+        const oldListable = oldListables[i];    // oldListable is what the selectedListable was before setting
         const isListElement = _isListElement(selectedListable);
-        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
-        const nextDepth = (i < selectedListables.length - 1) ? depths[i + 1] : null;
-        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
-        const nextIsSameDepth = (nextDepth !== null) && (depth === nextDepth);
+        const nextExists = (i < selectedListables.length - 1);
+        const nextListable = nextExists && selectedListables[i + 1];
+        const nextOldIndex = nextExists && oldIndices[i + 1];
+        const nextOldListable = nextExists && oldListables[i + 1]
+        // When oldContainerIndices[i+1] is non-null, it holds the index into oldIndices where
+        // we will find the array of childNodes to find the element that contains the nextListable
+        const nextIsSubList = nextExists && (oldContainerIndices[i + 1] !== null);
         // We can end up with a case of the selectedListable being a <P> (i.e., a top-level paragraph),
         // but the newListType being <UL> or <OL>. In this case, we won't find a newListableElement
         // or a newListItem, since the selectedListable isn't in a list at all.
         const newListableElement = _findFirstParentElementInNodeNames(selectedListable, [newListType]);
-        let newListItemElement = _findFirstParentElementInNodeNames(selectedListable, ['LI']);
+        // Since a UL/OL can be within a LI, we need to exclude _listTags when searching upward for the LI
+        let newListItemElement = _findFirstParentElementInNodeNames(selectedListable, ['LI'], _listTags);
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedListable === startContainer);
         const newEndContainer = (i === indices.length - 1) && (selectedListable === endContainer);
@@ -2723,41 +2786,45 @@ const _undoMultiList = function(undoerData) {
         sel.removeAllRanges();
         sel.addRange(tagRange);
         // If !unsetAll, then we only set the new list type for OL or UL that are different
-        // from the oldListable. We use the existing splitList method to do the hard work.
-        // If unsetAll, then we removed all lists, and now we need to make all of them back into items.
+        // from the oldListable. We use the existing splitList method to do the hard work when
+        // removing a tag altogether. When the tag changes, just replaceTag.
+        // If unsetAll, then we removed all lists at "do" time, and now we need to make all listables
+        // back into lists with the proper nesting.
         const untag = !unsetAll && newListableElement && newListItemElement && (oldListable !== newListableElement.nodeName);
-        const outdent = !unsetAll && newListableElement && (oldListable === newListableElement.nodeName);
+        const replaceTag = !unsetAll && _isListElement(newListableElement) && (oldListable !== newListableElement.nodeName);
         if (untag) {
             let styleElement = _splitList(newListItemElement);
             newSelectedListables.push(styleElement);
-        } else if (outdent) {
-            _doListOutdent(false);
+        } else if (replaceTag) {
+            let listElement = _replaceTag(newListableElement, oldListable);
+            newSelectedListables.push(listElement);
         } else if (unsetAll) {
-            // We know each selectedListable was previously unset, so now we need to reset them
-            // all to the original list type. We need to use depth to track whether we add the
-            // selectedListable to the currentList or we have to create a new one.
-            if (!currentList) {
-                currentList = _findFirstParentElementInNodeNames(selectedListable, _listTags);
-            }
-            let currentDepth = currentList && _depthWithin(selectedListable, _listTags);
+            // If currentList is null, we have to create it as a top-level list. At the end of the
+            // loop, we set it based on the oldIndices, either to null because we need to create
+            // a new top-level list for the next listable, or to a sublist that we create or have
+            // previously created.
             if (!currentList) {
                 currentList = document.createElement(newListType);
                 selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
-                let newListItem = document.createElement('LI');
-                currentList.appendChild(newListItem);
-                newListItem.appendChild(selectedListable);
-                newSelectedListables.push(currentList);     // Track the new list we just created
-            } else {
-                let newListItem = document.createElement('LI');
-                currentList.appendChild(newListItem);
-                newListItem.appendChild(selectedListable);
             };
-            // If the next selectedListable we are going to see is a not a sibling element, or if
-            // it's a sibling but not at the same depth, then set currentList to null to
-            // force creation and insertion of a new list; else just keep adding new list
-            // items to currentList.
-            if (!nextIsSibling || !(nextIsSibling && nextIsSameDepth)) {
-                currentList = null;
+            // When we unsetAll previously, every listable  has to be placed in a new LI in the currentList
+            let currentListItem = document.createElement('LI');
+            currentList.appendChild(currentListItem);
+            currentListItem.appendChild(selectedListable);
+            // If the next selectedListable is a subList, we have to create a new UL or OL to put
+            // in the LI that we already created. That LI is not necessarily currentListItem.
+            // The oldListIndex has the path through commonAncestor childNodes to find that LI.
+            // The last item in oldListIndex is the childNode (OL or OL) we are about to create,
+            // and the path up to that last item gives us the LI it should reside in.
+            if (nextIsSubList) {
+                // The list item we are going to put a new subList into should already exist
+                // because of the ordering we restore the list in.
+                const listItemIndex = nextOldIndex.slice(0, -1);    // Remove the last item
+                const listItem = _childNodeIn(commonAncestor, listItemIndex);
+                const subList = document.createElement(newListType);
+                listItem.appendChild(subList);
+                currentList = subList;                      // Use the new sublist for the next item
+                newSelectedListables.push(currentList);     // Track the new list we just created
             };
         };
         const newRange = sel.getRangeAt(0);
@@ -2781,6 +2848,27 @@ const _undoMultiList = function(undoerData) {
     undoerData.data.unsetAll = !unsetAll;
     _restoreRange(savedRange);
     _callback('input');
+};
+
+/**
+ * Return whether index1 is in the same list as index2
+ *
+ * For example, [1, 0, 0] is in the same list as [1, 0, 1],
+ * while [1, 0, 0] is not in the same list as [1, 1, 0].
+ */
+const _listSiblings = function(index1, index2) {
+    return _compareIndexLevel(index1, index2) === 0;
+};
+
+/**
+ * Return whether index1 is contained within index2
+ *
+ * For example, [1] contains both [1, 0] and [1, 0, 1],
+ * and [1, 0, 1] contains [1, 0, 1, 1].
+ */
+const _listContains = function(index1, index2) {
+    const containerIndices = _containerIndices([index1, index2]);
+    return containerIndices[1] !== null
 };
 
 /**
@@ -6324,6 +6412,40 @@ const _compareIndicesBreadthwise = function(a, b) {
 };
 
 /**
+ * Compare two indices found from _childNodeIndicesByParent to determine if they are
+ * at different levels.
+ *
+ * For example, [[1], [1, 5], [1, 1], [2], [2, 4], [3]].sort(_compareIndexLevel)
+ * returns [[1], [2], [3], [1, 5], [1, 1], [2, 4]].
+ * Not sure the sorting operation itself is useful, but this is used to determine
+ * if two indexes are at the same level and writted in the same style at the other
+ * _compare functions.
+ *
+ * Return -1 if a is at a shallower level than b
+ * Return 1 if a is at a deeper level than b
+ * Return 0 if they are at the same level
+ */
+const _compareIndexLevel = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    for (let i = 0; i < (aLength - 1); i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
+    return 0;
+};
+
+/**
  * Return whether the selection includes multiple list tags or top-level styles,
  * both of which can be acted upon in _multiList()
  */
@@ -6859,6 +6981,68 @@ const _childNodeIndex = function(node) {
         _node = _node.previousSibling;
     };
     return childCount;
+};
+
+/**
+ * Given indices for a set of nodes under a common ancestor derived using
+ * childNodeIndicesByParent, return an array of indexes into the indices
+ * array that identifies the closest containing node, where that node can be null.
+ *
+ * For example, if indices is:
+ *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+ * then we return:
+ *  [null, null, 0, 1, 0, 1, 3]
+ * This indicated that the container of [1, 0] is [1], the container of
+ * [3, 1] is [3], the container of [3, 2] is [3], and the container of
+ * [3, 1, 0, 5] is [3, 1]. The other items in indices have no containers
+ * within indices.
+ *
+ * We need this to identify how to reassemble a list on undo of unsetAll.
+ */
+const _containerIndices = function(indices) {
+    // It's going to make life easier to put indices in depthwise sorted order,
+    // but we need to return an array that is in the original order.
+    // For example, if indices is:
+    //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+    // then sortedIndices will be:
+    //  [[1], [1, 0], [3], [3, 1], [3, 1, 0, 5], [3, 2], [4]]
+    if (indices.length === 0) { return containerIndices };
+    const sortedIndices = [...indices].sort(_compareIndicesDepthwise);  // Don't sort in place
+    const orphanLength = sortedIndices[0].length; // Any element of this size have no parents
+    const sortedContainerIndices = [];
+    for (let i = 0; i < sortedIndices.length; i++) {
+        let sortedIndex = sortedIndices[i];
+        const sortedIndexLength = sortedIndex.length;
+        if (sortedIndexLength === orphanLength) {
+            sortedContainerIndices[i] = null;
+        } else {
+            // Otherwise, see if we can find a parent within sortedIndices that matches
+            let matchedIndex = null;
+            for (let j = 0; j < i; j++) {
+                let possibleMatch = sortedIndices[j];
+                // If possibleMatch is shorter than index, it could be the parent
+                if (possibleMatch.length < sortedIndex.length) {
+                    for (let k = 0; k < possibleMatch.length; k++) {
+                        if (possibleMatch[k] === sortedIndex[k]) {
+                            matchedIndex = j;
+                        } else {
+                            break;
+                        };
+                    };
+                };
+            };
+            sortedContainerIndices[i] = matchedIndex;
+        };
+    };
+    // Populate containerIndices in the order of original indices, not sortedContainerIndices
+    const containerIndices = Array(sortedContainerIndices.length).fill(null);
+    for (let i = 0; i < sortedContainerIndices.length; i++) {
+        const sortedContainerIndex = sortedContainerIndices[i];
+        const sortedIndex = sortedIndices[i];
+        const j = indices.indexOf(sortedIndex);
+        containerIndices[j] = sortedContainerIndex;
+    };
+    return containerIndices;
 };
 
 /*

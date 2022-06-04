@@ -1121,7 +1121,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 HtmlTest(
                     description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                     startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
-                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></ul>",
+                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></li></ul>",
                     startId: "p",
                     startOffset: 2,
                     endId: "h",
@@ -1157,7 +1157,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 HtmlTest(
                     description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                     startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
-                    endHtml: "<ol><li><p id=\"p\">Hello paragraph</p></li><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></ol>",
+                    endHtml: "<ol><li><p id=\"p\">Hello paragraph</p><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></li></ol>",
                     startId: "p",
                     startOffset: 2,
                     endId: "h",
@@ -1192,8 +1192,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             (
                 HtmlTest(
                     description: "UL interleaved paragraphs and lists",
-                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
-                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p></li><ul><li><p>Unordered list paragraph 1</p></li><ul><li><p>Ordered sublist paragraph</p></li></ul></ul><li><p>Top-level paragraph 2</p></li><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></ul>",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
                     startId: "p1",
                     startOffset: 2,
                     endId: "p2",
@@ -1209,8 +1209,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Remove UL interleaved paragraphs and lists",
-                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p></li><ul><li><p>Unordered list paragraph 1</p></li><ul><li><p>Ordered sublist paragraph</p></li></ul></ul><li><p>Top-level paragraph 2</p></li><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></ul>",
+                    description: "Unset all UL interleaved paragraphs and lists",
+                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
                     endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
                     startId: "p1",
                     startOffset: 2,
@@ -1220,6 +1220,24 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 { handler in
                     self.webView.getSelectionState() { state in
                         self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Set all OL lists and sublists",
+                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
                             handler()
                         }
                     }
@@ -1228,8 +1246,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             (
                 HtmlTest(
                     description: "OL interleaved paragraphs and lists",
-                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
-                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p></li><ol><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ol><li><p>Top-level paragraph 2</p></li><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></ol>",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
                     startId: "p1",
                     startOffset: 2,
                     endId: "p2",
@@ -1245,8 +1263,8 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Remove OL interleaved paragraphs and lists",
-                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p></li><ol><li><p>Unordered list paragraph 1</p></li><ol><li><p>Ordered sublist paragraph</p></li></ol></ol><li><p>Top-level paragraph 2</p></li><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></ol>",
+                    description: "Unset all OL interleaved paragraphs and lists",
+                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
                     endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
                     startId: "p1",
                     startOffset: 2,
@@ -1256,6 +1274,24 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 { handler in
                     self.webView.getSelectionState() { state in
                         self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Set all UL lists and sublists",
+                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
                             handler()
                         }
                     }
