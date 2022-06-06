@@ -1191,6 +1191,80 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
+                    description: "UL <ul><li><h5>Un|ordered <i>H5</i> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    undoHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li>Ordered sublist.</li></ul></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL <ul><li><h5>Un|ordered <i>H5</i> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove OL <ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    startHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    undoHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li>Ordered sublist.</li></ol></li></ol>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
                     description: "UL interleaved paragraphs and lists",
                     startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
                     endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
@@ -1302,6 +1376,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Multilist operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
@@ -1313,7 +1388,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
-                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }

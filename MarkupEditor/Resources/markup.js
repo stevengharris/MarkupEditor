@@ -2541,7 +2541,7 @@ const _multiList = function(newListType, undoable) {
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
     const range = sel.getRangeAt(0);
-    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType]) );
+    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType], ['LI']));
     // If all elements are of the same newListType already, then unsetAll===true; otherwise,
     // unsetAll===false indicates that all elements will be set to newListType, with the ones
     // that are already in newListType left alone. We need to know what unsetAll was in undo also.
@@ -2704,20 +2704,6 @@ const _multiList = function(newListType, undoable) {
 
 /**
  * Undo the previous multiList operation.
- *
- * A list-specific complication is that when we do multi-list, we combine elements into
- * a single list if we can. Consider the original with selection at |:
- *
- *  <p>He|llo paragraph</p>
- *  <ul><li><h5>He|llo header in list</h5></li></ul>
- *
- * which when changed to <UL> becomes (without the nice formatting):
- *
- *  <ul>
- *      <li><p>He|llo paragraph</p></li>
- *      <li><h5>He|llo header in list</h5></li>
- *  </ul>
- *
  */
 const _undoMultiList = function(undoerData) {
     const sel = document.getSelection();
@@ -2851,40 +2837,71 @@ const _undoMultiList = function(undoerData) {
 };
 
 /**
- * Return whether index1 is in the same list as index2
- *
- * For example, [1, 0, 0] is in the same list as [1, 0, 1],
- * while [1, 0, 0] is not in the same list as [1, 1, 0].
- */
-const _listSiblings = function(index1, index2) {
-    return _compareIndexLevel(index1, index2) === 0;
-};
-
-/**
- * Return whether index1 is contained within index2
- *
- * For example, [1] contains both [1, 0] and [1, 0, 1],
- * and [1, 0, 1] contains [1, 0, 1, 1].
- */
-const _listContains = function(index1, index2) {
-    const containerIndices = _containerIndices([index1, index2]);
-    return containerIndices[1] !== null
-};
-
-/**
  * Redo the previous undo of the multiList operation.
  */
 const _redoMultiList = function(undoerData) {
+    _undoMultiList(undoerData)
     /*
-     const _redoMultiStyle = function(undoerData) {
-         const commonAncestor = undoerData.data.commonAncestor;
-         const newStyle = undoerData.data.newStyle;
-         const indices = undoerData.data.indices;
-         for (let i = 0; i < indices.length; i++) {
-             const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
-             _replaceTag(selectedParagraph, newStyle.toUpperCase());
+     const sel = document.getSelection();
+     if (!sel || sel.rangeCount === 0) {
+         MUError.NoSelection.callback();
+         return;
+     };
+     const range = sel.getRangeAt(0);
+     const startContainer = range.startContainer;
+     const startOffset = range.startOffset;
+     const endContainer = range.endContainer;
+     const endOffset = range.endOffset;
+     const commonAncestor = undoerData.data.commonAncestor;
+     const oldFormats = undoerData.data.oldFormats;
+     const newFormat = undoerData.data.newFormat;
+     const indices = undoerData.data.indices;
+     const unsetAll = undoerData.data.unsetAll;
+     for (let i = 0; i < indices.length; i++) {
+         const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
+         const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+         let tagRange = document.createRange();
+         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+         const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
+         if (newStartContainer) {
+             tagRange.setStart(selectedTextNode, startOffset);
+         } else {
+             tagRange.setStart(selectedTextNode, 0);
+         };
+         if (newEndContainer) {
+             tagRange.setEnd(selectedTextNode, endOffset);
+         } else {
+             tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+         };
+         sel.removeAllRanges();
+         sel.addRange(tagRange);
+         // If unsetAll, then all elements identified by indices need to be put back in
+         // newFormat.
+         // If !unsetAll, only the elements in newFormat need to be untagged.
+         const untag = !unsetAll && newFormatElement;
+         if (untag) {
+             _unsetTagInRange(newFormatElement, tagRange);
+         } else if (unsetAll) {
+             _setTagInRange(newFormat, tagRange);
+         };
+         // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
+         // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
+         // undo.
+         tagRange = document.getSelection().getRangeAt(0);
+         undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+         undoerData.data.unsetAll = !unsetAll;
+         const newRange = sel.getRangeAt(0);
+         if (newStartContainer) {
+             range.setStart(newRange.startContainer, newRange.startOffset);
+         };
+         if (newEndContainer) {
+             range.setEnd(newRange.endContainer, newRange.endOffset);
          };
      };
+     sel.removeAllRanges();
+     sel.addRange(range);
+     _callback('input');
      */
     _consoleLog("Implement _redoMultiList");
 };
