@@ -24,7 +24,9 @@ class BasicTests: XCTestCase, MarkupDelegate {
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        wait(for: [loadedExpectation], timeout: 10)
+        // Not sure what happened with XCTest, but somewhere along Xcode upgrades this initial
+        // loading *in testing only, not in real life usage* takes a very long time.
+        wait(for: [loadedExpectation], timeout: 15)
     }
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {

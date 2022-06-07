@@ -1965,7 +1965,6 @@ const _undoMultiFormat = function(undoerData) {
         // redo.
         tagRange = document.getSelection().getRangeAt(0);
         undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
-        undoerData.data.unsetAll = !unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -1997,11 +1996,19 @@ const _redoMultiFormat = function(undoerData) {
     const oldFormats = undoerData.data.oldFormats;
     const newFormat = undoerData.data.newFormat;
     const indices = undoerData.data.indices;
-    const unsetAll = undoerData.data.unsetAll;
+    const selectedTextNodes = [];
+    indices.forEach(index => {
+        selectedTextNodes.push(_childNodeIn(commonAncestor, index));
+    });
+    const formattedElements = selectedTextNodes.filter( textNode => _findFirstParentElementInNodeNames(textNode, [newFormat]) );
+    // If all nodes are of the same newFormat already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all nodes will be set to newFormat, with the ones
+    // that are already in newFormat left alone. We need to know what unsetAll was in undo also.
+    const unsetAll = formattedElements.length === selectedTextNodes.length;
     for (let i = 0; i < indices.length; i++) {
-        const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+        const selectedTextNode = selectedTextNodes[i];
         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
-        const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        const existingFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
         const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
@@ -2020,10 +2027,20 @@ const _redoMultiFormat = function(undoerData) {
         // If unsetAll, then all elements identified by indices need to be put back in
         // newFormat.
         // If !unsetAll, only the elements in newFormat need to be untagged.
-        const untag = !unsetAll && newFormatElement;
-        if (untag) {
+        if (unsetAll) {
+            // We may need to select a part of the selectedTextNode (or perhaps all of it,
+            // depending on tagRange). If necessary, _selectedSubTextElement subdivides
+            // selectedTextNode into 2 nodes while leaving sel set to the subnode that needs
+            // to be untagged.
+            const newFormatElement = _subTextElementInRange(tagRange, newFormat);
+            tagRange = document.getSelection().getRangeAt(0);
             _unsetTagInRange(newFormatElement, tagRange);
-        } else if (unsetAll) {
+        } else if (!existingFormatElement) {
+            // Set tags using tagRange, not the selection.
+            // When the selection includes leading or trailing blanks, the startOffset and endOffsets
+            // from document.getSelection are inset from the ends. So, we can't rely on it being
+            // correct when looping over elements. If we rely on the selection, then the insets
+            // can end up removing blanks between words.
             _setTagInRange(newFormat, tagRange);
         };
         // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
@@ -2031,7 +2048,7 @@ const _redoMultiFormat = function(undoerData) {
         // undo.
         tagRange = document.getSelection().getRangeAt(0);
         undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
-        undoerData.data.unsetAll = !unsetAll;
+        undoerData.data.unsetAll = unsetAll;
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2635,6 +2652,10 @@ const _multiList = function(newListType, undoable) {
                 };
             };
             // The selectedListable's location in the DOM has likely changed, so push now.
+            // Also worth noting that when the selectedListable is a top-level styled element that
+            // is now embedded in a list, you might logically think the only listable should be
+            // the list it's now embedded in. However, that doesn't let us map them back easily
+            // on undo, so we track the styled element in the list, not the list.
             oldListables.push(oldListable);
             oldIndices.push(oldIndex);
             newListableElements.push(selectedListable);
@@ -2695,7 +2716,7 @@ const _multiList = function(newListType, undoable) {
     _restoreRange(savedRange);
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, oldIndices: oldIndices, indices: indices, unsetAll: unsetAll});
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, oldIndices: oldIndices, indices: indices, unsetAll: unsetAll}, savedRange);
         undoer.push(undoerData);
         _restoreSelection();
     };
@@ -2792,6 +2813,7 @@ const _undoMultiList = function(undoerData) {
             if (!currentList) {
                 currentList = document.createElement(newListType);
                 selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                newSelectedListables.push(currentList);     // Track the new list we just created
             };
             // When we unsetAll previously, every listable  has to be placed in a new LI in the currentList
             let currentListItem = document.createElement('LI');
@@ -2812,7 +2834,10 @@ const _undoMultiList = function(undoerData) {
                 currentList = subList;                      // Use the new sublist for the next item
                 newSelectedListables.push(currentList);     // Track the new list we just created
             };
-        };
+        } else {
+            // Do nothing to this element. We still need to track it, though.
+            newSelectedListables.push(selectedListable);
+        }
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -2824,86 +2849,136 @@ const _undoMultiList = function(undoerData) {
     // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
     // the listables, depths, and indices of the elements have changed after undo.
     undoerData.data.oldListables = [];
-    undoerData.data.depths = [];
     undoerData.data.indices = [];
     newSelectedListables.forEach(newSelectedListable => {
         undoerData.data.oldListables.push(newSelectedListable.nodeName);
-        undoerData.data.depths.push(_depthWithin(newSelectedListable, _listTags));
         undoerData.data.indices.push(_childNodeIndicesByParent(newSelectedListable, commonAncestor));
     });
-    undoerData.data.unsetAll = !unsetAll;
     _restoreRange(savedRange);
     _callback('input');
 };
 
 /**
  * Redo the previous undo of the multiList operation.
+ *
+ * Basically similar to _multiList, except the data for the operation is all
+ * derived from the undoerData, not the selection.
  */
 const _redoMultiList = function(undoerData) {
-    _undoMultiList(undoerData)
-    /*
-     const sel = document.getSelection();
-     if (!sel || sel.rangeCount === 0) {
-         MUError.NoSelection.callback();
-         return;
-     };
-     const range = sel.getRangeAt(0);
-     const startContainer = range.startContainer;
-     const startOffset = range.startOffset;
-     const endContainer = range.endContainer;
-     const endOffset = range.endOffset;
-     const commonAncestor = undoerData.data.commonAncestor;
-     const oldFormats = undoerData.data.oldFormats;
-     const newFormat = undoerData.data.newFormat;
-     const indices = undoerData.data.indices;
-     const unsetAll = undoerData.data.unsetAll;
-     for (let i = 0; i < indices.length; i++) {
-         const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
-         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
-         const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
-         let tagRange = document.createRange();
-         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
-         const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
-         if (newStartContainer) {
-             tagRange.setStart(selectedTextNode, startOffset);
-         } else {
-             tagRange.setStart(selectedTextNode, 0);
-         };
-         if (newEndContainer) {
-             tagRange.setEnd(selectedTextNode, endOffset);
-         } else {
-             tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
-         };
-         sel.removeAllRanges();
-         sel.addRange(tagRange);
-         // If unsetAll, then all elements identified by indices need to be put back in
-         // newFormat.
-         // If !unsetAll, only the elements in newFormat need to be untagged.
-         const untag = !unsetAll && newFormatElement;
-         if (untag) {
-             _unsetTagInRange(newFormatElement, tagRange);
-         } else if (unsetAll) {
-             _setTagInRange(newFormat, tagRange);
-         };
-         // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
-         // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
-         // undo.
-         tagRange = document.getSelection().getRangeAt(0);
-         undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
-         undoerData.data.unsetAll = !unsetAll;
-         const newRange = sel.getRangeAt(0);
-         if (newStartContainer) {
-             range.setStart(newRange.startContainer, newRange.startOffset);
-         };
-         if (newEndContainer) {
-             range.setEnd(newRange.endContainer, newRange.endOffset);
-         };
-     };
-     sel.removeAllRanges();
-     sel.addRange(range);
-     _callback('input');
-     */
-    _consoleLog("Implement _redoMultiList");
+    const newListType = undoerData.data.newListType;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const originalIndices = undoerData.data.indices;    // Indices to the results of undo (i.e., what we once started with)
+    const selectedListables = [];
+    for (let i = 0; i < originalIndices.length; i++) {
+        selectedListables[i] = _childNodeIn(commonAncestor, originalIndices[i]);
+    };
+    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType], ['LI']));
+    // If all elements are of the same newListType already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all elements will be set to newListType, with the ones
+    // that are already in newListType left alone.
+    const unsetAll = listableElements.length === selectedListables.length;
+    _restoreRange(undoerData.range);
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
+    const tagRange = document.createRange();
+    const newListableElements = [];
+    const oldListables = [];
+    const oldIndices = [];
+    let currentList, currentListItem;
+    for (let i = 0; i < selectedListables.length; i++) {
+        let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
+        const isListElement = _isListElement(selectedListable);
+        const oldIndex = originalIndices[i];
+        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
+        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
+        if (unsetAll) {
+            // Every selectedListable is of newListType, that we are going to remove.
+            // First, eliminate all the list items, which should hold styled elements
+            // and hold onto all the styled elements we end up with in unsetChildren.
+            const unsetChildren = [];
+            let childNode = selectedListable.firstChild;
+            while (childNode) {
+                let nextChildNode = childNode.nextSibling;
+                if (_isListItemElement(childNode)) {
+                    tagRange.selectNode(childNode);
+                    let styledElementRange = _unsetTagInRange(childNode, tagRange);
+                    let styledElement = styledElementRange.startContainer;
+                    unsetChildren.push(styledElement);
+                };
+                childNode = nextChildNode;
+            };
+            // Then, remove the selectedListable by removing its tag.
+            tagRange.selectNode(selectedListable);
+            _unsetTagInRange(selectedListable, tagRange);
+            // And track the unsetChildren (i.e., new top-level paragraph styles) that we have left over
+            // so that we can retag them on undo.
+            for (let j = 0; j < unsetChildren.length; j++) {
+                let unsetChild = unsetChildren[j];
+                oldListables.push(newListType);                 // Remains the same for each child
+                oldIndices.push(oldIndex);                      // Remains the same for each child
+                newListableElements.push(unsetChild);           // Track so we can get indices when done
+            };
+        } else {
+            // We are only going to set the ones that are not of newListType, adding them to
+            // the list we are currently in, or creating a new currentList as needed
+            let oldListable = selectedListable.nodeName;
+            if (!currentList) {
+                if (isListElement) {
+                    currentList = selectedListable;
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                } else {
+                    currentList = document.createElement(newListType);
+                    selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            } else {
+                if (isListElement) {
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                    if (currentListItem) {
+                        currentListItem.appendChild(selectedListable);  // Should always be true
+                    } else {
+                        currentList.appendChild(selectedListable);
+                    };
+                } else {
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            };
+            // The selectedListable's location in the DOM has likely changed, so push now.
+            oldListables.push(oldListable);
+            oldIndices.push(oldIndex);
+            newListableElements.push(selectedListable);
+        };
+        // If the next selectedListable we are going to see is a sibling element of currentList,
+        // then leave currentList the same so it gets appended; else set currentList to null
+        // so that the next loop will create a new list as needed.
+        if (!nextIsSibling) {
+            currentList = null;
+            currentListItem = null;
+        };
+    };
+    // Why update undoerData after the redo? Because if we undo again, we use the undoerData again, but
+    // the listables, depths, and indices of the elements have changed after redo.
+    undoerData.data.oldListables = oldListables;
+    undoerData.data.oldIndices = oldIndices;
+    undoerData.data.indices = [];
+    for (let i = 0; i < newListableElements.length; i++) {
+        undoerData.data.indices.push(_childNodeIndicesByParent(newListableElements[i], commonAncestor));
+    };
+    _restoreRange(savedRange);
+    _callback('input');
 };
 
 /**
