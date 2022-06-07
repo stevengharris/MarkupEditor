@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: swift build -v
+      run: xcodebuild -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
     - name: Run tests
       run: swift test -v
