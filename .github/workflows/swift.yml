@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
+    - name: Build and Test
       env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -35,6 +35,4 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        xcodebuild -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
-    - name: Run tests
-      run: xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
