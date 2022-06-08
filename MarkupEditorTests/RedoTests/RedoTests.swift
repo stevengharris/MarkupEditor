@@ -23,7 +23,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        wait(for: [loadedExpectation], timeout: 10)
+        wait(for: [loadedExpectation], timeout: 15)
     }
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
