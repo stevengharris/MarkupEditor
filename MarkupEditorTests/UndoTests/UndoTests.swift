@@ -176,13 +176,42 @@ class UndoTests: XCTestCase, MarkupDelegate {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
                 HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat italic",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><b id=\"b\">Hello world</b></p>",
-                    undoHtml: "<p><b id=\"b\"><i>Hello</i> world</b></p>",
-                    startId: "i",
+                    description: "Bold <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo</u></b><u>rd 1</u><u> Word 2 </u><u id=\"u3\">Wo</u><b><u>rd 3</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">Wo</u></b><u><b>rd 1</b></u><u><b> Word 2 </b></u><u id=\"u3\"><b>Wo</b></u><b><u>rd 3</u></b></p>",
+                    startId: "u1",
                     startOffset: 2,
-                    endId: "i",
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo</u>rd 1 Word 2 Wo<u>rd 3</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">Wo</u><u>rd 1</u><u> Word 2 </u><u>Wo</u><u>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Word 1</u><u> Word 2 </u><u id=\"u3\">Word 3</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">Wo<i>rd 1</i></u><u><i> Word 2 </i></u><u id=\"u3\"><i>Wo</i>rd 3</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u3",
                     endOffset: 2
                 ),
                 { handler in
@@ -191,14 +220,59 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "\"He|llo \" is italic and bold, \"world\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello</i> world</p>",
-                    undoHtml: "<p><b><i id=\"i\">Hello</i> world</b></p>",
+                    description: "Bold <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold </u></b><u>and</u><b><u> underline</u> world</b></p>",
+                    undoHtml: "<p><b>Hello <u id=\"u\">bold </u></b><u><b>and</b></u><b><u> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold </u>and<u> underline</u> world</b></p>",
+                    undoHtml: "<p><b>Hello <u id=\"u\">bold </u><u>and</u><u> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <b>Hello <u id=\"u\">bold |and| underline</u> world</b>",
+                    startHtml: "<p><b>Hello <u id=\"u\">bold and underline</u> world</b></p>",
+                    endHtml: "<p><b>Hello <u id=\"u\">bold <i>and</i> underline</u> world</b></p>",
+                    startId: "u",
+                    startOffset: 5,
+                    endId: "u",
+                    endOffset: 8
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">He</i></b><i>llo </i>wo<b>rld</b></p>",
+                    undoHtml: "<p><b id=\"b\"><i id=\"i\">He</i></b><i><b>llo </b></i><b>wo</b><b>rld</b></p>",
                     startId: "i",
                     startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
+                    endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
                 ),
                 { handler in
                     self.webView.bold() { handler() }
@@ -206,28 +280,85 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
-                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
-                    undoHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    startId: "p",
-                    startOffset: 0,
-                    endId: "i",
-                    endOffset: 5
-                ),
-                { handler in
-                    self.webView.bold() { handler() }
-                }
-            ),
-            (
-                HtmlTest(
-                    description: "\"Hello \" is italic and bold, \"wo|rld\" is bold; unformat bold",
-                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello</i> world</b></p>",
-                    endHtml: "<p><i id=\"i\">Hello</i> world</p>",
-                    undoHtml: "<p><b><i id=\"i\">Hello</i> world</b></p>",
-                    startId: "b",
+                    description: "Underline <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">He<u>llo </u></i><u>wo</u>rld</b></p>",
+                    startId: "i",
                     startOffset: 2,
                     endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><i>He|llo </i>wo|rld</b></p>",
+                    startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
+                    endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i><i>wo</i>rld</b></p>",
+                    startId: "i",
+                    startOffset: 2,
+                    endId: "b",
+                    endOffset: 2,
+                    endChildNodeIndex: 1
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><b>Hello </b><i id=\"i\"><b>world</b></i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><u>Hello </u><i id=\"i\"><u>world</u></i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p>|Hello <i>world|</i></p>",
+                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
+                    endHtml: "<p id=\"p\"><i>Hello </i><i id=\"i\">world</i></p>",
+                    startId: "p",
+                    startOffset: 0,
+                    endId: "i",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He</u></b><u>llo </u><u id=\"u2\">wo</u><b><u>rld</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">He</u></b><u><b>llo </b></u><u id=\"u2\"><b>wo</b></u><b><u>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
                     endOffset: 2
                 ),
                 { handler in
@@ -236,16 +367,116 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "\"world\" is italic, select \"|Hello <i>world</i>|\" and format bold",
-                    startHtml: "<p id=\"p\">Hello <i id=\"i\">world</i></p>",
-                    endHtml: "<p id=\"p\"><b>Hello <i id=\"i\">world</i></b></p>",
-                    startId: "p",
+                    description: "Underline <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He</u>llo </b><b>wo<u>rld</u></b></p>",
+                    undoHtml: "<p><b><u id=\"u1\">He</u><u>llo </u></b><b><u>wo</u><u>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic <p><b><u>He|llo </u></b><b><u>wo|rld</u></b></p>",
+                    startHtml: "<p><b><u id=\"u1\">Hello </u></b><b><u id=\"u2\">world</u></b></p>",
+                    endHtml: "<p><b><u id=\"u1\">He<i>llo </i></u></b><b><u id=\"u2\"><i>wo</i>rld</u></b></p>",
+                    startId: "u1",
+                    startOffset: 2,
+                    endId: "u2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
                     startOffset: 0,
-                    endId: "i",
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><u>Hello </u><i id=\"i1\"><u>world</u></i></p><p id=\"p2\"><b><u>Hello </u></b><i id=\"i2\"><b id=\"b1\"><u>wo</u>rld</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic across partial paragraphs <p>|Hello <i>world</i></p><p><b>Hello </b><i><b>wo|rld</b></i></p>",
+                    startHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><i>Hello </i><i id=\"i1\">world</i></p><p id=\"p2\"><b><i>Hello </i></b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Bold across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\">Hello <i id=\"i1\">world</i></p><p id=\"p2\">Hello <i id=\"i2\">world</i></p>",
+                    undoHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b>world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
                     endOffset: 5
                 ),
                 { handler in
                     self.webView.bold() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Underline across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b><u>Hello </u></b><i id=\"i1\"><b><u>world</u></b></i></p><p id=\"p2\"><b><u>Hello </u></b><i id=\"i2\"><b id=\"b1\"><u>world</u></b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.underline() { handler() }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Italic across all-bolded paragraphs <p><b>|Hello </b><i><b>world</b></i></p><p><b>Hello </b><i><b>world|</b></i></p>",
+                    startHtml: "<p id=\"p1\"><b>Hello </b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b>Hello </b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    endHtml: "<p id=\"p1\"><b><i>Hello </i></b><i id=\"i1\"><b>world</b></i></p><p id=\"p2\"><b><i>Hello </i></b><i id=\"i2\"><b id=\"b1\">world</b></i></p>",
+                    startId: "p1",
+                    startOffset: 0,
+                    endId: "b1",
+                    endOffset: 5
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
                 }
             ),
         ]
@@ -258,7 +489,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             webView.setTestHtml(value: startHtml) {
                 self.webView.getHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         action() {
                             self.webView.getHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
@@ -612,7 +843,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 2)
+            wait(for: [expectation], timeout: 3)
         }
     }
     
@@ -729,7 +960,61 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            ]
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+                    startHtml: "<ul><li><p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></li></ul>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+                    startHtml: "<ul><li><p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></li></ul>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "p",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+                    startHtml: "<ul><li><p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></li></ul>",
+                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    startId: "h",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+        ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
             let startHtml = test.startHtml
@@ -746,6 +1031,364 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.webView.testUndo() {
                                     self.webView.getHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        expectation.fulfill()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testUndoMultiLists() throws {
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo world1</p><p>He|llo world2</p>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    endHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><p id=\"p2\">Hello world2</p></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+                    startHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><p id=\"p2\">Hello world2</p></li></ul>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo world1</p><h5>He|llo world2</h5>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
+                    endHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><h5 id=\"p2\">Hello world2</h5></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+                    startHtml: "<ul><li><p id=\"p1\">Hello world1</p></li><li><h5 id=\"p2\">Hello world2</h5></li></ul>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<ul><li><p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+                    startHtml: "<ul><li><p id=\"p\">Hello paragraph</p></li><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul></ul>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><h5 id=\"h\">Hello header in list</h5>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<ol><li><p id=\"p\">Hello paragraph</p><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></li></ol>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove OL <ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
+                    startHtml: "<ol><li><p id=\"p\">Hello paragraph</p></li><ol><li><h5 id=\"h\">Hello header in list</h5></li></ol></ol>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><h5 id=\"h\">Hello header in list</h5>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL <ul><li><h5>Un|ordered <i>H5</i> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove UL <ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    undoHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li>Ordered sublist.</li></ul></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL <ul><li><h5>Un|ordered <i>H5</i> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Remove OL <ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    startHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    undoHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li>Ordered sublist.</li></ol></li></ol>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "UL interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Unset all UL interleaved paragraphs and lists",
+                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Set all OL lists and sublists",
+                    startHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "OL interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Unset all OL interleaved paragraphs and lists",
+                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .OL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Set all UL lists and sublists",
+                    startHtml: "<ol><li><p id=\"p1\">Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol></li></ol>",
+                    endHtml: "<ul><li><p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p id=\"p2\">Ordered list paragraph 1</p></li></ul></li></ul>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.toggleListItem(type: .UL) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+        ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? startHtml
+            let expectation = XCTestExpectation(description: "Multilist operations with selections spanning multiple elements")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }

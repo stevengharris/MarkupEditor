@@ -1,5 +1,5 @@
 /**
- * Copyright © 2021 Steven Harris. All rights reserved.
+ * Copyright © 2021-2022 Steven Harris. All rights reserved.
  *
  * This code was inspired by the original RichEditorView by cjwirth
  * at https://github.com/cjwirth/RichEditorView. Subsequent versions by cbess
@@ -91,6 +91,7 @@ class MUError {
     static InvalidJoinNodes = new MUError('InvalidJoinNodes', 'The nodes to join did not conform to expectations.');
     static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
+    static NoEndContainerInRange = new MUError('NoEndContainerInRange', 'Range endContainer not found in _nodesWithNamesInRange');
     static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
     static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
@@ -276,6 +277,24 @@ class Undoer {
 //MARK: Undo/Redo
 
 /**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _undoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.undo = function() {
+    document.execCommand('undo', false, null);
+};
+
+/**
+ * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
+ * event to be triggered from Swift. Note that the _redoOperation gets called when it has
+ * been placed in the stack with undoer.push (for example, for formatting or pasting).
+ */
+MU.redo = function() {
+    document.execCommand('redo', false, null);
+};
+
+/**
  * Return the populated undoerData object held on the Undoer._stack.
  * If range is not passed-in, then populate range from document.getSelection().
  *
@@ -316,6 +335,9 @@ const _undoOperation = function(undoerData) {
         case 'format':
             _undoToggleFormat(undoerData);
             break;
+        case 'multiFormat':
+            _undoMultiFormat(undoerData);
+            break;
         case 'style':
             _restoreSelection();
             MU.replaceStyle(data.newStyle, data.oldStyle, false);
@@ -326,8 +348,11 @@ const _undoOperation = function(undoerData) {
             break;
         case 'list':
             _restoreSelection();
-            MU.toggleListItem(data.oldListType, false);
+            MU.toggleListItem(data.oldListType, data.removedContainingList, false);
             _backupSelection();
+            break;
+        case 'multiList':
+            _undoMultiList(undoerData);
             break;
         case 'indent':
             _restoreSelection();
@@ -388,6 +413,9 @@ const _redoOperation = function(undoerData) {
         case 'format':
             _redoToggleFormat(undoerData);
             break;
+        case 'multiFormat':
+            _redoMultiFormat(undoerData);
+            break;
         case 'style':
             _restoreSelection();
             MU.replaceStyle(data.oldStyle, data.newStyle, false);
@@ -400,6 +428,9 @@ const _redoOperation = function(undoerData) {
             _restoreSelection();
             MU.toggleListItem(data.newListType, false);
             _backupSelection();
+            break;
+        case 'multiList':
+            _redoMultiList(undoerData);
             break;
         case 'indent':
             _restoreSelection();
@@ -452,24 +483,6 @@ const _redoOperation = function(undoerData) {
  * perform the operation.
  */
 const undoer = new Undoer(_undoOperation, _redoOperation, null);
-
-/**
- * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
- * event to be triggered from Swift. Note that the _undoOperation gets called when it has
- * been placed in the stack with undoer.push (for example, for formatting or pasting).
- */
-MU.undo = function() {
-    document.execCommand('undo', false, null);
-};
-
-/**
- * Without any api-level access to undo/redo, we are forced to use the execCommand to cause the
- * event to be triggered from Swift. Note that the _redoOperation gets called when it has
- * been placed in the stack with undoer.push (for example, for formatting or pasting).
- */
-MU.redo = function() {
-    document.execCommand('redo', false, null);
-};
 
 /**
  * Return a promise that delays focusing on a target.
@@ -622,14 +635,6 @@ MU.editor.addEventListener('focus', function(ev) {
     unmuteFocusBlur();
 });
 
-//MU.editor.addEventListener('focusout', function(ev) {
-//    _consoleLog("focusout: " + ev.target.id);
-//});
-//
-//MU.editor.addEventListener('focusin', function(ev) {
-//    _consoleLog("focusin: " + ev.target.id);
-//});
-
 /**
  * Capture the current selection using backupSelection and then let Swift know blur happened.
  * The blur during the undoer.push operation will always be followed by a focus, where
@@ -653,7 +658,7 @@ MU.editor.addEventListener('blur', function(ev) {
     };
     if (!_muteFocusBlur) {
         _callback('blur');
-    }
+    };
 });
 
 /**
@@ -668,7 +673,7 @@ MU.editor.addEventListener('click', function(ev) {
         _callback('click');
     } else {
         //_multiClickSelect(nclicks);
-    }
+    };
 });
 
 /**
@@ -808,7 +813,7 @@ const _doEnter = function(undoable=true) {
         return p;   // To preventDefault() on Enter
     };
     return null;    // Let the MarkupWKWebView do its normal thing
-}
+};
 
 /**
  * Undo Enter that was handled by _doEnter.
@@ -866,6 +871,13 @@ MU.pasteText = function(html) {
     const fragment = _patchPasteHTML(html);            // Remove all the cruft first, leaving BRs
     const minimalHTML = _minimalHTML(fragment);
     _pasteHTML(minimalHTML);
+};
+
+/**
+ * Do a custom paste operation of html.
+ */
+MU.pasteHTML = function(html) {
+    _pasteHTML(html);
 };
 
 /**
@@ -941,13 +953,6 @@ const _minimalLink = function(div) {
         };
     };
 };
-
-/**
- * Do a custom paste operation of html.
- */
-MU.pasteHTML = function(html) {
-    _pasteHTML(html);
-}
 
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const redoing = !undoable && (oldUndoerData !== null);
@@ -1099,12 +1104,12 @@ const _insertHTML = function(fragment) {
         fragment.removeChild(firstFragEl);
         firstFragEl = (fragment.firstChild && (fragment.firstChild.nodeType === Node.ELEMENT_NODE)) ? fragment.firstChild : null;
         direction = 'AFTER';
-    }
+    };
     let lastFragEl = (fragment.lastChild && (fragment.lastChild.nodeType === Node.ELEMENT_NODE)) ? fragment.lastChild : null;
     if (lastFragEl && _isEmpty(lastFragEl)) {
         fragment.removeChild(lastFragEl);
         direction = direction || 'BEFORE';  // Only reset if we didn't already set
-    }
+    };
     // We will need to define a new range for selection and track the insertedRange
     let newSelRange = document.createRange();       // Collapsed at the end of the fragment
     const insertedRange = document.createRange();   // Spanning the fragment
@@ -1237,7 +1242,7 @@ const _insertHTML = function(fragment) {
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
-    return {insertedRange: insertedRange, rootName: rootName}
+    return {insertedRange: insertedRange, rootName: rootName};
 };
 
 /**
@@ -1372,7 +1377,7 @@ const _rangeFor = function(node, direction='START') {
     range.setStart(node, startOffset);
     range.setEnd(node, endOffset);
     return range;
-}
+};
 
 /**
  * Delete the range and reset selection if needed.
@@ -1492,26 +1497,12 @@ MU.getHTML = function() {
 };
 
 /**
- * Set the base element for the document to the urlString.
- * URLs within the html will be interpreted relative to this urlString.
- * For example, and <img src="foo.png"> will be loaded from the location
- * identified by urlString.
+ * Return a marginally prettier version of the raw editor contents.
  *
- * @param {String} urlString The full string for base (e.g., 'file:///<path>')
+ * @return {String}     A string showing the raw HTML with tags, etc.
  */
-MU.setBase = function(urlString) {
-    const existingBase = document.getElementsByTagName('base')
-    if (existingBase.length > 0) {
-        _consoleLog("Existing base href was " + existingBase[0].href);
-        _consoleLog("Resetting base.href to " + urlString);
-        existingBase[0].href = urlString;
-    } else {
-        _consoleLog("Setting base.href to " + urlString);
-        const base = document.createElement('base');
-        base.href = urlString;
-        document.getElementsByTagName('head')[0].appendChild(base);
-    }
-    _consoleLog(" Done.");
+MU.getPrettyHTML = function() {
+    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
 };
 
 /**
@@ -1540,20 +1531,14 @@ const _initializeRange = function() {
         MU.emptyDocument()
     }
     _focusOn(MU.editor).then(_callback('updateHeight'));
-}
-
-const _firstEditorElement = function() {
-    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
-    return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
 
 /**
- * Return a marginally prettier version of the raw editor contents.
- *
- * @return {String}     A string showing the raw HTML with tags, etc.
+ * Return the first text node within MU.editor if possible, else its first child
  */
-MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+const _firstEditorElement = function() {
+    const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
+    return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
 
 /********************************************************************************
@@ -1606,7 +1591,7 @@ const _toggleFormat = function(type, undoable=true) {
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
     const range = sel.getRangeAt(0);
-    let tagRange; // startIndices, startOffset, endIndices, endOffset;
+    let tagRange;
     let existingElement = _findFirstParentElementInNodeNames(selNode, [type]);
     const newSelRange = sel.getRangeAt(0);
     const commonAncestor = newSelRange.commonAncestorContainer;
@@ -1828,9 +1813,9 @@ const _redoToggleFormat = function(undoerData) {
 /**
  * Make all text elements within a selection that spans text nodes into newFormat.
  *
- * Elements that are already in newFormat are not changed, but we track them. The
- * net effect is that everything is set to newFormat, whether it started that way
- * or not. Then, when turning off formatting, it's all turned off. Therefore if
+ * Elements that are already in newFormat are not changed. The net effect
+ * is that everything is set to newFormat, whether it started that way or not.
+ * Then, when turning off formatting, it's all turned off. Therefore if
  * user selects across text that has various embedded bolds and then bolds once,
  * everything is bolded, but selecting bold again unbolds everything. This is the
  * way other text editors work to allow easy "format everything" and "remove
@@ -1850,11 +1835,21 @@ const _multiFormat = function(newFormat, undoable=true) {
     const startOffset = range.startOffset;
     const endContainer = range.endContainer;
     const endOffset = range.endOffset;
-    const commonAncestor = range.commonAncestorContainer;
+    let commonAncestor = range.commonAncestorContainer;
+    // If commonAncestor has a _formatTag, we might be mucking with it as we use _subTextElementInRange
+    // later in such a way that it is no longer a common ancestor of elements across the range. To prevent
+    // any problems, use the style above it if commonAncestor has a _formatTag.
+    if (_isFormatElement(commonAncestor)) {
+        const styleParent = _findFirstParentElementInNodeNames(commonAncestor, _paragraphStyleTags);
+        commonAncestor = styleParent ?? MU.editor;     // MU.editor as a last ditch attempt to avoid problems
+    };
     let oldFormats = [];
     let indices = []
     let newStartContainer, newEndContainer;
     const formattedElements = selectedTextNodes.filter( textNode => _findFirstParentElementInNodeNames(textNode, [newFormat]) );
+    // If all nodes are of the same newFormat already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all nodes will be set to newFormat, with the ones
+    // that are already in newFormat left alone. We need to know what unsetAll was in undo also.
     const unsetAll = formattedElements.length === selectedTextNodes.length;
     for (let i = 0; i < selectedTextNodes.length; i++) {
         const selectedTextNode = selectedTextNodes[i];
@@ -1863,8 +1858,6 @@ const _multiFormat = function(newFormat, undoable=true) {
         // the newFormat, then put that into the oldFormats array.
         const existingFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
         const existingFormat = (existingFormatElement) ? existingFormatElement.nodeName : selectedTextNode.nodeName;
-        oldFormats.push(existingFormat);
-        indices.push(_childNodeIndicesByParent(selectedTextNode, commonAncestor));
         let tagRange = document.createRange();
         const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
         const newEndContainer = (i === selectedTextNodes.length - 1) && (selectedTextNode === endContainer);
@@ -1883,12 +1876,10 @@ const _multiFormat = function(newFormat, undoable=true) {
         if (unsetAll) {
             // We may need to select a part of the selectedTextNode (or perhaps all of it,
             // depending on tagRange). If necessary, _selectedSubTextElement subdivides
-            // selectedTextNode into 2 or 3 nodes while leaving sel set to the subnode that needs
-            // to be untagged, so we need to reset indices and selectedTextNodes.
+            // selectedTextNode into 2 nodes while leaving sel set to the subnode that needs
+            // to be untagged.
             const newFormatElement = _subTextElementInRange(tagRange, newFormat);
             tagRange = document.getSelection().getRangeAt(0);
-            selectedTextNodes[i] = tagRange.startContainer;
-            indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor)
             _unsetTagInRange(newFormatElement, tagRange);
         } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
@@ -1898,6 +1889,11 @@ const _multiFormat = function(newFormat, undoable=true) {
             // can end up removing blanks between words.
             _setTagInRange(newFormat, tagRange);
         };
+        // After we set or unset the tag, we need to track the oldFormat and indices, since they
+        // are changed when we set the tag.
+        tagRange = document.getSelection().getRangeAt(0);
+        oldFormats.push(existingFormat);
+        indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
         const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
             range.setStart(newRange.startContainer, newRange.startOffset);
@@ -1910,10 +1906,159 @@ const _multiFormat = function(newFormat, undoable=true) {
     sel.addRange(range);
     if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices});
+        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices, unsetAll: unsetAll});
         undoer.push(undoerData);
         _restoreSelection()
     };
+    _callback('input');
+};
+
+/**
+ * Undo the previous multiFormat operation.
+ */
+const _undoMultiFormat = function(undoerData) {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldFormats = undoerData.data.oldFormats;
+    const newFormat = undoerData.data.newFormat;
+    const indices = undoerData.data.indices;
+    const unsetAll = undoerData.data.unsetAll;
+    for (let i = 0; i < indices.length; i++) {
+        const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+        const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
+        const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedTextNode, startOffset);
+        } else {
+            tagRange.setStart(selectedTextNode, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedTextNode, endOffset);
+        } else {
+            tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        // If !unsetAll, then we only setTag for elements that were not already in newFormat,
+        // and now we want to untag only those elements.
+        // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
+        const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
+        if (untag) {
+            _unsetTagInRange(newFormatElement, tagRange);
+        } else if (unsetAll) {
+            _setTagInRange(newFormat, tagRange);
+        };
+        // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
+        // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
+        // redo.
+        tagRange = document.getSelection().getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _callback('input');
+};
+
+/**
+ * Redo the previous multiFormat operation.
+ */
+const _redoMultiFormat = function(undoerData) {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldFormats = undoerData.data.oldFormats;
+    const newFormat = undoerData.data.newFormat;
+    const indices = undoerData.data.indices;
+    const selectedTextNodes = [];
+    indices.forEach(index => {
+        selectedTextNodes.push(_childNodeIn(commonAncestor, index));
+    });
+    const formattedElements = selectedTextNodes.filter( textNode => _findFirstParentElementInNodeNames(textNode, [newFormat]) );
+    // If all nodes are of the same newFormat already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all nodes will be set to newFormat, with the ones
+    // that are already in newFormat left alone. We need to know what unsetAll was in undo also.
+    const unsetAll = formattedElements.length === selectedTextNodes.length;
+    for (let i = 0; i < indices.length; i++) {
+        const selectedTextNode = selectedTextNodes[i];
+        const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
+        const existingFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedTextNode === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedTextNode === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedTextNode, startOffset);
+        } else {
+            tagRange.setStart(selectedTextNode, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedTextNode, endOffset);
+        } else {
+            tagRange.setEnd(selectedTextNode, selectedTextNode.textContent.length);
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        // If unsetAll, then all elements identified by indices need to be put back in
+        // newFormat.
+        // If !unsetAll, only the elements in newFormat need to be untagged.
+        if (unsetAll) {
+            // We may need to select a part of the selectedTextNode (or perhaps all of it,
+            // depending on tagRange). If necessary, _selectedSubTextElement subdivides
+            // selectedTextNode into 2 nodes while leaving sel set to the subnode that needs
+            // to be untagged.
+            const newFormatElement = _subTextElementInRange(tagRange, newFormat);
+            tagRange = document.getSelection().getRangeAt(0);
+            _unsetTagInRange(newFormatElement, tagRange);
+        } else if (!existingFormatElement) {
+            // Set tags using tagRange, not the selection.
+            // When the selection includes leading or trailing blanks, the startOffset and endOffsets
+            // from document.getSelection are inset from the ends. So, we can't rely on it being
+            // correct when looping over elements. If we rely on the selection, then the insets
+            // can end up removing blanks between words.
+            _setTagInRange(newFormat, tagRange);
+        };
+        // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
+        // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
+        // undo.
+        tagRange = document.getSelection().getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+        undoerData.data.unsetAll = unsetAll;
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    sel.removeAllRanges();
+    sel.addRange(range);
     _callback('input');
 };
 
@@ -1924,6 +2069,13 @@ const _multiFormat = function(newFormat, undoable=true) {
  * When the range is within a single text node but only encompasses part of it,
  * we need to split it into multiple text nodes and return the one that contains
  * the range. We do this for formatting.
+ *
+ * Consider:
+ *      <b>Hello <u>bold |and| underline</u> world</b>
+ * where we want to unbold "and". We use _splitTextNode twice to produce:
+ *      <b>Hello <u>bold </u></b><b><u>and</u></b><u><b> underline</u> world</b>
+ * in the document. We need to return the text node "and" without the tag "type" so
+ * that it is unformatted without affecting the surrounding text formatting.
  */
 const _subTextElementInRange = function(range, type) {
     const startContainer = range.startContainer;
@@ -1956,7 +2108,7 @@ const _subTextElementInRange = function(range, type) {
     range.selectNode(subTextNode);
     sel.removeAllRanges();
     sel.addRange(range);
-    return unNest(subTextNode, type);
+    return _unNest(subTextNode, type);
 }
 
 /**
@@ -1972,7 +2124,24 @@ const _selectedSubTextElement = function(sel, type) {
     return _subTextElementInRange(range, type);
 };
 
-const unNest = function(textNode, type) {
+/**
+ * Un-nest the textNode from within nested formatting.
+ *
+ * Consider:
+ *      <p><b><u>Wo|rd 1</u><u> Word 2 </u><u>Wo|rd 3</u></b></p>
+ *
+ * In this case, there are originally three text nodes which are all bolded because
+ * of the outer <b>, but are individually underlined. We might want to unbold or ununderline.
+ * To do this, we have to split "Word 1" into two text nodes like:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u><u>Wo|rd 3</u></b></p>
+ * Now we can change the format of "rd 1". For "Word 2", we don't need to split the text
+ * node itself, but we do need to "un-nest" the bolding to get:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u></b><b><u>Wo|rd 3</u></b></p>
+ * and then we need to split the "Word 3" text node:
+ *      <p><b><u>Wo</u></b><b><u>rd 1</u></b><b><u> Word 2 </u></b><b><u>Wo</u></b><b><u>rd 3</u></b></p>
+ * so that the "Wo" portion-only can be formatted.
+ */
+const _unNest = function(textNode, type) {
     //_consoleLog("* _unNest(" + _textString(textNode) + ", " + type + ")");
     const formatTags = _tagsMatching(textNode, _formatTags);
     const inNestedTags = (formatTags.length > 1) && (formatTags[0] !== type);
@@ -1982,10 +2151,7 @@ const unNest = function(textNode, type) {
     if (inNestedTags) {
         // The selection is of type, but type is in an outer element. The leadingTextNode is
         // part of a different format element. We need to split the existingElement of type
-        // into two elements starting after the innermost formatElement selection is in. Consider
-        // <b>Hello <u>bold |and| underline</u> world</b>. We eventually want to return
-        // the <b><u>and</u><b> element from the splitFormatElement result of
-        // <b>Hello <u>bold </u></b><b><u>and</u></b><u><b> underline</u> world</b>
+        // into two elements starting after the innermost formatElement selection is in.
         existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
         const childFormatElement = _findFirstParentElementInNodeNames(textNode, [formatTags[0]]); // The innermost tag
         _splitFormatElement(existingElement, childFormatElement);
@@ -2000,10 +2166,15 @@ const unNest = function(textNode, type) {
     } else {
         existingElement = _findFirstParentElementInNodeNames(textNode, [type]);
     }
-    //_consoleLog("* Done _unNest (returning " + _textString(existingElement));
+    //_consoleLog("* Done _unNest (returning " + _textString(existingElement) + ")");
     return existingElement;
-}
+};
 
+/**
+ * Split a format element that contains a child of a different format.
+ *
+ * See the comments in unNest and subTextElementInRange for context.
+ */
 const _splitFormatElement = function(parentFormatElement, childFormatElement, direction='AFTER') {
     //_consoleLog("* _splitFormatElement(" + _textString(parentFormatElement) + ", " + _textString(childFormatElement) + ", \'" + direction + "\')");
     const parentName = parentFormatElement.nodeName;
@@ -2162,9 +2333,9 @@ const _redoMultiStyle = function(undoerData) {
 };
 
 /********************************************************************************
- * Nestables, including lists and block quotes
+ * Lists
  */
-//MARK: Nestables, Including Lists and BlockQuotes
+//MARK: Lists
 
 /**
  * Turn the list tag off and on for selection, doing the right thing
@@ -2175,10 +2346,14 @@ const _redoMultiStyle = function(undoerData) {
  * @param {String}  newListType     The kind of list we want the list item to be in if we are turning it on or changing it.
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
-MU.toggleListItem = function(newListType, undoable=true) {
+MU.toggleListItem = function(newListType, restoreContainingList=false, undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return };
+    if (_selectionSpansListables()) {
+        _multiList(newListType, undoable);
+        return;
+    };
     // Capture the range settings for the selection
     const range = sel.getRangeAt(0).cloneRange();
     const oldStartContainer = range.startContainer;
@@ -2191,6 +2366,8 @@ MU.toggleListItem = function(newListType, undoable=true) {
     const isInListItem = selectionState['li'];
     // We will capture the newSelNode for restoring the selection along the way
     let newSelNode = null;
+    // Track whether we removed a list containing a list so we can restore on undo
+    let removedContainingList = false;
     if (oldListType) {
         // TOP-LEVEL CASE: We selected something in a list
         const listElement = _findFirstParentElementInNodeNames(selNode, [oldListType]);
@@ -2240,7 +2417,7 @@ MU.toggleListItem = function(newListType, undoable=true) {
                 const containingBlock = _findFirstParentElementInNodeNames(selNode, _listStyleTags)
                 const liChild = (containingBlock) ? containingBlock : selNode
                 //_consoleLog("liChild.outerHTML: " + liChild.outerHTML);
-                const naked = _isNakedListSelection(liChild, ['LI'], ['OL', 'UL']);
+                const naked = _isNakedListSelection(liChild);
                 const previousSib = liChild.previousElementSibling;
                 if (previousSib || (naked && (listItemElementCount > 0))) {
                     //_consoleLog("Toggle on")
@@ -2283,6 +2460,9 @@ MU.toggleListItem = function(newListType, undoable=true) {
                             // of list present without any list items in it. We don't have
                             // to do this, but it just seems less confusing to an end user.
                             _unsetTag(listElement, sel);
+                            // We need to track that we removed the list so that we can put any contained
+                            // list back in as its child when we undo
+                            removedContainingList = true;
                         }
                     }
                 }
@@ -2330,11 +2510,19 @@ MU.toggleListItem = function(newListType, undoable=true) {
         // TOP-LEVEL CASE: We selected something outside of any list
         // By definition, we want to put it in a newListType list
         const styledElement = _findFirstParentElementInNodeNames(selNode, [styleType]);
+        let nextElementSib;
         if (styledElement) {
+            nextElementSib = styledElement.nextElementSibling;
             newSelNode = _replaceNodeWithList(newListType, styledElement);
         } else {
+            nextElementSib = selNode.nextElementSibling;
             newSelNode = _replaceNodeWithList(newListType, selNode);
-        }
+        };
+        // If the nextElementSibling of what we just put into a list is also a list,
+        // then make it a child of the new list.
+        if (_isListElement(nextElementSib) && restoreContainingList) {
+            newSelNode.appendChild(nextElementSib);
+        };
     };
     // If we captured the newSelNode, then reset the selection based on it
     if (newSelNode) {
@@ -2352,10 +2540,444 @@ MU.toggleListItem = function(newListType, undoable=true) {
     }
     if (undoable) {
         _backupSelection();
-        const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType});
+        const undoerData = _undoerData('list', {newListType: newListType, oldListType: oldListType, removedContainingList: removedContainingList});
         undoer.push(undoerData);
         _restoreSelection();
     }
+    _callback('input');
+};
+
+/**
+ * Turn the elements found in _selectedListables into list of type newListType.
+ *
+ * Listables are paragraph elements that are not within lists, and well as lists themselves.
+ * When listables are elementSiblings, we want them to end up in the same list.
+ */
+const _multiList = function(newListType, undoable) {
+    const selectedListables = _selectedListables();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType], ['LI']));
+    // If all elements are of the same newListType already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all elements will be set to newListType, with the ones
+    // that are already in newListType left alone. We need to know what unsetAll was in undo also.
+    const unsetAll = listableElements.length === selectedListables.length;
+    // Rather than use the range.commonAncestorContainer, we use MU.editor because it's too
+    // easy for the common ancestor to end up being something we change.
+    const commonAncestor = MU.editor;
+    // Record the indices of selectedListables before we modify them, because this tells us how
+    // to reassemble them on undo. The multilist operation may change the number of listables, so
+    // "originalIndices" here refers to what exists when we start. As we loop over selectedListables,
+    // we will be creating newListableElements, and for each of those we track the originalIndices
+    // entry they were derived from in "oldIndices". This tells us the location and depth in the list
+    // they were derived from to use during undo.
+    const originalIndices = [];  // So we can tell how to reassemble on undo
+    for (let i = 0; i < selectedListables.length; i++) {
+        originalIndices[i] = _childNodeIndicesByParent(selectedListables[i], commonAncestor)
+    };
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
+    const tagRange = document.createRange();
+    const newListableElements = [];
+    const oldListables = [];
+    const oldIndices = [];
+    let currentList, currentListItem;
+    for (let i = 0; i < selectedListables.length; i++) {
+        let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
+        const isListElement = _isListElement(selectedListable);
+        const oldIndex = originalIndices[i];
+        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
+        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
+        if (unsetAll) {
+            // Every selectedListable is of newListType, that we are going to remove.
+            // First, eliminate all the list items, which should hold styled elements
+            // and hold onto all the styled elements we end up with in unsetChildren.
+            const unsetChildren = [];
+            let childNode = selectedListable.firstChild;
+            while (childNode) {
+                let nextChildNode = childNode.nextSibling;
+                if (_isListItemElement(childNode)) {
+                    tagRange.selectNode(childNode);
+                    let styledElementRange = _unsetTagInRange(childNode, tagRange);
+                    let styledElement = styledElementRange.startContainer;
+                    unsetChildren.push(styledElement);
+                };
+                childNode = nextChildNode;
+            };
+            // Then, remove the selectedListable by removing its tag.
+            tagRange.selectNode(selectedListable);
+            _unsetTagInRange(selectedListable, tagRange);
+            // And track the unsetChildren (i.e., new top-level paragraph styles) that we have left over
+            // so that we can retag them on undo.
+            for (let j = 0; j < unsetChildren.length; j++) {
+                let unsetChild = unsetChildren[j];
+                oldListables.push(newListType);                 // Remains the same for each child
+                oldIndices.push(oldIndex);                      // Remains the same for each child
+                newListableElements.push(unsetChild);           // Track so we can get indices when done
+            };
+        } else {
+            // We are only going to set the ones that are not of newListType, adding them to
+            // the list we are currently in, or creating a new currentList as needed
+            let oldListable = selectedListable.nodeName;
+            if (!currentList) {
+                if (isListElement) {
+                    currentList = selectedListable;
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                } else {
+                    currentList = document.createElement(newListType);
+                    selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            } else {
+                if (isListElement) {
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                    if (currentListItem) {
+                        currentListItem.appendChild(selectedListable);  // Should always be true
+                    } else {
+                        currentList.appendChild(selectedListable);
+                    };
+                } else {
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            };
+            // The selectedListable's location in the DOM has likely changed, so push now.
+            // Also worth noting that when the selectedListable is a top-level styled element that
+            // is now embedded in a list, you might logically think the only listable should be
+            // the list it's now embedded in. However, that doesn't let us map them back easily
+            // on undo, so we track the styled element in the list, not the list.
+            oldListables.push(oldListable);
+            oldIndices.push(oldIndex);
+            newListableElements.push(selectedListable);
+        };
+        // If the next selectedListable we are going to see is a sibling element of currentList,
+        // then leave currentList the same so it gets appended; else set currentList to null
+        // so that the next loop will create a new list as needed.
+        if (!nextIsSibling) {
+            currentList = null;
+            currentListItem = null;
+        };
+    };
+    // Now find indices after looping over all the original selectedListables
+    const indices = [];
+    for (let i = 0; i < newListableElements.length; i++) {
+        indices.push(_childNodeIndicesByParent(newListableElements[i], commonAncestor));
+    };
+    // For posterity, even though it looks visually like OL/UL are at a lower level in a nested list
+    // hierarchy than P, they are not. Consider:
+    //  <p id="p1">Top-level paragraph 1</p>
+    //  <ul id="ul1">
+    //      <li>
+    //          <p id="p2>Unordered list paragraph 1</p>
+    //          <ol id="ol1">
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </li>
+    //  </ul>
+    //  <p id="p3">Top-level paragraph 2</p>
+    //  <ol id="ol2">
+    //      <li><p>Ordered list paragraph 1</p></li>
+    //  </ol>
+    // In this arrangement, p1, ul1, p3, and ol2 are siblings, and p2 and ol1 are siblings. This is
+    // structurally true even though ul1 looks like it is indented compared to p1, and even though
+    // ol1 looks like it is indented compared to p2. In the above, the listables are, in breadthwise
+    // order: p1, ul1, p3, ol2, ol1. Now if all of those listables are set to UL using multilist,
+    // we end up with (preserving the ids even though all list types are now UL):
+    //  <ul id="ul0">
+    //      <li>
+    //          <p id="p1">Top-level paragraph 1</p>
+    //          <ul id="ul1">
+    //              <li>
+    //                  <p id="p2">Unordered list paragraph 1</p>
+    //                  <ul id="ol1">
+    //                      <li><p>Ordered sublist paragraph</p></li>
+    //                  </ul>
+    //              </li>
+    //          </ul>
+    //      </li>
+    //      <li>
+    //          <p id="p3">Top-level paragraph 2</p>
+    //          <ul id="ol2">
+    //              <li><p>Ordered list paragraph 1</p></li>
+    //          </ul>
+    //      </li>
+    //  </ul>
+    // Note that p1 and ul1 are now siblings, and p3 and ol2 are now siblings.
+    _restoreRange(savedRange);
+    if (undoable) {
+        _backupSelection();
+        const undoerData = _undoerData('multiList', {commonAncestor: commonAncestor, newListType: newListType, oldListables: oldListables, oldIndices: oldIndices, indices: indices, unsetAll: unsetAll}, savedRange);
+        undoer.push(undoerData);
+        _restoreSelection();
+    };
+    _callback('input');
+};
+
+/**
+ * Undo the previous multiList operation.
+ */
+const _undoMultiList = function(undoerData) {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+        MUError.NoSelection.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const oldListables = undoerData.data.oldListables;
+    const oldIndices = undoerData.data.oldIndices;
+    const oldContainerIndices = _containerIndices(oldIndices);    // Points to containing elements in oldIndices
+    const newListType = undoerData.data.newListType;
+    const indices = undoerData.data.indices;
+    const unsetAll = undoerData.data.unsetAll;
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
+    // Find all the listables first, because once we start mucking around with the list, we won't
+    // be able to find them from indices any more. The "mucking around" involves removing things
+    // from lists, splitting them, etc. While we are mucking around, the listables themselves will
+    // still exist, but their location in the DOM will be changed.
+    const selectedListables = [];
+    for (let i = 0; i < indices.length; i++) {
+        let selectedListable = _childNodeIn(commonAncestor, indices[i]);
+        selectedListables.push(selectedListable);
+    };
+    let currentList, currentListItem;
+    const newSelectedListables = [];
+    for (let i = 0; i < selectedListables.length; i++) {
+        const selectedListable = selectedListables[i];
+        const oldIndex = oldIndices[i];         // oldIndex is what indices to selectedListable were before setting
+        const oldListable = oldListables[i];    // oldListable is what the selectedListable was before setting
+        const isListElement = _isListElement(selectedListable);
+        const nextExists = (i < selectedListables.length - 1);
+        const nextListable = nextExists && selectedListables[i + 1];
+        const nextOldIndex = nextExists && oldIndices[i + 1];
+        const nextOldListable = nextExists && oldListables[i + 1]
+        // When oldContainerIndices[i+1] is non-null, it holds the index into oldIndices where
+        // we will find the array of childNodes to find the element that contains the nextListable
+        const nextIsSubList = nextExists && (oldContainerIndices[i + 1] !== null);
+        // We can end up with a case of the selectedListable being a <P> (i.e., a top-level paragraph),
+        // but the newListType being <UL> or <OL>. In this case, we won't find a newListableElement
+        // or a newListItem, since the selectedListable isn't in a list at all.
+        const newListableElement = _findFirstParentElementInNodeNames(selectedListable, [newListType]);
+        // Since a UL/OL can be within a LI, we need to exclude _listTags when searching upward for the LI
+        let newListItemElement = _findFirstParentElementInNodeNames(selectedListable, ['LI'], _listTags);
+        let tagRange = document.createRange();
+        const newStartContainer = (i === 0) && (selectedListable === startContainer);
+        const newEndContainer = (i === indices.length - 1) && (selectedListable === endContainer);
+        if (newStartContainer) {
+            tagRange.setStart(selectedListable, startOffset);
+        } else {
+            tagRange.setStart(selectedListable, 0);
+        };
+        if (newEndContainer) {
+            tagRange.setEnd(selectedListable, endOffset);
+        } else {
+            tagRange.setEnd(selectedListable, _endOffsetFor(selectedListable));
+        };
+        sel.removeAllRanges();
+        sel.addRange(tagRange);
+        // If !unsetAll, then we only set the new list type for OL or UL that are different
+        // from the oldListable. We use the existing splitList method to do the hard work when
+        // removing a tag altogether. When the tag changes, just replaceTag.
+        // If unsetAll, then we removed all lists at "do" time, and now we need to make all listables
+        // back into lists with the proper nesting.
+        const untag = !unsetAll && newListableElement && newListItemElement && (oldListable !== newListableElement.nodeName);
+        const replaceTag = !unsetAll && _isListElement(newListableElement) && (oldListable !== newListableElement.nodeName);
+        if (untag) {
+            let styleElement = _splitList(newListItemElement);
+            newSelectedListables.push(styleElement);
+        } else if (replaceTag) {
+            let listElement = _replaceTag(newListableElement, oldListable);
+            newSelectedListables.push(listElement);
+        } else if (unsetAll) {
+            // If currentList is null, we have to create it as a top-level list. At the end of the
+            // loop, we set it based on the oldIndices, either to null because we need to create
+            // a new top-level list for the next listable, or to a sublist that we create or have
+            // previously created.
+            if (!currentList) {
+                currentList = document.createElement(newListType);
+                selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                newSelectedListables.push(currentList);     // Track the new list we just created
+            };
+            // When we unsetAll previously, every listable  has to be placed in a new LI in the currentList
+            let currentListItem = document.createElement('LI');
+            currentList.appendChild(currentListItem);
+            currentListItem.appendChild(selectedListable);
+            // If the next selectedListable is a subList, we have to create a new UL or OL to put
+            // in the LI that we already created. That LI is not necessarily currentListItem.
+            // The oldListIndex has the path through commonAncestor childNodes to find that LI.
+            // The last item in oldListIndex is the childNode (OL or OL) we are about to create,
+            // and the path up to that last item gives us the LI it should reside in.
+            if (nextIsSubList) {
+                // The list item we are going to put a new subList into should already exist
+                // because of the ordering we restore the list in.
+                const listItemIndex = nextOldIndex.slice(0, -1);    // Remove the last item
+                const listItem = _childNodeIn(commonAncestor, listItemIndex);
+                const subList = document.createElement(newListType);
+                listItem.appendChild(subList);
+                currentList = subList;                      // Use the new sublist for the next item
+                newSelectedListables.push(currentList);     // Track the new list we just created
+            };
+        } else {
+            // Do nothing to this element. We still need to track it, though.
+            newSelectedListables.push(selectedListable);
+        }
+        const newRange = sel.getRangeAt(0);
+        if (newStartContainer) {
+            range.setStart(newRange.startContainer, newRange.startOffset);
+        };
+        if (newEndContainer) {
+            range.setEnd(newRange.endContainer, newRange.endOffset);
+        };
+    };
+    // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
+    // the listables, depths, and indices of the elements have changed after undo.
+    undoerData.data.oldListables = [];
+    undoerData.data.indices = [];
+    newSelectedListables.forEach(newSelectedListable => {
+        undoerData.data.oldListables.push(newSelectedListable.nodeName);
+        undoerData.data.indices.push(_childNodeIndicesByParent(newSelectedListable, commonAncestor));
+    });
+    _restoreRange(savedRange);
+    _callback('input');
+};
+
+/**
+ * Redo the previous undo of the multiList operation.
+ *
+ * Basically similar to _multiList, except the data for the operation is all
+ * derived from the undoerData, not the selection.
+ */
+const _redoMultiList = function(undoerData) {
+    const newListType = undoerData.data.newListType;
+    const commonAncestor = undoerData.data.commonAncestor;
+    const originalIndices = undoerData.data.indices;    // Indices to the results of undo (i.e., what we once started with)
+    const selectedListables = [];
+    for (let i = 0; i < originalIndices.length; i++) {
+        selectedListables[i] = _childNodeIn(commonAncestor, originalIndices[i]);
+    };
+    const listableElements = selectedListables.filter( listableElement => _findFirstParentElementInNodeNames(listableElement, [newListType], ['LI']));
+    // If all elements are of the same newListType already, then unsetAll===true; otherwise,
+    // unsetAll===false indicates that all elements will be set to newListType, with the ones
+    // that are already in newListType left alone.
+    const unsetAll = listableElements.length === selectedListables.length;
+    _restoreRange(undoerData.range);
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    // Altho the selectedListables will change position in the DOM, they will still exist,
+    // so we can use _rangeProxy() and restoreRange() to preserve selection. We don't use
+    // _backupRange and _restoreRange to avoid issues if they are used by methods we call here.
+    const savedRange = _rangeProxy();
+    const tagRange = document.createRange();
+    const newListableElements = [];
+    const oldListables = [];
+    const oldIndices = [];
+    let currentList, currentListItem;
+    for (let i = 0; i < selectedListables.length; i++) {
+        let selectedListable = selectedListables[i];    // A top-level style or a UL or OL
+        const isListElement = _isListElement(selectedListable);
+        const oldIndex = originalIndices[i];
+        const nextListable = (i < selectedListables.length - 1) ? selectedListables[i + 1] : null;
+        const nextIsSibling = nextListable && (selectedListable.nextElementSibling === nextListable);
+        if (unsetAll) {
+            // Every selectedListable is of newListType, that we are going to remove.
+            // First, eliminate all the list items, which should hold styled elements
+            // and hold onto all the styled elements we end up with in unsetChildren.
+            const unsetChildren = [];
+            let childNode = selectedListable.firstChild;
+            while (childNode) {
+                let nextChildNode = childNode.nextSibling;
+                if (_isListItemElement(childNode)) {
+                    tagRange.selectNode(childNode);
+                    let styledElementRange = _unsetTagInRange(childNode, tagRange);
+                    let styledElement = styledElementRange.startContainer;
+                    unsetChildren.push(styledElement);
+                };
+                childNode = nextChildNode;
+            };
+            // Then, remove the selectedListable by removing its tag.
+            tagRange.selectNode(selectedListable);
+            _unsetTagInRange(selectedListable, tagRange);
+            // And track the unsetChildren (i.e., new top-level paragraph styles) that we have left over
+            // so that we can retag them on undo.
+            for (let j = 0; j < unsetChildren.length; j++) {
+                let unsetChild = unsetChildren[j];
+                oldListables.push(newListType);                 // Remains the same for each child
+                oldIndices.push(oldIndex);                      // Remains the same for each child
+                newListableElements.push(unsetChild);           // Track so we can get indices when done
+            };
+        } else {
+            // We are only going to set the ones that are not of newListType, adding them to
+            // the list we are currently in, or creating a new currentList as needed
+            let oldListable = selectedListable.nodeName;
+            if (!currentList) {
+                if (isListElement) {
+                    currentList = selectedListable;
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                } else {
+                    currentList = document.createElement(newListType);
+                    selectedListable.parentNode.insertBefore(currentList, selectedListable.nextSibling);
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            } else {
+                if (isListElement) {
+                    if (oldListable !== newListType) {
+                        selectedListable = _replaceTag(selectedListable, newListType.toUpperCase());
+                    };
+                    if (currentListItem) {
+                        currentListItem.appendChild(selectedListable);  // Should always be true
+                    } else {
+                        currentList.appendChild(selectedListable);
+                    };
+                } else {
+                    currentListItem = document.createElement('LI');
+                    currentList.appendChild(currentListItem);
+                    currentListItem.appendChild(selectedListable);
+                };
+            };
+            // The selectedListable's location in the DOM has likely changed, so push now.
+            oldListables.push(oldListable);
+            oldIndices.push(oldIndex);
+            newListableElements.push(selectedListable);
+        };
+        // If the next selectedListable we are going to see is a sibling element of currentList,
+        // then leave currentList the same so it gets appended; else set currentList to null
+        // so that the next loop will create a new list as needed.
+        if (!nextIsSibling) {
+            currentList = null;
+            currentListItem = null;
+        };
+    };
+    // Why update undoerData after the redo? Because if we undo again, we use the undoerData again, but
+    // the listables, depths, and indices of the elements have changed after redo.
+    undoerData.data.oldListables = oldListables;
+    undoerData.data.oldIndices = oldIndices;
+    undoerData.data.indices = [];
+    for (let i = 0; i < newListableElements.length; i++) {
+        undoerData.data.indices.push(_childNodeIndicesByParent(newListableElements[i], commonAncestor));
+    };
+    _restoreRange(savedRange);
     _callback('input');
 };
 
@@ -2368,16 +2990,6 @@ MU.toggleListItem = function(newListType, undoable=true) {
 const _isNakedListSelection = function(node) {
     return !(_findFirstParentElementInNodeNames(node, ['LI'], ['OL', 'UL']));
 };
-
-const _rangeCopy = function() {
-    const sel = document.getSelection();
-    if (!sel || (!sel.rangeCount > 0)) { return null };
-    const selRange = sel.getRangeAt(0)
-    const rangeCopy = document.createRange();
-    rangeCopy.setStart(selRange.startContainer, selRange.startOffset);
-    rangeCopy.setEnd(selRange.endContainer, selRange.endOffset);
-    return rangeCopy;
-}
 
 /**
  * We are inside of a list and hit Enter.
@@ -2613,87 +3225,6 @@ const _patchWhiteSpace = function(str, end='BOTH') {
             break;
     };
     return patchedStr;
-};
-
-/**
- * Replace newlines with <br> in a text node; return trailingText if patched, else node
- */
-const _patchNewlines = function(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    const rawContent = node.textContent;
-    const leadingNl = rawContent.slice(1) === '\n';
-    const trailingNl = rawContent.slice(-1) === '\n';
-    const lines = rawContent.split('\n');
-    if (lines.length === 1) { return node };
-    const insertTarget = node.nextSibling;
-    let textNode;
-    let initialI = 0;
-    if (leadingNl) {
-        const p = document.createElement('p');
-        p.appendChild(document.createElement('br'));
-        node.parentNode.insertBefore(p, insertTarget);
-        initialI = 1;
-    };
-    for (let i = initialI; i < lines.length; i++) {
-        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
-        node.parentNode.insertBefore(textNode, insertTarget);
-        if (i < lines.length - 1) {
-            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
-        };
-    };
-    if (trailingNl) {
-        const p = document.createElement('p');
-        textNode = document.createElement('br')
-        p.appendChild(textNode);
-        node.parentNode.insertBefore(p, insertTarget);
-    }
-    node.parentNode.removeChild(node);
-    return textNode;
-};
-
-const _patchAngleBrackets = function(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    let rawContent = node.textContent;
-    rawContent = rawContent.replace('<', '&lt;');
-    rawContent = rawContent.replace('>', '&gt;');
-    node.textContent = rawContent;
-};
-
-const _stripZeroWidthChars = function(element) {
-    const childNodes = element.childNodes;
-    for (let i=0; i<childNodes.length; i++) {
-        const childNode = childNodes[i];
-        if (childNode.nodeType === Node.TEXT_NODE) {
-            childNode.textContent = childNode.textContent.replace(/\u200B/g, '');
-        };
-    };
-}
-
-/**
- * Return true if element and all of its children are empty or
- * if it is an empty text node.
- *
- * For example, <li><p></p></li> is empty, as is <li></li>, while
- * <li><p> <p></li> and <li> <li> will have text elements and are
- * therefore not empty.
- */
-const _isEmpty = function(element) {
-    let empty;
-    if (element.nodeType === Node.TEXT_NODE) {
-        empty = element.textContent.trim().length === 0;
-    } else {
-        empty = true;
-        const childNodes = element.childNodes;
-        for (let i=0; i<childNodes.length; i++) {
-            empty = _isEmpty(childNodes[i]);
-            if (!empty) { break };
-        };
-    }
-    return empty;
 };
 
 /**
@@ -3129,7 +3660,7 @@ const _insertInList = function(fragment) {
 const _doListIndent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
+    if (!selNode) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!existingList || !existingListItem) { return null };
@@ -3238,22 +3769,28 @@ const _indentListItem = function(existingListItem, existingList) {
 const _doListOutdent = function(undoable=true) {
     let sel = document.getSelection();
     let selNode = (sel) ? sel.anchorNode : null;
-    if (!selNode || !sel.isCollapsed) { return null };
+    if (!selNode) { return null };
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(selNode, ['LI'])
     if (!(existingList && existingListItem)) { return null };
     _backupSelection();
     const outdentedItem = _outdentListItem(existingListItem, existingList);
-    _restoreSelection()
+    _restoreSelection();
     // When outdenting to get out of a list, we will always end up in a
-    // style tag of some kind. The operation will not be undoable.
-    // User can undo by pressing the delete key to get back in the list.
-    if (outdentedItem && (!_styleTags.includes(outdentedItem.nodeName))) {
-        if (undoable) {
-            _backupSelection();
-            const undoerData = _undoerData('outdent');
-            undoer.push(undoerData);
+    // paragraph style tag of some kind. If that's the case, then treat the operation
+    // like toggleListItem so we get the proper undo behavior that restores any
+    // previously nested list.
+    const outdentedFromList = outdentedItem && _paragraphStyleTags.includes(outdentedItem.nodeName);
+    if (outdentedItem && undoable) {
+        _backupSelection();
+        let undoerData;
+        if (outdentedFromList) {
+            const removedContainingList = _isListElement(outdentedItem.nextElementSibling);
+            undoerData = _undoerData('list', {newListType: existingList.nodeName, oldListType: existingList.nodeName, removedContainingList: removedContainingList});
+        } else {
+            undoerData = _undoerData('outdent');
         };
+        undoer.push(undoerData);
     };
     _callback('input');
 };
@@ -3302,9 +3839,10 @@ const _outdentListItem = function(existingListItem, existingList) {
     // To do this, find the existingListItem and the existingList it is inside of.
     // The existingList's parentNode's nextSibling is what we want to put the
     // existingListItem before. However, before we do that, move all of existingListItem's
-    // nextSiblings to be its children, thereby "moving down" any nodes below it in the
+    // nextElementSiblings to be its children, thereby "moving down" any nodes below it in the
     // existingList. When done, if existingList is empty, remove it.
-    const nextListItem = existingList.parentNode.nextElementSibling;
+    let nextListItem = existingList.parentNode.nextElementSibling;
+    if (!_isListItemElement(nextListItem)) { nextListItem = null };
     let sib = existingListItem.nextElementSibling;
     if (sib) {
         const newList = document.createElement(existingList.nodeName);
@@ -3373,7 +3911,7 @@ const _splitList = function(listItemElement, newListType) {
         oldList.replaceWith(newList);
         return listItemElement;
     } else {
-        // We want the contents of listItemElement to be embedded between
+        // We want the contents of listItemElement to be embedded
         // at the right place in the document, which varies depending on
         // whether there was a postList to mark the location.
         let insertionPoint;
@@ -3483,6 +4021,11 @@ const _replaceNodeWithListItem = function(selNode) {
     selNode.replaceWith(newListItemElement);
     return newListItemElement;
 };
+
+/********************************************************************************
+ * Indenting and Outdenting (for blockquotes and lists)
+ */
+//MARK: Indenting and Outdenting (for blockquotes and lists)
 
 /**
  * Do a context-sensitive indent.
@@ -3955,6 +4498,54 @@ const _cleanUpAttributesWithin = function(attribute, node) {
     };
     return attributesRemoved;
 };
+
+/**
+ * Replace newlines with <br> in a text node; return trailingText if patched, else node
+ */
+const _patchNewlines = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    const rawContent = node.textContent;
+    const leadingNl = rawContent.slice(1) === '\n';
+    const trailingNl = rawContent.slice(-1) === '\n';
+    const lines = rawContent.split('\n');
+    if (lines.length === 1) { return node };
+    const insertTarget = node.nextSibling;
+    let textNode;
+    let initialI = 0;
+    if (leadingNl) {
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        node.parentNode.insertBefore(p, insertTarget);
+        initialI = 1;
+    };
+    for (let i = initialI; i < lines.length; i++) {
+        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
+        node.parentNode.insertBefore(textNode, insertTarget);
+        if (i < lines.length - 1) {
+            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
+        };
+    };
+    if (trailingNl) {
+        const p = document.createElement('p');
+        textNode = document.createElement('br')
+        p.appendChild(textNode);
+        node.parentNode.insertBefore(p, insertTarget);
+    }
+    node.parentNode.removeChild(node);
+    return textNode;
+};
+
+const _patchAngleBrackets = function(node) {
+    if (node.nodeType !== Node.TEXT_NODE) {
+        return node;
+    };
+    let rawContent = node.textContent;
+    rawContent = rawContent.replace('<', '&lt;');
+    rawContent = rawContent.replace('>', '&gt;');
+    node.textContent = rawContent;
+};
                                 
 /********************************************************************************
  * Explicit handling of multi-click
@@ -4039,27 +4630,29 @@ const _tripleClickSelect = function(sel) {
 //MARK: Selection
 
 /**
- * Define various arrays of tags used to represent concepts on the Swift side.
+ * Define various arrays of tags used to represent concepts on the Swift side and internally.
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
  */
-const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];      // All paragraph styles
+const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];                  // All paragraph styles
 
-const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];           // All possible (nestable) formats
+const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];                       // All possible (nestable) formats
 
-const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);          // Possible containing blocks in a list
+const _listTags = ['UL', 'OL'];                                                         // Types of lists
 
-const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];       // Convert to 'P' for MU.pasteText
+const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];                       // All tags associated with tables
 
-const _styleTags = _paragraphStyleTags.concat(['LI', 'BLOCKQUOTE', 'OL', 'UL']);    // Identify insert-before point in table/list
+const _styleTags = _paragraphStyleTags.concat(_listTags.concat(['LI', 'BLOCKQUOTE']));  // Identify insert-before point in table/list
 
-const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];           // All tags associated with tables
+const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);                      // Possible containing blocks in a list
 
-const _monitorEnterTags = ['UL', 'OL', 'TABLE', 'BLOCKQUOTE'];              // Tags we monitor for Enter
+const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];           // Convert to 'P' for MU.pasteText
 
-const _monitorIndentTags = ['UL', 'OL', 'BLOCKQUOTE'];                      // Tags we monitor for Tab or Ctrl+]
+const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);                    // Tags we monitor for Enter
 
-const _topLevelTags = _paragraphStyleTags.concat(['OL', 'UL', 'TABLE']);    // Allowed top-level tags within editor
+const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
+
+const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE']));          // Allowed top-level tags within editor
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -4720,169 +5313,6 @@ MU.deleteTable = function(undoable=true) {
     };
 };
 
-/*
- * If the selection is inside a TABLE, populate attributes with the information
- * about the table and what is selected in it.
- * Note that the table likely has empty #text elements in it depending on how the
- * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
- * The values in elements are JavaScript objects of various kinds; however, the
- * values in attributes have to be consumable on the Swift side. So, for example,
- * the elements['thead'] is the HTML Table Header Element, whereas attributes['thead']
- * is either true or false indicating whether the selection is in the header.
- * Similarly, elements['header'] and ['colspan'] are true or false so
- * can be stored in attributes directly.
- *
- * @return {String : T}     Dictionary with keys of various types consumable in Swift
- */
-const _getTableAttributesAtSelection = function() {
-    const attributes = {};
-    const elements = _getTableElementsAtSelection();
-    attributes['table'] = elements['table'] != null;
-    if (!attributes['table']) { return attributes };
-    attributes['thead'] = elements['thead'] != null;
-    attributes['tbody'] = elements['tbody'] != null;
-    attributes['header'] = elements['header'];
-    attributes['colspan'] = elements['colspan'];
-    attributes['cols'] = elements['cols'];
-    attributes['rows'] = elements['rows'];
-    attributes['row'] = elements['row'];
-    attributes['col'] = elements['col'];
-    return attributes;
-};
-
-/**
- * Return all the table elements at the selection.
- * The selection has to be in a TD or TH element. Then, we
- * walk up the parent chain to TABLE, populating elements
- * as we go. We compute the row and col of the selection, too.
- * If anything is unexpected along the way, we return an empty
- * dictionary.
- *
- * @return {String : T}     Dictionary with keys of types consumable here in JavaScript
- */
-const _getTableElementsAtSelection = function() {
-    const elements = {};
-    const cell = _firstSelectionNodeMatching(['TD', 'TH']);
-    if (cell) {
-        let _cell = cell;
-        // Track the cell the selection is in
-        if (cell.nodeName === 'TD') {
-            elements['td'] = cell;
-        } else {
-            elements['th'] = cell;
-        }
-        // Find the column the selection is in, since we know it immediately
-        let colCount = 0;
-        while (_cell.previousElementSibling) {
-            _cell = _cell.previousElementSibling;
-            if (_cell.nodeType === cell.nodeType) { colCount++; };
-        };
-        elements['col'] = colCount;
-        // Track the row the selection is in
-        const row = cell.parentNode;
-        if (row.nodeName === 'TR') {
-            elements['tr'] = row;
-        } else {
-            return {};
-        }
-        // Track whether we are in the header or body
-        const section = row.parentNode;
-        if (section.nodeName === 'TBODY') {
-            elements['tbody'] = section;
-            // If the selection is in the body, then we can find the row
-            let _row = row;
-            let rowCount = 0;
-            while (_row.previousElementSibling) {
-                _row = _row.previousElementSibling;
-                if (_row.nodeType === row.nodeType) { rowCount++; };
-            };
-            elements['row'] = rowCount;
-        } else if (section.nodeName === 'THEAD') {
-            elements['thead'] = section;
-        } else {
-            return {};
-        };
-        // Track the selected table
-        const table = section.parentNode;
-        if (table.nodeName === 'TABLE') {
-            elements['table'] = table;
-        } else {
-            return {};
-        }
-        // Track the size of the table and whether the header spans columns
-        const [rows, cols, header, colspan] = _getRowsCols(table);
-        elements['rows'] = rows;
-        elements['cols'] = cols;
-        elements['header'] = header
-        elements['colspan'] = colspan;
-    };
-    return elements;
-};
-
-/**
- * Since we might select an element in the header or the body of table, we need a single
- * way to get the size of the table body in terms rows and cols regardless of what was
- * selected. The header always has one row that is not counted in terms of the table size.
- * When we have a TBODY, it always defines rowCount and colCount. If we have a THEAD and
- * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
- * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
- * is zero. The colspan value is returned so we know if the header spans columns.
- * Externally, we only need to know if a header exists. Internally in JavaScript, we can
- * always _getSection for the table to find out.
- *
- * @param {HTML Table Element}  table   The table being examined
- * @return {[T]}                        Array with number of rows and cols and whether a header with or without colSpan exists
- */
-const _getRowsCols = function(table) {
-    let rowCount = 0;
-    let colCount = 0;
-    let headerExists = false;
-    let colspan = null;
-    const children = table.children;
-    for (let i=0; i<children.length; i++) {
-        let section = children[i];
-        let rows = section.children;
-        if (rows.length > 0) {
-            let row = rows[0];
-            let cols = row.children;
-            if (section.nodeName === 'TBODY') {
-                rowCount = rows.length;
-                colCount = cols.length;
-            } else if (section.nodeName === 'THEAD') {
-                headerExists = true;
-                if (cols.length > 0) {
-                    colspan = _numberAttribute(cols[0], 'colspan');
-                };
-                if (colspan && (colCount === 0)) {
-                    colCount = colspan;
-                } else if (colCount === 0) {
-                    colCount = cols.length;
-                };
-            };
-        };
-    };
-    const colSpanExists = colspan != null;
-    return [ rowCount, colCount, headerExists, colSpanExists ];
-}
-
-/**
- * Return the section of the table identified by node name
- *
- * @param {HTML Table Element}  table   The table being examined.
- * @param {String}              name    The desired section, either 'THEAD' or 'TBODY'.
- * @return {HTML Table Header | HTML Table Body | null}
- */
-const _getSection = function(table, name) {
-    const children = table.children;
-    for (let i=0; i<children.length; i++) {
-        let section = children[i];
-        if (section.nodeName === name) {
-            return section;
-        };
-    };
-    return null;
-};
-
 /**
  * Add a row before or after the current selection, whether it's in the header or body.
  * For rows, AFTER = below; otherwise above.
@@ -5212,6 +5642,169 @@ MU.deleteCol = function(undoable=true) {
     _callback('input');
 };
 
+/*
+ * If the selection is inside a TABLE, populate attributes with the information
+ * about the table and what is selected in it.
+ * Note that the table likely has empty #text elements in it depending on how the
+ * HTML is formatted, so we use 'children' to get only ELEMENT_NODEs.
+ * The values in elements are JavaScript objects of various kinds; however, the
+ * values in attributes have to be consumable on the Swift side. So, for example,
+ * the elements['thead'] is the HTML Table Header Element, whereas attributes['thead']
+ * is either true or false indicating whether the selection is in the header.
+ * Similarly, elements['header'] and ['colspan'] are true or false so
+ * can be stored in attributes directly.
+ *
+ * @return {String : T}     Dictionary with keys of various types consumable in Swift
+ */
+const _getTableAttributesAtSelection = function() {
+    const attributes = {};
+    const elements = _getTableElementsAtSelection();
+    attributes['table'] = elements['table'] != null;
+    if (!attributes['table']) { return attributes };
+    attributes['thead'] = elements['thead'] != null;
+    attributes['tbody'] = elements['tbody'] != null;
+    attributes['header'] = elements['header'];
+    attributes['colspan'] = elements['colspan'];
+    attributes['cols'] = elements['cols'];
+    attributes['rows'] = elements['rows'];
+    attributes['row'] = elements['row'];
+    attributes['col'] = elements['col'];
+    return attributes;
+};
+
+/**
+ * Return all the table elements at the selection.
+ * The selection has to be in a TD or TH element. Then, we
+ * walk up the parent chain to TABLE, populating elements
+ * as we go. We compute the row and col of the selection, too.
+ * If anything is unexpected along the way, we return an empty
+ * dictionary.
+ *
+ * @return {String : T}     Dictionary with keys of types consumable here in JavaScript
+ */
+const _getTableElementsAtSelection = function() {
+    const elements = {};
+    const cell = _firstSelectionNodeMatching(['TD', 'TH']);
+    if (cell) {
+        let _cell = cell;
+        // Track the cell the selection is in
+        if (cell.nodeName === 'TD') {
+            elements['td'] = cell;
+        } else {
+            elements['th'] = cell;
+        }
+        // Find the column the selection is in, since we know it immediately
+        let colCount = 0;
+        while (_cell.previousElementSibling) {
+            _cell = _cell.previousElementSibling;
+            if (_cell.nodeType === cell.nodeType) { colCount++; };
+        };
+        elements['col'] = colCount;
+        // Track the row the selection is in
+        const row = cell.parentNode;
+        if (row.nodeName === 'TR') {
+            elements['tr'] = row;
+        } else {
+            return {};
+        }
+        // Track whether we are in the header or body
+        const section = row.parentNode;
+        if (section.nodeName === 'TBODY') {
+            elements['tbody'] = section;
+            // If the selection is in the body, then we can find the row
+            let _row = row;
+            let rowCount = 0;
+            while (_row.previousElementSibling) {
+                _row = _row.previousElementSibling;
+                if (_row.nodeType === row.nodeType) { rowCount++; };
+            };
+            elements['row'] = rowCount;
+        } else if (section.nodeName === 'THEAD') {
+            elements['thead'] = section;
+        } else {
+            return {};
+        };
+        // Track the selected table
+        const table = section.parentNode;
+        if (table.nodeName === 'TABLE') {
+            elements['table'] = table;
+        } else {
+            return {};
+        }
+        // Track the size of the table and whether the header spans columns
+        const [rows, cols, header, colspan] = _getRowsCols(table);
+        elements['rows'] = rows;
+        elements['cols'] = cols;
+        elements['header'] = header
+        elements['colspan'] = colspan;
+    };
+    return elements;
+};
+
+/**
+ * Since we might select an element in the header or the body of table, we need a single
+ * way to get the size of the table body in terms rows and cols regardless of what was
+ * selected. The header always has one row that is not counted in terms of the table size.
+ * When we have a TBODY, it always defines rowCount and colCount. If we have a THEAD and
+ * no TBODY, then THEAD defines colcount either using the value in colspan if it exists, or
+ * by the number of TH children of THEAD. In both of those cases (no TBODY), rowCount
+ * is zero. The colspan value is returned so we know if the header spans columns.
+ * Externally, we only need to know if a header exists. Internally in JavaScript, we can
+ * always _getSection for the table to find out.
+ *
+ * @param {HTML Table Element}  table   The table being examined
+ * @return {[T]}                        Array with number of rows and cols and whether a header with or without colSpan exists
+ */
+const _getRowsCols = function(table) {
+    let rowCount = 0;
+    let colCount = 0;
+    let headerExists = false;
+    let colspan = null;
+    const children = table.children;
+    for (let i=0; i<children.length; i++) {
+        let section = children[i];
+        let rows = section.children;
+        if (rows.length > 0) {
+            let row = rows[0];
+            let cols = row.children;
+            if (section.nodeName === 'TBODY') {
+                rowCount = rows.length;
+                colCount = cols.length;
+            } else if (section.nodeName === 'THEAD') {
+                headerExists = true;
+                if (cols.length > 0) {
+                    colspan = _numberAttribute(cols[0], 'colspan');
+                };
+                if (colspan && (colCount === 0)) {
+                    colCount = colspan;
+                } else if (colCount === 0) {
+                    colCount = cols.length;
+                };
+            };
+        };
+    };
+    const colSpanExists = colspan != null;
+    return [ rowCount, colCount, headerExists, colSpanExists ];
+}
+
+/**
+ * Return the section of the table identified by node name
+ *
+ * @param {HTML Table Element}  table   The table being examined.
+ * @param {String}              name    The desired section, either 'THEAD' or 'TBODY'.
+ * @return {HTML Table Header | HTML Table Body | null}
+ */
+const _getSection = function(table, name) {
+    const children = table.children;
+    for (let i=0; i<children.length; i++) {
+        let section = children[i];
+        if (section.nodeName === name) {
+            return section;
+        };
+    };
+    return null;
+};
+
 /**
  * Given a row, tr, select at the beginning of the first text element in col, or
  * the entire first element if not a text element.
@@ -5431,6 +6024,60 @@ const _doPrevCell = function() {
  * Common private functions
  */
 //MARK: Common Private Functions
+
+/**
+ * Return the depth of node in parents contained in nodeNames. If the node is
+ * a top-level element, then depth===0.
+ */
+const _depthWithin = function(node, nodeNames) {
+    let depth = 0;
+    let parentElement = _findFirstParentElementInNodeNames(node, nodeNames);
+    while (parentElement) {
+        depth++;
+        parentElement = _findFirstParentElementInNodeNames(parentElement.parentNode, nodeNames);
+    };
+    return depth;
+};
+
+/**
+ * Return true if element and all of its children are empty or
+ * if it is an empty text node.
+ *
+ * For example, <li><p></p></li> is empty, as is <li></li>, while
+ * <li><p> <p></li> and <li> <li> will have text elements and are
+ * therefore not empty.
+ */
+const _isEmpty = function(element) {
+    let empty;
+    if (element.nodeType === Node.TEXT_NODE) {
+        empty = element.textContent.trim().length === 0;
+    } else {
+        empty = true;
+        const childNodes = element.childNodes;
+        for (let i=0; i<childNodes.length; i++) {
+            empty = _isEmpty(childNodes[i]);
+            if (!empty) { break };
+        };
+    }
+    return empty;
+};
+
+/**
+ * Remove all non-printing zero-width chars in element.
+ *
+ * The zero-width chars get inserted during editing as formatting changes (e.g.,
+ * "<type some> CTRL+B <type more> CTRL+B" results in non-printing chars being
+ * inserted to allow the selection to be maintained properly.
+ */
+const _stripZeroWidthChars = function(element) {
+    const childNodes = element.childNodes;
+    for (let i=0; i<childNodes.length; i++) {
+        const childNode = childNodes[i];
+        if (childNode.nodeType === Node.TEXT_NODE) {
+            childNode.textContent = childNode.textContent.replace(/\u200B/g, '');
+        };
+    };
+};
 
 /**
  * Split the textNode at offset, but also split its parents up to and
@@ -5679,11 +6326,24 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
  * false here in that case.
  */
 const _selectionSpansStyles = function() {
+    const styles = _selectionStartAndEndStyle();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    return startStyle && endStyle && (startStyle !== endStyle)
+};
+
+/**
+ * Return the paragraph style element the selection starts in and ends in
+ */
+const _selectionStartAndEndStyle = function() {
     const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.anchorNode === sel.focusNode)) { return false };
-    const anchorStyleParent = _findFirstParentElementInNodeNames(sel.anchorNode, _paragraphStyleTags);
-    const focusStyleParent = _findFirstParentElementInNodeNames(sel.focusNode, _paragraphStyleTags);
-    return (!anchorStyleParent || !focusStyleParent || (anchorStyleParent !== focusStyleParent));
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endContainer = range.endContainer;
+    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    return {startStyle: startStyle, endStyle: endStyle};
 };
 
 /**
@@ -5697,29 +6357,21 @@ const _selectionSpansStyles = function() {
 const _selectedStyles = function() {
     let elements = [];
     if (!_selectionSpansStyles()) { return elements };
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startParagraph = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    const endContainer = range.endContainer;
-    const endParagraph = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    // Selection has to start and end in some kind of paragraph or we do nothing
-    if (!startParagraph || !endParagraph) { return elements };
-    const paragraphRange = document.createRange();
-    paragraphRange.setStart(startParagraph, 0);
-    paragraphRange.setEnd(endParagraph, 0);
-    return _nodesWithNamesInRange(paragraphRange, _paragraphStyleTags);
+    const styles = _selectionStartAndEndStyle();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    const styleRange = document.createRange();
+    styleRange.setStart(startStyle, 0);
+    styleRange.setEnd(endStyle, 0);
+    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
 };
 
+/**
+ * Return whether the selection contains multiple text nodes
+ */
 const _selectionSpansTextNodes = function() {
-    const sel = document.getSelection();
-    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return false };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const endContainer = range.endContainer;
-    return (startContainer.nodeType === Node.TEXT_NODE) && (startContainer !== endContainer);
-}
+    return _selectedTextNodes().length > 1;
+};
 
 /**
  * Return an array of text nodes that the selection spans, including ones it
@@ -5734,6 +6386,287 @@ const _selectionSpansTextNodes = function() {
 const _selectedTextNodes = function() {
     const nodes = _selectedNodesNamed('#text');
     return nodes.filter(textNode => !_isEmpty(textNode));
+};
+
+const _selectedListables = function() {
+    if (!_selectionSpansListables()) { return [] };
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    const listableRange = document.createRange();
+    listableRange.setStart(startListable, 0);
+    listableRange.setEnd(endListable, 0);
+    let lists = _nodesWithNamesInRange(listableRange, _listTags);
+    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
+    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
+    // are not interleaved in order they are encountered. This matters because the ordering
+    // determines whether the listables can be combined into the same list or not.
+    // It's quite a hack, but rather than write yet another method to do the traversal,
+    // we use the _childIndices on each element to reassemble them in order.
+    const commonAncestor = listableRange.commonAncestorContainer;
+    let indices = [];
+    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
+    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
+    // Consider:
+    //  <div>
+    //      ...<4 intervening childNodes>...
+    //      <p>Top-level paragraph 1</p>
+    //      <ul>
+    //          <li><p>Unordered list paragraph 1</p></li>
+    //          <ol>
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </ul>
+    //      <p>Top-level paragraph 2</p>
+    //      <ol>
+    //          <li><p>Ordered list paragraph 1</p></li>
+    //      </ol>
+    //  </div>
+    // Then indices from the commonAncestor div at this point will be:
+    //  [[6], [6, 3], [10], [4], [8]]
+    // Note that the indices count childNodes, including empty text for the newlines.
+    // The first three items point at lists. The last two point at styles.
+    // Top-to-bottom readingwise, we would want depthwise traversal:
+    //  [[4], [6], [6, 3], [8], [10]]
+    // However, we want siblings at a given level to follow one another in the list,
+    // so we want breadthwise traversal:
+    //  [[4], [6], [8], [10], [6, 3]]
+    // We get the order using the _compareIndices* function.
+    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
+    // Then we reassemble the listables in that order and return them
+    const sortedListables = [];
+    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
+    return sortedListables;
+};
+
+/**
+ * Compare two indices found from _childNodeIndicesByParent to determine which
+ * one will be encountered first below a common ancestor using depthwise
+ * traversal. In a list, the order is what you see visually on the screen from
+ * top to bottom.
+ * For example, [[6], [6, 3], [10], [4], [8]].sort(_compareIndicesDepthwise)
+ * returns [[4], [6], [6, 3], [8], [10]].
+ *
+ * Return -1 if a comes before b
+ * Return 1 if a comes after b
+ * Return 0 if they are the same
+ */
+const _compareIndicesDepthwise = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    const shorter = (aLength <= bLength) ? a.length : b.length;
+    for (let i = 0; i < shorter; i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    return 0;
+};
+
+/**
+ * Compare two indices found from _childNodeIndicesByParent to determine which
+ * one will be encountered first below a common ancestor using breadthwise
+ * traversal. In a list, the order is sibling-order at each level.
+ * For example, [[6], [6, 3], [10], [4], [8]].sort(_compareIndicesBreadthwise)
+ * returns [[4], [6], [8], [10], [6, 3]].
+ *
+ * Return -1 if a comes before b
+ * Return 1 if a comes after b
+ * Return 0 if they are the same
+ */
+const _compareIndicesBreadthwise = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    for (let i = 0; i < aLength; i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
+    return 0;
+};
+
+/**
+ * Compare two indices found from _childNodeIndicesByParent to determine if they are
+ * at different levels.
+ *
+ * For example, [[1], [1, 5], [1, 1], [2], [2, 4], [3]].sort(_compareIndexLevel)
+ * returns [[1], [2], [3], [1, 5], [1, 1], [2, 4]].
+ * Not sure the sorting operation itself is useful, but this is used to determine
+ * if two indexes are at the same level and writted in the same style at the other
+ * _compare functions.
+ *
+ * Return -1 if a is at a shallower level than b
+ * Return 1 if a is at a deeper level than b
+ * Return 0 if they are at the same level
+ */
+const _compareIndexLevel = function(a, b) {
+    const aLength = a.length;
+    const bLength = b.length;
+    if (aLength < bLength) {
+        return -1;
+    } else if (aLength > bLength) {
+        return 1;
+    }
+    for (let i = 0; i < (aLength - 1); i++) {
+        let ai = a[i];
+        let bi = b[i];
+        if (ai < bi) {
+            return -1;
+        } else if (ai > bi) {
+            return 1;
+        };
+    };
+    return 0;
+};
+
+/**
+ * Return whether the selection includes multiple list tags or top-level styles,
+ * both of which can be acted upon in _multiList()
+ */
+const _selectionSpansListables = function() {
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    let spansListables = startListable && endListable && (startListable !== endListable);
+    if (spansListables) {
+        return true;
+    } else {
+        // We might be in a list with the selection spanning items, and these list items
+        // can themselves contain lists, so if we are in different items, return true
+        // even tho we might be in one UL or OL.
+        const startListItem = selectionListables.startListItem;
+        const endListItem = selectionListables.endListItem;
+        return startListItem && endListItem && (startListItem !== endListItem);
+    };
+};
+
+/**
+ * Return the paragraph style or list element the selection starts in and ends in.
+ *
+ * If we are in a list, we return the list elements we are in (UL or OL) and the
+ * list items we are in. Otherwise, we return the paragraph element we are in.
+ * This gives us the "top level" elements we can change to lists or change from lists,
+ * without including the ones that are already embedded in lists.
+ */
+const _selectionListables = function() {
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    let startList, startListItem, startStyle, endList, endListItem, endStyle;
+    startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (startList) {
+        startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (endList) {
+        endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return {startList: startList, startListItem: startListItem, startStyle: startStyle, endList: endList, endListItem: endListItem, endStyle: endStyle};
+};
+
+
+/**
+ * Return the nodes with names in selection, but exclude any that reside within
+ * nodes with names in excluding. Excluding is empty by default.
+ *
+ * For example, for multiList operations, we want all _paragraphStyles in the
+ * selection, but do not want any inside of lists.
+ */
+const _selectedNodesWithNamesExcluding = function(names, excluding, nodes=[]) {
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || (sel.rangeCount === 0)) { return nodes };
+    let range = sel.getRangeAt(0);
+    return _nodesWithNamesInRangeExcluding(range, names, excluding, nodes);
+};
+
+/**
+ * Return the nodes with names in range, but exclude any that reside within
+ * nodes with names in excluding. Excluding is empty by default.
+ *
+ * For example, for multiList operations, we want all _paragraphStyles in the
+ * range, but do not want any inside of lists.
+ */
+const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=[]) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    let child = startContainer;
+    let excluded;
+    if (_equalsOrIsContainedIn(startContainer, endContainer)) {
+        excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+        if (!excluded) {
+            if (names.includes(child.nodeName)) { nodes.push(child) };
+            let subNodes = _allChildNodesWithNames(child, names, endContainer).nodes;
+            nodes.push(...subNodes);
+        };
+        return nodes;
+    };
+    while (child) {
+        excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+        // Even tho child might be embedded in the exclusion list, we still need to look thru its children
+        // to stop traversal if we encounter endContainer.
+        if (!excluded && (names.includes(child.nodeName))) { nodes.push(child) };
+        // If this child has children, the use _allChildNodesWithNames to get them all
+        // but stop (and include if proper) when we find endContainer in them
+        if (_isElementNode(child) && (child.childNodes.length > 0)) {
+            let traversalData = _allChildNodesWithNames(child, names, endContainer);
+            if (!excluded) {
+                let subNodes = traversalData.nodes;
+                if (subNodes.length > 0) {
+                    nodes.push(...subNodes);
+                };
+            };
+            // If we found endContainer, then .stopped is true; else, we need to keep looking
+            if (traversalData.stopped) { child = null };
+        };
+        // If we did not find endContainer, then go to child's nextSibling and
+        // continue. If there is no nextSibling, then go up to the parent and
+        // find its nextSibling. Keep going up until we find something above us
+        // that has a nextSibling and go on from there. By definition, the nodes
+        // above us are not in the range, but all of their siblings are in the range
+        // until we locate endContainer.
+        if (child) {
+            let parent = child.parentNode;
+            child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
+            while (parent && !child) {
+                parent = parent.parentNode;
+                child = parent && parent.nextSibling;
+            };
+            // We should have found some child, whether it is excluded or not
+            excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
+            if (child && (child === endContainer)) {
+                if (!excluded && (names.includes(child.nodeName))) { nodes.push(child) };
+                child = null;
+            };
+        };
+    };
+    // It's fine if we found nothing, but if we found the startContainer, then we should have found
+    // the endContainer d
+    //if (child && (nodes.length > 0) && (child !== endContainer)) { MUError.NoEndContainerInRange.callback() };
+    return nodes;
 };
 
 /**
@@ -5769,57 +6702,35 @@ const _selectedNodesWithNames = function(names, nodes=[]) {
  * the range only partially covers them.
  */
 const _nodesWithNamesInRange = function(range, names, nodes=[]) {
-    const startContainer = range.startContainer;
-    const endContainer = range.endContainer;
-    if (startContainer === endContainer) { return nodes };
-    let child = startContainer;
-    while (child && (child != endContainer)) {
-        if (names.includes(child.nodeName)) { nodes.push(child) };
-        // If this child has children, the use _allChildNodesWithNames to get them all
-        // but stop if we find endContainer in them
-        if (_isElementNode(child) && (child.childNodes.length > 0)) {
-            let subNodes = _allChildNodesWithNames(child, names);
-            for (let i = 0; i < subNodes.length; i++) {
-                let subChild = subNodes[i];
-                if (subChild === endContainer) {
-                    child = subChild;   // Will stop the while loop
-                    break;              // Don't add endContainer to nodes yet
-                };
-                if (names.includes(subChild.nodeName)) { nodes.push(subChild) };
-            };
-        };
-        // If we did not find endContainer, then go to child's nextSibling and
-        // continue. If there is no nextSibling, then go up to the parent and
-        // find its nextSibling. Keep going up until we find something above us
-        // that has a nextSibling and go on from there. By definition, the nodes
-        // above us are not in the range, but all of their siblings are in the range
-        // until we locate endContainer.
-        if (child !== endContainer) {
-            let parent = child.parentNode;
-            child = (child.nextSibling) ? child.nextSibling : parent.nextSibling;
-            while (parent && !child) {
-                parent = parent.parentNode;
-                child = parent.nextSibling;
-            };
-        };
-    };
-    // Child should always be non-null and === endContainer at this point, or it is an error.
-    if (child && (names.includes(child.nodeName))) { nodes.push(child) };
-    return nodes;
+    return _nodesWithNamesInRangeExcluding(range, names, [], nodes);
 };
 
 /**
  * Return all nodes within element that have nodeName, not including element.
+ *
+ * We need to indicate whether we found stoppingAfter (since it might not be part
+ * of the existingNodes we return), so we return both existingNodes and whether we
+ * stopped the traversal because we found stoppingAfter.
+ *
+ * If stoppingAfter is provided, it indicates when traversal should terminate (including
+ * that child if it is in nodeNames).
  */
-const _allChildNodesWithNames = function(element, nodeNames, existingNodes=[]) {
-    if (!_isElementNode(element)) { return existingNodes };
+const _allChildNodesWithNames = function(element, nodeNames, stoppingAfter, existingNodes=[]) {
+    if (!_isElementNode(element)) { return {nodes: existingNodes, stopped: false} };
     const childNodes = element.childNodes;
+    let stopped = false;
     for (let i = 0; i < childNodes.length; i++) {
         let child = childNodes[i];
         if (nodeNames.includes(child.nodeName)) { existingNodes.push(child) };
-        existingNodes = _allChildNodesWithNames(child, nodeNames, existingNodes);
+        if (child === stoppingAfter) {
+            stopped = true;
+            break;
+        };
+        let traversalData = _allChildNodesWithNames(child, nodeNames, stoppingAfter, existingNodes);
+        stopped = traversalData.stopped;
+        existingNodes = traversalData.nodes;
     };
-    return existingNodes;
+    return {nodes: existingNodes, stopped: stopped};
 };
 
 /**
@@ -5872,6 +6783,20 @@ const _isElementNode = function(node) {
  */
 const _isFormatElement = function(node) {
     return _isElementNode(node) && _formatTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether node is a list element (i.e., either UL or OL)
+ */
+const _isListElement = function(node) {
+    return node && _listTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether a node is a list item element (LI)
+ */
+const _isListItemElement = function(node) {
+    return node && (node.nodeName == 'LI');
 };
 
 /**
@@ -6132,7 +7057,7 @@ const _childNodeIndicesByParent = function(node, parentNode) {
     }
     // If we never find parentNode, return an empty array
     return (_node) ? indices : [];
-}
+};
 
 /**
  * Return the index in node.parentNode.childNodes where we will find node.
@@ -6148,6 +7073,68 @@ const _childNodeIndex = function(node) {
         _node = _node.previousSibling;
     };
     return childCount;
+};
+
+/**
+ * Given indices for a set of nodes under a common ancestor derived using
+ * childNodeIndicesByParent, return an array of indexes into the indices
+ * array that identifies the closest containing node, where that node can be null.
+ *
+ * For example, if indices is:
+ *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+ * then we return:
+ *  [null, null, 0, 1, 0, 1, 3]
+ * This indicated that the container of [1, 0] is [1], the container of
+ * [3, 1] is [3], the container of [3, 2] is [3], and the container of
+ * [3, 1, 0, 5] is [3, 1]. The other items in indices have no containers
+ * within indices.
+ *
+ * We need this to identify how to reassemble a list on undo of unsetAll.
+ */
+const _containerIndices = function(indices) {
+    // It's going to make life easier to put indices in depthwise sorted order,
+    // but we need to return an array that is in the original order.
+    // For example, if indices is:
+    //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+    // then sortedIndices will be:
+    //  [[1], [1, 0], [3], [3, 1], [3, 1, 0, 5], [3, 2], [4]]
+    if (indices.length === 0) { return containerIndices };
+    const sortedIndices = [...indices].sort(_compareIndicesDepthwise);  // Don't sort in place
+    const orphanLength = sortedIndices[0].length; // Any element of this size have no parents
+    const sortedContainerIndices = [];
+    for (let i = 0; i < sortedIndices.length; i++) {
+        let sortedIndex = sortedIndices[i];
+        const sortedIndexLength = sortedIndex.length;
+        if (sortedIndexLength === orphanLength) {
+            sortedContainerIndices[i] = null;
+        } else {
+            // Otherwise, see if we can find a parent within sortedIndices that matches
+            let matchedIndex = null;
+            for (let j = 0; j < i; j++) {
+                let possibleMatch = sortedIndices[j];
+                // If possibleMatch is shorter than index, it could be the parent
+                if (possibleMatch.length < sortedIndex.length) {
+                    for (let k = 0; k < possibleMatch.length; k++) {
+                        if (possibleMatch[k] === sortedIndex[k]) {
+                            matchedIndex = j;
+                        } else {
+                            break;
+                        };
+                    };
+                };
+            };
+            sortedContainerIndices[i] = matchedIndex;
+        };
+    };
+    // Populate containerIndices in the order of original indices, not sortedContainerIndices
+    const containerIndices = Array(sortedContainerIndices.length).fill(null);
+    for (let i = 0; i < sortedContainerIndices.length; i++) {
+        const sortedContainerIndex = sortedContainerIndices[i];
+        const sortedIndex = sortedIndices[i];
+        const j = indices.indexOf(sortedIndex);
+        containerIndices[j] = sortedContainerIndex;
+    };
+    return containerIndices;
 };
 
 /*
@@ -6238,7 +7225,7 @@ const _deleteAndResetSelection = function(element, direction) {
     sel.removeAllRanges();
     sel.addRange(newRange);
     _backupSelection();
-}
+};
 
 /**
  * Get the element with nodeName at the selection point if one exists.
@@ -6452,6 +7439,10 @@ const _removeEmptyTextNodes = function(range) {
     };
 };
 
+/**
+ * Return the offset that represents the "end" of a range for node, which depends on whether
+ * it is a text node or element node.
+ */
 const _endOffsetFor = function(node) {
     if (_isTextNode(node)) {
         return node.textContent.length;
@@ -6589,9 +7580,10 @@ const _unsetTag = function(oldElement, sel) {
 /**
  * Given an element with a tag, replace its tag with the new nodeName.
  *
- * If the current selection is within the oldElement, then patch it up to sit in
- * the right place in the newElement. It's important not to change selection if
- * this is not the case, because we iterate over _replaceTag when doing selection
+ * If the current selection is within the oldElement, it travels with the
+ * childNodes as they are moved to the newElement. If the current selection
+ * is the oldElement, then fix it so it is in the newElement. It's important
+ * not to change selection because we iterate over _replaceTag when doing selection
  * across multiple paragraphs.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
@@ -6603,34 +7595,28 @@ const _replaceTag = function(oldElement, nodeName) {
         MUError.NoNewTag.callback();
         return;
     };
+    if (oldElement.nodeName === nodeName) { return oldElement };
     const sel = document.getSelection();
     const oldRange = sel.getRangeAt(0).cloneRange();
     const startContainer = oldRange.startContainer;
     const startOffset = oldRange.startOffset;
     const endContainer = oldRange.endContainer;
     const endOffset = oldRange.endOffset;
-    // Create and update newRange if we can find either startContainer or
-    // endContainer within oldElement. If we can, then we can reset the
-    // selection by locating the proper element inside of newElement using
-    // the indices we obtained from oldElement.
-    const newRange = oldRange.cloneRange();
-    const startIndices = _childNodeIndicesByParent(startContainer, oldElement);
-    const endIndices = _childNodeIndicesByParent(endContainer, oldElement);
-    const patchStart = startIndices.length > 0;
-    const patchEnd = endIndices.length > 0;
+    const newStartContainer = (startContainer === oldElement) ? newElement : startContainer;
+    const newEndContainer = (endContainer === oldElement) ? newElement : endContainer;
     const newElement = document.createElement(nodeName);
-    newElement.innerHTML = oldElement.innerHTML;
-    oldElement.replaceWith(newElement);
-    if (patchStart) {
-        newRange.setStart(_childNodeIn(newElement, startIndices), startOffset);
+    oldElement.parentNode.insertBefore(newElement, oldElement.nextSibling);
+    let child = oldElement.firstChild;
+    while (child) {
+        newElement.appendChild(child);
+        child = oldElement.firstChild;
     };
-    if (patchEnd) {
-        newRange.setEnd(_childNodeIn(newElement, endIndices), endOffset);
-    }
-    if (patchStart || patchEnd) {
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-    };
+    oldElement.parentNode.removeChild(oldElement);
+    const newRange = document.createRange();
+    newRange.setStart(newStartContainer, startOffset);
+    newRange.setEnd(newEndContainer, endOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
     return newElement;
 };
 
@@ -6647,7 +7633,7 @@ const _childrenWithNodeNameCount = function(element, nodeName) {
         if (children[i].nodeName === nodeName) { count++ };
     }
     return count;
-}
+};
 
 /**
  * Find the first child of element whose textContent matches the container passed-in.
@@ -6673,7 +7659,7 @@ const _firstChildMatchingContainer = function(element, container) {
         }
     }
     return null;
-}
+};
 
 /**
  * Return the first child within element that is a textNode using depth-first traversal.
@@ -6723,6 +7709,17 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
     };
 };
 
+/**
+ * Return whether startContainer===endContainer or if startContainer contains endContainer
+ */
+const _equalsOrIsContainedIn = function(startContainer, endContainer) {
+    let parent = endContainer;
+    while (parent && (parent !== startContainer)) {
+        parent = parent.parentNode;
+    };
+    return parent === startContainer;
+};
+
 /********************************************************************************
  * Xcode Formatting Hack
  *
@@ -6749,7 +7746,7 @@ const _imgScale = function(element) {
     } else {
         return null;
     }
-}
+};
 
 /**
  * Return percent of int; e.g., 80 percent of 10 is 8.
@@ -6760,5 +7757,5 @@ const _imgScale = function(element) {
  */
 const _percentInt = function(percent, int) {
     return int * percent / 100;
-}
+};
 
