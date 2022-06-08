@@ -1,7 +1,7 @@
 <p align="center">
-    <img src="https://img.shields.io/badge/Swift-5.4-brightgreen.svg">
+    <img src="https://img.shields.io/badge/Swift-5.5-brightgreen.svg">
     <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+">
-    <img src="https://img.shields.io/badge/MacOS-11.3+-blue.svg" alt="MacOS 11.3+">
+    <img src="https://img.shields.io/badge/MacCatalyst-14.5-blue" alt="MacCatalyst 14.5+">
     <a href="https://twitter.com/stevengharris">
         <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris">
     </a>
@@ -144,6 +144,20 @@ The demos open `demo.html`, which contains information about how to use the Mark
 The current version is closing in on feature-complete. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
 
 ### History
+
+#### Version 0.3.3 [Upcoming]
+
+* Run build and tests on main using GitHub actions.
+* Start using the GitHub issue tracker and PRs to monitor issues prior to Beta.
+* Support multi-list operations.
+* Support multi-indent/outdent operations.
+
+#### Version 0.3.2
+
+This is an intermediate release in support of multi-element operations. A multi-element operation involves selecting multiple elements (e.g., paragraphs or formatted text elements - basically a large selected area in the document) and applying an operation like changing styles, formatting (e.g., bold, italic), or list attributes.
+
+* Support multi-style operations.
+* Support multi-format operations.
 
 #### Version 0.3.1
 
