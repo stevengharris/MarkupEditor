@@ -37,4 +37,4 @@ jobs:
 
         xcodebuild -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
     - name: Run tests
-      run: swift test -v
+      run: xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
