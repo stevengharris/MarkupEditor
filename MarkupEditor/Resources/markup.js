@@ -2075,6 +2075,28 @@ const _redoMultiFormat = function(undoerData) {
 };
 
 /**
+ * Return whether the selection contains multiple text nodes
+ */
+const _selectionSpansTextNodes = function() {
+    return _selectedTextNodes().length > 1;
+};
+
+/**
+ * Return an array of text nodes that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection is collapsed or resides within a single text node, then return
+ * an empty array. We do this because the "normal" formatting logic applies within
+ * a single text node, whereas we use this method to deal with selection that
+ * spans across multiple text nodes. The text nodes we return may already reside
+ * in formatting elements (e.g., <B>, <I>, etc).
+ */
+const _selectedTextNodes = function() {
+    const nodes = _selectedNodesNamed('#text');
+    return nodes.filter(textNode => !_isEmpty(textNode));
+};
+
+/**
  * Return a text node that the range contains or null if the range is
  * not within a single text node or is collapsed.
  *
@@ -2342,6 +2364,58 @@ const _redoMultiStyle = function(undoerData) {
         const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
         _replaceTag(selectedParagraph, newStyle.toUpperCase());
     };
+};
+
+/**
+ * Return true if the selection spans _paragraphStyleTags.
+ *
+ * It's possible (due to pasting) that we end up with a selection in a text
+ * node that is not inside of a paragraph style tag. Since we are only going to
+ * apply multiple operations at the paragraph style level, we will return
+ * false here in that case.
+ */
+const _selectionSpansStyles = function() {
+    const styles = _selectionStyles();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    return startStyle && endStyle && (startStyle !== endStyle)
+};
+
+/**
+ * Return the paragraph style element the selection starts in and ends in.
+ *
+ * Note the difference with _selectedStyles, which returns the style elements within
+ * the selection.
+ */
+const _selectionStyles = function() {
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endContainer = range.endContainer;
+    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    return {startStyle: startStyle, endStyle: endStyle};
+};
+
+/**
+ * Return an array of paragraph-styled Elements that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection doesn't span paragraph styles, return an empty array. We do this even though
+ * the selection is within a paragraph. This is because the function is used for operations
+ * that span paragraphs.
+ */
+const _selectedStyles = function() {
+    let elements = [];
+    if (!_selectionSpansStyles()) { return elements };
+    const styles = _selectionStyles();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    const styleRange = document.createRange();
+    styleRange.setStart(startStyle, 0);
+    styleRange.setEnd(endStyle, 0);
+    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
 };
 
 /********************************************************************************
@@ -2991,6 +3065,114 @@ const _redoMultiList = function(undoerData) {
     };
     _restoreRange(savedRange);
     _callback('input');
+};
+
+/**
+ * Return whether the selection includes multiple list tags or top-level styles,
+ * both of which can be acted upon in _multiList()
+ */
+const _selectionSpansListables = function() {
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    let spansListables = startListable && endListable && (startListable !== endListable);
+    if (spansListables) {
+        return true;
+    } else {
+        // We might be in a list with the selection spanning items, and these list items
+        // can themselves contain lists, so if we are in different items, return true
+        // even tho we might be in one UL or OL.
+        const startListItem = selectionListables.startListItem;
+        const endListItem = selectionListables.endListItem;
+        return startListItem && endListItem && (startListItem !== endListItem);
+    };
+};
+
+/**
+ * Return the paragraph style or list element the selection starts in and ends in.
+ *
+ * Note the difference with _selectedListables, which returns the listables within
+ * the selection.
+ *
+ * If we are in a list, we return the list elements we are in (UL or OL) and the
+ * list items we are in. Otherwise, we return the paragraph element we are in.
+ * This gives us the "top level" elements we can change to lists or change from lists,
+ * without including the ones that are already embedded in lists.
+ */
+const _selectionListables = function() {
+    const selectionListables = {};
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return selectionListables };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    selectionListables.startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (selectionListables.startList) {
+        selectionListables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        selectionListables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    selectionListables.endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (selectionListables.endList) {
+        selectionListables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        selectionListables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return selectionListables;
+};
+
+/**
+ * Return the elements within the selection that we can perform multiList operations on
+ */
+const _selectedListables = function() {
+    if (!_selectionSpansListables()) { return [] };
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    const listableRange = document.createRange();
+    listableRange.setStart(startListable, 0);
+    listableRange.setEnd(endListable, 0);
+    let lists = _nodesWithNamesInRange(listableRange, _listTags);
+    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
+    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
+    // are not interleaved in order they are encountered. This matters because the ordering
+    // determines whether the listables can be combined into the same list or not.
+    // It's quite a hack, but rather than write yet another method to do the traversal,
+    // we use the _childIndices on each element to reassemble them in order.
+    const commonAncestor = listableRange.commonAncestorContainer;
+    let indices = [];
+    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
+    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
+    // Consider:
+    //  <div>
+    //      ...<4 intervening childNodes>...
+    //      <p>Top-level paragraph 1</p>
+    //      <ul>
+    //          <li><p>Unordered list paragraph 1</p></li>
+    //          <ol>
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </ul>
+    //      <p>Top-level paragraph 2</p>
+    //      <ol>
+    //          <li><p>Ordered list paragraph 1</p></li>
+    //      </ol>
+    //  </div>
+    // Then indices from the commonAncestor div at this point will be:
+    //  [[6], [6, 3], [10], [4], [8]]
+    // Note that the indices count childNodes, including empty text for the newlines.
+    // The first three items point at lists. The last two point at styles.
+    // Top-to-bottom readingwise, we would want depthwise traversal:
+    //  [[4], [6], [6, 3], [8], [10]]
+    // However, we want siblings at a given level to follow one another in the list,
+    // so we want breadthwise traversal:
+    //  [[4], [6], [8], [10], [6, 3]]
+    // We get the order using the _compareIndices* function.
+    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
+    // Then we reassemble the listables in that order and return them
+    const sortedListables = [];
+    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
+    return sortedListables;
 };
 
 /**
@@ -4035,9 +4217,9 @@ const _replaceNodeWithListItem = function(selNode) {
 };
 
 /********************************************************************************
- * Indenting and Outdenting (for blockquotes and lists)
+ * Indenting and Outdenting
  */
-//MARK: Indenting and Outdenting (for blockquotes and lists)
+//MARK: Indenting and Outdenting
 
 /**
  * Do a context-sensitive indent.
@@ -4104,6 +4286,9 @@ const _selectionSpansDentables = function() {
 
 /**
  * Return the top-level paragraph style or list item the selection starts in and ends in.
+ *
+ * Note the difference with _selectedDentables, which returns the dentable elements within
+ * the selection.
  */
 const _selectionDentables = function() {
     const selectionDentables = {};
@@ -6456,131 +6641,6 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
 };
 
 /**
- * Return true if the selection spans _paragraphStyleTags.
- *
- * It's possible (due to pasting) that we end up with a selection in a text
- * node that is not inside of a paragraph style tag. Since we are only going to
- * apply multiple operations at the paragraph style level, we will return
- * false here in that case.
- */
-const _selectionSpansStyles = function() {
-    const styles = _selectionStartAndEndStyle();
-    const startStyle = styles.startStyle;
-    const endStyle = styles.endStyle;
-    return startStyle && endStyle && (startStyle !== endStyle)
-};
-
-/**
- * Return the paragraph style element the selection starts in and ends in
- */
-const _selectionStartAndEndStyle = function() {
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    const endContainer = range.endContainer;
-    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    return {startStyle: startStyle, endStyle: endStyle};
-};
-
-/**
- * Return an array of paragraph-styled Elements that the selection spans, including ones it
- * only partially encompasses.
- *
- * If the selection doesn't span paragraph styles, return an empty array. We do this even though
- * the selection is within a paragraph. This is because the function is used for operations
- * that span paragraphs.
- */
-const _selectedStyles = function() {
-    let elements = [];
-    if (!_selectionSpansStyles()) { return elements };
-    const styles = _selectionStartAndEndStyle();
-    const startStyle = styles.startStyle;
-    const endStyle = styles.endStyle;
-    const styleRange = document.createRange();
-    styleRange.setStart(startStyle, 0);
-    styleRange.setEnd(endStyle, 0);
-    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
-};
-
-/**
- * Return whether the selection contains multiple text nodes
- */
-const _selectionSpansTextNodes = function() {
-    return _selectedTextNodes().length > 1;
-};
-
-/**
- * Return an array of text nodes that the selection spans, including ones it
- * only partially encompasses.
- *
- * If the selection is collapsed or resides within a single text node, then return
- * an empty array. We do this because the "normal" formatting logic applies within
- * a single text node, whereas we use this method to deal with selection that
- * spans across multiple text nodes. The text nodes we return may already reside
- * in formatting elements (e.g., <B>, <I>, etc).
- */
-const _selectedTextNodes = function() {
-    const nodes = _selectedNodesNamed('#text');
-    return nodes.filter(textNode => !_isEmpty(textNode));
-};
-
-/**
- * Return the elements within the selection that we can perform multiList operations on
- */
-const _selectedListables = function() {
-    if (!_selectionSpansListables()) { return [] };
-    const selectionListables = _selectionListables();
-    const startListable = selectionListables.startList ?? selectionListables.startStyle;
-    const endListable = selectionListables.endList ?? selectionListables.endStyle;
-    const listableRange = document.createRange();
-    listableRange.setStart(startListable, 0);
-    listableRange.setEnd(endListable, 0);
-    let lists = _nodesWithNamesInRange(listableRange, _listTags);
-    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
-    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
-    // are not interleaved in order they are encountered. This matters because the ordering
-    // determines whether the listables can be combined into the same list or not.
-    // It's quite a hack, but rather than write yet another method to do the traversal,
-    // we use the _childIndices on each element to reassemble them in order.
-    const commonAncestor = listableRange.commonAncestorContainer;
-    let indices = [];
-    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
-    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
-    // Consider:
-    //  <div>
-    //      ...<4 intervening childNodes>...
-    //      <p>Top-level paragraph 1</p>
-    //      <ul>
-    //          <li><p>Unordered list paragraph 1</p></li>
-    //          <ol>
-    //              <li><p>Ordered sublist paragraph</p></li>
-    //          </ol>
-    //      </ul>
-    //      <p>Top-level paragraph 2</p>
-    //      <ol>
-    //          <li><p>Ordered list paragraph 1</p></li>
-    //      </ol>
-    //  </div>
-    // Then indices from the commonAncestor div at this point will be:
-    //  [[6], [6, 3], [10], [4], [8]]
-    // Note that the indices count childNodes, including empty text for the newlines.
-    // The first three items point at lists. The last two point at styles.
-    // Top-to-bottom readingwise, we would want depthwise traversal:
-    //  [[4], [6], [6, 3], [8], [10]]
-    // However, we want siblings at a given level to follow one another in the list,
-    // so we want breadthwise traversal:
-    //  [[4], [6], [8], [10], [6, 3]]
-    // We get the order using the _compareIndices* function.
-    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
-    // Then we reassemble the listables in that order and return them
-    const sortedListables = [];
-    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
-    return sortedListables;
-};
-
-/**
  * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on
  */
 const _selectedDentables = function() {
@@ -6701,58 +6761,6 @@ const _compareIndexLevel = function(a, b) {
     };
     return 0;
 };
-
-/**
- * Return whether the selection includes multiple list tags or top-level styles,
- * both of which can be acted upon in _multiList()
- */
-const _selectionSpansListables = function() {
-    const selectionListables = _selectionListables();
-    const startListable = selectionListables.startList ?? selectionListables.startStyle;
-    const endListable = selectionListables.endList ?? selectionListables.endStyle;
-    let spansListables = startListable && endListable && (startListable !== endListable);
-    if (spansListables) {
-        return true;
-    } else {
-        // We might be in a list with the selection spanning items, and these list items
-        // can themselves contain lists, so if we are in different items, return true
-        // even tho we might be in one UL or OL.
-        const startListItem = selectionListables.startListItem;
-        const endListItem = selectionListables.endListItem;
-        return startListItem && endListItem && (startListItem !== endListItem);
-    };
-};
-
-/**
- * Return the paragraph style or list element the selection starts in and ends in.
- *
- * If we are in a list, we return the list elements we are in (UL or OL) and the
- * list items we are in. Otherwise, we return the paragraph element we are in.
- * This gives us the "top level" elements we can change to lists or change from lists,
- * without including the ones that are already embedded in lists.
- */
-const _selectionListables = function() {
-    const selectionListables = {};
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return selectionListables };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    selectionListables.startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
-    if (selectionListables.startList) {
-        selectionListables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
-    } else {
-        selectionListables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    };
-    const endContainer = range.endContainer;
-    selectionListables.endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
-    if (selectionListables.endList) {
-        selectionListables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
-    } else {
-        selectionListables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    };
-    return selectionListables;
-};
-
 
 /**
  * Return the nodes with names in selection, but exclude any that reside within
