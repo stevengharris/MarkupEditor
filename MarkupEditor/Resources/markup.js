@@ -359,10 +359,16 @@ const _undoOperation = function(undoerData) {
             MU.outdent(false);
             _backupSelection();
             break;
+        case 'multiIndent':
+            _undoMultiIndent(undoerData);
+            break;
         case 'outdent':
             _restoreSelection();
             MU.indent(false);
             _backupSelection();
+            break;
+        case 'multiOutdent':
+            _undoMultiOutdent(undoerData)
             break;
         case 'insertLink':
             _redoDeleteLink(undoerData);
@@ -437,10 +443,16 @@ const _redoOperation = function(undoerData) {
             MU.indent(false);
             _backupSelection();
             break;
+        case 'multiIndent':
+            _redoMultiIndent(undoerData);
+            break;
         case 'outdent':
             _restoreSelection();
             MU.outdent(false);
             _backupSelection();
+            break;
+        case 'multiOutdent':
+            _redoMultiOutdent(undoerData);
             break;
         case 'insertLink':
             _redoInsertLink(undoerData);
@@ -4036,6 +4048,7 @@ const _replaceNodeWithListItem = function(selNode) {
  *
  */
 MU.indent = function(undoable=true) {
+    if (_selectionSpansDentables()) { return _multiIndent() };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4062,6 +4075,7 @@ MU.indent = function(undoable=true) {
  *
  */
 MU.outdent = function(undoable=true) {
+    if (_selectionSpansDentables()) { return _multiOutdent() };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4075,6 +4089,116 @@ MU.outdent = function(undoable=true) {
             _decreaseQuoteLevel(undoable);
         };
     };
+};
+
+/**
+ * Return whether the selection includes multiple list items or top-level styled elements,
+ * all of which can be acted upon in _multiIndent() and _multiOutdent()
+ */
+const _selectionSpansDentables = function() {
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    return startDentable && endDentable && (startDentable !== endDentable);
+};
+
+/**
+ * Return the top-level paragraph style or list item the selection starts in and ends in.
+ */
+const _selectionDentables = function() {
+    const selectionDentables = {};
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return selectionDentables };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (startList) {
+        selectionDentables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        selectionDentables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    const endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (endList) {
+        selectionDentables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        selectionDentables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return selectionDentables;
+};
+
+/**
+ * Indent all the items within a selection that can be indented.
+ */
+const _multiIndent = function(undoable=true) {
+    const selectedDentables = _selectedDentables();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    const indices = [];
+    selectedDentables.forEach(selectedDentable => {
+            if (_isListItemElement(selectedDentable)) {
+                const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL'])
+                if (existingList && _indentListItem(selectedDentable, existingList)) {
+                        indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+                };
+            } else if (_indent(selectedDentable)) {
+                indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+            };
+    });
+    if (undoable && (indices.length > 0)) {
+        _backupSelection()
+        const undoerData = _undoerData('multiIndent', {commonAncestor: commonAncestor, indices: indices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
+
+/**
+ * Outdent all the items within a selection that can be indented.
+ */
+const _multiOutdent = function(undoable=true) {
+    const selectedDentables = _selectedDentables();
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    const range = sel.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    const indices = [];
+    selectedDentables.forEach(selectedDentable => {
+        if (_isListItemElement(selectedDentable)) {
+            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL'])
+            if (existingList && _outdentListItem(selectedDentable, existingList)) {
+                    indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+            };
+        } else if (_outdent(selectedDentable)) {
+            indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+        };
+    });
+    if (undoable && (indices.length > 0)) {
+        _backupSelection()
+        const undoerData = _undoerData('multiOutdent', {commonAncestor: commonAncestor, indices: indices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
+
+const _undoMultiIndent = function(undoerData) {
+    _consoleLog('Implement _undoMultiIndent');
+};
+
+const _redoMultiIndent = function(undoerData) {
+    _consoleLog('Implement _redoMultiIndent')
+};
+
+const _undoMultiOutdent = function(undoerData) {
+    _consoleLog('Implement _undoMultiOutdent');
+};
+
+const _redoMultiOutdent = function(undoerData) {
+    _consoleLog('Implement _redoMultiOutdent')
 };
 
 /**
@@ -4137,33 +4261,33 @@ const _increaseQuoteLevel = function(undoable=true) {
             }
         }
     }
-    // Now create a new BLOCKQUOTE parent based, put the selNodeParent's outerHTML
-    // into it, and replace the selNodeParent with the BLOCKQUOTE
-    const newParent = document.createElement('blockquote');
-    newParent.innerHTML = selNodeParent.outerHTML;
-    selNodeParent.replaceWith(newParent);
-    // Restore the selection by locating the start and endContainers in the newParent
-    _backupSelection();
-    let startContainer, endContainer;
-    startContainer = _firstChildMatchingContainer(newParent, oldStartContainer);
-    if (oldEndContainer ===  oldStartContainer) {
-        endContainer = startContainer;
-    } else {
-        endContainer = _firstChildMatchingContainer(newParent, oldEndContainer);
-    }
-    range.setStart(startContainer, oldStartOffset);
-    range.setEnd(endContainer, oldEndOffset);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    if (undoable) {
-        _backupSelection();
-        const undoerData = _undoerData('indent');
-        undoer.push(undoerData);
-        _restoreSelection();
-    }
-    _callback('input');
-    return selNode;
-}
+    if (_indent(selNodeParent)) {
+        if (undoable) {
+            _backupSelection();
+            const undoerData = _undoerData('indent');
+            undoer.push(undoerData);
+            _restoreSelection();
+        }
+        _callback('input');
+        return selNode;
+    };
+    return null;
+};
+
+/**
+ * Indent node by placing it in a BLOCKQUOTE, preserve selection.
+ *
+ * Return true if the node could be indented.
+ */
+const _indent = function(node) {
+    if (!node.parentNode) { return null };
+    const oldRange = _rangeProxy();
+    const newParent = document.createElement('BLOCKQUOTE');
+    node.parentNode.insertBefore(newParent, node.nextSibling);
+    newParent.appendChild(node);
+    oldRange && _restoreRange(oldRange);
+    return true;
+};
 
 /**
  * Remove an existing BLOCKQUOTE if it exists
@@ -4174,9 +4298,7 @@ const _decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
-    const existingElement = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
-    if (existingElement) {
-        _unsetTag(existingElement, sel);
+    if (_outdent(selNode)) {
         if (undoable) {
             _backupSelection();
             const undoerData = _undoerData('outdent');
@@ -4187,6 +4309,22 @@ const _decreaseQuoteLevel = function(undoable=true) {
         return selNode;
     };
     return null;
+};
+
+/**
+ * Outdent node that is already in a BLOCKQUOTE, preserve selection.
+ *
+ * Return true if the node could be outdented.
+ */
+const _outdent = function(node) {
+    const existingElement = _findFirstParentElementInNodeNames(node, ['BLOCKQUOTE']);
+    if (!existingElement) { return null };
+    const oldRange = _rangeProxy();
+    const nodeRange = document.createRange();
+    nodeRange.selectNode(existingElement);
+    _unsetTagInRange(existingElement, nodeRange);
+    oldRange && _restoreRange(oldRange);
+    return true;
 }
 
 /********************************************************************************
@@ -6388,6 +6526,9 @@ const _selectedTextNodes = function() {
     return nodes.filter(textNode => !_isEmpty(textNode));
 };
 
+/**
+ * Return the elements within the selection that we can perform multiList operations on
+ */
 const _selectedListables = function() {
     if (!_selectionSpansListables()) { return [] };
     const selectionListables = _selectionListables();
@@ -6437,6 +6578,30 @@ const _selectedListables = function() {
     const sortedListables = [];
     sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
     return sortedListables;
+};
+
+/**
+ * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on
+ */
+const _selectedDentables = function() {
+    if (!_selectionSpansDentables()) { return [] };
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    const dentableRange = document.createRange();
+    dentableRange.setStart(startDentable, 0);
+    dentableRange.setEnd(endDentable, 0);
+    const allListItems = _nodesWithNamesInRange(dentableRange, ['LI']);
+    // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
+    // itself contains LIs), but we only want to include ones that are not nested in others
+    // in the listItems. That's because when we indent or outdent, the nested items will
+    // be indented or outdented along with their parent.
+    const listItems = allListItems.filter(listItem => !_hasContainerWithin(listItem, allListItems))
+    const styles = _nodesWithNamesInRangeExcluding(dentableRange, _paragraphStyleTags, _listTags);
+    // Unlike with listables, the ordering of listItems and styles does not matter, as
+    // the indent/outdent operations can all be treated independently.
+    styles.push(...listItems);
+    return styles;
 };
 
 /**
@@ -6567,25 +6732,25 @@ const _selectionSpansListables = function() {
  * without including the ones that are already embedded in lists.
  */
 const _selectionListables = function() {
+    const selectionListables = {};
     const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
+    if (!sel || (sel.rangeCount === 0)) { return selectionListables };
     const range = sel.getRangeAt(0);
     const startContainer = range.startContainer;
-    let startList, startListItem, startStyle, endList, endListItem, endStyle;
-    startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
-    if (startList) {
-        startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    selectionListables.startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (selectionListables.startList) {
+        selectionListables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
     } else {
-        startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+        selectionListables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
     };
     const endContainer = range.endContainer;
-    endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
-    if (endList) {
-        endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    selectionListables.endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (selectionListables.endList) {
+        selectionListables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
     } else {
-        endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+        selectionListables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
     };
-    return {startList: startList, startListItem: startListItem, startStyle: startStyle, endList: endList, endListItem: endListItem, endStyle: endStyle};
+    return selectionListables;
 };
 
 
@@ -6615,7 +6780,7 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
     const endContainer = range.endContainer;
     let child = startContainer;
     let excluded;
-    if (_equalsOrIsContainedIn(startContainer, endContainer)) {
+    if (_equalsOrIsContainedIn(endContainer, startContainer)) {
         excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
         if (!excluded) {
             if (names.includes(child.nodeName)) { nodes.push(child) };
@@ -7710,14 +7875,39 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
 };
 
 /**
- * Return whether startContainer===endContainer or if startContainer contains endContainer
+ * Return whether node===possibleAncestorElement or if possibleAncestorElement contains node
  */
-const _equalsOrIsContainedIn = function(startContainer, endContainer) {
-    let parent = endContainer;
-    while (parent && (parent !== startContainer)) {
+const _equalsOrIsContainedIn = function(node, possibleAncestorElement) {
+    if (node === possibleAncestorElement) {
+        return true;
+    } else {
+        return _isContainedIn(node, possibleAncestorElement);
+    };
+};
+
+/**
+ * Return whether possibleAncestorElement contains node
+ */
+const _isContainedIn = function(node, possibleAncestorElement) {
+    let parent = node.parentNode;
+    while (parent) {
+        if (parent === possibleAncestorElement) { return true };
         parent = parent.parentNode;
     };
-    return parent === startContainer;
+    return false;
+};
+
+/**
+ * Return whether any of the elements in possibleAncestorElements contain node
+ */
+const _hasContainerWithin = function(node, possibleAncestorElements) {
+    let hasContainerWithin = false;
+    for (let i = 0; i < possibleAncestorElements.length; i++) {
+        if (_isContainedIn(node, possibleAncestorElements[i])) {
+            return true;
+        };
+    };
+    return hasContainerWithin;
 };
 
 /********************************************************************************
