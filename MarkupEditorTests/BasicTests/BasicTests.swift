@@ -732,7 +732,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
 
-    func testIndentOutdent() throws {
+    func testDenting() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -869,7 +869,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testMultiIndentOutdent() throws {
+    func testMultiDenting() throws {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
                 HtmlTest(

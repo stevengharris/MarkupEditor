@@ -360,7 +360,7 @@ const _undoOperation = function(undoerData) {
             _backupSelection();
             break;
         case 'multiIndent':
-            _undoMultiIndent(undoerData);
+            _undoRedoMultiDent(DentType.Outdent, undoerData);
             break;
         case 'outdent':
             _restoreSelection();
@@ -368,7 +368,7 @@ const _undoOperation = function(undoerData) {
             _backupSelection();
             break;
         case 'multiOutdent':
-            _undoMultiOutdent(undoerData)
+            _undoRedoMultiDent(DentType.Indent, undoerData)
             break;
         case 'insertLink':
             _redoDeleteLink(undoerData);
@@ -444,7 +444,7 @@ const _redoOperation = function(undoerData) {
             _backupSelection();
             break;
         case 'multiIndent':
-            _redoMultiIndent(undoerData);
+            _undoRedoMultiDent(DentType.Indent, undoerData);
             break;
         case 'outdent':
             _restoreSelection();
@@ -452,7 +452,7 @@ const _redoOperation = function(undoerData) {
             _backupSelection();
             break;
         case 'multiOutdent':
-            _redoMultiOutdent(undoerData);
+            _undoRedoMultiDent(DentType.Outdent, undoerData);
             break;
         case 'insertLink':
             _redoInsertLink(undoerData);
@@ -4221,6 +4221,11 @@ const _replaceNodeWithListItem = function(selNode) {
  */
 //MARK: Indenting and Outdenting
 
+const DentType = {
+    Indent: 'Indent',
+    Outdent: 'Outdent'
+};
+
 /**
  * Do a context-sensitive indent.
  *
@@ -4230,7 +4235,7 @@ const _replaceNodeWithListItem = function(selNode) {
  *
  */
 MU.indent = function(undoable=true) {
-    if (_selectionSpansDentables()) { return _multiIndent() };
+    if (_selectionSpansDentables()) { return _multiDent(DentType.Indent) };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4257,7 +4262,7 @@ MU.indent = function(undoable=true) {
  *
  */
 MU.outdent = function(undoable=true) {
-    if (_selectionSpansDentables()) { return _multiOutdent() };
+    if (_selectionSpansDentables()) { return _multiDent(DentType.Outdent) };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4275,7 +4280,7 @@ MU.outdent = function(undoable=true) {
 
 /**
  * Return whether the selection includes multiple list items or top-level styled elements,
- * all of which can be acted upon in _multiIndent() and _multiOutdent()
+ * all of which can be acted upon in _multiDent()
  */
 const _selectionSpansDentables = function() {
     const selectionDentables = _selectionDentables();
@@ -4313,28 +4318,78 @@ const _selectionDentables = function() {
 };
 
 /**
- * Indent all the items within a selection that can be indented.
+ * Indent or outdent all the items within a selection that can be indented or outdented.
+ *
+ * When we outdent, we can remove a list item and the list element it is in.
+ * We need to track oldDentableTypes so we know to restore the list on outdent undo.
  */
-const _multiIndent = function(undoable=true) {
+const _multiDent = function(dentType, undoable=true) {
     const selectedDentables = _selectedDentables();
+    const commonAncestor = MU.editor;
+    // Track the indices before denting so we can tell how to put lists back together
+    const originalIndices = [];
+    selectedDentables.forEach(selectedDentable => {
+        originalIndices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+    });
+    // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
+    // itself contains LIs), but we only want to include ones that are not nested in others
+    // in the listItems. That's because when we indent or outdent, the nested items will
+    // be indented or outdented along with their parent.
+    const allListItems = selectedDentables.filter(dentable => _isListItemElement(dentable));
+    const sublistItems = allListItems.filter(listItem => _hasContainerWithin(listItem, allListItems))
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
+    let _dentFunction, _listDentFunction;
+    if (dentType === DentType.Outdent) {
+        _dentFunction = _outdent;
+        _listDentFunction = _outdentListItem;
+    } else if (dentType === DentType.Indent) {
+        _dentFunction = _indent;
+        _listDentFunction = _indentListItem;
+    } else {
+        MUError.UnrecognizedDentType.callback();
+        return;
+    };
     const range = sel.getRangeAt(0);
-    const commonAncestor = range.commonAncestorContainer;
+    const savedRange = _rangeProxy();
     const indices = [];
-    selectedDentables.forEach(selectedDentable => {
-            if (_isListItemElement(selectedDentable)) {
-                const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL'])
-                if (existingList && _indentListItem(selectedDentable, existingList)) {
-                        indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+    const oldDentableTypes = [];
+    const oldIndices = [];
+    for (let i = 0; i < selectedDentables.length; i++) {
+        // We only track the selectedDentables that we dent.
+        // Note that sublist outdents are always tracked, because their parent is outdented.
+        const selectedDentable = selectedDentables[i];
+        let dentedItem, dentableType, oldIndex;
+        if (_isListItemElement(selectedDentable)) {
+            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL']);
+            if (dentType === DentType.Indent) {
+                dentedItem = _listDentFunction(selectedDentable, existingList);
+                dentableType = existingList.nodeName;
+            } else if (dentType === DentType.Outdent) {
+                if (sublistItems.includes(selectedDentable)) {
+                    // Sublist are outdented by outdenting their parent. We track it because we
+                    // here because we need to know about it on undo. We will use the oldIndices
+                    // to figure out how to do that.
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
                 };
-            } else if (_indent(selectedDentable)) {
-                indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+                dentableType = existingList.nodeName;
             };
-    });
-    if (undoable && (indices.length > 0)) {
+        } else {
+            dentedItem = _dentFunction(selectedDentable);
+            dentableType = selectedDentable.nodeName;
+        };
+        if (dentedItem) {
+            indices.push(_childNodeIndicesByParent(dentedItem, commonAncestor));
+            oldDentableTypes.push(dentableType);
+            oldIndices.push(originalIndices[i]);
+        };
+    };
+    _restoreRange(savedRange);
+    if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiIndent', {commonAncestor: commonAncestor, indices: indices});
+        const undoerData = _undoerData('multi' + dentType, {commonAncestor: commonAncestor, indices: indices, oldDentableTypes: oldDentableTypes, oldIndices: oldIndices});
         undoer.push(undoerData);
         _restoreSelection()
     };
@@ -4342,48 +4397,80 @@ const _multiIndent = function(undoable=true) {
 };
 
 /**
- * Outdent all the items within a selection that can be indented.
+ * Undo or redo the previous multiDent operation.
+ *
+ * For undoIndent, dentType===DentType.Outdent
+ * For redoIndent, dentType===DentType.Indent
+ * For undoOutdent, dentType===DentType.Indent
+ * For redoOutdent, dentType===DentType.Outdent
+ *
+ * If the oldDentableType is a list element, then we have to treat an indent as
+ * a list creation, not blockquoting.
  */
-const _multiOutdent = function(undoable=true) {
-    const selectedDentables = _selectedDentables();
-    const sel = document.getSelection();
-    if (!sel || sel.rangeCount === 0) { return }
-    const range = sel.getRangeAt(0);
-    const commonAncestor = range.commonAncestorContainer;
-    const indices = [];
-    selectedDentables.forEach(selectedDentable => {
-        if (_isListItemElement(selectedDentable)) {
-            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL'])
-            if (existingList && _outdentListItem(selectedDentable, existingList)) {
-                    indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
-            };
-        } else if (_outdent(selectedDentable)) {
-            indices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
-        };
-    });
-    if (undoable && (indices.length > 0)) {
-        _backupSelection()
-        const undoerData = _undoerData('multiOutdent', {commonAncestor: commonAncestor, indices: indices});
-        undoer.push(undoerData);
-        _restoreSelection()
+const _undoRedoMultiDent = function(dentType, undoerData) {
+    let _dentFunction, _listDentFunction;
+    if (dentType === DentType.Indent) {
+        _dentFunction = _indent;
+        _listDentFunction = _indentListItem;
+    } else if (dentType === DentType.Outdent) {
+        _dentFunction = _outdent;
+        _listDentFunction = _outdentListItem;
+    } else {
+        MUError.UnrecognizedDentType.callback();
+        return;
     };
+    _restoreUndoerRange(undoerData);
+    const savedRange = _rangeProxy();
+    const commonAncestor = undoerData.data.commonAncestor;
+    const indices = undoerData.data.indices;
+    const oldDentableTypes = undoerData.data.oldDentableTypes;
+    const oldIndices = undoerData.data.oldIndices;
+    const oldContainerIndices = _containerIndices(oldIndices);    // Points to containing elements in oldIndices
+    const selectedDentables = [];
+    indices.forEach(index => {
+        selectedDentables.push(_childNodeIn(commonAncestor, index));
+    });
+    const newIndices = [];
+    for (let i = 0; i < selectedDentables.length; i++) {
+        const selectedDentable = selectedDentables[i];
+        const oldDentableType = oldDentableTypes[i];
+        // When oldContainerIndices[i+1] is non-null, it holds the index into indices where
+        // we will find the array of childNodes to find the dentable that contains the selectedDentable
+        let dentedItem, dentableType;
+        if (_isListItemElement(selectedDentable)) {
+            // The selectedDentable is a list item in a list, so dent it if we can.
+            // However, if it was previously part of a sublist, then instead of denting
+            // it, we need to put its parent list in the list item we find from
+            // oldContainerIndices.
+            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL']);
+            const isSubList = oldContainerIndices[i] !== null;
+            if (isSubList) {
+                const dentable = selectedDentables[oldContainerIndices[i]];
+                const existingListItem = _findFirstParentElementInNodeNames(dentable, ['LI']);
+                existingListItem.appendChild(existingList);
+                dentedItem = selectedDentable;
+            } else {
+                dentedItem = _listDentFunction(selectedDentable, existingList);
+            };
+        } else if ((_listTags.includes(oldDentableType)) && (_dentFunction === _indent)) {
+            // The selectedListable needs to become a listItem in a list
+            const newList = document.createElement(oldDentableType);
+            selectedDentable.parentNode.insertBefore(newList, selectedDentable.nextSibling);
+            dentedItem = document.createElement('LI');
+            newList.appendChild(dentedItem);
+            dentedItem.appendChild(selectedDentable);
+        } else {
+            // The selectedListable is some styled element that we might be able to dent
+            dentedItem = _dentFunction(selectedDentable);
+        };
+        if (dentedItem) {
+            newIndices.push(_childNodeIndicesByParent(dentedItem, commonAncestor));
+        };
+    };
+    undoerData.data.indices = newIndices;
+    _restoreRange(savedRange);
+    undoerData.range = document.getSelection().getRangeAt(0);
     _callback('input');
-};
-
-const _undoMultiIndent = function(undoerData) {
-    _consoleLog('Implement _undoMultiIndent');
-};
-
-const _redoMultiIndent = function(undoerData) {
-    _consoleLog('Implement _redoMultiIndent')
-};
-
-const _undoMultiOutdent = function(undoerData) {
-    _consoleLog('Implement _undoMultiOutdent');
-};
-
-const _redoMultiOutdent = function(undoerData) {
-    _consoleLog('Implement _redoMultiOutdent')
 };
 
 /**
@@ -4462,7 +4549,7 @@ const _increaseQuoteLevel = function(undoable=true) {
 /**
  * Indent node by placing it in a BLOCKQUOTE, preserve selection.
  *
- * Return true if the node could be indented.
+ * Return the node if it could be indented.
  */
 const _indent = function(node) {
     if (!node.parentNode) { return null };
@@ -4471,7 +4558,7 @@ const _indent = function(node) {
     node.parentNode.insertBefore(newParent, node.nextSibling);
     newParent.appendChild(node);
     oldRange && _restoreRange(oldRange);
-    return true;
+    return node;
 };
 
 /**
@@ -4499,7 +4586,7 @@ const _decreaseQuoteLevel = function(undoable=true) {
 /**
  * Outdent node that is already in a BLOCKQUOTE, preserve selection.
  *
- * Return true if the node could be outdented.
+ * Return the node if it could be outdented.
  */
 const _outdent = function(node) {
     const existingElement = _findFirstParentElementInNodeNames(node, ['BLOCKQUOTE']);
@@ -4509,7 +4596,7 @@ const _outdent = function(node) {
     nodeRange.selectNode(existingElement);
     _unsetTagInRange(existingElement, nodeRange);
     oldRange && _restoreRange(oldRange);
-    return true;
+    return node;
 }
 
 /********************************************************************************
@@ -6641,7 +6728,11 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
 };
 
 /**
- * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on
+ * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on.
+ *
+ * Note that the caller needs to determine whether the sublists need to be acted upon. For nested sublists,
+ * we only want to "dent" the containing list. However, we want to track the sublists because on undo, we
+ * need to re-insert them as sublists if outdenting removed the containing list.
  */
 const _selectedDentables = function() {
     if (!_selectionSpansDentables()) { return [] };
@@ -6651,12 +6742,7 @@ const _selectedDentables = function() {
     const dentableRange = document.createRange();
     dentableRange.setStart(startDentable, 0);
     dentableRange.setEnd(endDentable, 0);
-    const allListItems = _nodesWithNamesInRange(dentableRange, ['LI']);
-    // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
-    // itself contains LIs), but we only want to include ones that are not nested in others
-    // in the listItems. That's because when we indent or outdent, the nested items will
-    // be indented or outdented along with their parent.
-    const listItems = allListItems.filter(listItem => !_hasContainerWithin(listItem, allListItems))
+    const listItems = _nodesWithNamesInRange(dentableRange, ['LI']);
     const styles = _nodesWithNamesInRangeExcluding(dentableRange, _paragraphStyleTags, _listTags);
     // Unlike with listables, the ordering of listItems and styles does not matter, as
     // the indent/outdent operations can all be treated independently.
