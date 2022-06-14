@@ -712,7 +712,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
                 HtmlTest(
-                    description: "Increase quote level, selection in text element",
+                    description: "Indent, selection in text element",
                     startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
                     endHtml: "<blockquote><p id=\"p\">Hello <b id=\"b\">world</b></p></blockquote>",
                     startId: "p",
@@ -730,7 +730,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Increase quote level, selection in a non-text element",
+                    description: "Indent, selection in a non-text element",
                     startHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -748,7 +748,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Decrease quote level from 1 to 0, selection in a non-text element, no styling",
+                    description: "Outdent from 1 to 0, selection in a non-text element, no styling",
                     startHtml: "<blockquote><b id=\"b\"><i id=\"i\">Hello </i>world</b></blockquote>",
                     endHtml: "<b id=\"b\"><i id=\"i\">Hello </i>world</b>",
                     startId: "i",
@@ -766,7 +766,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Decrease quote level from 1 to 0, selection in a non-text element, with styling",
+                    description: "Outdent from 1 to 0, selection in a non-text element, with styling",
                     startHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     endHtml: "<p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p>",
                     startId: "i",
@@ -784,7 +784,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Decrease quote level from 2 to 1, selection in a non-text element",
+                    description: "Outdent from 2 to 1, selection in a non-text element",
                     startHtml: "<blockquote><blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote></blockquote>",
                     endHtml: "<blockquote><p><b id=\"b\"><i id=\"i\">Hello </i>world</b></p></blockquote>",
                     startId: "i",
@@ -802,7 +802,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Increase quote level in an embedded paragraph in a blockquote, selection in a non-text element",
+                    description: "Indent in an embedded paragraph in a blockquote, selection in a non-text element",
                     startHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote>",
                     endHtml: "<blockquote><p><b id=\"b1\"><i id=\"i1\">Hello </i>world</b></p><blockquote><p><b id=\"b2\"><i id=\"i2\">Hello </i>world</b></p></blockquote></blockquote>",
                     startId: "i2",
