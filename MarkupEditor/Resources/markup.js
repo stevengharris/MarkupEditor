@@ -359,10 +359,16 @@ const _undoOperation = function(undoerData) {
             MU.outdent(false);
             _backupSelection();
             break;
+        case 'multiIndent':
+            _undoRedoMultiDent(DentType.Outdent, undoerData);
+            break;
         case 'outdent':
             _restoreSelection();
             MU.indent(false);
             _backupSelection();
+            break;
+        case 'multiOutdent':
+            _undoRedoMultiDent(DentType.Indent, undoerData)
             break;
         case 'insertLink':
             _redoDeleteLink(undoerData);
@@ -437,10 +443,16 @@ const _redoOperation = function(undoerData) {
             MU.indent(false);
             _backupSelection();
             break;
+        case 'multiIndent':
+            _undoRedoMultiDent(DentType.Indent, undoerData);
+            break;
         case 'outdent':
             _restoreSelection();
             MU.outdent(false);
             _backupSelection();
+            break;
+        case 'multiOutdent':
+            _undoRedoMultiDent(DentType.Outdent, undoerData);
             break;
         case 'insertLink':
             _redoInsertLink(undoerData);
@@ -2063,6 +2075,28 @@ const _redoMultiFormat = function(undoerData) {
 };
 
 /**
+ * Return whether the selection contains multiple text nodes
+ */
+const _selectionSpansTextNodes = function() {
+    return _selectedTextNodes().length > 1;
+};
+
+/**
+ * Return an array of text nodes that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection is collapsed or resides within a single text node, then return
+ * an empty array. We do this because the "normal" formatting logic applies within
+ * a single text node, whereas we use this method to deal with selection that
+ * spans across multiple text nodes. The text nodes we return may already reside
+ * in formatting elements (e.g., <B>, <I>, etc).
+ */
+const _selectedTextNodes = function() {
+    const nodes = _selectedNodesNamed('#text');
+    return nodes.filter(textNode => !_isEmpty(textNode));
+};
+
+/**
  * Return a text node that the range contains or null if the range is
  * not within a single text node or is collapsed.
  *
@@ -2330,6 +2364,58 @@ const _redoMultiStyle = function(undoerData) {
         const selectedParagraph = _childNodeIn(commonAncestor, indices[i]);
         _replaceTag(selectedParagraph, newStyle.toUpperCase());
     };
+};
+
+/**
+ * Return true if the selection spans _paragraphStyleTags.
+ *
+ * It's possible (due to pasting) that we end up with a selection in a text
+ * node that is not inside of a paragraph style tag. Since we are only going to
+ * apply multiple operations at the paragraph style level, we will return
+ * false here in that case.
+ */
+const _selectionSpansStyles = function() {
+    const styles = _selectionStyles();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    return startStyle && endStyle && (startStyle !== endStyle)
+};
+
+/**
+ * Return the paragraph style element the selection starts in and ends in.
+ *
+ * Note the difference with _selectedStyles, which returns the style elements within
+ * the selection.
+ */
+const _selectionStyles = function() {
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return elements };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    const endContainer = range.endContainer;
+    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    return {startStyle: startStyle, endStyle: endStyle};
+};
+
+/**
+ * Return an array of paragraph-styled Elements that the selection spans, including ones it
+ * only partially encompasses.
+ *
+ * If the selection doesn't span paragraph styles, return an empty array. We do this even though
+ * the selection is within a paragraph. This is because the function is used for operations
+ * that span paragraphs.
+ */
+const _selectedStyles = function() {
+    let elements = [];
+    if (!_selectionSpansStyles()) { return elements };
+    const styles = _selectionStyles();
+    const startStyle = styles.startStyle;
+    const endStyle = styles.endStyle;
+    const styleRange = document.createRange();
+    styleRange.setStart(startStyle, 0);
+    styleRange.setEnd(endStyle, 0);
+    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
 };
 
 /********************************************************************************
@@ -2979,6 +3065,82 @@ const _redoMultiList = function(undoerData) {
     };
     _restoreRange(savedRange);
     _callback('input');
+};
+
+/**
+ * Return whether the selection includes multiple list tags or top-level styles,
+ * both of which can be acted upon in _multiList()
+ */
+const _selectionSpansListables = function() {
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    let spansListables = startListable && endListable && (startListable !== endListable);
+    if (spansListables) {
+        return true;
+    } else {
+        // We might be in a list with the selection spanning items, and these list items
+        // can themselves contain lists, so if we are in different items, return true
+        // even tho we might be in one UL or OL.
+        const startListItem = selectionListables.startListItem;
+        const endListItem = selectionListables.endListItem;
+        return startListItem && endListItem && (startListItem !== endListItem);
+    };
+};
+
+/**
+ * Return the paragraph style or list element the selection starts in and ends in.
+ *
+ * Note the difference with _selectedListables, which returns the listables within
+ * the selection.
+ *
+ * If we are in a list, we return the list elements we are in (UL or OL) and the
+ * list items we are in. Otherwise, we return the paragraph element we are in.
+ * This gives us the "top level" elements we can change to lists or change from lists,
+ * without including the ones that are already embedded in lists.
+ */
+const _selectionListables = function() {
+    const selectionListables = {};
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return selectionListables };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    selectionListables.startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (selectionListables.startList) {
+        selectionListables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        selectionListables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    selectionListables.endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (selectionListables.endList) {
+        selectionListables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        selectionListables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return selectionListables;
+};
+
+/**
+ * Return the elements within the selection that we can perform multiList operations on
+ */
+const _selectedListables = function() {
+    if (!_selectionSpansListables()) { return [] };
+    const selectionListables = _selectionListables();
+    const startListable = selectionListables.startList ?? selectionListables.startStyle;
+    const endListable = selectionListables.endList ?? selectionListables.endStyle;
+    const listableRange = document.createRange();
+    listableRange.setStart(startListable, 0);
+    listableRange.setEnd(endListable, 0);
+    let lists = _nodesWithNamesInRange(listableRange, _listTags);
+    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
+    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
+    // are not interleaved in order they are encountered. This matters because the ordering
+    // determines whether the listables can be combined into the same list or not.
+    // It's quite a hack, but rather than write yet another method to do the traversal,
+    // we use the _childIndices on each element to reassemble them in order.
+    const commonAncestor = listableRange.commonAncestorContainer;
+    return _joinElementArrays(lists, styles, commonAncestor);
 };
 
 /**
@@ -4023,9 +4185,14 @@ const _replaceNodeWithListItem = function(selNode) {
 };
 
 /********************************************************************************
- * Indenting and Outdenting (for blockquotes and lists)
+ * Indenting and Outdenting
  */
-//MARK: Indenting and Outdenting (for blockquotes and lists)
+//MARK: Indenting and Outdenting
+
+const DentType = {
+    Indent: 'Indent',
+    Outdent: 'Outdent'
+};
 
 /**
  * Do a context-sensitive indent.
@@ -4036,6 +4203,7 @@ const _replaceNodeWithListItem = function(selNode) {
  *
  */
 MU.indent = function(undoable=true) {
+    if (_selectionSpansDentables()) { return _multiDent(DentType.Indent) };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4062,6 +4230,7 @@ MU.indent = function(undoable=true) {
  *
  */
 MU.outdent = function(undoable=true) {
+    if (_selectionSpansDentables()) { return _multiDent(DentType.Outdent) };
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     const specialParent = _findFirstParentElementInNodeNames(selNode, _monitorIndentTags);
@@ -4075,6 +4244,273 @@ MU.outdent = function(undoable=true) {
             _decreaseQuoteLevel(undoable);
         };
     };
+};
+
+/**
+ * Indent or outdent all the items within a selection that can be indented or outdented.
+ *
+ * When we outdent, we can remove a list item and the list element it is in.
+ * We need to track oldDentableTypes so we know to restore the list on outdent undo.
+ */
+const _multiDent = function(dentType, undoable=true) {
+    const selectedDentables = _selectedDentables();
+    const commonAncestor = MU.editor;
+    // Track the indices before denting so we can tell how to put lists back together
+    const originalIndices = [];
+    selectedDentables.forEach(selectedDentable => {
+        originalIndices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
+    });
+    // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
+    // itself contains LIs), but we only want to include ones that are not nested in others
+    // in the listItems. That's because when we indent or outdent, the nested items will
+    // be indented or outdented along with their parent.
+    const allListItems = selectedDentables.filter(dentable => _isListItemElement(dentable));
+    const subListItems = allListItems.filter(listItem => _hasContainerWithin(listItem, allListItems))
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0) { return }
+    let _dentFunction, _listDentFunction;
+    if (dentType === DentType.Outdent) {
+        _dentFunction = _outdent;
+        _listDentFunction = _outdentListItem;
+    } else if (dentType === DentType.Indent) {
+        _dentFunction = _indent;
+        _listDentFunction = _indentListItem;
+    } else {
+        MUError.UnrecognizedDentType.callback();
+        return;
+    };
+    const range = sel.getRangeAt(0);
+    const savedRange = _rangeProxy();
+    const indices = [];
+    const oldDentableTypes = [];
+    const oldIndices = [];
+    for (let i = 0; i < selectedDentables.length; i++) {
+        // We only track dentables that could be dented.
+        // Note that sublist outdents are always tracked, because their parent is outdented.
+        const selectedDentable = selectedDentables[i];
+        let dentedItem, dentableType, oldIndex;
+        if (_isListItemElement(selectedDentable)) {
+            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL']);
+            if (dentType === DentType.Indent) {
+                dentedItem = _listDentFunction(selectedDentable, existingList);
+                dentableType = existingList.nodeName;
+            } else if (dentType === DentType.Outdent) {
+                if (subListItems.includes(selectedDentable)) {
+                    // Sublist are outdented by outdenting their parent. We track it because we
+                    // here because we need to know about it on undo. We will use the oldIndices
+                    // to figure out how to do that.
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
+                };
+                dentableType = existingList.nodeName;
+            };
+        } else {
+            dentedItem = _dentFunction(selectedDentable);
+            dentableType = selectedDentable.nodeName;
+        };
+        if (dentedItem) {
+            indices.push(_childNodeIndicesByParent(dentedItem, commonAncestor));
+            oldDentableTypes.push(dentableType);
+            oldIndices.push(originalIndices[i]);
+        };
+    };
+    _restoreRange(savedRange);
+    if (undoable) {
+        _backupSelection()
+        const undoerData = _undoerData('multi' + dentType, {commonAncestor: commonAncestor, indices: indices, oldDentableTypes: oldDentableTypes, oldIndices: oldIndices});
+        undoer.push(undoerData);
+        _restoreSelection()
+    };
+    _callback('input');
+};
+
+/**
+ * Undo or redo the previous multiDent operation.
+ *
+ * For undoIndent, dentType===DentType.Outdent
+ * For redoIndent, dentType===DentType.Indent
+ * For undoOutdent, dentType===DentType.Indent
+ * For redoOutdent, dentType===DentType.Outdent
+ *
+ * If the oldDentableType is a list element, then we have to treat an indent as
+ * a list creation, not blockquoting.
+ */
+const _undoRedoMultiDent = function(dentType, undoerData) {
+    let _dentFunction, _listDentFunction;
+    if (dentType === DentType.Indent) {
+        _dentFunction = _indent;
+        _listDentFunction = _indentListItem;
+    } else if (dentType === DentType.Outdent) {
+        _dentFunction = _outdent;
+        _listDentFunction = _outdentListItem;
+    } else {
+        MUError.UnrecognizedDentType.callback();
+        return;
+    };
+    _restoreUndoerRange(undoerData);
+    const savedRange = _rangeProxy();
+    const commonAncestor = undoerData.data.commonAncestor;
+    const indices = undoerData.data.indices;
+    const originalDentableTypes = undoerData.data.oldDentableTypes;
+    const originalIndices = undoerData.data.oldIndices;
+    // When originalContainerIndices is non-null, it identifies the index into
+    // originalIndices where we will find the array of childNodes that led to the
+    // container of the element that originalIndices pointed at.
+    // See the comments in _containerIndices.
+    const originalContainerIndices = _containerIndices(originalIndices);
+    const originalSiblingIndices = _siblingIndices(originalIndices);
+    const selectedDentables = [];
+    indices.forEach(index => {
+        selectedDentables.push(_childNodeIn(commonAncestor, index));
+    });
+    const newDentedItems = [];
+    const oldIndices = [];
+    const oldDentableTypes = [];
+    let currentList;
+    for (let i = 0; i < selectedDentables.length; i++) {
+        const selectedDentable = selectedDentables[i];
+        const dentableType = originalDentableTypes[i];
+        const index = originalIndices[i];
+        const nextExists = (i < selectedDentables.length - 1);
+        const nextDentable = nextExists && selectedDentables[i + 1];
+        const nextIndex = nextExists && originalIndices[i + 1];
+        const nextDentableType = nextExists && originalDentableTypes[i + 1];
+        const nextIsSubList = nextExists && (originalContainerIndices[i + 1] !== null);
+        const nextIsSibling = nextExists && (originalSiblingIndices[i + 1] !== null);
+        let dentedItem;
+        if (_isListItemElement(selectedDentable)) {
+            // The selectedDentable is a list item in a list, so dent it if we can.
+            // However, if it was previously part of a sublist, then instead of denting
+            // it, we need to put its parent list in the list item we find from
+            // originalContainerIndices.
+            const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL']);
+            const isSubList = originalContainerIndices[i] !== null;
+            if (dentType === DentType.Indent) {
+                if (isSubList) {
+                    const dentable = selectedDentables[originalContainerIndices[i]];
+                    const existingListItem = _findFirstParentElementInNodeNames(dentable, ['LI']);
+                    existingListItem.appendChild(existingList);
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
+                }
+            } else if (dentType === DentType.Outdent) {
+                if (isSubList) {
+                    // Sublist are outdented by outdenting their parent. We track it because we
+                    // here because we need to know about it on undo. We will use the oldIndices
+                    // to figure out how to do that.
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
+                };
+            };
+        } else if ((_listTags.includes(dentableType)) && (dentType === DentType.Indent)) {
+            // The selectedDentable needs to become a listItem in a list. Do we create a new
+            // list for it, or put it in an existing one?
+            // If currentList is null, we have to create it as a top-level list. Afterward, we
+            // determine if we should set currentList for the next dentable based on whether
+            // the next is a sublist, or just set it to null indicating we should create a
+            // new top-level list for the next element.
+            if (!currentList) {
+                currentList = document.createElement(dentableType);
+                selectedDentable.parentNode.insertBefore(currentList, selectedDentable.nextSibling);
+            };
+            dentedItem = document.createElement('LI');
+            currentList.appendChild(dentedItem);
+            dentedItem.appendChild(selectedDentable);
+            if (nextIsSubList) {
+                // The next listable is a list item in a sublist, so we need to find the list
+                // to put it into and make that the currentList.
+                const listItemIndex = nextIndex.slice(0, -1);    // Remove the last item
+                const listItem = _childNodeIn(commonAncestor, listItemIndex);
+                currentList = _findFirstParentElementInNodeNames(listItem, _listTags);
+            } else if (!nextIsSibling) { // Only reset currentList if the next is not a sibling
+                currentList = null;
+            };
+        } else {
+            // The selectedListable is some styled element that we might be able to dent
+            dentedItem = _dentFunction(selectedDentable);
+        };
+        if (dentedItem) {
+            newDentedItems.push(dentedItem);    // Its location may change during the loop, so wait on indices
+            oldDentableTypes.push(dentableType);
+            oldIndices.push(index);
+        };
+    };
+    const newIndices = [];
+    newDentedItems.forEach(dentedItem => {
+        newIndices.push(_childNodeIndicesByParent(dentedItem, commonAncestor))
+    });
+    // Put the range back in place. The startContainer and endContainer will have changed
+    // location in the DOM, but the savedRange will be valid.
+    _restoreRange(savedRange);
+    // Then update undoerData for the next undo or redo.
+    undoerData.data.indices = newIndices;
+    undoerData.data.oldDentableTypes = oldDentableTypes;
+    undoerData.data.oldIndices = oldIndices;
+    undoerData.range = document.getSelection().getRangeAt(0);
+    _callback('input');
+};
+
+/**
+ * Return whether the selection includes multiple list items or top-level styled elements,
+ * all of which can be acted upon in _multiDent()
+ */
+const _selectionSpansDentables = function() {
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    return startDentable && endDentable && (startDentable !== endDentable);
+};
+
+/**
+ * Return the top-level paragraph style or list item the selection starts in and ends in.
+ *
+ * Note the difference with _selectedDentables, which returns the dentable elements within
+ * the selection.
+ */
+const _selectionDentables = function() {
+    const selectionDentables = {};
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return selectionDentables };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (startList) {
+        selectionDentables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        selectionDentables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    const endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (endList) {
+        selectionDentables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        selectionDentables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return selectionDentables;
+};
+
+/**
+ * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on.
+ *
+ * Note that the caller needs to determine whether the sublists need to be acted upon. For nested sublists,
+ * we only want to "dent" the containing list. However, we want to track the sublists because on undo, we
+ * need to re-insert them as sublists if outdenting removed the containing list.
+ */
+const _selectedDentables = function() {
+    if (!_selectionSpansDentables()) { return [] };
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    const dentableRange = document.createRange();
+    dentableRange.setStart(startDentable, 0);
+    dentableRange.setEnd(endDentable, 0);
+    const listItems = _nodesWithNamesInRange(dentableRange, ['LI']);
+    const styles = _nodesWithNamesInRangeExcluding(dentableRange, _paragraphStyleTags, _listTags);
+    const commonAncestor = dentableRange.commonAncestorContainer;
+    return _joinElementArrays(listItems, styles, commonAncestor);
 };
 
 /**
@@ -4137,33 +4573,33 @@ const _increaseQuoteLevel = function(undoable=true) {
             }
         }
     }
-    // Now create a new BLOCKQUOTE parent based, put the selNodeParent's outerHTML
-    // into it, and replace the selNodeParent with the BLOCKQUOTE
-    const newParent = document.createElement('blockquote');
-    newParent.innerHTML = selNodeParent.outerHTML;
-    selNodeParent.replaceWith(newParent);
-    // Restore the selection by locating the start and endContainers in the newParent
-    _backupSelection();
-    let startContainer, endContainer;
-    startContainer = _firstChildMatchingContainer(newParent, oldStartContainer);
-    if (oldEndContainer ===  oldStartContainer) {
-        endContainer = startContainer;
-    } else {
-        endContainer = _firstChildMatchingContainer(newParent, oldEndContainer);
-    }
-    range.setStart(startContainer, oldStartOffset);
-    range.setEnd(endContainer, oldEndOffset);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    if (undoable) {
-        _backupSelection();
-        const undoerData = _undoerData('indent');
-        undoer.push(undoerData);
-        _restoreSelection();
-    }
-    _callback('input');
-    return selNode;
-}
+    if (_indent(selNodeParent)) {
+        if (undoable) {
+            _backupSelection();
+            const undoerData = _undoerData('indent');
+            undoer.push(undoerData);
+            _restoreSelection();
+        }
+        _callback('input');
+        return selNode;
+    };
+    return null;
+};
+
+/**
+ * Indent node by placing it in a BLOCKQUOTE, preserve selection.
+ *
+ * Return the node if it could be indented.
+ */
+const _indent = function(node) {
+    if (!node.parentNode) { return null };
+    const oldRange = _rangeProxy();
+    const newParent = document.createElement('BLOCKQUOTE');
+    node.parentNode.insertBefore(newParent, node.nextSibling);
+    newParent.appendChild(node);
+    oldRange && _restoreRange(oldRange);
+    return node;
+};
 
 /**
  * Remove an existing BLOCKQUOTE if it exists
@@ -4174,9 +4610,7 @@ const _decreaseQuoteLevel = function(undoable=true) {
     const sel = document.getSelection();
     const selNode = (sel) ? sel.anchorNode : null;
     if (!sel || !selNode || !sel.rangeCount) { return null };
-    const existingElement = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
-    if (existingElement) {
-        _unsetTag(existingElement, sel);
+    if (_outdent(selNode)) {
         if (undoable) {
             _backupSelection();
             const undoerData = _undoerData('outdent');
@@ -4187,6 +4621,22 @@ const _decreaseQuoteLevel = function(undoable=true) {
         return selNode;
     };
     return null;
+};
+
+/**
+ * Outdent node that is already in a BLOCKQUOTE, preserve selection.
+ *
+ * Return the node if it could be outdented.
+ */
+const _outdent = function(node) {
+    const existingElement = _findFirstParentElementInNodeNames(node, ['BLOCKQUOTE']);
+    if (!existingElement) { return null };
+    const oldRange = _rangeProxy();
+    const nodeRange = document.createRange();
+    nodeRange.selectNode(existingElement);
+    _unsetTagInRange(existingElement, nodeRange);
+    oldRange && _restoreRange(oldRange);
+    return node;
 }
 
 /********************************************************************************
@@ -6317,96 +6767,10 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     //_consoleLog("* Done _joinNodes")
 };
 
-/**
- * Return true if the selection spans _paragraphStyleTags.
- *
- * It's possible (due to pasting) that we end up with a selection in a text
- * node that is not inside of a paragraph style tag. Since we are only going to
- * apply multiple operations at the paragraph style level, we will return
- * false here in that case.
- */
-const _selectionSpansStyles = function() {
-    const styles = _selectionStartAndEndStyle();
-    const startStyle = styles.startStyle;
-    const endStyle = styles.endStyle;
-    return startStyle && endStyle && (startStyle !== endStyle)
-};
-
-/**
- * Return the paragraph style element the selection starts in and ends in
- */
-const _selectionStartAndEndStyle = function() {
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    const endContainer = range.endContainer;
-    const endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    return {startStyle: startStyle, endStyle: endStyle};
-};
-
-/**
- * Return an array of paragraph-styled Elements that the selection spans, including ones it
- * only partially encompasses.
- *
- * If the selection doesn't span paragraph styles, return an empty array. We do this even though
- * the selection is within a paragraph. This is because the function is used for operations
- * that span paragraphs.
- */
-const _selectedStyles = function() {
-    let elements = [];
-    if (!_selectionSpansStyles()) { return elements };
-    const styles = _selectionStartAndEndStyle();
-    const startStyle = styles.startStyle;
-    const endStyle = styles.endStyle;
-    const styleRange = document.createRange();
-    styleRange.setStart(startStyle, 0);
-    styleRange.setEnd(endStyle, 0);
-    return _nodesWithNamesInRange(styleRange, _paragraphStyleTags);
-};
-
-/**
- * Return whether the selection contains multiple text nodes
- */
-const _selectionSpansTextNodes = function() {
-    return _selectedTextNodes().length > 1;
-};
-
-/**
- * Return an array of text nodes that the selection spans, including ones it
- * only partially encompasses.
- *
- * If the selection is collapsed or resides within a single text node, then return
- * an empty array. We do this because the "normal" formatting logic applies within
- * a single text node, whereas we use this method to deal with selection that
- * spans across multiple text nodes. The text nodes we return may already reside
- * in formatting elements (e.g., <B>, <I>, etc).
- */
-const _selectedTextNodes = function() {
-    const nodes = _selectedNodesNamed('#text');
-    return nodes.filter(textNode => !_isEmpty(textNode));
-};
-
-const _selectedListables = function() {
-    if (!_selectionSpansListables()) { return [] };
-    const selectionListables = _selectionListables();
-    const startListable = selectionListables.startList ?? selectionListables.startStyle;
-    const endListable = selectionListables.endList ?? selectionListables.endStyle;
-    const listableRange = document.createRange();
-    listableRange.setStart(startListable, 0);
-    listableRange.setEnd(endListable, 0);
-    let lists = _nodesWithNamesInRange(listableRange, _listTags);
-    let styles = _nodesWithNamesInRangeExcluding(listableRange, _paragraphStyleTags, _listTags);
-    // By re-using _nodesWithNamesInRange to get lists and styles separately, the elements
-    // are not interleaved in order they are encountered. This matters because the ordering
-    // determines whether the listables can be combined into the same list or not.
-    // It's quite a hack, but rather than write yet another method to do the traversal,
-    // we use the _childIndices on each element to reassemble them in order.
-    const commonAncestor = listableRange.commonAncestorContainer;
+const _joinElementArrays = function(array1, array2, commonAncestor, ordering=_compareIndicesBreadthwise) {
     let indices = [];
-    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
-    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
+    array1.forEach(item => { indices.push(_childNodeIndicesByParent(item, commonAncestor)) });
+    array2.forEach(item => { indices.push(_childNodeIndicesByParent(item, commonAncestor)) });
     // Consider:
     //  <div>
     //      ...<4 intervening childNodes>...
@@ -6428,15 +6792,15 @@ const _selectedListables = function() {
     // The first three items point at lists. The last two point at styles.
     // Top-to-bottom readingwise, we would want depthwise traversal:
     //  [[4], [6], [6, 3], [8], [10]]
-    // However, we want siblings at a given level to follow one another in the list,
-    // so we want breadthwise traversal:
+    // However, if we want siblings at a given level to follow one another in the list,
+    // we want breadthwise traversal:
     //  [[4], [6], [8], [10], [6, 3]]
     // We get the order using the _compareIndices* function.
-    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
+    const sortedIndices = indices.sort(ordering);
     // Then we reassemble the listables in that order and return them
-    const sortedListables = [];
-    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
-    return sortedListables;
+    const sortedArray = [];
+    sortedIndices.forEach(indices => { sortedArray.push(_childNodeIn(commonAncestor, indices)) });
+    return sortedArray;
 };
 
 /**
@@ -6538,58 +6902,6 @@ const _compareIndexLevel = function(a, b) {
 };
 
 /**
- * Return whether the selection includes multiple list tags or top-level styles,
- * both of which can be acted upon in _multiList()
- */
-const _selectionSpansListables = function() {
-    const selectionListables = _selectionListables();
-    const startListable = selectionListables.startList ?? selectionListables.startStyle;
-    const endListable = selectionListables.endList ?? selectionListables.endStyle;
-    let spansListables = startListable && endListable && (startListable !== endListable);
-    if (spansListables) {
-        return true;
-    } else {
-        // We might be in a list with the selection spanning items, and these list items
-        // can themselves contain lists, so if we are in different items, return true
-        // even tho we might be in one UL or OL.
-        const startListItem = selectionListables.startListItem;
-        const endListItem = selectionListables.endListItem;
-        return startListItem && endListItem && (startListItem !== endListItem);
-    };
-};
-
-/**
- * Return the paragraph style or list element the selection starts in and ends in.
- *
- * If we are in a list, we return the list elements we are in (UL or OL) and the
- * list items we are in. Otherwise, we return the paragraph element we are in.
- * This gives us the "top level" elements we can change to lists or change from lists,
- * without including the ones that are already embedded in lists.
- */
-const _selectionListables = function() {
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    let startList, startListItem, startStyle, endList, endListItem, endStyle;
-    startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
-    if (startList) {
-        startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
-    } else {
-        startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    };
-    const endContainer = range.endContainer;
-    endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
-    if (endList) {
-        endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
-    } else {
-        endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    };
-    return {startList: startList, startListItem: startListItem, startStyle: startStyle, endList: endList, endListItem: endListItem, endStyle: endStyle};
-};
-
-
-/**
  * Return the nodes with names in selection, but exclude any that reside within
  * nodes with names in excluding. Excluding is empty by default.
  *
@@ -6615,7 +6927,7 @@ const _nodesWithNamesInRangeExcluding = function(range, names, excluding, nodes=
     const endContainer = range.endContainer;
     let child = startContainer;
     let excluded;
-    if (_equalsOrIsContainedIn(startContainer, endContainer)) {
+    if (_equalsOrIsContainedIn(endContainer, startContainer)) {
         excluded = (excluding.length > 0) ? _findFirstParentElementInNodeNames(child, excluding) : null;
         if (!excluded) {
             if (names.includes(child.nodeName)) { nodes.push(child) };
@@ -7084,7 +7396,7 @@ const _childNodeIndex = function(node) {
  *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
  * then we return:
  *  [null, null, 0, 1, 0, 1, 3]
- * This indicated that the container of [1, 0] is [1], the container of
+ * This indicates that the container of [1, 0] is [1], the container of
  * [3, 1] is [3], the container of [3, 2] is [3], and the container of
  * [3, 1, 0, 5] is [3, 1]. The other items in indices have no containers
  * within indices.
@@ -7098,7 +7410,7 @@ const _containerIndices = function(indices) {
     //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
     // then sortedIndices will be:
     //  [[1], [1, 0], [3], [3, 1], [3, 1, 0, 5], [3, 2], [4]]
-    if (indices.length === 0) { return containerIndices };
+    if (indices.length < 2) { return Array(indices.length).fill(null) };
     const sortedIndices = [...indices].sort(_compareIndicesDepthwise);  // Don't sort in place
     const orphanLength = sortedIndices[0].length; // Any element of this size have no parents
     const sortedContainerIndices = [];
@@ -7135,6 +7447,65 @@ const _containerIndices = function(indices) {
         containerIndices[j] = sortedContainerIndex;
     };
     return containerIndices;
+};
+
+/**
+ * Given indices for a set of nodes under a common ancestor derived using
+ * childNodeIndicesByParent, return an array of indexes into the indices
+ * array that identifies each node's sibling, where that node can be null.
+ *
+ * For example, if indices is:
+ *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+ * then we return:
+ *  [null, null, null, null, 1, 3, 0]
+ * This indicates that [4] is the sibling of [3] and [3, 2] is the sibling
+ * of [3, 1]. The other items in indices have no siblings within indices.
+ *
+ * We need this to identify how to reassemble a list on undo outdent.
+ */
+const _siblingIndices = function(indices) {
+    // It's going to make life easier to put indices in breadthwise sorted order,
+    // but we need to return an array that is in the original order.
+    // For example, if indices is:
+    //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+    // then sortedIndices will be:
+    //  [[1], [3], [4], [1, 0], [3, 1], [3, 2], [3, 1, 0, 5]]
+    if (indices.length < 2) { return Array(indices.length).fill(null) };
+    const sortedIndices = [...indices].sort(_compareIndicesBreadthwise);  // Don't sort in place
+    const sortedSiblingIndices = [];
+    for (let i = 1; i < sortedIndices.length; i++) {
+        const previousIndex = sortedIndices[i - 1];
+        const sortedIndex = sortedIndices[i];
+        const sortedIndexLength = sortedIndex.length;
+        if (previousIndex.length !== sortedIndexLength) {
+            sortedSiblingIndices[i] = null;   // Not siblings by definition
+        } else {
+            // Otherwise, see if we are a sibling by matching all but the last item
+            // between previousIndex and sortedIndex, with the last items being sequential
+            let kLastItem = sortedIndexLength - 1;
+            let sameLevel = true;
+            for (let k = 0; k < kLastItem; k++) {
+                if (previousIndex[k] !== sortedIndex[k]) {
+                    sameLevel = false;
+                    break;
+                };
+            };
+            if (sameLevel && (sortedIndex[kLastItem] === previousIndex[kLastItem] + 1)) {
+                sortedSiblingIndices[i] = i - 1;
+            } else {
+                sortedSiblingIndices[i] = null;
+            }
+        };
+    };
+    // Populate containerIndices in the order of original indices, not sortedContainerIndices
+    const siblingIndices = Array(sortedSiblingIndices.length).fill(null);
+    for (let i = 0; i < sortedSiblingIndices.length; i++) {
+        const sortedSiblingIndex = sortedSiblingIndices[i];
+        const sortedIndex = sortedIndices[i];
+        const j = indices.indexOf(sortedIndex);
+        siblingIndices[j] = sortedSiblingIndex;
+    };
+    return siblingIndices;
 };
 
 /*
@@ -7710,14 +8081,39 @@ const _findFirstParentElementInNodeNames = function(node, matchNames, excludeNam
 };
 
 /**
- * Return whether startContainer===endContainer or if startContainer contains endContainer
+ * Return whether node===possibleAncestorElement or if possibleAncestorElement contains node
  */
-const _equalsOrIsContainedIn = function(startContainer, endContainer) {
-    let parent = endContainer;
-    while (parent && (parent !== startContainer)) {
+const _equalsOrIsContainedIn = function(node, possibleAncestorElement) {
+    if (node === possibleAncestorElement) {
+        return true;
+    } else {
+        return _isContainedIn(node, possibleAncestorElement);
+    };
+};
+
+/**
+ * Return whether possibleAncestorElement contains node
+ */
+const _isContainedIn = function(node, possibleAncestorElement) {
+    let parent = node.parentNode;
+    while (parent) {
+        if (parent === possibleAncestorElement) { return true };
         parent = parent.parentNode;
     };
-    return parent === startContainer;
+    return false;
+};
+
+/**
+ * Return whether any of the elements in possibleAncestorElements contain node
+ */
+const _hasContainerWithin = function(node, possibleAncestorElements) {
+    let hasContainerWithin = false;
+    for (let i = 0; i < possibleAncestorElements.length; i++) {
+        if (_isContainedIn(node, possibleAncestorElements[i])) {
+            return true;
+        };
+    };
+    return hasContainerWithin;
 };
 
 /********************************************************************************
