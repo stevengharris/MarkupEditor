@@ -730,7 +730,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testRedoBlockQuotes() throws {
+    func testRedoDenting() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
         // using the innermost element id and the offset into it. Inline comments
         // below show the selection using "|" for clarity.
@@ -874,6 +874,258 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 }
             }
             wait(for: [expectation], timeout: 3)
+        }
+    }
+    
+    func testRedoMultiDenting() throws {
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Indent <p>He|llo world1</p><p>He|llo world2</p>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    endHtml: "<blockquote><p id=\"p1\">Hello world1</p></blockquote><blockquote><p id=\"p2\">Hello world2</p></blockquote>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <blockquote><p id=\"p1\">He|llo world1</p></blockquote><blockquote><p id=\"p2\">He|llo world2</p></blockquote>",
+                    startHtml: "<blockquote><p id=\"p1\">Hello world1</p></blockquote><blockquote><p id=\"p2\">Hello world2</p></blockquote>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><p id=\"p2\">Hello world2</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Indent <p>He|llo world1</p><h5>He|llo world2</h5>",
+                    startHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
+                    endHtml: "<blockquote><p id=\"p1\">Hello world1</p></blockquote><blockquote><h5 id=\"p2\">Hello world2</h5></blockquote>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <blockquote><p id=\"p1\">He|llo world1</p></blockquote><blockquote><h5 id=\"p2\">He|llo world2</h5></blockquote>",
+                    startHtml: "<blockquote><p id=\"p1\">Hello world1</p></blockquote><blockquote><h5 id=\"p2\">Hello world2</h5></blockquote>",
+                    endHtml: "<p id=\"p1\">Hello world1</p><h5 id=\"p2\">Hello world2</h5>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Indent <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    startHtml: "<p id=\"p\">Hello paragraph</p><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<blockquote><p id=\"p\">Hello paragraph</p></blockquote><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <blockquote><p id=\"p\">He|llo paragraph</p></blockquote><ul><li><h5 id=\"h\">He|llo header in list</h5></li></ul>",
+                    startHtml: "<blockquote><p id=\"p\">Hello paragraph</p></blockquote><ul><li><h5 id=\"h\">Hello header in list</h5></li></ul>",
+                    endHtml: "<p id=\"p\">Hello paragraph</p><h5 id=\"h\">Hello header in list</h5>",
+                    startId: "p",
+                    startOffset: 2,
+                    endId: "h",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Indent no-op <ul><li><h5>Un|ordered <i>H5</i> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent <ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ul>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol>",
+                    startId: "h5",
+                    startOffset: 2,
+                    endId: "li",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Indent interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<blockquote><p id=\"p1\">Top-level paragraph 1</p></blockquote><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><blockquote><p>Top-level paragraph 2</p></blockquote><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent interleaved paragraphs and lists",
+                    startHtml: "<p id=\"p1\">Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p id=\"p2\">Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<p id=\"p1\">Top-level paragraph 1</p><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol><p>Top-level paragraph 2</p><p id=\"p2\">Ordered list paragraph 1</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Indent list with sublists",
+                    startHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol></li><li><h5 id=\"h2\">With two styled items.</h5></li></ul>",
+                    endHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.<ol><li>With two unstyled items.</li></ol></li></ol><ul><li><h5 id=\"h2\">With two styled items.</h5></li></ul></li></ul>",
+                    startId: "h1",
+                    startOffset: 2,
+                    endId: "h2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent list with sublists",
+                    startHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol></li><li><h5 id=\"h2\">With two styled items.</h5></li></ul>",
+                    endHtml: "<h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol><h5 id=\"h2\">With two styled items.</h5>",
+                    startId: "h1",
+                    startOffset: 2,
+                    endId: "h2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Indent/outdent operations with selections spanning multiple elements")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
+                        // Execute the action to unformat at the selection
+                        action() {
+                            self.webView.getHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                self.webView.testUndo() {
+                                    self.webView.getHtml { unformatted in
+                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.webView.testRedo() {
+                                            self.webView.getHtml { reformatted in
+                                                self.assertEqualStrings(expected: endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
         }
     }
     

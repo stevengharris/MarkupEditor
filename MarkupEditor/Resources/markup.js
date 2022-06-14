@@ -3140,39 +3140,7 @@ const _selectedListables = function() {
     // It's quite a hack, but rather than write yet another method to do the traversal,
     // we use the _childIndices on each element to reassemble them in order.
     const commonAncestor = listableRange.commonAncestorContainer;
-    let indices = [];
-    lists.forEach(list => { indices.push(_childNodeIndicesByParent(list, commonAncestor)) });
-    styles.forEach(style => { indices.push(_childNodeIndicesByParent(style, commonAncestor)) });
-    // Consider:
-    //  <div>
-    //      ...<4 intervening childNodes>...
-    //      <p>Top-level paragraph 1</p>
-    //      <ul>
-    //          <li><p>Unordered list paragraph 1</p></li>
-    //          <ol>
-    //              <li><p>Ordered sublist paragraph</p></li>
-    //          </ol>
-    //      </ul>
-    //      <p>Top-level paragraph 2</p>
-    //      <ol>
-    //          <li><p>Ordered list paragraph 1</p></li>
-    //      </ol>
-    //  </div>
-    // Then indices from the commonAncestor div at this point will be:
-    //  [[6], [6, 3], [10], [4], [8]]
-    // Note that the indices count childNodes, including empty text for the newlines.
-    // The first three items point at lists. The last two point at styles.
-    // Top-to-bottom readingwise, we would want depthwise traversal:
-    //  [[4], [6], [6, 3], [8], [10]]
-    // However, we want siblings at a given level to follow one another in the list,
-    // so we want breadthwise traversal:
-    //  [[4], [6], [8], [10], [6, 3]]
-    // We get the order using the _compareIndices* function.
-    const sortedIndices = indices.sort(_compareIndicesBreadthwise);
-    // Then we reassemble the listables in that order and return them
-    const sortedListables = [];
-    sortedIndices.forEach(indices => { sortedListables.push(_childNodeIn(commonAncestor, indices)) });
-    return sortedListables;
+    return _joinElementArrays(lists, styles, commonAncestor);
 };
 
 /**
@@ -4279,45 +4247,6 @@ MU.outdent = function(undoable=true) {
 };
 
 /**
- * Return whether the selection includes multiple list items or top-level styled elements,
- * all of which can be acted upon in _multiDent()
- */
-const _selectionSpansDentables = function() {
-    const selectionDentables = _selectionDentables();
-    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
-    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
-    return startDentable && endDentable && (startDentable !== endDentable);
-};
-
-/**
- * Return the top-level paragraph style or list item the selection starts in and ends in.
- *
- * Note the difference with _selectedDentables, which returns the dentable elements within
- * the selection.
- */
-const _selectionDentables = function() {
-    const selectionDentables = {};
-    const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return selectionDentables };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
-    if (startList) {
-        selectionDentables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
-    } else {
-        selectionDentables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
-    };
-    const endContainer = range.endContainer;
-    const endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
-    if (endList) {
-        selectionDentables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
-    } else {
-        selectionDentables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
-    };
-    return selectionDentables;
-};
-
-/**
  * Indent or outdent all the items within a selection that can be indented or outdented.
  *
  * When we outdent, we can remove a list item and the list element it is in.
@@ -4356,7 +4285,7 @@ const _multiDent = function(dentType, undoable=true) {
     const oldDentableTypes = [];
     const oldIndices = [];
     for (let i = 0; i < selectedDentables.length; i++) {
-        // We only track the selectedDentables that we dent.
+        // We track dentables that could be dented, whether they were dented or not.
         // Note that sublist outdents are always tracked, because their parent is outdented.
         const selectedDentable = selectedDentables[i];
         let dentedItem, dentableType, oldIndex;
@@ -4425,17 +4354,26 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
     const indices = undoerData.data.indices;
     const oldDentableTypes = undoerData.data.oldDentableTypes;
     const oldIndices = undoerData.data.oldIndices;
-    const oldContainerIndices = _containerIndices(oldIndices);    // Points to containing elements in oldIndices
+    // When oldContainerIndices is non-null, it identifies the index into oldIndices where
+    // we will find the array of childNodes that lead to the container of the element that
+    // oldIndices pointed at. See the comments in _containerIndices.
+    const oldContainerIndices = _containerIndices(oldIndices);
+    const oldSiblingIndices = _siblingIndices(oldIndices);
     const selectedDentables = [];
     indices.forEach(index => {
         selectedDentables.push(_childNodeIn(commonAncestor, index));
     });
     const newIndices = [];
+    let currentList;
     for (let i = 0; i < selectedDentables.length; i++) {
         const selectedDentable = selectedDentables[i];
         const oldDentableType = oldDentableTypes[i];
-        // When oldContainerIndices[i+1] is non-null, it holds the index into indices where
-        // we will find the array of childNodes to find the dentable that contains the selectedDentable
+        const nextExists = (i < selectedDentables.length - 1);
+        const nextDentable = nextExists && selectedDentables[i + 1];
+        const nextOldIndex = nextExists && oldIndices[i + 1];
+        const nextOldDentableType = nextExists && oldDentableTypes[i + 1];
+        const nextIsSubList = nextExists && (oldContainerIndices[i + 1] !== null);
+        const nextIsSibling = nextExists && (oldSiblingIndices[i + 1] !== null);
         let dentedItem, dentableType;
         if (_isListItemElement(selectedDentable)) {
             // The selectedDentable is a list item in a list, so dent it if we can.
@@ -4453,12 +4391,27 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
                 dentedItem = _listDentFunction(selectedDentable, existingList);
             };
         } else if ((_listTags.includes(oldDentableType)) && (_dentFunction === _indent)) {
-            // The selectedListable needs to become a listItem in a list
-            const newList = document.createElement(oldDentableType);
-            selectedDentable.parentNode.insertBefore(newList, selectedDentable.nextSibling);
+            // The selectedDentable needs to become a listItem in a list. Do we create a new
+            // list for it, or put it in an existing one?
+            // If currentList is null, we have to create it as a top-level list. Afterward, we
+            // determine if we should set currentList for the next dentable based on whether
+            // the next is a sublist, or just set it to null indicating we should create a
+            // new top-level list for the next element.
+            if (!currentList) {
+                currentList = document.createElement(oldDentableType);
+                selectedDentable.parentNode.insertBefore(currentList, selectedDentable.nextSibling);
+            };
             dentedItem = document.createElement('LI');
-            newList.appendChild(dentedItem);
+            currentList.appendChild(dentedItem);
             dentedItem.appendChild(selectedDentable);
+            if (nextIsSubList) {
+                // The list item we TBD:
+                const listItemIndex = nextOldIndex.slice(0, -1);    // Remove the last item
+                const listItem = _childNodeIn(commonAncestor, listItemIndex);
+                currentList = _findFirstParentElementInNodeNames(listItem, _listTags);
+            } else if (!nextIsSibling) { // Only reset currentList if the next is not a sibling
+                currentList = null;
+            };
         } else {
             // The selectedListable is some styled element that we might be able to dent
             dentedItem = _dentFunction(selectedDentable);
@@ -4471,6 +4424,66 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
     _restoreRange(savedRange);
     undoerData.range = document.getSelection().getRangeAt(0);
     _callback('input');
+};
+
+/**
+ * Return whether the selection includes multiple list items or top-level styled elements,
+ * all of which can be acted upon in _multiDent()
+ */
+const _selectionSpansDentables = function() {
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    return startDentable && endDentable && (startDentable !== endDentable);
+};
+
+/**
+ * Return the top-level paragraph style or list item the selection starts in and ends in.
+ *
+ * Note the difference with _selectedDentables, which returns the dentable elements within
+ * the selection.
+ */
+const _selectionDentables = function() {
+    const selectionDentables = {};
+    const sel = document.getSelection();
+    if (!sel || (sel.rangeCount === 0)) { return selectionDentables };
+    const range = sel.getRangeAt(0);
+    const startContainer = range.startContainer;
+    const startList = _findFirstParentElementInNodeNames(startContainer, _listTags);
+    if (startList) {
+        selectionDentables.startListItem = _findFirstParentElementInNodeNames(startContainer, ['LI']);
+    } else {
+        selectionDentables.startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
+    };
+    const endContainer = range.endContainer;
+    const endList = _findFirstParentElementInNodeNames(endContainer, _listTags);
+    if (endList) {
+        selectionDentables.endListItem = _findFirstParentElementInNodeNames(endContainer, ['LI']);
+    } else {
+        selectionDentables.endStyle = _findFirstParentElementInNodeNames(endContainer, _paragraphStyleTags);
+    };
+    return selectionDentables;
+};
+
+/**
+ * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on.
+ *
+ * Note that the caller needs to determine whether the sublists need to be acted upon. For nested sublists,
+ * we only want to "dent" the containing list. However, we want to track the sublists because on undo, we
+ * need to re-insert them as sublists if outdenting removed the containing list.
+ */
+const _selectedDentables = function() {
+    if (!_selectionSpansDentables()) { return [] };
+    const selectionDentables = _selectionDentables();
+    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
+    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
+    const dentableRange = document.createRange();
+    dentableRange.setStart(startDentable, 0);
+    dentableRange.setEnd(endDentable, 0);
+    const listItems = _nodesWithNamesInRange(dentableRange, ['LI']);
+    const styles = _nodesWithNamesInRangeExcluding(dentableRange, _paragraphStyleTags, _listTags);
+    const commonAncestor = dentableRange.commonAncestorContainer;
+    return _joinElementArrays(listItems, styles, commonAncestor);
 };
 
 /**
@@ -6727,27 +6740,40 @@ const _joinNodes = function(leadingNode, trailingNode, rootName) {
     //_consoleLog("* Done _joinNodes")
 };
 
-/**
- * Return the elements within the selection that we can perform multiIndent and multiOutdent operations on.
- *
- * Note that the caller needs to determine whether the sublists need to be acted upon. For nested sublists,
- * we only want to "dent" the containing list. However, we want to track the sublists because on undo, we
- * need to re-insert them as sublists if outdenting removed the containing list.
- */
-const _selectedDentables = function() {
-    if (!_selectionSpansDentables()) { return [] };
-    const selectionDentables = _selectionDentables();
-    const startDentable = selectionDentables.startListItem ?? selectionDentables.startStyle;
-    const endDentable = selectionDentables.endListItem ?? selectionDentables.endStyle;
-    const dentableRange = document.createRange();
-    dentableRange.setStart(startDentable, 0);
-    dentableRange.setEnd(endDentable, 0);
-    const listItems = _nodesWithNamesInRange(dentableRange, ['LI']);
-    const styles = _nodesWithNamesInRangeExcluding(dentableRange, _paragraphStyleTags, _listTags);
-    // Unlike with listables, the ordering of listItems and styles does not matter, as
-    // the indent/outdent operations can all be treated independently.
-    styles.push(...listItems);
-    return styles;
+const _joinElementArrays = function(array1, array2, commonAncestor, ordering=_compareIndicesBreadthwise) {
+    let indices = [];
+    array1.forEach(item => { indices.push(_childNodeIndicesByParent(item, commonAncestor)) });
+    array2.forEach(item => { indices.push(_childNodeIndicesByParent(item, commonAncestor)) });
+    // Consider:
+    //  <div>
+    //      ...<4 intervening childNodes>...
+    //      <p>Top-level paragraph 1</p>
+    //      <ul>
+    //          <li><p>Unordered list paragraph 1</p></li>
+    //          <ol>
+    //              <li><p>Ordered sublist paragraph</p></li>
+    //          </ol>
+    //      </ul>
+    //      <p>Top-level paragraph 2</p>
+    //      <ol>
+    //          <li><p>Ordered list paragraph 1</p></li>
+    //      </ol>
+    //  </div>
+    // Then indices from the commonAncestor div at this point will be:
+    //  [[6], [6, 3], [10], [4], [8]]
+    // Note that the indices count childNodes, including empty text for the newlines.
+    // The first three items point at lists. The last two point at styles.
+    // Top-to-bottom readingwise, we would want depthwise traversal:
+    //  [[4], [6], [6, 3], [8], [10]]
+    // However, if we want siblings at a given level to follow one another in the list,
+    // we want breadthwise traversal:
+    //  [[4], [6], [8], [10], [6, 3]]
+    // We get the order using the _compareIndices* function.
+    const sortedIndices = indices.sort(ordering);
+    // Then we reassemble the listables in that order and return them
+    const sortedArray = [];
+    sortedIndices.forEach(indices => { sortedArray.push(_childNodeIn(commonAncestor, indices)) });
+    return sortedArray;
 };
 
 /**
@@ -7343,7 +7369,7 @@ const _childNodeIndex = function(node) {
  *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
  * then we return:
  *  [null, null, 0, 1, 0, 1, 3]
- * This indicated that the container of [1, 0] is [1], the container of
+ * This indicates that the container of [1, 0] is [1], the container of
  * [3, 1] is [3], the container of [3, 2] is [3], and the container of
  * [3, 1, 0, 5] is [3, 1]. The other items in indices have no containers
  * within indices.
@@ -7357,7 +7383,7 @@ const _containerIndices = function(indices) {
     //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
     // then sortedIndices will be:
     //  [[1], [1, 0], [3], [3, 1], [3, 1, 0, 5], [3, 2], [4]]
-    if (indices.length === 0) { return containerIndices };
+    if (indices.length < 2) { return Array(indices.length).fill(null) };
     const sortedIndices = [...indices].sort(_compareIndicesDepthwise);  // Don't sort in place
     const orphanLength = sortedIndices[0].length; // Any element of this size have no parents
     const sortedContainerIndices = [];
@@ -7394,6 +7420,65 @@ const _containerIndices = function(indices) {
         containerIndices[j] = sortedContainerIndex;
     };
     return containerIndices;
+};
+
+/**
+ * Given indices for a set of nodes under a common ancestor derived using
+ * childNodeIndicesByParent, return an array of indexes into the indices
+ * array that identifies each node's sibling, where that node can be null.
+ *
+ * For example, if indices is:
+ *  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+ * then we return:
+ *  [null, null, null, null, 1, 3, 0]
+ * This indicates that [4] is the sibling of [3] and [3, 2] is the sibling
+ * of [3, 1]. The other items in indices have no siblings within indices.
+ *
+ * We need this to identify how to reassemble a list on undo outdent.
+ */
+const _siblingIndices = function(indices) {
+    // It's going to make life easier to put indices in breadthwise sorted order,
+    // but we need to return an array that is in the original order.
+    // For example, if indices is:
+    //  [[1], [3], [1, 0], [3, 1], [4], [3, 2], [3, 1, 0, 5]]
+    // then sortedIndices will be:
+    //  [[1], [3], [4], [1, 0], [3, 1], [3, 2], [3, 1, 0, 5]]
+    if (indices.length < 2) { return Array(indices.length).fill(null) };
+    const sortedIndices = [...indices].sort(_compareIndicesBreadthwise);  // Don't sort in place
+    const sortedSiblingIndices = [];
+    for (let i = 1; i < sortedIndices.length; i++) {
+        const previousIndex = sortedIndices[i - 1];
+        const sortedIndex = sortedIndices[i];
+        const sortedIndexLength = sortedIndex.length;
+        if (previousIndex.length !== sortedIndexLength) {
+            sortedSiblingIndices[i] = null;   // Not siblings by definition
+        } else {
+            // Otherwise, see if we are a sibling by matching all but the last item
+            // between previousIndex and sortedIndex, with the last items being sequential
+            let kLastItem = sortedIndexLength - 1;
+            let sameLevel = true;
+            for (let k = 0; k < kLastItem; k++) {
+                if (previousIndex[k] !== sortedIndex[k]) {
+                    sameLevel = false;
+                    break;
+                };
+            };
+            if (sameLevel && (sortedIndex[kLastItem] === previousIndex[kLastItem] + 1)) {
+                sortedSiblingIndices[i] = i - 1;
+            } else {
+                sortedSiblingIndices[i] = null;
+            }
+        };
+    };
+    // Populate containerIndices in the order of original indices, not sortedContainerIndices
+    const siblingIndices = Array(sortedSiblingIndices.length).fill(null);
+    for (let i = 0; i < sortedSiblingIndices.length; i++) {
+        const sortedSiblingIndex = sortedSiblingIndices[i];
+        const sortedIndex = sortedIndices[i];
+        const j = indices.indexOf(sortedIndex);
+        siblingIndices[j] = sortedSiblingIndex;
+    };
+    return siblingIndices;
 };
 
 /*

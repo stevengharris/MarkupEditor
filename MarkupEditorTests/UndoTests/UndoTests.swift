@@ -1029,6 +1029,42 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "Indent list with sublists",
+                    startHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol></li><li><h5 id=\"h2\">With two styled items.</h5></li></ul>",
+                    endHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.<ol><li>With two unstyled items.</li></ol></li></ol><ul><li><h5 id=\"h2\">With two styled items.</h5></li></ul></li></ul>",
+                    startId: "h1",
+                    startOffset: 2,
+                    endId: "h2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.indent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Outdent list with sublists",
+                    startHtml: "<ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol></li><li><h5 id=\"h2\">With two styled items.</h5></li></ul>",
+                    endHtml: "<h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol><h5 id=\"h2\">With two styled items.</h5>",
+                    startId: "h1",
+                    startOffset: 2,
+                    endId: "h2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
