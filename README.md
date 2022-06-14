@@ -146,7 +146,7 @@ The current version is closing in on feature-complete. I am now consuming it mys
 
 ### History
 
-#### Version 0.3.3 [Upcoming]
+#### Version 0.3.3
 
 * Run build and tests on main using GitHub actions.
 * Start using the GitHub issue tracker and PRs to monitor issues prior to Beta.
@@ -188,6 +188,8 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 
 ### Known Issues
 
+[Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub, but the inlined summary below may be useful.
+
 1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
 2. Table editing
     * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
@@ -197,8 +199,7 @@ The labeled toolbar took up too much screen real estate in my other project, so 
     * Scaling is clunky. I plan to replace the Stepper with an overlay with handles on the image.
     * Save and cancel should go away in favor of immediate preview and undo.
     * The UI to deal with local images vs external image references is rough.
-4. Multi-element selections are a work in progress. For example, selecting multiple paragraphs and changing their style works, but undo/redo of the same does not. Operations performed for selections across lists and tables will result in unpredicatable behavior and attempts to undo may make things worse.
-5. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
+4. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
 
 ### Limitations
 
