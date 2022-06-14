@@ -4265,7 +4265,7 @@ const _multiDent = function(dentType, undoable=true) {
     // in the listItems. That's because when we indent or outdent, the nested items will
     // be indented or outdented along with their parent.
     const allListItems = selectedDentables.filter(dentable => _isListItemElement(dentable));
-    const sublistItems = allListItems.filter(listItem => _hasContainerWithin(listItem, allListItems))
+    const subListItems = allListItems.filter(listItem => _hasContainerWithin(listItem, allListItems))
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) { return }
     let _dentFunction, _listDentFunction;
@@ -4285,7 +4285,7 @@ const _multiDent = function(dentType, undoable=true) {
     const oldDentableTypes = [];
     const oldIndices = [];
     for (let i = 0; i < selectedDentables.length; i++) {
-        // We track dentables that could be dented, whether they were dented or not.
+        // We only track dentables that could be dented.
         // Note that sublist outdents are always tracked, because their parent is outdented.
         const selectedDentable = selectedDentables[i];
         let dentedItem, dentableType, oldIndex;
@@ -4295,7 +4295,7 @@ const _multiDent = function(dentType, undoable=true) {
                 dentedItem = _listDentFunction(selectedDentable, existingList);
                 dentableType = existingList.nodeName;
             } else if (dentType === DentType.Outdent) {
-                if (sublistItems.includes(selectedDentable)) {
+                if (subListItems.includes(selectedDentable)) {
                     // Sublist are outdented by outdenting their parent. We track it because we
                     // here because we need to know about it on undo. We will use the oldIndices
                     // to figure out how to do that.
@@ -4352,45 +4352,60 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
     const savedRange = _rangeProxy();
     const commonAncestor = undoerData.data.commonAncestor;
     const indices = undoerData.data.indices;
-    const oldDentableTypes = undoerData.data.oldDentableTypes;
-    const oldIndices = undoerData.data.oldIndices;
-    // When oldContainerIndices is non-null, it identifies the index into oldIndices where
-    // we will find the array of childNodes that lead to the container of the element that
-    // oldIndices pointed at. See the comments in _containerIndices.
-    const oldContainerIndices = _containerIndices(oldIndices);
-    const oldSiblingIndices = _siblingIndices(oldIndices);
+    const originalDentableTypes = undoerData.data.oldDentableTypes;
+    const originalIndices = undoerData.data.oldIndices;
+    // When originalContainerIndices is non-null, it identifies the index into
+    // originalIndices where we will find the array of childNodes that led to the
+    // container of the element that originalIndices pointed at.
+    // See the comments in _containerIndices.
+    const originalContainerIndices = _containerIndices(originalIndices);
+    const originalSiblingIndices = _siblingIndices(originalIndices);
     const selectedDentables = [];
     indices.forEach(index => {
         selectedDentables.push(_childNodeIn(commonAncestor, index));
     });
-    const newIndices = [];
+    const newDentedItems = [];
+    const oldIndices = [];
+    const oldDentableTypes = [];
     let currentList;
     for (let i = 0; i < selectedDentables.length; i++) {
         const selectedDentable = selectedDentables[i];
-        const oldDentableType = oldDentableTypes[i];
+        const dentableType = originalDentableTypes[i];
+        const index = originalIndices[i];
         const nextExists = (i < selectedDentables.length - 1);
         const nextDentable = nextExists && selectedDentables[i + 1];
-        const nextOldIndex = nextExists && oldIndices[i + 1];
-        const nextOldDentableType = nextExists && oldDentableTypes[i + 1];
-        const nextIsSubList = nextExists && (oldContainerIndices[i + 1] !== null);
-        const nextIsSibling = nextExists && (oldSiblingIndices[i + 1] !== null);
-        let dentedItem, dentableType;
+        const nextIndex = nextExists && originalIndices[i + 1];
+        const nextDentableType = nextExists && originalDentableTypes[i + 1];
+        const nextIsSubList = nextExists && (originalContainerIndices[i + 1] !== null);
+        const nextIsSibling = nextExists && (originalSiblingIndices[i + 1] !== null);
+        let dentedItem;
         if (_isListItemElement(selectedDentable)) {
             // The selectedDentable is a list item in a list, so dent it if we can.
             // However, if it was previously part of a sublist, then instead of denting
             // it, we need to put its parent list in the list item we find from
-            // oldContainerIndices.
+            // originalContainerIndices.
             const existingList = _findFirstParentElementInNodeNames(selectedDentable, ['UL', 'OL']);
-            const isSubList = oldContainerIndices[i] !== null;
-            if (isSubList) {
-                const dentable = selectedDentables[oldContainerIndices[i]];
-                const existingListItem = _findFirstParentElementInNodeNames(dentable, ['LI']);
-                existingListItem.appendChild(existingList);
-                dentedItem = selectedDentable;
-            } else {
-                dentedItem = _listDentFunction(selectedDentable, existingList);
+            const isSubList = originalContainerIndices[i] !== null;
+            if (dentType === DentType.Indent) {
+                if (isSubList) {
+                    const dentable = selectedDentables[originalContainerIndices[i]];
+                    const existingListItem = _findFirstParentElementInNodeNames(dentable, ['LI']);
+                    existingListItem.appendChild(existingList);
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
+                }
+            } else if (dentType === DentType.Outdent) {
+                if (isSubList) {
+                    // Sublist are outdented by outdenting their parent. We track it because we
+                    // here because we need to know about it on undo. We will use the oldIndices
+                    // to figure out how to do that.
+                    dentedItem = selectedDentable;
+                } else {
+                    dentedItem = _listDentFunction(selectedDentable, existingList);
+                };
             };
-        } else if ((_listTags.includes(oldDentableType)) && (_dentFunction === _indent)) {
+        } else if ((_listTags.includes(dentableType)) && (dentType === DentType.Indent)) {
             // The selectedDentable needs to become a listItem in a list. Do we create a new
             // list for it, or put it in an existing one?
             // If currentList is null, we have to create it as a top-level list. Afterward, we
@@ -4398,15 +4413,16 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
             // the next is a sublist, or just set it to null indicating we should create a
             // new top-level list for the next element.
             if (!currentList) {
-                currentList = document.createElement(oldDentableType);
+                currentList = document.createElement(dentableType);
                 selectedDentable.parentNode.insertBefore(currentList, selectedDentable.nextSibling);
             };
             dentedItem = document.createElement('LI');
             currentList.appendChild(dentedItem);
             dentedItem.appendChild(selectedDentable);
             if (nextIsSubList) {
-                // The list item we TBD:
-                const listItemIndex = nextOldIndex.slice(0, -1);    // Remove the last item
+                // The next listable is a list item in a sublist, so we need to find the list
+                // to put it into and make that the currentList.
+                const listItemIndex = nextIndex.slice(0, -1);    // Remove the last item
                 const listItem = _childNodeIn(commonAncestor, listItemIndex);
                 currentList = _findFirstParentElementInNodeNames(listItem, _listTags);
             } else if (!nextIsSibling) { // Only reset currentList if the next is not a sibling
@@ -4417,11 +4433,22 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
             dentedItem = _dentFunction(selectedDentable);
         };
         if (dentedItem) {
-            newIndices.push(_childNodeIndicesByParent(dentedItem, commonAncestor));
+            newDentedItems.push(dentedItem);    // Its location may change during the loop, so wait on indices
+            oldDentableTypes.push(dentableType);
+            oldIndices.push(index);
         };
     };
-    undoerData.data.indices = newIndices;
+    const newIndices = [];
+    newDentedItems.forEach(dentedItem => {
+        newIndices.push(_childNodeIndicesByParent(dentedItem, commonAncestor))
+    });
+    // Put the range back in place. The startContainer and endContainer will have changed
+    // location in the DOM, but the savedRange will be valid.
     _restoreRange(savedRange);
+    // Then update undoerData for the next undo or redo.
+    undoerData.data.indices = newIndices;
+    undoerData.data.oldDentableTypes = oldDentableTypes;
+    undoerData.data.oldIndices = oldIndices;
     undoerData.range = document.getSelection().getRangeAt(0);
     _callback('input');
 };
