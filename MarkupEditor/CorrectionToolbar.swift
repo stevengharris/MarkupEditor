@@ -33,6 +33,26 @@ public struct CorrectionToolbar: View {
 
 struct CorrectionToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        CorrectionToolbar()
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                CorrectionToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                CorrectionToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
     }
 }

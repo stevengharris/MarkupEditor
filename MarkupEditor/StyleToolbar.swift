@@ -83,6 +83,26 @@ public struct StyleToolbar: View {
 
 struct StyleToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        StyleToolbar()
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                StyleToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                StyleToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
     }
 }

@@ -66,11 +66,19 @@ public struct MarkupToolbar: View {
 struct MarkupToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
-        let markupEnv = MarkupEnv(style: .compact)
-        MarkupToolbar()
-            .environmentObject(markupEnv.selectionState)
-            .environmentObject(markupEnv.toolbarPreference)
-            .environmentObject(markupEnv.observedWebView)
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        VStack(alignment: .leading) {
+            MarkupToolbar()
+                .environmentObject(compactMarkupEnv.selectionState)
+                .environmentObject(compactMarkupEnv.toolbarPreference)
+                .environmentObject(compactMarkupEnv.observedWebView)
+            MarkupToolbar()
+                .environmentObject(labeledMarkupEnv.selectionState)
+                .environmentObject(labeledMarkupEnv.toolbarPreference)
+                .environmentObject(labeledMarkupEnv.observedWebView)
+            Spacer()
+        }
     }
 }
 

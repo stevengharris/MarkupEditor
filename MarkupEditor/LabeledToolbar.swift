@@ -46,15 +46,44 @@ public struct LabeledToolbar<Content: View>: View {
 
 struct LabeledToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        LabeledToolbar(label: Text("Test Label")) {
-            ToolbarImageButton(
-                systemName: "square.and.arrow.up.fill",
-                action: { print("up") }
-            )
-            ToolbarImageButton(
-                systemName: "square.and.arrow.down.fill",
-                action: { print("down") }
-            )
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                LabeledToolbar(label: Text("Test Label")) {
+                    ToolbarImageButton(
+                        systemName: "square.and.arrow.up.fill",
+                        action: { print("up") }
+                    )
+                    ToolbarImageButton(
+                        systemName: "square.and.arrow.down.fill",
+                        action: { print("down") }
+                    )
+                }
+                    .environmentObject(SelectionState())
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                LabeledToolbar(label: Text("Test Label")) {
+                    ToolbarImageButton(
+                        systemName: "square.and.arrow.up.fill",
+                        action: { print("up") }
+                    )
+                    ToolbarImageButton(
+                        systemName: "square.and.arrow.down.fill",
+                        action: { print("down") }
+                    )
+                }
+                    .environmentObject(SelectionState())
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
         }
     }
 }

@@ -190,6 +190,27 @@ public struct LinkToolbar: View {
 
 struct LinkToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        LinkToolbar(selectionState: SelectionState())
+        let selectionState = SelectionState()
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                LinkToolbar(selectionState: selectionState)
+                    .environmentObject(selectionState)
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                LinkToolbar(selectionState: selectionState)
+                    .environmentObject(selectionState)
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
     }
 }
