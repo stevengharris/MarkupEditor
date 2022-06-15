@@ -80,9 +80,6 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     public var isInTable: Bool {
         table
     }
-    public var isOutdentable: Bool {
-        quote || isInList
-    }
     
     // CustomStringConvertible conformance
     public var description: String {

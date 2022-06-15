@@ -75,7 +75,6 @@ public struct StyleToolbar: View {
                 active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                 onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
             )
-            .disabled(!selectionState.isOutdentable)
         }
     }
     

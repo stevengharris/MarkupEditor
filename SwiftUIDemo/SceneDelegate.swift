@@ -58,12 +58,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     /// Return false to disable various menu items depending on selectionState
     @objc override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         //print(action.description)
-        let selectionState = markupEnv.selectionState
         switch action {
         case #selector(indent):
             return true
         case #selector(outdent):
-            return selectionState.isOutdentable
+            return true
         default:
             return super.canPerformAction(action, withSender: sender)
         }
