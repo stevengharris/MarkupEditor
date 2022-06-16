@@ -1618,6 +1618,24 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "Outdent, start and end in styles surround list",
+                    startHtml: "<p id=\"p1\">Starting paragraph.</p><ul><li><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol></li><li><h5 id=\"h2\">With two styled items.</h5></li></ul><p id=\"p2\">Ending paragraph.</p>",
+                    endHtml: "<p id=\"p1\">Starting paragraph.</p><h5 id=\"h1\">Unordered list.</h5><ol><li>Ordered sublist.</li><li>With two unstyled items.</li></ol><h5 id=\"h2\">With two styled items.</h5><p id=\"p2\">Ending paragraph.</p>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.outdent() {
+                            handler()
+                        }
+                    }
+                }
+            ),
         ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()

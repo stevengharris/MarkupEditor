@@ -555,8 +555,9 @@ const _backupUndoerRange = function(undoerData) {
  *
  * 1. We don't want to hear about the selection changing as the mouse moves
  *    during a drag-select. We track when the mouse is down. If mouse movement
- *    occurs while down, we mute. Then, when the mouse comes back up, we
- *    unmute. The net effect is to get one selectionChange event when the mouse
+ *    occurs while down, we mute. Then, when the mouse comes back up, we callback
+ *    to let the Swift side know the selection changes, and then unmute.
+ *    The net effect is to get one selectionChange event when the mouse
  *    comes back up after a drag-select, and avoid any selectionChange events while
  *    the mouse is down.
  *
@@ -591,8 +592,12 @@ MU.editor.addEventListener('mousemove', function() {
 
 /**
  * Unmute selectionChange on mouseup.
+ *
+ * When changes are muted, we want to callback selectionChange to update the
+ * selection on the Swift side, so we see one selectionChange notification.
  */
 MU.editor.addEventListener('mouseup', function() {
+    if (_muteChanges) { _callback('selectionChange') };
     _mouseDown = false;
     _muteChanges = false;
 });
@@ -1485,6 +1490,7 @@ MU.emptyDocument = function() {
 MU.setHTML = function(contents) {
     const tempWrapper = document.createElement('div');
     tempWrapper.innerHTML = contents;
+    _cleanUpEmptyTextNodes(tempWrapper);
     const images = tempWrapper.querySelectorAll('img');
     for (let i=0; i<images.length; i++) {
         images[i].onload = function() {
@@ -1509,12 +1515,72 @@ MU.getHTML = function() {
 };
 
 /**
- * Return a marginally prettier version of the raw editor contents.
+ * Return a pretty version of the raw editor contents based on the DOM contents of MU.editor.
+ *
+ * Insert a newline between each top-level element so they are distinct
+ * visually and each top-level element is in a contiguous text block vertically.
  *
  * @return {String}     A string showing the raw HTML with tags, etc.
  */
 MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+    let text = '';
+    let firstTopLevelNode = true;
+    const childNodes = MU.editor.childNodes;
+    const childNodesLength = childNodes.length;
+    for (let i = 0; i < childNodesLength; i++) {
+        let topLevelNode = childNodes[i];
+        text += _prettyHTML(topLevelNode, '', '', i === 0);
+        if (i < childNodesLength - 1) { text += '\n' };
+    }
+    return text;
+};
+
+/**
+ * Return a decently formatted/indented version of node's HTML.
+ *
+ * The inlined parameter forces whether to put a newline at the beginning
+ * of the text. My passing it in rather than computing it from node, we
+ * can avoid putting a newline in front of the first element in MU.getPrettyHTML.
+ */
+const _prettyHTML = function(node, indent, text, inlined) {
+    const nodeName = node.nodeName.toLowerCase();
+    const nodeIsTopLevel = indent.length === 0;
+    const nodeIsText = _isTextNode(node);
+    const nodeIsElement = _isElementNode(node);
+    const nodeIsInlined = inlined || _isInlined(node);  // allow inlined to force it
+    const nodeHasTerminator = !_isVoidNode(node);
+    if (nodeIsText) {
+        text += node.textContent;
+    } else if (nodeIsElement) {
+        const terminatorIsInlined = _isInlined(node.firstChild) && _isInlined(node.lastChild);
+        if (!inlined) { text += '\n' + indent };
+        text += '<' + nodeName;
+        const attributes = node.attributes;
+        for (let i = 0; i < attributes.length; i++) {
+            const attribute = attributes[i];
+            text += ' ' + attribute.name + '=\"' + attribute.value + '\"';
+        };
+        text += '>';
+        node.childNodes.forEach(childNode => {
+            text = _prettyHTML(childNode, indent + '    ', text, _isInlined(childNode));
+        });
+        if (nodeHasTerminator) {
+            if (!terminatorIsInlined) { text += '\n' + indent };
+            text += '</' + nodeName + '>';
+        };
+        if (!nodeIsInlined && !terminatorIsInlined) {
+            indent = indent.slice(0, -4);
+        };
+    };
+    return text;
+};
+
+/**
+ * Return whether node should be inlined during the prettyHTML assembly. An inlined node
+ * like <I> in a <P> ends up looking like <P>This is an <I>italic</I> node</P>.
+ */
+const _isInlined = function(node) {
+    return _isTextNode(node) || _isFormatElement(node) || _isLinkNode(node) || _isVoidNode(node)
 };
 
 /**
@@ -4260,6 +4326,8 @@ const _multiDent = function(dentType, undoable=true) {
     selectedDentables.forEach(selectedDentable => {
         originalIndices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
     });
+    // For debugging:
+    const originalSiblingIndices = _siblingIndices(originalIndices);
     // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
     // itself contains LIs), but we only want to include ones that are not nested in others
     // in the listItems. That's because when we indent or outdent, the nested items will
@@ -4949,6 +5017,19 @@ const _cleanUpAttributesWithin = function(attribute, node) {
     return attributesRemoved;
 };
 
+const _cleanUpEmptyTextNodes = function(node) {
+    let child = node.firstChild;
+    while (child) {
+        let nextChild = child.nextSibling;
+        if (_isElementNode(child)) {
+            _cleanUpEmptyTextNodes(child);
+        } else if (_isTextNode(child) && _isEmpty(child)) {
+            child.parentNode.removeChild(child);
+        };
+        child = nextChild;
+    };
+};
+
 /**
  * Replace newlines with <br> in a text node; return trailingText if patched, else node
  */
@@ -5102,7 +5183,10 @@ const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);            
 
 const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
 
+//TODO: Include BLOCKQUOTE?
 const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE']));          // Allowed top-level tags within editor
+
+const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -7091,6 +7175,13 @@ const _isElementNode = function(node) {
 };
 
 /**
+ * Return whether node is a style element; i.e., its nodeName is in _styleTags
+ */
+const _isStyleElement = function(node) {
+    return _isElementNode(node) && _styleTags.includes(node.nodeName);
+};
+
+/**
  * Return whether node is a format element; i.e., its nodeName is in _formatTags
  */
 const _isFormatElement = function(node) {
@@ -7108,7 +7199,15 @@ const _isListElement = function(node) {
  * Return whether a node is a list item element (LI)
  */
 const _isListItemElement = function(node) {
-    return node && (node.nodeName == 'LI');
+    return node && (node.nodeName === 'LI');
+};
+
+const _isVoidNode = function(node) {
+    return node && (_voidTags.includes(node.nodeName));
+};
+
+const _isLinkNode = function(node) {
+    return node && (node.nodeName === 'A');
 };
 
 /**
