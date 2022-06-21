@@ -3185,6 +3185,42 @@ const _redoMultiList = function(undoerData) {
 };
 
 /**
+ * Return the type of list a selection is in. If the selection spans listables,
+ * then return the list type they all belong to if they are all the same list type,
+ * or return null if they are different types.
+ *
+ */
+const _selectionListType = function() {
+    if (_selectionSpansListables()) {
+        const selectedListables = _selectedListables();
+        const nListables = selectedListables.length;
+        const liTags = selectedListables.map(listable => _tagsMatching(listable, ['LI']));
+        if (liTags.length !== nListables) {
+            return null;
+        };
+        // The selectedListables are all list items, so we need to figure out what kind
+        // of lists they are in.
+        const listElements = selectedListables.map(listable => _findFirstParentElementInNodeNames(listable, _listTags)).filter(n => n);
+        if (listElements.length !== nListables) {
+            return null;
+        };
+        const ulTags = listElements.filter(listElement => listElement.nodeName === 'UL');
+        if (ulTags.length === nListables) {
+            return 'UL';
+        } else {
+            const olTags = listElements.filter(listElement => listElement.nodeName === 'OL');
+            if (olTags.length === nListables) {
+                return 'OL';
+            } else {
+                return null;
+            }
+        };
+    } else {
+        return _firstSelectionTagMatching(['UL', 'OL']);
+    };
+};
+
+/**
  * Return whether the selection includes multiple list tags or top-level styles,
  * both of which can be acted upon in _multiList()
  */
@@ -5287,7 +5323,7 @@ const _getSelectionState = function() {
     state['col'] = tableAttributes['col'];
     // Style
     state['style'] = _getParagraphStyle();
-    state['list'] = _firstSelectionTagMatching(['UL', 'OL']);
+    state['list'] = _selectionListType();
     if (state['list']) {
         // If we are in a list, then we might or might not be in a list item
         state['li'] = _firstSelectionTagMatching(['LI']).length > 0;
@@ -5330,6 +5366,14 @@ const _getParagraphStyle = function() {
  * Return an array of format tags at the selection. For example, the selection could
  * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['U', 'I', 'B'],
  * from innermost to outermost tag.
+ *
+ * For multiformatting, return formatTags such that the only the formats identified
+ * are ones that are in-place for every selected text node. This provides an indication
+ * that "unsetAll" will take place for the selection for that tag. For example, if every
+ * text node is bolded, then when the user selects bold, they will all be unbolded.
+ * Conversely, if some text nodes are unformatted, say, in bold, and some are, then
+ * formatTags will not include bold. This provides an indication that all text will be
+ * bolded if the user selects bold.
  *
  * @return {[String]}       Tag names that represent the selection formatting on the Swift side.
  */
