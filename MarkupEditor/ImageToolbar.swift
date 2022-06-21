@@ -229,9 +229,28 @@ public struct ImageToolbar: View {
 }
 
 struct ImageToolbar_Previews: PreviewProvider {
-    
     static var previews: some View {
-        // src: "https://polyominoes.files.wordpress.com/2019/10/logo-1024.png", alt: "Polyominoes logo", scale: 100
-        ImageToolbar(selectionState: SelectionState())
+        let selectionState = SelectionState()
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                ImageToolbar(selectionState: selectionState)
+                    .environmentObject(selectionState)
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                ImageToolbar(selectionState: selectionState)
+                    .environmentObject(selectionState)
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
     }
 }

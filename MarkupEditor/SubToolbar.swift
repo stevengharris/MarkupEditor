@@ -64,3 +64,33 @@ public struct SubToolbar: View {
     }
     
 }
+
+struct SubToolbar_Previews: PreviewProvider {
+    // This is just a container for a specific SubToolbar dynamically specified by type
+    static var previews: some View {
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        let showSubToolbar = ShowSubToolbar()
+        VStack(alignment: .leading) {
+            HStack {
+                SubToolbar(markupDelegate: nil)
+                    .environmentObject(SelectionState())
+                    .environmentObject(compactPreference)
+                    .environmentObject(showSubToolbar)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                SubToolbar(markupDelegate: nil)
+                    .environmentObject(SelectionState())
+                    .environmentObject(labeledPreference)
+                    .environmentObject(showSubToolbar)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
+    }
+}

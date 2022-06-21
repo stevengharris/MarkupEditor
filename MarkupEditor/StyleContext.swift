@@ -12,6 +12,7 @@ import UIKit
 public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
 
     public static let Undefined = StyleContext(tag: "Undefined", name: "Style", fontSize: P.fontSize)
+    public static let Multiple = StyleContext(tag: "Multiple", name: "Multiple", fontSize: P.fontSize)
     public static let P = StyleContext(tag: "P", name: "Normal", fontSize: 14)
     public static let H1 = StyleContext(tag: "H1", name: "Header 1", fontSize: 26)
     public static let H2 = StyleContext(tag: "H2", name: "Header 2", fontSize: 24)
@@ -19,7 +20,7 @@ public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, 
     public static let H4 = StyleContext(tag: "H4", name: "Header 4", fontSize: 20)
     public static let H5 = StyleContext(tag: "H5", name: "Header 5", fontSize: 18)
     public static let H6 = StyleContext(tag: "H6", name: "Header 6", fontSize: 16)
-    public static let AllCases = [Undefined, P, H1, H2, H3, H4, H5, H6]
+    public static let AllCases = [Undefined, Multiple, P, H1, H2, H3, H4, H5, H6]
     public static let StyleCases = [P, H1, H2, H3, H4, H5, H6]
     public static let SizeCases = [P, H6, H5, H4, H3, H2, H1]  // In order smallest to largest
     

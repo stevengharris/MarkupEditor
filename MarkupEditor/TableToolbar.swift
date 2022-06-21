@@ -124,3 +124,29 @@ public struct TableToolbar: View {
     }
     
 }
+
+struct TableToolbar_Previews: PreviewProvider {
+    static var previews: some View {
+        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactPreference = compactMarkupEnv.toolbarPreference
+        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledPreference = labeledMarkupEnv.toolbarPreference
+        VStack(alignment: .leading) {
+            HStack {
+                TableToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(compactPreference)
+                    .frame(height: compactPreference.height())
+                Spacer()
+            }
+            HStack {
+                TableToolbar()
+                    .environmentObject(SelectionState())
+                    .environmentObject(labeledPreference)
+                    .frame(height: labeledPreference.height())
+                Spacer()
+            }
+            Spacer()
+        }
+    }
+}

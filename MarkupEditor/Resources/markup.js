@@ -555,8 +555,9 @@ const _backupUndoerRange = function(undoerData) {
  *
  * 1. We don't want to hear about the selection changing as the mouse moves
  *    during a drag-select. We track when the mouse is down. If mouse movement
- *    occurs while down, we mute. Then, when the mouse comes back up, we
- *    unmute. The net effect is to get one selectionChange event when the mouse
+ *    occurs while down, we mute. Then, when the mouse comes back up, we callback
+ *    to let the Swift side know the selection changes, and then unmute.
+ *    The net effect is to get one selectionChange event when the mouse
  *    comes back up after a drag-select, and avoid any selectionChange events while
  *    the mouse is down.
  *
@@ -591,8 +592,12 @@ MU.editor.addEventListener('mousemove', function() {
 
 /**
  * Unmute selectionChange on mouseup.
+ *
+ * When changes are muted, we want to callback selectionChange to update the
+ * selection on the Swift side, so we see one selectionChange notification.
  */
 MU.editor.addEventListener('mouseup', function() {
+    if (_muteChanges) { _callback('selectionChange') };
     _mouseDown = false;
     _muteChanges = false;
 });
@@ -1485,6 +1490,7 @@ MU.emptyDocument = function() {
 MU.setHTML = function(contents) {
     const tempWrapper = document.createElement('div');
     tempWrapper.innerHTML = contents;
+    _cleanUpEmptyTextNodes(tempWrapper);
     const images = tempWrapper.querySelectorAll('img');
     for (let i=0; i<images.length; i++) {
         images[i].onload = function() {
@@ -1509,12 +1515,72 @@ MU.getHTML = function() {
 };
 
 /**
- * Return a marginally prettier version of the raw editor contents.
+ * Return a pretty version of the raw editor contents based on the DOM contents of MU.editor.
+ *
+ * Insert a newline between each top-level element so they are distinct
+ * visually and each top-level element is in a contiguous text block vertically.
  *
  * @return {String}     A string showing the raw HTML with tags, etc.
  */
 MU.getPrettyHTML = function() {
-    return MU.editor.innerHTML.replace(/<p/g, '\n<p').replace(/<h/g, '\n<h').replace(/<div/g, '\n<div').replace(/<table/g, '\n<table').trim();
+    let text = '';
+    let firstTopLevelNode = true;
+    const childNodes = MU.editor.childNodes;
+    const childNodesLength = childNodes.length;
+    for (let i = 0; i < childNodesLength; i++) {
+        let topLevelNode = childNodes[i];
+        text += _prettyHTML(topLevelNode, '', '', i === 0);
+        if (i < childNodesLength - 1) { text += '\n' };
+    }
+    return text;
+};
+
+/**
+ * Return a decently formatted/indented version of node's HTML.
+ *
+ * The inlined parameter forces whether to put a newline at the beginning
+ * of the text. By passing it in rather than computing it from node, we
+ * can avoid putting a newline in front of the first element in MU.getPrettyHTML.
+ */
+const _prettyHTML = function(node, indent, text, inlined) {
+    const nodeName = node.nodeName.toLowerCase();
+    const nodeIsTopLevel = indent.length === 0;
+    const nodeIsText = _isTextNode(node);
+    const nodeIsElement = _isElementNode(node);
+    const nodeIsInlined = inlined || _isInlined(node);  // allow inlined to force it
+    const nodeHasTerminator = !_isVoidNode(node);
+    if (nodeIsText) {
+        text += node.textContent;
+    } else if (nodeIsElement) {
+        const terminatorIsInlined = _isInlined(node.firstChild) && _isInlined(node.lastChild);
+        if (!inlined) { text += '\n' + indent };
+        text += '<' + nodeName;
+        const attributes = node.attributes;
+        for (let i = 0; i < attributes.length; i++) {
+            const attribute = attributes[i];
+            text += ' ' + attribute.name + '=\"' + attribute.value + '\"';
+        };
+        text += '>';
+        node.childNodes.forEach(childNode => {
+            text = _prettyHTML(childNode, indent + '    ', text, _isInlined(childNode));
+        });
+        if (nodeHasTerminator) {
+            if (!terminatorIsInlined) { text += '\n' + indent };
+            text += '</' + nodeName + '>';
+        };
+        if (!nodeIsInlined && !terminatorIsInlined) {
+            indent = indent.slice(0, -4);
+        };
+    };
+    return text;
+};
+
+/**
+ * Return whether node should be inlined during the prettyHTML assembly. An inlined node
+ * like <I> in a <P> ends up looking like <P>This is an <I>italic</I> node</P>.
+ */
+const _isInlined = function(node) {
+    return _isTextNode(node) || _isFormatElement(node) || _isLinkNode(node) || _isVoidNode(node)
 };
 
 /**
@@ -1885,40 +1951,55 @@ const _multiFormat = function(newFormat, undoable=true) {
         };
         sel.removeAllRanges();
         sel.addRange(tagRange);
+        let formattedTagRange = tagRange;
+        let newStartOffset = tagRange.startOffset;
+        let newEndOffset = tagRange.endOffset;
         if (unsetAll) {
             // We may need to select a part of the selectedTextNode (or perhaps all of it,
             // depending on tagRange). If necessary, _selectedSubTextElement subdivides
             // selectedTextNode into 2 nodes while leaving sel set to the subnode that needs
             // to be untagged.
             const newFormatElement = _subTextElementInRange(tagRange, newFormat);
-            tagRange = document.getSelection().getRangeAt(0);
-            _unsetTagInRange(newFormatElement, tagRange);
+            formattedTagRange = document.createRange();
+            formattedTagRange.selectNode(newFormatElement);
+            formattedTagRange = _unsetTagInRange(newFormatElement, formattedTagRange);
+            newStartOffset = 0;
         } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
             // When the selection includes leading or trailing blanks, the startOffset and endOffsets
             // from document.getSelection are inset from the ends. So, we can't rely on it being
             // correct when looping over elements. If we rely on the selection, then the insets
             // can end up removing blanks between words.
-            _setTagInRange(newFormat, tagRange);
+            formattedTagRange = _setTagInRange(newFormat, tagRange);
+            newStartOffset = 0;
+        };
+        let newSelectedTextNode;
+        if (_isTextNode(formattedTagRange.startContainer)) {
+            newSelectedTextNode = formattedTagRange.startContainer;
+        } else {
+            const startChild = formattedTagRange.startContainer.childNodes[formattedTagRange.startOffset];
+            if (_isTextNode(startChild)) {
+                newSelectedTextNode = startChild;
+            } else {
+                newSelectedTextNode = _firstTextNodeChild(startChild);
+            };
         };
         // After we set or unset the tag, we need to track the oldFormat and indices, since they
         // are changed when we set the tag.
-        tagRange = document.getSelection().getRangeAt(0);
         oldFormats.push(existingFormat);
-        indices.push(_childNodeIndicesByParent(tagRange.startContainer, commonAncestor));
-        const newRange = sel.getRangeAt(0);
+        indices.push(_childNodeIndicesByParent(newSelectedTextNode, commonAncestor));
         if (newStartContainer) {
-            range.setStart(newRange.startContainer, newRange.startOffset);
+            range.setStart(newSelectedTextNode, newStartOffset);
         };
         if (newEndContainer) {
-            range.setEnd(newRange.endContainer, newRange.endOffset);
+            range.setEnd(newSelectedTextNode, newEndOffset);
         };
     };
     sel.removeAllRanges();
     sel.addRange(range);
     if (undoable) {
         _backupSelection()
-        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices, unsetAll: unsetAll});
+        const undoerData = _undoerData('multiFormat', {commonAncestor: commonAncestor, newFormat: newFormat, oldFormats: oldFormats, indices: indices, unsetAll: unsetAll}, range);
         undoer.push(undoerData);
         _restoreSelection()
     };
@@ -1934,18 +2015,23 @@ const _undoMultiFormat = function(undoerData) {
         MUError.NoSelection.callback();
         return;
     };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startOffset = range.startOffset;
-    const endContainer = range.endContainer;
-    const endOffset = range.endOffset;
+    const oldRange = undoerData.range;
+    const startContainer = oldRange.startContainer;
+    const startOffset = oldRange.startOffset;
+    const endContainer = oldRange.endContainer;
+    const endOffset = oldRange.endOffset;
     const commonAncestor = undoerData.data.commonAncestor;
     const oldFormats = undoerData.data.oldFormats;
     const newFormat = undoerData.data.newFormat;
     const indices = undoerData.data.indices;
     const unsetAll = undoerData.data.unsetAll;
-    for (let i = 0; i < indices.length; i++) {
-        const selectedTextNode = _childNodeIn(commonAncestor, indices[i]);
+    const selectedTextNodes = [];
+    indices.forEach(index => {;
+        selectedTextNodes.push(_childNodeIn(commonAncestor, index))
+    });
+    const range = document.createRange();
+    for (let i = 0; i < selectedTextNodes.length; i++) {
+        const selectedTextNode = selectedTextNodes[i];
         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
         const newFormatElement = _findFirstParentElementInNodeNames(selectedTextNode, [newFormat]);
         let tagRange = document.createRange();
@@ -1967,26 +2053,39 @@ const _undoMultiFormat = function(undoerData) {
         // and now we want to untag only those elements.
         // If unsetAll, then we toggled all elements off, and now we need to make all of them newFormat.
         const untag = !unsetAll && newFormatElement && (oldFormat !== newFormat);
+        let formattedTagRange = tagRange;
+        const newStartOffset = tagRange.startOffset;
+        const newEndOffset = tagRange.endOffset;
         if (untag) {
-            _unsetTagInRange(newFormatElement, tagRange);
+            formattedTagRange = _unsetTagInRange(newFormatElement, tagRange);
         } else if (unsetAll) {
-            _setTagInRange(newFormat, tagRange);
+            formattedTagRange = _setTagInRange(newFormat, tagRange);
+        };
+        let newSelectedTextNode;
+        if (_isTextNode(formattedTagRange.startContainer)) {
+            newSelectedTextNode = formattedTagRange.startContainer;
+        } else {
+            const startChild = formattedTagRange.startContainer.childNodes[formattedTagRange.startOffset];
+            if (_isTextNode(startChild)) {
+                newSelectedTextNode = startChild;
+            } else {
+                newSelectedTextNode = _firstTextNodeChild(startChild);
+            };
         };
         // Why update undoerData after the undo? Because on redo, we use the undoerData again, but
         // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
         // redo.
-        tagRange = document.getSelection().getRangeAt(0);
-        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
-        const newRange = sel.getRangeAt(0);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(newSelectedTextNode, commonAncestor);
         if (newStartContainer) {
-            range.setStart(newRange.startContainer, newRange.startOffset);
+            range.setStart(newSelectedTextNode, newStartOffset);
         };
         if (newEndContainer) {
-            range.setEnd(newRange.endContainer, newRange.endOffset);
+            range.setEnd(newSelectedTextNode, newEndOffset);
         };
     };
     sel.removeAllRanges();
     sel.addRange(range);
+    undoerData.range = range;
     _callback('input');
 };
 
@@ -1999,11 +2098,11 @@ const _redoMultiFormat = function(undoerData) {
         MUError.NoSelection.callback();
         return;
     };
-    const range = sel.getRangeAt(0);
-    const startContainer = range.startContainer;
-    const startOffset = range.startOffset;
-    const endContainer = range.endContainer;
-    const endOffset = range.endOffset;
+    const oldRange = undoerData.range;
+    const startContainer = oldRange.startContainer;
+    const startOffset = oldRange.startOffset;
+    const endContainer = oldRange.endContainer;
+    const endOffset = oldRange.endOffset;
     const commonAncestor = undoerData.data.commonAncestor;
     const oldFormats = undoerData.data.oldFormats;
     const newFormat = undoerData.data.newFormat;
@@ -2017,6 +2116,7 @@ const _redoMultiFormat = function(undoerData) {
     // unsetAll===false indicates that all nodes will be set to newFormat, with the ones
     // that are already in newFormat left alone. We need to know what unsetAll was in undo also.
     const unsetAll = formattedElements.length === selectedTextNodes.length;
+    const range = document.createRange();
     for (let i = 0; i < indices.length; i++) {
         const selectedTextNode = selectedTextNodes[i];
         const oldFormat = oldFormats[i];    // oldFormat was what the selectedTextNode was before formatting
@@ -2039,6 +2139,9 @@ const _redoMultiFormat = function(undoerData) {
         // If unsetAll, then all elements identified by indices need to be put back in
         // newFormat.
         // If !unsetAll, only the elements in newFormat need to be untagged.
+        let formattedTagRange = tagRange;
+        const newStartOffset = tagRange.startOffset;
+        const newEndOffset = tagRange.endOffset;
         if (unsetAll) {
             // We may need to select a part of the selectedTextNode (or perhaps all of it,
             // depending on tagRange). If necessary, _selectedSubTextElement subdivides
@@ -2046,31 +2149,41 @@ const _redoMultiFormat = function(undoerData) {
             // to be untagged.
             const newFormatElement = _subTextElementInRange(tagRange, newFormat);
             tagRange = document.getSelection().getRangeAt(0);
-            _unsetTagInRange(newFormatElement, tagRange);
+            formattedTagRange = _unsetTagInRange(newFormatElement, tagRange);
         } else if (!existingFormatElement) {
             // Set tags using tagRange, not the selection.
             // When the selection includes leading or trailing blanks, the startOffset and endOffsets
             // from document.getSelection are inset from the ends. So, we can't rely on it being
             // correct when looping over elements. If we rely on the selection, then the insets
             // can end up removing blanks between words.
-            _setTagInRange(newFormat, tagRange);
+            formattedTagRange = _setTagInRange(newFormat, tagRange);
+        };
+        let newSelectedTextNode;
+        if (_isTextNode(formattedTagRange.startContainer)) {
+            newSelectedTextNode = formattedTagRange.startContainer;
+        } else {
+            const startChild = formattedTagRange.startContainer.childNodes[formattedTagRange.startOffset];
+            if (_isTextNode(startChild)) {
+                newSelectedTextNode = startChild;
+            } else {
+                newSelectedTextNode = _firstTextNodeChild(startChild);
+            };
         };
         // Why update undoerData after the redo? Because on undo, we use the undoerData again, but
         // untagging or tagging may change the indices. Plus unsetAll has the opposite meaning for
         // undo.
-        tagRange = document.getSelection().getRangeAt(0);
-        undoerData.data.indices[i] = _childNodeIndicesByParent(tagRange.startContainer, commonAncestor);
+        undoerData.data.indices[i] = _childNodeIndicesByParent(newSelectedTextNode, commonAncestor);
         undoerData.data.unsetAll = unsetAll;
-        const newRange = sel.getRangeAt(0);
         if (newStartContainer) {
-            range.setStart(newRange.startContainer, newRange.startOffset);
+            range.setStart(newSelectedTextNode, newStartOffset);
         };
         if (newEndContainer) {
-            range.setEnd(newRange.endContainer, newRange.endOffset);
+            range.setEnd(newSelectedTextNode, newEndOffset);
         };
     };
     sel.removeAllRanges();
     sel.addRange(range);
+    undoerData.range = range;
     _callback('input');
 };
 
@@ -2137,9 +2250,12 @@ const _subTextElementInRange = function(range, type) {
         // leadingTextNode, and what is left in leadingTextNode is what need to be untagged.
         _splitTextNode(leadingTextNode, endOffset, type, 'AFTER');
         subTextNode = leadingTextNode;
-    };
+    } else {
+        subTextNode = startContainer;
+    }
+    range.setStart(subTextNode, 0);
+    range.setEnd(subTextNode, subTextNode.textContent.length);
     const sel = document.getSelection();
-    range.selectNode(subTextNode);
     sel.removeAllRanges();
     sel.addRange(range);
     return _unNest(subTextNode, type);
@@ -2818,7 +2934,7 @@ const _undoMultiList = function(undoerData) {
         MUError.NoSelection.callback();
         return;
     };
-    const range = sel.getRangeAt(0);
+    const range = undoerData.range;
     const startContainer = range.startContainer;
     const startOffset = range.startOffset;
     const endContainer = range.endContainer;
@@ -2941,6 +3057,7 @@ const _undoMultiList = function(undoerData) {
         undoerData.data.indices.push(_childNodeIndicesByParent(newSelectedListable, commonAncestor));
     });
     _restoreRange(savedRange);
+    undoerData.range = savedRange;
     _callback('input');
 };
 
@@ -3065,6 +3182,42 @@ const _redoMultiList = function(undoerData) {
     };
     _restoreRange(savedRange);
     _callback('input');
+};
+
+/**
+ * Return the type of list a selection is in. If the selection spans listables,
+ * then return the list type they all belong to if they are all the same list type,
+ * or return null if they are different types.
+ *
+ */
+const _selectionListType = function() {
+    if (_selectionSpansListables()) {
+        const selectedListables = _selectedListables();
+        const nListables = selectedListables.length;
+        const liTags = selectedListables.map(listable => _tagsMatching(listable, ['LI']));
+        if (liTags.length !== nListables) {
+            return null;
+        };
+        // The selectedListables are all list items, so we need to figure out what kind
+        // of lists they are in.
+        const listElements = selectedListables.map(listable => _findFirstParentElementInNodeNames(listable, _listTags)).filter(n => n);
+        if (listElements.length !== nListables) {
+            return null;
+        };
+        const ulTags = listElements.filter(listElement => listElement.nodeName === 'UL');
+        if (ulTags.length === nListables) {
+            return 'UL';
+        } else {
+            const olTags = listElements.filter(listElement => listElement.nodeName === 'OL');
+            if (olTags.length === nListables) {
+                return 'OL';
+            } else {
+                return null;
+            }
+        };
+    } else {
+        return _firstSelectionTagMatching(['UL', 'OL']);
+    };
 };
 
 /**
@@ -4260,6 +4413,8 @@ const _multiDent = function(dentType, undoable=true) {
     selectedDentables.forEach(selectedDentable => {
         originalIndices.push(_childNodeIndicesByParent(selectedDentable, commonAncestor));
     });
+    // For debugging:
+    const originalSiblingIndices = _siblingIndices(originalIndices);
     // The listItems in allListItems can be nested (i.e., when a LI contains a UL or OL that
     // itself contains LIs), but we only want to include ones that are not nested in others
     // in the listItems. That's because when we indent or outdent, the nested items will
@@ -4949,6 +5104,19 @@ const _cleanUpAttributesWithin = function(attribute, node) {
     return attributesRemoved;
 };
 
+const _cleanUpEmptyTextNodes = function(node) {
+    let child = node.firstChild;
+    while (child) {
+        let nextChild = child.nextSibling;
+        if (_isElementNode(child)) {
+            _cleanUpEmptyTextNodes(child);
+        } else if (_isTextNode(child) && _isEmpty(child)) {
+            child.parentNode.removeChild(child);
+        };
+        child = nextChild;
+    };
+};
+
 /**
  * Replace newlines with <br> in a text node; return trailingText if patched, else node
  */
@@ -5102,7 +5270,10 @@ const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);            
 
 const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
 
+//TODO: Include BLOCKQUOTE?
 const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE']));          // Allowed top-level tags within editor
+
+const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
 /**
  * Populate a dictionary of properties about the current selection
@@ -5152,7 +5323,7 @@ const _getSelectionState = function() {
     state['col'] = tableAttributes['col'];
     // Style
     state['style'] = _getParagraphStyle();
-    state['list'] = _firstSelectionTagMatching(['UL', 'OL']);
+    state['list'] = _selectionListType();
     if (state['list']) {
         // If we are in a list, then we might or might not be in a list item
         state['li'] = _firstSelectionTagMatching(['LI']).length > 0;
@@ -5188,7 +5359,17 @@ const _getSelectionState = function() {
  * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
  */
 const _getParagraphStyle = function() {
-    return _firstSelectionTagMatching(_paragraphStyleTags);
+    if (_selectionSpansStyles()) {
+        const selectedStyleElements = _selectedStyles();
+        const selectedStyles = selectedStyleElements.map(element => element.nodeName);
+        if (selectedStyles.every(style => style === selectedStyles[0])) {
+            return selectedStyles[0];
+        } else {
+            return 'Multiple';
+        }
+    } else {
+        return _firstSelectionTagMatching(_paragraphStyleTags);
+    }
 };
 
 /**
@@ -5196,10 +5377,35 @@ const _getParagraphStyle = function() {
  * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['U', 'I', 'B'],
  * from innermost to outermost tag.
  *
+ * For multiformatting, return formatTags such that the only the formats identified
+ * are ones that are in-place for every selected text node. This provides an indication
+ * that "unsetAll" will take place for the selection for that tag. For example, if every
+ * text node is bolded, then when the user selects bold, they will all be unbolded.
+ * Conversely, if some text nodes are unformatted, say, in bold, and some are, then
+ * formatTags will not include bold. This provides an indication that all text will be
+ * bolded if the user selects bold.
+ *
  * @return {[String]}       Tag names that represent the selection formatting on the Swift side.
  */
 const _getFormatTags = function() {
-    return _selectionTagsMatching(_formatTags);
+    if (_selectionSpansTextNodes()) {
+        const selectedTextNodes = _selectedTextNodes();
+        const formatTagArrays = selectedTextNodes.map(textNode => _tagsMatching(textNode, _formatTags));
+        const formatTags = [];
+        _formatTags.forEach(tag => {
+            let allHaveTag = true;
+            for (let i = 0; i < formatTagArrays.length; i++) {
+                if (!formatTagArrays[i].includes(tag)) {
+                    allHaveTag = false;
+                    break;
+                };
+            };
+            if (allHaveTag) { formatTags.push(tag) };
+        });
+        return formatTags;
+    } else {
+        return _selectionTagsMatching(_formatTags);
+    }
 };
 
 /**
@@ -7041,6 +7247,7 @@ const _allChildNodesWithNames = function(element, nodeNames, stoppingAfter, exis
         let traversalData = _allChildNodesWithNames(child, nodeNames, stoppingAfter, existingNodes);
         stopped = traversalData.stopped;
         existingNodes = traversalData.nodes;
+        if (stopped) { break };
     };
     return {nodes: existingNodes, stopped: stopped};
 };
@@ -7091,6 +7298,13 @@ const _isElementNode = function(node) {
 };
 
 /**
+ * Return whether node is a style element; i.e., its nodeName is in _styleTags
+ */
+const _isStyleElement = function(node) {
+    return _isElementNode(node) && _styleTags.includes(node.nodeName);
+};
+
+/**
  * Return whether node is a format element; i.e., its nodeName is in _formatTags
  */
 const _isFormatElement = function(node) {
@@ -7108,7 +7322,15 @@ const _isListElement = function(node) {
  * Return whether a node is a list item element (LI)
  */
 const _isListItemElement = function(node) {
-    return node && (node.nodeName == 'LI');
+    return node && (node.nodeName === 'LI');
+};
+
+const _isVoidNode = function(node) {
+    return node && (_voidTags.includes(node.nodeName));
+};
+
+const _isLinkNode = function(node) {
+    return node && (node.nodeName === 'A');
 };
 
 /**
@@ -7640,7 +7862,7 @@ const _setTagInRange = function(type, range) {
     const wordRange = _wordRangeAtCaret();
     const startNewTag = range.collapsed && !wordRange;
     const tagWord = range.collapsed && wordRange;
-    const newRange = document.createRange();
+    let newRange = document.createRange();
     let tagRange;
     // In all cases, el is the new element with nodeName type and range will have
     // been modified to have the new element appropriately inserted. The
