@@ -5359,7 +5359,17 @@ const _getSelectionState = function() {
  * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
  */
 const _getParagraphStyle = function() {
-    return _firstSelectionTagMatching(_paragraphStyleTags);
+    if (_selectionSpansStyles()) {
+        const selectedStyleElements = _selectedStyles();
+        const selectedStyles = selectedStyleElements.map(element => element.nodeName);
+        if (selectedStyles.every(style => style === selectedStyles[0])) {
+            return selectedStyles[0];
+        } else {
+            return 'Multiple';
+        }
+    } else {
+        return _firstSelectionTagMatching(_paragraphStyleTags);
+    }
 };
 
 /**
