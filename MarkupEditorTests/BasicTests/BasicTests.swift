@@ -523,6 +523,21 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     self.webView.italic() { handler() }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "UnsetAll italic across paragraphs <p>This <i>is| italic</i></p><p><i>Ex|tending across</i> paragraphs</p>",
+                    startHtml: "<p>This <i id=\"i1\">is italic</i></p><p><i id=\"i2\">Extending across</i> paragraphs</p>",
+                    endHtml: "<p>This <i id=\"i1\">is</i> italic</p><p>Ex<i>tending across</i> paragraphs</p>",
+                    startId: "i1",
+                    startOffset: 2,
+                    endId: "i2",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.italic() { handler() }
+                }
+            ),
+            //<p>This <i id=\"i1\">is all italic</i></p><p><i id=\"i2\">Extending across</i> paragraphs</p>
         ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
@@ -1486,9 +1501,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Remove UL <ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
-                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\">Ordered sublist.</li></ul></li></ul>",
-                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    description: "Remove UL <ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\"><p>Unordered sublist.</p></li></ul></li></ul>",
+                    startHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li id=\"li\"><p>Unordered sublist.</p></li></ul></li></ul>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5><p>Unordered sublist.</p>",
+                    undoHtml: "<ul><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
                     startId: "h5",
                     startOffset: 2,
                     endId: "li",
@@ -1522,9 +1538,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (
                 HtmlTest(
-                    description: "Remove OL <ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
-                    startHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\">Ordered sublist.</li></ol></li></ol>",
-                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5>Ordered sublist.",
+                    description: "Remove OL <ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\"><p>Ordered sublist.</p></li></ol></li></ol>",
+                    startHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li id=\"li\"><p>Ordered sublist.</p></li></ol></li></ol>",
+                    endHtml: "<h5 id=\"h5\">Unordered <i>H5</i> list.</h5><p>Ordered sublist.</p>",
+                    undoHtml: "<ol><li><h5 id=\"h5\">Unordered <i>H5</i> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
                     startId: "h5",
                     startOffset: 2,
                     endId: "li",
