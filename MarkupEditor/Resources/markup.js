@@ -1488,22 +1488,35 @@ MU.emptyDocument = function() {
  * @param {String} contents The HTML for the editor element
  */
 MU.setHTML = function(contents) {
-    const tempWrapper = document.createElement('div');
-    tempWrapper.innerHTML = contents;
-    _cleanUpEmptyTextNodes(tempWrapper);
-    const images = tempWrapper.querySelectorAll('img');
-    for (let i=0; i<images.length; i++) {
-        images[i].onload = function() {
-            // _consoleLog("Loaded " + images[i].src);
-            _callback('updateHeight')
+    // Note for history:
+    // Originally this method used a div tempWrapper and just assigned contents to its innerHTML.
+    // In doing so, the image.onload method would fire, but I could never get an event listener to
+    // fire for the image. I fixed this by using a template, which presumably preserves the actual
+    // image element so that image that I assign the event listener to is preserved.
+    const template = document.createElement('template');
+    template.innerHTML = contents;
+    const element = template.content;
+    _cleanUpEmptyTextNodes(element);
+    const images = element.querySelectorAll('img');
+    for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        image.onload = function() {
+            _imageLoaded(this)
         };
-        //images[i].onerror = function() {
-        //    _consoleLog("Error loading " + images[i].src);
-        //};
-    }
-    MU.editor.innerHTML = tempWrapper.innerHTML;
-    _initializeRange()
+    };
+    MU.editor.innerHTML = '';   // Clean it out!
+    MU.editor.appendChild(element);
+    _initializeRange();
 };
+
+const _imageLoaded = function(image) {
+    _callback('updateHeight');
+    image.addEventListener('click', _handleImageSelection);
+};
+
+const _handleImageSelection = function(ev) {
+    _consoleLog('selected image: ' + _textString(ev.currentTarget));
+}
 
 /**
  * Get the contents of the editor element
@@ -5718,6 +5731,71 @@ const _redoDeleteLink = function(undoerData) {
  * Images
  */
 //MARK: Images
+
+class ResizeableImage {
+    
+    constructor(imageElement) {
+        /*
+         // Create a new image with a copy of the original src
+                 // When resizing, we will always use this original copy as the base
+                 orig_src.src=image_target.src;
+
+                 // Add resize handles
+                 $(image_target).wrap('<div class="resize-container"></div>')
+                 .before('<span class="resize-handle resize-handle-nw"></span>')
+                 .before('<span class="resize-handle resize-handle-ne"></span>')
+                 .after('<span class="resize-handle resize-handle-se"></span>')
+                 .after('<span class="resize-handle resize-handle-sw"></span>');
+
+                 // Get a variable for the container
+                 $container =  $(image_target).parent('.resize-container');
+
+                 // Add events
+                 $container.on('mousedown', '.resize-handle', startResize);
+         */
+        const container = document.createElement('div');
+        container.setAttribute('class', 'resize-container');
+        imageElement.parentNode.insertBefore(container, imageElement.nextSibling);
+        container.appendChild(imageElement);
+        const nwHandle = document.createElement('span');
+        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+        container.parentNode.insertBefore(nwHandle, container);
+        const neHandle = document.createElement('span');
+        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+        container.parentNode.insertBefore(neHandle, container);
+        const swHandle = document.createElement('span');
+        neHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+        container.parentNode.insertBefore(swHandle, container);
+        const seHandle = document.createElement('span');
+        nwHandle.setAttribute('class', 'resize-handle resize-handle-se');
+        container.parentNode.insertBefore(seHandle, container.nextSibling);
+        container.addEventListener('mousedown', function(ev) {
+            _startResize(ev);
+        });
+    };
+    
+    _startResize(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        _consoleLog('_startResize!')
+    }
+    
+    /*
+     startResize = function(e){
+         e.preventDefault();
+         e.stopPropagation();
+         saveEventState(e);
+         $(document).on('mousemove', resizing);
+         $(document).on('mouseup', endResize);
+     };
+
+     endResize = function(e){
+         e.preventDefault();
+         $(document).off('mouseup touchend', endResize);
+         $(document).off('mousemove touchmove', resizing);
+     };
+     */
+};
 
 /**
  * Insert the image at src with alt text, signaling updateHeight when done loading.
