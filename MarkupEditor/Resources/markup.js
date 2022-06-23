@@ -685,7 +685,16 @@ MU.editor.addEventListener('blur', function(ev) {
  * TODO - Maybe remove the _multiClickSelect call
  */
 MU.editor.addEventListener('click', function(ev) {
-    let nclicks = ev.detail;
+    const target = ev.target;
+    // If we click somewhere outside of the resizableImage, then
+    // we need to clear it and notify the Swift side that the selection
+    // changed and the contents of MU.editor changed as a result.
+    if (resizableImage.imageElement && !_isImageElement(target)) {
+        resizableImage.clear();
+        _callback('selectionChange')
+        _callback('input');
+    };
+    const nclicks = ev.detail;
     if (nclicks === 1) {
         _callback('click');
     } else {
@@ -1509,15 +1518,6 @@ MU.setHTML = function(contents) {
     _initializeRange();
 };
 
-const _imageLoaded = function(image) {
-    _callback('updateHeight');
-    image.addEventListener('click', _handleImageSelection);
-};
-
-const _handleImageSelection = function(ev) {
-    _consoleLog('selected image: ' + _textString(ev.currentTarget));
-}
-
 /**
  * Get the contents of the editor element
  *
@@ -1562,11 +1562,12 @@ const _prettyHTML = function(node, indent, text, inlined) {
     const nodeIsElement = _isElementNode(node);
     const nodeIsInlined = inlined || _isInlined(node);  // allow inlined to force it
     const nodeHasTerminator = !_isVoidNode(node);
+    const nodeIsEmptyElement = nodeIsElement && (node.childNodes.length === 0);
     if (nodeIsText) {
         text += node.textContent;
     } else if (nodeIsElement) {
-        const terminatorIsInlined = _isInlined(node.firstChild) && _isInlined(node.lastChild);
-        if (!inlined) { text += '\n' + indent };
+        const terminatorIsInlined = nodeIsEmptyElement || (_isInlined(node.firstChild) && _isInlined(node.lastChild));
+        if (!nodeIsInlined) { text += '\n' + indent };
         text += '<' + nodeName;
         const attributes = node.attributes;
         for (let i = 0; i < attributes.length; i++) {
@@ -5732,71 +5733,6 @@ const _redoDeleteLink = function(undoerData) {
  */
 //MARK: Images
 
-class ResizeableImage {
-    
-    constructor(imageElement) {
-        /*
-         // Create a new image with a copy of the original src
-                 // When resizing, we will always use this original copy as the base
-                 orig_src.src=image_target.src;
-
-                 // Add resize handles
-                 $(image_target).wrap('<div class="resize-container"></div>')
-                 .before('<span class="resize-handle resize-handle-nw"></span>')
-                 .before('<span class="resize-handle resize-handle-ne"></span>')
-                 .after('<span class="resize-handle resize-handle-se"></span>')
-                 .after('<span class="resize-handle resize-handle-sw"></span>');
-
-                 // Get a variable for the container
-                 $container =  $(image_target).parent('.resize-container');
-
-                 // Add events
-                 $container.on('mousedown', '.resize-handle', startResize);
-         */
-        const container = document.createElement('div');
-        container.setAttribute('class', 'resize-container');
-        imageElement.parentNode.insertBefore(container, imageElement.nextSibling);
-        container.appendChild(imageElement);
-        const nwHandle = document.createElement('span');
-        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
-        container.parentNode.insertBefore(nwHandle, container);
-        const neHandle = document.createElement('span');
-        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
-        container.parentNode.insertBefore(neHandle, container);
-        const swHandle = document.createElement('span');
-        neHandle.setAttribute('class', 'resize-handle resize-handle-sw');
-        container.parentNode.insertBefore(swHandle, container);
-        const seHandle = document.createElement('span');
-        nwHandle.setAttribute('class', 'resize-handle resize-handle-se');
-        container.parentNode.insertBefore(seHandle, container.nextSibling);
-        container.addEventListener('mousedown', function(ev) {
-            _startResize(ev);
-        });
-    };
-    
-    _startResize(ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        _consoleLog('_startResize!')
-    }
-    
-    /*
-     startResize = function(e){
-         e.preventDefault();
-         e.stopPropagation();
-         saveEventState(e);
-         $(document).on('mousemove', resizing);
-         $(document).on('mouseup', endResize);
-     };
-
-     endResize = function(e){
-         e.preventDefault();
-         $(document).off('mouseup touchend', endResize);
-         $(document).off('mousemove touchmove', resizing);
-     };
-     */
-};
-
 /**
  * Insert the image at src with alt text, signaling updateHeight when done loading.
  * All insert operations that involve user interaction outside of JavaScript
@@ -5910,6 +5846,132 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
 };
 
 /**
+ * A ResizableImage tracks a specific image element, and the imageContainer it is
+ * contained in. The displaystyle of the container is handled in markup.css.
+ *
+ * As a resizing handle is dragged, the image size is adjusted. The underlying image
+ * is never actually resized or changed.
+ *
+ * There should only be one ResizableImage in the document, which represents the image
+ * that is currently selected. When the ResizableImage's imageElement is null, there is
+ * no selected image element, and the imageContainer is also null.
+ */
+class ResizableImage {
+    
+    constructor(selectedImageElement=null) {
+        this._imageElement = null;
+        this._imageContainer = null;
+        this.imageElement = selectedImageElement;
+    };
+    
+    get isSelected() {
+        return this._imageElement !== null;
+    }
+    
+    get imageElement() {
+        return this._imageElement;
+    };
+    
+    /**
+     * Set the image element if it's not the same as the current image element.
+     *
+     * When set, the image element is surrounded by spans that outline the image
+     * and show resize handles at its corners.
+     */
+    set imageElement(imageElement) {
+        if (this._imageElement && (this._imageElement === imageElement)) { return };
+        this.clear();
+        if (imageElement) {
+            const imageContainer = document.createElement('div');
+            imageContainer.setAttribute('class', 'resize-container');
+            imageContainer.setAttribute('tabindex', -1);
+            imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
+            const nwHandle = document.createElement('span');
+            nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+            imageContainer.appendChild(nwHandle);
+            const neHandle = document.createElement('span');
+            neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+            imageContainer.appendChild(neHandle);
+            imageContainer.appendChild(imageElement);
+            const swHandle = document.createElement('span');
+            swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+            imageContainer.appendChild(swHandle);
+            const seHandle = document.createElement('span');
+            seHandle.setAttribute('class', 'resize-handle resize-handle-se');
+            imageContainer.appendChild(seHandle);
+            imageContainer.addEventListener('mousedown', this.startResize);
+            this._imageElement = imageElement;
+            this._imageContainer = imageContainer;
+        };
+    };
+    
+    /**
+     * Remove all the spans around imageElement if it exists.
+     */
+    clear() {
+        //_consoleLog('clear')
+        if (!this._imageElement) { return };
+        this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
+        this._imageContainer.parentNode.removeChild(this._imageContainer);
+        this._imageElement = null;
+        this._imageContainer = null;
+    };
+    
+    focusout(ev) {
+        _consoleLog('focusout: ' + ev.targetNode);
+    };
+    
+    focusin(ev) {
+        _consoleLog('focusin: ' + ev.targetNode);
+    };
+    
+    startResize(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        _consoleLog('_startResize!')
+    };
+    
+    /*
+     startResize = function(e){
+         e.preventDefault();
+         e.stopPropagation();
+         saveEventState(e);
+         $(document).on('mousemove', resizing);
+         $(document).on('mouseup', endResize);
+     };
+
+     endResize = function(e){
+         e.preventDefault();
+         $(document).off('mouseup touchend', endResize);
+         $(document).off('mousemove touchmove', resizing);
+     };
+     */
+};
+
+/*
+ * There is a singleton resizableImage which may or may not contain an image element.
+ */
+const resizableImage = new ResizableImage();
+
+/**
+ * Callback invoked from image.onload
+ */
+const _imageLoaded = function(image) {
+    _callback('updateHeight');
+    image.addEventListener('focusin', _focusImage);
+};
+
+/**
+ * Callback invoked when an image is clicked
+ */
+const _focusImage = function(ev) {
+    const image = ev.currentTarget;
+    _consoleLog("focus image: " + _textString(image))
+    resizableImage.imageElement = image;
+    _callback('input')
+};
+
+/**
  * If the current selection's anchorNode is an IMG tag, get the src and alt.
  * We include the boundingRect in attributes in case we want to do something with it on the Swift side.
  *
@@ -5917,7 +5979,7 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
  */
 const _getImageAttributesAtSelection = function() {
     const attributes = {};
-    const img = _getElementAtSelection('IMG');
+    const img = resizableImage && resizableImage.imageElement;
     if (img) {
         attributes['src'] = img.getAttribute('src');
         attributes['alt'] = img.getAttribute('alt');
@@ -7403,10 +7465,23 @@ const _isListItemElement = function(node) {
     return node && (node.nodeName === 'LI');
 };
 
+/**
+ * Return whether node is an image element
+ */
+const _isImageElement = function(node) {
+    return node && (node.nodeName === 'IMG');
+};
+
+/**
+ * Return whether node has a void tag (i.e., does not need a terminator)
+ */
 const _isVoidNode = function(node) {
     return node && (_voidTags.includes(node.nodeName));
 };
 
+/**
+ * Return whether node is a link
+ */
 const _isLinkNode = function(node) {
     return node && (node.nodeName === 'A');
 };

@@ -168,16 +168,11 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
 .resize-container {
     position: relative;
     display: inline-block;
-    cursor: move;
     margin: 0 auto;
 }
 
 .resize-container img {
-    display: block
-}
-
-.resize-container:hover img,
-.resize-container:active img {
+    display: block;
     outline: 2px dashed rgba(222,60,80,.9);
 }
 
