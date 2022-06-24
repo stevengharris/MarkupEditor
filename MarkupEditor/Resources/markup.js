@@ -1099,6 +1099,7 @@ const _patchPasteHTML = function(html) {
     _cleanUpBRs(element);
     _cleanUpPREs(element);
     _cleanUpAliases(element);
+    _prepImages(element);
     return element;
 };
 
@@ -1506,13 +1507,7 @@ MU.setHTML = function(contents) {
     template.innerHTML = contents;
     const element = template.content;
     _cleanUpEmptyTextNodes(element);
-    const images = element.querySelectorAll('img');
-    for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        image.onload = function() {
-            _imageLoaded(this)
-        };
-    };
+    _prepImages(element);
     MU.editor.innerHTML = '';   // Clean it out!
     MU.editor.appendChild(element);
     _initializeRange();
@@ -2512,14 +2507,14 @@ const _selectionSpansStyles = function() {
 };
 
 /**
- * Return the paragraph style element the selection starts in and ends in.
+ * Return the paragraph style elements the selection starts in and ends in.
  *
  * Note the difference with _selectedStyles, which returns the style elements within
  * the selection.
  */
 const _selectionStyles = function() {
     const sel = document.getSelection();
-    if (!sel || (sel.rangeCount === 0)) { return elements };
+    if (!sel || (sel.rangeCount === 0)) { return {} };
     const range = sel.getRangeAt(0);
     const startContainer = range.startContainer;
     const startStyle = _findFirstParentElementInNodeNames(startContainer, _paragraphStyleTags);
@@ -2537,8 +2532,7 @@ const _selectionStyles = function() {
  * that span paragraphs.
  */
 const _selectedStyles = function() {
-    let elements = [];
-    if (!_selectionSpansStyles()) { return elements };
+    if (!_selectionSpansStyles()) { return [] };
     const styles = _selectionStyles();
     const startStyle = styles.startStyle;
     const endStyle = styles.endStyle;
@@ -5131,6 +5125,16 @@ const _cleanUpEmptyTextNodes = function(node) {
     };
 };
 
+const _prepImages = function(node) {
+    const images = node.querySelectorAll('img');
+    for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        image.onload = function() {
+            _imageLoaded(image)
+        };
+    };
+};
+
 /**
  * Replace newlines with <br> in a text node; return trailingText if patched, else node
  */
@@ -5319,7 +5323,7 @@ const _getSelectionState = function() {
     state['href'] = linkAttributes['href'];
     state['link'] = linkAttributes['link'];
     // Image
-    const imageAttributes = _getImageAttributesAtSelection();
+    const imageAttributes = _getImageAttributes();
     state['src'] = imageAttributes['src'];
     state['alt'] = imageAttributes['alt'];
     state['scale'] = imageAttributes['scale'];
@@ -5757,8 +5761,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
         img.setAttribute('width', scale);
         img.setAttribute('height', scale);
     }
-    img.setAttribute('tabindex', -1);                       // Allows us to select the image
-    img.onload = function() { _callback('updateHeight') };  // Let Swift know the height changed after loading
+    img.onload = _imageLoaded(img);     // Prep the image properly after loading
     range.insertNode(img);
     // After inserting the image, we want to leave the selection at the beginning
     // of the nextTextElement after it for inline images. If there is no such thing,
@@ -5855,13 +5858,16 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
  * There should only be one ResizableImage in the document, which represents the image
  * that is currently selected. When the ResizableImage's imageElement is null, there is
  * no selected image element, and the imageContainer is also null.
+ *
+ * This approach was inspired by https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
  */
 class ResizableImage {
     
-    constructor(selectedImageElement=null) {
+    constructor(imageElement=null) {
         this._imageElement = null;
         this._imageContainer = null;
-        this.imageElement = selectedImageElement;
+        this._eventState = {};
+        this.imageElement = imageElement;
     };
     
     get isSelected() {
@@ -5909,43 +5915,80 @@ class ResizableImage {
      * Remove all the spans around imageElement if it exists.
      */
     clear() {
-        //_consoleLog('clear')
         if (!this._imageElement) { return };
         this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
         this._imageContainer.parentNode.removeChild(this._imageContainer);
+        this._imageContainer.removeEventListener('mousedown', this.startResize);
         this._imageElement = null;
         this._imageContainer = null;
     };
     
-    focusout(ev) {
-        _consoleLog('focusout: ' + ev.targetNode);
-    };
-    
-    focusin(ev) {
-        _consoleLog('focusin: ' + ev.targetNode);
-    };
-    
     startResize(ev) {
+        ev.stopImmediatePropagation();
         ev.preventDefault();
-        ev.stopPropagation();
-        _consoleLog('_startResize!')
+        resizableImage.saveEventState(ev);
+        MU.editor.addEventListener('mousemove', resizableImage.resizing);
+        MU.editor.addEventListener('mouseup', resizableImage.endResize);
     };
     
-    /*
-     startResize = function(e){
-         e.preventDefault();
-         e.stopPropagation();
-         saveEventState(e);
-         $(document).on('mousemove', resizing);
-         $(document).on('mouseup', endResize);
-     };
-
-     endResize = function(e){
-         e.preventDefault();
-         $(document).off('mouseup touchend', endResize);
-         $(document).off('mousemove touchmove', resizing);
-     };
-     */
+    endResize(ev) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
+        MU.editor.removeEventListener('mousemove', resizableImage.resizing);
+    }
+    
+    resizing(ev) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        const eventState = resizableImage._eventState;
+        const ev0 = eventState.ev;
+        const classList = ev0.target.classList;
+        if (!classList.contains('resize-handle')) { return };
+        const x = ev.clientX;
+        const y = ev.clientY;
+        // FYI: x increases to the right, y increases down
+        const x0 = ev0.clientX;
+        const y0 = ev0.clientY;
+        let dx, dy;
+        if (classList.contains('resize-handle-nw')) {
+            dx = x0 - x;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-ne')) {
+            dx = x - x0;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-sw')) {
+            dx = x0 - x;
+            dy = y - y0;
+        } else if (classList.contains('resize-handle-se')) {
+            dx = x - x0;
+            dy = y - y0;
+        };
+        const scaleH = Math.abs(dy) > Math.abs(dx);
+        const w0 = eventState.imageWidth;
+        const h0 = eventState.imageHeight;
+        const ratio = w0 / h0;
+        let width, height;
+        if (scaleH) {
+            height = h0 + dy;
+            width = Math.floor(height * ratio);
+        } else {
+            width = w0 + dx;
+            height = Math.floor(width / ratio);
+        };
+        resizableImage._imageElement.setAttribute('width', width);
+        resizableImage._imageElement.setAttribute('height', height);
+    };
+    
+    saveEventState(ev) {
+        // Save the initial event details and container state
+        const eventState = this._eventState;
+        const imageElement = this._imageElement;
+        eventState.imageWidth = imageElement.getBoundingClientRect().width;
+        eventState.imageHeight = imageElement.getBoundingClientRect().height;
+        eventState.ev = ev;
+    };
+    
 };
 
 /*
@@ -5958,28 +6001,29 @@ const resizableImage = new ResizableImage();
  */
 const _imageLoaded = function(image) {
     _callback('updateHeight');
-    image.addEventListener('focusin', _focusImage);
+    image.setAttribute('class', 'resize-image');         // Make it resizable
+    image.setAttribute('tabindex', -1);                 // Make it selectable
+    image.addEventListener('focusin', _focusImage);     // Allow resizing when focused
 };
 
 /**
- * Callback invoked when an image is clicked
+ * Callback invoked when an image is focused on (aka clicked)
  */
 const _focusImage = function(ev) {
     const image = ev.currentTarget;
-    _consoleLog("focus image: " + _textString(image))
     resizableImage.imageElement = image;
     _callback('input')
 };
 
 /**
- * If the current selection's anchorNode is an IMG tag, get the src and alt.
- * We include the boundingRect in attributes in case we want to do something with it on the Swift side.
+ * Return the imageAttributes for image. If null, return attributes for the
+ * resizableImage if it contains an image.
  *
  * @return {String : String}        Dictionary with 'src', 'alt', etc as keys; empty if not an image.
  */
-const _getImageAttributesAtSelection = function() {
+const _getImageAttributes = function(image=null) {
     const attributes = {};
-    const img = resizableImage && resizableImage.imageElement;
+    const img = image || (resizableImage && resizableImage.imageElement);
     if (img) {
         attributes['src'] = img.getAttribute('src');
         attributes['alt'] = img.getAttribute('alt');

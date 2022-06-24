@@ -2520,8 +2520,9 @@ class RedoTests: XCTestCase, MarkupDelegate {
                                 // exists.
                                 if let pasted = pasted {
                                     XCTAssertTrue(pasted.contains("<img src=\""))
+                                    XCTAssertTrue(pasted.contains("\" class=\"resize-image\""))
                                     XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
-                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -42)
+                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -63)
                                     let imageFileName = String(pasted[imageFileRange])
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                 } else {
@@ -2538,8 +2539,9 @@ class RedoTests: XCTestCase, MarkupDelegate {
                                                 // exists.
                                                 if let pasted = pasted {
                                                     XCTAssertTrue(pasted.contains("<img src=\""))
+                                                    XCTAssertTrue(pasted.contains("\" class=\"resize-image\""))
                                                     XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
-                                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -42)
+                                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -63)
                                                     let imageFileName = String(pasted[imageFileRange])
                                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                                 } else {
