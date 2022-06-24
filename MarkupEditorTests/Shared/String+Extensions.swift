@@ -49,12 +49,11 @@ extension String {
         // The string must be a valid <img> tag, like <img src="2537ACEF-A318-4395-8955-8F2C73701AD0.png">
         guard
             contains("<img"),
-            contains("src=\""),
             let srcRange = range(of: "src=\"") else {
             return nil
         }
-        let imageFileNameSize = UUID().uuidString.count + 4;    // The image file name will always be a UUID + extension
-        let startIndex = srcRange.upperBound;
+        let imageFileNameSize = UUID().uuidString.count + 4    // The image file name will always be a UUID + extension
+        let startIndex = srcRange.upperBound
         let endIndex = index(startIndex, offsetBy: imageFileNameSize)
         return String(self[startIndex..<endIndex])
     }
