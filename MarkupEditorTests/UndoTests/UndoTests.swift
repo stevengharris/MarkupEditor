@@ -2455,16 +2455,9 @@ class UndoTests: XCTestCase, MarkupDelegate {
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
                             self.webView.getHtml { pasted in
-                                // This is pretty brittle, but the image file name is a generated UUID. The test just makes
-                                // sure that the <img> element is where we expect in this simple case and the file actually
-                                // exists.
-                                if let pasted = pasted {
-                                    XCTAssertTrue(pasted.contains("<img src=\""))
-                                    XCTAssertTrue(pasted.contains("\" class=\"resize-image\""))
-                                    XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
-                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -63)
-                                    let imageFileName = String(pasted[imageFileRange])
+                                if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
+                                    expectation.fulfill()
                                 } else {
                                     XCTFail("The pasted HTML was not returned properly.")
                                 }

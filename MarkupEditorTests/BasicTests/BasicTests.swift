@@ -2718,15 +2718,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         self.webView.pasteImage(UIImage(systemName: "calendar")) {
                             self.webView.getHtml() { pasted in
-                                // This is pretty brittle, but the image file name is a generated UUID. The test just makes
-                                // sure that the <img> element is where we expect in this simple case and the file actually
-                                // exists.
-                                if let pasted = pasted {
-                                    XCTAssertTrue(pasted.contains("<img src=\""))
-                                    XCTAssertTrue(pasted.contains("\" class=\"resize-image\""))
-                                    XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
-                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -63)
-                                    let imageFileName = String(pasted[imageFileRange])
+                                if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                     expectation.fulfill()
                                 } else {
