@@ -173,41 +173,60 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
 
 .resize-container img {
     display: block;
-    outline: 2px dashed rgba(222,60,80,.9);
+    outline: 1px black dashed;
+    outline-offset: 4px;
+    outline-width: 1px;
 }
 
-.resize-handle-ne,
-.resize-handle-se,
 .resize-handle-nw,
-.resize-handle-sw {
+.resize-handle-ne,
+.resize-handle-sw,
+.resize-handle-se {
     position: absolute;
     display: block;
-    width: 10px;
-    height: 10px;
-    background: rgba(222,60,80,.9);
+    width: 6px;
+    height: 6px;
+    outline: 1px black solid;
+    background: white;
     z-index: 999;
 }
 
-.resize-handle-nw {
-    top: -5px;
-    left: -5px;
-    cursor: nw-resize;
+/* A transparent child for each resize-handle that expands the clickable area */
+.resize-handle-nw:after,
+.resize-handle-ne:after,
+.resize-handle-sw:after,
+.resize-handle-se:after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 16px;
+  height: 16px;
 }
 
-.resize-handle-sw {
-    bottom: -5px;
-    left: -5px;
-    cursor: sw-resize;
+/* The *-resize cursors do not work, at least in MacCatalyst.
+ * Still specifying them below. They default to a pointer instead
+ */
+.resize-handle-nw {
+    cursor: nw-resize;
+    top: -8px;
+    left: -8px;
 }
 
 .resize-handle-ne {
-    top: -5px;
-    right: -5px;
     cursor: ne-resize;
+    top: -8px;
+    right: -8px;
+}
+
+.resize-handle-sw {
+    cursor: sw-resize;
+    bottom: -8px;
+    left: -8px;
 }
 
 .resize-handle-se {
-    bottom: -5px;
-    right: -5px;
     cursor: se-resize;
+    bottom: -8px;
+    right: -8px;
 }

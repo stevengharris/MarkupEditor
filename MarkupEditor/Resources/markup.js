@@ -5888,22 +5888,22 @@ class ResizableImage {
         if (this._imageElement && (this._imageElement === imageElement)) { return };
         this.clear();
         if (imageElement) {
-            const imageContainer = document.createElement('div');
+            const imageContainer = document.createElement('span');
             imageContainer.setAttribute('class', 'resize-container');
             imageContainer.setAttribute('tabindex', -1);
             imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
             const nwHandle = document.createElement('span');
-            nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+            nwHandle.setAttribute('class', 'resize-handle-nw');
             imageContainer.appendChild(nwHandle);
             const neHandle = document.createElement('span');
-            neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+            neHandle.setAttribute('class', 'resize-handle-ne');
             imageContainer.appendChild(neHandle);
             imageContainer.appendChild(imageElement);
             const swHandle = document.createElement('span');
-            swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+            swHandle.setAttribute('class', 'resize-handle-sw');
             imageContainer.appendChild(swHandle);
             const seHandle = document.createElement('span');
-            seHandle.setAttribute('class', 'resize-handle resize-handle-se');
+            seHandle.setAttribute('class', 'resize-handle-se');
             imageContainer.appendChild(seHandle);
             imageContainer.addEventListener('mousedown', this.startResize);
             this._imageElement = imageElement;
@@ -5924,7 +5924,7 @@ class ResizableImage {
     };
     
     startResize(ev) {
-        ev.stopImmediatePropagation();
+        ev.stopPropagation();
         ev.preventDefault();
         resizableImage.saveEventState(ev);
         MU.editor.addEventListener('mousemove', resizableImage.resizing);
@@ -5932,24 +5932,23 @@ class ResizableImage {
     };
     
     endResize(ev) {
-        ev.stopImmediatePropagation();
+        ev.stopPropagation();
         ev.preventDefault();
         MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         MU.editor.removeEventListener('mousemove', resizableImage.resizing);
     }
     
     resizing(ev) {
-        ev.stopImmediatePropagation();
+        ev.stopPropagation();
         ev.preventDefault();
         const eventState = resizableImage._eventState;
         const ev0 = eventState.ev;
-        const classList = ev0.target.classList;
-        if (!classList.contains('resize-handle')) { return };
+        // FYI: x increases to the right, y increases down
         const x = ev.clientX;
         const y = ev.clientY;
-        // FYI: x increases to the right, y increases down
         const x0 = ev0.clientX;
         const y0 = ev0.clientY;
+        const classList = ev0.target.classList;
         let dx, dy;
         if (classList.contains('resize-handle-nw')) {
             dx = x0 - x;
@@ -5963,7 +5962,9 @@ class ResizableImage {
         } else if (classList.contains('resize-handle-se')) {
             dx = x - x0;
             dy = y - y0;
-        };
+        } else {
+            return;
+        }
         const scaleH = Math.abs(dy) > Math.abs(dx);
         const w0 = eventState.imageWidth;
         const h0 = eventState.imageHeight;
