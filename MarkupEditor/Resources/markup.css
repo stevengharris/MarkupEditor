@@ -154,15 +154,14 @@ code {
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
     white-space: pre;
 }
-
-p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
-    display: inline;
-}
-
 @media (prefers-color-scheme: dark) {
     code {
         background-color: #808080;
     }
+}
+
+p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+    display: inline;
 }
 
 .resize-container {
@@ -177,6 +176,11 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
     outline-offset: 4px;
     outline-width: 1px;
 }
+@media (prefers-color-scheme: dark) {
+    .resize-container img {
+        outline: 1px white dashed;
+    }
+}
 
 .resize-handle-nw,
 .resize-handle-ne,
@@ -189,6 +193,15 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
     outline: 1px black solid;
     background: white;
     z-index: 999;
+}
+@media (prefers-color-scheme: dark) {
+    .resize-handle-nw,
+    .resize-handle-ne,
+    .resize-handle-sw,
+    .resize-handle-se {
+        outline: 1px white solid;
+        background: black;
+    }
 }
 
 /* A transparent child for each resize-handle that expands the clickable area */
