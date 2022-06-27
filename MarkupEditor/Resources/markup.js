@@ -271,6 +271,155 @@ class Undoer {
 
 };
 
+/**
+ * A ResizableImage tracks a specific image element, and the imageContainer it is
+ * contained in. The displaystyle of the container is handled in markup.css.
+ *
+ * As a resizing handle is dragged, the image size is adjusted. The underlying image
+ * is never actually resized or changed.
+ *
+ * There should only be one ResizableImage in the document, which represents the image
+ * that is currently selected. When the ResizableImage's imageElement is null, there is
+ * no selected image element, and the imageContainer is also null.
+ *
+ * This approach was inspired by https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
+ */
+class ResizableImage {
+    
+    constructor(imageElement=null) {
+        this._imageElement = null;
+        this._imageContainer = null;
+        this._eventState = {};
+        this.imageElement = imageElement;
+    };
+    
+    get isSelected() {
+        return this._imageElement !== null;
+    }
+    
+    get imageElement() {
+        return this._imageElement;
+    };
+    
+    /**
+     * Set the image element if it's not the same as the current image element.
+     *
+     * When set, the image element is surrounded by spans that outline the image
+     * and show resize handles at its corners.
+     */
+    set imageElement(imageElement) {
+        if (this._imageElement && (this._imageElement === imageElement)) { return };
+        this.clear();
+        if (imageElement) {
+            const imageContainer = document.createElement('span');
+            imageContainer.setAttribute('class', 'resize-container');
+            imageContainer.setAttribute('tabindex', -1);
+            imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
+            const nwHandle = document.createElement('span');
+            nwHandle.setAttribute('class', 'resize-handle-nw');
+            imageContainer.appendChild(nwHandle);
+            const neHandle = document.createElement('span');
+            neHandle.setAttribute('class', 'resize-handle-ne');
+            imageContainer.appendChild(neHandle);
+            imageContainer.appendChild(imageElement);
+            const swHandle = document.createElement('span');
+            swHandle.setAttribute('class', 'resize-handle-sw');
+            imageContainer.appendChild(swHandle);
+            const seHandle = document.createElement('span');
+            seHandle.setAttribute('class', 'resize-handle-se');
+            imageContainer.appendChild(seHandle);
+            imageContainer.addEventListener('mousedown', this.startResize);
+            this._imageElement = imageElement;
+            this._imageContainer = imageContainer;
+        };
+    };
+    
+    /**
+     * Remove all the spans around imageElement if it exists.
+     */
+    clear() {
+        if (!this._imageElement) { return };
+        this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
+        this._imageContainer.parentNode.removeChild(this._imageContainer);
+        this._imageContainer.removeEventListener('mousedown', this.startResize);
+        this._imageElement = null;
+        this._imageContainer = null;
+    };
+    
+    startResize(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        resizableImage.saveEventState(ev);
+        MU.editor.addEventListener('mousemove', resizableImage.resizing);
+        MU.editor.addEventListener('mouseup', resizableImage.endResize);
+    };
+    
+    endResize(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
+        MU.editor.removeEventListener('mousemove', resizableImage.resizing);
+    }
+    
+    resizing(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const eventState = resizableImage._eventState;
+        const ev0 = eventState.ev;
+        // FYI: x increases to the right, y increases down
+        const x = ev.clientX;
+        const y = ev.clientY;
+        const x0 = ev0.clientX;
+        const y0 = ev0.clientY;
+        const classList = ev0.target.classList;
+        let dx, dy;
+        if (classList.contains('resize-handle-nw')) {
+            dx = x0 - x;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-ne')) {
+            dx = x - x0;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-sw')) {
+            dx = x0 - x;
+            dy = y - y0;
+        } else if (classList.contains('resize-handle-se')) {
+            dx = x - x0;
+            dy = y - y0;
+        } else {
+            return;
+        }
+        const scaleH = Math.abs(dy) > Math.abs(dx);
+        const w0 = eventState.imageWidth;
+        const h0 = eventState.imageHeight;
+        const ratio = w0 / h0;
+        let width, height;
+        if (scaleH) {
+            height = h0 + dy;
+            width = Math.floor(height * ratio);
+        } else {
+            width = w0 + dx;
+            height = Math.floor(width / ratio);
+        };
+        resizableImage._imageElement.setAttribute('width', width);
+        resizableImage._imageElement.setAttribute('height', height);
+    };
+    
+    saveEventState(ev) {
+        // Save the initial event details and container state
+        const eventState = this._eventState;
+        const imageElement = this._imageElement;
+        eventState.imageWidth = imageElement.getBoundingClientRect().width;
+        eventState.imageHeight = imageElement.getBoundingClientRect().height;
+        eventState.ev = ev;
+    };
+    
+};
+
+/*
+ * There is a singleton resizableImage which may or may not contain an image element.
+ */
+const resizableImage = new ResizableImage();
+
 /********************************************************************************
  * Undo/Redo
  */
@@ -691,6 +840,7 @@ MU.editor.addEventListener('click', function(ev) {
     // changed and the contents of MU.editor changed as a result.
     if (resizableImage.imageElement && !_isImageElement(target)) {
         resizableImage.clear();
+        MU.editor.style.caretColor = 'blue';
         _callback('selectionChange')
         _callback('input');
     };
@@ -5849,170 +5999,26 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
 };
 
 /**
- * A ResizableImage tracks a specific image element, and the imageContainer it is
- * contained in. The displaystyle of the container is handled in markup.css.
- *
- * As a resizing handle is dragged, the image size is adjusted. The underlying image
- * is never actually resized or changed.
- *
- * There should only be one ResizableImage in the document, which represents the image
- * that is currently selected. When the ResizableImage's imageElement is null, there is
- * no selected image element, and the imageContainer is also null.
- *
- * This approach was inspired by https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
- */
-class ResizableImage {
-    
-    constructor(imageElement=null) {
-        this._imageElement = null;
-        this._imageContainer = null;
-        this._eventState = {};
-        this.imageElement = imageElement;
-    };
-    
-    get isSelected() {
-        return this._imageElement !== null;
-    }
-    
-    get imageElement() {
-        return this._imageElement;
-    };
-    
-    /**
-     * Set the image element if it's not the same as the current image element.
-     *
-     * When set, the image element is surrounded by spans that outline the image
-     * and show resize handles at its corners.
-     */
-    set imageElement(imageElement) {
-        if (this._imageElement && (this._imageElement === imageElement)) { return };
-        this.clear();
-        if (imageElement) {
-            const imageContainer = document.createElement('span');
-            imageContainer.setAttribute('class', 'resize-container');
-            imageContainer.setAttribute('tabindex', -1);
-            imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
-            const nwHandle = document.createElement('span');
-            nwHandle.setAttribute('class', 'resize-handle-nw');
-            imageContainer.appendChild(nwHandle);
-            const neHandle = document.createElement('span');
-            neHandle.setAttribute('class', 'resize-handle-ne');
-            imageContainer.appendChild(neHandle);
-            imageContainer.appendChild(imageElement);
-            const swHandle = document.createElement('span');
-            swHandle.setAttribute('class', 'resize-handle-sw');
-            imageContainer.appendChild(swHandle);
-            const seHandle = document.createElement('span');
-            seHandle.setAttribute('class', 'resize-handle-se');
-            imageContainer.appendChild(seHandle);
-            imageContainer.addEventListener('mousedown', this.startResize);
-            this._imageElement = imageElement;
-            this._imageContainer = imageContainer;
-        };
-    };
-    
-    /**
-     * Remove all the spans around imageElement if it exists.
-     */
-    clear() {
-        if (!this._imageElement) { return };
-        this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
-        this._imageContainer.parentNode.removeChild(this._imageContainer);
-        this._imageContainer.removeEventListener('mousedown', this.startResize);
-        this._imageElement = null;
-        this._imageContainer = null;
-    };
-    
-    startResize(ev) {
-        ev.stopPropagation();
-        ev.preventDefault();
-        resizableImage.saveEventState(ev);
-        MU.editor.addEventListener('mousemove', resizableImage.resizing);
-        MU.editor.addEventListener('mouseup', resizableImage.endResize);
-    };
-    
-    endResize(ev) {
-        ev.stopPropagation();
-        ev.preventDefault();
-        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
-        MU.editor.removeEventListener('mousemove', resizableImage.resizing);
-    }
-    
-    resizing(ev) {
-        ev.stopPropagation();
-        ev.preventDefault();
-        const eventState = resizableImage._eventState;
-        const ev0 = eventState.ev;
-        // FYI: x increases to the right, y increases down
-        const x = ev.clientX;
-        const y = ev.clientY;
-        const x0 = ev0.clientX;
-        const y0 = ev0.clientY;
-        const classList = ev0.target.classList;
-        let dx, dy;
-        if (classList.contains('resize-handle-nw')) {
-            dx = x0 - x;
-            dy = y0 - y;
-        } else if (classList.contains('resize-handle-ne')) {
-            dx = x - x0;
-            dy = y0 - y;
-        } else if (classList.contains('resize-handle-sw')) {
-            dx = x0 - x;
-            dy = y - y0;
-        } else if (classList.contains('resize-handle-se')) {
-            dx = x - x0;
-            dy = y - y0;
-        } else {
-            return;
-        }
-        const scaleH = Math.abs(dy) > Math.abs(dx);
-        const w0 = eventState.imageWidth;
-        const h0 = eventState.imageHeight;
-        const ratio = w0 / h0;
-        let width, height;
-        if (scaleH) {
-            height = h0 + dy;
-            width = Math.floor(height * ratio);
-        } else {
-            width = w0 + dx;
-            height = Math.floor(width / ratio);
-        };
-        resizableImage._imageElement.setAttribute('width', width);
-        resizableImage._imageElement.setAttribute('height', height);
-    };
-    
-    saveEventState(ev) {
-        // Save the initial event details and container state
-        const eventState = this._eventState;
-        const imageElement = this._imageElement;
-        eventState.imageWidth = imageElement.getBoundingClientRect().width;
-        eventState.imageHeight = imageElement.getBoundingClientRect().height;
-        eventState.ev = ev;
-    };
-    
-};
-
-/*
- * There is a singleton resizableImage which may or may not contain an image element.
- */
-const resizableImage = new ResizableImage();
-
-/**
  * Callback invoked from image.onload
  */
 const _imageLoaded = function(image) {
     _callback('updateHeight');
-    image.setAttribute('class', 'resize-image');         // Make it resizable
+    image.setAttribute('class', 'resize-image');        // Make it resizable
     image.setAttribute('tabindex', -1);                 // Make it selectable
     image.addEventListener('focusin', _focusImage);     // Allow resizing when focused
 };
 
 /**
  * Callback invoked when an image is focused on (aka clicked)
+ *
+ * We set the singleton resizableImage, which highlights the resizableImage
+ * according to markup.css. We also make the caret transparent, which
+ * is restored to blue on a click event outside of the image.
  */
 const _focusImage = function(ev) {
     const image = ev.currentTarget;
     resizableImage.imageElement = image;
+    MU.editor.style.caretColor = 'transparent';
     _callback('input')
 };
 
