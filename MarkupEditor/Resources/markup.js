@@ -289,7 +289,8 @@ class ResizableImage {
     constructor(imageElement=null) {
         this._imageElement = null;
         this._imageContainer = null;
-        this._eventState = {};
+        this._startEvent = null;
+        this._startDimensions = {};
         this.imageElement = imageElement;
     };
     
@@ -331,7 +332,24 @@ class ResizableImage {
             imageContainer.addEventListener('mousedown', this.startResize);
             this._imageElement = imageElement;
             this._imageContainer = imageContainer;
+            this._startDimensions = this.dimensionsFrom(imageElement);
         };
+    };
+    
+    /**
+     * The startDimensions are the width/height before resizing
+     */
+    get startDimensions() {
+        return this._startDimensions;
+    };
+    
+    /**
+     * During undo/redo, we have to reset the dimensions which in turn resizes the image
+     */
+    set startDimensions(startDimensions) {
+        this._startDimensions = startDimensions;
+        resizableImage._imageElement.setAttribute('width', startDimensions.width);
+        resizableImage._imageElement.setAttribute('height', startDimensions.height);
     };
     
     /**
@@ -344,6 +362,8 @@ class ResizableImage {
         this._imageContainer.removeEventListener('mousedown', this.startResize);
         this._imageElement = null;
         this._imageContainer = null;
+        this._startEvent = null;
+        this._startDimensions = {};
     };
     
     startResize(ev) {
@@ -359,13 +379,14 @@ class ResizableImage {
         ev.preventDefault();
         MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         MU.editor.removeEventListener('mousemove', resizableImage.resizing);
+        const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: resizableImage.startDimensions});
+        undoer.push(undoerData);
     }
     
     resizing(ev) {
         ev.stopPropagation();
         ev.preventDefault();
-        const eventState = resizableImage._eventState;
-        const ev0 = eventState.ev;
+        const ev0 = resizableImage._startEvent;
         // FYI: x increases to the right, y increases down
         const x = ev.clientX;
         const y = ev.clientY;
@@ -389,8 +410,8 @@ class ResizableImage {
             return;
         }
         const scaleH = Math.abs(dy) > Math.abs(dx);
-        const w0 = eventState.imageWidth;
-        const h0 = eventState.imageHeight;
+        const w0 = resizableImage._startDimensions.width;
+        const h0 = resizableImage._startDimensions.height;
         const ratio = w0 / h0;
         let width, height;
         if (scaleH) {
@@ -406,11 +427,14 @@ class ResizableImage {
     
     saveEventState(ev) {
         // Save the initial event details and container state
-        const eventState = this._eventState;
-        const imageElement = this._imageElement;
-        eventState.imageWidth = imageElement.getBoundingClientRect().width;
-        eventState.imageHeight = imageElement.getBoundingClientRect().height;
-        eventState.ev = ev;
+        this._startEvent = ev;
+        this._startDimensions = this.dimensionsFrom(this._imageElement);
+    };
+    
+    dimensionsFrom(imageElement) {
+        const width = imageElement.getBoundingClientRect().width;
+        const height = imageElement.getBoundingClientRect().height;
+        return {width: width, height: height};
     };
     
 };
@@ -531,6 +555,9 @@ const _undoOperation = function(undoerData) {
         case 'modifyImage':
             _redoInsertImage(undoerData);
             break;
+        case 'resizeImage':
+            _undoRedoResizeImage(undoerData);
+            break;
         case 'insertTable':
             _redoDeleteTable(undoerData);
             break;
@@ -614,6 +641,9 @@ const _redoOperation = function(undoerData) {
             break;
         case 'modifyImage':
             _redoModifyImage(undoerData);
+            break;
+        case 'resizeImage':
+            _undoRedoResizeImage(undoerData);
             break;
         case 'insertTable':
             _redoInsertTable(undoerData);
@@ -840,7 +870,7 @@ MU.editor.addEventListener('click', function(ev) {
     // changed and the contents of MU.editor changed as a result.
     if (resizableImage.imageElement && !_isImageElement(target)) {
         resizableImage.clear();
-        MU.editor.style.caretColor = 'blue';
+        _showCaret();
         _callback('selectionChange')
         _callback('input');
     };
@@ -6018,7 +6048,7 @@ const _imageLoaded = function(image) {
 const _focusImage = function(ev) {
     const image = ev.currentTarget;
     resizableImage.imageElement = image;
-    MU.editor.style.caretColor = 'transparent';
+    _hideCaret();
     _callback('input')
 };
 
@@ -6068,7 +6098,7 @@ const _redoInsertImage = function(undoerData) {
     const range = document.createRange();
     range.selectNode(el);
     undoerData.range = range;
-}
+};
 
 /**
  * Do the modifyImage operation following an insertImage operation
@@ -6085,7 +6115,18 @@ const _redoModifyImage = function(undoerData) {
     _restoreUndoerRange(undoerData);
     _backupSelection();
     MU.modifyImage(null, null, null, false);
-}
+};
+
+const _undoRedoResizeImage = function(undoerData) {
+    const imageElement = undoerData.data.imageElement;
+    const oldDimensions = undoerData.data.startDimensions;  // dimensions to undo/redo to
+    resizableImage.imageElement = imageElement;
+    _hideCaret();
+    const startDimensions = resizableImage.startDimensions; // dimensions we are at now
+    resizableImage.startDimensions = oldDimensions;         // Resets the image size
+    undoerData.data.startDimensions = startDimensions;      // Change undoerData for next undo/redo
+    _callback('input');
+};
 
 /********************************************************************************
  * Tables
@@ -6871,6 +6912,14 @@ const _doPrevCell = function() {
  * Common private functions
  */
 //MARK: Common Private Functions
+
+const _hideCaret = function() {
+    MU.editor.style.caretColor = 'transparent';
+};
+
+const _showCaret = function() {
+    MU.editor.style.caretColor = 'blue';
+};
 
 /**
  * Return the depth of node in parents contained in nodeNames. If the node is
