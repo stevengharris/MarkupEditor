@@ -6125,6 +6125,7 @@ const _undoRedoResizeImage = function(undoerData) {
     const startDimensions = resizableImage.startDimensions; // dimensions we are at now
     resizableImage.startDimensions = oldDimensions;         // Resets the image size
     undoerData.data.startDimensions = startDimensions;      // Change undoerData for next undo/redo
+    _callback('selectionChange');
     _callback('input');
 };
 
