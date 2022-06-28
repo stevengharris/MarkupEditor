@@ -310,7 +310,7 @@ class ResizableImage {
      */
     set imageElement(imageElement) {
         if (this._imageElement && (this._imageElement === imageElement)) { return };
-        this.clear();
+        this.clearSelection();
         if (imageElement) {
             const imageContainer = document.createElement('span');
             imageContainer.setAttribute('class', 'resize-container');
@@ -353,17 +353,91 @@ class ResizableImage {
     };
     
     /**
-     * Remove all the spans around imageElement if it exists.
+     * Remove all the spans around imageElement if it exists, leaving the imageElement.
      */
-    clear() {
+    clearSelection() {
         if (!this._imageElement) { return };
+        // First, move the imageElement outside of the imageContainer
         this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
-        this._imageContainer.parentNode.removeChild(this._imageContainer);
+        // Then delete the imageContainer. But since we moved the imageElement out, it will still be in the document.
+        this._deleteImageContainer();
+    };
+    
+    /**
+     * Delete the image that the imageContainer contains, along with the imageContainer itself.
+     *
+     * Set the selection properly when done, including selecting a new image if needed and
+     * inserting a BR into an empty style element.
+     */
+    deleteImage() {
+        const range = this.rangeAfterDeleting();
+        this._deleteImageContainer();
+        const startContainer = range.startContainer;
+        if (_isImageElement(startContainer)) {
+            // Select a new resizableImage. The caret remains hidden.
+            this.imageElement = startContainer;
+        } else {
+            if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
+                startContainer.appendChild(document.createElement('br'));
+            };
+            const sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            // Now that we are not selecting an image, show the caret again.
+            _showCaret();
+        };
+    };
+    
+    /**
+     * Delete the imageContainer.
+     *
+     * If done while the imageContainer contains the imageElement, then the image element is also deleted.
+     */
+    _deleteImageContainer() {
         this._imageContainer.removeEventListener('mousedown', this.startResize);
+        this._imageContainer.parentNode.removeChild(this._imageContainer);
         this._imageElement = null;
         this._imageContainer = null;
         this._startEvent = null;
         this._startDimensions = {};
+    };
+    
+    /**
+     * Return a valid range that will exist after deleting the imageContainer.
+     *
+     * Caller may have to do something with it after deleting the imageContainer.
+     * For example, if range is an empty paragraph, caller needs to insert a BR and
+     * selected after it. If it's an IMG, caller will need to set the resizableImage.
+     */
+    rangeAfterDeleting() {
+        const imageContainer = this._imageContainer;
+        const range = document.createRange();
+        range.setStart(_firstEditorElement(), 0);
+        range.setEnd(_firstEditorElement(), 0);
+        if (!imageContainer) { return range };
+        let sib = imageContainer.previousSibling;
+        let selectionIsImage = false;
+        if (sib) {
+            if (_isTextNode(sib)) {
+                range.setStart(sib, sib.textContent.length);
+                range.setEnd(sib, sib.textContent.length);
+            } else {
+                range.setStart(sib, sib.childNodes.length);
+                range.setEnd(sib, sib.childNodes.length);
+            };
+        } else {
+            sib = imageContainer.nextSibling;
+            if (sib) {
+                range.setStart(sib, 0);
+                range.setEnd(sib, 0);
+            };
+        };
+        if (!sib & _isStyleElement(imageContainer.parentNode)) {
+            // imageContainer has no siblings and is in a style element.
+            range.setStart(imageContainer.parentNode, 0);
+            range.setEnd(imageContainer.parentNode, 0);
+        };
+        return range;
     };
     
     startResize(ev) {
@@ -869,7 +943,9 @@ MU.editor.addEventListener('click', function(ev) {
     // we need to clear it and notify the Swift side that the selection
     // changed and the contents of MU.editor changed as a result.
     if (resizableImage.imageElement && !_isImageElement(target)) {
-        resizableImage.clear();
+        ev.preventDefault();
+        ev.stopPropagation();
+        resizableImage.clearSelection();
         _showCaret();
         _callback('selectionChange')
         _callback('input');
@@ -980,6 +1056,15 @@ MU.editor.addEventListener('keydown', function(ev) {
                 _doNextCell();
             };
             break;
+        case 'Backspace':
+        case 'Delete':
+            if (resizableImage.isSelected) {
+                ev.preventDefault();
+                resizableImage.deleteImage();
+                _callback('input');
+                _callback('selectionChange');
+            };
+            break;
     };
 });
 
@@ -1047,8 +1132,10 @@ const _undoEnter = function(undoerData) {
 MU.editor.addEventListener('keyup', function(ev) {
     const key = ev.key;
     if ((key === 'Backspace') || (key === 'Delete')) {
-        _cleanUpSpans();
-        _cleanUpAttributes('style');
+        if (!resizableImage.isSelected) {
+            _cleanUpSpans();
+            _cleanUpAttributes('style');
+        };
     };
 });
 
