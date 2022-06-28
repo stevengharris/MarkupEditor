@@ -62,22 +62,10 @@ public struct ImageToolbar: View {
                     }
                     .padding([.trailing], 8)
                     Spacer()
-                    Divider()
-                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                        Text("\(scale)%")
-                            .frame(width: 40, height: height, alignment: .trailing)
-                    }
                     if toolbarPreference.allowLocalImages {
-                        Divider()
                         ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
                             .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
-                    Divider()
-                    ToolbarTextButton(title: "Save", action: { self.save() }) //, width: 50)
-                        .disabled(!src.isEmpty && !src.isValidURL)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }) //, width: 50)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
                 .frame(height: height)
             case .labeled:
@@ -102,22 +90,11 @@ public struct ImageToolbar: View {
                         .padding([.top], 2)
                     }
                     .padding([.trailing], 8)
-                    Divider()
-                    LabeledToolbar(label: Text("Scale")) {
-                        Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                            Text("\(scale)%")
-                                .frame(width: height, height: height, alignment: .trailing)
-                        }
+                    Spacer()
+                    if toolbarPreference.allowLocalImages {
+                        ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
+                            .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
-                    .padding([.bottom], 3)
-                    Divider()
-                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                        .padding([.bottom], 4)
-                        .disabled(!src.isEmpty && !src.isValidURL)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                        .padding([.bottom], 4)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
                 .frame(height: height)
             }
@@ -231,9 +208,9 @@ public struct ImageToolbar: View {
 struct ImageToolbar_Previews: PreviewProvider {
     static var previews: some View {
         let selectionState = SelectionState()
-        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactMarkupEnv = MarkupEnv(style: .compact, allowLocalImages: true)
         let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledMarkupEnv = MarkupEnv(style: .labeled, allowLocalImages: true)
         let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
