@@ -416,6 +416,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             if alt != nil {
                 args += ", '\(alt!.escaped)'"
             }
+            becomeFirstResponder()
             evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
         }
     }

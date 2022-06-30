@@ -643,6 +643,9 @@ const _undoOperation = function(undoerData) {
         case 'resizeImage':
             _undoRedoResizeImage(undoerData);
             break;
+        case 'deleteImage':
+            _undoDeleteImage(undoerData);
+            break;
         case 'insertTable':
             _redoDeleteTable(undoerData);
             break;
@@ -729,6 +732,9 @@ const _redoOperation = function(undoerData) {
             break;
         case 'resizeImage':
             _undoRedoResizeImage(undoerData);
+            break;
+        case 'deleteImage':
+            _redoDeleteImage(undoerData);
             break;
         case 'insertTable':
             _redoInsertTable(undoerData);
@@ -962,6 +968,7 @@ MU.editor.addEventListener('click', function(ev) {
     if (resizableImage.preventNextClick) {
         resizableImage.preventNextClick = false;
         ev.preventDefault();
+        _callback('input');     // Because the html changed to indicate a new size
     } else if (!_isResizableImage(target) && resizableImage.isSelected && !_isImageElement(target)) {
         ev.preventDefault();
         resizableImage.clearSelection();
@@ -1077,26 +1084,52 @@ MU.editor.addEventListener('keydown', function(ev) {
             };
             break;
         case 'Backspace':
+            if (resizableImage.isSelected) {
+                ev.preventDefault();
+                _deleteSelectedResizableImage();
+            } else {
+                const sel = document.getSelection();
+                const range = sel && (sel.rangeCount > 0) && sel.getRangeAt(0);
+                if (range) {
+                    const startContainer = range.startContainer;
+                    let prevSib;
+                    if (_isTextNode(startContainer)) {
+                        prevSib = startContainer.previousSibling;
+                    } else {
+                        let index = Math.max(range.startOffset - 1, 0);
+                        prevSib = startContainer.childNodes[index];
+                    };
+                    if (_isImageElement(prevSib)) {
+                        ev.preventDefault();
+                        resizableImage.imageElement = prevSib;
+                        _deleteSelectedResizableImage();
+                    };
+                };
+            };
+            break;
         case 'Delete':
             if (resizableImage.isSelected) {
                 ev.preventDefault();
-                const range = resizableImage.deleteImage();
-                const startContainer = range.startContainer;
-                if (_isImageElement(startContainer)) {
-                    // Select a new resizableImage.
-                    resizableImage.imageElement = startContainer;
-                } else {
-                    if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
-                        startContainer.appendChild(document.createElement('br'));
+                _deleteSelectedResizableImage();
+            } else {
+                const sel = document.getSelection();
+                const range = sel && (sel.rangeCount > 0) && sel.getRangeAt(0);
+                if (range) {
+                    const endContainer = range.endContainer;
+                    let nextSib;
+                    if (_isTextNode(endContainer)) {
+                        nextSib = endContainer.nextSibling;
+                    } else {
+                        const index = Math.min(range.endOffset + 1, endContainer.childNodes.length - 1)
+                        nextSib = endContainer.childNodes[index];
                     };
-                    const sel = document.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                    _showCaret();
+                    if (_isImageElement(nextSib)) {
+                        ev.preventDefault();
+                        resizableImage.imageElement = nextSib;
+                        _deleteSelectedResizableImage();
+                    };
                 };
-                _callback('input');
-                _callback('selectionChange');
-            };
+            }
             break;
     };
 });
@@ -6047,21 +6080,18 @@ const _redoDeleteLink = function(undoerData) {
  *
  * @param {String}              src         The url of the image.
  * @param {String}              alt         The alt text describing the image.
- * @param {Int}                 scale       The scale as a percentage of original's naturalWidth/Height.
  * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  * @return {HTML Image Element}             The image element that was created, used for undo/redo.
  */
-MU.insertImage = function(src, alt, scale=100, undoable=true) {
+MU.insertImage = function(src, alt, undoable=true) {
     const sel = document.getSelection();
-    const range = sel.getRangeAt(0).cloneRange();
+    const range = sel.getRangeAt(0);
     const img = document.createElement('img');
     img.setAttribute('src', src);
     if (alt) { img.setAttribute('alt', alt) };
-    if (scale !== 100) {
-        img.setAttribute('width', scale);
-        img.setAttribute('height', scale);
-    }
-    img.onload = _imageLoaded(img);     // Prep the image properly after loading
+    img.onload = function() {
+        _imageLoaded(img)       // Prep the image properly after loading
+    };
     range.insertNode(img);
     // After inserting the image, we want to leave the selection at the beginning
     // of the nextTextElement after it for inline images. If there is no such thing,
@@ -6092,7 +6122,7 @@ MU.insertImage = function(src, alt, scale=100, undoable=true) {
     if (undoable) {
         const imgRange = document.createRange();
         imgRange.selectNode(img);
-        const undoerData = _undoerData('insertImage', {src: src, alt: alt, scale: scale}, imgRange);
+        const undoerData = _undoerData('insertImage', {src: src, alt: alt}, imgRange);
         undoer.push(undoerData);
         _restoreSelection();
     };
@@ -6122,30 +6152,38 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
             } else {
                 img.removeAttribute('alt');
             }
+            let width, height;
             if (scale) {
-                let width = _percentInt(scale, img.naturalWidth);
-                let height = _percentInt(scale, img.naturalHeight);
-                img.setAttribute('width', width);
-                img.setAttribute('height', height);
+                width = _percentInt(scale, img.naturalWidth);
+                height = _percentInt(scale, img.naturalHeight);
             } else {
-                img.removeAttribute('width');
-                img.removeAttribute('height');
+                width = img.naturalWidth;
+                height = img.naturalHeight;
             }
+            img.setAttribute('width', width);
+            img.setAttribute('height', height);
             _restoreSelection()
         } else {
             // Before removing the img, record the existing src, alt, and scale
             const deletedSrc = img.getAttribute('src');
-            const deletedAlt = img.getAttribute('alt');
-            const deletedScale = img.getAttribute('width');
+            const deletedAlt = img.getAttribute('alt');;
             _deleteAndResetSelection(img, 'BEFORE');
             if (undoable) {
-                const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: deletedScale});
+                const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: scale});
                 undoer.push(undoerData);
                 _restoreSelection();
             }
         };
         _callback('input');
     };
+};
+
+const _undoDeleteImage = function(undoerData) {
+    _consoleLog('_undoDeleteImage')
+};
+
+const _redoDeleteImage = function(undoerData) {
+    _consoleLog('_redoDeleteImage')
 };
 
 /**
@@ -6155,8 +6193,16 @@ const _imageLoaded = function(image) {
     _callback('updateHeight');
     image.setAttribute('class', 'resize-image');            // Make it resizable
     image.setAttribute('tabindex', -1);                     // Make it selectable
+    // Per https://www.youtube.com/watch?v=YM3KszYmn58, we always want dimensions
+    if (!image.getAttribute('width')) {
+        image.setAttribute('width', image.naturalWidth);
+    };
+    if (!image.getAttribute('height')) {
+        image.setAttribute('height', image.naturalHeight);
+    };
     // For history, 'focusout' just never fires, either for image or the resizeContainer
     image.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
+    _callback('input');                                     // Because we changed the html
 };
 
 /**
@@ -6171,6 +6217,36 @@ const _focusInImage = function(ev) {
     resizableImage.imageElement = image;
     _hideCaret();
     _callback('input')
+};
+
+/*
+ * Delete the resizableImage and reset the selection properly afterward
+ */
+const _deleteSelectedResizableImage = function() {
+    if (!resizableImage.isSelected) { return };
+    const src = resizableImage.imageElement.src;
+    const alt = resizableImage.imageElement.alt;
+    const startDimensions = resizableImage.startDimensions;
+    const range = resizableImage.deleteImage();
+    const startContainer = range.startContainer;
+    if (_isImageElement(startContainer)) {
+        // Select a new resizableImage.
+        resizableImage.imageElement = startContainer;
+    } else {
+        if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
+            range.startContainer.appendChild(document.createElement('br'));
+        };
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        _showCaret();
+    };
+    _backupSelection()
+    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, startDimensions: startDimensions}, range);
+    undoer.push(undoerData);
+    _restoreSelection();
+    _callback('input');
+    _callback('selectionChange');
 };
 
 /**
@@ -6215,7 +6291,7 @@ const _redoInsertImage = function(undoerData) {
     // for the newly (re)created image element.
     _restoreUndoerRange(undoerData);
     _backupSelection();
-    const el = MU.insertImage(undoerData.data.src, undoerData.data.alt, undoerData.data.scale, false);
+    const el = MU.insertImage(undoerData.data.src, undoerData.data.alt, undoerData.data.dimensions, false);
     const range = document.createRange();
     range.selectNode(el);
     undoerData.range = range;
@@ -6238,6 +6314,12 @@ const _redoModifyImage = function(undoerData) {
     MU.modifyImage(null, null, null, false);
 };
 
+/**
+ * Undo or redo resizing from the state held in undoerData.
+ *
+ * After undo or redo, the undoerData is reset to the old value, so
+ * that it holds the proper starting point for the next invocation.
+ */
 const _undoRedoResizeImage = function(undoerData) {
     const imageElement = undoerData.data.imageElement;
     const oldDimensions = undoerData.data.startDimensions;  // dimensions to undo/redo to
