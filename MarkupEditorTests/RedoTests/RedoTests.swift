@@ -2515,10 +2515,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
                             self.webView.getHtml { pasted in
-                                // This is pretty brittle, but the image file name is a generated UUID. The test just makes
-                                // sure that the <img> element is where we expect in this simple case and the file actually
-                                // exists.
-                                if let imageFileName = self.imageFileName(from: pasted) {
+                                if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                     expectation.fulfill()
                                 } else {

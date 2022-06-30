@@ -282,6 +282,14 @@ class Undoer {
  * that is currently selected. When the ResizableImage's imageElement is null, there is
  * no selected image element, and the imageContainer is also null.
  *
+ * The manipulators of ResizableImage need to deal with the selection and caret visibility.
+ * When caret visibility is embedded in the ResizableImage code, there are just too many UI
+ * issues that can come up depending on how it's used. In general, though when the imageElement
+ * is set, and the resizeContainer is present and visible along with the resize handles,
+ * it makes sense to hide the caret since it's distracting and the box/handles indicate what
+ * the selection is. However, once you do that, you have to show the caret when the selection
+ * changes.
+ *
  * This approach was inspired by https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
  */
 class ResizableImage {
@@ -291,12 +299,21 @@ class ResizableImage {
         this._imageContainer = null;
         this._startEvent = null;
         this._startDimensions = {};
+        this._preventNextClick = false;  // Flag to avoid click after mouseup on resize
         this.imageElement = imageElement;
     };
     
     get isSelected() {
         return this._imageElement !== null;
-    }
+    };
+    
+    get preventNextClick() {
+        return this._preventNextClick;
+    };
+    
+    set preventNextClick(preventNextClick) {
+        this._preventNextClick = preventNextClick;
+    };
     
     get imageElement() {
         return this._imageElement;
@@ -311,29 +328,7 @@ class ResizableImage {
     set imageElement(imageElement) {
         if (this._imageElement && (this._imageElement === imageElement)) { return };
         this.clearSelection();
-        if (imageElement) {
-            const imageContainer = document.createElement('span');
-            imageContainer.setAttribute('class', 'resize-container');
-            imageContainer.setAttribute('tabindex', -1);
-            imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
-            const nwHandle = document.createElement('span');
-            nwHandle.setAttribute('class', 'resize-handle-nw');
-            imageContainer.appendChild(nwHandle);
-            const neHandle = document.createElement('span');
-            neHandle.setAttribute('class', 'resize-handle-ne');
-            imageContainer.appendChild(neHandle);
-            imageContainer.appendChild(imageElement);
-            const swHandle = document.createElement('span');
-            swHandle.setAttribute('class', 'resize-handle-sw');
-            imageContainer.appendChild(swHandle);
-            const seHandle = document.createElement('span');
-            seHandle.setAttribute('class', 'resize-handle-se');
-            imageContainer.appendChild(seHandle);
-            imageContainer.addEventListener('mousedown', this.startResize);
-            this._imageElement = imageElement;
-            this._imageContainer = imageContainer;
-            this._startDimensions = this.dimensionsFrom(imageElement);
-        };
+        this._select(imageElement);
     };
     
     /**
@@ -366,26 +361,41 @@ class ResizableImage {
     /**
      * Delete the image that the imageContainer contains, along with the imageContainer itself.
      *
-     * Set the selection properly when done, including selecting a new image if needed and
-     * inserting a BR into an empty style element.
+     * Return the range to be selected after the imageContainer is deleted. This might be another
+     * image element, or it might be an empty paragraph, or it might be a text node. The caller needs
+     * handle what to do with the range. For example, if it's an image element, that should become the
+     * singleton ResizableImage. If it's an empty paragraph, it needs to contain a BR for the user to
+     * type into.
      */
     deleteImage() {
         const range = this.rangeAfterDeleting();
         this._deleteImageContainer();
-        const startContainer = range.startContainer;
-        if (_isImageElement(startContainer)) {
-            // Select a new resizableImage. The caret remains hidden.
-            this.imageElement = startContainer;
-        } else {
-            if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
-                startContainer.appendChild(document.createElement('br'));
-            };
-            const sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            // Now that we are not selecting an image, show the caret again.
-            _showCaret();
-        };
+        return range;
+    };
+    
+    _select(imageElement) {
+        if (!imageElement) { return };
+        const imageContainer = document.createElement('span');
+        imageContainer.setAttribute('class', 'resize-container');
+        imageContainer.setAttribute('tabindex', -1);
+        imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
+        const nwHandle = document.createElement('span');
+        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+        imageContainer.appendChild(nwHandle);
+        const neHandle = document.createElement('span');
+        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+        imageContainer.appendChild(neHandle);
+        imageContainer.appendChild(imageElement);
+        const swHandle = document.createElement('span');
+        swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+        imageContainer.appendChild(swHandle);
+        const seHandle = document.createElement('span');
+        seHandle.setAttribute('class', 'resize-handle resize-handle-se');
+        imageContainer.appendChild(seHandle);
+        imageContainer.addEventListener('mousedown', this.startResize);
+        this._imageElement = imageElement;
+        this._imageContainer = imageContainer;
+        this._startDimensions = this.dimensionsFrom(imageElement);
     };
     
     /**
@@ -441,18 +451,19 @@ class ResizableImage {
     };
     
     startResize(ev) {
-        ev.stopPropagation();
         ev.preventDefault();
+        ev.stopImmediatePropagation();
         resizableImage.saveEventState(ev);
         MU.editor.addEventListener('mousemove', resizableImage.resizing);
         MU.editor.addEventListener('mouseup', resizableImage.endResize);
     };
     
     endResize(ev) {
-        ev.stopPropagation();
+        resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
+        ev.stopImmediatePropagation();
         ev.preventDefault();
-        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         MU.editor.removeEventListener('mousemove', resizableImage.resizing);
+        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: resizableImage.startDimensions});
         undoer.push(undoerData);
     }
@@ -938,23 +949,32 @@ MU.editor.addEventListener('blur', function(ev) {
  * TODO - Maybe remove the _multiClickSelect call
  */
 MU.editor.addEventListener('click', function(ev) {
-    const target = ev.target;
+    const target = ev.target;   // The element that triggered the event
     // If we click somewhere outside of the resizableImage, then
     // we need to clear it and notify the Swift side that the selection
-    // changed and the contents of MU.editor changed as a result.
-    if (resizableImage.imageElement && !_isImageElement(target)) {
+    // changed and the contents of MU.editor changed as a result. However, we
+    // also get a click event when the mouseup happens after resizing, and we
+    // don't want that to deselect the image. We prevent this latter behavior
+    // using the preventNextClick state of resizableImage, which is set to
+    // true when the endResize is triggered. Basically, resizableImage.preventNextClick
+    // is only true after the mouseUp happens after resizing and before the click
+    // event is received here.
+    if (resizableImage.preventNextClick) {
+        resizableImage.preventNextClick = false;
         ev.preventDefault();
-        ev.stopPropagation();
+    } else if (!_isResizableImage(target) && resizableImage.isSelected && !_isImageElement(target)) {
+        ev.preventDefault();
         resizableImage.clearSelection();
         _showCaret();
         _callback('selectionChange')
         _callback('input');
-    };
-    const nclicks = ev.detail;
-    if (nclicks === 1) {
-        _callback('click');
     } else {
-        //_multiClickSelect(nclicks);
+        const nclicks = ev.detail;
+        if (nclicks === 1) {
+            _callback('click');
+        } else {
+            //_multiClickSelect(nclicks);
+        };
     };
 });
 
@@ -1060,7 +1080,20 @@ MU.editor.addEventListener('keydown', function(ev) {
         case 'Delete':
             if (resizableImage.isSelected) {
                 ev.preventDefault();
-                resizableImage.deleteImage();
+                const range = resizableImage.deleteImage();
+                const startContainer = range.startContainer;
+                if (_isImageElement(startContainer)) {
+                    // Select a new resizableImage.
+                    resizableImage.imageElement = startContainer;
+                } else {
+                    if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
+                        startContainer.appendChild(document.createElement('br'));
+                    };
+                    const sel = document.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    _showCaret();
+                };
                 _callback('input');
                 _callback('selectionChange');
             };
@@ -6120,19 +6153,20 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
  */
 const _imageLoaded = function(image) {
     _callback('updateHeight');
-    image.setAttribute('class', 'resize-image');        // Make it resizable
-    image.setAttribute('tabindex', -1);                 // Make it selectable
-    image.addEventListener('focusin', _focusImage);     // Allow resizing when focused
+    image.setAttribute('class', 'resize-image');            // Make it resizable
+    image.setAttribute('tabindex', -1);                     // Make it selectable
+    // For history, 'focusout' just never fires, either for image or the resizeContainer
+    image.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
 };
 
 /**
  * Callback invoked when an image is focused on (aka clicked)
  *
  * We set the singleton resizableImage, which highlights the resizableImage
- * according to markup.css. We also make the caret transparent, which
- * is restored to blue on a click event outside of the image.
+ * according to markup.css. We also make hide the caret, since the image highlight
+ * is showing where the selection is.
  */
-const _focusImage = function(ev) {
+const _focusInImage = function(ev) {
     const image = ev.currentTarget;
     resizableImage.imageElement = image;
     _hideCaret();
@@ -7658,6 +7692,13 @@ const _isListItemElement = function(node) {
  */
 const _isImageElement = function(node) {
     return node && (node.nodeName === 'IMG');
+};
+
+/**
+ * Return whether node is a ResizableImage, either a handle or the container itself
+ */
+const _isResizableImage = function(node) {
+    return node && (node.classList.contains('resize-handle') || node.classList.contains('resize-container'));
 };
 
 /**
