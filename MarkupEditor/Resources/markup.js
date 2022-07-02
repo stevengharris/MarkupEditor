@@ -375,6 +375,7 @@ class ResizableImage {
     
     _select(imageElement) {
         if (!imageElement) { return };
+        MU.editor.addEventListener('keydown', resizableImage.handleInput);
         const imageContainer = document.createElement('span');
         imageContainer.setAttribute('class', 'resize-container');
         imageContainer.setAttribute('tabindex', -1);
@@ -404,6 +405,7 @@ class ResizableImage {
      * If done while the imageContainer contains the imageElement, then the image element is also deleted.
      */
     _deleteImageContainer() {
+        MU.editor.removeEventListener('keydown', resizableImage.handleInput);
         this._imageContainer.removeEventListener('mousedown', this.startResize);
         this._imageContainer.parentNode.removeChild(this._imageContainer);
         this._imageElement = null;
@@ -452,7 +454,7 @@ class ResizableImage {
     
     startResize(ev) {
         ev.preventDefault();
-        ev.stopImmediatePropagation();
+        ev.stopPropagation();
         resizableImage.saveEventState(ev);
         MU.editor.addEventListener('mousemove', resizableImage.resizing);
         MU.editor.addEventListener('mouseup', resizableImage.endResize);
@@ -460,13 +462,52 @@ class ResizableImage {
     
     endResize(ev) {
         resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
-        ev.stopImmediatePropagation();
+        ev.stopPropagation();
         ev.preventDefault();
         MU.editor.removeEventListener('mousemove', resizableImage.resizing);
         MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: resizableImage.startDimensions});
         undoer.push(undoerData);
-    }
+    };
+    
+    handleInput(ev) {
+        // Pass through the navigation and deleteSelection keys; else preventDefault.
+        let existingImageElement;
+        switch (ev.key) {
+            case 'ArrowLeft':
+                ev.preventDefault();
+                existingImageElement = resizableImage.imageElement;
+                resizableImage.clearSelection();
+                _selectFollowingInsert(existingImageElement, 'BEFORE');
+                _showCaret();
+                _callback('input');
+                _callback('selectionChange');
+                break;
+            case 'ArrowRight':
+                ev.preventDefault();
+                existingImageElement = resizableImage.imageElement;
+                resizableImage.clearSelection();
+                _selectFollowingInsert(existingImageElement, 'AFTER');
+                _showCaret();
+                _callback('input');
+                _callback('selectionChange');
+                break;
+            case 'ArrowUp':
+            case 'ArrowDown':
+                resizableImage.clearSelection();
+                _showCaret();
+                _callback('input');
+                _callback('selectionChange');
+                break;
+            case 'Backspace':
+            case 'Delete':
+                ev.preventDefault();
+                _deleteSelectedResizableImage();
+                break;
+            default:
+                ev.preventDefault();
+        };
+    };
     
     resizing(ev) {
         ev.stopPropagation();
@@ -1058,6 +1099,7 @@ const _keyModified = function(modifier, key) {
  * Also note that Tab is still received and handled here, never on the Swift side.
  */
 MU.editor.addEventListener('keydown', function(ev) {
+    let sib;
     const key = ev.key;
     switch (key) {
         case 'Enter':
@@ -1083,53 +1125,55 @@ MU.editor.addEventListener('keydown', function(ev) {
                 _doNextCell();
             };
             break;
-        case 'Backspace':
-            if (resizableImage.isSelected) {
+        case 'ArrowLeft':
+            // Note ArrowLeft is handled by ResizableImage if it's selected
+            if (resizableImage.isSelected) { break };
+            sib = _siblingAtSelection('BEFORE');
+            if (_isImageElement(sib)) {
                 ev.preventDefault();
-                _deleteSelectedResizableImage();
-            } else {
-                const sel = document.getSelection();
-                const range = sel && (sel.rangeCount > 0) && sel.getRangeAt(0);
-                if (range) {
-                    const startContainer = range.startContainer;
-                    let prevSib;
-                    if (_isTextNode(startContainer)) {
-                        prevSib = startContainer.previousSibling;
-                    } else {
-                        let index = Math.max(range.startOffset - 1, 0);
-                        prevSib = startContainer.childNodes[index];
-                    };
-                    if (_isImageElement(prevSib)) {
-                        ev.preventDefault();
-                        resizableImage.imageElement = prevSib;
-                        _deleteSelectedResizableImage();
-                    };
-                };
+                ev.stopPropagation();
+                resizableImage.imageElement = sib;
+                _hideCaret();
+                _callback('input');
+                _callback('selectionChange');
+            };
+            break;
+        case 'ArrowRight':
+            // Note ArrowRight is handled by ResizableImage if it's selected
+            if (resizableImage.isSelected) { break };
+            sib = _siblingAtSelection('AFTER');
+            if (_isImageElement(sib)) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                resizableImage.imageElement = sib;
+                _hideCaret();
+                _callback('input');
+                _callback('selectionChange');
+            };
+            break;
+        case 'Backspace':
+            // Note Backspace is handled by ResizableImage if it's selected
+            sib = _siblingAtSelection('BEFORE');
+            if (_isImageElement(sib)) {
+                ev.preventDefault();
+                resizableImage.imageElement = sib;
+                // Altho we deleted the image BEFORE the selection,
+                // we want to pass 'AFTER' here to indicate where
+                // the cursor should be positioned on undo.
+                _deleteSelectedResizableImage('AFTER');
             };
             break;
         case 'Delete':
-            if (resizableImage.isSelected) {
+            // Note Delete is handled by ResizableImage if it's selected
+            sib = _siblingAtSelection('AFTER');
+            if (_isImageElement(sib)) {
                 ev.preventDefault();
-                _deleteSelectedResizableImage();
-            } else {
-                const sel = document.getSelection();
-                const range = sel && (sel.rangeCount > 0) && sel.getRangeAt(0);
-                if (range) {
-                    const endContainer = range.endContainer;
-                    let nextSib;
-                    if (_isTextNode(endContainer)) {
-                        nextSib = endContainer.nextSibling;
-                    } else {
-                        const index = Math.min(range.endOffset + 1, endContainer.childNodes.length - 1)
-                        nextSib = endContainer.childNodes[index];
-                    };
-                    if (_isImageElement(nextSib)) {
-                        ev.preventDefault();
-                        resizableImage.imageElement = nextSib;
-                        _deleteSelectedResizableImage();
-                    };
-                };
-            }
+                resizableImage.imageElement = sib;
+                // Altho we deleted the image AFTER the selection,
+                // we want to pass 'BEFORE' here to indicate where
+                // the cursor should be positioned on undo.
+                _deleteSelectedResizableImage('BEFORE');
+            };
             break;
     };
 });
@@ -6084,38 +6128,8 @@ const _redoDeleteLink = function(undoerData) {
  * @return {HTML Image Element}             The image element that was created, used for undo/redo.
  */
 MU.insertImage = function(src, alt, undoable=true) {
-    const sel = document.getSelection();
-    const range = sel.getRangeAt(0);
-    const img = document.createElement('img');
-    img.setAttribute('src', src);
-    if (alt) { img.setAttribute('alt', alt) };
-    img.onload = function() {
-        _imageLoaded(img)       // Prep the image properly after loading
-    };
-    range.insertNode(img);
-    // After inserting the image, we want to leave the selection at the beginning
-    // of the nextTextElement after it for inline images. If there is no such thing,
-    // then find the next best thing.
-    const nearestTextNode = _getFirstChildOfTypeAfter(img, Node.TEXT_NODE);
-    const newRange = document.createRange();
-    if (nearestTextNode) {
-        newRange.setStart(nearestTextNode, 0);
-        newRange.setEnd(nearestTextNode, 0);
-    } else {
-        const nextSibling = img.nextSibling;
-        if (nextSibling && (nextSibling.nodeName === 'BR')) {
-            const newTextNode = document.createTextNode('');
-            nextSibling.replaceWith(newTextNode);
-            newRange.setStart(newTextNode, 0);
-            newRange.setEnd(newTextNode, 0);
-        } else {
-            newRange.setStart(img, 0);
-            newRange.setEnd(img, 0);
-        };
-    };
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    _backupSelection();
+    const img = _insertImageAtSelection(src, alt);
+    _selectFollowingInsertImage(img, 'AFTER');
     // Track image insertion on the undo stack if necessary and hold onto the new image element's range
     // Note that the range tracked on the undo stack is not the same as the selection, which has been
     // set to make continued typing easy after inserting the image.
@@ -6178,8 +6192,90 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
     };
 };
 
+const _insertImageAtSelection = function(src, alt, dimensions) {
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0);
+    const img = document.createElement('img');
+    img.setAttribute('src', src);
+    if (alt) {
+        img.setAttribute('alt', alt);
+    };
+    if (dimensions) {
+        img.setAttribute('width', dimensions.width);
+        img.setAttribute('height', dimensions.height);
+    }
+    img.onload = function() {
+        _imageLoaded(img)       // Prep the image properly after loading
+    };
+    const sib = _siblingAtSelection();
+    if (_isBRElement(sib)) {
+        sib.replaceWith(img);
+    } else {
+        range.insertNode(img);
+    };
+    return img;
+};
+
+const _selectFollowingInsertImage = function(img, direction) {
+    // After inserting the image, we want to leave the selection either before
+    // or after it, or just select the image itself, depending on the context.
+    if ((direction !== 'AFTER') && (direction !== 'BEFORE')) {
+        resizableImage.imageElement = img;
+        _hideCaret()
+        _callback('input');
+        _callback('selectionChange');
+    } else {
+        _selectFollowingInsert(img, direction);
+    };
+};
+
+const _selectFollowingInsert = function(node, direction) {
+    const parentNode = node.parentNode;
+    const newRange = document.createRange();
+    let sib;
+    if (direction === 'AFTER') {
+        sib = node.nextSibling;
+        if (sib) {
+            newRange.setStart(sib, 0);
+            newRange.setEnd(sib, 0);
+        } else {
+            const index = Math.max(_childNodeIndex(node) + 1, parentNode.childNodes.length);
+            newRange.setStart(parentNode, index);
+            newRange.setEnd(parentNode, index);
+        };
+    } else {
+        sib = node.previousSibling;
+        if (sib) {
+            if (_isTextNode(sib)) {
+                newRange.setStart(sib, sib.textContent.length);
+                newRange.setEnd(sib, sib.textContent.length);
+            } else {
+                newRange.setStart(parentNode, _childNodeIndex(sib));
+                newRange.setEnd(parentNode, _childNodeIndex(sib));
+            };
+        } else {
+            const index = Math.max(_childNodeIndex(node) - 1, 0);
+            newRange.setStart(parentNode, index);
+            newRange.setEnd(parentNode, index);
+        };
+    };
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+};
+
 const _undoDeleteImage = function(undoerData) {
-    _consoleLog('_undoDeleteImage')
+    const src = undoerData.data.src;
+    const alt = undoerData.data.alt;
+    const dimensions = undoerData.data.dimensions;
+    // If direction is null, resizableImage was selected when we pressed Backspace
+    // or Delete. If direction==='AFTER', we Backspaced from the position after an
+    // image (which is not selected) to delete; if 'BEFORE', we Deleted from the position
+    // before an image (which is not selected) to delete.
+    const direction = undoerData.data.direction;
+    _restoreUndoerRange(undoerData);
+    const img = _insertImageAtSelection(src, alt, dimensions);
+    _selectFollowingInsertImage(img, direction);
 };
 
 const _redoDeleteImage = function(undoerData) {
@@ -6221,8 +6317,14 @@ const _focusInImage = function(ev) {
 
 /*
  * Delete the resizableImage and reset the selection properly afterward
+ *
+ * If direction is null, resizableImage was selected when we pressed Backspace
+ * or Delete. If direction==='AFTER', we Backspaced from the position after an
+ * image (which is not selected) to delete; if 'BEFORE', we Deleted from the position
+ * before an image (which is not selected) to delete. The direction is not used
+ * until we undo, at which point we need to know how to reset the selection.
  */
-const _deleteSelectedResizableImage = function() {
+const _deleteSelectedResizableImage = function(direction) {
     if (!resizableImage.isSelected) { return };
     const src = resizableImage.imageElement.src;
     const alt = resizableImage.imageElement.alt;
@@ -6242,7 +6344,7 @@ const _deleteSelectedResizableImage = function() {
         _showCaret();
     };
     _backupSelection()
-    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, startDimensions: startDimensions}, range);
+    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, startDimensions: startDimensions, direction: direction}, range);
     undoer.push(undoerData);
     _restoreSelection();
     _callback('input');
@@ -7776,6 +7878,10 @@ const _isImageElement = function(node) {
     return node && (node.nodeName === 'IMG');
 };
 
+const _isBRElement = function(node) {
+    return node && (node.nodeName === 'BR');
+};
+
 /**
  * Return whether node is a ResizableImage, either a handle or the container itself
  */
@@ -7914,20 +8020,68 @@ const _getFirstChildOfTypeWithin = function(node, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's nextSiblings.
+ * Return the first text node we encounter after node
+ */
+const _firstTextNodeAfter = function(node) {
+    return _firstNodeOfTypeAfter(node, Node.TEXT_NODE);
+};
+
+/**
+ * Return the first text node we encounter before node
+ */
+const _firstTextNodeBefore = function(node) {
+    return _firstNodeOfTypeBefore(node, Node.TEXT_NODE);
+};
+
+/**
+ * Return the node before or after the selection
+ */
+const _siblingAtSelection = function(direction='AFTER') {
+    const sel = document.getSelection();
+    const range = sel && (sel.rangeCount > 0) && sel.getRangeAt(0);
+    if (!range) { return null };
+    let sib;
+    if (direction === 'BEFORE') {
+        const startContainer = range.startContainer;
+        if (_isTextNode(startContainer)) {
+            if (range.startOffset > 0) {
+                sib = startContainer;
+            } else {
+                sib = startContainer.previousSibling;
+            };
+        } else if (range.startOffset > 0) {
+            sib = startContainer.childNodes[range.startOffset - 1];
+        };
+    } else if (direction === 'AFTER') {
+        const endContainer = range.endContainer;
+        if (_isTextNode(endContainer)) {
+            if (range.endOffset < endContainer.textContent.length - 1) {
+                sib = endContainer;
+            } else {
+                sib = endContainer.nextSibling;
+            };
+        } else {
+            sib = endContainer.childNodes[range.endOffset];
+        };
+    };
+    return sib;
+};
+
+/**
+ * Return the first node of nodeType within node's nextSiblings.
  *
  * Note that when looking for text nodes, a sibling is sometimes an empty text node.
  * The whole point of identifying the child is to set the selection, so we skip
  * these because we cannot select in an empty text node. Such nodes are "normal" to
  * be found between styled sections and are not useful in any case.
  *
- * @param   {HTML Element}  element     The element to start looking at for nextSiblings.
- * @param   {String}        nodeType    The type of node we are looking for.
- * @return  {HTML Node | null}          The node we found, or null.
+ * @param   {HTML Node}  node        The node to start looking at for nextSiblings.
+ * @param   {String}     nodeType    The type of node we are looking for.
+ * @return  {HTML Node | null}       The node we found, or null.
  */
-const _getFirstChildOfTypeAfter = function(element, nodeType) {
+const _firstNodeOfTypeAfter = function(node, nodeType) {
     const nextSibs = [];
-    let nextSib = element.nextSibling;
+    let nextSib = node.nextSibling;
     while (nextSib) {
         nextSibs.push(nextSib);
         nextSib = nextSib.nextSibling;
@@ -7949,20 +8103,20 @@ const _getFirstChildOfTypeAfter = function(element, nodeType) {
 };
 
 /**
- * Return the first node of nodeType within element's previousSiblings.
+ * Return the first node of nodeType within node's previousSiblings.
  *
  * Note that when looking for text nodes, a sibling is sometimes an empty text node.
  * The whole point of identifying the child is to set the selection, so we skip
  * these because we cannot select in an empty text node. Such nodes are "normal" to
  * be found between styled sections and are not useful in any case.
  *
- * @param   {HTML Element}  element     The element to start looking at for previousSiblings.
- * @param   {String}        nodeType    The type of node we are looking for.
+ * @param   {HTML Node}  node           The node to start looking at for previousSiblings.
+ * @param   {String}     nodeType       The type of node we are looking for.
  * @return  {HTML Node | null}          The node we found, or null.
  */
-const _getFirstChildOfTypeBefore = function(element, nodeType) {
+const _firstNodeOfTypeBefore = function(node, nodeType) {
     const prevSibs = [];
-    let prevSib = element.previousSibling;
+    let prevSib = node.previousSibling;
     while (prevSib) {
         prevSibs.push(prevSib);
         prevSib = prevSib.previousSibling;
@@ -8227,9 +8381,9 @@ const _elementAfterDeleting = function(element, direction) {
     //_consoleLog("\n* elementAfterDeleting")
     let nearestTextNode;
     if (direction === 'BEFORE') {
-        nearestTextNode = _getFirstChildOfTypeBefore(element, Node.TEXT_NODE);
+        nearestTextNode = _firstTextNodeBefore(element);
     } else {
-        nearestTextNode = _getFirstChildOfTypeAfter(element, Node.TEXT_NODE);
+        nearestTextNode = _firstTextNodeAfter(element);
     };
     if (nearestTextNode) {
         return nearestTextNode
