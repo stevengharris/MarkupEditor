@@ -6387,7 +6387,13 @@ const _undoDeleteImage = function(undoerData) {
     // image (which is not selected) to delete; if 'BEFORE', we Deleted from the position
     // before an image (which is not selected) to delete.
     const direction = undoerData.data.direction;
-    _restoreUndoerRange(undoerData);
+    const offset = undoerData.data.offset;
+    const newRange = undoerData.range;
+    newRange.setStart(newRange.startContainer, offset);
+    newRange.setEnd(newRange.startContainer, offset);
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(newRange);
     const img = _insertImageAtSelection(src, alt, dimensions);
     _selectFollowingInsertImage(img, direction);
 };
@@ -6442,13 +6448,13 @@ const _deleteSelectedResizableImage = function(direction) {
     if (!resizableImage.isSelected) { return };
     const src = resizableImage.imageElement.src;
     const alt = resizableImage.imageElement.alt;
-    const startDimensions = resizableImage.startDimensions;
+    const dimensions = resizableImage.currentDimensions;
     const range = resizableImage.deleteImage();
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
     _backupSelection();
-    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, startDimensions: startDimensions, direction: direction}, range);
+    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, dimensions: dimensions, direction: direction, offset: range.startOffset}, range);
     undoer.push(undoerData);
     _restoreSelection();
     _showCaret();
