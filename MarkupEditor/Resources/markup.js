@@ -78,6 +78,11 @@ window.addEventListener('load', function () {
  * this is generally the case, it's set to true by default and certain MUErrors that
  * are more informational in nature are set to false. For example, BackupNullRange
  * happens when the user clicks outside of text, etc, so is fairly normal.
+ *
+ * Note that there is at least one instance of the Swift side notifying its MarkupDelegate
+ * of an error using this same approach, but originating on the Swift side. That happens
+ * in MarkupWKWebView.copyImage if anything goes wrong, because the copying to the
+ * clipboard is handled on the Swift side.
  */
 class MUError {
     static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.', null, false);
@@ -284,23 +289,25 @@ class Undoer {
  *
  * The manipulators of ResizableImage need to deal with the selection and caret visibility.
  * When caret visibility is embedded in the ResizableImage code, there are just too many UI
- * issues that can come up depending on how it's used. In general, though when the imageElement
+ * issues that can come up depending on how it's used. The exception here is in handling
+ * input when the ResizableImage is selected. In general, though when the imageElement
  * is set, and the resizeContainer is present and visible along with the resize handles,
  * it makes sense to hide the caret since it's distracting and the box/handles indicate what
  * the selection is. However, once you do that, you have to show the caret when the selection
- * changes.
+ * changes or it will be very confusing to the user.
  *
- * This approach was inspired by https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
+ * The approach of setting spans in the HTML and styling them in CSS to show the selected
+ * ResizableImage, and dealing with mouseup/down/move was inspired by
+ * https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
  */
 class ResizableImage {
     
-    constructor(imageElement=null) {
+    constructor() {
         this._imageElement = null;
         this._imageContainer = null;
         this._startEvent = null;
         this._startDimensions = {};
         this._preventNextClick = false;  // Flag to avoid click after mouseup on resize
-        this.imageElement = imageElement;
     };
     
     get isSelected() {
@@ -319,17 +326,11 @@ class ResizableImage {
         return this._imageElement;
     };
     
-    /**
-     * Set the image element if it's not the same as the current image element.
-     *
-     * When set, the image element is surrounded by spans that outline the image
-     * and show resize handles at its corners.
-     */
-    set imageElement(imageElement) {
-        if (this._imageElement && (this._imageElement === imageElement)) { return };
-        this.clearSelection();
-        this._select(imageElement);
-    };
+    get range() {
+        const range = document.createRange();
+        range.selectNode(this._imageContainer);
+        return range;
+    }
     
     /**
      * The startDimensions are the width/height before resizing
@@ -347,137 +348,69 @@ class ResizableImage {
         resizableImage._imageElement.setAttribute('height', startDimensions.height);
     };
     
-    /**
-     * Remove all the spans around imageElement if it exists, leaving the imageElement.
+    /*
+     * Return the width and height of the image element
      */
-    clearSelection() {
-        if (!this._imageElement) { return };
-        // First, move the imageElement outside of the imageContainer
-        this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
-        // Then delete the imageContainer. But since we moved the imageElement out, it will still be in the document.
-        this._deleteImageContainer();
+    get currentDimensions() {
+        const width = parseInt(resizableImage._imageElement.getAttribute('width'));
+        const height = parseInt(resizableImage._imageElement.getAttribute('height'));
+        return {width: width, height: height};
     };
     
     /**
-     * Delete the image that the imageContainer contains, along with the imageContainer itself.
+     * Handle input events when this ResizableImage is selected.
      *
-     * Return the range to be selected after the imageContainer is deleted. This might be another
-     * image element, or it might be an empty paragraph, or it might be a text node. The caller needs
-     * handle what to do with the range. For example, if it's an image element, that should become the
-     * singleton ResizableImage. If it's an empty paragraph, it needs to contain a BR for the user to
-     * type into.
-     */
-    deleteImage() {
-        const range = this.rangeAfterDeleting();
-        this._deleteImageContainer();
-        return range;
-    };
-    
-    _select(imageElement) {
-        if (!imageElement) { return };
-        MU.editor.addEventListener('keydown', resizableImage.handleInput);
-        const imageContainer = document.createElement('span');
-        imageContainer.setAttribute('class', 'resize-container');
-        imageContainer.setAttribute('tabindex', -1);
-        imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
-        const nwHandle = document.createElement('span');
-        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
-        imageContainer.appendChild(nwHandle);
-        const neHandle = document.createElement('span');
-        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
-        imageContainer.appendChild(neHandle);
-        imageContainer.appendChild(imageElement);
-        const swHandle = document.createElement('span');
-        swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
-        imageContainer.appendChild(swHandle);
-        const seHandle = document.createElement('span');
-        seHandle.setAttribute('class', 'resize-handle resize-handle-se');
-        imageContainer.appendChild(seHandle);
-        imageContainer.addEventListener('mousedown', this.startResize);
-        this._imageElement = imageElement;
-        this._imageContainer = imageContainer;
-        this._startDimensions = this.dimensionsFrom(imageElement);
-    };
-    
-    /**
-     * Delete the imageContainer.
+     * In general, any typing should delete the image and then just be passed-thru. This
+     * is the same as any other non-collapsed selection in a document.
      *
-     * If done while the imageContainer contains the imageElement, then the image element is also deleted.
-     */
-    _deleteImageContainer() {
-        MU.editor.removeEventListener('keydown', resizableImage.handleInput);
-        this._imageContainer.removeEventListener('mousedown', this.startResize);
-        this._imageContainer.parentNode.removeChild(this._imageContainer);
-        this._imageElement = null;
-        this._imageContainer = null;
-        this._startEvent = null;
-        this._startDimensions = {};
-    };
-    
-    /**
-     * Return a valid range that will exist after deleting the imageContainer.
+     * We have to handle copy/cut specially, because the user expects the image to be copied
+     * or cut, but the image element itself is not actually selected. WebKit has a lot of
+     * browser security barriers for CORS built-in, so I opted just to pass back the info
+     * to Swift and deal with it there. This also lets me put both the image and the HTML in
+     * the paste buffer so that pasting into the document will preserve width/height, but
+     * the image (for pasting in other apps) will be full size. Paste itself is just
+     * passed thru and will be received via MU.pasteHTML or MU.pasteImage. The code
+     * under those methods knows how to deal with the resizableImage being selected.
      *
-     * Caller may have to do something with it after deleting the imageContainer.
-     * For example, if range is an empty paragraph, caller needs to insert a BR and
-     * selected after it. If it's an IMG, caller will need to set the resizableImage.
+     * The meta-type keys like Shift, etc arrive here and are passed-thru.
+     *
+     * The navigation keys when invoked here mean: navigate out of this resizableImage.
+     * In all arrow key cases, the current resizableImage has to be deselected.
+     * In the case of left/right, that will put the selection next to the current
+     * resizableImage, while in the up/down it just passes thru after deselecting.
+     *
+     * Backspace and Delete do what you expect: delete the imageElement itself.
      */
-    rangeAfterDeleting() {
-        const imageContainer = this._imageContainer;
-        const range = document.createRange();
-        range.setStart(_firstEditorElement(), 0);
-        range.setEnd(_firstEditorElement(), 0);
-        if (!imageContainer) { return range };
-        let sib = imageContainer.previousSibling;
-        let selectionIsImage = false;
-        if (sib) {
-            if (_isTextNode(sib)) {
-                range.setStart(sib, sib.textContent.length);
-                range.setEnd(sib, sib.textContent.length);
-            } else {
-                range.setStart(sib, sib.childNodes.length);
-                range.setEnd(sib, sib.childNodes.length);
-            };
-        } else {
-            sib = imageContainer.nextSibling;
-            if (sib) {
-                range.setStart(sib, 0);
-                range.setEnd(sib, 0);
-            };
-        };
-        if (!sib & _isStyleElement(imageContainer.parentNode)) {
-            // imageContainer has no siblings and is in a style element.
-            range.setStart(imageContainer.parentNode, 0);
-            range.setEnd(imageContainer.parentNode, 0);
-        };
-        return range;
-    };
-    
-    startResize(ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        resizableImage.saveEventState(ev);
-        MU.editor.addEventListener('mousemove', resizableImage.resizing);
-        MU.editor.addEventListener('mouseup', resizableImage.endResize);
-    };
-    
-    endResize(ev) {
-        resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
-        ev.stopPropagation();
-        ev.preventDefault();
-        MU.editor.removeEventListener('mousemove', resizableImage.resizing);
-        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
-        const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: resizableImage.startDimensions});
-        undoer.push(undoerData);
-    };
-    
     handleInput(ev) {
-        // Pass through the navigation and deleteSelection keys; else preventDefault.
+        // For metaKeys, handle copy/cut specially; otherwise pass thru.
+        if (ev.metaKey) {
+            // Note that paste is passed-thru whereas copy/cut are custom
+            //if (_keyModified('Meta', 'v')) {
+            if (_keyModified('Meta', 'c')) {
+                ev.preventDefault();
+                resizableImage.copyToClipboard();
+            } else if (_keyModified('Meta', 'x')) {
+                ev.preventDefault();
+                resizableImage.copyToClipboard();
+                resizableImage.deleteImage();
+                _showCaret();
+            };
+            return;
+        };
+        // Pass through the navigation, deleteSelection and meta keys; else preventDefault.
         let existingImageElement;
         switch (ev.key) {
+            case 'Escape':
+            case 'Shift':
+            case 'Alt':
+            case 'Meta':
+            case 'Control':
+            case 'Tab':
+                break;
             case 'ArrowLeft':
                 ev.preventDefault();
                 existingImageElement = resizableImage.imageElement;
-                resizableImage.clearSelection();
+                resizableImage.deselect();
                 _selectFollowingInsert(existingImageElement, 'BEFORE');
                 _showCaret();
                 _callback('input');
@@ -486,7 +419,7 @@ class ResizableImage {
             case 'ArrowRight':
                 ev.preventDefault();
                 existingImageElement = resizableImage.imageElement;
-                resizableImage.clearSelection();
+                resizableImage.deselect();
                 _selectFollowingInsert(existingImageElement, 'AFTER');
                 _showCaret();
                 _callback('input');
@@ -494,7 +427,7 @@ class ResizableImage {
                 break;
             case 'ArrowUp':
             case 'ArrowDown':
-                resizableImage.clearSelection();
+                resizableImage.deselect();
                 _showCaret();
                 _callback('input');
                 _callback('selectionChange');
@@ -505,8 +438,30 @@ class ResizableImage {
                 _deleteSelectedResizableImage();
                 break;
             default:
-                ev.preventDefault();
+                _deleteSelectedResizableImage();
+                break;
         };
+    };
+    
+    startResize(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        resizableImage._startEvent = ev;
+        resizableImage._startDimensions = resizableImage.dimensionsFrom(resizableImage._imageElement);
+        MU.editor.addEventListener('mousemove', resizableImage.resizing);
+        MU.editor.addEventListener('mouseup', resizableImage.endResize);
+    };
+    
+    endResize(ev) {
+        resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
+        ev.stopPropagation();
+        ev.preventDefault();
+        MU.editor.removeEventListener('mousemove', resizableImage.resizing);
+        MU.editor.removeEventListener('mouseup', resizableImage.endResize);
+        const startDimensions = resizableImage.startDimensions;
+        const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: startDimensions});
+        resizableImage._startDimensions = resizableImage.currentDimensions;
+        undoer.push(undoerData);
     };
     
     resizing(ev) {
@@ -550,11 +505,148 @@ class ResizableImage {
         resizableImage._imageElement.setAttribute('width', width);
         resizableImage._imageElement.setAttribute('height', height);
     };
+
+    /**
+     * Select the image element if it's not the same as the current image element.
+     *
+     * When set, the image element is surrounded by spans that outline the image
+     * and show resize handles at its corners.
+     */
+    select(imageElement) {
+        if (this._imageElement && (this._imageElement === imageElement)) { return };
+        this.deselect();
+        MU.editor.addEventListener('keydown', resizableImage.handleInput);
+        const imageContainer = document.createElement('span');
+        imageContainer.setAttribute('class', 'resize-container');
+        imageContainer.setAttribute('tabindex', -1);
+        imageElement.parentNode.insertBefore(imageContainer, imageElement.nextSibling);
+        const nwHandle = document.createElement('span');
+        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+        imageContainer.appendChild(nwHandle);
+        const neHandle = document.createElement('span');
+        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+        imageContainer.appendChild(neHandle);
+        imageContainer.appendChild(imageElement);
+        const swHandle = document.createElement('span');
+        swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+        imageContainer.appendChild(swHandle);
+        const seHandle = document.createElement('span');
+        seHandle.setAttribute('class', 'resize-handle resize-handle-se');
+        imageContainer.appendChild(seHandle);
+        imageContainer.addEventListener('mousedown', this.startResize);
+        this._imageElement = imageElement;
+        this._imageContainer = imageContainer;
+        this._startDimensions = this.dimensionsFrom(imageElement);
+    };
     
-    saveEventState(ev) {
-        // Save the initial event details and container state
-        this._startEvent = ev;
-        this._startDimensions = this.dimensionsFrom(this._imageElement);
+    /**
+     * Deselect the imageElement by removing all the spans around it if exists, leaving the imageElement.
+     */
+    deselect() {
+        if (!this._imageElement) { return };
+        // First, move the imageElement outside of the imageContainer
+        this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
+        // Then delete the imageContainer. But since we moved the imageElement out, it will still be in the document.
+        this._deleteImageContainer();
+    };
+    
+    /**
+     * Delete the image that the imageContainer contains, along with the imageContainer itself.
+     *
+     * Return the range to be selected after the imageContainer is deleted. This might be another
+     * image element, or it might be an empty paragraph, or it might be a text node. The caller needs
+     * handle what to do with the range. For example, if it's an image element, that should become the
+     * singleton ResizableImage. If it's an empty paragraph, it needs to contain a BR for the user to
+     * type into and which is a valid selection, so we always do that here.
+     */
+    deleteImage() {
+        const range = this.rangeAfterDeleting();
+        this._deleteImageContainer();
+        const startContainer = range.startContainer;
+        if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
+            startContainer.appendChild(document.createElement('br'));
+        };
+        return range;
+    };
+    
+    /**
+     * Replace the current imageElement with this new one
+     */
+    replaceImage(imageElement) {
+        this._imageElement.replaceWith(imageElement);
+        this._imageElement = imageElement;
+    };
+    
+    /**
+     * Callback to Swift with the resizableImage data that allows us to put an image
+     * in the clipboard without all the browser shenanigans.
+     */
+    copyToClipboard() {
+        const image = this._imageElement;
+        if (!image) { return };
+        const messageDict = {
+            'messageType' : 'copyImage',
+            'src' : image.src,
+            'alt' : image.alt,
+            'dimensions' : this._startDimensions
+        };
+        _callback(JSON.stringify(messageDict));
+    };
+    
+    /**
+     * Delete the imageContainer.
+     *
+     * If done while the imageContainer contains the imageElement, then the image element is also deleted.
+     */
+    _deleteImageContainer() {
+        MU.editor.removeEventListener('keydown', resizableImage.handleInput);
+        this._imageContainer.removeEventListener('mousedown', this.startResize);
+        this._imageContainer.parentNode.removeChild(this._imageContainer);
+        this._imageElement = null;
+        this._imageContainer = null;
+        this._startEvent = null;
+        this._startDimensions = {};
+    };
+    
+    /**
+     * Return a valid range that will exist after deleting the imageContainer.
+     *
+     * Caller may have to do something with it after deleting the imageContainer.
+     * For example, if range is an empty paragraph, caller needs to insert a BR and
+     * selected after it. If it's an IMG, caller will need to set the resizableImage.
+     */
+    rangeAfterDeleting() {
+        const imageContainer = this._imageContainer;
+        const range = document.createRange();
+        range.setStart(_firstEditorElement(), 0);
+        range.setEnd(_firstEditorElement(), 0);
+        if (!imageContainer) { return range };
+        let sib = imageContainer.previousSibling;
+        let selectionIsImage = false;
+        if (sib) {
+            if (_isTextNode(sib)) {
+                range.setStart(sib, sib.textContent.length);
+                range.setEnd(sib, sib.textContent.length);
+            } else if (_isImageElement(sib)) {
+                range.setStart(sib.parentNode, _childNodeIndex(imageContainer));
+                range.setEnd(sib.parentNode, _childNodeIndex(imageContainer));
+            } else {
+                range.setStart(sib, sib.childNodes.length);
+                range.setEnd(sib, sib.childNodes.length);
+            };
+        } else {
+            sib = imageContainer.nextSibling;
+            if (sib) {
+                range.setStart(sib, 0);
+                range.setEnd(sib, 0);
+            };
+        };
+        if (!sib & _isStyleElement(imageContainer.parentNode)) {
+            // imageContainer has no siblings and is in a style element.
+            range.setStart(imageContainer.parentNode, 0);
+            range.setEnd(imageContainer.parentNode, 0);
+        };
+        return range;
     };
     
     dimensionsFrom(imageElement) {
@@ -1012,7 +1104,7 @@ MU.editor.addEventListener('click', function(ev) {
         _callback('input');     // Because the html changed to indicate a new size
     } else if (!_isResizableImage(target) && resizableImage.isSelected && !_isImageElement(target)) {
         ev.preventDefault();
-        resizableImage.clearSelection();
+        resizableImage.deselect();
         _showCaret();
         _callback('selectionChange')
         _callback('input');
@@ -1132,7 +1224,7 @@ MU.editor.addEventListener('keydown', function(ev) {
             if (_isImageElement(sib)) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                resizableImage.imageElement = sib;
+                resizableImage.select(sib);
                 _hideCaret();
                 _callback('input');
                 _callback('selectionChange');
@@ -1145,7 +1237,7 @@ MU.editor.addEventListener('keydown', function(ev) {
             if (_isImageElement(sib)) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                resizableImage.imageElement = sib;
+                resizableImage.select(sib);
                 _hideCaret();
                 _callback('input');
                 _callback('selectionChange');
@@ -1153,10 +1245,11 @@ MU.editor.addEventListener('keydown', function(ev) {
             break;
         case 'Backspace':
             // Note Backspace is handled by ResizableImage if it's selected
+            if (resizableImage.isSelected) { break };
             sib = _siblingAtSelection('BEFORE');
             if (_isImageElement(sib)) {
                 ev.preventDefault();
-                resizableImage.imageElement = sib;
+                resizableImage.select(sib);
                 // Altho we deleted the image BEFORE the selection,
                 // we want to pass 'AFTER' here to indicate where
                 // the cursor should be positioned on undo.
@@ -1165,10 +1258,11 @@ MU.editor.addEventListener('keydown', function(ev) {
             break;
         case 'Delete':
             // Note Delete is handled by ResizableImage if it's selected
+            if (resizableImage.isSelected) { break };
             sib = _siblingAtSelection('AFTER');
             if (_isImageElement(sib)) {
                 ev.preventDefault();
-                resizableImage.imageElement = sib;
+                resizableImage.select(sib);
                 // Altho we deleted the image AFTER the selection,
                 // we want to pass 'BEFORE' here to indicate where
                 // the cursor should be positioned on undo.
@@ -1360,34 +1454,45 @@ const _minimalLink = function(div) {
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const redoing = !undoable && (oldUndoerData !== null);
     let sel = document.getSelection();
-    let anchorNode = (sel) ? sel.anchorNode : null;
-    if (!anchorNode) {
-        MUError.NoSelection.callback();
-        return null;
-    };
-    let focusNode = sel.focusNode;
-    let selRange = sel.getRangeAt(0).cloneRange();
     // If sel is not collapsed, delete the entire selection and reset before continuing.
     // Track the deletedFragment.
-    let deletedFragment;
-    if (!sel.isCollapsed) {
+    let selRange, anchorNode, deletedFragment;
+    if (resizableImage.isSelected) {
+        selRange = resizableImage.range;
+        anchorNode = selRange.startContainer;
+        const imageRange = document.createRange();
+        imageRange.selectNode(resizableImage.imageElement);
+        deletedFragment = imageRange.extractContents();
+        if (redoing) {
+            oldUndoerData.data.deletedFragment = deletedFragment;
+        };
+        selRange = resizableImage.deleteImage();
+        sel.removeAllRanges();
+        sel.addRange(selRange);
+        _showCaret();
+    } else {
+        anchorNode = (sel) ? sel.anchorNode : null;
+        if (!anchorNode) {
+            MUError.NoSelection.callback();
+            return null;
+        };
+        selRange = sel.getRangeAt(0);
         deletedFragment = selRange.extractContents();
         if (redoing) {
             oldUndoerData.data.deletedFragment = deletedFragment;
         };
-        sel = document.getSelection();
-        anchorNode = sel.anchorNode;
-        focusNode = sel.focusNode;
-        selRange = sel.getRangeAt(0).cloneRange();
-        // At this point, sel is collapsed and the document contents are the same as if we had
-        // hit Backspace (but not paste yet) on the original non-collapsed selection.
-        //
-        // DEBUGGING TIP:
-        // By executing an 'input' callback and returning true at this point, we can debug the
-        // result ensure it is the same as hitting Backspace.
-        //_callback('input');
-        //return true;
     };
+    sel = document.getSelection();
+    anchorNode = sel.anchorNode;
+    selRange = sel.getRangeAt(0);
+    // At this point, sel is collapsed and the document contents are the same as if we had
+    // hit Backspace (but not paste yet) on the original non-collapsed selection.
+    //
+    // DEBUGGING TIP:
+    // By executing an 'input' callback and returning true at this point, we can debug the
+    // result ensure it is the same as hitting Backspace.
+    //_callback('input');
+    //return true;
     const newElement = _patchPasteHTML(html)
     const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
     const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
@@ -1556,6 +1661,11 @@ const _insertHTML = function(fragment) {
                 newSelRange.setStart(lastFragChild, lastFragChild.textContent.length);
                 newSelRange.setEnd(lastFragChild, lastFragChild.textContent.length);
                 insertedRange.setEnd(lastFragChild, lastFragChild.textContent.length);
+            } else if (_isImageElement(lastFragChild)) {
+                const childNodeIndex = _childNodeIndex(lastFragChild) + 1;
+                newSelRange.setStart(lastFragChild.parentNode, childNodeIndex);
+                newSelRange.setEnd(lastFragChild.parentNode, childNodeIndex);
+                insertedRange.setEnd(lastFragChild.parentNode, childNodeIndex);
             } else {
                 newSelRange.setStart(lastFragChild, lastFragChild.childNodes.length);
                 newSelRange.setEnd(lastFragChild, lastFragChild.childNodes.length);
@@ -6207,11 +6317,15 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
     img.onload = function() {
         _imageLoaded(img)       // Prep the image properly after loading
     };
-    const sib = _siblingAtSelection();
-    if (_isBRElement(sib)) {
-        sib.replaceWith(img);
+    if (resizableImage.isSelected) {
+        resizableImage.replaceImage(img);
     } else {
-        range.insertNode(img);
+        const sib = _siblingAtSelection();
+        if (_isBRElement(sib)) {
+            sib.replaceWith(img);
+        } else {
+            range.insertNode(img);
+        };
     };
     return img;
 };
@@ -6220,7 +6334,7 @@ const _selectFollowingInsertImage = function(img, direction) {
     // After inserting the image, we want to leave the selection either before
     // or after it, or just select the image itself, depending on the context.
     if ((direction !== 'AFTER') && (direction !== 'BEFORE')) {
-        resizableImage.imageElement = img;
+        resizableImage.select(img);
         _hideCaret()
         _callback('input');
         _callback('selectionChange');
@@ -6250,8 +6364,8 @@ const _selectFollowingInsert = function(node, direction) {
                 newRange.setStart(sib, sib.textContent.length);
                 newRange.setEnd(sib, sib.textContent.length);
             } else {
-                newRange.setStart(parentNode, _childNodeIndex(sib));
-                newRange.setEnd(parentNode, _childNodeIndex(sib));
+                newRange.setStart(parentNode, _childNodeIndex(node));
+                newRange.setEnd(parentNode, _childNodeIndex(node));
             };
         } else {
             const index = Math.max(_childNodeIndex(node) - 1, 0);
@@ -6309,8 +6423,8 @@ const _imageLoaded = function(image) {
  * is showing where the selection is.
  */
 const _focusInImage = function(ev) {
-    const image = ev.currentTarget;
-    resizableImage.imageElement = image;
+    const img = ev.currentTarget;
+    resizableImage.select(img);
     _hideCaret();
     _callback('input')
 };
@@ -6330,23 +6444,14 @@ const _deleteSelectedResizableImage = function(direction) {
     const alt = resizableImage.imageElement.alt;
     const startDimensions = resizableImage.startDimensions;
     const range = resizableImage.deleteImage();
-    const startContainer = range.startContainer;
-    if (_isImageElement(startContainer)) {
-        // Select a new resizableImage.
-        resizableImage.imageElement = startContainer;
-    } else {
-        if (_isStyleElement(startContainer) && (startContainer.childNodes.length === 0)) {
-            range.startContainer.appendChild(document.createElement('br'));
-        };
-        const sel = document.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        _showCaret();
-    };
-    _backupSelection()
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    _backupSelection();
     const undoerData = _undoerData('deleteImage', {src: src, alt: alt, startDimensions: startDimensions, direction: direction}, range);
     undoer.push(undoerData);
     _restoreSelection();
+    _showCaret();
     _callback('input');
     _callback('selectionChange');
 };
@@ -6425,7 +6530,7 @@ const _redoModifyImage = function(undoerData) {
 const _undoRedoResizeImage = function(undoerData) {
     const imageElement = undoerData.data.imageElement;
     const oldDimensions = undoerData.data.startDimensions;  // dimensions to undo/redo to
-    resizableImage.imageElement = imageElement;
+    resizableImage.select(imageElement);
     _hideCaret();
     const startDimensions = resizableImage.startDimensions; // dimensions we are at now
     resizableImage.startDimensions = oldDimensions;         // Resets the image size
@@ -7251,12 +7356,14 @@ const _depthWithin = function(node, nodeNames) {
  */
 const _isEmpty = function(element) {
     let empty;
-    if (element.nodeType === Node.TEXT_NODE) {
+    if (_isTextNode(element)) {
         empty = element.textContent.trim().length === 0;
+    } else if (_isImageElement(element)) {
+        empty = false;
     } else {
         empty = true;
         const childNodes = element.childNodes;
-        for (let i=0; i<childNodes.length; i++) {
+        for (let i = 0; i < childNodes.length; i++) {
             empty = _isEmpty(childNodes[i]);
             if (!empty) { break };
         };
