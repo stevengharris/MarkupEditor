@@ -452,29 +452,40 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             markupDelegate?.markupError(code: "Invalid image URL", message: "The url for the image to copy was invalid.", info: "src: \(src)", alert: true)
             return
         }
-        var html = "<img src=\"\(src)\""
+        // We will get src specified properly depending on whether it's a local or remote url,
+        // but first load up the alt, width, and height part of the <img> element which we will
+        // append to the opening <img src= part of the element.
+        var html = ""
         if let alt = alt { html += " alt=\"\(alt)\""}
         if let width = width, let height = height { html += " width=\"\(width)\" height=\"\(height)\""}
         html += ">"
-        guard let htmlData = html.data(using: .utf8) else { // Should never happen
-            markupDelegate?.markupError(code: "Invalid image HTML", message: "The html for the image to copy was invalid.", info: "html: \(html)", alert: true)
-            return
-        }
         var items = [String : Any]()
-        items["markup.image"] = htmlData
-        // File urls need to reside at the cacheUrl or we don't put it in the pasteboard
+        // First, get the pngData for any local element, and finish populating html along the way
         if url.isFileURL, let fileUrl = URL(string: url.path) {
+            // File urls need to reside at the cacheUrl or we don't put it in the pasteboard.
+            // The src is specified relative to the cacheUrl().
             if (url.path.starts(with: cacheUrl().path)) {
                 let cachedImageUrl = URL(fileURLWithPath: fileUrl.lastPathComponent, relativeTo: cacheUrl())
                 if let urlData = try? Data(contentsOf: cachedImageUrl), let image = UIImage(data: urlData) {
                     items["public.png"] = image.pngData()
+                    html = "<img src=\"\(cachedImageUrl.relativePath)\"\(html)"
                 }
             }
-            if items["public.png"] == nil {
+            guard items["public.png"] != nil else {
                 markupDelegate?.markupError(code: "Invalid local image", message: "Could not copy image data to pasteboard.", info: "src: \(src)", alert: true)
+                return
             }
         } else {
-            items["public.html"] = htmlData
+            // Src is the full path
+            html = "<img src=\"\(src)\"\(html)"
+        }
+        guard let htmlData = html.data(using: .utf8) else { // Should never happen
+            markupDelegate?.markupError(code: "Invalid image HTML", message: "The html for the image to copy was invalid.", info: "html: \(html)", alert: true)
+            return
+        }
+        items["markup.image"] = htmlData        // Always load up our custom pasteboard element
+        if !url.isFileURL {
+            items["public.html"] = htmlData     // And for external images, load up the html
         }
         let pasteboard = UIPasteboard.general
         pasteboard.setItems([items])
