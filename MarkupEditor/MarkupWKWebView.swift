@@ -452,15 +452,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             markupDelegate?.markupError(code: "Invalid image URL", message: "The url for the image to copy was invalid.", info: "src: \(src)", alert: true)
             return
         }
-        // We will get src specified properly depending on whether it's a local or remote url,
-        // but first load up the alt, width, and height part of the <img> element which we will
-        // append to the opening <img src= part of the element.
         var html = ""
-        if let alt = alt { html += " alt=\"\(alt)\""}
-        if let width = width, let height = height { html += " width=\"\(width)\" height=\"\(height)\""}
-        html += ">"
         var items = [String : Any]()
-        // First, get the pngData for any local element, and finish populating html along the way
+        // First, get the pngData for any local element, and start populating html with src
         if url.isFileURL, let fileUrl = URL(string: url.path) {
             // File urls need to reside at the cacheUrl or we don't put it in the pasteboard.
             // The src is specified relative to the cacheUrl().
@@ -468,7 +462,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 let cachedImageUrl = URL(fileURLWithPath: fileUrl.lastPathComponent, relativeTo: cacheUrl())
                 if let urlData = try? Data(contentsOf: cachedImageUrl), let image = UIImage(data: urlData) {
                     items["public.png"] = image.pngData()
-                    html = "<img src=\"\(cachedImageUrl.relativePath)\"\(html)"
+                    html += "<img src=\"\(cachedImageUrl.relativePath)\""
                 }
             }
             guard items["public.png"] != nil else {
@@ -477,8 +471,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         } else {
             // Src is the full path
-            html = "<img src=\"\(src)\"\(html)"
+            html += "<img src=\"\(src)\""
         }
+        if let alt = alt { html += " alt=\"\(alt)\""}
+        if let width = width, let height = height { html += " width=\"\(width)\" height=\"\(height)\""}
+        html += ">"
         guard let htmlData = html.data(using: .utf8) else { // Should never happen
             markupDelegate?.markupError(code: "Invalid image HTML", message: "The html for the image to copy was invalid.", info: "html: \(html)", alert: true)
             return
