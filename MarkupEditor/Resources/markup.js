@@ -326,6 +326,12 @@ class ResizableImage {
         return this._imageElement;
     };
     
+    get imageRange() {
+        const range = document.createRange();
+        range.selectNode(this._imageElement);
+        return range;
+    }
+    
     get range() {
         const range = document.createRange();
         range.selectNode(this._imageContainer);
@@ -927,9 +933,14 @@ const _focusOn = function(target, delay=20) {
 const _restoreUndoerRange = function(undoerData) {
     const range = undoerData.range;
     if (range) {
-        const sel = document.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        const startContainer = range.startContainer;
+        if ((startContainer === range.endContainer) && (_isImageElement(startContainer))) {
+            resizableImage.select(startContainer);
+        } else {
+            const sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     };
 };
 
@@ -939,10 +950,14 @@ const _restoreUndoerRange = function(undoerData) {
  * @param {Object}  undoerData  The undoerData instance created at push time.
  */
 const _backupUndoerRange = function(undoerData) {
-    const sel = document.getSelection();
-    if (sel && (sel.rangeCount > 0)) {
-        undoerData.range = sel.getRangeAt(0).cloneRange();
-    };
+    if (resizableImage.isSelected) {
+        undoerData.range = resizableImage.imageRange
+    } else {
+        const sel = document.getSelection();
+        if (sel && (sel.rangeCount > 0)) {
+            undoerData.range = sel.getRangeAt(0).cloneRange();
+        };
+    }
 };
 
 /********************************************************************************
@@ -1454,9 +1469,15 @@ const _minimalLink = function(div) {
 const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const redoing = !undoable && (oldUndoerData !== null);
     let sel = document.getSelection();
+    let anchorNode = (sel) ? sel.anchorNode : null;
+    if (!anchorNode) {
+        MUError.NoSelection.callback();
+        return null;
+    };
+    let selRange = sel.getRangeAt(0);
     // If sel is not collapsed, delete the entire selection and reset before continuing.
     // Track the deletedFragment.
-    let selRange, anchorNode, deletedFragment;
+    let deletedFragment;
     if (resizableImage.isSelected) {
         selRange = resizableImage.range;
         anchorNode = selRange.startContainer;
@@ -1470,21 +1491,15 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         sel.removeAllRanges();
         sel.addRange(selRange);
         _showCaret();
-    } else {
-        anchorNode = (sel) ? sel.anchorNode : null;
-        if (!anchorNode) {
-            MUError.NoSelection.callback();
-            return null;
-        };
-        selRange = sel.getRangeAt(0);
+    } else if (!sel.isCollapsed) {
         deletedFragment = selRange.extractContents();
         if (redoing) {
             oldUndoerData.data.deletedFragment = deletedFragment;
         };
+        sel = document.getSelection();
+        anchorNode = sel.anchorNode;
+        selRange = sel.getRangeAt(0);
     };
-    sel = document.getSelection();
-    anchorNode = sel.anchorNode;
-    selRange = sel.getRangeAt(0);
     // At this point, sel is collapsed and the document contents are the same as if we had
     // hit Backspace (but not paste yet) on the original non-collapsed selection.
     //
@@ -1662,10 +1677,14 @@ const _insertHTML = function(fragment) {
                 newSelRange.setEnd(lastFragChild, lastFragChild.textContent.length);
                 insertedRange.setEnd(lastFragChild, lastFragChild.textContent.length);
             } else if (_isImageElement(lastFragChild)) {
-                const childNodeIndex = _childNodeIndex(lastFragChild) + 1;
-                newSelRange.setStart(lastFragChild.parentNode, childNodeIndex);
-                newSelRange.setEnd(lastFragChild.parentNode, childNodeIndex);
-                insertedRange.setEnd(lastFragChild.parentNode, childNodeIndex);
+                // When we inserted an image via html, then we need to set both the
+                // newSelRange and insertedRange based on its parent, one right after
+                // the image, and the other surrounding the image.
+                const childNodeIndex = _childNodeIndex(lastFragChild);
+                newSelRange.setStart(lastFragChild.parentNode, childNodeIndex + 1);
+                newSelRange.setEnd(lastFragChild.parentNode, childNodeIndex + 1);
+                insertedRange.setStart(lastFragChild.parentNode, childNodeIndex);
+                insertedRange.setEnd(lastFragChild.parentNode, childNodeIndex + 1);
             } else {
                 newSelRange.setStart(lastFragChild, lastFragChild.childNodes.length);
                 newSelRange.setEnd(lastFragChild, lastFragChild.childNodes.length);
@@ -1918,6 +1937,7 @@ const _deleteRange = function(range, rootName) {
     //_consoleLog("* _deleteRange");
     let leadingNode = range.startContainer;
     let trailingNode = range.endContainer;
+    const startOffset = range.startOffset;
     range.deleteContents();
     const sel = document.getSelection();
     const anchorNode = sel.anchorNode;
@@ -1936,8 +1956,13 @@ const _deleteRange = function(range, rootName) {
         };
     } else {
         newRange = document.createRange();
-        newRange.setStart(leadingNode, leadingNode.textContent.length);
-        newRange.setEnd(trailingNode, 0);
+        if (leadingNode !== trailingNode) {
+            newRange.setStart(leadingNode, leadingNode.textContent.length);
+            newRange.setEnd(trailingNode, 0);
+        } else {
+            newRange.setStart(leadingNode, startOffset);
+            newRange.setEnd(leadingNode, startOffset);
+        }
     };
     range.setStart(newRange.startContainer, newRange.startOffset);
     range.setEnd(newRange.endContainer, newRange.endOffset);
@@ -6302,6 +6327,14 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
     };
 };
 
+/**
+ * Insert the image at the current selection point.
+ *
+ * @param {String}              src         The url of the image.
+ * @param {String}              alt         The alt text describing the image.
+ * @param {Int, Int}            dimensions  The width and height of the image.
+ * @return {HTML Image Element}             The image element that was inserted.
+ */
 const _insertImageAtSelection = function(src, alt, dimensions) {
     const sel = document.getSelection();
     const range = sel.getRangeAt(0);
@@ -6330,6 +6363,16 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
     return img;
 };
 
+/*
+ * Reset the selection after an image has been inserted.
+ *
+ * @param {HTML Image Element}  img         The image element to set selection based on
+ * @param {String || null}      direction   Whether to put the selection BEFORE, AFTER or at the image element
+ *
+ * If the direction is specified, then we need to select the proper element either
+ * before or after the image. If not, then we need to hide the caret and select
+ * the image itself.
+ */
 const _selectFollowingInsertImage = function(img, direction) {
     // After inserting the image, we want to leave the selection either before
     // or after it, or just select the image itself, depending on the context.
@@ -6343,41 +6386,9 @@ const _selectFollowingInsertImage = function(img, direction) {
     };
 };
 
-const _selectFollowingInsert = function(node, direction) {
-    const parentNode = node.parentNode;
-    const newRange = document.createRange();
-    let sib;
-    if (direction === 'AFTER') {
-        sib = node.nextSibling;
-        if (sib) {
-            newRange.setStart(sib, 0);
-            newRange.setEnd(sib, 0);
-        } else {
-            const index = Math.max(_childNodeIndex(node) + 1, parentNode.childNodes.length);
-            newRange.setStart(parentNode, index);
-            newRange.setEnd(parentNode, index);
-        };
-    } else {
-        sib = node.previousSibling;
-        if (sib) {
-            if (_isTextNode(sib)) {
-                newRange.setStart(sib, sib.textContent.length);
-                newRange.setEnd(sib, sib.textContent.length);
-            } else {
-                newRange.setStart(parentNode, _childNodeIndex(node));
-                newRange.setEnd(parentNode, _childNodeIndex(node));
-            };
-        } else {
-            const index = Math.max(_childNodeIndex(node) - 1, 0);
-            newRange.setStart(parentNode, index);
-            newRange.setEnd(parentNode, index);
-        };
-    };
-    const sel = document.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-};
-
+/**
+ * Undo the previous deletion operation on an image
+ */
 const _undoDeleteImage = function(undoerData) {
     const src = undoerData.data.src;
     const alt = undoerData.data.alt;
@@ -6396,10 +6407,48 @@ const _undoDeleteImage = function(undoerData) {
     sel.addRange(newRange);
     const img = _insertImageAtSelection(src, alt, dimensions);
     _selectFollowingInsertImage(img, direction);
+    undoerData.range = document.getSelection().getRangeAt(0);
 };
 
+/**
+ * Redo the previous deletion operation on an image.
+ *
+ * The
+ */
 const _redoDeleteImage = function(undoerData) {
-    _consoleLog('_redoDeleteImage')
+    const src = undoerData.data.src;
+    const alt = undoerData.data.alt;
+    const dimensions = undoerData.data.dimensions;
+    _restoreUndoerRange(undoerData);
+    // If direction is null, resizableImage was selected when we pressed Backspace
+    // or Delete. If direction==='AFTER', we Backspaced from the position after an
+    // image (which is not selected) to delete; if 'BEFORE', we Deleted from the position
+    // before an image (which is not selected) to delete.
+    const direction = undoerData.data.direction;
+    let sib;
+    if (resizableImage.isSelected) {
+        resizableImage.deleteImage(false)
+        _showCaret();
+    } else if (direction === 'AFTER') {
+        sib = _siblingAtSelection('BEFORE');
+        if (_isImageElement(sib)) {
+            resizableImage.select(sib);
+            // Altho we deleted the image BEFORE the selection,
+            // we want to pass 'AFTER' here to indicate where
+            // the cursor should be positioned on undo.
+            _deleteSelectedResizableImage('AFTER', false);
+        };
+    } else if (direction === 'BEFORE') {
+        sib = _siblingAtSelection('AFTER');
+        if (_isImageElement(sib)) {
+            resizableImage.select(sib);
+            // Altho we deleted the image BEFORE the selection,
+            // we want to pass 'AFTER' here to indicate where
+            // the cursor should be positioned on undo.
+            _deleteSelectedResizableImage('BEFORE', false);
+        };
+    };
+    undoerData.range = document.getSelection().getRangeAt(0);
 };
 
 /**
@@ -6444,7 +6493,7 @@ const _focusInImage = function(ev) {
  * before an image (which is not selected) to delete. The direction is not used
  * until we undo, at which point we need to know how to reset the selection.
  */
-const _deleteSelectedResizableImage = function(direction) {
+const _deleteSelectedResizableImage = function(direction, undoable=true) {
     if (!resizableImage.isSelected) { return };
     const src = resizableImage.imageElement.src;
     const alt = resizableImage.imageElement.alt;
@@ -6453,10 +6502,12 @@ const _deleteSelectedResizableImage = function(direction) {
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-    _backupSelection();
-    const undoerData = _undoerData('deleteImage', {src: src, alt: alt, dimensions: dimensions, direction: direction, offset: range.startOffset}, range);
-    undoer.push(undoerData);
-    _restoreSelection();
+    if (undoable) {
+        _backupSelection();
+        const undoerData = _undoerData('deleteImage', {src: src, alt: alt, dimensions: dimensions, direction: direction, offset: range.startOffset}, range);
+        undoer.push(undoerData);
+        _restoreSelection();
+    }
     _showCaret();
     _callback('input');
     _callback('selectionChange');
@@ -7330,12 +7381,56 @@ const _doPrevCell = function() {
  */
 //MARK: Common Private Functions
 
+/**
+ * Hide the caret (used for image selection)
+ */
 const _hideCaret = function() {
     MU.editor.style.caretColor = 'transparent';
 };
 
+/**
+ * Show the caret (has to be restored after image selection
+ */
 const _showCaret = function() {
     MU.editor.style.caretColor = 'blue';
+};
+
+/**
+ * Set the selection either BEFORE or AFTER node
+ */
+const _selectFollowingInsert = function(node, direction) {
+    const parentNode = node.parentNode;
+    const newRange = document.createRange();
+    let sib;
+    if (direction === 'AFTER') {
+        sib = node.nextSibling;
+        if (sib) {
+            newRange.setStart(sib, 0);
+            newRange.setEnd(sib, 0);
+        } else {
+            const index = Math.max(_childNodeIndex(node) + 1, parentNode.childNodes.length);
+            newRange.setStart(parentNode, index);
+            newRange.setEnd(parentNode, index);
+        };
+    } else {
+        sib = node.previousSibling;
+        if (sib) {
+            if (_isTextNode(sib)) {
+                newRange.setStart(sib, sib.textContent.length);
+                newRange.setEnd(sib, sib.textContent.length);
+            } else {
+                newRange.setStart(parentNode, _childNodeIndex(node));
+                newRange.setEnd(parentNode, _childNodeIndex(node));
+            };
+        } else {
+            const index = Math.max(_childNodeIndex(node) - 1, 0);
+            newRange.setStart(parentNode, index);
+            newRange.setEnd(parentNode, index);
+        };
+    };
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(newRange);
 };
 
 /**
