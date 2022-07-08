@@ -186,7 +186,7 @@ class ViewController: UIViewController {
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        selectedWebView?.getPrettyHtml { html in
+        selectedWebView?.getHtml { html in
             self.rawTextView.attributedText = self.attributedString(from: html ?? "")
             handler?()
         }

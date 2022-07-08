@@ -2026,26 +2026,51 @@ MU.setHTML = function(contents) {
 };
 
 /**
- * Get the contents of the editor element
+ * Get the contents of the editor element.
+ *
+ * If pretty, then the text will be nicely formatted for reading.
+ * If clean, the spans and empty text nodes will be removed first.
+ *
+ * Note: Clean is needed to avoid the selected ResizableImage from being
+ * passed-back with spans around it, which is what are used internally to
+ * represent the resizing handles and box around the selected image.
+ * However, this content of the DOM is only for visualization within the
+ * MarkupEditor and should not be included with the HTML contents. It is
+ * left here as an option in case it's needed for debugging.
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function() {
-    return MU.editor.innerHTML;
+MU.getHTML = function(pretty=true, clean=true) {
+    let editor, text;
+    if (clean) {
+        const template = document.createElement('template');
+        template.innerHTML = MU.editor.innerHTML;
+        editor = template.content;
+        _cleanUpSpansWithin(editor);
+        _cleanUpEmptyTextNodes(editor);
+    } else {
+        editor = MU.editor;
+    };
+    if (pretty) {
+        text = _allPrettyHTML(editor);
+    } else {
+        text = MU.editor.innerHTML;
+    };
+    return text;
 };
 
 /**
- * Return a pretty version of the raw editor contents based on the DOM contents of MU.editor.
+ * Return a pretty version of editor contents.
  *
  * Insert a newline between each top-level element so they are distinct
  * visually and each top-level element is in a contiguous text block vertically.
  *
  * @return {String}     A string showing the raw HTML with tags, etc.
  */
-MU.getPrettyHTML = function() {
+const _allPrettyHTML = function(editor) {
     let text = '';
     let firstTopLevelNode = true;
-    const childNodes = MU.editor.childNodes;
+    const childNodes = editor.childNodes;
     const childNodesLength = childNodes.length;
     for (let i = 0; i < childNodesLength; i++) {
         let topLevelNode = childNodes[i];
@@ -2060,7 +2085,7 @@ MU.getPrettyHTML = function() {
  *
  * The inlined parameter forces whether to put a newline at the beginning
  * of the text. By passing it in rather than computing it from node, we
- * can avoid putting a newline in front of the first element in MU.getPrettyHTML.
+ * can avoid putting a newline in front of the first element in _allPrettyHTML.
  */
 const _prettyHTML = function(node, indent, text, inlined) {
     const nodeName = node.nodeName.toLowerCase();
@@ -5561,19 +5586,24 @@ const _cleanUpSpans = function() {
  */
 const _cleanUpSpansWithin = function(node, spansRemoved) {
     spansRemoved = spansRemoved ?? 0;
-    // Spans are not elements, so have no children; however, nested
-    // spans do show up as childNodes of a span.
-    const childNodes = node.childNodes;
-    for (let i=0; i<childNodes.length; i++) {
-        const child = childNodes[i];
+    // Nested spans show up as children of a span.
+    const children = node.children;
+    let child = (children.length > 0) ? children[0] : null;
+    while (child) {
+        let nextChild = child.nextElementSibling;
         spansRemoved = _cleanUpSpansWithin(child, spansRemoved);
+        child = nextChild;
     };
     if (node.nodeName === 'SPAN') {
         spansRemoved++;
-        const template = document.createElement('template');
-        template.innerHTML = node.innerHTML;
-        const newElement = template.content;
-        node.replaceWith(newElement);
+        if (node.childNodes.length > 0) {   // Use childNodes because we need text nodes
+            const template = document.createElement('template');
+            template.innerHTML = node.innerHTML;
+            const newElement = template.content;
+            node.replaceWith(newElement);
+        } else {
+            node.parentNode.removeChild(node);
+        };
     };
     return spansRemoved;
 };

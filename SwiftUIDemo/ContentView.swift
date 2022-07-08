@@ -85,7 +85,7 @@ struct ContentView: View {
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        selectedWebView?.getPrettyHtml { html in
+        selectedWebView?.getHtml { html in
             rawText = attributedString(from: html ?? "")
             handler?()
         }

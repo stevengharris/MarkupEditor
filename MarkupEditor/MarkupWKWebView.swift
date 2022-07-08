@@ -354,13 +354,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func getHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML()") { result, error in
+        getPrettyHtml(handler)
+    }
+    
+    public func getRawHtml(_ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getHTML(false)") { result, error in
             handler?(result as? String)
         }
     }
     
     public func getPrettyHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getPrettyHTML()") { result, error in
+        evaluateJavaScript("MU.getHTML()") { result, error in
             handler?(result as? String)
         }
     }

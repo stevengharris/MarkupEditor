@@ -74,15 +74,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             var test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Undo formatting of \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: test.startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         XCTAssert(result)
                         let formatFollowUp = {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: test.endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: test.startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -127,15 +127,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let startHtml = formattedString.styledHtml(adding: .P)
             let expectation = XCTestExpectation(description: "Format \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: test.startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         XCTAssert(result)
                         let formatFollowUp = {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: test.endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -502,14 +502,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let undoHtml = test.undoHtml ?? test.startHtml
             let expectation = XCTestExpectation(description: "Unformatting nested tags")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -592,14 +592,14 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Undoing the setting and replacing of styles")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -698,15 +698,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Setting and replacing styles across multiple paragraphs")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -840,15 +840,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1087,15 +1087,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Indent/outdent operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1283,15 +1283,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1659,15 +1659,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Multilist operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1785,17 +1785,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1943,17 +1943,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -1999,15 +1999,15 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -2198,17 +2198,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -2403,17 +2403,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
             // When the undo is done, the html should be what we started with.
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
@@ -2448,13 +2448,13 @@ class UndoTests: XCTestCase, MarkupDelegate {
             let startHtml = test.startHtml
             let expectation = XCTestExpectation(description: "Paste an image")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
                         self.addUndoSetHandler {
-                            self.webView.getHtml { pasted in
+                            self.webView.getRawHtml { pasted in
                                 if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                     expectation.fulfill()
@@ -2463,7 +2463,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 }
                                 // Define the handler after input is received (i.e., once the undo is complete)
                                 self.addInputHandler {
-                                    self.webView.getHtml { unformatted in
+                                    self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
