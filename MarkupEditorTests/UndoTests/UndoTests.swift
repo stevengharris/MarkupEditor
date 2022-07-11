@@ -67,7 +67,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
     func addUndoSetHandler(_ handler: @escaping (()->Void)) {
         undoSetHandler = handler
     }
-    
+
     func testUndoFormats() throws {
         // Select a range in a P styled string, apply a format to it, and then undo
         for format in FormatContext.AllCases {
@@ -2457,7 +2457,6 @@ class UndoTests: XCTestCase, MarkupDelegate {
                             self.webView.getRawHtml { pasted in
                                 if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
-                                    expectation.fulfill()
                                 } else {
                                     XCTFail("The pasted HTML was not returned properly.")
                                 }

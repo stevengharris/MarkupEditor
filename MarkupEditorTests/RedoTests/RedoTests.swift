@@ -2517,7 +2517,6 @@ class RedoTests: XCTestCase, MarkupDelegate {
                             self.webView.getRawHtml { pasted in
                                 if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
-                                    expectation.fulfill()
                                 } else {
                                     XCTFail("The pasted HTML was not returned properly.")
                                 }

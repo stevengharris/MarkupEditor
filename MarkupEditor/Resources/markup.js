@@ -774,7 +774,7 @@ const _undoOperation = function(undoerData) {
             _redoInsertLink(undoerData);
             break;
         case 'insertImage':
-            _redoModifyImage(undoerData);
+            _undoInsertImage(undoerData);
             break;
         case 'modifyImage':
             _redoInsertImage(undoerData);
@@ -6571,6 +6571,17 @@ const _getImageAttributes = function(image=null) {
         attributes['frame'] = rectDict
     }
     return attributes;
+};
+
+const _undoInsertImage = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    if (resizableImage.isSelected) {
+        resizableImage.deleteImage()
+        undoerData.range = document.getSelection().getRangeAt(0);
+        _showCaret();
+        _callback('input');
+        _callback('selectionChange');
+    };
 };
 
 /**
