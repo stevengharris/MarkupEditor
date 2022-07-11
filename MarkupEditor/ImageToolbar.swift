@@ -29,6 +29,7 @@ public struct ImageToolbar: View {
     private var argAlt: String? { alt.isEmpty ? nil : alt }
     @State private var saving: Bool = false
     @State private var endedEditing: Bool = false
+    @State private var focusedField = "src"
     
     public var body: some View {
         Group {
@@ -41,16 +42,18 @@ public struct ImageToolbar: View {
                                 label: "Image URL",
                                 placeholder: "Enter Image URL",
                                 text: $src,
-                                commitHandler: { save() },
-                                loseFocusHandler: { save() }
+                                commitHandler: { save("src") },
+                                takeFocusOn: "src",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
                                 text: $alt,
-                                commitHandler: { save() },
-                                loseFocusHandler: { save() }
+                                commitHandler: { save("alt") },
+                                takeFocusOn: "alt",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
@@ -72,16 +75,18 @@ public struct ImageToolbar: View {
                                 label: "Image URL",
                                 placeholder: "Enter Image URL",
                                 text: $src,
-                                commitHandler: { save() },
-                                loseFocusHandler: { save() }
+                                commitHandler: { save("src") },
+                                takeFocusOn: "src",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
                                 text: $alt,
-                                commitHandler: { save() },
-                                loseFocusHandler: { save() }
+                                commitHandler: { save("alt") },
+                                takeFocusOn: "alt",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
@@ -149,10 +154,11 @@ public struct ImageToolbar: View {
         insertOrModify()
     }
     
-    private func save() {
-        // Save src, alt, scale if they haven't been previewed, and then close
+    private func save(_ fieldName: String) {
+        // Insert or modify the image, then change the focusedField
         saving = true
         insertOrModify()
+        focusedField = (fieldName == "src") ? "alt" : "src"
     }
     
 }
