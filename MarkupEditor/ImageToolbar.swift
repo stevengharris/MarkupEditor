@@ -17,21 +17,16 @@ public struct ImageToolbar: View {
     private var height: CGFloat { toolbarPreference.height() }
     private var initialSrc: String?
     private var initialAlt: String?
-    private var initialScale: Int?
-    private let scaleStep: Int = 5
-    // The src, alt, and scale values are the state for the toolbar
+    // The src and alt values are the state for the toolbar
     @State private var src: String
     @State private var alt: String
-    @State private var scale: Int
     // The previewed values hold on to what has been previewed, to
     // avoid doing the insert/modify unnecessarily
     @State private var previewedSrc: String
     @State private var previewedAlt: String
-    @State private var previewedScale: Int
     // The "arg" equivalent is for scale passed to create/modifyImage
     private var argSrc: String? { src.isEmpty ? nil : src }
     private var argAlt: String? { alt.isEmpty ? nil : alt }
-    private var argScale: Int? { scale == 100 ? nil : scale }
     @State private var saving: Bool = false
     @State private var endedEditing: Bool = false
     
@@ -47,14 +42,15 @@ public struct ImageToolbar: View {
                                 placeholder: "Enter Image URL",
                                 text: $src,
                                 commitHandler: { save() },
-                                validationHandler: { src.isValidURL },
                                 loseFocusHandler: { save() }
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
-                                text: $alt
+                                text: $alt,
+                                commitHandler: { save() },
+                                loseFocusHandler: { save() }
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
@@ -77,13 +73,15 @@ public struct ImageToolbar: View {
                                 placeholder: "Enter Image URL",
                                 text: $src,
                                 commitHandler: { save() },
-                                validationHandler: { src.isValidURL }
+                                loseFocusHandler: { save() }
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
-                                text: $alt
+                                text: $alt,
+                                commitHandler: { save() },
+                                loseFocusHandler: { save() }
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
@@ -102,10 +100,8 @@ public struct ImageToolbar: View {
         .onChange(of: selectionState.src, perform: { value in
             src = selectionState.src ?? ""
             alt = selectionState.alt ?? ""
-            scale = selectionState.scale ?? 100
             previewedSrc = src
             previewedAlt = alt
-            previewedScale = scale
         })
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
@@ -115,48 +111,15 @@ public struct ImageToolbar: View {
     public init(selectionState: SelectionState) {
         initialSrc = selectionState.src
         initialAlt = selectionState.alt
-        initialScale = selectionState.scale
         _previewedSrc = State(initialValue: selectionState.src ?? "")
         _previewedAlt = State(initialValue: selectionState.alt ?? "")
-        _previewedScale = State(initialValue: selectionState.scale ?? 100)
         _src = State(initialValue: selectionState.src ?? "")
         _alt = State(initialValue: selectionState.alt ?? "")
-        _scale = State(initialValue: selectionState.scale ?? 100)
-    }
-    
-    private func incrementScale() {
-        // We need to reset scale and then set it back to avoid this bug:
-        // https://stackoverflow.com/questions/58960251/strange-behavior-of-stepper-in-swiftui
-        scale += scaleStep
-        if scale > 100 {
-            scale = 100
-        } else {
-            guard let view = observedWebView.selectedWebView, argSrc != nil else {
-                scale -= scaleStep
-                return
-            }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
-        }
-    }
-    
-    private func decrementScale() {
-        // We need to reset scale and then set it back to avoid this bug:
-        // https://stackoverflow.com/questions/58960251/strange-behavior-of-stepper-in-swiftui
-        scale -= scaleStep
-        if scale < scaleStep {
-            scale = scaleStep
-        } else {
-            guard let view = observedWebView.selectedWebView, argSrc != nil else {
-                scale += scaleStep
-                return
-            }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
-        }
     }
     
     private func previewed() -> Bool {
         // Return whether what we are seeing on the screen is the same as is in the toolbar
-        return src == previewedSrc && alt == previewedAlt && scale == previewedScale
+        return src == previewedSrc && alt == previewedAlt
     }
     
     private func insertOrModify(handler: (()->Void)? = nil) {
@@ -168,14 +131,12 @@ public struct ImageToolbar: View {
             observedWebView.selectedWebView?.insertImage(src: argSrc, alt: argAlt) {
                 previewedSrc = src
                 previewedAlt = alt
-                previewedScale = scale
                 handler?()
             }
         } else {
-            observedWebView.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale) {
+            observedWebView.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: nil) {
                 previewedSrc = src
                 previewedAlt = alt
-                previewedScale = scale
                 handler?()
             }
         }
@@ -191,15 +152,6 @@ public struct ImageToolbar: View {
     private func save() {
         // Save src, alt, scale if they haven't been previewed, and then close
         saving = true
-        insertOrModify()
-    }
-    
-    private func cancel() {
-        // Restore src, alt, and scale to their initial values, put things back the way they were, and then close
-        saving = true
-        src = initialSrc ?? ""
-        alt = initialAlt ?? ""
-        scale = initialScale ?? 100
         insertOrModify()
     }
     

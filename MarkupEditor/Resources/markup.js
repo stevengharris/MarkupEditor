@@ -5671,9 +5671,8 @@ const _prepImages = function(node) {
     const images = node.querySelectorAll('img');
     for (let i = 0; i < images.length; i++) {
         const image = images[i];
-        image.onload = function() {
-            _imageLoaded(image)
-        };
+        image.addEventListener('load', function() {_prepImage(image)});
+        image.addEventListener('error', function() {_prepImage(image)});
     };
 };
 
@@ -6311,10 +6310,8 @@ MU.insertImage = function(src, alt, undoable=true) {
 
 /**
  * Modify the attributes of the image at selection.
- * If src is null, then remove the image.
  * Scale is a percentage like '80' where null means 100%.
  * Scale is always expressed relative to full scale.
- * Only removing an image is undoable.
  *
  * @param {String}              src         The url of the image.
  * @param {String}              alt         The alt text describing the image.
@@ -6322,38 +6319,46 @@ MU.insertImage = function(src, alt, undoable=true) {
  * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
-    const img = _getElementAtSelection('IMG');
-    if (img) {
-        if (src) {
-            img.setAttribute('src', src);
-            if (alt) {
-                img.setAttribute('alt', alt);
-            } else {
-                img.removeAttribute('alt');
-            }
-            let width, height;
-            if (scale) {
-                width = _percentInt(scale, img.naturalWidth);
-                height = _percentInt(scale, img.naturalHeight);
-            } else {
-                width = img.naturalWidth;
-                height = img.naturalHeight;
-            }
-            img.setAttribute('width', width);
-            img.setAttribute('height', height);
-            _restoreSelection()
-        } else {
-            // Before removing the img, record the existing src, alt, and scale
-            const deletedSrc = img.getAttribute('src');
-            const deletedAlt = img.getAttribute('alt');;
-            _deleteAndResetSelection(img, 'BEFORE');
-            if (undoable) {
-                const undoerData = _undoerData('modifyImage', {src: deletedSrc, alt: deletedAlt, scale: scale});
-                undoer.push(undoerData);
-                _restoreSelection();
-            }
+    if (!resizableImage.isSelected) { return };   // Can't modify an iage that isn't selected
+    const img = resizableImage.imageElement;
+    const existingSrc = img.getAttribute('src');
+    const existingAlt = img.getAttribute('alt');
+    const existingWidth = img.getAttribute('width');
+    const existingHeight = img.getAttribute('height');
+    if (src === existingSrc) {
+        if (alt !== existingAlt) { img.setAttribute('alt', alt) };
+        let width, height;
+        if (scale) {
+            width = _percentInt(scale, img.naturalWidth);
+            height = _percentInt(scale, img.naturalHeight);
+            if ((width !== existingWidth) || (height !== existingHeight)) {
+                img.setAttribute('width', width);
+                img.setAttribute('height', height);
+            };
         };
         _callback('input');
+        _callback('selectionChange');
+    } else {
+        const newImg = document.createElement('img');
+        newImg.setAttribute('alt', alt);
+        _setSrc(newImg, src);   // Will make newImg selected and call input/selectionChange
+    };
+    //TODO: Make modifyImage properly undoable again
+};
+
+const _setSrc = function(img, src) {
+    img.addEventListener('load', function() {_makeSelected(img)});
+    img.addEventListener('error', function() {_makeSelected(img)});
+    img.setAttribute('src', src);
+};
+
+const _makeSelected = function(img) {
+    _prepImage(img);
+    if (resizableImage.isSelected) {
+        resizableImage.replaceImage(img);
+    } else {
+        resizableImage.select(img);
+        _hideCaret();
     };
 };
 
@@ -6369,7 +6374,6 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
     const sel = document.getSelection();
     const range = sel.getRangeAt(0);
     const img = document.createElement('img');
-    img.setAttribute('src', src);
     if (alt) {
         img.setAttribute('alt', alt);
     };
@@ -6377,19 +6381,13 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
         img.setAttribute('width', dimensions.width);
         img.setAttribute('height', dimensions.height);
     }
-    img.onload = function() {
-        _imageLoaded(img)       // Prep the image properly after loading
-    };
-    if (resizableImage.isSelected) {
-        resizableImage.replaceImage(img);
+    const sib = _siblingAtSelection();
+    if (_isBRElement(sib)) {
+        sib.replaceWith(img);
     } else {
-        const sib = _siblingAtSelection();
-        if (_isBRElement(sib)) {
-            sib.replaceWith(img);
-        } else {
-            range.insertNode(img);
-        };
+        range.insertNode(img);
     };
+    _setSrc(img, src)   // Initiate load/error callback and prepping of image
     return img;
 };
 
@@ -6482,22 +6480,26 @@ const _redoDeleteImage = function(undoerData) {
 };
 
 /**
- * Callback invoked from image.onload
+ * Callback invoked after the load or error event on an image
+ *
+ * The purpose of this method is to set attributes of every image to be
+ * selectable and resizable.
  */
-const _imageLoaded = function(image) {
-    _callback('updateHeight');
-    image.setAttribute('class', 'resize-image');            // Make it resizable
-    image.setAttribute('tabindex', -1);                     // Make it selectable
+const _prepImage = function(img) {
+    img.setAttribute('class', 'resize-image');            // Make it resizable
+    img.setAttribute('tabindex', -1);                     // Make it selectable
     // Per https://www.youtube.com/watch?v=YM3KszYmn58, we always want dimensions
-    if (!image.getAttribute('width')) {
-        image.setAttribute('width', image.naturalWidth);
+    const width = img.getAttribute('width');
+    if (!img.getAttribute('width')) {
+        img.setAttribute('width', Math.max(img.naturalWidth ?? 0, 20));
     };
-    if (!image.getAttribute('height')) {
-        image.setAttribute('height', image.naturalHeight);
+    if (!img.getAttribute('height')) {
+        img.setAttribute('height', Math.max(img.naturalHeight ?? 0, 20));
     };
     // For history, 'focusout' just never fires, either for image or the resizeContainer
-    image.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
-    _callback('input');                                     // Because we changed the html
+    img.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
+    _callback('updateHeight');
+    _callback('input');                                   // Because we changed the html
 };
 
 /**
@@ -8683,6 +8685,9 @@ const _deleteAndResetSelection = function(element, direction) {
  * @return  {HTML Node | null}          The node we found or null if not found.
  */
 const _getElementAtSelection = function(nodeName) {
+    if (nodeName === 'IMG') {
+        return (resizableImage.isSelected) ? resizableImage.imageElement : null;
+    };
     const sel = document.getSelection();
     if (sel && sel.anchorNode) {  // Removed check on && isCollapsed
         const node = sel.anchorNode;
