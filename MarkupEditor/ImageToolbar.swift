@@ -17,23 +17,19 @@ public struct ImageToolbar: View {
     private var height: CGFloat { toolbarPreference.height() }
     private var initialSrc: String?
     private var initialAlt: String?
-    private var initialScale: Int?
-    private let scaleStep: Int = 5
-    // The src, alt, and scale values are the state for the toolbar
+    // The src and alt values are the state for the toolbar
     @State private var src: String
     @State private var alt: String
-    @State private var scale: Int
     // The previewed values hold on to what has been previewed, to
     // avoid doing the insert/modify unnecessarily
     @State private var previewedSrc: String
     @State private var previewedAlt: String
-    @State private var previewedScale: Int
     // The "arg" equivalent is for scale passed to create/modifyImage
     private var argSrc: String? { src.isEmpty ? nil : src }
     private var argAlt: String? { alt.isEmpty ? nil : alt }
-    private var argScale: Int? { scale == 100 ? nil : scale }
     @State private var saving: Bool = false
     @State private var endedEditing: Bool = false
+    @State private var focusedField = "src"
     
     public var body: some View {
         Group {
@@ -46,15 +42,18 @@ public struct ImageToolbar: View {
                                 label: "Image URL",
                                 placeholder: "Enter Image URL",
                                 text: $src,
-                                commitHandler: { save() },
-                                validationHandler: { src.isValidURL },
-                                loseFocusHandler: { save() }
+                                commitHandler: { save("src") },
+                                takeFocusOn: "src",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
-                                text: $alt
+                                text: $alt,
+                                commitHandler: { save("alt") },
+                                takeFocusOn: "alt",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
@@ -62,22 +61,10 @@ public struct ImageToolbar: View {
                     }
                     .padding([.trailing], 8)
                     Spacer()
-                    Divider()
-                    Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                        Text("\(scale)%")
-                            .frame(width: 40, height: height, alignment: .trailing)
-                    }
                     if toolbarPreference.allowLocalImages {
-                        Divider()
                         ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
                             .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
-                    Divider()
-                    ToolbarTextButton(title: "Save", action: { self.save() }) //, width: 50)
-                        .disabled(!src.isEmpty && !src.isValidURL)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }) //, width: 50)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
                 .frame(height: height)
             case .labeled:
@@ -88,36 +75,29 @@ public struct ImageToolbar: View {
                                 label: "Image URL",
                                 placeholder: "Enter Image URL",
                                 text: $src,
-                                commitHandler: { save() },
-                                validationHandler: { src.isValidURL }
+                                commitHandler: { save("src") },
+                                takeFocusOn: "src",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.7)
                             ToolbarTextField(
                                 label: "Description",
                                 placeholder: "Enter Description",
-                                text: $alt
+                                text: $alt,
+                                commitHandler: { save("alt") },
+                                takeFocusOn: "alt",
+                                focusIsOn: $focusedField
                             )
                             .frame(width: geometry.size.width * 0.3)
                         }
                         .padding([.top], 2)
                     }
                     .padding([.trailing], 8)
-                    Divider()
-                    LabeledToolbar(label: Text("Scale")) {
-                        Stepper(onIncrement: incrementScale, onDecrement: decrementScale) {
-                            Text("\(scale)%")
-                                .frame(width: height, height: height, alignment: .trailing)
-                        }
+                    Spacer()
+                    if toolbarPreference.allowLocalImages {
+                        ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
+                            .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
-                    .padding([.bottom], 3)
-                    Divider()
-                    ToolbarTextButton(title: "Save", action: { self.save() }, width: 80)
-                        .padding([.bottom], 4)
-                        .disabled(!src.isEmpty && !src.isValidURL)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
-                    ToolbarTextButton(title: "Cancel", action: { self.cancel() }, width: 80)
-                        .padding([.bottom], 4)
-                        .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                 }
                 .frame(height: height)
             }
@@ -125,10 +105,8 @@ public struct ImageToolbar: View {
         .onChange(of: selectionState.src, perform: { value in
             src = selectionState.src ?? ""
             alt = selectionState.alt ?? ""
-            scale = selectionState.scale ?? 100
             previewedSrc = src
             previewedAlt = alt
-            previewedScale = scale
         })
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
@@ -138,48 +116,15 @@ public struct ImageToolbar: View {
     public init(selectionState: SelectionState) {
         initialSrc = selectionState.src
         initialAlt = selectionState.alt
-        initialScale = selectionState.scale
         _previewedSrc = State(initialValue: selectionState.src ?? "")
         _previewedAlt = State(initialValue: selectionState.alt ?? "")
-        _previewedScale = State(initialValue: selectionState.scale ?? 100)
         _src = State(initialValue: selectionState.src ?? "")
         _alt = State(initialValue: selectionState.alt ?? "")
-        _scale = State(initialValue: selectionState.scale ?? 100)
-    }
-    
-    private func incrementScale() {
-        // We need to reset scale and then set it back to avoid this bug:
-        // https://stackoverflow.com/questions/58960251/strange-behavior-of-stepper-in-swiftui
-        scale += scaleStep
-        if scale > 100 {
-            scale = 100
-        } else {
-            guard let view = observedWebView.selectedWebView, argSrc != nil else {
-                scale -= scaleStep
-                return
-            }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
-        }
-    }
-    
-    private func decrementScale() {
-        // We need to reset scale and then set it back to avoid this bug:
-        // https://stackoverflow.com/questions/58960251/strange-behavior-of-stepper-in-swiftui
-        scale -= scaleStep
-        if scale < scaleStep {
-            scale = scaleStep
-        } else {
-            guard let view = observedWebView.selectedWebView, argSrc != nil else {
-                scale += scaleStep
-                return
-            }
-            view.modifyImage(src: argSrc, alt: argAlt, scale: argScale, handler: nil)
-        }
     }
     
     private func previewed() -> Bool {
         // Return whether what we are seeing on the screen is the same as is in the toolbar
-        return src == previewedSrc && alt == previewedAlt && scale == previewedScale
+        return src == previewedSrc && alt == previewedAlt
     }
     
     private func insertOrModify(handler: (()->Void)? = nil) {
@@ -191,14 +136,12 @@ public struct ImageToolbar: View {
             observedWebView.selectedWebView?.insertImage(src: argSrc, alt: argAlt) {
                 previewedSrc = src
                 previewedAlt = alt
-                previewedScale = scale
                 handler?()
             }
         } else {
-            observedWebView.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: argScale) {
+            observedWebView.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, scale: nil) {
                 previewedSrc = src
                 previewedAlt = alt
-                previewedScale = scale
                 handler?()
             }
         }
@@ -211,19 +154,11 @@ public struct ImageToolbar: View {
         insertOrModify()
     }
     
-    private func save() {
-        // Save src, alt, scale if they haven't been previewed, and then close
+    private func save(_ fieldName: String) {
+        // Insert or modify the image, then change the focusedField
         saving = true
         insertOrModify()
-    }
-    
-    private func cancel() {
-        // Restore src, alt, and scale to their initial values, put things back the way they were, and then close
-        saving = true
-        src = initialSrc ?? ""
-        alt = initialAlt ?? ""
-        scale = initialScale ?? 100
-        insertOrModify()
+        focusedField = (fieldName == "src") ? "alt" : "src"
     }
     
 }
@@ -231,9 +166,9 @@ public struct ImageToolbar: View {
 struct ImageToolbar_Previews: PreviewProvider {
     static var previews: some View {
         let selectionState = SelectionState()
-        let compactMarkupEnv = MarkupEnv(style: .compact)
+        let compactMarkupEnv = MarkupEnv(style: .compact, allowLocalImages: true)
         let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
+        let labeledMarkupEnv = MarkupEnv(style: .labeled, allowLocalImages: true)
         let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {

@@ -52,15 +52,15 @@ public struct LinkToolbar: View {
                     Divider()
                     LabeledToolbar(label: Text("Delete")) {
                         ToolbarImageButton(
-                                systemName: "link",
+                            systemName: "link",
                             action: { observedWebView.selectedWebView?.insertLink(nil) }
-                            ).overlay(
-                                Image(systemName: "xmark")
-                                    .foregroundColor(Color.red)
-                                    .font(Font.system(size: 8).weight(.bold))
-                                    .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
-                                    .zIndex(1)
-                            )
+                        ).overlay(
+                            Image(systemName: "xmark")
+                                .foregroundColor(Color.red)
+                                .font(Font.system(size: 8).weight(.bold))
+                                .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
+                                .zIndex(1)
+                        )
                     }
                     .disabled(!selectionState.isInLink)
                     Divider()
@@ -122,13 +122,13 @@ public struct LinkToolbar: View {
             }
         }
         .onChange(of: selectionState.selection, perform: { value in
-            print("Alink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            print("A link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
             href = selectionState.href ?? ""
             link = selectionState.link ?? selectionState.selection ?? ""
             previewedHref = href
         })
         .onChange(of: selectionState.href, perform: { value in
-            print("Blink: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            print("B link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
             href = selectionState.href ?? ""
             link = selectionState.link ?? selectionState.selection ?? ""
             previewedHref = href

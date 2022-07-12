@@ -82,12 +82,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             var test = HtmlTest.forFormatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Format \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: test.startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         XCTAssert(result)
                         let formatFollowUp = {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: test.endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -125,12 +125,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             var test = HtmlTest.forUnformatting("This is a start.", style: .P, format: format, startingAt: 5, endingAt: 7)
             let expectation = XCTestExpectation(description: "Format \(format.tag)")
             webView.setTestHtml(value: test.startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: test.startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         XCTAssert(result)
                         let formatFollowUp = {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: test.endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -173,7 +173,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             print(" * Test: \(description)")
             let expectation = XCTestExpectation(description: description)
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: format.tag, startOffset: 1, endId: format.tag, endOffset: 1) { result in
                         XCTAssert(result)
@@ -545,12 +545,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Unformatting nested tags")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -628,12 +628,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Setting and replacing styles")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -730,12 +730,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Setting and replacing styles across multiple paragraphs")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -867,12 +867,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Increasing and decreasing block levels")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -1127,12 +1127,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Indent/outdent operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -1318,12 +1318,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -1670,12 +1670,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "List operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -1867,12 +1867,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Enter being pressed in a list with various collapsed selections")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Execute the action to press Enter at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -2124,12 +2124,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: test.description ?? "Enter being pressed in a list with various range selections")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Execute the action to press Enter at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -2199,12 +2199,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
                         // Execute the action to unformat at the selection
                         action() {
-                            self.webView.getHtml { formatted in
+                            self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
@@ -2435,11 +2435,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Paste various html at various places")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         self.webView.pasteHtml(test.pasteString) {
-                            self.webView.getHtml() { pasted in
+                            self.webView.getRawHtml() { pasted in
                                 self.assertEqualStrings(expected: endHtml, saw: pasted)
                                 expectation.fulfill()
                             }
@@ -2680,11 +2680,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Paste various html at various places")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         self.webView.pasteText(test.pasteString) {
-                            self.webView.getHtml() { pasted in
+                            self.webView.getRawHtml() { pasted in
                                 self.assertEqualStrings(expected: endHtml, saw: pasted)
                                 expectation.fulfill()
                             }
@@ -2713,19 +2713,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let startHtml = test.startHtml
             let expectation = XCTestExpectation(description: "Paste an image")
             webView.setTestHtml(value: startHtml) {
-                self.webView.getHtml { contents in
+                self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         self.webView.pasteImage(UIImage(systemName: "calendar")) {
-                            self.webView.getHtml() { pasted in
-                                // This is pretty brittle, but the image file name is a generated UUID. The test just makes
-                                // sure that the <img> element is where we expect in this simple case and the file actually
-                                // exists.
-                                if let pasted = pasted {
-                                    XCTAssertTrue(pasted.contains("<img src=\""))
-                                    XCTAssertTrue(pasted.contains("\" tabindex=\"-1\">"))
-                                    let imageFileRange = pasted.index(pasted.startIndex, offsetBy: 30)..<pasted.index(pasted.endIndex, offsetBy: -42)
-                                    let imageFileName = String(pasted[imageFileRange])
+                            self.webView.getRawHtml() { pasted in
+                                if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                     expectation.fulfill()
                                 } else {

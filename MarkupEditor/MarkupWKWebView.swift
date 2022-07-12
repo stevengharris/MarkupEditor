@@ -54,7 +54,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public enum PasteableType {
         case Text
         case Html
-        case Image
+        case ExternalImage
+        case LocalImage
         case Url
     }
     
@@ -353,13 +354,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func getHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML()") { result, error in
+        getPrettyHtml(handler)
+    }
+    
+    public func getRawHtml(_ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getHTML(false)") { result, error in
             handler?(result as? String)
         }
     }
     
     public func getPrettyHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getPrettyHTML()") { result, error in
+        evaluateJavaScript("MU.getHTML()") { result, error in
             handler?(result as? String)
         }
     }
@@ -416,6 +421,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             if alt != nil {
                 args += ", '\(alt!.escaped)'"
             }
+            becomeFirstResponder()
             evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
         }
     }
@@ -436,6 +442,54 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             print("Error inserting local image: \(error.localizedDescription)")
             handler?()
         }
+    }
+    
+    /// Copy both the html for the image and the image itself to the clipboard.
+    ///
+    /// Why copy both? For copy/paste within the document itself, we always want to paste the HTML. The html
+    /// points to the same image file at the same scale as exists in the document already. But, if the user wants
+    /// to copy an image from the document and paste it into some other app, then they need the image from src
+    /// at its full resolution. However, if the image in the MarkupEditor document is an external image, then we
+    /// populate the public.html, not the public.png, so external pasting uses the url.
+    public func copyImage(src: String, alt: String?, width: Int?, height: Int?) {
+        guard let url = URL(string: src) else {
+            markupDelegate?.markupError(code: "Invalid image URL", message: "The url for the image to copy was invalid.", info: "src: \(src)", alert: true)
+            return
+        }
+        var html = ""
+        var items = [String : Any]()
+        // First, get the pngData for any local element, and start populating html with src
+        if url.isFileURL, let fileUrl = URL(string: url.path) {
+            // File urls need to reside at the cacheUrl or we don't put it in the pasteboard.
+            // The src is specified relative to the cacheUrl().
+            if (url.path.starts(with: cacheUrl().path)) {
+                let cachedImageUrl = URL(fileURLWithPath: fileUrl.lastPathComponent, relativeTo: cacheUrl())
+                if let urlData = try? Data(contentsOf: cachedImageUrl), let image = UIImage(data: urlData) {
+                    items["public.png"] = image.pngData()
+                    html += "<img src=\"\(cachedImageUrl.relativePath)\""
+                }
+            }
+            guard items["public.png"] != nil else {
+                markupDelegate?.markupError(code: "Invalid local image", message: "Could not copy image data to pasteboard.", info: "src: \(src)", alert: true)
+                return
+            }
+        } else {
+            // Src is the full path
+            html += "<img src=\"\(src)\""
+        }
+        if let alt = alt { html += " alt=\"\(alt)\""}
+        if let width = width, let height = height { html += " width=\"\(width)\" height=\"\(height)\""}
+        html += ">"
+        guard let htmlData = html.data(using: .utf8) else { // Should never happen
+            markupDelegate?.markupError(code: "Invalid image HTML", message: "The html for the image to copy was invalid.", info: "html: \(html)", alert: true)
+            return
+        }
+        items["markup.image"] = htmlData        // Always load up our custom pasteboard element
+        if !url.isFileURL {
+            items["public.html"] = htmlData     // And for external images, load up the html
+        }
+        let pasteboard = UIPasteboard.general
+        pasteboard.setItems([items])
     }
     
     private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
@@ -552,11 +606,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK: Paste
     
     /// Return the Pasteable type based on the types found in the UIPasteboard.general
+    ///
+    /// When we copy from the MarkupEditor itself, we populate both the "markup.image" of the
+    /// pasteboard as well as the "image". This lets us paste the image to an external app,
+    /// where it will show up full size. However, if we have "markup.image" populated, then
+    /// we prioritize it for pasting, because it retains the sizing of the original.
     public func pasteableType() -> PasteableType? {
         let pasteboard = UIPasteboard.general
-        if pasteboard.image != nil {
+        if pasteboard.contains(pasteboardTypes: ["markup.image"]) {
+            return .LocalImage
+        } else if pasteboard.image != nil {
             // We have copied an image into the pasteboard
-            return .Image
+            return .ExternalImage
         } else if pasteboard.url != nil {
             // We have a url which we assume identifies an image we can display
             return .Url
@@ -836,8 +897,15 @@ extension MarkupWKWebView {
             if let data = pasteboard.data(forPasteboardType: "public.html") {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
-        case .Image:
+        case .ExternalImage:
             pasteImage(pasteboard.image)
+        case .LocalImage:
+            // Note that a LocalImage is just HTML; i.e., the html of the
+            // image element we copied in the MarkupEditor, that also specifies
+            // the dimensions.
+            if let data = pasteboard.data(forPasteboardType: "markup.image") {
+                pasteHtml(String(data: data, encoding: .utf8))
+            }
         case .Url:
             pasteImageUrl(pasteboard.url)
         }

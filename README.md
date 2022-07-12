@@ -194,12 +194,7 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 2. Table editing
     * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
     * Headers are currently colspanning the full table, but this needs to be adjustable.
-3. Image editing
-    * Selection is funky. Should show the image itself being selected but does not.
-    * Scaling is clunky. I plan to replace the Stepper with an overlay with handles on the image.
-    * Save and cancel should go away in favor of immediate preview and undo.
-    * The UI to deal with local images vs external image references is rough.
-4. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
+3. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
 
 ### Limitations
 

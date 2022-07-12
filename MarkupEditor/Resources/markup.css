@@ -154,13 +154,92 @@ code {
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
     white-space: pre;
 }
+@media (prefers-color-scheme: dark) {
+    code {
+        background-color: #808080;
+    }
+}
 
 p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
     display: inline;
 }
 
+.resize-container {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.resize-container img {
+    display: block;
+    outline: 1px black dashed;
+    outline-offset: 4px;
+    outline-width: 1px;
+}
 @media (prefers-color-scheme: dark) {
-    code {
-        background-color: #808080;
+    .resize-container img {
+        outline: 1px white dashed;
     }
+}
+
+.resize-handle-nw,
+.resize-handle-ne,
+.resize-handle-sw,
+.resize-handle-se {
+    position: absolute;
+    display: block;
+    width: 6px;
+    height: 6px;
+    outline: 1px black solid;
+    background: white;
+    z-index: 999;
+}
+@media (prefers-color-scheme: dark) {
+    .resize-handle-nw,
+    .resize-handle-ne,
+    .resize-handle-sw,
+    .resize-handle-se {
+        outline: 1px white solid;
+        background: black;
+    }
+}
+
+/* A transparent child for each resize-handle that expands the clickable area */
+.resize-handle-nw:after,
+.resize-handle-ne:after,
+.resize-handle-sw:after,
+.resize-handle-se:after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 16px;
+  height: 16px;
+}
+
+/* The *-resize cursors do not work, at least in MacCatalyst.
+ * Still specifying them below. They default to a pointer instead
+ */
+.resize-handle-nw {
+    cursor: nw-resize;
+    top: -8px;
+    left: -8px;
+}
+
+.resize-handle-ne {
+    cursor: ne-resize;
+    top: -8px;
+    right: -8px;
+}
+
+.resize-handle-sw {
+    cursor: sw-resize;
+    bottom: -8px;
+    left: -8px;
+}
+
+.resize-handle-se {
+    cursor: se-resize;
+    bottom: -8px;
+    right: -8px;
 }

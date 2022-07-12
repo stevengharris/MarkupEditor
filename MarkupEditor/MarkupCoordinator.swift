@@ -158,6 +158,18 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             let info = messageData["info"] as? String
             let alert = (messageData["alert"] as? Bool) ?? true
             markupDelegate?.markupError(code: code, message: message, info: info, alert: alert)
+        case "copyImage":
+            guard
+                let src = messageData["src"] as? String,
+                let dimensions = messageData["dimensions"] as? [String : Int]
+            else {
+                print("Src or dimensions was missing")
+                return
+            }
+            let alt = messageData["alt"] as? String
+            let width = dimensions["width"]
+            let height = dimensions["height"]
+            webView.copyImage(src: src, alt: alt, width: width, height: height)
         default:
             print("Unknown message of type \(messageType): \(messageData).")
         }
