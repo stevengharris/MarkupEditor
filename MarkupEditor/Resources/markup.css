@@ -211,8 +211,8 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
 .resize-handle-se:after {
   content: "";
   position: absolute;
-  left: -3px;
-  top: -3px;
+  left: -5px;
+  top: -5px;
   width: 16px;
   height: 16px;
 }

@@ -449,19 +449,22 @@ class ResizableImage {
         };
     };
     
+    /**
+     * Start resize on mousedown in this resizableImage
+     */
     startResize(ev) {
         ev.preventDefault();
-        ev.stopPropagation();
-        resizableImage._startEvent = ev;
-        resizableImage._startDimensions = resizableImage.dimensionsFrom(resizableImage._imageElement);
+        MU.editor.style.webkitUserSelect = 'none';  // Prevent selection of text as mouse moves
         MU.editor.addEventListener('mousemove', resizableImage.resizing);
         MU.editor.addEventListener('mouseup', resizableImage.endResize);
+        resizableImage._startEvent = ev;
+        resizableImage._startDimensions = resizableImage.dimensionsFrom(resizableImage._imageElement);
     };
     
     endResize(ev) {
-        resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
-        ev.stopPropagation();
         ev.preventDefault();
+        MU.editor.style.webkitUserSelect = 'text';  // Restore selection of text now that we are done
+        resizableImage.preventNextClick = true;   // Avoid the MU.editor click event default action on mouseup
         MU.editor.removeEventListener('mousemove', resizableImage.resizing);
         MU.editor.removeEventListener('mouseup', resizableImage.endResize);
         const startDimensions = resizableImage.startDimensions;
@@ -471,7 +474,6 @@ class ResizableImage {
     };
     
     resizing(ev) {
-        ev.stopPropagation();
         ev.preventDefault();
         const ev0 = resizableImage._startEvent;
         // FYI: x increases to the right, y increases down
@@ -494,7 +496,10 @@ class ResizableImage {
             dx = x - x0;
             dy = y - y0;
         } else {
-            return;
+            // If not in a handle, treat movement like resize-handle-ne (upper right)
+            // This also makes it easier to resize on an iDevice
+            dx = x - x0;
+            dy = y0 - y;
         }
         const scaleH = Math.abs(dy) > Math.abs(dx);
         const w0 = resizableImage._startDimensions.width;
@@ -502,10 +507,10 @@ class ResizableImage {
         const ratio = w0 / h0;
         let width, height;
         if (scaleH) {
-            height = h0 + dy;
+            height = Math.max(h0 + dy, minImageSize);
             width = Math.floor(height * ratio);
         } else {
-            width = w0 + dx;
+            width = Math.max(w0 + dx, minImageSize);
             height = Math.floor(width / ratio);
         };
         resizableImage._imageElement.setAttribute('width', width);
@@ -667,6 +672,7 @@ class ResizableImage {
  * There is a singleton resizableImage which may or may not contain an image element.
  */
 const resizableImage = new ResizableImage();
+const minImageSize = 20;
 
 /********************************************************************************
  * Undo/Redo
@@ -987,25 +993,15 @@ const _backupUndoerRange = function(undoerData) {
  *    selectionChange callback until it matters.
  *
  */
-let _mouseDown = false;
 let _muteChanges = false;
-const muteChanges = function() { _setMuteChanges(true) };
-const unmuteChanges = function() { _setMuteChanges(false) };
-const _setMuteChanges = function(bool) { _muteChanges = bool };
+const muteChanges = function() { _muteChanges = true };
+const unmuteChanges = function() { _muteChanges = false };
 
 /**
- * Track when mouse is down, unmute to broadcase selectionChange unless mousemove happens.
+ * Mute selectionChange notifications when mouse is down.
  */
 MU.editor.addEventListener('mousedown', function() {
-    _mouseDown = true;
-    _muteChanges = false;
-});
-
-/**
- * Mute selectionChange when mousedown has happened and the mouse is moving.
- */
-MU.editor.addEventListener('mousemove', function() {
-    if (_mouseDown) { _muteChanges = true };
+    muteChanges();
 });
 
 /**
@@ -1016,20 +1012,20 @@ MU.editor.addEventListener('mousemove', function() {
  */
 MU.editor.addEventListener('mouseup', function() {
     if (_muteChanges) { _callback('selectionChange') };
-    _mouseDown = false;
-    _muteChanges = false;
+    unmuteChanges();
 });
 
 /**
  * Let Swift know the selection has changed so it can getSelectionState.
  * The eventListener has to be done at the document level, not MU.editor.
  */
-document.addEventListener('selectionchange', function() {
-    if (!_muteChanges) {
-        //_consoleLog('selectionchange')
+document.addEventListener('selectionchange', function(ev) {
+    if (_muteChanges) {
+        ev.preventDefault;
+//        _consoleLog(' (muted selectionchange)')
+    } else {
+//        _consoleLog('selectionchange')
         _callback('selectionChange');
-    //} else {
-    //    _consoleLog(' (muted selectionchange)')
     };
 });
 
@@ -6491,10 +6487,10 @@ const _prepImage = function(img) {
     // Per https://www.youtube.com/watch?v=YM3KszYmn58, we always want dimensions
     const width = img.getAttribute('width');
     if (!img.getAttribute('width')) {
-        img.setAttribute('width', Math.max(img.naturalWidth ?? 0, 20));
+        img.setAttribute('width', Math.max(img.naturalWidth ?? 0, minImageSize));
     };
     if (!img.getAttribute('height')) {
-        img.setAttribute('height', Math.max(img.naturalHeight ?? 0, 20));
+        img.setAttribute('height', Math.max(img.naturalHeight ?? 0, minImageSize));
     };
     // For history, 'focusout' just never fires, either for image or the resizeContainer
     img.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
