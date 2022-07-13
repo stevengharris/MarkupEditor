@@ -7,33 +7,16 @@ body {
 
 #editor {
     caret-color: blue;
-    overflow: auto;
     cursor: auto;
+    /* The overflow and margin are set primarily to deal gracefully with
+     * selecting resizable images that are at the edge of the screen.
+     */
+    overflow: visible;
+    margin: 0 2px 0 2px;
 }
 
 #editor:focus {
     outline: none !important;
-}
-
-/* The following two sections along with the third, highlight an image on selection,
- * without a blinking cursor and return to the standard blue cursor when not selected.
- *
- * Unfortunately, they also have the effect of making the caret color transparent
- * until after you select the image. Removing them for now, but need to come
- * back again later.
-
-img:not(:active) {
-    caret-color: blue;
-}
- 
-#editor:not(:active) {
-    caret-color: transparent;
-}
-*/
-
-img:focus {
-    outline: none;
-    /* border: 2px solid #00FFFF; */ /* Helps with debugging */
 }
 
 a {
