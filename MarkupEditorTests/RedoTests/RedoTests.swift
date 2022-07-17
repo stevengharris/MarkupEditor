@@ -2152,7 +2152,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2162,7 +2162,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello <b>bold</b> world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello <b>bold</b> world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2364,7 +2364,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2374,7 +2374,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello bold world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello bold world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
