@@ -5396,41 +5396,74 @@ const _doBlockquoteEnter = function(undoable=true) {
     let selNode = (sel) ? sel.anchorNode : null;
     if (!selNode || !sel.isCollapsed) { return null };
     const range = sel.getRangeAt(0);
-    let startContainer = range.startContainer;
-    let endContainer = range.endContainer;
-    const leadingNode = startContainer;
+    let leadingNode = range.startContainer;
+    let offset = range.startOffset;
     let trailingNode;
+    // Neither splitTextNode nor splitElement make the resulting leadingNode and trailingNode
+    // selectable if they end up being either an empty text node or an empty element (like <p></p>).
+    // We have to patch them up here. For history, I used to do this within the split* methods,
+    // but it ends up overloading functionality in a way that prevents re-use when these methods
+    // are so convenient for just splitting things.
     if (_isTextNode(leadingNode)) {
-        trailingNode = _splitTextNode(leadingNode, range.startOffset, 'BLOCKQUOTE', 'AFTER');
-        let emptyNode, emptyContainer;
+        trailingNode = _splitTextNode(leadingNode, offset, 'BLOCKQUOTE', 'AFTER');
+        // We might have split leadingNode at the beginning or end, leaving one or the
+        // other empty. If there are other nodes in the empty end's parent, then we just
+        // want to delete the empty text node and reassign it to a sibling. If there are
+        // no other nodes in the empty end's parent, then we want to put in a BR.
         if (_isEmpty(leadingNode)) {
-            emptyNode = leadingNode;
-            emptyContainer = leadingNode.parentNode;
+            if (leadingNode === leadingNode.parentNode.firstChild) {
+                const br = document.createElement('br');
+                leadingNode.parentNode.appendChild(br);
+                leadingNode.parentNode.removeChild(leadingNode);
+                leadingNode = br;
+            } else {
+                leadingNode.parentNode.removeChild(leadingNode);
+                leadingNode = trailingNode;
+            };
         } else if (_isEmpty(trailingNode)) {
-            emptyNode = trailingNode;
-            emptyContainer = trailingNode.parentNode;
-        };
-        if (emptyNode) {
-            // Then we hit Enter at the beginning of a text node, so we need to put a BR in it
-            // and adjust the selection.
-            const br = document.createElement('br');
-            emptyContainer.appendChild(br);
-            emptyContainer.removeChild(emptyNode);
-            const newRange = document.createRange();
-            newRange.setStart(emptyContainer, 0);
-            newRange.setStart(emptyContainer, 0);
+            if (trailingNode === trailingNode.parentNode.lastChild) {
+                const br = document.createElement('br');
+                trailingNode.parentNode.appendChild(br);
+                trailingNode.parentNode.removeChild(trailingNode);
+                trailingNode = br;
+            } else {
+                const newTrailingNode = trailingNode.nextSibling;
+                trailingNode.parentNode.removeChild(trailingNode);
+                trailingNode = newTrailingNode;
+            };
+            // When we ended up with an empty trailingNode, we always want
+            // the selection to end up in its parentNode. IOW, the selection
+            // at always moves to the new element we split off, whether it
+            // was empty or not.
+            range.setStart(trailingNode.parentNode, 0);
+            range.setEnd(trailingNode.parentNode, 0);
             sel.removeAllRanges();
-            sel.addRange(newRange);
+            sel.addRange(range);
         };
     } else {
-        trailingNode = _splitElement(leadingNode, range.startOffset, 'BLOCKQUOTE', 'AFTER');
+        trailingNode = _splitElement(leadingNode, offset, 'BLOCKQUOTE', 'AFTER');
+        if (_isElementNode(leadingNode) && !_isVoidNode(leadingNode) && _isEmpty(leadingNode)) {
+            const br = document.createElement('br');
+            leadingNode.appendChild(br);
+            leadingNode = br;
+        } else if (_isElementNode(trailingNode) && !_isVoidNode(trailingNode) && _isEmpty(trailingNode)) {
+            const br = document.createElement('br');
+            trailingNode.appendChild(br);
+            trailingNode = br;
+            range.setStart(trailingNode.parentNode, 0);
+            range.setEnd(trailingNode.parentNode, 0);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        };
     };
-    if (undoable && trailingNode) {
+    if (undoable) {
         _backupSelection();
         const commonAncestor = MU.editor;
         const leadingIndices = _childNodeIndicesByParent(leadingNode, commonAncestor);
         const trailingIndices = _childNodeIndicesByParent(trailingNode, commonAncestor);
-        const undoerData = _undoerData('blockquoteEnter', {leadingIndices: leadingIndices, trailingIndices: trailingIndices, commonAncestor: commonAncestor});
+        // Note we track offset-1 because in splitElement, we split off the node at offset.
+        // The offset is used to find the leadingNode for undo when it is inside of an element.
+        const undoerData = _undoerData('blockquoteEnter', {leadingIndices: leadingIndices, trailingIndices: trailingIndices, commonAncestor: commonAncestor, offset: offset - 1});
         undoer.push(undoerData);
         _restoreSelection();
     };
@@ -5443,8 +5476,25 @@ const _undoBlockquoteEnter = function(undoerData) {
     const leadingIndices = undoerData.data.leadingIndices;
     const trailingIndices = undoerData.data.trailingIndices;
     const commonAncestor = undoerData.data.commonAncestor;
-    const leadingNode = _childNodeIn(commonAncestor, leadingIndices);
-    const trailingNode = _childNodeIn(commonAncestor, trailingIndices);
+    const offset = undoerData.data.offset;
+    let leadingNode = _childNodeIn(commonAncestor, leadingIndices);
+    let trailingNode = _childNodeIn(commonAncestor, trailingIndices);
+    // Because we replace any empty text node with one containing BR so it is
+    // selectable, we have to undo that on undo.
+    if (_isBRElement(leadingNode)) {
+        const emptyTextNode = document.createTextNode('');
+        leadingNode.replaceWith(emptyTextNode);
+        leadingNode = emptyTextNode;
+    } else if (_isElementNode(leadingNode) && !_isVoidNode(leadingNode)) {
+        leadingNode = leadingNode.childNodes[offset];
+    };
+    if (_isBRElement(trailingNode)) {
+        const emptyTextNode = document.createTextNode('');
+        trailingNode.replaceWith(emptyTextNode);
+        trailingNode = emptyTextNode;
+    } else if (_isElementNode(trailingNode) && !_isVoidNode(trailingNode)) {
+        trailingNode = trailingNode.childNodes[0];
+    };
     if (_isTextNode(leadingNode) && _isTextNode(trailingNode)) {
         _joinTextNodes(leadingNode, trailingNode, 'BLOCKQUOTE');
     } else {
@@ -7933,31 +7983,55 @@ const _joinElements = function(leadingElement, trailingElement, rootName) {
     // Since we are going to delete trailingElement after joining, we need to reset
     // the range if any part of it is in the trailingElement.
     let newStartContainer, newStartOffset, newEndContainer, newEndOffset;
-    if (startContainer === trailingElement) {
-        newStartContainer = leadingElement;
-        newStartOffset = leadingElement.childNodes.length + startOffset;
+    if (_equalsOrIsContainedIn(startContainer, trailingRoot)) {
+        if (_isTextNode(leadingElement) || _isVoidNode(leadingElement)) {
+            newStartContainer = leadingElement.parentNode;
+            newStartOffset = _childNodeIndex(leadingElement) + 1;
+        } else {
+            newStartContainer = leadingElement;
+            newStartOffset = leadingElement.childNodes.length + startOffset;
+        }
     } else {
         newStartContainer = startContainer;
         newStartOffset = startOffset;
     };
-    if (endContainer === trailingElement) {
-        newEndContainer = leadingElement;
-        newEndOffset = leadingElement.childNodes.length + endOffset;
+    if (_equalsOrIsContainedIn(endContainer, trailingRoot)) {
+        if (_isTextNode(leadingElement) || _isVoidNode(leadingElement)) {
+            newEndContainer = leadingElement.parentNode;
+            newEndOffset = _childNodeIndex(leadingElement) + 1;
+        } else {
+            newEndContainer = leadingElement;
+            newEndOffset = leadingElement.childNodes.length + endOffset;
+        }
     } else {
         newEndContainer = endContainer;
         newEndOffset = endOffset;
     };
-    // Move all of the trailingElement's children to the leadingNode
-    let child = trailingElement.firstChild;
-    while (child) {
-        let nextChild = child.nextSibling;
-        leadingElement.appendChild(child);
-        child = nextChild;
-    };
+    // Hold onto trailingElement's parentNode before we move it
+    let parent = trailingElement.parentNode;
+    if (_isTextNode(trailingElement) || _isVoidNode(trailingElement)) {
+        let sib = trailingElement.nextSibling;
+        let insertBefore = leadingElement.nextSibling;
+        // Move trailingElement itself to follow leadingElement inside of leadingElement's parentNode
+        leadingElement.parentNode.insertBefore(trailingElement, insertBefore);
+        // Move all of the trailingElement's siblings to the leadingNode
+        while (sib) {
+            let nextSib = sib.nextSibling;
+            leadingElement.parentNode.insertBefore(sib, insertBefore);
+            sib = nextSib;
+        };
+    } else {
+        // Move all of the trailingElement's children to the leadingNode
+        let child = trailingElement.firstChild;
+        while (child) {
+            let nextChild = child.nextSibling;
+            leadingElement.appendChild(child);
+            child = nextChild;
+        };
+    }
     // Then go all the way up to the level *below* the trailingRoot, and move
     // all of the siblings of the branch that trailingElement was found on to be
     // children of the leadingRoot
-    let parent = trailingElement.parentNode;
     let rootChild;
     while (parent !== trailingRoot) {
         rootChild = parent.nextSibling;
