@@ -901,7 +901,7 @@ const _redoOperation = function(undoerData) {
             _doListEnter(false, undoerData);
             break;
         case 'blockquoteEnter':
-            _doBlockquoteEnter(false, undoerData);
+            _redoBlockquoteEnter(undoerData);
             break;
         case 'enter':
             _doEnter(false);
@@ -5442,14 +5442,31 @@ const _doBlockquoteEnter = function(undoable=true) {
         };
     } else {
         trailingNode = _splitElement(leadingNode, offset, 'BLOCKQUOTE', 'AFTER');
+        const br = document.createElement('br');
         if (_isElementNode(leadingNode) && !_isVoidNode(leadingNode) && _isEmpty(leadingNode)) {
-            const br = document.createElement('br');
+            // leadingNode is an empty element
             leadingNode.appendChild(br);
             leadingNode = br;
         } else if (_isElementNode(trailingNode) && !_isVoidNode(trailingNode) && _isEmpty(trailingNode)) {
-            const br = document.createElement('br');
+            // trailingNode is an empty element
             trailingNode.appendChild(br);
             trailingNode = br;
+            // and we need to reset the selection into it
+            range.setStart(trailingNode.parentNode, 0);
+            range.setEnd(trailingNode.parentNode, 0);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else if (_isTextNode(leadingNode) && _isEmpty(leadingNode.parentNode)) {
+            // leadingNode is "" in an otherwise empty parentNode
+            leadingNode.parentNode.appendChild(br);
+            leadingNode.parentNode.removeChild(leadingNode);
+            leadingNode = br;
+        } else if (_isTextNode(trailingNode) && _isEmpty(trailingNode.parentNode)) {
+            // trailingNode is "" in an otherwise empty parentNode
+            trailingNode.parentNode.appendChild(br);
+            trailingNode.parentNode.removeChild(trailingNode);
+            trailingNode = br;
+            // and we need to reset the selection into it
             range.setStart(trailingNode.parentNode, 0);
             range.setEnd(trailingNode.parentNode, 0);
             sel.removeAllRanges();
@@ -5500,7 +5517,14 @@ const _undoBlockquoteEnter = function(undoerData) {
     } else {
         _joinElements(leadingNode, trailingNode, 'BLOCKQUOTE');
     };
+    _backupUndoerRange(undoerData);
     _callback('input');
+};
+
+const _redoBlockquoteEnter = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    _doBlockquoteEnter(false);
+    _backupUndoerRange(undoerData);
 };
 
 /********************************************************************************

@@ -1241,7 +1241,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                         expectation.fulfill()
                                     }
                                 }
-                                // Kick off the undo operation in the list we did enter in
+                                // Kick off the undo operation in the blockquote we did enter in
                                 self.webView.testUndoBlockquoteEnter()
                             }
                         }
