@@ -47,7 +47,6 @@ The initial open source release does not support the following (but I plan to):
 
 * Text alignment (although how well this translates back-and-forth to Markdown remains to be seen)
 * Flexible table formatting
-* Copy/paste preserving formatting (currently only supports plain text)
 
 If you want a richer feature set, you can extend the MarkupEditor yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for saving what you edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
 
