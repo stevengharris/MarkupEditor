@@ -337,6 +337,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Invoke the \_doBlockquoteEnter operation directly.
+    public func testBlockquoteEnter(handler: (()->Void)? = nil) {
+        self.evaluateJavaScript("MU.testBlockquoteEnter()") { result, error in handler?() }
+    }
+    
+    /// Invoke the \_undoBlockquoteEnter operation directly.
+    public func testUndoBlockquoteEnter(handler: (()->Void)? = nil) {
+        self.evaluateJavaScript("MU.testUndoBlockquoteEnter()") { result, error in handler?() }
+    }
+    
     /// Invoke the \_doListEnter operation directly.
     public func testListEnter(handler: (()->Void)? = nil) {
         self.evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }

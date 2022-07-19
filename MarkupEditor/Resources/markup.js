@@ -6252,7 +6252,7 @@ MU.setRange = function(startElementId, startOffset, endElementId, endOffset, sta
  */
 MU.testUndo = function() {
     undoer.testUndo();
-}
+};
 
 /**
  * For testing purposes, invoke redo by direct input to undoer.
@@ -6260,7 +6260,24 @@ MU.testUndo = function() {
  */
 MU.testRedo = function() {
     undoer.testRedo();
-}
+};
+
+/**
+ * For testing purposes, invoke _doBlockquoteEnter programmatically.
+ *
+ * After the _doBlockquoteEnter, subsequent ops for undo and redo need to
+ * be done using MU.testUndo
+ */
+MU.testBlockquoteEnter = function() {
+    _doBlockquoteEnter()
+};
+
+/**
+ * For testing purposes, undo _doBlockquoteEnter by invoking standard undo.
+ */
+MU.testUndoBlockquoteEnter = function() {
+    undoer.testUndo()
+};
 
 /**
  * For testing purposes, invoke _doListEnter programmatically.
@@ -6270,14 +6287,14 @@ MU.testRedo = function() {
  */
 MU.testListEnter = function() {
     _doListEnter()
-}
+};
 
 /**
  * For testing purposes, undo _doListEnter by invoking standard undo.
  */
 MU.testUndoListEnter = function() {
     undoer.testUndo()
-}
+};
 
 /**
  * For testing purposes, execute _patchPasteHTML and return the resulting
@@ -7764,18 +7781,22 @@ const _splitElement = function(element, offset, rootName=null, direction='AFTER'
     // We have the structure below trailingRoot, but we haven't moved anything
     // from element into it yet.
     let trailingElement = element.childNodes[offset];
-    let sib = trailingElement.nextSibling;
-    newElement.appendChild(trailingElement);
-    // Then put all of the original trailingElement's siblings into the newElement
-    while (sib) {
-        let nextSib = sib.nextSibling;
-        newElement.appendChild(sib);
-        sib = nextSib;
-    };
+    if (trailingElement) {  // The offset might be at the very end
+        let sib = trailingElement.nextSibling;
+        newElement.appendChild(trailingElement);
+        // Then put all of the original trailingElement's siblings into the newElement
+        while (sib) {
+            let nextSib = sib.nextSibling;
+            newElement.appendChild(sib);
+            sib = nextSib;
+        };
+    } else {
+        trailingElement = newElement;
+    }
     // And if we had to recreate the structure below rootNode, then we need to move
     // all of element's siblings into the trailingRoot also.
     if (!elementIsRootNode) {
-        sib = element.nextSibling;
+        let sib = element.nextSibling;
         while (sib) {
             let nextSib = sib.nextSibling;
             trailingRoot.appendChild(sib);
@@ -7914,6 +7935,15 @@ const _joinTextNodes = function(leadingNode, trailingNode, rootName) {
         newEndContainer = endContainer;
         newEndOffset = endOffset;
     };
+    // If any of trailingNode's parent's attributes are not specified in
+    // leadingNode's parent, add those to leadingElement's parent's attributes.
+    const trailingAttributes = trailingNode.parentNode.getAttributeNames();
+    trailingAttributes.forEach(name => {
+        let leadingAttribute = leadingNode.parentNode.getAttribute(name);
+        if (!leadingAttribute) {
+            leadingNode.parentNode.setAttribute(name, trailingNode.parentNode.getAttribute(name));
+        };
+    });
     // Append the trailingNode's textContent to the leadingNode's textContent
     leadingNode.textContent = leadingNode.textContent + trailingNode.textContent;
     // Move all of the trailingNode's siblings to the leadingNode
@@ -8006,6 +8036,19 @@ const _joinElements = function(leadingElement, trailingElement, rootName) {
     } else {
         newEndContainer = endContainer;
         newEndOffset = endOffset;
+    };
+    // If any of trailingElement's attributes are not specified in
+    // leadingElement, add those to leadingElement's attributes.
+    const leadingParent = leadingElement.parentNode;
+    const trailingParent = trailingElement.parentNode;
+    if (leadingParent.nodeName === trailingParent.nodeName) {
+        const trailingAttributes = trailingParent.getAttributeNames();
+        trailingAttributes.forEach(name => {
+            let leadingAttribute = leadingParent.getAttribute(name);
+            if (!leadingAttribute) {
+                leadingParent.setAttribute(name, trailingParent.getAttribute(name));
+            };
+        });
     };
     // Hold onto trailingElement's parentNode before we move it
     let parent = trailingElement.parentNode;
