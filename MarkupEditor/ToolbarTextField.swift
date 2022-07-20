@@ -19,7 +19,7 @@ public struct ToolbarTextField: View {
     @State var previousText: String     // Hack to deal with tab navigation
     @State var takeFocusOn: String?     // Set at init time to indicate when to focus
     @Binding var focusIsOn: String      // Set externally to indicate where focus is
-    @available (macCatalyst 15.0, *)
+    @available (iOS 15.0, macCatalyst 15.0, *)
     @FocusState var fieldIsFocused: Bool
     
     public var body: some View {
@@ -28,7 +28,7 @@ public struct ToolbarTextField: View {
             VStack(spacing: 2) {
                 Text(label)
                     .font(.system(size: 10, weight: .light))
-                if #available(macCatalyst 15.0, *) {
+                if #available(iOS 15.0, macCatalyst 15.0, *) {
                     TextField(
                         label,
                         text: $text,
@@ -82,7 +82,7 @@ public struct ToolbarTextField: View {
                 }
             }
         case .compact:
-            if #available(macCatalyst 15.0, *) {
+            if #available(iOS 15.0, macCatalyst 15.0, *) {
                 TextField(
                     label,
                     text: $text,
