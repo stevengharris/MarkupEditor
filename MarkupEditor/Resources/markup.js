@@ -4950,7 +4950,7 @@ MU.outdent = function(undoable=true) {
         if (inList) {
             _doListOutdent(undoable);
         } else if (inBlockQuote) {
-            _decreaseQuoteLevel(undoable);
+            _decreaseQuoteLevelAtSelection(undoable);
         };
     };
 };
@@ -5317,11 +5317,8 @@ const _indent = function(node) {
  *
  * @param {Boolean} undoable        True if we should push undoerData onto the undo stack.
  */
-const _decreaseQuoteLevel = function(undoable=true) {
-    const sel = document.getSelection();
-    const selNode = (sel) ? sel.anchorNode : null;
-    if (!sel || !selNode || !sel.rangeCount) { return null };
-    if (_outdent(selNode)) {
+const _decreaseQuoteLevel = function(node, undoable=true) {
+    if (_outdent(node)) {
         if (undoable) {
             _backupSelection();
             const undoerData = _undoerData('outdent');
@@ -5329,9 +5326,16 @@ const _decreaseQuoteLevel = function(undoable=true) {
             _restoreSelection();
         }
         _callback('input');
-        return selNode;
+        return node;
     };
     return null;
+};
+
+const _decreaseQuoteLevelAtSelection = function(undoable=true) {
+    const sel = document.getSelection();
+    const selNode = (sel) ? sel.anchorNode : null;
+    if (!sel || !selNode || !sel.rangeCount) { return null };
+    return _decreaseQuoteLevel(selNode, undoable);
 };
 
 /**
@@ -5441,6 +5445,18 @@ const _doBlockquoteEnter = function(undoable=true) {
             sel.addRange(range);
         };
     } else {
+        if (_isEmpty(leadingNode)) {
+            const innerBlockquote = _isBlockquoteElement(leadingNode.parentNode) && leadingNode.parentNode;
+            const isOuterBlockquote = innerBlockquote && _isBlockquoteElement(innerBlockquote.parentNode);
+            if (!isOuterBlockquote && innerBlockquote && (innerBlockquote.lastChild === leadingNode)) {
+                // We hit return in an empty element at the end of an unnested blockquote.
+                // By returning here, we let decreaseQuoteLevel deal with undo/redo
+                // Note this will also leave the style of leadingNode in place. This
+                // seems like the right thing, altho return from H1-H6 produces P
+                // normally.
+                return _decreaseQuoteLevel(leadingNode, undoable);
+            };
+        };
         trailingNode = _splitElement(leadingNode, offset, 'BLOCKQUOTE', 'AFTER');
         const br = document.createElement('br');
         if (_isElementNode(leadingNode) && !_isVoidNode(leadingNode) && _isEmpty(leadingNode)) {
@@ -5514,6 +5530,21 @@ const _undoBlockquoteEnter = function(undoerData) {
     };
     if (_isTextNode(leadingNode) && _isTextNode(trailingNode)) {
         _joinTextNodes(leadingNode, trailingNode, 'BLOCKQUOTE');
+        // Here we have to undo the case when Enter at the end of a blockquote
+        // produced a new empty blockquote containing just an empty element with
+        // a br in it.
+        if (_isTextNode(leadingNode) && _isEmpty(leadingNode)) {
+            const br = document.createElement('br');
+            const emptyParent = leadingNode.parentNode;
+            emptyParent.appendChild(br);
+            emptyParent.removeChild(leadingNode);
+            const sel = document.getSelection();
+            const range = document.createRange();
+            range.setStart(emptyParent, 0);
+            range.setEnd(emptyParent, 0);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        };
     } else {
         _joinElements(leadingNode, trailingNode, 'BLOCKQUOTE');
     };
@@ -6297,13 +6328,6 @@ MU.testBlockquoteEnter = function() {
 };
 
 /**
- * For testing purposes, undo _doBlockquoteEnter by invoking standard undo.
- */
-MU.testUndoBlockquoteEnter = function() {
-    undoer.testUndo()
-};
-
-/**
  * For testing purposes, invoke _doListEnter programmatically.
  *
  * After the _doListEnter, subsequent ops for undo and redo need to
@@ -6311,13 +6335,6 @@ MU.testUndoBlockquoteEnter = function() {
  */
 MU.testListEnter = function() {
     _doListEnter()
-};
-
-/**
- * For testing purposes, undo _doListEnter by invoking standard undo.
- */
-MU.testUndoListEnter = function() {
-    undoer.testUndo()
 };
 
 /**
@@ -8479,8 +8496,18 @@ const _isImageElement = function(node) {
     return node && (node.nodeName === 'IMG');
 };
 
+/**
+ * Return whether node is a BR element
+ */
 const _isBRElement = function(node) {
     return node && (node.nodeName === 'BR');
+};
+
+/**
+ * Return whether node is a BLOCKQUOTE element
+ */
+const _isBlockquoteElement = function(node) {
+    return node && (node.nodeName === 'BLOCKQUOTE')
 };
 
 /**

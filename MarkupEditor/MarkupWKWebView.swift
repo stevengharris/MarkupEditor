@@ -318,13 +318,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Invoke the \_undoOperation directly.
     ///
     /// Delay to allow the async operation being done to have completed.
-    public func testUndo(_ immediate: Bool = false, handler: (()->Void)? = nil) {
-        if immediate {
+    public func testUndo(handler: (()->Void)? = nil) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
-        } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
-            }
         }
     }
     
@@ -342,19 +338,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         self.evaluateJavaScript("MU.testBlockquoteEnter()") { result, error in handler?() }
     }
     
-    /// Invoke the \_undoBlockquoteEnter operation directly.
-    public func testUndoBlockquoteEnter(handler: (()->Void)? = nil) {
-        self.evaluateJavaScript("MU.testUndoBlockquoteEnter()") { result, error in handler?() }
-    }
-    
     /// Invoke the \_doListEnter operation directly.
     public func testListEnter(handler: (()->Void)? = nil) {
         self.evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }
-    }
-    
-    /// Invoke the \_undoListEnter operation directly.
-    public func testUndoListEnter(handler: (()->Void)? = nil) {
-        self.evaluateJavaScript("MU.testUndoListEnter()") { result, error in handler?() }
     }
     
     //MARK: Javascript interactions

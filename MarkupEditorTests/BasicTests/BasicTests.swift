@@ -1200,6 +1200,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endId: "p",
                 endOffset: 26
             ),
+            HtmlTest(
+                description: "Enter at end of empty paragraph in nested blockquotes",
+                startHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote></blockquote>",
+                startId: "empty",
+                startOffset: 0,
+                endId: "empty",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Outdent on enter at end of empty paragraph in unnested blockquotes",
+                startHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><p id=\"empty\"><br></p>",
+                startId: "empty",
+                startOffset: 0,
+                endId: "empty",
+                endOffset: 0
+            ),
             // We don't wait for images to load or fail, so we specify the class, tabindex, width, and height on
             // input so we get the same thing back.
             HtmlTest(
