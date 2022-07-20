@@ -49,7 +49,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
     var pastedAsync = false;
     /// An accessoryView to override the inputAccesoryView of UIResponder.
-    var accessoryView: UIView?
+    public var accessoryView: UIView?
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
         case Text
