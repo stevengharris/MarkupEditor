@@ -1143,6 +1143,161 @@ class BasicTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 2)
         }
     }
+    
+    func testBlockquoteEnter() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Enter at beginning of simple paragraph in blockquote",
+                startHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote>",
+                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Enter in middle of simple paragraph in blockquote",
+                startHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\">This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote>",
+                startId: "p",
+                startOffset: 13,
+                endId: "p",
+                endOffset: 13
+            ),
+            HtmlTest(
+                description: "Enter at end of simple paragraph in blockquote",
+                startHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote>",
+                startId: "p",
+                startOffset: 26,
+                endId: "p",
+                endOffset: 26
+            ),
+            HtmlTest(
+                description: "Enter at beginning of simple paragraph in nested blockquotes",
+                startHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p><br></p></blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote></blockquote>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Enter in middle of simple paragraph in nested blockquotes",
+                startHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p id=\"p\">This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote></blockquote>",
+                startId: "p",
+                startOffset: 13,
+                endId: "p",
+                endOffset: 13
+            ),
+            HtmlTest(
+                description: "Enter at end of simple paragraph in nested blockquotes",
+                startHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote></blockquote>",
+                startId: "p",
+                startOffset: 26,
+                endId: "p",
+                endOffset: 26
+            ),
+            HtmlTest(
+                description: "Enter at end of empty paragraph in nested blockquotes",
+                startHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote></blockquote>",
+                startId: "empty",
+                startOffset: 0,
+                endId: "empty",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Outdent on enter at end of empty paragraph in unnested blockquotes",
+                startHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><blockquote><p id=\"empty\"><br></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\">This is a simple paragraph</p></blockquote><p id=\"empty\"><br></p>",
+                startId: "empty",
+                startOffset: 0,
+                endId: "empty",
+                endOffset: 0
+            ),
+            // We don't wait for images to load or fail, so we specify the class, tabindex, width, and height on
+            // input so we get the same thing back.
+            HtmlTest(
+                description: "Enter before image in blockquote",
+                startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Enter after image in blockquote",
+                startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><br></p></blockquote>",
+                startId: "p",
+                startOffset: 1,
+                endId: "p",
+                endOffset: 1
+            ),
+            HtmlTest(
+                description: "Enter between images in blockquote",
+                startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                startId: "p",
+                startOffset: 1,
+                endId: "p",
+                endOffset: 1
+            ),
+            HtmlTest(
+                description: "Enter between text and image in blockquote",
+                startHtml: "<blockquote><p id=\"p\">Hello<img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\">Hello</p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                startId: "p",
+                startOffset: 5,
+                endId: "p",
+                endOffset: 5,
+                startChildNodeIndex: 0,
+                endChildNodeIndex: 0
+            ),
+            HtmlTest(
+                description: "Enter between image and text in blockquote",
+                startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">Hello</p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p>Hello</p></blockquote>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                startChildNodeIndex: 1,
+                endChildNodeIndex: 1
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Enter being pressed inside of blockquotes")
+            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _doListEnter.
+             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
+             // When the undo is done, the html should be what we started with.
+             webView.setTestHtml(value: startHtml) {
+                 self.webView.getRawHtml { contents in
+                     self.assertEqualStrings(expected: startHtml, saw: contents)
+                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                         // Define the handler to execute after input is received (i.e., once the operation is
+                         // complete and has changed the html).
+                         self.addInputHandler {
+                             self.webView.getRawHtml { formatted in
+                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                 expectation.fulfill()
+                             }
+                         }
+                         // Kick off the enter operation in the blockquote we selected
+                         self.webView.testBlockquoteEnter()
+                     }
+                 }
+             }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
 
     func testLists() throws {
         // The selection (startId, startOffset, endId, endOffset) is always identified
@@ -1860,7 +2015,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
-            ]
+        ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
             let startHtml = test.startHtml
@@ -2351,7 +2506,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2361,7 +2516,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello <b>bold</b> world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello <b>bold</b> world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2596,7 +2751,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2606,7 +2761,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">Hello bold world</p><p>This is just a simple paragraph.</p>",
+                endHtml: "<p>Hello bold world</p><p id=\"p\">This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
