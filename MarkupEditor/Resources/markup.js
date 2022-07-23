@@ -9069,13 +9069,18 @@ const _deleteAndResetSelection = function(element, direction) {
         newRange.setEnd(emptyTextNode, 1);
     } else {
         if (direction === 'BEFORE') {
-            newRange.setStart(nextEl, nextEl.textContent.length);
-            newRange.setEnd(nextEl, nextEl.textContent.length);
+            if (_isTextNode(nextEl)) {
+                newRange.setStart(nextEl, nextEl.textContent.length);
+                newRange.setEnd(nextEl, nextEl.textContent.length);
+            } else {
+                newRange.setStart(nextEl, nextEl.childNodes.length);
+                newRange.setEnd(nextEl, nextEl.childNodes.length);
+            };
         } else {
             newRange.setStart(nextEl, 0);
             newRange.setEnd(nextEl, 0);
         }
-    }
+    };
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(newRange);
