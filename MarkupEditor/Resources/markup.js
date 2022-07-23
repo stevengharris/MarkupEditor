@@ -6897,14 +6897,22 @@ MU.insertTable = function(rows, cols, undoable=true) {
     table.appendChild(tbody);
     const targetNode = _findFirstParentElementInNodeNames(selNode, _styleTags);
     if (!targetNode) { return };
-    targetNode.insertAdjacentHTML('afterend', table.outerHTML);
-    // We need the new table that now exists at selection.
+    const startRange = sel.getRangeAt(0);
+    let newTable;
+    if ((targetNode.firstChild === startRange.startContainer) && (startRange.startOffset === 0)) {
+        targetNode.insertAdjacentHTML('beforebegin', table.outerHTML);
+        // We need the new table that now exists before targetNode
+        newTable = _getFirstChildWithNameWithin(targetNode.previousSibling, 'TABLE');
+    } else {
+        targetNode.insertAdjacentHTML('afterend', table.outerHTML);
+        // We need the new table that now exists after targetNode
+        newTable = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
+    }
     // Restore the selection to leave it at the beginning of the new table
-    const newTable = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
     _restoreTableSelection(newTable, 0, 0, false);
     // Track table insertion on the undo stack if necessary
     if (undoable) {
-        const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML});
+        const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML, startRange: startRange});
         undoer.push(undoerData);
     }
     _callback('input');
@@ -7499,18 +7507,22 @@ const _redoInsertTable = function(undoerData) {
     // undoerData.range with the range for the newly (re)created table element.
     // We leave the selection at the same row/col that was selected when the
     // table was deleted, but we don't try to put it at the same offset as before.
-    const endContainer = undoerData.range.endContainer;
-    let targetNode = endContainer;
-    if (endContainer.nodeType === Node.TEXT_NODE) {
-        targetNode = endContainer.parentNode;
-    };
-    targetNode.insertAdjacentHTML('afterend', undoerData.data.outerHTML);
+    const startRange = undoerData.data.startRange;
+    const targetNode = _findFirstParentElementInNodeNames(startRange.startContainer, _styleTags);
+    let table;
+    if ((targetNode.firstChild === startRange.startContainer) && (startRange.startOffset === 0)) {
+        targetNode.insertAdjacentHTML('beforebegin', undoerData.data.outerHTML);
+        // We need the new table that now exists before targetNode
+        table = _getFirstChildWithNameWithin(targetNode.previousSibling, 'TABLE');
+    } else {
+        targetNode.insertAdjacentHTML('afterend', undoerData.data.outerHTML);
+        // We need the new table that now exists after targetNode
+        table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
+    }
     _callback('input');
-    // We need the new table that now exists at selection.
     // Restore the selection to leave it at the beginning of the proper row/col
     // it was at when originally deleted. Then reset the undoerData range to hold
     // onto the new range.
-    const table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
     if (table) {
         _restoreTableSelection(table, undoerData.data.row, undoerData.data.col, undoerData.data.inHeader)
         _backupUndoerRange(undoerData);
@@ -7530,6 +7542,10 @@ const _redoDeleteTable = function(undoerData) {
     _restoreUndoerRange(undoerData);
     _backupSelection();
     MU.deleteTable(false);
+    const startRange = undoerData.data.startRange;
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(startRange);
     _backupUndoerRange(undoerData);
 };
 
@@ -9053,13 +9069,18 @@ const _deleteAndResetSelection = function(element, direction) {
         newRange.setEnd(emptyTextNode, 1);
     } else {
         if (direction === 'BEFORE') {
-            newRange.setStart(nextEl, nextEl.textContent.length);
-            newRange.setEnd(nextEl, nextEl.textContent.length);
+            if (_isTextNode(nextEl)) {
+                newRange.setStart(nextEl, nextEl.textContent.length);
+                newRange.setEnd(nextEl, nextEl.textContent.length);
+            } else {
+                newRange.setStart(nextEl, nextEl.childNodes.length);
+                newRange.setEnd(nextEl, nextEl.childNodes.length);
+            };
         } else {
             newRange.setStart(nextEl, 0);
             newRange.setEnd(nextEl, 0);
         }
-    }
+    };
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(newRange);

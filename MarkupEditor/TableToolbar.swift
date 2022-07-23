@@ -23,7 +23,6 @@ public struct TableToolbar: View {
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
     @State private var showTableSizer: Bool = false
-    @State private var tappedInTableSizer: Bool = false
     @State private var rows: Int = 0
     @State private var cols: Int = 0
     @State private var addHoverLabel: Text = Text("Add")
@@ -37,14 +36,14 @@ public struct TableToolbar: View {
                         CreateTable()
                     }
                     .disabled(selectionState.isInTable)
-                    .popover(isPresented: $showTableSizer) {
-                        TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer, tapped: $tappedInTableSizer)
+                    .forcePopover(isPresented: $showTableSizer) {
+                        TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer)
                             .onAppear() {
                                 rows = 0
                                 cols = 0
                             }
                             .onDisappear() {
-                                if tappedInTableSizer && rows > 0 && cols > 0 {
+                                if rows > 0 && cols > 0 {
                                     observedWebView.selectedWebView?.insertTable(rows: rows, cols: cols)
                                 }
                             }

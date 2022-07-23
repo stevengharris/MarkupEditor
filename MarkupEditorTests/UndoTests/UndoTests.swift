@@ -2134,49 +2134,64 @@ class UndoTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testUndoInsertEmpty() throws {
-        /* See the notes in testInsertEmpty */
-        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (
-                HtmlTest(
-                    description: "Make a paragraph into an ordered list",
-                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
-                    endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
-                    }
-                }
-            )
+    func testUndoInsertTable() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Insert at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table><p id=\"p\">This is a simple paragraph</p>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Insert in the middle of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<p id=\"p\">This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+                startId: "p",
+                startOffset: 13,
+                endId: "p",
+                endOffset: 13
+            ),
+            HtmlTest(
+                description: "Insert in the end of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<p id=\"p\">This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+                startId: "p",
+                startOffset: 26,
+                endId: "p",
+                endOffset: 26
+            ),
         ]
-        for (test, action) in htmlTestAndActions {
+        for test in htmlTests {
             test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
+            let undoHtml = test.undoHtml ?? startHtml
+            let expectation = XCTestExpectation(description: "Insert a table")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
-                        action() {
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Define the handler to execute after undoSet is received (i.e., once the undoData has
+                        // been pushed to the stack and can be executed).
+                        self.addUndoSetHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                self.webView.testUndo() {
+                                // Define the handler after input is received (i.e., once the undo is complete)
+                                self.addInputHandler {
                                     self.webView.getRawHtml { unformatted in
-                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
+                                // Kick off the undo operation in the blockquote we did enter in
+                                self.webView.testUndo()
                             }
                         }
+                        // Kick off the enter operation in the blockquote we selected
+                        self.webView.insertTable(rows: 2, cols: 2)
                     }
                 }
             }

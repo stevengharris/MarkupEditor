@@ -2296,74 +2296,55 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testInsertEmpty() throws {
-        /*
-         From this oldie but goodie... https://bugs.webkit.org/show_bug.cgi?id=15256
-         
-         For example, given an HTML block like this:
-
-             <div contentEditable="true"><div id="scratchpad"></div></div>
-
-         and code like this:
-
-             document.getElementById("scratchpad").innerHTML = "<div id=\"foo\">blah</div><div id=\"bar\">blah</div>";
-
-             var sel = window.getSelection();
-             sel.removeAllRanges();
-             var range = document.createRange();
-
-             range.setStartAfter(document.getElementById("foo"));
-             range.setEndAfter(document.getElementById("foo"));
-             sel.addRange(range);
-
-             document.execCommand("insertHTML", false, "<div id=\"baz\">-</div>");
-
-         One would expect this snippet to result in:
-
-             <div id="foo">blah</div><div id="baz">-</div><div id="bar">blah</div>
-
-         but instead, you get:
-
-             <div id="foo">blah</div><div id="bar">-blah</div>
-
-         I've tried every combination of set{Start|End}{After|Before|} that I can think of, and even things like setBaseAndExtent, modifying the selection object directly by extending it in either direction, etc.  Nothing works.
-         Comment 38
-         */
-        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (
-                HtmlTest(
-                    description: "Make a paragraph into an ordered list",
-                    startHtml: "<p id=\"p\">Hello <b id=\"b\">world</b></p>",
-                    endHtml: "<ol><li><p id=\"p\">Hello <b id=\"b\">world</b></p></li></ol>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
-                ),
-                { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
-                    }
-                }
-            )
+    func testInsertTable() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Insert at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table><p id=\"p\">This is a simple paragraph</p>",
+                startId: "p",
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0
+            ),
+            HtmlTest(
+                description: "Insert in the middle of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<p id=\"p\">This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+                startId: "p",
+                startOffset: 13,
+                endId: "p",
+                endOffset: 13
+            ),
+            HtmlTest(
+                description: "Insert in the end of a paragraph",
+                startHtml: "<p id=\"p\">This is a simple paragraph</p>",
+                endHtml: "<p id=\"p\">This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
+                startId: "p",
+                startOffset: 26,
+                endId: "p",
+                endOffset: 26
+            ),
         ]
-        for (test, action) in htmlTestAndActions {
+        for test in htmlTests {
+            test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
-            let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
+            let expectation = XCTestExpectation(description: "Insert a table")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
-                        action() {
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Define the handler to execute after input is received (i.e., once the operation is
+                        // complete and has changed the html).
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 expectation.fulfill()
                             }
                         }
+                        // Kick off the enter operation in the blockquote we selected
+                        self.webView.insertTable(rows: 2, cols: 2)
                     }
                 }
             }

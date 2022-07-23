@@ -69,6 +69,9 @@
 		AA8EFAF4261E0EA9008AE31E /* LinkToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAF3261E0EA9008AE31E /* LinkToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
 		AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CDA8E268900380046D308 /* SubToolbar.swift */; };
+		AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */; };
+		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
+		AAA1B0972889D2F000303721 /* View+Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Modifiers.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
 		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
@@ -207,6 +210,9 @@
 		AA8EFAF3261E0EA9008AE31E /* LinkToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkToolbar.swift; sourceTree = "<group>"; };
 		AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableToolbar.swift; sourceTree = "<group>"; };
 		AA9CDA8E268900380046D308 /* SubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubToolbar.swift; sourceTree = "<group>"; };
+		AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForcePopoverModifier.swift; sourceTree = "<group>"; };
+		AAA1B0942889D2E200303721 /* PopoverHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHostingController.swift; sourceTree = "<group>"; };
+		AAA1B0962889D2F000303721 /* View+Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Modifiers.swift"; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
@@ -268,12 +274,15 @@
 			isa = PBXGroup;
 			children = (
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
+				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */,
+				AAA1B0942889D2E200303721 /* PopoverHostingController.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
 				AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */,
 				AA8EFAC0261CD357008AE31E /* ToolbarTextField.swift */,
+				AAA1B0962889D2F000303721 /* View+Modifiers.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -748,6 +757,7 @@
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
+				AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
 				AA408B292616685B00CAE8B9 /* StyleContext.swift in Sources */,
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
@@ -755,6 +765,7 @@
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
 				AA0BC27026F8F52500B90327 /* MarkupEnv.swift in Sources */,
 				AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */,
+				AAA1B0972889D2F000303721 /* View+Modifiers.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
 				AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */,
 				AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */,
@@ -764,6 +775,7 @@
 				AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */,
 				AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */,
 				AA408B2E2616685B00CAE8B9 /* ImageToolbar.swift in Sources */,
+				AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */,
 				AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */,
 				AA8EFAC1261CD357008AE31E /* ToolbarTextField.swift in Sources */,
 			);
