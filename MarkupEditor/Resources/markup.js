@@ -6897,10 +6897,18 @@ MU.insertTable = function(rows, cols, undoable=true) {
     table.appendChild(tbody);
     const targetNode = _findFirstParentElementInNodeNames(selNode, _styleTags);
     if (!targetNode) { return };
-    targetNode.insertAdjacentHTML('afterend', table.outerHTML);
-    // We need the new table that now exists at selection.
+    const range = sel.getRangeAt(0);
+    let newTable;
+    if ((targetNode.firstChild === range.startContainer) && (range.startOffset === 0)) {
+        targetNode.insertAdjacentHTML('beforebegin', table.outerHTML);
+        // We need the new table that now exists before targetNode
+        newTable = _getFirstChildWithNameWithin(targetNode.previousSibling, 'TABLE');
+    } else {
+        targetNode.insertAdjacentHTML('afterend', table.outerHTML);
+        // We need the new table that now exists after targetNode
+        newTable = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
+    }
     // Restore the selection to leave it at the beginning of the new table
-    const newTable = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
     _restoreTableSelection(newTable, 0, 0, false);
     // Track table insertion on the undo stack if necessary
     if (undoable) {
