@@ -1597,10 +1597,12 @@ const _patchPasteHTML = function(html) {
     template.innerHTML = html;
     const element = template.content;
     _cleanUpSpansWithin(element);
+    _cleanUpDivsWithin(element);
     _cleanUpAttributesWithin('style', element);
     _cleanUpAttributesWithin('class', element);
     _cleanUpMetas(element);
     _cleanUpBRs(element);
+    _cleanUpNewlines(element);
     _cleanUpPREs(element);
     _cleanUpAliases(element);
     _prepImages(element);
@@ -2057,6 +2059,7 @@ MU.getHTML = function(pretty=true, clean=true) {
         const template = document.createElement('template');
         template.innerHTML = MU.editor.innerHTML;
         editor = template.content;
+        _cleanUpDivsWithin(editor);
         _cleanUpSpansWithin(editor);
         _cleanUpEmptyTextNodes(editor);
     } else {
@@ -2107,7 +2110,7 @@ const _prettyHTML = function(node, indent, text, inlined) {
     const nodeHasTerminator = !_isVoidNode(node);
     const nodeIsEmptyElement = nodeIsElement && (node.childNodes.length === 0);
     if (nodeIsText) {
-        text += node.textContent;
+        text += _replaceAngles(node.textContent);
     } else if (nodeIsElement) {
         const terminatorIsInlined = nodeIsEmptyElement || (_isInlined(node.firstChild) && _isInlined(node.lastChild));
         if (!nodeIsInlined) { text += '\n' + indent };
@@ -2130,6 +2133,13 @@ const _prettyHTML = function(node, indent, text, inlined) {
         };
     };
     return text;
+};
+
+/**
+ * Return a new string that has all < replaced with &lt; and all > replaced with &gt;
+ */
+const _replaceAngles = function(textContent) {
+    return textContent.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 };
 
 /**
@@ -5710,13 +5720,12 @@ const _cleanUpMetas = function(node) {
 
 /*
  * Put any direct childNodes of node that are in "standalone" BRs into paragraphs
- * and patch up text nodes with newlines and embedded angle brackets.
  */
 const _cleanUpBRs = function(node) {
     const childNodes = node.childNodes;
     let child = node.firstChild;
     while (child) {
-        if (child.nodeName === 'BR') {
+        if (_isBRElement(child)) {
             const nextChild = child.nextSibling;
             const nextNextChild = (nextChild) ? nextChild.nextSibling : null;
             if ((!nextChild) || (nextChild && (nextChild.nodeType !== Node.TEXT_NODE))) {
@@ -5726,8 +5735,20 @@ const _cleanUpBRs = function(node) {
                 child.replaceWith(p);
             };
             child = nextNextChild;
-        } else if (child.nodeType === Node.TEXT_NODE) {
-            _patchAngleBrackets(child);
+        } else {
+            child = child.nextSibling;
+        };
+    };
+};
+
+/**
+ * Patch up text nodes that have newlines
+ */
+const _cleanUpNewlines = function(node) {
+    const childNodes = node.childNodes;
+    let child = node.firstChild;
+    while (child) {
+        if (_isTextNode(child)) {
             child = _patchNewlines(child).nextSibling;
         } else {
             child = child.nextSibling;
@@ -5804,17 +5825,35 @@ const _cleanUpSpans = function() {
  * @return {Int}    The number of spans removed
  */
 const _cleanUpSpansWithin = function(node, spansRemoved) {
-    spansRemoved = spansRemoved ?? 0;
-    // Nested spans show up as children of a span.
+    return _cleanUpSpansDivsWithin(node, 'SPAN', spansRemoved);
+};
+
+/**
+ * Do a depth-first traversal from node, removing divs starting at the leaf nodes.
+ *
+ * @return {Int}    The number of divs removed
+ */
+const _cleanUpDivsWithin = function(node, divsRemoved) {
+    return _cleanUpSpansDivsWithin(node, 'DIV', divsRemoved);
+}
+
+/**
+ * Do a depth-first traversal from node, removing divs/spans starting at the leaf nodes.
+ *
+ * @return {Int}    The number of divs/spans removed
+ */
+const _cleanUpSpansDivsWithin = function(node, type, removed) {
+    removed = removed ?? 0;
+    // Nested span/divs show up as children of a span/div.
     const children = node.children;
     let child = (children.length > 0) ? children[0] : null;
     while (child) {
         let nextChild = child.nextElementSibling;
-        spansRemoved = _cleanUpSpansWithin(child, spansRemoved);
+        removed = _cleanUpSpansDivsWithin(child, type, removed);
         child = nextChild;
     };
-    if (node.nodeName === 'SPAN') {
-        spansRemoved++;
+    if (node.nodeName === type) {
+        removed++;
         if (node.childNodes.length > 0) {   // Use childNodes because we need text nodes
             const template = document.createElement('template');
             template.innerHTML = node.innerHTML;
@@ -5824,7 +5863,7 @@ const _cleanUpSpansWithin = function(node, spansRemoved) {
             node.parentNode.removeChild(node);
         };
     };
-    return spansRemoved;
+    return removed;
 };
 
 /**
@@ -5937,10 +5976,7 @@ const _patchAngleBrackets = function(node) {
     if (node.nodeType !== Node.TEXT_NODE) {
         return node;
     };
-    let rawContent = node.textContent;
-    rawContent = rawContent.replace('<', '&lt;');
-    rawContent = rawContent.replace('>', '&gt;');
-    node.textContent = rawContent;
+    node.textContent = _replaceAngles(node.textContent);
 };
                                 
 /********************************************************************************

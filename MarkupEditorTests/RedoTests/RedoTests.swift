@@ -2265,6 +2265,16 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 pasteString: "Hello world"
             ),
             HtmlTest(
+                description: "P in P - Paste text with embedded HTML at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello &lt;b&gt;bold&lt;/b&gt; worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello &lt;b&gt;bold&lt;/b&gt; world"
+            ),
+            HtmlTest(
                 description: "P in P - Paste text with embedded bold at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is juHello <b>bold</b> worldst a simple paragraph.</p>",
@@ -2475,6 +2485,16 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 endId: "p",
                 endOffset: 10,
                 pasteString: "Hello world"
+            ),
+            HtmlTest(
+                description: "P in P - Paste text with embedded HTML at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello &lt;b&gt;bold&lt;/b&gt; worldst a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "Hello &lt;b&gt;bold&lt;/b&gt; world"
             ),
             HtmlTest(
                 description: "P in P - Paste text with embedded bold at insertion point in a word",
