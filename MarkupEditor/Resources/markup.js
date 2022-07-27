@@ -7307,6 +7307,64 @@ MU.deleteCol = function(undoable=true) {
     _callback('input');
 };
 
+MU.borderTable = function(tableBorders, undoable=true) {
+    _backupSelection();
+    const tableElements = _getTableElementsAtSelection();
+    if (tableElements.length === 0) { return };
+    const table = tableElements['table'];
+    const header = _getSection(table, 'THEAD');
+    const ths = header ? header.querySelectorAll('th') : [];
+    const tds = table.querySelectorAll('td');
+    _clearBorders(table, header, ths, tds); // Always clear
+    switch (tableBorders) {
+        case 'outer':
+            table.setAttribute('class', 'bordered-element');
+            break;
+        case 'header':
+            table.setAttribute('class', 'bordered-element');
+            if (header) {
+                header.setAttribute('class', 'bordered-element');
+            };
+            break;
+        case 'cell':
+            table.setAttribute('class', 'bordered-element');
+            if (header) {
+                header.setAttribute('class', 'bordered-element');
+            };
+            for (let i = 0; i < ths.length; i++) {
+                ths[i].setAttribute('class', 'bordered-element')
+            };
+            for (let i = 0; i < tds.length; i++) {
+                tds[i].setAttribute('class', 'bordered-element')
+            };
+            break;
+        default:
+            break;
+    };
+    _forceRedraw(table);    // No idea why it doesn't redraw sometimes
+    _callback('input');
+};
+
+const _clearBorders = function(table, header, ths, tds) {
+    table.removeAttribute('class', 'bordered-element');
+    if (header) {
+        header.removeAttribute('class', 'bordered-element');
+    }
+    for (let i = 0; i < ths.length; i++) {
+        ths[i].removeAttribute('class', 'bordered-element')
+    };
+    for (let i = 0; i < tds.length; i++) {
+        tds[i].removeAttribute('class', 'bordered-element')
+    };
+};
+
+const _forceRedraw = function(element) {
+    const disp = element.style.display;
+    element.style.display = 'none';
+    const trick = element.offsetHeight;
+    element.style.display = disp;
+};
+
 /*
  * If the selection is inside a TABLE, populate attributes with the information
  * about the table and what is selected in it.
