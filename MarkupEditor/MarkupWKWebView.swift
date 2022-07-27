@@ -558,6 +558,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.deleteTable()") { result, error in handler?() }
     }
     
+    public func borderTable(_ borders: TableBorders, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.borderTable()")  { result, error in handler?() }
+    }
+    
     //MARK: Image editing
     
     public func modifyImage(src: String?, alt: String?, scale: Int?, handler: (()->Void)?) {
