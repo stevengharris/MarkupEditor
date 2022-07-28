@@ -123,10 +123,10 @@ public struct TableToolbar: View {
                 Divider()
                 LabeledToolbar(label: borderHoverLabel) {
                     ToolbarImageButton(
-                        action: { observedWebView.selectedWebView?.borderTable(.outer) },
-                        onHover: { over in borderHoverLabel = Text(over ? "Outer" : "Border") }
+                        action: { observedWebView.selectedWebView?.borderTable(.cell) },
+                        onHover: { over in borderHoverLabel = Text(over ? "Cells" : "Border") }
                     ) {
-                        BorderIcon(.outer)
+                        BorderIcon(.cell)
                     }
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
@@ -137,10 +137,10 @@ public struct TableToolbar: View {
                     }
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
-                        action: { observedWebView.selectedWebView?.borderTable(.cell) },
-                        onHover: { over in borderHoverLabel = Text(over ? "Cells" : "Border") }
+                        action: { observedWebView.selectedWebView?.borderTable(.outer) },
+                        onHover: { over in borderHoverLabel = Text(over ? "Outer" : "Border") }
                     ) {
-                        BorderIcon(.cell)
+                        BorderIcon(.outer)
                     }
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(

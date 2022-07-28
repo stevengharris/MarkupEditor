@@ -88,7 +88,33 @@ table p, table h1, table h2, table h3, table h4, table h5, table h6 {
     margin: 0;
 }
 
-.bordered-element {
+/* Table bordering options */
+.bordered-table-none {
+    border: none;
+}
+
+.bordered-table-outer, .bordered-table-header, .bordered-table-cell {
+    border: 1px solid #DDD;
+}
+
+.bordered-table-header th {   /* border th not thead to refresh properly */
+    border: 1px solid #DDD;
+}
+
+.bordered-table-cell th, .bordered-table-cell td {
+    border: 1px solid #DDD;
+}
+
+/* Default table bordering is same as .bordered-table-cell but is only used when not specified */
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {
+    border: 1px solid #DDD;
+}
+
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {
+    border: 1px solid #DDD;
+}
+
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {
     border: 1px solid #DDD;
 }
 
