@@ -18,7 +18,7 @@ public enum TableDirection {
 }
 
 /// Enum to identiry border styling for tables
-public enum TableBorders {
+public enum TableBorder: String {
     case outer
     case header
     case cell
@@ -64,7 +64,7 @@ public struct TableToolbar: View {
                         action: { observedWebView.selectedWebView?.addHeader() },
                         onHover: { over in addHoverLabel = Text(over ? "Add Header" : "Add") }
                     ) {
-                        AddHeader(rows: 2, cols: 3)
+                        AddHeader()
                     }
                     .disabled(!selectionState.isInTable || selectionState.header)
                     ToolbarImageButton(
@@ -124,6 +124,7 @@ public struct TableToolbar: View {
                 LabeledToolbar(label: borderHoverLabel) {
                     ToolbarImageButton(
                         action: { observedWebView.selectedWebView?.borderTable(.cell) },
+                        active: Binding<Bool>(get: { selectionState.isInTable && selectionState.border == .cell }, set: { _ = $0 }),
                         onHover: { over in borderHoverLabel = Text(over ? "Cells" : "Border") }
                     ) {
                         BorderIcon(.cell)
@@ -131,6 +132,7 @@ public struct TableToolbar: View {
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
                         action: { observedWebView.selectedWebView?.borderTable(.header) },
+                        active: Binding<Bool>(get: { selectionState.border == .header }, set: { _ = $0 }),
                         onHover: { over in borderHoverLabel = Text(over ? "Header" : "Border") }
                     ) {
                         BorderIcon(.header)
@@ -138,6 +140,7 @@ public struct TableToolbar: View {
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
                         action: { observedWebView.selectedWebView?.borderTable(.outer) },
+                        active: Binding<Bool>(get: { selectionState.border == .outer }, set: { _ = $0 }),
                         onHover: { over in borderHoverLabel = Text(over ? "Outer" : "Border") }
                     ) {
                         BorderIcon(.outer)
@@ -145,6 +148,7 @@ public struct TableToolbar: View {
                     .disabled(!selectionState.isInTable)
                     ToolbarImageButton(
                         action: { observedWebView.selectedWebView?.borderTable(.none) },
+                        active: Binding<Bool>(get: { selectionState.border == .none }, set: { _ = $0 }),
                         onHover: { over in borderHoverLabel = Text(over ? "None" : "Border") }
                     ) {
                         BorderIcon(.none)

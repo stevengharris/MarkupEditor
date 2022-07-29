@@ -558,8 +558,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.deleteTable()") { result, error in handler?() }
     }
     
-    public func borderTable(_ borders: TableBorders, handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.borderTable(\"\(borders)\")")  { result, error in handler?() }
+    public func borderTable(_ border: TableBorder, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.borderTable(\"\(border)\")")  { result, error in handler?() }
     }
     
     //MARK: Image editing
@@ -780,6 +780,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.cols = state["cols"] as? Int ?? 0
         selectionState.row = state["row"] as? Int ?? 0
         selectionState.col = state["col"] as? Int ?? 0
+        if let rawValue = state["border"] as? String {
+            selectionState.border = TableBorder(rawValue: rawValue) ?? .cell
+        } else {
+            selectionState.border = .cell
+        }
         // Styles
         if let tag = state["style"] as? String {
             selectionState.style = StyleContext.with(tag: tag)

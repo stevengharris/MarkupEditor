@@ -6135,6 +6135,7 @@ const _getSelectionState = function() {
     state['cols'] = tableAttributes['cols'];
     state['row'] = tableAttributes['row'];
     state['col'] = tableAttributes['col'];
+    state['border'] = tableAttributes['border']
     // Style
     state['style'] = _getParagraphStyle();
     state['list'] = _selectionListType();
@@ -7311,12 +7312,18 @@ MU.deleteCol = function(undoable=true) {
  * Set the class of the table to style it using CSS.
  * The default draws a border around everything.
  */
-MU.borderTable = function(tableBorders, undoable=true) {
+MU.borderTable = function(border, undoable=true) {
     _backupSelection();
     const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     const table = tableElements['table'];
-    switch (tableBorders) {
+    _setBorder(border, table);
+    _callback('input');
+    _callback('selectionChange')
+};
+
+const _setBorder = function(border, table) {
+    switch (border) {
         case 'outer':
             table.setAttribute('class', 'bordered-table-outer');
             break;
@@ -7333,7 +7340,29 @@ MU.borderTable = function(tableBorders, undoable=true) {
             table.removeAttribute('class');
             break;
     };
-    _callback('input');
+};
+
+const _getBorder = function(table) {
+    const borderClass = table.getAttribute('class');
+    var border;
+    switch (borderClass) {
+        case 'bordered-table-outer':
+            border = 'outer';
+            break;
+        case 'bordered-table-header':
+            border = 'header';
+            break;
+        case 'bordered-table-cell':
+            border = 'cell';
+            break;
+        case 'bordered-table-none':
+            border = 'none';
+            break;
+        default:
+            border = 'cell';
+            break;
+    };
+    return border;
 };
 
 /*
@@ -7353,7 +7382,8 @@ MU.borderTable = function(tableBorders, undoable=true) {
 const _getTableAttributesAtSelection = function() {
     const attributes = {};
     const elements = _getTableElementsAtSelection();
-    attributes['table'] = elements['table'] != null;
+    const table = elements['table'];
+    attributes['table'] = table != null;
     if (!attributes['table']) { return attributes };
     attributes['thead'] = elements['thead'] != null;
     attributes['tbody'] = elements['tbody'] != null;
@@ -7363,6 +7393,7 @@ const _getTableAttributesAtSelection = function() {
     attributes['rows'] = elements['rows'];
     attributes['row'] = elements['row'];
     attributes['col'] = elements['col'];
+    attributes['border'] = _getBorder(table);
     return attributes;
 };
 
