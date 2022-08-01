@@ -9,8 +9,10 @@
 import SwiftUI
 
 struct EdgeColor {
-    static let border: Color = .secondary
-    static let outline: Color = .secondary
+    static let activeBorder: Color = Color(UIColor.systemBackground)
+    static let activeOutline: Color = Color(UIColor.systemBackground)
+    static let inactiveBorder: Color = .accentColor
+    static let inactiveOutline: Color = .accentColor
 }
 
 struct EdgeWidth {
@@ -21,15 +23,16 @@ struct EdgeWidth {
 //MARK: Table Icons
 
 struct TableIcon: View {
-    var rows: Int = 3
-    var cols: Int = 3
-    var inset: CGFloat = 3
-    var selectRow: Int? = nil
-    var selectCol: Int? = nil
-    var withHeader: Bool = false
-    var deleteRows: [Int]? = nil
-    var deleteCols: [Int]? = nil
-    var border: TableBorder = .none
+    @Binding var active: Bool
+    var rows: Int
+    var cols: Int
+    var inset: CGFloat
+    var selectRow: Int?
+    var selectCol: Int?
+    var withHeader: Bool
+    var deleteRows: [Int]?
+    var deleteCols: [Int]?
+    var border: TableBorder
     var body: some View {
         GeometryReader() { geometry in
             let width = geometry.size.width
@@ -54,10 +57,27 @@ struct TableIcon: View {
             }
             .frame(width: width, height: height)
             .overlay(
-                TableIconBorder(width: width, height: height, rows: rows, cols: cols, withHeader: withHeader, border: border)
+                TableIconBorder(active: $active, width: width, height: height, rows: rows, cols: cols, withHeader: withHeader, border: border)
             )
         }
         .padding([.all], inset)
+    }
+    
+    init(active: Binding<Bool>? = nil, rows: Int = 3, cols: Int = 3, inset: CGFloat = 3, selectRow: Int? = nil, selectCol: Int? = nil, withHeader: Bool = false, deleteRows: [Int]? = nil, deleteCols: [Int]? = nil, border: TableBorder = .none) {
+        if let active = active {
+            _active = active
+        } else {
+            _active = .constant(false)
+        }
+        self.rows = rows
+        self.cols = cols
+        self.inset = inset
+        self.selectRow = selectRow
+        self.selectCol = selectCol
+        self.withHeader = withHeader
+        self.deleteRows = deleteRows
+        self.deleteCols = deleteCols
+        self.border = border
     }
 }
 
@@ -70,7 +90,7 @@ struct TableCell: View {
         ZStack {
             Rectangle()
                 .frame(width: width, height: height)
-                .foregroundColor(selected ? Color.accentColor.opacity(0.2) : Color (UIColor.systemBackground))
+                .foregroundColor(selected ? Color.accentColor.opacity(0.3) : Color (UIColor.systemBackground).opacity(0.3))
             if deleted {
                 Image(systemName: "xmark")
                     .foregroundColor(Color.red)
@@ -81,23 +101,26 @@ struct TableCell: View {
 }
 
 struct TableIconBorder: View {
+    @Binding var active: Bool
     let width: CGFloat
     let height: CGFloat
     let rows: Int
     let cols: Int
     let withHeader: Bool
     let border: TableBorder
+    var borderColor: Color { active ? EdgeColor.activeBorder : EdgeColor.inactiveBorder }
+    var outlineColor: Color { active ? EdgeColor.activeOutline : EdgeColor.inactiveOutline }
     var body: some View {
-        let borderThickness = border == .none ? EdgeWidth.outline : EdgeWidth.border
-        let borderColor = border == .none ? EdgeColor.outline : EdgeColor.border
+        let outerThickness = border == .none ? EdgeWidth.outline : EdgeWidth.border
+        let outerColor = border == .none ? outlineColor : borderColor
         let cellWidth = width / CGFloat(cols)
         let cellHeight = height / CGFloat(rows)
         ZStack(alignment: .topLeading) {
             Rectangle()
-                .stroke(borderColor, lineWidth: borderThickness)
+                .stroke(outerColor, lineWidth: outerThickness)
                 .foregroundColor(Color.clear)
             ForEach(0..<rows, id:\.self) { row in
-                let rowTopLineWidth = row == 0 ? borderThickness : rowLineWidth(for: row - 1)
+                let rowTopLineWidth = row == 0 ? outerThickness : rowLineWidth(for: row - 1)
                 let rowBottomLineWidth = rowLineWidth(for: row)
                 let rowBottomColor = rowColor(for: row)
                 TableBorderRowSeparator(
@@ -107,7 +130,7 @@ struct TableIconBorder: View {
                     cellHeight: cellHeight,
                     color: rowBottomColor,
                     lineWidth: rowBottomLineWidth,
-                    borderThickness: borderThickness)
+                    outerThickness: outerThickness)
                 ForEach(0..<cols-1, id: \.self) { col in
                     let isHeader = withHeader ? row == 0 : false
                     let colTrailingColor = isHeader ? Color.clear : colColor(for: col)
@@ -131,15 +154,15 @@ struct TableIconBorder: View {
         var color: Color
         switch border {
         case .outer, .none:
-            color = EdgeColor.outline
+            color = outlineColor
         case .header:
             if row == 0 {
-                color = EdgeColor.border
+                color = borderColor
             } else {
-                color = EdgeColor.outline
+                color = outlineColor
             }
         case .cell:
-            color = EdgeColor.border
+            color = borderColor
         }
         return color
     }
@@ -167,9 +190,9 @@ struct TableIconBorder: View {
         var color: Color
         switch border {
         case .outer, .header, .none:
-            color = EdgeColor.outline
+            color = outlineColor
         case .cell:
-            color = EdgeColor.border
+            color = borderColor
         }
         return color
     }
@@ -194,16 +217,16 @@ struct TableBorderRowSeparator: View {
     let cellHeight: CGFloat
     let color: Color
     let lineWidth: CGFloat
-    let borderThickness: CGFloat
+    let outerThickness: CGFloat
     var body: some View {
         let hideRowSeparator = row == rows - 1   // Don't draw line at bottom
         if !hideRowSeparator {
             let rowBottomOffset = cellHeight * CGFloat(row + 1)
             Path { path in
                 path.move(to: CGPoint.zero)
-                path.addLine(to: CGPoint(x: rowWidth - borderThickness, y: 0))
+                path.addLine(to: CGPoint(x: rowWidth - outerThickness, y: 0))
             }
-            .offset(x: borderThickness / 2, y: rowBottomOffset)
+            .offset(x: outerThickness / 2, y: rowBottomOffset)
             .stroke(color, lineWidth: lineWidth)
         } else {
             EmptyView()
@@ -332,13 +355,19 @@ struct CreateTable: View {
 }
 
 struct BorderIcon: View {
+    @Binding var active: Bool
     var border: TableBorder = .none
     var body: some View {
-        TableIcon(rows: 3, cols: 3, withHeader: true, border: border)
+        TableIcon(active: $active, rows: 3, cols: 3, withHeader: true, border: border)
     }
     
-    init(_ border: TableBorder) {
+    init(_ border: TableBorder = .none, active: Binding<Bool>? = nil) {
         self.border = border
+        if let active = active {
+            _active = active
+        } else {
+            _active = .constant(false)
+        }
     }
 }
 
