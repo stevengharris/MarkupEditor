@@ -2343,8 +2343,153 @@ class BasicTests: XCTestCase, MarkupDelegate {
                                 expectation.fulfill()
                             }
                         }
-                        // Kick off the enter operation in the blockquote we selected
+                        // Kick off the insert table action
                         self.webView.insertTable(rows: 2, cols: 2)
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 2)
+        }
+    }
+    
+    func testTableActions() throws {
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (HtmlTest(
+                description: "Delete row",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.deleteRow() {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Delete col",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.deleteCol() {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Delete table",
+                startHtml: "<p>Hello</p><table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>world</p>",
+                endHtml: "<p>Hello</p><p>world</p>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.deleteTable() {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Add row above",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.addRow(.before) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Add row below",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.addRow(.after) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Add col before",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.addCol(.before) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Add col after",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p><br></p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p><br></p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.addCol(.after) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Add header",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table><thead><tr><th colspan=\"2\"><p><br></p></th></tr></thead><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.addHeader() {
+                     handler()
+                 }
+             }
+            ),
+        ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: "Perform actions on a table")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        action {
+                            self.webView.getRawHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
                     }
                 }
             }

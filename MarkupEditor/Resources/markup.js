@@ -7004,8 +7004,7 @@ MU.addRow = function(direction, undoable=true) {
     // Create an empty row with the right number of elements
     const newRow = document.createElement('tr');
     for (let i=0; i<cols; i++) {
-        let td = document.createElement('td');
-        newRow.appendChild(td);
+        newRow.appendChild(_emptyTd());
     };
     // For reference, form of insertBefore is...
     //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
@@ -7084,7 +7083,7 @@ MU.addCol = function(direction, undoable=true) {
                 let tr = rows[j];
                 let td = tr.children[col];  // Only td elements
                 // Then insert a new td before or after
-                let newTd = document.createElement('td');
+                let newTd = _emptyTd();
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -7104,7 +7103,7 @@ MU.addCol = function(direction, undoable=true) {
             } else {
                 th = tr.children[col];           // Only th elements
                 // Then insert a new td before or after
-                let newTh = document.createElement('th');
+                let newTh = _emptyTh();
                 // For reference, form of insertBefore is...
                 //  let insertedNode = parentNode.insertBefore(newNode, referenceNode)
                 if (direction === 'AFTER') {
@@ -7147,13 +7146,13 @@ MU.addHeader = function(colspan=true, undoable=true) {
         const header = document.createElement('thead');
         const tr = document.createElement('tr');
         if (colspan) {
-            let th = document.createElement('th');
+            let th = _emptyTh();
             th.setAttribute('colspan', cols);
             tr.appendChild(th);
             header.appendChild(tr);
         } else {
             for (let i=0; i<cols; i++) {
-                let th = document.createElement('th');
+                let th = _emptyTh();
                 tr.appendChild(th);
             }
             header.appendChild(tr);
@@ -7363,6 +7362,22 @@ const _getBorder = function(table) {
             break;
     };
     return border;
+};
+
+const _emptyTd = function() {
+    return _emptyCell('td');
+};
+
+const _emptyTh = function() {
+    return _emptyCell('th');
+}
+
+const _emptyCell = function(cellType) {
+    const cell = document.createElement(cellType);
+    const p = document.createElement('p');
+    p.appendChild(document.createElement('br'));
+    cell.appendChild(p);
+    return cell;
 };
 
 /*
