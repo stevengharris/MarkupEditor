@@ -30,6 +30,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var cols: Int = 0
     @Published public var row: Int = 0
     @Published public var col: Int = 0
+    @Published public var border: TableBorder = TableBorder.cell
     // Styles
     @Published public var style: StyleContext = StyleContext.Undefined
     @Published public var list: ListContext = ListContext.Undefined
@@ -114,6 +115,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         cols = selectionState?.cols ?? 0                // Number of cols in table if selected
         row = selectionState?.row ?? 0                  // Row number selected in body (0 if header)
         col = selectionState?.col ?? 0                  // Col number selected in body or header
+        border = selectionState?.border ?? .cell        // TableBorder for selected table
         style = selectionState?.style ?? StyleContext.Undefined
         list = selectionState?.list ?? ListContext.Undefined
         li = selectionState?.li ?? false
@@ -162,12 +164,12 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         let tableSize = "\(rows)x\(cols)"
         let headerType = header ? (colspan ? "spanning header" : "non-spanning header") : "no header"
         if tbody {
-            return "in body row \(row), col \(col) of \(tableSize) table with \(headerType)"
+            return "in body row \(row), col \(col) of \(tableSize) table with \(headerType), border: \(border)"
         } else if thead {
             if colspan {
-                return "in \(headerType) of \(tableSize) table"
+                return "in \(headerType) of \(tableSize) table, border: \(border)"
             } else {
-                return "in col \(col) of \(headerType) of \(tableSize) table"
+                return "in col \(col) of \(headerType) of \(tableSize) table, border: \(border)"
             }
         } else {
             return "Error: in \(tableSize) table, but in neither tbody nor thead"

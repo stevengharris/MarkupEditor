@@ -8,147 +8,256 @@
 
 import SwiftUI
 
+struct EdgeColor {
+    static let activeBorder: Color = Color(UIColor.systemBackground)
+    static let activeOutline: Color = Color(UIColor.systemBackground)
+    static let inactiveBorder: Color = .accentColor
+    static let inactiveOutline: Color = .accentColor
+}
+
+struct EdgeWidth {
+    static let border: CGFloat = 2
+    static let outline: CGFloat = 1
+}
+
 //MARK: Table Icons
 
+struct TableIcon: View {
+    @Binding var active: Bool
+    var rows: Int
+    var cols: Int
+    var inset: CGFloat
+    var selectRow: Int?
+    var selectCol: Int?
+    var withHeader: Bool
+    var deleteRows: [Int]?
+    var deleteCols: [Int]?
+    var border: TableBorder
+    var body: some View {
+        GeometryReader() { geometry in
+            let width = geometry.size.width
+            let height = geometry.size.height
+            let cellWidth = width / CGFloat(cols)
+            let cellHeight = height / CGFloat(rows)
+            VStack(spacing: 0) {
+                ForEach(0..<rows, id: \.self) { row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<cols, id: \.self) { col in
+                            let select = row == selectRow || col == selectCol
+                            let delete = deleteRows?.contains(row) ?? false || deleteCols?.contains(col) ?? false
+                            TableCell(
+                                width: cellWidth,
+                                height: cellHeight,
+                                selected: select,
+                                deleted: delete
+                            )
+                        }
+                    }
+                }
+            }
+            .frame(width: width, height: height)
+            .overlay(
+                TableIconBorder(active: $active, width: width, height: height, rows: rows, cols: cols, withHeader: withHeader, border: border)
+            )
+        }
+        .padding([.all], inset)
+    }
+    
+    init(active: Binding<Bool>? = nil, rows: Int = 3, cols: Int = 3, inset: CGFloat = 3, selectRow: Int? = nil, selectCol: Int? = nil, withHeader: Bool = false, deleteRows: [Int]? = nil, deleteCols: [Int]? = nil, border: TableBorder = .none) {
+        if let active = active {
+            _active = active
+        } else {
+            _active = .constant(false)
+        }
+        self.rows = rows
+        self.cols = cols
+        self.inset = inset
+        self.selectRow = selectRow
+        self.selectCol = selectCol
+        self.withHeader = withHeader
+        self.deleteRows = deleteRows
+        self.deleteCols = deleteCols
+        self.border = border
+    }
+}
+
 struct TableCell: View {
-    @State var width: CGFloat
-    @State var height: CGFloat
-    @State var selected: Bool = false
-    @State var deleted: Bool = false
-    @State var borderEdges: [Edge] = []
+    let width: CGFloat
+    let height: CGFloat
+    let selected: Bool
+    let deleted: Bool
     var body: some View {
         ZStack {
             Rectangle()
                 .frame(width: width, height: height)
-                .foregroundColor(selected ? Color.accentColor.opacity(0.2) : Color(UIColor.systemBackground))
-            ForEach(borderEdges, id: \.self) { edge in
-                switch edge {
-                case .top:
-                    Path { path in
-                        path.move(to: CGPoint(x: 0, y: 0))
-                        path.addLine(to: CGPoint(x: width, y: 0))
-                    }
-                    .stroke(Color.accentColor)
-                case .bottom:
-                    Path { path in
-                        path.move(to: CGPoint(x: 0, y: height))
-                        path.addLine(to: CGPoint(x: width, y: height))
-                    }
-                    .stroke(Color.accentColor)
-                case .leading:
-                    Path { path in
-                        path.move(to: CGPoint(x: 0, y: 0))
-                        path.addLine(to: CGPoint(x: 0, y: height))
-                    }
-                    .stroke(Color.accentColor)
-                case .trailing:
-                    Path { path in
-                        path.move(to: CGPoint(x: width, y: 0))
-                        path.addLine(to: CGPoint(x: width, y: height))
-                    }
-                    .stroke(Color.accentColor)
-                }
-            }
+                .foregroundColor(selected ? Color.accentColor.opacity(0.3) : Color (UIColor.systemBackground).opacity(0.3))
             if deleted {
                 Image(systemName: "xmark")
                     .foregroundColor(Color.red)
-                    .font(Font.system(size: 6).weight(.bold))
-                    .zIndex(1)
+                    .font(Font.system(size: min(width, height) - 2).weight(.bold))
             }
         }
     }
 }
 
-struct TableRow: View {
-    @State var cols: Int
-    @State var height: CGFloat
-    @State var selected: Bool = false
-    @State var selectCol: Int? = nil
-    @State var deleted: Bool = false
-    @State var deleteCols: [Int]? = nil
-    @State var isHeader: Bool = false
+struct TableIconBorder: View {
+    @Binding var active: Bool
+    let width: CGFloat
+    let height: CGFloat
+    let rows: Int
+    let cols: Int
+    let withHeader: Bool
+    let border: TableBorder
+    var borderColor: Color { active ? EdgeColor.activeBorder : EdgeColor.inactiveBorder }
+    var outlineColor: Color { active ? EdgeColor.activeOutline : EdgeColor.inactiveOutline }
     var body: some View {
-        GeometryReader() { geometry in
-            HStack(spacing: 0) {
-                ForEach(0..<cols, id: \.self) { col in
-                    let select = selected ? true : col == selectCol
-                    let delete = deleted ? true : deleteCols?.contains(col) ?? false
-                    let trailingOnly = isHeader && col == cols - 1
-                    let none = isHeader && cols > 2 && col > 0 && col < cols - 1
-                    let both = !isHeader && col == cols - 1
-                    // Each row draws the vertical lines of its cells; the creator of the row draws the horizontal ones
-                    // Each cell always draws its leading edge unless:
-                    //  1. It is not in the header and it's the last column, in which case it draws both leading and trailing
-                    //  2. It is in the header and it is in > the first column. In this case:
-                    //      2.1 If it is in between the first and last columns, it draws neither leading nor trailing edges
-                    //      2.2 If it is the last column, it draws the trailing edge
-                    // In any event, in case it's not obvious, we need a TableCell.
-                    if trailingOnly {
-                        TableCell(width: geometry.size.width / CGFloat(cols), height: height, selected: select, deleted: delete, borderEdges: [.trailing])
-                    } else if both {
-                        TableCell(width: geometry.size.width / CGFloat(cols), height: height, selected: select, deleted: delete, borderEdges: [.leading, .trailing])
-                    } else if none {
-                        TableCell(width: geometry.size.width / CGFloat(cols), height: height, selected: select, deleted: delete)
-                    } else {
-                        TableCell(width: geometry.size.width / CGFloat(cols), height: height, selected: select, deleted: delete, borderEdges: [.leading])
-                    }
+        let outerThickness = border == .none ? EdgeWidth.outline : EdgeWidth.border
+        let outerColor = border == .none ? outlineColor : borderColor
+        let cellWidth = width / CGFloat(cols)
+        let cellHeight = height / CGFloat(rows)
+        ZStack(alignment: .topLeading) {
+            Rectangle()
+                .stroke(outerColor, lineWidth: outerThickness)
+                .foregroundColor(Color.clear)
+            ForEach(0..<rows, id:\.self) { row in
+                let rowTopLineWidth = row == 0 ? outerThickness : rowLineWidth(for: row - 1)
+                let rowBottomLineWidth = rowLineWidth(for: row)
+                let rowBottomColor = rowColor(for: row)
+                TableBorderRowSeparator(
+                    row: row,
+                    rows: rows,
+                    rowWidth: width,
+                    cellHeight: cellHeight,
+                    color: rowBottomColor,
+                    lineWidth: rowBottomLineWidth,
+                    outerThickness: outerThickness)
+                ForEach(0..<cols-1, id: \.self) { col in
+                    let isHeader = withHeader ? row == 0 : false
+                    let colTrailingColor = isHeader ? Color.clear : colColor(for: col)
+                    let colTrailingLineWidth = colLineWidth(for: col)
+                    TableBorderColSeparator(
+                        row: row,
+                        col: col,
+                        cellWidth: cellWidth,
+                        cellHeight: cellHeight,
+                        rowTopLineWidth: rowTopLineWidth,
+                        rowBottomLineWidth: rowBottomLineWidth,
+                        color: colTrailingColor,
+                        lineWidth: colTrailingLineWidth)
                 }
             }
         }
     }
+    
+    /// Return the color for the bottom edge of a row
+    private func rowColor(for row: Int) -> Color {
+        var color: Color
+        switch border {
+        case .outer, .none:
+            color = outlineColor
+        case .header:
+            if row == 0 {
+                color = borderColor
+            } else {
+                color = outlineColor
+            }
+        case .cell:
+            color = borderColor
+        }
+        return color
+    }
+    
+    /// Return the thickness for the bottom edge of a row
+    private func rowLineWidth(for row: Int) -> CGFloat {
+        var thickness: CGFloat
+        switch border {
+        case .outer, .none:
+            thickness = EdgeWidth.outline
+        case .header:
+            if row == 0 {
+                thickness = EdgeWidth.border
+            } else {
+                thickness = EdgeWidth.outline
+            }
+        case .cell:
+            thickness = EdgeWidth.border
+        }
+        return thickness
+    }
+    
+    /// Return the color for the trailing edge of a cell at col
+    private func colColor(for col: Int) -> Color {
+        var color: Color
+        switch border {
+        case .outer, .header, .none:
+            color = outlineColor
+        case .cell:
+            color = borderColor
+        }
+        return color
+    }
+
+    /// Return the thickness for the trailing edge of a cell at col
+    private func colLineWidth(for col: Int) -> CGFloat {
+        var thickness: CGFloat
+        switch border {
+        case .outer, .header, .none:
+            thickness = EdgeWidth.outline
+        case .cell:
+            thickness = EdgeWidth.border
+        }
+        return thickness
+    }
 }
 
-struct TableIcon: View {
-    @State var rows: Int
-    @State var cols: Int
-    @State var inset: CGFloat = 3
-    @State var selectRow: Int? = nil
-    @State var selectCol: Int? = nil
-    @State var withHeader: Bool = false
-    @State var deleteRows: [Int]? = nil
-    @State var deleteCols: [Int]? = nil
+struct TableBorderRowSeparator: View {
+    let row: Int
+    let rows: Int
+    let rowWidth: CGFloat
+    let cellHeight: CGFloat
+    let color: Color
+    let lineWidth: CGFloat
+    let outerThickness: CGFloat
     var body: some View {
-        GeometryReader() { geometry in
-            let rowHeight = geometry.size.height / CGFloat(rows)
-            let rowWidth = geometry.size.width
-            VStack(spacing: 0) {
-                ForEach(0..<rows, id: \.self) { row in
-                    ZStack(alignment: .top) {
-                        TableRow(
-                            cols: cols,
-                            height: rowHeight,
-                            selected: row == selectRow,
-                            selectCol: selectCol,
-                            deleted: deleteRows?.contains(row) ?? false,
-                            deleteCols: deleteCols,
-                            isHeader: withHeader ? (row == 0) : false
-                        )
-                        if row == 0 {
-                            Path { path in
-                                path.move(to: CGPoint(x: 0, y: 0))
-                                path.addLine(to: CGPoint(x: rowWidth, y: 0))
-                            }
-                            .stroke(Color.accentColor)
-                            .zIndex(0.5)
-                        }
-                        Path { path in
-                            path.move(to: CGPoint(x: 0, y: 0))
-                            path.addLine(to: CGPoint(x: rowWidth, y: 0))
-                        }
-                        .offset(CGSize(width: 0, height: rowHeight))
-                        .stroke(Color.accentColor)
-                        .zIndex(0.5)
-                    }
-                    
-                }
+        let hideRowSeparator = row == rows - 1   // Don't draw line at bottom
+        if !hideRowSeparator {
+            let rowBottomOffset = cellHeight * CGFloat(row + 1)
+            Path { path in
+                path.move(to: CGPoint.zero)
+                path.addLine(to: CGPoint(x: rowWidth - outerThickness, y: 0))
             }
+            .offset(x: outerThickness / 2, y: rowBottomOffset)
+            .stroke(color, lineWidth: lineWidth)
+        } else {
+            EmptyView()
         }
-        .padding([.all], inset)
+    }
+}
+
+struct TableBorderColSeparator: View {
+    let row: Int
+    let col: Int
+    let cellWidth: CGFloat
+    let cellHeight: CGFloat
+    let rowTopLineWidth: CGFloat
+    let rowBottomLineWidth: CGFloat
+    let color: Color
+    let lineWidth: CGFloat
+    var body: some View {
+        let rowTopOffset = cellHeight * CGFloat(row)
+        let colSeparatorHeight = cellHeight - (rowTopLineWidth + rowBottomLineWidth) / 2
+        let colXOffset = cellWidth * CGFloat(col + 1)
+        Path { path in
+            path.move(to: CGPoint.zero)
+            path.addLine(to: CGPoint(x: 0, y: colSeparatorHeight))
+        }
+        .offset(x: colXOffset, y: rowTopOffset + rowTopLineWidth / 2)
+        .stroke(color, lineWidth: lineWidth)
     }
 }
 
 struct AddRow: View {
-    @State var direction: TableDirection
+    let direction: TableDirection
     var body: some View {
         VStack(spacing: -6) {
             if direction == .after {
@@ -175,7 +284,7 @@ struct AddRow: View {
 }
 
 struct AddCol: View {
-    @State var direction: TableDirection
+    let direction: TableDirection
     var body: some View {
         HStack(spacing: -6) {
             if direction == .after {
@@ -202,9 +311,6 @@ struct AddCol: View {
 }
 
 struct AddHeader: View {
-    @State var rows: Int
-    @State var cols: Int
-    @State var inset: CGFloat = 2
     var body: some View {
         ZStack(alignment: .top) {
             TableIcon(rows: 3, cols: 3, selectRow: 0, withHeader: true)
@@ -248,11 +354,70 @@ struct CreateTable: View {
     }
 }
 
+struct BorderIcon: View {
+    @Binding var active: Bool
+    var border: TableBorder = .none
+    var body: some View {
+        TableIcon(active: $active, rows: 3, cols: 3, withHeader: true, border: border)
+    }
+    
+    init(_ border: TableBorder = .none, active: Binding<Bool>? = nil) {
+        self.border = border
+        if let active = active {
+            _active = active
+        } else {
+            _active = .constant(false)
+        }
+    }
+}
+
 struct TableIcon_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
-            TableIcon(rows: 3, cols: 4)
+            HStack(alignment: .top) {
+                Group {
+                    TableIcon()
+                        .frame(width: 30, height: 30)
+                    CreateTable()
+                        .frame(width: 30, height: 30)
+                }
+                Divider()
+                Group {
+                    AddHeader()
+                        .frame(width: 30, height: 30)
+                    AddRow(direction: .after)
+                        .frame(width: 30, height: 30)
+                    AddRow(direction: .before)
+                        .frame(width: 30, height: 30)
+                    AddCol(direction: .after)
+                        .frame(width: 30, height: 30)
+                    AddCol(direction: .before)
+                        .frame(width: 30, height: 30)
+                }
+                Divider()
+                Group {
+                    DeleteRow()
+                        .frame(width: 30, height: 30)
+                    DeleteCol()
+                        .frame(width: 30, height: 30)
+                    DeleteTable()
+                        .frame(width: 30, height: 30)
+                }
+                Divider()
+                Group {
+                    BorderIcon(.cell)
+                        .frame(width: 30, height: 30)
+                    BorderIcon(.header)
+                        .frame(width: 30, height: 30)
+                    BorderIcon(.outer)
+                        .frame(width: 30, height: 30)
+                    BorderIcon(.none)
+                        .frame(width: 30, height: 30)
+                }
+                Spacer()
+            }
+            .frame(height: 30)
+            Spacer()
         }
-        .frame(width: 30, height: 30)
     }
 }

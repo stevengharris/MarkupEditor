@@ -76,23 +76,46 @@ h1 + p, h2 + p, h3 + p {
 table {
     table-layout: fixed;
     border-collapse: collapse;
-    border: 1px solid #DDD;
     width: 100%;
 }
 
-table thead tr th {
+table th, table td {
     padding: 4px;
-    border-bottom: 1px solid #DDD;
 }
 
-table tbody tr {
-    padding: 4px;
-    border-bottom: 1px solid #DDD;
+/* Make the styling compact inside of a table */
+table p, table h1, table h2, table h3, table h4, table h5, table h6 {
+    margin: 0;
 }
 
-table tbody td {
-    padding: 4px;
-    border-right: 1px solid #DDD;
+/* Table bordering options */
+.bordered-table-none {
+    border: none;
+}
+
+.bordered-table-outer, .bordered-table-header, .bordered-table-cell {
+    border: 1px solid #DDD;
+}
+
+.bordered-table-header th {   /* border th not thead to refresh properly */
+    border: 1px solid #DDD;
+}
+
+.bordered-table-cell th, .bordered-table-cell td {
+    border: 1px solid #DDD;
+}
+
+/* Default table bordering is same as .bordered-table-cell but is only used when not specified */
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {
+    border: 1px solid #DDD;
+}
+
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {
+    border: 1px solid #DDD;
+}
+
+table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {
+    border: 1px solid #DDD;
 }
 
 li p {
@@ -102,33 +125,6 @@ li p {
 blockquote {
     margin-right: 0px; /* Because nested blockquotes just keep getting narrower */
 }
-
-/* GitHub style?
-table {
-    padding: 0; }
-table tr {
-    border-top: 1px solid #cccccc;
-    background-color: white;
-    margin: 0;
-    padding: 0; }
-table tr:nth-child(2n) {
-    background-color: #f8f8f8; }
-table tr th {
-    font-weight: bold;
-    border: 1px solid #cccccc;
-    text-align: left;
-    margin: 0;
-    padding: 6px 13px; }
-table tr td {
-    border: 1px solid #cccccc;
-    text-align: left;
-    margin: 0;
-    padding: 6px 13px; }
-table tr th :first-child, table tr td :first-child {
-    margin-top: 0; }
-table tr th :last-child, table tr td :last-child {
-    margin-bottom: 0; }
-*/
 
 code {
     display: block;
