@@ -21,6 +21,7 @@ public struct MarkupToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
+    var contents: ToolbarContents { toolbarPreference.contents }
     @State var markupDelegate: MarkupDelegate?
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
@@ -34,14 +35,22 @@ public struct MarkupToolbar: View {
                 Divider()
             }
             Group {
-                CorrectionToolbar()
-                Divider()
-                InsertToolbar()
-                Divider()
-                StyleToolbar()
-                Divider()
-                FormatToolbar()
-                Divider()           // Vertical on the right
+                if contents.correction {
+                    CorrectionToolbar()
+                    Divider()
+                }
+                if contents.insert {
+                    InsertToolbar()
+                    Divider()
+                }
+                if contents.style {
+                    StyleToolbar()
+                    Divider()
+                }
+                if contents.format {
+                    FormatToolbar()
+                    Divider()           // Vertical on the right
+                }
             }
             if rightToolbar != nil {
                 rightToolbar

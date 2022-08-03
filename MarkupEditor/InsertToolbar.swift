@@ -10,30 +10,38 @@ import SwiftUI
 
 /// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
+    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var selectionState: SelectionState
     @EnvironmentObject private var showSubToolbar: ShowSubToolbar
+    private var contents: InsertContents { toolbarPreference.contents.insertContents }
     private var showAnyToolbar: Bool { showSubToolbar.type != nil }
     @State private var hoverLabel: Text = Text("Insert")
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
-            ToolbarImageButton(
-                systemName: "link",
-                action: { withAnimation { showOnly(.link) } },
-                active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
-                onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .link : nil)) } }
-            )
-            ToolbarImageButton(
-                systemName: "photo",
-                action: { withAnimation { showOnly(.image) } },
-                active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
-                onHover:  { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .image : nil)) } }
-            )
-            ToolbarImageButton(
-                systemName: "squareshape.split.3x3",
-                action: { withAnimation { showOnly(.table)} },
-                active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
-                onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .table : nil)) } }
-            )
+            if contents.link {
+                ToolbarImageButton(
+                    systemName: "link",
+                    action: { withAnimation { showOnly(.link) } },
+                    active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
+                    onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .link : nil)) } }
+                )
+            }
+            if contents.image {
+                ToolbarImageButton(
+                    systemName: "photo",
+                    action: { withAnimation { showOnly(.image) } },
+                    active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
+                    onHover:  { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .image : nil)) } }
+                )
+            }
+            if contents.table {
+                ToolbarImageButton(
+                    systemName: "squareshape.split.3x3",
+                    action: { withAnimation { showOnly(.table)} },
+                    active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
+                    onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .table : nil)) } }
+                )
+            }
         }
     }
     

@@ -13,6 +13,7 @@ public struct StyleToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
+    private var contents: StyleContents { toolbarPreference.contents.styleContents }
     @State private var hoverLabel: Text = Text("Paragraph Style")
 
     public init() {}
@@ -52,31 +53,37 @@ public struct StyleToolbar: View {
             )
             .contentShape(Rectangle())
             .disabled(selectionState.style == .Undefined)
-            Divider()
-            ToolbarImageButton(
-                systemName: "list.bullet",
-                action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
-                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
-            )
-            ToolbarImageButton(
-                systemName: "list.number",
-                action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
-                active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
-            )
-            ToolbarImageButton(
-                systemName: "increase.quotelevel",
-                action: { observedWebView.selectedWebView?.indent() },
-                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
-            )
-            ToolbarImageButton(
-                systemName: "decrease.quotelevel",
-                action: { observedWebView.selectedWebView?.outdent() },
-                active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
-                onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
-            )
+            if contents.list || contents.dent {
+                Divider()
+            }
+            if contents.list {
+                ToolbarImageButton(
+                    systemName: "list.bullet",
+                    action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
+                    active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
+                    onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
+                )
+                ToolbarImageButton(
+                    systemName: "list.number",
+                    action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
+                    active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
+                    onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
+                )
+            }
+            if contents.dent {
+                ToolbarImageButton(
+                    systemName: "increase.quotelevel",
+                    action: { observedWebView.selectedWebView?.indent() },
+                    active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                    onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
+                )
+                ToolbarImageButton(
+                    systemName: "decrease.quotelevel",
+                    action: { observedWebView.selectedWebView?.outdent() },
+                    active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                    onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
+                )
+            }
         }
     }
     
