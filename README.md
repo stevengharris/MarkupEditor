@@ -43,11 +43,6 @@ As you might expect, then, this feature set is pretty darned close to Markdown -
 * Highlighting
 * Font size changes (except as implied by identifying something as a paragraph or header)
 
-The initial open source release does not support the following (but I plan to):
-
-* Text alignment (although how well this translates back-and-forth to Markdown remains to be seen)
-* Flexible table formatting
-
 If you want a richer feature set, you can extend the MarkupEditor yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for saving what you edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
 
 ### What is WYSIWYG, Really?
@@ -205,16 +200,7 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub, but the inlined summary below may be useful.
 
 1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
-2. Table editing
-    * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
-    * Headers are currently colspanning the full table, but this needs to be adjustable.
-3. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
-
-### Limitations
-
-1. Probably needs to support text justification, but I may not do so.
-2. Preferences. Some things are properly configurable via ToolbarPreferences, but this needs to be expanded.
-3. Menus are incomplete, but the scaffolding is in place to be filled-out.
+2. Menus are incomplete, but the scaffolding is in place to be filled-out.
 
 ## Legacy and Acknowledgements
 
