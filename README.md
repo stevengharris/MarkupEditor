@@ -43,11 +43,6 @@ As you might expect, then, this feature set is pretty darned close to Markdown -
 * Highlighting
 * Font size changes (except as implied by identifying something as a paragraph or header)
 
-The initial open source release does not support the following (but I plan to):
-
-* Text alignment (although how well this translates back-and-forth to Markdown remains to be seen)
-* Flexible table formatting
-
 If you want a richer feature set, you can extend the MarkupEditor yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for saving what you edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
 
 ### What is WYSIWYG, Really?
@@ -117,13 +112,28 @@ extension ContentView: MarkupDelegate {
 
 The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code for a detailed example. I'd like there to be less boilerplate code, but I'm also planning on using the MarkupEditor in a SwiftUI app so am likely not to put a lot of effort into that.
 
+### Customizing Toolbar Contents
+
+You can customize toolbars by eliminating them and/or subsetting their contents. Here is an example that eliminates the CorrectionToolbar (that holds the Undo and Redo buttons) and only includes Bold, Italic, and Underline as formats in the FormatToolbar. As discussed below the default for allowLocalImages is false for several reasons. If you use customized ToolbarContents, then you need to specify allowLocalImages directly in ImageContents to override the default.
+
+```
+let myToolbarContents = ToolbarContents(
+    correction: false,
+    formatContents: FormatContents(code: false, strike: false, subSuper: false),
+    imageContents: ImageContents(allowLocalImages: true)
+)
+markupEnv.toolbarPreference.contents = myToolbarContents
+```
+
+You would typically be doing this kind of customization in your SceneDelegate, which is where you can find a commented-out example of how to do it in the demos.
+
 ## Local Images
 
 Being able to insert an image into a document you are editing is fundamental. In Markdown, you do this by referencing a URL, and the URL can point to a file on your local file system. The MarkupEditor can do the same, of course, but when you insert an image into a document in even the simplest WYSIWYG editor, you don't normally have to think, "Hmm, I'll have to remember to copy this file around with my document when I move my document" or "Hmm, where can I stash this image so it will be accessible across the Internet in the future."  From an end-user perspective, the image is just part of the document. Furthermore, you expect to be able to paste images into your document that you copied from elsewhere. Nobody wants to think about creating and tracking a local file in that case.
 
 The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your MarkupWKWebView when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your MarkupDelegate receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
 
-Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. For this reason, there is a ToolbarPreference to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
+Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is a ToolbarPreference to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
 
@@ -190,16 +200,7 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub, but the inlined summary below may be useful.
 
 1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
-2. Table editing
-    * Table styling is hardcoded. I plan to provide options for putting borders around elements, header, etc.
-    * Headers are currently colspanning the full table, but this needs to be adjustable.
-3. Pasting of text with embedded HTML causes weird things to happen since the embedded HTML is not properly sanitized yet.
-
-### Limitations
-
-1. Probably needs to support text justification, but I may not do so.
-2. Preferences. Some things are properly configurable via ToolbarPreferences, but this needs to be expanded.
-3. Menus are incomplete, but the scaffolding is in place to be filled-out.
+2. Menus are incomplete, but the scaffolding is in place to be filled-out.
 
 ## Legacy and Acknowledgements
 

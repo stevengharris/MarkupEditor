@@ -9,8 +9,10 @@
 import SwiftUI
 
 public struct FormatToolbar: View {
+    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
+    var contents: FormatContents { toolbarPreference.contents.formatContents }
     @State private var hoverLabel: Text = Text("Text Format")
 
     public init() {}
@@ -35,30 +37,36 @@ public struct FormatToolbar: View {
                 active: $selectionState.underline,
                 onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
             )
-            ToolbarImageButton(
-                systemName: "curlybraces",
-                action: { observedWebView.selectedWebView?.code() },
-                active: $selectionState.code,
-                onHover: { over in hoverLabel = Text(over ? "Code" : "Text Format") }
-            )
-            ToolbarImageButton(
-                systemName: "strikethrough",
-                action: { observedWebView.selectedWebView?.strike() },
-                active: $selectionState.strike,
-                onHover: { over in hoverLabel = Text(over ? "Strikethrough" : "Text Format") }
-            )
-            ToolbarImageButton(
-                systemName: "textformat.subscript",
-                action: { observedWebView.selectedWebView?.subscriptText() },
-                active: $selectionState.sub,
-                onHover: { over in hoverLabel = Text(over ? "Subscript" : "Text Format") }
-            )
-            ToolbarImageButton(
-                systemName: "textformat.superscript",
-                action: { observedWebView.selectedWebView?.superscript() },
-                active: $selectionState.sup,
-                onHover: { over in hoverLabel = Text(over ? "Superscript" : "Text Format") }
-            )
+            if contents.code {
+                ToolbarImageButton(
+                    systemName: "curlybraces",
+                    action: { observedWebView.selectedWebView?.code() },
+                    active: $selectionState.code,
+                    onHover: { over in hoverLabel = Text(over ? "Code" : "Text Format") }
+                )
+            }
+            if contents.strike {
+                ToolbarImageButton(
+                    systemName: "strikethrough",
+                    action: { observedWebView.selectedWebView?.strike() },
+                    active: $selectionState.strike,
+                    onHover: { over in hoverLabel = Text(over ? "Strikethrough" : "Text Format") }
+                )
+            }
+            if contents.subSuper {
+                ToolbarImageButton(
+                    systemName: "textformat.subscript",
+                    action: { observedWebView.selectedWebView?.subscriptText() },
+                    active: $selectionState.sub,
+                    onHover: { over in hoverLabel = Text(over ? "Subscript" : "Text Format") }
+                )
+                ToolbarImageButton(
+                    systemName: "textformat.superscript",
+                    action: { observedWebView.selectedWebView?.superscript() },
+                    active: $selectionState.sup,
+                    onHover: { over in hoverLabel = Text(over ? "Superscript" : "Text Format") }
+                )
+            }
         }
     }
 }

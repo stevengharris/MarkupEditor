@@ -11,7 +11,6 @@ import SwiftUI
 /// The toolbar for undo and redo.
 public struct CorrectionToolbar: View {
     @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
     @State private var hoverLabel: Text = Text("Correction")
     
     public var body: some View {
