@@ -804,6 +804,9 @@ const _undoOperation = function(undoerData) {
         case 'restoreTable':
             _restoreTable(undoerData);
             break;
+        case 'borderTable':
+            _undoBorderTable(undoerData);
+            break;
         case 'listEnter':
             _undoListEnter(undoerData);
             break;
@@ -896,6 +899,9 @@ const _redoOperation = function(undoerData) {
             break;
         case 'restoreTable':
             _restoreTable(undoerData);
+            break;
+        case 'borderTable':
+            _redoBorderTable(undoerData);
             break;
         case 'listEnter':
             _doListEnter(false, undoerData);
@@ -7213,7 +7219,7 @@ MU.deleteRow = function(undoable=true) {
     if (newTr) {
         // There is a row left, so we will do the remove and select the first element of the newTr
         tr.parentNode.removeChild(tr);
-        _selectCol(newTr, 0)
+        _selectCol(newTr, 0);
         if (undoable) {
             const undoerData = _undoerData('restoreTable', {outerHTML: outerHTML, row: row, col: col, inHeader: (thead != null)});
             undoer.push(undoerData);
@@ -7316,9 +7322,27 @@ MU.borderTable = function(border, undoable=true) {
     const tableElements = _getTableElementsAtSelection();
     if (tableElements.length === 0) { return };
     const table = tableElements['table'];
+    const oldBorder = table.getAttribute('class');
     _setBorder(border, table);
+    if (undoable) {
+        const undoerData = _undoerData('borderTable', {border: border, oldBorder: oldBorder});
+        undoer.push(undoerData);
+        _restoreSelection();
+    }
     _callback('input');
     _callback('selectionChange')
+};
+
+const _undoBorderTable = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    const oldBorder = undoerData.data.oldBorder;
+    MU.borderTable(oldBorder, false);
+};
+
+const _redoBorderTable = function(undoerData) {
+    _restoreUndoerRange(undoerData);
+    const border = undoerData.data.border;
+    MU.borderTable(border, false);
 };
 
 const _setBorder = function(border, table) {
@@ -7618,10 +7642,18 @@ const _redoInsertTable = function(undoerData) {
     // undoerData.range with the range for the newly (re)created table element.
     // We leave the selection at the same row/col that was selected when the
     // table was deleted, but we don't try to put it at the same offset as before.
-    const startRange = undoerData.data.startRange;
-    const targetNode = _findFirstParentElementInNodeNames(startRange.startContainer, _styleTags);
+    const startRange = undoerData.data.startRange ?? undoerData.range;
+    const startContainer = startRange.startContainer;
+    const startOffset = startRange.startOffset;
+    let selNode;
+    if (_isElementNode(startContainer)) {
+        selNode = startContainer.childNodes[startOffset];
+    } else {
+        selNode = startContainer
+    };
+    const targetNode = _findFirstParentElementInNodeNames(selNode, _topLevelTags);
     let table;
-    if ((targetNode.firstChild === startRange.startContainer) && (startRange.startOffset === 0)) {
+    if ((targetNode === selNode) || (targetNode.firstChild === startRange.startContainer) && (startRange.startOffset === 0)) {
         targetNode.insertAdjacentHTML('beforebegin', undoerData.data.outerHTML);
         // We need the new table that now exists before targetNode
         table = _getFirstChildWithNameWithin(targetNode.previousSibling, 'TABLE');
@@ -7653,7 +7685,7 @@ const _redoDeleteTable = function(undoerData) {
     _restoreUndoerRange(undoerData);
     _backupSelection();
     MU.deleteTable(false);
-    const startRange = undoerData.data.startRange;
+    const startRange = undoerData.data.startRange ?? undoerData.range;
     const sel = document.getSelection();
     sel.removeAllRanges();
     sel.addRange(startRange);

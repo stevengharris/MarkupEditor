@@ -2356,8 +2356,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (HtmlTest(
                 description: "Delete row",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2371,8 +2371,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Delete col",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2401,8 +2401,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Add row above",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2416,8 +2416,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Add row below",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2431,8 +2431,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Add col before",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2446,8 +2446,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Add col after",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p><br></p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p><br></p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p><br></p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p><br></p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2461,8 +2461,8 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
             (HtmlTest(
                 description: "Add header",
-                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table><thead><tr><th colspan=\"2\"><p><br></p></th></tr></thead><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
+                endHtml: "<table><thead><tr><th colspan=\"2\"><p><br></p></th></tr></thead><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
                 startId: "00",
                 startOffset: 3,
                 endId: "00",
@@ -2470,6 +2470,66 @@ class BasicTests: XCTestCase, MarkupDelegate {
             ),
              { handler in
                  self.webView.addHeader() {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Set cell border",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table class=\"bordered-table-cell\"><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.borderTable(.cell) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Set header border",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table class=\"bordered-table-header\"><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.borderTable(.header) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Set outer border",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table class=\"bordered-table-outer\"><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.borderTable(.outer) {
+                     handler()
+                 }
+             }
+            ),
+            (HtmlTest(
+                description: "Set no border",
+                startHtml: "<table><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                endHtml: "<table class=\"bordered-table-none\"><tbody><tr><td><p id=\"00\">Row 0, Col 0</p></td><td><p id=\"01\">Row 0, Col 1</p></td></tr><tr><td><p id=\"10\">Row 1, Col 0</p></td><td><p id=\"11\">Row 1, Col 1</p></td></tr></tbody></table>",
+                startId: "00",
+                startOffset: 3,
+                endId: "00",
+                endOffset: 3
+            ),
+             { handler in
+                 self.webView.borderTable(.none) {
                      handler()
                  }
              }
