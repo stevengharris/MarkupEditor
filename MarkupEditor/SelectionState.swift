@@ -45,7 +45,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var sup: Bool = false
     @Published public var code: Bool = false
     
-    // Selection state queries
+    //MARK: Selection state queries
     public var isLinkable: Bool {
         href == nil          // Can't link when selection is in a link
     }
@@ -81,6 +81,15 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     public var isInTable: Bool {
         table
     }
+    
+    //MARK: Enable/disable menu options and buttons
+    
+    public var canDent: Bool { true }
+    public var canStyle: Bool { true }
+    public var canList: Bool { true }
+    public var canInsert: Bool { isInsertable }
+    public var canLink: Bool { !isInLink && selection != nil }
+    public var canFormat: Bool { true }
     
     // CustomStringConvertible conformance
     public var description: String {

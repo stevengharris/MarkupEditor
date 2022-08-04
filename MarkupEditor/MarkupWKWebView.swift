@@ -9,6 +9,11 @@
 import SwiftUI
 import WebKit
 
+@objc public protocol MenuTarget {
+    func indent(handler: (()->Void)?)
+    func outdent(handler: (()->Void)?)
+}
+
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
 /// All init methods invoke setupForEditing, which loads markup.html that in turn loads
@@ -24,7 +29,7 @@ import WebKit
 /// results in `userContentController(_:didReceive)' being invoked in the MarkupCoordinator to
 /// let us know something happened on the JavaScript side . In this way, we we maintain up-to-date information
 /// as-needed in Swift about what is in the MarkupWKWebView.
-public class MarkupWKWebView: WKWebView, ObservableObject {
+public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
     static let DefaultInnerLineHeight: Int = 18
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
@@ -821,10 +826,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Styling
     
-    /// Replace the existing style of the selection with the new style (e.g., from <p> to <h3>)
-    public func replaceStyle(in selectionState: SelectionState, with newStyle: StyleContext, handler: (()->Void)? = nil) {
-        let oldStyle = selectionState.style
-        evaluateJavaScript("MU.replaceStyle('\(oldStyle)', '\(newStyle)')") { result, error in
+    /// Replace the oldStyle of the selection with the newStyle (e.g., from <p> to <h3>)
+    ///
+    /// A null value of oldStyle results in an unstyled element being styled (which really should never happen)
+    public func replaceStyle(_ oldStyle: StyleContext?, with newStyle: StyleContext, handler: (()->Void)? = nil) {
+        var replaceCall = "MU.replaceStyle("
+        if let oldStyle = oldStyle {
+            replaceCall += "'\(oldStyle)', '\(newStyle)')"
+        } else {
+            replaceCall += "null, '\(newStyle)')"
+        }
+        evaluateJavaScript(replaceCall) { result, error in
             handler?()
         }
     }

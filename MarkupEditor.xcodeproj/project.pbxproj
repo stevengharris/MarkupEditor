@@ -46,8 +46,6 @@
 		AA408B362616686C00CAE8B9 /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA652A09260E99FF000674B7 /* markup.js */; };
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AA42FEBB26E2D53800D55E33 /* ToolbarPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */; };
-		AA4342FE279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
-		AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
@@ -73,6 +71,7 @@
 		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
 		AAA1B0972889D2F000303721 /* View+Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Modifiers.swift */; };
 		AAAF7A6D289AE4B9005EF58E /* ToolbarContents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6C289AE4B9005EF58E /* ToolbarContents.swift */; };
+		AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
 		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
@@ -167,7 +166,6 @@
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA42FEBA26E2D53800D55E33 /* ToolbarPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarPreference.swift; sourceTree = "<group>"; };
-		AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorMenu.swift; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA52F320280634B200EEC655 /* RedoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedoTests.swift; sourceTree = "<group>"; };
 		AA5EEF04264061B800B111A1 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
@@ -215,6 +213,7 @@
 		AAA1B0942889D2E200303721 /* PopoverHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHostingController.swift; sourceTree = "<group>"; };
 		AAA1B0962889D2F000303721 /* View+Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Modifiers.swift"; sourceTree = "<group>"; };
 		AAAF7A6C289AE4B9005EF58E /* ToolbarContents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarContents.swift; sourceTree = "<group>"; };
+		AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupMenu.swift; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
@@ -279,6 +278,7 @@
 				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AA0BC26F26F8F52500B90327 /* MarkupEnv.swift */,
+				AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */,
 				AAA1B0942889D2E200303721 /* PopoverHostingController.swift */,
 				AABAF162264C36FA00DC02C6 /* TableSizer.swift */,
 				AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */,
@@ -300,7 +300,6 @@
 				AA1B816C26265CAD00891FFB /* demo.html */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
-				AA4342FC279F205C002E2AFD /* MarkupEditorMenu.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
@@ -755,6 +754,7 @@
 				AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */,
 				AA8EFAF4261E0EA9008AE31E /* LinkToolbar.swift in Sources */,
 				AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */,
+				AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */,
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
 				AA408B242616685B00CAE8B9 /* MarkupWebView.swift in Sources */,
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
@@ -794,7 +794,6 @@
 				AA2FA8B627FF7E180068828F /* AudioPlayer.swift in Sources */,
 				AAD26E86264463A300908777 /* ContentView.swift in Sources */,
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
-				AA4342FF279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
@@ -809,7 +808,6 @@
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA2FA8B727FF7E180068828F /* AudioPlayer.swift in Sources */,
-				AA4342FE279F217E002E2AFD /* MarkupEditorMenu.swift in Sources */,
 				AA6529C5260E8B2B000674B7 /* UIViewController+Extensions.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,

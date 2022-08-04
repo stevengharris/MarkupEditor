@@ -20,6 +20,7 @@ public class MarkupEnv: ObservableObject {
     public let selectImage = SelectImage()
     public let supportedImageTypes: [UTType] = [.image, .movie]
     public let showSubToolbar = ShowSubToolbar()
+    public var markupMenu: MarkupMenu?
     
     public init(style: ToolbarPreference.Style = .compact, allowLocalImages: Bool = false) {
         toolbarPreference = ToolbarPreference(style: style, allowLocalImages: allowLocalImages)

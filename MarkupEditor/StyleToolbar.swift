@@ -32,7 +32,7 @@ public struct StyleToolbar: View {
             // problems per https://stackoverflow.com/a/67377002/8968411
             Menu {
                 ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                    Button(action: { observedWebView.selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
+                    Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
                         Text(styleContext.name)
                             .font(.system(size: styleContext.fontSize))
                     }

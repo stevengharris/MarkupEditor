@@ -39,6 +39,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             .environmentObject(markupEnv.selectImage)
             .environmentObject(markupEnv.showSubToolbar)
         
+        // Connect the markupMenu to the markupEnv
+        (UIApplication.shared.delegate as! AppDelegate).markupMenu.markupEnv = markupEnv
+        
         // Use a UIHostingController as window root view controller.
         if let windowScene = scene as? UIWindowScene {
             let window = UIWindow(windowScene: windowScene)
@@ -60,29 +63,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func demoUrl() -> URL? {
         return Bundle.main.resourceURL?.appendingPathComponent("demo.html")
-    }
-    
-    //MARK: Menu actions
-    
-    /// Return false to disable various menu items depending on selectionState
-    @objc override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        //print(action.description)
-        switch action {
-        case #selector(indent):
-            return true
-        case #selector(outdent):
-            return true
-        default:
-            return super.canPerformAction(action, withSender: sender)
-        }
-    }
-    
-    @objc func indent() {
-        markupEnv.observedWebView.selectedWebView?.indent()
-    }
-    
-    @objc func outdent() {
-        markupEnv.observedWebView.selectedWebView?.outdent()
     }
     
 }

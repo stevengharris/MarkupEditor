@@ -30,22 +30,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
+        // Connect the markupMenu to the markupEnv
+        (UIApplication.shared.delegate as! AppDelegate).markupMenu.markupEnv = markupEnv
+        
         // No storyboard
         let window = UIWindow(windowScene: windowScene)
         window.backgroundColor = .systemBackground
         window.rootViewController = ViewController()
         self.window = window
         window.makeKeyAndVisible()
-    }
-    
-    //MARK: Menu
-    
-    @objc func indent() {
-        markupEnv.observedWebView.selectedWebView?.indent()
-    }
-    
-    @objc func outdent() {
-        markupEnv.observedWebView.selectedWebView?.outdent()
     }
 
 
