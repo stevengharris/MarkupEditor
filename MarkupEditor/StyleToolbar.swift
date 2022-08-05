@@ -13,7 +13,7 @@ public struct StyleToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
-    private var contents: StyleContents { toolbarPreference.contents.styleContents }
+    private var contents: StyleContents { ToolbarContents.shared.styleContents }
     @State private var hoverLabel: Text = Text("Paragraph Style")
 
     public init() {}

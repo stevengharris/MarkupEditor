@@ -1,5 +1,5 @@
 //
-//  MarkupMenus.swift
+//  MarkupMenu.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 8/3/22.
@@ -7,10 +7,26 @@
 
 import UIKit
 
+/// The MarkupMenu creates the UIMenu content for an environment that supports a menu bar. It dispatches
+/// menu actions to the selectedWebView and determines whether we canPerformAction based on the
+/// selectionState.
+///
+/// The MarkupMenu will have a title of "Format" by default and will be placed following the Edit menu.
+///
+/// Note that some hotkeys will work without the menu being enabled, but most will not. For example, command+B
+/// will bold/unbold even if there is no MarkupMenu, but command+] will not indent. This is a byproduct of the
+/// "native" support of WKWebView.
+///
+/// The MarkupMenu needs access to the MarkupEnv to find the selectedWebView and selectionState. The
+/// contents of the menu is adjusted at creation time to correspond to ToolbarContents. The various toolbars
+/// use the same mechanism to determine what their contents are and whether buttons should be disabled.
+///
 public class MarkupMenu {
-    public var markupEnv: MarkupEnv?
-    private var selectedWebView: MarkupWKWebView? { markupEnv?.observedWebView.selectedWebView }
-    private var selectionState: SelectionState? { markupEnv?.selectionState }
+    public let title: String
+    public let markupEnv: MarkupEnv
+    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
+    private var selectionState: SelectionState? { markupEnv.selectionState }
+    let contents = ToolbarContents.shared
     private let actions: [Selector] = [
         #selector(insertLink),
         #selector(insertImage),
@@ -35,162 +51,86 @@ public class MarkupMenu {
         #selector(superscript)
     ]
     
-    public init() {}
-    
-    public func initMainMenu(with builder: UIMenuBuilder) {
-        builder.remove(menu: .services)
-        builder.remove(menu: .format)
-        builder.remove(menu: .toolbar)
+    public init(title: String? = nil, markupEnv: MarkupEnv) {
+        self.title = title ?? "Format"
+        self.markupEnv = markupEnv
     }
     
     public func initMarkupMenu(with builder: UIMenuBuilder) {
-        let formatMenu = UIMenu(title: "Format", children: [insertMenu(), styleMenu(), dentMenu(), listMenu(), formatMenu()])
-        builder.insertSibling(formatMenu, afterMenu: .edit)
+        var children = [UIMenu]()
+        if contents.insert { children.append(insertMenu()) }
+        if contents.style {
+            children.append(styleMenu())
+            if contents.styleContents.list { children.append(listMenu()) }
+            if contents.styleContents.dent { children.append(dentMenu()) }
+        }
+        if contents.format { children.append(formatMenu()) }
+        if children.isEmpty { return }  // Show no markupMenu
+        let markupMenu = UIMenu(title: title, children: children)
+        builder.insertSibling(markupMenu, afterMenu: .edit)
     }
     
     private func insertMenu() -> UIMenu {
-        let linkCommand = UIKeyCommand(
-            title: "Link",
-            image: nil,
-            action: #selector(insertLink),
-            input: "K",
-            modifierFlags: .command
-        )
-        let imageCommand = UICommand(
-            title: "Image",
-            action: #selector(insertImage)
-        )
-        let tableCommand = UICommand(
-            title: "Table",
-            action: #selector(insertTable)
-        )
-        return UIMenu(title: "Insert", children: [linkCommand, imageCommand, tableCommand])
+        var children = [UICommand]()
+        if contents.insertContents.link {
+            children.append(UIKeyCommand(title: "Link", action: #selector(insertLink), input: "K", modifierFlags: .command))
+        }
+        if contents.insertContents.image {
+            children.append(UICommand(title: "Image", action: #selector(insertImage)))
+        }
+        if contents.insertContents.table {
+            children.append(UICommand(title: "Table", action: #selector(insertTable)))
+        }
+        return UIMenu(title: "Insert", children: children)
     }
     
     private func styleMenu() -> UIMenu {
-        let pCommand = UICommand(
-            title: "Normal",
-            action: #selector(pStyle)
-        )
-        let h1Command = UICommand(
-            title: "Header 1",
-            action: #selector(h1Style)
-        )
-        let h2Command = UICommand(
-            title: "Header 2",
-            action: #selector(h2Style)
-        )
-        let h3Command = UICommand(
-            title: "Header 3",
-            action: #selector(h3Style)
-        )
-        let h4Command = UICommand(
-            title: "Header 4",
-            action: #selector(h4Style)
-        )
-        let h5Command = UICommand(
-            title: "Header 5",
-            action: #selector(h5Style)
-        )
-        let h6Command = UICommand(
-            title: "Header 6",
-            action: #selector(h6Style)
-        )
-        return UIMenu(title: "Style", children: [pCommand, h1Command, h2Command, h3Command, h4Command, h5Command, h6Command])
+        let children: [UICommand] = [
+            UICommand(title: "Normal", action: #selector(pStyle)),
+            UICommand(title: "Header 1", action: #selector(h1Style)),
+            UICommand(title: "Header 2", action: #selector(h2Style)),
+            UICommand(title: "Header 3", action: #selector(h3Style)),
+            UICommand(title: "Header 4", action: #selector(h4Style)),
+            UICommand(title: "Header 5", action: #selector(h5Style)),
+            UICommand(title: "Header 6", action: #selector(h6Style))
+        ]
+        return UIMenu(title: "Style", children: children)
     }
     
     private func dentMenu() -> UIMenu {
-        let indentCommand = UIKeyCommand(
-            title: "Indent",
-            image: nil,
-            action: #selector(indent),
-            input: "]",
-            modifierFlags: .command
-        )
-        let outdentCommand = UIKeyCommand(
-            title: "Outdent",
-            image: nil,
-            action: #selector(outdent),
-            input: "[",
-            modifierFlags: .command
-        )
-        return UIMenu(title: "Dent", options: .displayInline, children: [indentCommand, outdentCommand])
+        let children: [UICommand] = [
+            UIKeyCommand(title: "Indent", action: #selector(indent), input: "]", modifierFlags: .command),
+            UIKeyCommand(title: "Outdent", action: #selector(outdent), input: "[", modifierFlags: .command)
+        ]
+        return UIMenu(title: "Dent", options: .displayInline, children: children)
     }
     
     private func listMenu() -> UIMenu {
-        let bulletCommand = UIKeyCommand(
-            title: "Bullets",
-            image: nil,
-            action: #selector(bullets),
-            input: ".",
-            modifierFlags: .command
-        )
-        let numbersCommand = UIKeyCommand(
-            title: "Numbers",
-            image: nil,
-            action: #selector(numbers),
-            input: "/",
-            modifierFlags: .command
-        )
-        return UIMenu(title: "List", options: .displayInline, children: [bulletCommand, numbersCommand])
+        let children: [UICommand] = [
+            UIKeyCommand(title: "Bullets", action: #selector(bullets), input: ".", modifierFlags: .command),
+            UIKeyCommand(title: "Numbers", action: #selector(numbers), input: "/", modifierFlags: .command)
+        ]
+        return UIMenu(title: "List", options: .displayInline, children: children)
     }
     
     private func formatMenu() -> UIMenu {
-        let boldCommand = UIKeyCommand(
-            title: "Bold",
-            image: nil,
-            action: #selector(bold),
-            input: "B",
-            modifierFlags: .command
-        )
-        let italicCommand = UIKeyCommand(
-            title: "Italic",
-            image: nil,
-            action: #selector(italic),
-            input: "I",
-            modifierFlags: .command
-        )
+        var children: [UICommand] = []
+        children.append(UIKeyCommand(title: "Bold", action: #selector(bold), input: "B", modifierFlags: .command))
+        children.append(UIKeyCommand(title: "Italic", action: #selector(italic), input: "I", modifierFlags: .command))
         // TODO: Why is command+U a conflicting mapping but command+B is not?
-        //let underlineCommand = UIKeyCommand(
-        //    title: "Underline",
-        //    image: nil,
-        //    action: #selector(italic),
-        //    input: "U",
-        //    modifierFlags: .command
-        //)
-        let underlineCommand = UICommand(
-            title: "Underline",
-            action: #selector(underline)
-        )
-        let codeCommand = UIKeyCommand(
-            title: "Code",
-            image: nil,
-            action: #selector(code),
-            input: "{",
-            modifierFlags: .command
-        )
-        let strikeCommand = UIKeyCommand(
-            title: "Strikethrough",
-            image: nil,
-            action: #selector(strike),
-            input: "-",
-            modifierFlags: [.control, .command]
-        )
-        let subscriptCommand = UIKeyCommand(
-            title: "Subscript",
-            image: nil,
-            action: #selector(subscriptText),
-            input: "=",
-            modifierFlags: [.alternate, .command]
-        )
-        let superscriptCommand = UIKeyCommand(
-            title: "Superscript",
-            image: nil,
-            action: #selector(superscript),
-            input: "=",
-            modifierFlags: [.shift, .alternate, .command]
-        )
-        return UIMenu(title: "Format", options: .displayInline, children: [boldCommand, italicCommand, underlineCommand, codeCommand, strikeCommand, subscriptCommand, superscriptCommand])
+        // children.append(UIKeyCommand(title: "Underline", action: #selector(underline), input: "U", modifierFlags: .command))
+        children.append(UICommand(title: "Underline", action: #selector(underline)))
+        if contents.formatContents.code {
+            children.append(UIKeyCommand(title: "Code", action: #selector(code), input: "{", modifierFlags: .command))
+        }
+        if contents.formatContents.strike {
+            children.append(UIKeyCommand(title: "Strikethrough", action: #selector(strike), input: "-", modifierFlags: [.control, .command]))
+        }
+        if contents.formatContents.subSuper {
+            children.append(UIKeyCommand(title: "Subscript", action: #selector(subscriptText), input: "=", modifierFlags: [.alternate, .command]))
+            children.append(UIKeyCommand(title: "Superscript", action: #selector(superscript), input: "=", modifierFlags: [.shift, .alternate, .command]))
+        }
+        return UIMenu(title: "Format", options: .displayInline, children: children)
     }
     
     public func handles(_ action: Selector, withSender sender: Any?) -> Bool {
@@ -199,7 +139,6 @@ public class MarkupMenu {
     
     /// Return false to disable various menu items depending on selectionState
     @objc public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        //print(action.description)
         switch action {
         case #selector(indent), #selector(outdent):
             return selectionState?.canDent ?? false
@@ -219,15 +158,15 @@ public class MarkupMenu {
     }
     
     @objc public func insertLink() {
-        markupEnv?.showSubToolbar.type = .link
+        markupEnv.showSubToolbar.type = .link
     }
     
     @objc public func insertImage() {
-        markupEnv?.showSubToolbar.type = .image
+        markupEnv.showSubToolbar.type = .image
     }
     
     @objc public func insertTable() {
-        markupEnv?.showSubToolbar.type = .table
+        markupEnv.showSubToolbar.type = .table
     }
     
     @objc public func pStyle() {

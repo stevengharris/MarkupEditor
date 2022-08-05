@@ -9,10 +9,9 @@
 import SwiftUI
 
 public struct FormatToolbar: View {
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
-    var contents: FormatContents { toolbarPreference.contents.formatContents }
+    private var contents: FormatContents { ToolbarContents.shared.formatContents }
     @State private var hoverLabel: Text = Text("Text Format")
 
     public init() {}

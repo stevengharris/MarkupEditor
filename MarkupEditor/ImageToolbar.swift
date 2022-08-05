@@ -10,11 +10,12 @@ import SwiftUI
 
 /// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    @EnvironmentObject private var markupEnv: MarkupEnv
+    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
     @EnvironmentObject private var selectImage: SelectImage
-    private var contents: ImageContents { toolbarPreference.contents.imageContents }
+    private var allowLocalImages: Bool { markupEnv.allowLocalImages }
     private var height: CGFloat { toolbarPreference.height() }
     private var initialSrc: String?
     private var initialAlt: String?
@@ -61,7 +62,7 @@ public struct ImageToolbar: View {
                         .frame(height: geometry.size.height)
                     }
                     .padding([.trailing], 8)
-                    if contents.allowLocalImages {
+                    if allowLocalImages {
                         ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
                             .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }
@@ -93,7 +94,7 @@ public struct ImageToolbar: View {
                         .padding([.top], 2)
                     }
                     .padding([.trailing], 8)
-                    if contents.allowLocalImages {
+                    if allowLocalImages {
                         ToolbarTextButton(title: "Select", action: { selectImage.value = true }) //, width: 50)
                             .onTapGesture() {}  // Needed to recognize tap for ToolbarButtonStyle
                     }

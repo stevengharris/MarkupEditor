@@ -10,10 +10,9 @@ import SwiftUI
 
 /// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var selectionState: SelectionState
     @EnvironmentObject private var showSubToolbar: ShowSubToolbar
-    private var contents: InsertContents { toolbarPreference.contents.insertContents }
+    private var contents: InsertContents { ToolbarContents.shared.insertContents }
     private var showAnyToolbar: Bool { showSubToolbar.type != nil }
     @State private var hoverLabel: Text = Text("Insert")
     public var body: some View {
