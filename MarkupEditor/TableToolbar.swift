@@ -172,6 +172,7 @@ public struct TableToolbar: View {
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
         .background(Blur(style: .systemUltraThinMaterial))
+        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
     }
     
 }

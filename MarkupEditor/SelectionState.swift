@@ -10,6 +10,8 @@ import UIKit
 
 /// The state of the selection in a MarkupWKWebView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
+    // Validity
+    @Published public var valid: Bool = false
     // Selected text
     @Published public var selection: String? = nil
     // Links
@@ -85,7 +87,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     //MARK: Enable/disable menu options and buttons
     
     public var canDent: Bool { true }
-    public var canStyle: Bool { true }
+    public var canStyle: Bool { style != .Undefined }
     public var canList: Bool { true }
     public var canInsert: Bool { isInsertable }
     public var canLink: Bool { !isInLink && selection != nil }
@@ -93,6 +95,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     // CustomStringConvertible conformance
     public var description: String {
+        valid ?
         """
           selection: \(selection ?? "none")
           style: \(style.tag)
@@ -102,13 +105,14 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           link: \(linkString())
           image: \(imageString())
           table: \(tableString())
-        """
+        """ : "invalid"
     }
     
     public init() {}
     
     public func reset(from selectionState: SelectionState?) {
         selection = selectionState?.selection
+        valid = selectionState?.valid ?? false          // true if document.getSelection().rangeCount > 0
         href = selectionState?.href                     // href for <a> if selected
         link = selectionState?.link                     // text linked to href in <a> if selected
         src = selectionState?.src                       // src for <img> if selected

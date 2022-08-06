@@ -52,7 +52,7 @@ public struct StyleToolbar: View {
                 .stroke(Color.accentColor)
             )
             .contentShape(Rectangle())
-            .disabled(selectionState.style == .Undefined)
+            .disabled(!selectionState.canStyle)
             if contents.list || contents.dent {
                 Divider()
             }

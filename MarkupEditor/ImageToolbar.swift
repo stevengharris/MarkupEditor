@@ -111,6 +111,7 @@ public struct ImageToolbar: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
         .background(Blur(style: .systemUltraThinMaterial))
+        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
     }
     
     public init(selectionState: SelectionState) {

@@ -59,7 +59,7 @@ public struct MarkupToolbar: View {
             Spacer()                // Push everything to the left
         }
         .frame(height: toolbarPreference.height())
-        .disabled(observedWebView.selectedWebView == nil)
+        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
     }
     
     public init(markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {

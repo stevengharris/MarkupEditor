@@ -139,6 +139,7 @@ public class MarkupMenu {
     
     /// Return false to disable various menu items depending on selectionState
     @objc public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        guard selectedWebView != nil && selectionState?.valid ?? false else { return false }
         switch action {
         case #selector(indent), #selector(outdent):
             return selectionState?.canDent ?? false

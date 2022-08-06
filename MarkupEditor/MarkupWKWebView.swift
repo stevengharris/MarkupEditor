@@ -761,6 +761,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
             print("State decoded from JSON was nil")
             return selectionState
         }
+        // Validity (i.e., document.getSelection().rangeCount > 0
+        selectionState.valid = state["valid"] as? Bool ?? false
         // Selected text
         if let selectedText = state["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
