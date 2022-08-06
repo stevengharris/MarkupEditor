@@ -57,9 +57,8 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Get the markupEnv from the SceneDelegate.
-        // We need the markupEnv available in SceneDelegate so we can invoke menu actions.
-        markupEnv = (UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate)?.markupEnv
+        // Get the markupEnv from the AppDelegate
+        markupEnv = (UIApplication.shared.delegate as! AppDelegate).markupEnv
         initializePickers()
         initializeToolbar()
         initializeStackView()
@@ -257,9 +256,6 @@ extension ViewController: MarkupDelegate {
     func markupError(code: String, message: String, info: String?, alert: Bool) {
         print("Error \(code): \(message)")
         if let info = info { print(" \(info)") }
-        if (alert) {
-            AudioPlayer.shared.playSound(filename: "alert.wav")
-        }
     }
     
 }

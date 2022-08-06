@@ -7,11 +7,21 @@
 
 import Foundation
 
+/// ToolbarContents controls the contents of the MarkupToolbar and the MarkupMenu.
+///
 /// The ToolbarContents contains a set of Bools that are used in the various toolbars to determine
 /// whether contents are shown. The top-level `correction`, `insert`,  `style`, and `format`
-/// entries indicate whether those toolbars are included at all in the MakupToolbar. The other `*contents`
+/// entries indicate whether those toolbars are included at all in the MarkupToolbar. The other `*contents`
 /// entries point to similar structs for the individual toolbar contents.
+///
+/// Set `custom` to use your own instance of ToolbarContents to customize the contents of your
+/// MarkupToolbar and MarkupMenu. Internally, the toolbars and menus access `shared`, which
+/// will be your `custom` ToolbarContents or the default ToolbarContents instance if you did not
+/// specify `custom`.
 public struct ToolbarContents {
+    public static var custom: ToolbarContents?
+    public static let shared = custom ?? ToolbarContents()
+    
     public var correction: Bool
     public var insert: Bool
     public var style: Bool
@@ -20,7 +30,6 @@ public struct ToolbarContents {
     public var insertContents: InsertContents
     public var styleContents: StyleContents
     public var formatContents: FormatContents
-    public var imageContents: ImageContents
     public var tableContents: TableContents
     
     public init(
@@ -31,7 +40,6 @@ public struct ToolbarContents {
         insertContents: InsertContents = InsertContents(),
         styleContents: StyleContents = StyleContents(),
         formatContents: FormatContents = FormatContents(),
-        imageContents: ImageContents = ImageContents(),
         tableContents: TableContents = TableContents()
     ) {
         self.correction = correction
@@ -41,7 +49,6 @@ public struct ToolbarContents {
         self.insertContents = insertContents
         self.styleContents = styleContents
         self.formatContents = formatContents
-        self.imageContents = imageContents
         self.tableContents = tableContents
     }
 }
@@ -80,15 +87,6 @@ public struct FormatContents {
         self.code = code
         self.strike = strike
         self.subSuper = subSuper
-    }
-}
-
-/// Identify whether to include a `Select` button based on  `allowLocalImages`
-public struct ImageContents {
-    public var allowLocalImages: Bool
-    
-    public init(allowLocalImages: Bool = false) {
-        self.allowLocalImages = allowLocalImages    // The default for allowLocalImages is false
     }
 }
 

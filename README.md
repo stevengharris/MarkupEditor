@@ -55,7 +55,7 @@ Behind the scenes, the MarkupEditor interacts with an HTML document (created in 
 
 That sounds complicated, but it is mostly implementation details you should not need to worry about. The `MarkupDelegate` protocol is the key mechanism for your app to find out about changes as the user interacts with the document. The `MarkupWKWebView` is the key mechanism to make changes to the document from the Swift side or to obtain information from the document, such as its contents. The `MarkupToolbar` is a convenient, pre-built UI to invoke changes to the document by interacting with the `MarkupWKWebView`.
 
-To avoid spurious logging from the underlying WKWebView in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
+To avoid spurious logging from the underlying `WKWebView` in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
 
 NOTE: The MarkupEditor at this point has only really been used as a Mac Catalyst app and has some implicit dependencies on using it with a keyboard.
 
@@ -94,10 +94,11 @@ struct ContentView: View {
                     alignment: .topLeading)
         }
         .environmentObject(markupEnv)
-        .environmentObject(showSubToolbar)
         .environmentObject(markupEnv.toolbarPreference)
         .environmentObject(markupEnv.selectionState)
         .environmentObject(markupEnv.observedWebView)
+        .environmentObject(markupEnv.selectImage)
+        .environmentObject(showSubToolbar)
     }
 }
 
@@ -114,26 +115,27 @@ The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more co
 
 ### Customizing Toolbar Contents
 
-You can customize toolbars by eliminating them and/or subsetting their contents. Here is an example that eliminates the CorrectionToolbar (that holds the Undo and Redo buttons) and only includes Bold, Italic, and Underline as formats in the FormatToolbar. As discussed below the default for allowLocalImages is false for several reasons. If you use customized ToolbarContents, then you need to specify allowLocalImages directly in ImageContents to override the default.
+You can customize toolbars by eliminating them and/or subsetting their contents. You do this by creating a new instance of ToolbarContents and assigning it to `ToolbarContents.custom`. The `MarkupMenu` also uses the `ToolbarContents` to customize what it holds, so it's important to have set `ToolbarContents.custom` *before* creating the `MarkupMenu`. An easy way to do that is to set it up in your `AppDelegate` by overriding `init()`. Here is an example that eliminates the `CorrectionToolbar` (that holds the `Undo` and `Redo` buttons) and `InsertToolbar`,  and only includes Bold, Italic, and Underline as formats in the FormatToolbar.
 
 ```
-let myToolbarContents = ToolbarContents(
-    correction: false,
-    formatContents: FormatContents(code: false, strike: false, subSuper: false),
-    imageContents: ImageContents(allowLocalImages: true)
-)
-markupEnv.toolbarPreference.contents = myToolbarContents
+override init() {
+    let myToolbarContents = ToolbarContents(
+        correction: false,  // No undo/redo buttons, but will still show up in Edit menu
+        insert: false,      // Eliminate the entire InsertToolbar
+        // Remove code, strikethrough, subscript, and superscript as formatting options
+        formatContents: FormatContents(code: false, strike: false, subSuper: false)
+    )
+    ToolbarContents.custom = myToolbarContents
+}
 ```
-
-You would typically be doing this kind of customization in your SceneDelegate, which is where you can find a commented-out example of how to do it in the demos.
 
 ## Local Images
 
 Being able to insert an image into a document you are editing is fundamental. In Markdown, you do this by referencing a URL, and the URL can point to a file on your local file system. The MarkupEditor can do the same, of course, but when you insert an image into a document in even the simplest WYSIWYG editor, you don't normally have to think, "Hmm, I'll have to remember to copy this file around with my document when I move my document" or "Hmm, where can I stash this image so it will be accessible across the Internet in the future."  From an end-user perspective, the image is just part of the document. Furthermore, you expect to be able to paste images into your document that you copied from elsewhere. Nobody wants to think about creating and tracking a local file in that case.
 
-The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your MarkupWKWebView when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your MarkupDelegate receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
+The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your `MarkupWKWebView` when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your `MarkupDelegate` receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
 
-Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is a ToolbarPreference to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
+Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
 
@@ -145,7 +147,7 @@ The `BasicTests` target tests the "do" operations; i.e., the operations you can 
 
 ## Demos
 
-If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I find it to be a lot less hassle when developing the project overall, especially in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated. The demos have a dependency on the MarkupEditor.framework.
+If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I find it to be a lot less hassle when developing the project overall, especially in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated. The demos have a dependency on the `MarkupEditor.framework`.
 
 The demos open `demo.html`, which contains information about how to use the MarkupEditor as an end user and shows you the capabilities.
 
@@ -211,7 +213,3 @@ The MarkupEditor's approach of using an HTML document containing a `contentEdita
 The MarkupEditor has the advantage of not supporting arbitrary HTML, and in fact, owns the definition of the exact subset of HTML that is allowed. It is targeted only at WKWebView, so there are no browser portability problems. The restrictions on functionality and the absence of styling elements from the HTML help avoid some of the problems cited in [his article](https://medium.engineering/why-contenteditable-is-terrible-122d8a40e480). Also, by avoiding use of (the now deprecated but likely to live forever) [Document.execCommand](https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand) to perform editing tasks against the DOM, the MarkupEditor avoids WebKit polluting the "clean" HTML with spans and styles.
 
 In case you think "To heck with this contentEditable nonsense. How hard can it be to build a little editor!?", I refer you to this [article on lord.io](https://lord.io/text-editing-hates-you-too/). I did not enjoy writing JavaScript while implementing this project, but the DOM and its incredibly well-documented API are proven and kind of amazing. To be able to ride on top of the work done in the browser is a gift horse that should not be looked in the mouth.
-
-## Attribution
-
-The alert sound used in the demos was obtained from [freesound.org](https://freesound.org/s/322931/). It was created by [rhodesmas](https://freesound.org/people/rhodesmas/) and provided under the [Creative Commons Attribution License](http://creativecommons.org/licenses/by/3.0/).

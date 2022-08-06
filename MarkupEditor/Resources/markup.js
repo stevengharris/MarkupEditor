@@ -5636,6 +5636,7 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
+        callback(selectionChange);
     };
 };
 
@@ -6115,9 +6116,11 @@ MU.getSelectionState = function() {
  */
 const _getSelectionState = function() {
     const state = {};
-    if (!document.getSelection()) {
+    if (!document.getSelection() || (document.getSelection().rangeCount == 0)) {
+        state['valid'] = false;
         return state;
     }
+    state['valid'] = true;
     // Selected text
     state['selection'] = _getSelectionText();
     // Link

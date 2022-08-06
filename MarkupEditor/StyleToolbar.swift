@@ -13,7 +13,7 @@ public struct StyleToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
-    private var contents: StyleContents { toolbarPreference.contents.styleContents }
+    private var contents: StyleContents { ToolbarContents.shared.styleContents }
     @State private var hoverLabel: Text = Text("Paragraph Style")
 
     public init() {}
@@ -32,7 +32,7 @@ public struct StyleToolbar: View {
             // problems per https://stackoverflow.com/a/67377002/8968411
             Menu {
                 ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                    Button(action: { observedWebView.selectedWebView?.replaceStyle(in: selectionState, with: styleContext) }) {
+                    Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
                         Text(styleContext.name)
                             .font(.system(size: styleContext.fontSize))
                     }
@@ -52,7 +52,7 @@ public struct StyleToolbar: View {
                 .stroke(Color.accentColor)
             )
             .contentShape(Rectangle())
-            .disabled(selectionState.style == .Undefined)
+            .disabled(!selectionState.canStyle)
             if contents.list || contents.dent {
                 Divider()
             }

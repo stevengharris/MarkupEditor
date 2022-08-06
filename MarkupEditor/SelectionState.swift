@@ -10,6 +10,8 @@ import UIKit
 
 /// The state of the selection in a MarkupWKWebView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
+    // Validity
+    @Published public var valid: Bool = false
     // Selected text
     @Published public var selection: String? = nil
     // Links
@@ -45,7 +47,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var sup: Bool = false
     @Published public var code: Bool = false
     
-    // Selection state queries
+    //MARK: Selection state queries
     public var isLinkable: Bool {
         href == nil          // Can't link when selection is in a link
     }
@@ -82,8 +84,18 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         table
     }
     
+    //MARK: Enable/disable menu options and buttons
+    
+    public var canDent: Bool { true }
+    public var canStyle: Bool { style != .Undefined }
+    public var canList: Bool { true }
+    public var canInsert: Bool { isInsertable }
+    public var canLink: Bool { !isInLink && selection != nil }
+    public var canFormat: Bool { true }
+    
     // CustomStringConvertible conformance
     public var description: String {
+        valid ?
         """
           selection: \(selection ?? "none")
           style: \(style.tag)
@@ -93,13 +105,14 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           link: \(linkString())
           image: \(imageString())
           table: \(tableString())
-        """
+        """ : "invalid"
     }
     
     public init() {}
     
     public func reset(from selectionState: SelectionState?) {
         selection = selectionState?.selection
+        valid = selectionState?.valid ?? false          // true if document.getSelection().rangeCount > 0
         href = selectionState?.href                     // href for <a> if selected
         link = selectionState?.link                     // text linked to href in <a> if selected
         src = selectionState?.src                       // src for <img> if selected

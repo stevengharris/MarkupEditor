@@ -21,7 +21,7 @@ public struct MarkupToolbar: View {
     @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
-    var contents: ToolbarContents { toolbarPreference.contents }
+    let contents = ToolbarContents.shared
     @State var markupDelegate: MarkupDelegate?
     /// User-supplied view to be shown on the left side of the default MarkupToolbar
     private var leftToolbar: AnyView?
@@ -59,7 +59,7 @@ public struct MarkupToolbar: View {
             Spacer()                // Push everything to the left
         }
         .frame(height: toolbarPreference.height())
-        .disabled(observedWebView.selectedWebView == nil)
+        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
     }
     
     public init(markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {

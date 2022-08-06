@@ -555,7 +555,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
+                        self.webView.replaceStyle(state.style, with: .H1) {
                             handler()
                         }
                     }
@@ -574,7 +574,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H6) {
+                        self.webView.replaceStyle(state.style, with: .H6) {
                             handler()
                         }
                     }
@@ -593,7 +593,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .P) {
+                        self.webView.replaceStyle(state.style, with: .P) {
                             handler()
                         }
                     }
@@ -647,7 +647,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
+                        self.webView.replaceStyle(state.style, with: .H1) {
                             handler()
                         }
                     }
@@ -667,7 +667,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
+                        self.webView.replaceStyle(state.style, with: .H1) {
                             handler()
                         }
                     }
@@ -686,7 +686,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
+                        self.webView.replaceStyle(state.style, with: .H1) {
                             handler()
                         }
                     }
@@ -705,7 +705,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
-                        self.webView.replaceStyle(in: state, with: .H1) {
+                        self.webView.replaceStyle(state.style, with: .H1) {
                             handler()
                         }
                     }

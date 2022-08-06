@@ -27,10 +27,10 @@ public enum TableBorder: String {
 
 /// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    @EnvironmentObject private var toolbarPreference: ToolbarPreference
     @EnvironmentObject private var observedWebView: ObservedWebView
     @EnvironmentObject private var selectionState: SelectionState
-    private var contents: TableContents { toolbarPreference.contents.tableContents }
+    private var contents: TableContents { ToolbarContents.shared.tableContents }
     @State private var showTableSizer: Bool = false
     @State private var rows: Int = 0
     @State private var cols: Int = 0
@@ -172,6 +172,7 @@ public struct TableToolbar: View {
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
         .background(Blur(style: .systemUltraThinMaterial))
+        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
     }
     
 }
