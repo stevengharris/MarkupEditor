@@ -256,9 +256,6 @@ extension ViewController: MarkupDelegate {
     func markupError(code: String, message: String, info: String?, alert: Bool) {
         print("Error \(code): \(message)")
         if let info = info { print(" \(info)") }
-        if (alert) {
-            AudioPlayer.shared.playSound(filename: "alert.wav")
-        }
     }
     
 }
