@@ -9,11 +9,6 @@
 import SwiftUI
 import WebKit
 
-@objc public protocol MenuTarget {
-    func indent(handler: (()->Void)?)
-    func outdent(handler: (()->Void)?)
-}
-
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
 /// All init methods invoke setupForEditing, which loads markup.html that in turn loads
@@ -29,8 +24,9 @@ import WebKit
 /// results in `userContentController(_:didReceive)' being invoked in the MarkupCoordinator to
 /// let us know something happened on the JavaScript side . In this way, we we maintain up-to-date information
 /// as-needed in Swift about what is in the MarkupWKWebView.
-public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
+public class MarkupWKWebView: WKWebView, ObservableObject {
     static let DefaultInnerLineHeight: Int = 18
+    private let selectionState = SelectionState()       // Locally cached, specific to this view
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
     private var editorHeight: Int = 0
@@ -269,6 +265,40 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
     public override var inputAccessoryView: UIView? {
         // remove/replace the default accessory view
         return accessoryView
+    }
+    
+    /// Return false to disable various menu items depending on selectionState
+    @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        guard selectionState.valid else { return false }
+        switch action {
+        case #selector(indent), #selector(outdent):
+            return selectionState.canDent
+        case #selector(bullets), #selector(numbers):
+            return selectionState.canList
+        case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
+            return selectionState.canStyle
+        case #selector(MarkupMenu.showLinkToolbar):
+            return selectionState.canLink
+        case #selector(MarkupMenu.showImageToolbar), #selector(MarkupMenu.showTableToolbar):
+            return selectionState.canInsert
+        case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
+            return selectionState.canFormat
+        default:
+            print("Unknown action: \(action)")
+            return false
+        }
+    }
+    
+    @objc private func showLinkToolbar() {
+        MarkupMenu.shared.showLinkToolbar()
+    }
+    
+    @objc private func showImageToolbar() {
+        MarkupMenu.shared.showImageToolbar()
+    }
+    
+    @objc private func showTableToolbar() {
+        MarkupMenu.shared.showTableToolbar()
     }
     
     //MARK: Testing support
@@ -690,10 +720,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
     
     //MARK: Formatting
     
+    @objc public func bold() {
+        bold(handler: nil)
+    }
+    
     public func bold(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleBold()") { result, error in
             handler?()
         }
+    }
+    
+    @objc public func italic() {
+        italic(handler: nil)
     }
     
     public func italic(handler: (()->Void)? = nil) {
@@ -702,10 +740,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
         }
     }
     
+    @objc public func underline() {
+        underline(handler: nil)
+    }
+    
     public func underline(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleUnderline()") { result, error in
             handler?()
         }
+    }
+    
+    @objc public func code() {
+        code(handler: nil)
     }
     
     public func code(handler: (()->Void)? = nil) {
@@ -714,16 +760,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
         }
     }
 
+    @objc public func strike() {
+        strike(handler: nil)
+    }
+    
     public func strike(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleStrike()") { result, error in
             handler?()
         }
     }
     
+    @objc public func subscriptText() {
+        subscriptText(handler: nil)
+    }
+    
     public func subscriptText(handler: (()->Void)? = nil) {      // "superscript" is a keyword
         evaluateJavaScript("MU.toggleSubscript()") { result, error in
             handler?()
         }
+    }
+    
+    @objc public func superscript() {
+        superscript(handler: nil)
     }
     
     public func superscript(handler: (()->Void)? = nil) {
@@ -734,85 +792,92 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
     
     //MARK: Selection state
     
+    /// Get the selectionState async and execute a handler with it.
+    ///
+    /// Note we keep a local copy up-to-date so we can use it for handling actions coming in from
+    /// the MarkupMenu and hot-keys
     public func getSelectionState(handler: ((SelectionState)->Void)? = nil) {
         evaluateJavaScript("MU.getSelectionState()") { result, error in
-            var selectionState = SelectionState()
-            guard error == nil, let stateString = result as? String else {
-                handler?(selectionState)
+            guard
+                error == nil,
+                let stateString = result as? String,
+                !stateString.isEmpty,
+                let data = stateString.data(using: .utf8) else {
+                self.selectionState.reset(from: SelectionState())
+                handler?(self.selectionState)
                 return
             }
-            if !stateString.isEmpty {
-                if let data = stateString.data(using: .utf8) {
-                    do {
-                        let state = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
-                        selectionState = self.selectionState(from: state)
-                    } catch let error {
-                        print("Error decoding selectionState data: \(error.localizedDescription)")
-                    }
-                }
+            var newSelectionState: SelectionState
+            do {
+                let stateDictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+                newSelectionState = self.selectionState(from: stateDictionary)
+            } catch let error {
+                print("Error decoding selectionState data: \(error.localizedDescription)")
+                newSelectionState = SelectionState()
             }
-            handler?(selectionState)
+            self.selectionState.reset(from: newSelectionState)
+            handler?(self.selectionState)
         }
     }
     
-    private func selectionState(from state: [String : Any]?) -> SelectionState {
+    private func selectionState(from stateDictionary: [String : Any]?) -> SelectionState {
         let selectionState = SelectionState()
-        guard let state = state else {
+        guard let stateDictionary = stateDictionary else {
             print("State decoded from JSON was nil")
             return selectionState
         }
         // Validity (i.e., document.getSelection().rangeCount > 0
-        selectionState.valid = state["valid"] as? Bool ?? false
+        selectionState.valid = stateDictionary["valid"] as? Bool ?? false
         // Selected text
-        if let selectedText = state["selection"] as? String {
+        if let selectedText = stateDictionary["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
         } else {
             selectionState.selection = nil
         }
         // Links
-        selectionState.href = state["href"] as? String
-        selectionState.link = state["link"] as? String
+        selectionState.href = stateDictionary["href"] as? String
+        selectionState.link = stateDictionary["link"] as? String
         // Images
-        selectionState.src = state["src"] as? String
-        selectionState.alt = state["alt"] as? String
-        selectionState.scale = state["scale"] as? Int
-        selectionState.frame = rectFromFrame(state["frame"] as? [String : CGFloat])
+        selectionState.src = stateDictionary["src"] as? String
+        selectionState.alt = stateDictionary["alt"] as? String
+        selectionState.scale = stateDictionary["scale"] as? Int
+        selectionState.frame = rectFromFrame(stateDictionary["frame"] as? [String : CGFloat])
         // Tables
-        selectionState.table = state["table"] as? Bool ?? false
-        selectionState.thead = state["thead"] as? Bool ?? false
-        selectionState.tbody = state["tbody"] as? Bool ?? false
-        selectionState.header = state["header"] as? Bool ?? false
-        selectionState.colspan = state["colspan"] as? Bool ?? false
-        selectionState.rows = state["rows"] as? Int ?? 0
-        selectionState.cols = state["cols"] as? Int ?? 0
-        selectionState.row = state["row"] as? Int ?? 0
-        selectionState.col = state["col"] as? Int ?? 0
-        if let rawValue = state["border"] as? String {
+        selectionState.table = stateDictionary["table"] as? Bool ?? false
+        selectionState.thead = stateDictionary["thead"] as? Bool ?? false
+        selectionState.tbody = stateDictionary["tbody"] as? Bool ?? false
+        selectionState.header = stateDictionary["header"] as? Bool ?? false
+        selectionState.colspan = stateDictionary["colspan"] as? Bool ?? false
+        selectionState.rows = stateDictionary["rows"] as? Int ?? 0
+        selectionState.cols = stateDictionary["cols"] as? Int ?? 0
+        selectionState.row = stateDictionary["row"] as? Int ?? 0
+        selectionState.col = stateDictionary["col"] as? Int ?? 0
+        if let rawValue = stateDictionary["border"] as? String {
             selectionState.border = TableBorder(rawValue: rawValue) ?? .cell
         } else {
             selectionState.border = .cell
         }
         // Styles
-        if let tag = state["style"] as? String {
+        if let tag = stateDictionary["style"] as? String {
             selectionState.style = StyleContext.with(tag: tag)
         } else {
             selectionState.style = StyleContext.Undefined
         }
-        if let tag = state["list"] as? String {
+        if let tag = stateDictionary["list"] as? String {
             selectionState.list = ListContext.with(tag: tag)
         } else {
             selectionState.list = ListContext.Undefined
         }
-        selectionState.li = state["li"] as? Bool ?? false
-        selectionState.quote = state["quote"] as? Bool ?? false
+        selectionState.li = stateDictionary["li"] as? Bool ?? false
+        selectionState.quote = stateDictionary["quote"] as? Bool ?? false
         // Formats
-        selectionState.bold = state["bold"] as? Bool ?? false
-        selectionState.italic = state["italic"] as? Bool ?? false
-        selectionState.underline = state["underline"] as? Bool ?? false
-        selectionState.strike = state["strike"] as? Bool ?? false
-        selectionState.sub = state["sub"] as? Bool ?? false
-        selectionState.sup = state["sup"] as? Bool ?? false
-        selectionState.code = state["code"] as? Bool ?? false
+        selectionState.bold = stateDictionary["bold"] as? Bool ?? false
+        selectionState.italic = stateDictionary["italic"] as? Bool ?? false
+        selectionState.underline = stateDictionary["underline"] as? Bool ?? false
+        selectionState.strike = stateDictionary["strike"] as? Bool ?? false
+        selectionState.sub = stateDictionary["sub"] as? Bool ?? false
+        selectionState.sup = stateDictionary["sup"] as? Bool ?? false
+        selectionState.code = stateDictionary["code"] as? Bool ?? false
         return selectionState
     }
     
@@ -827,6 +892,34 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
     }
     
     //MARK: Styling
+    
+    @objc public func pStyle(sender: UICommand) {
+        replaceStyle(selectionState.style, with: .P)
+    }
+    
+    @objc public func h1Style() {
+        replaceStyle(selectionState.style, with: .H1)
+    }
+    
+    @objc public func h2Style() {
+        replaceStyle(selectionState.style, with: .H2)
+    }
+    
+    @objc public func h3Style() {
+        replaceStyle(selectionState.style, with: .H3)
+    }
+    
+    @objc public func h4Style() {
+        replaceStyle(selectionState.style, with: .H4)
+    }
+    
+    @objc public func h5Style() {
+        replaceStyle(selectionState.style, with: .H5)
+    }
+    
+    @objc public func h6Style() {
+        replaceStyle(selectionState.style, with: .H6)
+    }
     
     /// Replace the oldStyle of the selection with the newStyle (e.g., from <p> to <h3>)
     ///
@@ -843,6 +936,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
         }
     }
     
+    /// Indent from the menu or hotkey
+    @objc public func indent() {
+        indent(handler: nil)
+    }
+
     /// Indent the selection based on the context.
     ///
     /// If in a list, move list item to the next nested level if appropriate.
@@ -853,6 +951,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
         }
     }
     
+    /// Outdent from the menu or hotkey
+    @objc public func outdent() {
+        outdent(handler: nil)
+    }
+
     /// Outdent the selection based on the context.
     ///
     /// If in a list, move list item to the previous nested level if appropriate.
@@ -861,6 +964,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject, MenuTarget {
         evaluateJavaScript("MU.outdent()") { result, error in
             handler?()
         }
+    }
+    
+    @objc public func bullets() {
+        toggleListItem(type: .UL)
+    }
+    
+    @objc public func numbers() {
+        toggleListItem(type: .OL)
     }
     
     /// Switch between ordered and unordered list styles.
