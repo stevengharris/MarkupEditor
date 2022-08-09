@@ -282,7 +282,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
-            print("Unknown action: \(action)")
+            //print("Unknown action: \(action)")
             return false
         }
     }
