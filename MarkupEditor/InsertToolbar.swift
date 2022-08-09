@@ -10,9 +10,9 @@ import SwiftUI
 
 /// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
-    @EnvironmentObject private var selectionState: SelectionState
-    @EnvironmentObject private var showSubToolbar: ShowSubToolbar
-    private var contents: InsertContents { ToolbarContents.shared.insertContents }
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    @ObservedObject private var showSubToolbar: ShowSubToolbar = MarkupEditor.showSubToolbar
+    let contents: InsertContents = MarkupEditor.toolbarContents.insertContents
     private var showAnyToolbar: Bool { showSubToolbar.type != nil }
     @State private var hoverLabel: Text = Text("Insert")
     public var body: some View {
@@ -71,23 +71,15 @@ public struct InsertToolbar: View {
 
 struct InsertToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
                 InsertToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
+                    .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
                 InsertToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
+                    .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
             Spacer()

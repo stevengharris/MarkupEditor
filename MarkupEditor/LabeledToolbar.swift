@@ -10,9 +10,9 @@ import SwiftUI
 
 /// The standard way to display one of the toolbars with a label above. Typically ToobarImageButtons are provided as its content.
 public struct LabeledToolbar<Content: View>: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
-    let label: Text
-    let content: Content
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    private let label: Text
+    private let content: Content
     
     public init(label: Text, @ViewBuilder content: () -> Content) {
         self.label = label
@@ -20,7 +20,7 @@ public struct LabeledToolbar<Content: View>: View {
     }
     
     public var body: some View {
-        switch toolbarPreference.style {
+        switch toolbarStyle.style {
         case .labeled:
             VStack(spacing: 2) {
                 label
@@ -46,10 +46,6 @@ public struct LabeledToolbar<Content: View>: View {
 
 struct LabeledToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
                 LabeledToolbar(label: Text("Test Label")) {
@@ -62,9 +58,7 @@ struct LabeledToolbar_Previews: PreviewProvider {
                         action: { print("down") }
                     )
                 }
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
+                .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
@@ -78,9 +72,7 @@ struct LabeledToolbar_Previews: PreviewProvider {
                         action: { print("down") }
                     )
                 }
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
+                .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
             Spacer()

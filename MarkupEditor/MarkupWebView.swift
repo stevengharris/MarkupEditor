@@ -17,14 +17,9 @@ import WebKit
 /// The Coordinator will be a WKScriptMessageHandler and handle callbacks that come in from calls in markup.js to
 /// window.webkit.messageHandlers.markup.postMessage(message);
 ///
-/// Note we use markupEnv here, which does not publish changes. Then, from it, we pass the selectionState to the
-/// Coordinator. This way MarkupWebView does not refresh as SelectionState updates. The SelectionState updates
-/// as you type and click around, but there is no need to trigger updateUIView when it changes.
-///
 /// See the explanation in updateView for a better understanding of when it is called. TL;DR: Hold onto the html in
 /// state somewhere external to the MarkupWebView, and pass a binding to that state in init.
 public struct MarkupWebView: UIViewRepresentable {
-    @EnvironmentObject var markupEnv: MarkupEnv
     public typealias Coordinator = MarkupCoordinator
     /// The initial HTML content to be shown in the MarkupWKWebView.
     public var markupDelegate: MarkupDelegate?
@@ -56,7 +51,7 @@ public struct MarkupWebView: UIViewRepresentable {
         }
     
     public func makeCoordinator() -> Coordinator {
-        return Coordinator(selectionState: markupEnv.selectionState, markupDelegate: markupDelegate)
+        return Coordinator(markupDelegate: markupDelegate)
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {

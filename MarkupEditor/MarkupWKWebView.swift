@@ -277,10 +277,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return selectionState.canList
         case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
             return selectionState.canStyle
-        case #selector(MarkupMenu.showLinkToolbar):
-            return selectionState.canLink
-        case #selector(MarkupMenu.showImageToolbar), #selector(MarkupMenu.showTableToolbar):
-            return selectionState.canInsert
+        case #selector(showLinkToolbar), #selector(showImageToolbar), #selector(showTableToolbar):
+            return true     // Toggles off and on
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
@@ -289,16 +287,31 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    @objc private func showLinkToolbar() {
-        MarkupMenu.shared.showLinkToolbar()
+    @objc public func showLinkToolbar() {
+        let type = MarkupEditor.showSubToolbar.type
+        if (type == .link) {
+            MarkupEditor.showSubToolbar.type = nil
+        } else {
+            MarkupEditor.showSubToolbar.type = .link
+        }
     }
     
-    @objc private func showImageToolbar() {
-        MarkupMenu.shared.showImageToolbar()
+    @objc public func showImageToolbar() {
+        let type = MarkupEditor.showSubToolbar.type
+        if (type == .image) {
+            MarkupEditor.showSubToolbar.type = nil
+        } else {
+            MarkupEditor.showSubToolbar.type = .image
+        }
     }
     
-    @objc private func showTableToolbar() {
-        MarkupMenu.shared.showTableToolbar()
+    @objc public func showTableToolbar() {
+        let type = MarkupEditor.showSubToolbar.type
+        if (type == .table) {
+            MarkupEditor.showSubToolbar.type = nil
+        } else {
+            MarkupEditor.showSubToolbar.type = .table
+        }
     }
     
     //MARK: Testing support

@@ -7,9 +7,12 @@
 
 import UIKit
 
-/// The MarkupMenu creates the UIMenu content for an environment that supports a menu bar. It dispatches
-/// menu actions to the selectedWebView and determines whether we canPerformAction based on the
-/// selectionState.
+/// The MarkupMenu creates the UIMenu content for an environment that supports a menu bar.
+///
+/// The contents of the MarkupMenu corresponds to the ToolbarContents. The actions and
+/// canPerformAction logic all resides in MarkupWKWebView. As menu items are invoked and hot-keys are
+/// pressed, the selectedWebView (a MarkupWKWebView) is encountered in the responder chain and executes
+/// the action.
 ///
 /// The MarkupMenu will have a title of "Format" by default and will be placed following the Edit menu.
 /// The init method removes the default Format menu.
@@ -18,16 +21,9 @@ import UIKit
 /// will bold/unbold even if there is no MarkupMenu, but command+] will not indent. This is a byproduct of the
 /// "native" support of WKWebView.
 ///
-/// The MarkupMenu needs access to the MarkupEnv to find the selectedWebView and selectionState. The
-/// contents of the menu is adjusted at creation time to correspond to ToolbarContents. The various toolbars
-/// use the same mechanism to determine what their contents are and whether buttons should be disabled.
-///
 public class MarkupMenu {
     public static let shared = MarkupMenu()
-    public var markupEnv: MarkupEnv!
-    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
-    private var selectionState: SelectionState { markupEnv.selectionState }
-    let contents = ToolbarContents.shared
+    let contents = MarkupEditor.toolbarContents
     
     public init() {}
     
@@ -50,13 +46,13 @@ public class MarkupMenu {
     private func insertMenu() -> UIMenu {
         var children = [UICommand]()
         if contents.insertContents.link {
-            children.append(UIKeyCommand(title: "Link", action: #selector(showLinkToolbar), input: "K", modifierFlags: .command))
+            children.append(UIKeyCommand(title: "Link", action: #selector(MarkupWKWebView.showLinkToolbar), input: "K", modifierFlags: .command))
         }
         if contents.insertContents.image {
-            children.append(UICommand(title: "Image", action: #selector(showImageToolbar)))
+            children.append(UICommand(title: "Image", action: #selector(MarkupWKWebView.showImageToolbar)))
         }
         if contents.insertContents.table {
-            children.append(UICommand(title: "Table", action: #selector(showTableToolbar)))
+            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showTableToolbar)))
         }
         return UIMenu(title: "Insert", children: children)
     }
@@ -106,18 +102,6 @@ public class MarkupMenu {
             children.append(UIKeyCommand(title: "Superscript", action: #selector(MarkupWKWebView.superscript), input: "=", modifierFlags: [.shift, .alternate, .command]))
         }
         return UIMenu(title: "Format", options: .displayInline, children: children)
-    }
-    
-    @objc public func showLinkToolbar() {
-        markupEnv.showSubToolbar.type = .link
-    }
-    
-    @objc public func showImageToolbar() {
-        markupEnv.showSubToolbar.type = .image
-    }
-    
-    @objc public func showTableToolbar() {
-        markupEnv.showSubToolbar.type = .table
     }
     
 }

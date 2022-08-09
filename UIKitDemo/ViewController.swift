@@ -24,7 +24,6 @@ import Combine
 /// The MarkupWKWebView doesn't have any SwiftUI dependencies and can just be used directly.
 class ViewController: UIViewController {
     var stack: UIStackView!
-    var markupEnv: MarkupEnv!
     var toolbarHolder: UIView!
     var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
@@ -37,16 +36,13 @@ class ViewController: UIViewController {
     private var rawTextView: UITextView!
     private var bottomStack: UIStackView!
     private var bottomStackHeightConstraint: NSLayoutConstraint!
-    /// The state of the selection in the MarkupWKWebView, shown in the toolbar
-    var selectionState: SelectionState { markupEnv.selectionState }
     /// Which MarkupWKWebView we have selected and which the MarkupToolbar acts on
-    var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
+    var selectedWebView: MarkupWKWebView? { MarkupEditor.selectedWebView }
     /// Toggle whether the file selector should be shown to select a local image
     var selectImageCancellable: AnyCancellable?
     /// Identify which type of SubToolbar is showing, or nil if none
-    var showSubToolbar: ShowSubToolbar { markupEnv.showSubToolbar }
+    var showSubToolbar: ShowSubToolbar { MarkupEditor.showSubToolbar }
     var showSubToolbarCancellable: AnyCancellable?
-    private let toolbarPreference = ToolbarPreference(style: .compact)
     // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
@@ -57,15 +53,13 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Get the markupEnv from the AppDelegate
-        markupEnv = (UIApplication.shared.delegate as! AppDelegate).markupEnv
         initializePickers()
         initializeToolbar()
         initializeStackView()
     }
     
     func initializePickers() {
-        selectImageCancellable = markupEnv.selectImage.$value.sink { [weak self] value in
+        selectImageCancellable = MarkupEditor.selectImage.$value.sink { [weak self] value in
             if value {
                 let controller =  UIDocumentPickerViewController(forOpeningContentTypes: [.image])
                 controller.allowsMultipleSelection = false
@@ -100,17 +94,13 @@ class ViewController: UIViewController {
                 leftToolbar: AnyView(FileToolbar(fileToolbarDelegate: self))
             )
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                .environmentObject(showSubToolbar)
-                .environmentObject(markupEnv.toolbarPreference)
-                .environmentObject(markupEnv.selectionState)
-                .environmentObject(markupEnv.observedWebView)
         )
         add(swiftUIView: toolbar, to: toolbarHolder)
         toolbarHolder.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(toolbarHolder)
         NSLayoutConstraint.activate([
             toolbarHolder.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            toolbarHolder.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: (toolbarPreference.height() + 2)),
+            toolbarHolder.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: (MarkupEditor.toolbarStyle.height() + 2)),
             toolbarHolder.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
             toolbarHolder.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
         ])
@@ -120,11 +110,6 @@ class ViewController: UIViewController {
         ])
         subToolbar = AnyView(
             SubToolbar(markupDelegate: self)
-                .environmentObject(markupEnv.toolbarPreference)
-                .environmentObject(markupEnv.selectionState)
-                .environmentObject(markupEnv.observedWebView)
-                .environmentObject(markupEnv.showSubToolbar)
-                .environmentObject(markupEnv.selectImage)
         )
     }
     
@@ -149,12 +134,12 @@ class ViewController: UIViewController {
         ])
         // Create the webView and overlay the subToolbar
         webView = MarkupWKWebView(html: demoContent(), resourcesUrl: resourcesUrl, id: "Document", markupDelegate: self)
-        subToolbarUIView = overlayTop(swiftUIView: subToolbar, on: webView, height: toolbarPreference.height())
+        subToolbarUIView = overlayTop(swiftUIView: subToolbar, on: webView, height: MarkupEditor.toolbarStyle.height())
         subToolbarUIView.isHidden = true
-        // Monitor changes to the subToolbar type held in the markupEnv. The value will change as when one of
+        // Monitor changes to the subToolbar type held in the MarkupEditor. The value will change as when one of
         // the InsertToolbar buttons is pressed. This is a "natural" way to do things in SwiftUI, but we can
         // use Combine in UIKit to get the same effect.
-        showSubToolbarCancellable = markupEnv.showSubToolbar.$type.sink { [weak self] type in
+        showSubToolbarCancellable = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
             if type == .none {
                 self?.subToolbarUIView.isHidden = true
             } else {
@@ -163,7 +148,7 @@ class ViewController: UIViewController {
         }
         stack.addArrangedSubview(webView)
         // Set up the MarkupCoordinator. This is done transparently in SwiftUI by the WebView.
-        coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
+        coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
         webView.configuration.userContentController.add(coordinator, name: "markup")
         // Set up the bottom stack to hold the rawTextView and some decoration above it. Make the
         // bottom stack the same height as the webView so the overall stack can adjust nicely.
@@ -225,7 +210,7 @@ class ViewController: UIViewController {
 extension ViewController: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        markupEnv.observedWebView.selectedWebView = view
+        MarkupEditor.observedWebView.selectedWebView = view
         setRawText(handler)
     }
     
@@ -289,8 +274,8 @@ extension ViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first, url.startAccessingSecurityScopedResource() else { return }
         defer { url.stopAccessingSecurityScopedResource() }
-        if (markupEnv.selectImage.value) {
-            markupEnv.selectImage.value = false
+        if (MarkupEditor.selectImage.value) {
+            MarkupEditor.selectImage.value = false
             imageSelected(url: url)
         } else {
             openExistingDocument(url: url)
@@ -298,7 +283,7 @@ extension ViewController: UIDocumentPickerDelegate {
     }
     
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        markupEnv.selectImage.value = false
+        MarkupEditor.selectImage.value = false
         controller.dismiss(animated: true, completion: nil)
     }
     

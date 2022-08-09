@@ -10,22 +10,22 @@ import SwiftUI
 
 /// The toolbar for creating and editing hyperlinks.
 public struct LinkToolbar: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    private var initialHref: String?
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    @State private var initialHref: String?
     // The href and link are the state for the toolbar
-    @State private var href: String
-    @State private var link: String
+    @State private var href: String = ""
+    @State private var link: String = ""
     // The previewed value holds on to what has been previewed, to
     // avoid doing the insert/modify unnecessarily
-    @State private var previewedHref: String
+    @State private var previewedHref: String = ""
     // The "arg" equivalent is to pass to insertLink
     private var argHRef: String? { href.isEmpty ? nil : href }
     
     public var body: some View {
         Group {
-            switch toolbarPreference.style {
+            switch toolbarStyle.style {
             case .compact:
                 HStack(alignment: .center) {
                     GeometryReader { geometry in
@@ -58,7 +58,7 @@ public struct LinkToolbar: View {
                             Image(systemName: "xmark")
                                 .foregroundColor(Color.red)
                                 .font(Font.system(size: 8).weight(.bold))
-                                .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
+                                .offset(CGSize(width: -(toolbarStyle.buttonHeight() / 2) + 6, height: (toolbarStyle.buttonHeight() / 2) - 6))
                                 .zIndex(1)
                         )
                     }
@@ -103,7 +103,7 @@ public struct LinkToolbar: View {
                             Image(systemName: "xmark")
                                 .foregroundColor(Color.red)
                                 .font(Font.system(size: 8).weight(.bold))
-                                .offset(CGSize(width: -(toolbarPreference.buttonHeight() / 2) + 6, height: (toolbarPreference.buttonHeight() / 2) - 6))
+                                .offset(CGSize(width: -(toolbarStyle.buttonHeight() / 2) + 6, height: (toolbarStyle.buttonHeight() / 2) - 6))
                                 .zIndex(1)
                         )
                     }
@@ -121,14 +121,20 @@ public struct LinkToolbar: View {
                 .frame(height: 50)
             }
         }
+        .onAppear {
+            initialHref = selectionState.href
+            previewedHref = selectionState.href ?? ""
+            href = selectionState.href ?? ""
+            link = selectionState.link ?? selectionState.selection ?? ""
+        }
         .onChange(of: selectionState.selection, perform: { value in
-            print("A link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            //print("A link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
             href = selectionState.href ?? ""
             link = selectionState.link ?? selectionState.selection ?? ""
             previewedHref = href
         })
         .onChange(of: selectionState.href, perform: { value in
-            print("B link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
+            //print("B link: ", (selectionState.link ?? "nil"), ", selection: ", (selectionState.selection ?? "nil"))
             href = selectionState.href ?? ""
             link = selectionState.link ?? selectionState.selection ?? ""
             previewedHref = href
@@ -142,13 +148,6 @@ public struct LinkToolbar: View {
     
     private func canBeSaved() -> Bool {
         return (!href.isEmpty && href.isValidURL) || (href.isEmpty && initialHref != nil)
-    }
-    
-    public init(selectionState: SelectionState) {
-        initialHref = selectionState.href
-        _previewedHref = State(initialValue: selectionState.href ?? "")
-        _href = State(initialValue: selectionState.href ?? "")
-        _link = State(initialValue: selectionState.link ?? selectionState.selection ?? "")
     }
     
     private func previewed() -> Bool {
@@ -191,26 +190,11 @@ public struct LinkToolbar: View {
 
 struct LinkToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let selectionState = SelectionState()
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
-            HStack {
-                LinkToolbar(selectionState: selectionState)
-                    .environmentObject(selectionState)
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
-                Spacer()
-            }
-            HStack {
-                LinkToolbar(selectionState: selectionState)
-                    .environmentObject(selectionState)
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
-                Spacer()
-            }
+            LinkToolbar()
+                .environmentObject(ToolbarStyle.compact)
+            LinkToolbar()
+                .environmentObject(ToolbarStyle.labeled)
             Spacer()
         }
     }

@@ -10,7 +10,7 @@ import SwiftUI
 
 /// The TextField used in the ImageToolbar and LinkToolbar.
 public struct ToolbarTextField: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
     let label: String!
     let placeholder: String!
     @Binding var text: String
@@ -23,7 +23,7 @@ public struct ToolbarTextField: View {
     @FocusState var fieldIsFocused: Bool
     
     public var body: some View {
-        switch toolbarPreference.style {
+        switch toolbarStyle.style {
         case .labeled:
             VStack(spacing: 2) {
                 Text(label)
@@ -53,7 +53,7 @@ public struct ToolbarTextField: View {
                     .onAppear { fieldIsFocused = focusIsOn == takeFocusOn }
                     .focused($fieldIsFocused)
                     .onChange(of: focusIsOn) { focus in fieldIsFocused = focus == takeFocusOn }
-                    .frame(height: toolbarPreference.buttonHeight())
+                    .frame(height: toolbarStyle.buttonHeight())
                     .opacity(1)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
@@ -64,7 +64,7 @@ public struct ToolbarTextField: View {
                         placeholder,
                         text: $text,
                         onCommit: commitHandler ?? { })
-                    .frame(height: toolbarPreference.buttonHeight())
+                    .frame(height: toolbarStyle.buttonHeight())
                     .opacity(1)
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding(.horizontal, 8)
@@ -107,7 +107,7 @@ public struct ToolbarTextField: View {
                 .onAppear { fieldIsFocused = focusIsOn == takeFocusOn }
                 .focused($fieldIsFocused)
                 .onChange(of: focusIsOn) { focus in fieldIsFocused = focus == takeFocusOn }
-                .frame(height: toolbarPreference.buttonHeight())
+                .frame(height: toolbarStyle.buttonHeight())
                 .opacity(1)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .foregroundColor((validationHandler?() ?? true) ? Color(UIColor.label) : Color.red)
@@ -118,7 +118,7 @@ public struct ToolbarTextField: View {
                     placeholder,
                     text: $text,
                     onCommit: commitHandler ?? {})
-                .frame(height: toolbarPreference.buttonHeight())
+                .frame(height: toolbarStyle.buttonHeight())
                 .opacity(1)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.horizontal, 8)

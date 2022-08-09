@@ -71,16 +71,13 @@ Clone this repository and build the MarkupFramework target in Xcode. Add the Mar
 
 When consuming the MarkupEditor in SwiftUI, you can use the `MarkupToolbar` and `MarkupWebView` directly in your own View. The `MarkupWebView` is a UIViewRepresentable for the `MarkupWKWebView` and deals with setting up the `MarkupCoordinator` itself.
 
-In the simplest case, just add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. We let the transient `SubToolbar` (used to create and edit images, links, and tables) be an overlay of `MarkupWebView`. The `selectedWebView` has to be accessed by both the `MarkupToolbar` and `MarkupWebView`, and is accessible via the `MarkupEnv`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. (If you have multiple `MarkupWebViews` and a single `MarkupToolbar`, you can use the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
+In the simplest case, just add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. We let the transient `SubToolbar` (used to create and edit images, links, and tables) be an overlay of `MarkupWebView`. The `selectedWebView` has to be accessed by both the `MarkupToolbar` and `MarkupWebView`, and is accessible via the `MarkupEditor`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. (If you have multiple `MarkupWebViews` and a single `MarkupToolbar`, you can use the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
 
 ```
 import SwiftUI
 import MarkupEditor
 
 struct ContentView: View {
-    private let markupEnv = MarkupEnv(style: .compact)
-    private let showSubToolbar = ShowSubToolbar()
-    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
     @State private var demoContent: String = "<p>Hello world</p>"
     
     var body: some View {
@@ -93,18 +90,12 @@ struct ContentView: View {
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
         }
-        .environmentObject(markupEnv)
-        .environmentObject(markupEnv.toolbarPreference)
-        .environmentObject(markupEnv.selectionState)
-        .environmentObject(markupEnv.observedWebView)
-        .environmentObject(markupEnv.selectImage)
-        .environmentObject(showSubToolbar)
     }
 }
 
 extension ContentView: MarkupDelegate {
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        markupEnv.observedWebView.selectedWebView = view
+        MarkupEditor.observedWebView.selectedWebView = view
     }
 }
 ```
@@ -135,7 +126,7 @@ Being able to insert an image into a document you are editing is fundamental. In
 
 The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your `MarkupWKWebView` when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your `MarkupDelegate` receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
 
-Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
+Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `MarkupEditor.allowLocalImages = true` early in your application lifecycle. This will add a Select button to the Image Toolbar.
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
 

@@ -16,16 +16,14 @@ import UniformTypeIdentifiers
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
 struct ContentView: View {
 
-    @EnvironmentObject var markupEnv: MarkupEnv
-    @EnvironmentObject var selectImage: SelectImage
-    @EnvironmentObject var showSubToolbar: ShowSubToolbar
-    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
+    @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoContent: String
-    @State private var droppingImage: Bool = false
-    // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
+    //@State private var droppingImage: Bool = false
+    
+    // Note that we specify resourcesUrl when instantiating MarkupWebView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
     // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
@@ -45,10 +43,11 @@ struct ContentView: View {
                 .overlay(
                     SubToolbar(markupDelegate: self),
                     alignment: .topLeading)
-                .onDrop(of: markupEnv.supportedImageTypes, isTargeted: $droppingImage) { (providers, location) -> Bool in
-                    print("Dropping \(providers) at \(location)")
-                    return true
-                }
+                //TODO: Complete drag-drop support
+                //.onDrop(of: MarkupEditor.supportedImageTypes, isTargeted: $droppingImage) { (providers, location) -> Bool in
+                //    print("Dropping \(providers) at \(location)")
+                //    return true
+                //}
             if rawShowing {
                 VStack {
                     Divider()
@@ -64,15 +63,9 @@ struct ContentView: View {
             }
         }
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: markupEnv.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
-        .environmentObject(showSubToolbar)
-        .environmentObject(markupEnv)
-        .environmentObject(markupEnv.toolbarPreference)
-        .environmentObject(markupEnv.selectionState)
-        .environmentObject(markupEnv.observedWebView)
-        .environmentObject(markupEnv.selectImage)
+        .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         .onDisappear {
-            markupEnv.observedWebView.selectedWebView = nil
+            MarkupEditor.selectedWebView = nil
         }
     }
     
@@ -85,7 +78,7 @@ struct ContentView: View {
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        selectedWebView?.getHtml { html in
+        MarkupEditor.selectedWebView?.getHtml { html in
             rawText = attributedString(from: html ?? "")
             handler?()
         }
@@ -104,7 +97,7 @@ struct ContentView: View {
     }
     
     private func imageSelected(url: URL) {
-        guard let view = selectedWebView else { return }
+        guard let view = MarkupEditor.selectedWebView else { return }
         markupImageToAdd(view, url: url)
     }
     
@@ -113,7 +106,7 @@ struct ContentView: View {
 extension ContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        markupEnv.observedWebView.selectedWebView = view
+        MarkupEditor.observedWebView.selectedWebView = view
         setRawText(handler)
     }
     
@@ -144,7 +137,7 @@ extension ContentView: MarkupDelegate {
 extension ContentView: FileToolbarDelegate {
     
     func newDocument(handler: ((URL?)->Void)? = nil) {
-        selectedWebView?.emptyDocument() {
+        MarkupEditor.selectedWebView?.emptyDocument() {
             setRawText()
         }
     }

@@ -10,22 +10,21 @@ import SwiftUI
 
 /// The toolbar for creating and editing images.
 public struct ImageToolbar: View {
-    @EnvironmentObject private var markupEnv: MarkupEnv
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    @EnvironmentObject private var selectImage: SelectImage
-    private var allowLocalImages: Bool { markupEnv.allowLocalImages }
-    private var height: CGFloat { toolbarPreference.height() }
-    private var initialSrc: String?
-    private var initialAlt: String?
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    @ObservedObject private var selectImage: SelectImage = MarkupEditor.selectImage
+    private let allowLocalImages: Bool = MarkupEditor.allowLocalImages
+    private var height: CGFloat { toolbarStyle.height() }
+    @State private var initialSrc: String? = nil
+    @State private var initialAlt: String? = nil
     // The src and alt values are the state for the toolbar
-    @State private var src: String
-    @State private var alt: String
+    @State private var src: String = ""
+    @State private var alt: String = ""
     // The previewed values hold on to what has been previewed, to
     // avoid doing the insert/modify unnecessarily
-    @State private var previewedSrc: String
-    @State private var previewedAlt: String
+    @State private var previewedSrc: String = ""
+    @State private var previewedAlt: String = ""
     // The "arg" equivalent is for scale passed to create/modifyImage
     private var argSrc: String? { src.isEmpty ? nil : src }
     private var argAlt: String? { alt.isEmpty ? nil : alt }
@@ -35,7 +34,7 @@ public struct ImageToolbar: View {
     
     public var body: some View {
         Group {
-            switch toolbarPreference.style {
+            switch toolbarStyle.style {
             case .compact:
                 HStack(alignment: .center) {
                     GeometryReader { geometry in
@@ -112,15 +111,14 @@ public struct ImageToolbar: View {
         .padding(.vertical, 2)
         .background(Blur(style: .systemUltraThinMaterial))
         .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
-    }
-    
-    public init(selectionState: SelectionState) {
-        initialSrc = selectionState.src
-        initialAlt = selectionState.alt
-        _previewedSrc = State(initialValue: selectionState.src ?? "")
-        _previewedAlt = State(initialValue: selectionState.alt ?? "")
-        _src = State(initialValue: selectionState.src ?? "")
-        _alt = State(initialValue: selectionState.alt ?? "")
+        .onAppear {
+            initialSrc = selectionState.src
+            initialAlt = selectionState.alt
+            previewedSrc = selectionState.src ?? ""
+            previewedAlt = selectionState.alt ?? ""
+            src = selectionState.src ?? ""
+            alt = selectionState.alt ?? ""
+        }
     }
     
     private func previewed() -> Bool {
@@ -166,26 +164,11 @@ public struct ImageToolbar: View {
 
 struct ImageToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let selectionState = SelectionState()
-        let compactMarkupEnv = MarkupEnv(style: .compact, allowLocalImages: true)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled, allowLocalImages: true)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
-            HStack {
-                ImageToolbar(selectionState: selectionState)
-                    .environmentObject(selectionState)
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
-                Spacer()
-            }
-            HStack {
-                ImageToolbar(selectionState: selectionState)
-                    .environmentObject(selectionState)
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
-                Spacer()
-            }
+            ImageToolbar()
+                .environmentObject(ToolbarStyle.compact)
+            ImageToolbar()
+                .environmentObject(ToolbarStyle.labeled)
             Spacer()
         }
     }

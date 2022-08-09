@@ -17,17 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         guard let _ = (scene as? UIWindowScene) else { return }
         
-        // Get the markupEnv from the AppDelegate
-        let markupEnv = (UIApplication.shared.delegate as! AppDelegate).markupEnv
-        
         // Create the SwiftUI view that provides the window contents.
         let contentView = ContentView(url: demoUrl())
-            .environmentObject(markupEnv)
-            .environmentObject(markupEnv.observedWebView)
-            .environmentObject(markupEnv.selectionState)
-            .environmentObject(markupEnv.toolbarPreference)
-            .environmentObject(markupEnv.selectImage)
-            .environmentObject(markupEnv.showSubToolbar)
         
         // Use a UIHostingController as window root view controller.
         if let windowScene = scene as? UIWindowScene {

@@ -16,18 +16,18 @@ import SwiftUI
 /// but the Image passed-in using ViewBuilder should be set using Image.forToolbar() to have the image
 /// sizes match.
 public struct ToolbarImageButton<Content: View>: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
-    let image: Content
-    let systemName: String?
-    let action: ()->Void
-    @Binding var active: Bool
-    let activeColor: Color
-    let onHover: ((Bool)->Void)?
+    private var toolbarStyle: ToolbarStyle = MarkupEditor.toolbarStyle
+    private let image: Content
+    private let systemName: String?
+    private let action: ()->Void
+    @Binding private var active: Bool
+    private let activeColor: Color
+    private let onHover: ((Bool)->Void)?
     
     public var body: some View {
         Button(action: action, label: {
             label()
-                .frame(width: toolbarPreference.buttonHeight(), height: toolbarPreference.buttonHeight())
+                .frame(width: toolbarStyle.buttonHeight(), height: toolbarStyle.buttonHeight())
         })
         .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
@@ -53,7 +53,7 @@ public struct ToolbarImageButton<Content: View>: View {
         if systemName == nil {
             return AnyView(image)
         } else {
-            return AnyView(Image.forToolbar(systemName: systemName!, style: toolbarPreference.style))
+            return AnyView(Image.forToolbar(systemName: systemName!, style: toolbarStyle.style))
         }
     }
 
@@ -74,7 +74,7 @@ extension ToolbarImageButton where Content == EmptyView {
 }
 
 public struct ToolbarTextButton: View {
-    @EnvironmentObject var toolbarPreference: ToolbarPreference
+    var toolbarStyle: ToolbarStyle = MarkupEditor.toolbarStyle
     let title: String
     let action: ()->Void
     let width: CGFloat?
@@ -84,7 +84,7 @@ public struct ToolbarTextButton: View {
     public var body: some View {
         Button(action: action, label: {
             Text(title)
-                .frame(width: width, height: toolbarPreference.buttonHeight())
+                .frame(width: width, height: toolbarStyle.buttonHeight())
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(

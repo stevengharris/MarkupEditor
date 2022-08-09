@@ -27,10 +27,10 @@ public enum TableBorder: String {
 
 /// The toolbar used for creating and editing a table.
 public struct TableToolbar: View {
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    private var contents: TableContents { ToolbarContents.shared.tableContents }
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    private var contents: TableContents { MarkupEditor.toolbarContents.tableContents }
     @State private var showTableSizer: Bool = false
     @State private var rows: Int = 0
     @State private var cols: Int = 0
@@ -168,7 +168,7 @@ public struct TableToolbar: View {
             }
             Divider()
         }
-        .frame(height: toolbarPreference.height())
+        .frame(height: toolbarStyle.height())
         .padding([.leading, .trailing], 8)
         .padding([.top, .bottom], 2)
         .background(Blur(style: .systemUltraThinMaterial))
@@ -179,23 +179,15 @@ public struct TableToolbar: View {
 
 struct TableToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
                 TableToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
+                    .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
                 TableToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
+                    .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
             Spacer()

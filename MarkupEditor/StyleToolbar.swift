@@ -10,11 +10,12 @@ import SwiftUI
 
 /// The toolbar for setting the paragraph style.
 public struct StyleToolbar: View {
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    private var contents: StyleContents { ToolbarContents.shared.styleContents }
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    private let contents: StyleContents = MarkupEditor.toolbarContents.styleContents
     @State private var hoverLabel: Text = Text("Paragraph Style")
+    private var height: CGFloat { toolbarStyle.height() }
 
     public init() {}
 
@@ -40,10 +41,10 @@ public struct StyleToolbar: View {
                 }
             } label: {
                 Text(selectionState.style.name)
-                    .frame(width: 88, height: toolbarPreference.buttonHeight(), alignment: .center)
+                    .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
             }
             .menuStyle(BorderlessButtonMenuStyle())
-            .frame(width: 88, height: toolbarPreference.buttonHeight())
+            .frame(width: 88, height: toolbarStyle.buttonHeight())
             .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,
@@ -85,29 +86,22 @@ public struct StyleToolbar: View {
                 )
             }
         }
+        .frame(height: height)
     }
     
 }
 
 struct StyleToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
                 StyleToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
+                    .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
                 StyleToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
+                    .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
             Spacer()
