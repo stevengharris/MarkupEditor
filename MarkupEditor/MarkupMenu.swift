@@ -10,24 +10,23 @@ import UIKit
 /// The MarkupMenu creates the UIMenu content for an environment that supports a menu bar.
 ///
 /// The contents of the MarkupMenu corresponds to the ToolbarContents. The actions and
-/// canPerformAction logic all resides in MarkupWKWebView. As menu items are invoked and hot-keys are
+/// canPerformAction logic all reside in MarkupWKWebView. As menu items are invoked and hot-keys are
 /// pressed, the selectedWebView (a MarkupWKWebView) is encountered in the responder chain and executes
 /// the action.
 ///
 /// The MarkupMenu will have a title of "Format" by default and will be placed following the Edit menu.
-/// The init method removes the default Format menu.
+/// The initMenu method removes the default Format menu.
 ///
 /// Note that some hotkeys will work without the menu being enabled, but most will not. For example, command+B
 /// will bold/unbold even if there is no MarkupMenu, but command+] will not indent. This is a byproduct of the
 /// "native" support of WKWebView.
 ///
 public class MarkupMenu {
-    public static let shared = MarkupMenu()
     let contents = MarkupEditor.toolbarContents
     
     public init() {}
     
-    public func initMarkupMenu(with builder: UIMenuBuilder) {
+    public func initMenu(with builder: UIMenuBuilder) {
         // Remove the existing Format menu and replace it
         builder.remove(menu: .format)
         var children = [UIMenu]()

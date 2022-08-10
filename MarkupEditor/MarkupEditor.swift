@@ -5,13 +5,17 @@
 //  Created by Steven Harris on 8/8/22.
 //
 
-import Foundation
+import UIKit
 import UniformTypeIdentifiers
 
+/// The MarkupEditor struct holds onto all the state needed across the toolbars, views, and other
+/// machinery encompassed in it.
+///
+/// The state is all held in statics to provide convenient access. The MarkupEditor holds onto several
+/// ObservableObjects used by the toolbars.
 public struct MarkupEditor {
     
-    public static let shared = MarkupEditor()
-    public static let markupMenu = MarkupMenu.shared
+    public static let markupMenu = MarkupMenu()
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
     public static let observedWebView: ObservedWebView = ObservedWebView()
@@ -30,7 +34,9 @@ public struct MarkupEditor {
     }
     public static var allowLocalImages: Bool = false
     
-    public init() {}
+    public static func initMenu(with builder: UIMenuBuilder) {
+        markupMenu.initMenu(with: builder)
+    }
 
 }
 

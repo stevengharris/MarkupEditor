@@ -16,12 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         MarkupEditor.style = .compact
         MarkupEditor.allowLocalImages = true
         //
-        // Here is an example that eliminates the CorrectionToolbar and InsertToolbar,
-        // and some of the FormatToolbar contents. Note that the MarkupEditor adjusts
+        // Here is an example that eliminates the CorrectionToolbar and some
+        // of the FormatToolbar contents. Note that the MarkupEditor adjusts
         // the MarkupMenu properly to correspond to ToolbarContents.custom
         //          let myToolbarContents = ToolbarContents(
         //              correction: false,  // No undo/redo buttons, but will still show up in Edit menu
-        //              insert: false,      // Eliminate the entire InsertToolbar
         //              // Remove code, strikethrough, subscript, and superscript as formatting options
         //              formatContents: FormatContents(code: false, strike: false, subSuper: false)
         //          )
@@ -40,7 +39,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         builder.remove(menu: .services)
         builder.remove(menu: .toolbar)
         // Initialize the MarkupMenu as the Format menu
-        MarkupEditor.markupMenu.initMarkupMenu(with: builder)
+        MarkupEditor.initMenu(with: builder)
     }
     
 }

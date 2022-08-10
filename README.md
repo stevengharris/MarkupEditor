@@ -95,7 +95,7 @@ struct ContentView: View {
 
 extension ContentView: MarkupDelegate {
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        MarkupEditor.observedWebView.selectedWebView = view
+        MarkupEditor.selectedWebView = view
     }
 }
 ```
@@ -104,15 +104,18 @@ extension ContentView: MarkupDelegate {
 
 The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code for a detailed example. I'd like there to be less boilerplate code, but I'm also planning on using the MarkupEditor in a SwiftUI app so am likely not to put a lot of effort into that.
 
-### Customizing Toolbar Contents
+### Customizing The Toolbar
 
-You can customize toolbars by eliminating them and/or subsetting their contents. You do this by creating a new instance of ToolbarContents and assigning it to `ToolbarContents.custom`. The `MarkupMenu` also uses the `ToolbarContents` to customize what it holds, so it's important to have set `ToolbarContents.custom` *before* creating the `MarkupMenu`. An easy way to do that is to set it up in your `AppDelegate` by overriding `init()`. Here is an example that eliminates the `CorrectionToolbar` (that holds the `Undo` and `Redo` buttons) and `InsertToolbar`,  and only includes Bold, Italic, and Underline as formats in the FormatToolbar.
+You can use either a compact style of toolbar with only buttons, or a labeled form that shows what each button does. The default style is labeled. If you want to use the compact form, set `MarkupEditor.style` to `.compact`.
+
+You can customize the various toolbars by eliminating them and/or subsetting their contents. You do this by creating a new instance of ToolbarContents and assigning it to `ToolbarContents.custom`. The `MarkupMenu` also uses the `ToolbarContents` to customize what it holds, so it's important to have set `ToolbarContents.custom` *before* creating the `MarkupMenu`. An easy way to do that is to set it up in your `AppDelegate` by overriding `init()`. Here is an example that eliminates the `CorrectionToolbar` (that holds the `Undo` and `Redo` buttons) and only includes Bold, Italic, and Underline as formats in the FormatToolbar. It also sets up to use the compact style and to allow local images (as discussed below):
 
 ```
 override init() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
     let myToolbarContents = ToolbarContents(
         correction: false,  // No undo/redo buttons, but will still show up in Edit menu
-        insert: false,      // Eliminate the entire InsertToolbar
         // Remove code, strikethrough, subscript, and superscript as formatting options
         formatContents: FormatContents(code: false, strike: false, subSuper: false)
     )

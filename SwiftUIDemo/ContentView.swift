@@ -8,7 +8,6 @@
 
 import SwiftUI
 import MarkupEditor
-import UniformTypeIdentifiers
 
 /// The main view for the SwiftUIDemo.
 ///
@@ -106,7 +105,7 @@ struct ContentView: View {
 extension ContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        MarkupEditor.observedWebView.selectedWebView = view
+        MarkupEditor.selectedWebView = view
         setRawText(handler)
     }
     
