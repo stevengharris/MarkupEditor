@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoContent: String
+    @State var foo: Bool = true
     //@State private var droppingImage: Bool = false
     
     // Note that we specify resourcesUrl when instantiating MarkupWebView so that we can demonstrate
@@ -29,24 +30,10 @@ struct ContentView: View {
     // where your html file comes from, or in a directory that holds both the html file and all
     // of its resources.
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
-
+    
     var body: some View {
         VStack(spacing: 0) {
-            MarkupToolbar(
-                markupDelegate: self,
-                leftToolbar: AnyView(
-                    FileToolbar(fileToolbarDelegate: self)))
-                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-            Divider()
-            MarkupWebView(markupDelegate: self, boundContent: $demoContent, resourcesUrl: resourcesUrl, id: "Document")
-                .overlay(
-                    SubToolbar(markupDelegate: self),
-                    alignment: .topLeading)
-                //TODO: Complete drag-drop support
-                //.onDrop(of: MarkupEditor.supportedImageTypes, isTargeted: $droppingImage) { (providers, location) -> Bool in
-                //    print("Dropping \(providers) at \(location)")
-                //    return true
-                //}
+            MarkupEditorView(markupDelegate: self, boundContent: $demoContent, resourcesUrl: resourcesUrl, id: "Document")
             if rawShowing {
                 VStack {
                     Divider()
@@ -63,6 +50,8 @@ struct ContentView: View {
         }
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
+        // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
+        .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
         .onDisappear {
             MarkupEditor.selectedWebView = nil
         }
@@ -134,19 +123,19 @@ extension ContentView: MarkupDelegate {
 }
 
 extension ContentView: FileToolbarDelegate {
-    
+
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {
             setRawText()
         }
     }
-    
+
     func existingDocument(handler: ((URL?)->Void)? = nil) {
         documentPickerShowing.toggle()
     }
-    
+
     func rawDocument() {
         withAnimation { rawShowing.toggle()}
     }
-    
+
 }

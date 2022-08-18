@@ -15,6 +15,7 @@ public struct SubToolbar: View {
         case image
         case link
         case table
+        case none
     }
 
     @State private var toolbarStyle: ToolbarStyle
@@ -24,6 +25,9 @@ public struct SubToolbar: View {
     private var markupDelegate: MarkupDelegate?
     
     public var body: some View {
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
         VStack(spacing: 0) {
             if showSubToolbar.type == .link {
                 LinkToolbar()
@@ -58,7 +62,6 @@ public struct SubToolbar: View {
             Divider()
         }
         .environmentObject(toolbarStyle)
-        
     }
     
     public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil) {

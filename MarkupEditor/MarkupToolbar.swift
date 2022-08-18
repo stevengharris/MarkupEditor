@@ -19,59 +19,91 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
-    @State private var toolbarStyle: ToolbarStyle
+    private let toolbarStyle: ToolbarStyle
+    private let hideKeyboardButton: Bool
+    public let withSubToolbar: Bool         // Set to false by UIMarkupToolbar
+    public let subToolbarEdge: Edge
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState = MarkupEditor.selectionState
+    @ObservedObject private var showSubToolbar = MarkupEditor.showSubToolbar
     private let contents = MarkupEditor.toolbarContents
-    @State var markupDelegate: MarkupDelegate?
-    /// User-supplied view to be shown on the left side of the default MarkupToolbar
-    private var leftToolbar: AnyView?
-    /// User-supplied view to be shown on the right side of the default MarkupToolbar
-    private var rightToolbar: AnyView?
+    public var markupDelegate: MarkupDelegate?
+    private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
     
     public var body: some View {
-        HStack {
-            if leftToolbar != nil {
-                leftToolbar
-                Divider()
-            }
-            Group {
-                if contents.correction {
-                    CorrectionToolbar()
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
+        let leftToolbar = MarkupEditor.leftToolbar != nil
+        let rightToolbar = MarkupEditor.rightToolbar != nil
+        let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && MarkupEditor.showSubToolbar.type != .none
+        let topSubToolbar = withSubToolbar && subToolbarEdge == .top && MarkupEditor.showSubToolbar.type != .none
+        ZStack(alignment: .topLeading) {
+            if topSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
+            HStack {
+                ScrollView(.horizontal) {
+                    HStack {
+                        if leftToolbar {
+                            MarkupEditor.leftToolbar!
+                        }
+                        if contents.correction {
+                            if hideKeyboardButton || leftToolbar { Divider() }
+                            CorrectionToolbar()
+                        }
+                        if contents.insert {
+                            if hideKeyboardButton || leftToolbar || contents.correction { Divider() }
+                            InsertToolbar()
+                        }
+                        if contents.style {
+                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert { Divider() }
+                            StyleToolbar()
+                        }
+                        if contents.format {
+                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
+                            FormatToolbar()
+                        }
+                        if rightToolbar {
+                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
+                            MarkupEditor.rightToolbar!
+                        }
+                        Spacer()                // Push everything to the left
+                    }
+                    .environmentObject(toolbarStyle)
+                    .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                    .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
+                }
+                .onTapGesture {}    // To make the buttons responsive inside of the ScrollViewif hideKeyboardButton
+                if !hideKeyboardButton {
                     Divider()
-                }
-                if contents.insert {
-                    InsertToolbar()
-                    Divider()
-                }
-                if contents.style {
-                    StyleToolbar()
-                    Divider()
-                }
-                if contents.format {
-                    FormatToolbar()
-                    Divider()           // Vertical on the right
+                    ToolbarImageButton(
+                        systemName: "keyboard.chevron.compact.down",
+                        action: {
+                            showSubToolbar.type = .none
+                            _ = MarkupEditor.selectedWebView?.resignFirstResponder()
+                        }
+                    )
+                    Spacer()
                 }
             }
-            if rightToolbar != nil {
-                rightToolbar
-                Divider()
-            }
-            Spacer()                // Push everything to the left
+            if bottomSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
         }
-        .environmentObject(toolbarStyle)
-        .frame(height: toolbarStyle.height())
-        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
+        .frame(height: MarkupEditor.toolbarStyle.height())
+        .zIndex(999)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
+    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil, hideKeyboardButton: Bool = true, withSubToolbar: Bool = true, subToolbarEdge: Edge = .bottom) {
         let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
-        _toolbarStyle = State(initialValue: toolbarStyle)
+        self.toolbarStyle = toolbarStyle
+        self.hideKeyboardButton = hideKeyboardButton
+        self.withSubToolbar = withSubToolbar
+        self.subToolbarEdge = subToolbarEdge
         self.markupDelegate = markupDelegate
-        self.leftToolbar = leftToolbar
-        self.rightToolbar = rightToolbar
     }
     
+    public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbar {
+        MarkupToolbar(.compact, markupDelegate: markupDelegate, hideKeyboardButton: true, subToolbarEdge: .top)
+    }
+
 }
 
 //MARK: Previews

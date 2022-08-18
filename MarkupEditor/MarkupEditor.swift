@@ -5,7 +5,7 @@
 //  Created by Steven Harris on 8/8/22.
 //
 
-import UIKit
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// The MarkupEditor struct holds onto all the state needed across the toolbars, views, and other
@@ -18,6 +18,9 @@ public struct MarkupEditor {
     public static let markupMenu = MarkupMenu()
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
+    public static var toolbarLocation = ToolbarLocation.automatic
+    public static var leftToolbar: AnyView?
+    public static var rightToolbar: AnyView?
     public static let observedWebView: ObservedWebView = ObservedWebView()
     public static var selectedWebView: MarkupWKWebView? {
         get { observedWebView.selectedWebView }
@@ -36,6 +39,46 @@ public struct MarkupEditor {
     
     public static func initMenu(with builder: UIMenuBuilder) {
         markupMenu.initMenu(with: builder)
+    }
+    
+    /// Enum to identify directions for adding rows and columns.
+    ///
+    /// Used by both icons and MarkupWKWebView.
+    ///
+    /// Case "before" means to the left, and "after" means to the right for columns.
+    /// Case "before" means above, and "after' means below for rows.
+    public enum TableDirection {
+        case before
+        case after
+    }
+
+    /// Enum to identify border styling for tables; i.e., what gets a border.
+    ///
+    /// Used by both icons and MarkupWKWebView.
+    public enum TableBorder: String {
+        case outer
+        case header
+        case cell
+        case none
+    }
+
+    public enum ToolbarLocation {
+        case top
+        case bottom
+        case keyboard
+        case none
+        
+        static var automatic: ToolbarLocation {
+            if ProcessInfo.processInfo.isMacCatalystApp  {
+                return .top
+            } else {
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    return .top
+                } else {
+                    return .keyboard
+                }
+            }
+        }
     }
 
 }
@@ -65,7 +108,9 @@ public class SelectImage: ObservableObject {
 
 /// The observable object containing the type of SubToolbar to show, or nil for none.
 public class ShowSubToolbar: ObservableObject {
-    @Published public var type: SubToolbar.ToolbarType?
+    @Published public var type: SubToolbar.ToolbarType
     
-    public init(_ type: SubToolbar.ToolbarType? = nil) {}
+    public init(_ type: SubToolbar.ToolbarType? = nil) {
+        self.type = type ?? .none
+    }
 }

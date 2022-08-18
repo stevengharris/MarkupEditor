@@ -8,7 +8,9 @@
 import SwiftUI
 
 extension View {
+    
     public func forcePopover<Content>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View where Content : View {
         modifier(ForcePopoverModifier(isPresented: isPresented, contentBlock: content))
     }
+
 }

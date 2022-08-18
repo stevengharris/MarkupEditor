@@ -8,21 +8,10 @@
 
 import SwiftUI
 
-struct EdgeColor {
-    static let activeBorder: Color = Color(UIColor.systemBackground)
-    static let activeOutline: Color = Color(UIColor.systemBackground)
-    static let inactiveBorder: Color = .accentColor
-    static let inactiveOutline: Color = .accentColor
-}
-
-struct EdgeWidth {
-    static let border: CGFloat = 2
-    static let outline: CGFloat = 1
-}
-
 //MARK: Table Icons
 
 struct TableIcon: View {
+    typealias TableBorder = MarkupEditor.TableBorder
     @Binding var active: Bool
     var rows: Int
     var cols: Int
@@ -101,6 +90,7 @@ struct TableCell: View {
 }
 
 struct TableIconBorder: View {
+    typealias TableBorder = MarkupEditor.TableBorder
     @Binding var active: Bool
     let width: CGFloat
     let height: CGFloat
@@ -110,6 +100,18 @@ struct TableIconBorder: View {
     let border: TableBorder
     var borderColor: Color { active ? EdgeColor.activeBorder : EdgeColor.inactiveBorder }
     var outlineColor: Color { active ? EdgeColor.activeOutline : EdgeColor.inactiveOutline }
+
+    private struct EdgeColor {
+        static let activeBorder: Color = Color(UIColor.systemBackground)
+        static let activeOutline: Color = Color(UIColor.systemBackground)
+        static let inactiveBorder: Color = .accentColor
+        static let inactiveOutline: Color = .accentColor
+    }
+
+    private struct EdgeWidth {
+        static let border: CGFloat = 2
+        static let outline: CGFloat = 1
+    }
     var body: some View {
         let outerThickness = border == .none ? EdgeWidth.outline : EdgeWidth.border
         let outerColor = border == .none ? outlineColor : borderColor
@@ -257,6 +259,7 @@ struct TableBorderColSeparator: View {
 }
 
 struct AddRow: View {
+    typealias TableDirection = MarkupEditor.TableDirection
     let direction: TableDirection
     var body: some View {
         VStack(spacing: -6) {
@@ -284,6 +287,7 @@ struct AddRow: View {
 }
 
 struct AddCol: View {
+    typealias TableDirection = MarkupEditor.TableDirection
     let direction: TableDirection
     var body: some View {
         HStack(spacing: -6) {
@@ -355,6 +359,7 @@ struct CreateTable: View {
 }
 
 struct BorderIcon: View {
+    typealias TableBorder = MarkupEditor.TableBorder
     @Binding var active: Bool
     var border: TableBorder = .none
     var body: some View {

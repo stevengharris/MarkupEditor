@@ -8,6 +8,7 @@
 
 import SwiftUI
 import WebKit
+import Combine
 
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
@@ -24,7 +25,15 @@ import WebKit
 /// results in `userContentController(_:didReceive)' being invoked in the MarkupCoordinator to
 /// let us know something happened on the JavaScript side . In this way, we we maintain up-to-date information
 /// as-needed in Swift about what is in the MarkupWKWebView.
+///
+/// The MarkupWKWebView does the keyboard handling that presents the UIMarkupToolbar using inputAccessoryView.
+/// By default, the MarkupEditor.toolbarPosition is set to .top for larger format devices and to .keyboard for iPhones.
+/// The keyboard handling only presents the MarkupUIMarkupToolbar when MarkupEditor.toolbarPosition = .keyboard.
+/// If you have your own inputAccessoryView, then you must set MarkupEditor.toolbarPosition to .none and deal with
+/// the MarkupToolbar layout manually.
 public class MarkupWKWebView: WKWebView, ObservableObject {
+    public typealias TableBorder = MarkupEditor.TableBorder
+    public typealias TableDirection = MarkupEditor.TableDirection
     static let DefaultInnerLineHeight: Int = 18
     private let selectionState = SelectionState()       // Locally cached, specific to this view
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
@@ -49,8 +58,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
     var pastedAsync = false;
-    /// An accessoryView to override the inputAccesoryView of UIResponder.
+    /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView?
+    private var markupToolbar: MarkupToolbar?
+    private var keyboardIsAnimating: Bool = false
+    private var showSubToolbarCancellable: AnyCancellable?
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
         case Text
@@ -104,6 +116,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
+        // Use the keyboard notifications to add/remove the markupToolbar as the accessoryView
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
     }
     
     /// Return the bundle that is appropriate for the packaging.
@@ -215,6 +232,43 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    //MARK: Keyboard handling and accessoryView setup
+
+    @objc private func keyboardWillShow(notification: Notification) {
+        // The keyboardIsAnimating is a hack to prevent out-of-sync hide/show coming in and
+        // leaving the accessoryView showing. There is probably a more elaborate or even
+        // foolproof way to do it by examining the userInfo in the Notification, but I hope
+        // it's not necessary.
+        guard !keyboardIsAnimating else { return }
+        keyboardIsAnimating = true
+        let uiMarkupToolbar = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
+        inputAccessoryView = uiMarkupToolbar
+    }
+    
+    @objc private func keyboardDidShow(notification: Notification) {
+        keyboardIsAnimating = false
+        bringSubviewToFront(inputAccessoryView!)
+    }
+    
+    @objc private func keyboardWillHide() {
+        // The keyboardIsAnimating is a hack to prevent out-of-sync hide/show coming in and
+        // leaving the accessoryView showing. There is probably a more elaborate or even
+        // foolproof way to do it by examining the userInfo in the Notification, but I hope
+        // it's not necessary.
+        guard !keyboardIsAnimating else { return }
+        keyboardIsAnimating = true
+    }
+    
+    @objc private func keyboardDidHide() {
+        // Removing the inputAccessoryView seems only to work consistently here.
+        // All my attempts to remove it n keyboardWillHide result in random occasions of
+        // the accessory being empty but still blocking the screen, perhaps because the
+        // height doesn't get adjusted properly, I am not sure.
+        inputAccessoryView?.removeFromSuperview()
+        inputAccessoryView = nil
+        keyboardIsAnimating = false
+    }
+    
     //MARK: Overrides
     
     /// Override hitTest to enable drop events.
@@ -263,8 +317,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public override var inputAccessoryView: UIView? {
-        // remove/replace the default accessory view
-        return accessoryView
+        get { accessoryView }
+        set { accessoryView = newValue }
     }
     
     /// Return false to disable various menu items depending on selectionState
@@ -290,7 +344,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     @objc public func showLinkToolbar() {
         let type = MarkupEditor.showSubToolbar.type
         if (type == .link) {
-            MarkupEditor.showSubToolbar.type = nil
+            MarkupEditor.showSubToolbar.type = .none
         } else {
             MarkupEditor.showSubToolbar.type = .link
         }
@@ -299,7 +353,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     @objc public func showImageToolbar() {
         let type = MarkupEditor.showSubToolbar.type
         if (type == .image) {
-            MarkupEditor.showSubToolbar.type = nil
+            MarkupEditor.showSubToolbar.type = .none
         } else {
             MarkupEditor.showSubToolbar.type = .image
         }
@@ -308,7 +362,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     @objc public func showTableToolbar() {
         let type = MarkupEditor.showSubToolbar.type
         if (type == .table) {
-            MarkupEditor.showSubToolbar.type = nil
+            MarkupEditor.showSubToolbar.type = .none
         } else {
             MarkupEditor.showSubToolbar.type = .table
         }

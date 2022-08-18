@@ -24,14 +24,7 @@ import Combine
 /// The MarkupWKWebView doesn't have any SwiftUI dependencies and can just be used directly.
 class ViewController: UIViewController {
     var stack: UIStackView!
-    var toolbarHolder: UIView!
     var webView: MarkupWKWebView!
-    /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
-    private var coordinator: MarkupCoordinator!
-    /// The AnyView wrapper of MarkupToolbar is the SwiftUI component held in the toolbarHolder UIView
-    private var toolbar: AnyView!
-    private var subToolbar: AnyView!
-    private var subToolbarUIView: UIView!
     /// To see the raw HTML
     private var rawTextView: UITextView!
     private var bottomStack: UIStackView!
@@ -40,9 +33,6 @@ class ViewController: UIViewController {
     var selectedWebView: MarkupWKWebView? { MarkupEditor.selectedWebView }
     /// Toggle whether the file selector should be shown to select a local image
     var selectImageCancellable: AnyCancellable?
-    /// Identify which type of SubToolbar is showing, or nil if none
-    var showSubToolbar: ShowSubToolbar { MarkupEditor.showSubToolbar }
-    var showSubToolbarCancellable: AnyCancellable?
     // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
@@ -54,7 +44,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         initializePickers()
-        initializeToolbar()
+        MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self))
         initializeStackView()
     }
     
@@ -83,36 +73,6 @@ class ViewController: UIViewController {
         return divider
     }
     
-    /// Set up the MarkupToolbar at the top of the view, with a divider below it. Create the subToolbar which
-    /// will be overlayed on the MarkupWKWebView later.
-    func initializeToolbar() {
-        toolbarHolder = UIView()
-        // We need to wrap MarkupToolbar in AnyView so we can set its environment
-        toolbar = AnyView(
-            MarkupToolbar(
-                markupDelegate: self,
-                leftToolbar: AnyView(FileToolbar(fileToolbarDelegate: self))
-            )
-                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-        )
-        add(swiftUIView: toolbar, to: toolbarHolder)
-        toolbarHolder.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(toolbarHolder)
-        NSLayoutConstraint.activate([
-            toolbarHolder.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            toolbarHolder.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: (MarkupEditor.toolbarStyle.height() + 2)),
-            toolbarHolder.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            toolbarHolder.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
-        ])
-        let divider = divider(in: view)
-        NSLayoutConstraint.activate([
-            divider.topAnchor.constraint(equalTo: toolbarHolder.bottomAnchor, constant: 1)
-        ])
-        subToolbar = AnyView(
-            SubToolbar(markupDelegate: self)
-        )
-    }
-    
     /// Set up the stack below the MarkupToolbar. The stack contains the MarkupWKWebView and the rawTextView.
     ///
     /// The rawTextView height toggles as the raw text is shown.
@@ -127,31 +87,14 @@ class ViewController: UIViewController {
         view.addSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: toolbarHolder.bottomAnchor, constant: 2),
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             stack.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
             stack.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
         ])
         // Create the webView and overlay the subToolbar
-        webView = MarkupWKWebView(html: demoContent(), resourcesUrl: resourcesUrl, id: "Document", markupDelegate: self)
-        subToolbarUIView = overlayTop(swiftUIView: subToolbar, on: webView, height: MarkupEditor.toolbarStyle.height())
-        subToolbarUIView.isHidden = true
-        // Monitor changes to the subToolbar type held in the MarkupEditor. The value will change as when one of
-        // the InsertToolbar buttons is pressed. This is a "natural" way to do things in SwiftUI, but we can
-        // use Combine in UIKit to get the same effect.
-        showSubToolbarCancellable = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
-            if type == .none {
-                self?.subToolbarUIView.isHidden = true
-            } else {
-                self?.subToolbarUIView.isHidden = false
-            }
-        }
-        stack.addArrangedSubview(webView)
-        // Set up the MarkupCoordinator. This is done transparently in SwiftUI by the WebView.
-        coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
-        webView.configuration.userContentController.add(coordinator, name: "markup")
-        // Set up the bottom stack to hold the rawTextView and some decoration above it. Make the
-        // bottom stack the same height as the webView so the overall stack can adjust nicely.
+        let markupEditorView = MarkupEditorUIView(markupDelegate: self, content: demoContent(), resourcesUrl: resourcesUrl, id: "Document")
+        stack.addArrangedSubview(markupEditorView)
         bottomStack = UIStackView()
         bottomStack.isHidden = true
         bottomStack.axis = .vertical

@@ -32,7 +32,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var cols: Int = 0
     @Published public var row: Int = 0
     @Published public var col: Int = 0
-    @Published public var border: TableBorder = TableBorder.cell
+    @Published public var border: MarkupEditor.TableBorder = .cell
     // Styles
     @Published public var style: StyleContext = StyleContext.Undefined
     @Published public var list: ListContext = ListContext.Undefined
