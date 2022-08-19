@@ -82,11 +82,11 @@ public class MarkupToolbarUIView: UIView {
     
     private func observeShowSubToolbarType() {
         showSubToolbarType = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
-            guard let self = self else { return }
+            guard let self = self, let subToolbarHeightConstraint = self.subToolbarHeightConstraint else { return }
             if type == .none {
-                self.subToolbarHeightConstraint.constant = 0
+                subToolbarHeightConstraint.constant = 0
             } else {
-                self.subToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
+                subToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
             }
             self.invalidateIntrinsicContentSize()
         }
