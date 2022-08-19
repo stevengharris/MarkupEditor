@@ -25,13 +25,23 @@ public class MarkupToolbarUIView: UIView {
     private var showSubToolbarType: AnyCancellable?
     private var subToolbarHeightConstraint: NSLayoutConstraint!
     
+    public override var intrinsicContentSize: CGSize {
+        if MarkupEditor.showSubToolbar.type == .none {
+            return CGSize(width: frame.width, height: MarkupEditor.toolbarStyle.height()) }
+        else {
+            return CGSize(width: frame.width, height: 2.0 * MarkupEditor.toolbarStyle.height())
+        }
+    }
+    
     public override init(frame: CGRect) {
         super.init(frame: frame)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil, hideKeyboardButton: Bool = true, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil, subToolbarEdge: Edge = .bottom) {
+    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil, hideKeyboardButton: Bool = true, subToolbarEdge: Edge = .bottom) {
         super.init(frame: CGRect.zero)
+        observeShowSubToolbarType()
         self.markupDelegate = markupDelegate
+        autoresizingMask = .flexibleHeight
         let markupToolbar = MarkupToolbar(style, markupDelegate: markupDelegate, hideKeyboardButton: hideKeyboardButton, withSubToolbar: false)
         let markupToolbarHC = UIHostingController(rootView: markupToolbar)
         addSubview(markupToolbarHC.view)
@@ -43,28 +53,27 @@ public class MarkupToolbarUIView: UIView {
         subToolbarHeightConstraint = NSLayoutConstraint(item: subToolbarHC.view!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
         if subToolbarEdge == .bottom {
             NSLayoutConstraint.activate([
-                markupToolbarHC.view.topAnchor.constraint(equalTo: topAnchor),
+                markupToolbarHC.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
                 markupToolbarHC.view.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
-                markupToolbarHC.view.leftAnchor.constraint(equalTo: leftAnchor),
-                markupToolbarHC.view.rightAnchor.constraint(equalTo: rightAnchor),
+                markupToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                markupToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
                 subToolbarHC.view.topAnchor.constraint(equalTo: markupToolbarHC.view.bottomAnchor),
                 subToolbarHeightConstraint,
-                subToolbarHC.view.leftAnchor.constraint(equalTo: leftAnchor),
-                subToolbarHC.view.rightAnchor.constraint(equalTo: rightAnchor),
+                subToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                subToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
             ])
         } else {
             NSLayoutConstraint.activate([
-                markupToolbarHC.view.bottomAnchor.constraint(equalTo: bottomAnchor),
+                markupToolbarHC.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
                 markupToolbarHC.view.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
-                markupToolbarHC.view.leftAnchor.constraint(equalTo: leftAnchor),
-                markupToolbarHC.view.rightAnchor.constraint(equalTo: rightAnchor),
+                markupToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                markupToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
                 subToolbarHC.view.bottomAnchor.constraint(equalTo: markupToolbarHC.view.topAnchor),
                 subToolbarHeightConstraint,
-                subToolbarHC.view.leftAnchor.constraint(equalTo: leftAnchor),
-                subToolbarHC.view.rightAnchor.constraint(equalTo: rightAnchor),
+                subToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                subToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
             ])
         }
-        observeShowSubToolbarType()
     }
     
     public required init(coder: NSCoder) {
@@ -73,21 +82,18 @@ public class MarkupToolbarUIView: UIView {
     
     private func observeShowSubToolbarType() {
         showSubToolbarType = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
+            guard let self = self else { return }
             if type == .none {
-                self?.subToolbarHeightConstraint.constant = 0
+                self.subToolbarHeightConstraint.constant = 0
             } else {
-                self?.subToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
+                self.subToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
             }
+            self.invalidateIntrinsicContentSize()
         }
     }
     
     public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbarUIView {
-        let toolbar = MarkupToolbarUIView(.compact, markupDelegate: markupDelegate, hideKeyboardButton: false, subToolbarEdge: .top)
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            toolbar.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
-        ])
-        return toolbar
+        MarkupToolbarUIView(.compact, markupDelegate: markupDelegate, hideKeyboardButton: false, subToolbarEdge: .top)
     }
     
 }

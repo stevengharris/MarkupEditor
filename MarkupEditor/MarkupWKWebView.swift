@@ -34,7 +34,6 @@ import Combine
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
-    static let DefaultInnerLineHeight: Int = 18
     private let selectionState = SelectionState()       // Locally cached, specific to this view
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
@@ -60,9 +59,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     var pastedAsync = false;
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView?
-    private var markupToolbar: MarkupToolbar?
+    private var markupToolbarUIView: MarkupToolbarUIView!
     private var keyboardIsAnimating: Bool = false
-    private var showSubToolbarCancellable: AnyCancellable?
+    private var keyboardIsShowing: Bool = false
+    
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
         case Text
@@ -108,19 +108,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initRootFiles()
         markupDelegate?.markupSetup(self)
         // Enable drop interaction
-        let dropInteraction = UIDropInteraction(delegate: self)
-        addInteraction(dropInteraction)
+        //let dropInteraction = UIDropInteraction(delegate: self)
+        //addInteraction(dropInteraction)
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
         loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
-        // Use the keyboard notifications to add/remove the markupToolbar as the accessoryView
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
+        if MarkupEditor.toolbarLocation == .keyboard {
+            markupToolbarUIView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
+            // Use the keyboard notifications to add/remove the markupToolbar as the accessoryView
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
+        }
     }
     
     /// Return the bundle that is appropriate for the packaging.
@@ -239,15 +242,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // leaving the accessoryView showing. There is probably a more elaborate or even
         // foolproof way to do it by examining the userInfo in the Notification, but I hope
         // it's not necessary.
-        guard !keyboardIsAnimating else { return }
+        guard !keyboardIsAnimating && inputAccessoryView == nil else { return }
         keyboardIsAnimating = true
-        let uiMarkupToolbar = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
-        inputAccessoryView = uiMarkupToolbar
+        markupToolbarUIView?.isHidden = false   // Make sure we can see it
+        inputAccessoryView = markupToolbarUIView
     }
     
     @objc private func keyboardDidShow(notification: Notification) {
+        guard keyboardIsAnimating else { return }
         keyboardIsAnimating = false
-        bringSubviewToFront(inputAccessoryView!)
+        keyboardIsShowing = true
     }
     
     @objc private func keyboardWillHide() {
@@ -255,7 +259,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // leaving the accessoryView showing. There is probably a more elaborate or even
         // foolproof way to do it by examining the userInfo in the Notification, but I hope
         // it's not necessary.
-        guard !keyboardIsAnimating else { return }
+        guard !keyboardIsAnimating && inputAccessoryView != nil else { return }
+        markupToolbarUIView?.isHidden = true    // At least we don't have to see it while remove it
         keyboardIsAnimating = true
     }
     
@@ -264,9 +269,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // All my attempts to remove it n keyboardWillHide result in random occasions of
         // the accessory being empty but still blocking the screen, perhaps because the
         // height doesn't get adjusted properly, I am not sure.
+        guard keyboardIsAnimating else { return }
         inputAccessoryView?.removeFromSuperview()
         inputAccessoryView = nil
         keyboardIsAnimating = false
+        keyboardIsShowing = false
     }
     
     //MARK: Overrides
@@ -446,10 +453,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Javascript interactions
-    
-    public func setLineHeight(_ lineHeight: Int? = nil) {
-        evaluateJavaScript("MU.setLineHeight('\(lineHeight ?? Self.DefaultInnerLineHeight)px')")
-    }
     
     public func getHtml(_ handler: ((String?)->Void)?) {
         getPrettyHtml(handler)

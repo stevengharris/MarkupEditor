@@ -21,10 +21,10 @@ public class MarkupEditorUIView: UIView {
     var markupDelegate: MarkupDelegate?
     var toolbar: MarkupToolbarUIView!
     var toolbarHeightConstraint: NSLayoutConstraint!
+    private var showSubToolbarType: AnyCancellable?
     var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
     private var coordinator: MarkupCoordinator!
-    private var showSubToolbarType: AnyCancellable?
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -60,14 +60,14 @@ public class MarkupEditorUIView: UIView {
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
                 NSLayoutConstraint.activate([
-                    toolbar.topAnchor.constraint(equalTo: topAnchor),
+                    toolbar.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
                     toolbarHeightConstraint,
-                    toolbar.leftAnchor.constraint(equalTo: leftAnchor),
-                    toolbar.rightAnchor.constraint(equalTo: rightAnchor),
-                    webView.topAnchor.constraint(equalTo: topAnchor, constant: MarkupEditor.toolbarStyle.height()),
-                    webView.bottomAnchor.constraint(equalTo: bottomAnchor),
-                    webView.leftAnchor.constraint(equalTo: leftAnchor),
-                    webView.rightAnchor.constraint(equalTo: rightAnchor)
+                    toolbar.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                    toolbar.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
+                    webView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: MarkupEditor.toolbarStyle.height()),
+                    webView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
+                    webView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                    webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             } else if MarkupEditor.toolbarLocation == .bottom {
                 toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .top)
@@ -75,21 +75,21 @@ public class MarkupEditorUIView: UIView {
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
                 NSLayoutConstraint.activate([
-                    webView.topAnchor.constraint(equalTo: topAnchor),
-                    webView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: MarkupEditor.toolbarStyle.height()),
-                    webView.leftAnchor.constraint(equalTo: leftAnchor),
-                    webView.rightAnchor.constraint(equalTo: rightAnchor),
-                    toolbar.bottomAnchor.constraint(equalTo: bottomAnchor),
+                    webView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+                    webView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -MarkupEditor.toolbarStyle.height()),
+                    webView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                    webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
+                    toolbar.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
                     toolbarHeightConstraint,
-                    toolbar.leftAnchor.constraint(equalTo: leftAnchor),
-                    toolbar.rightAnchor.constraint(equalTo: rightAnchor)
+                    toolbar.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                    toolbar.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             } else {
                 NSLayoutConstraint.activate([
-                    webView.topAnchor.constraint(equalTo: topAnchor),
-                    webView.bottomAnchor.constraint(equalTo: bottomAnchor),
-                    webView.leftAnchor.constraint(equalTo: leftAnchor),
-                    webView.rightAnchor.constraint(equalTo: rightAnchor)
+                    webView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+                    webView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
+                    webView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
+                    webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             }
         }
