@@ -83,6 +83,10 @@ table th, table td {
     padding: 4px;
 }
 
+table th {
+    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */
+}
+
 /* Make the styling compact inside of a table */
 table p, table h1, table h2, table h3, table h4, table h5, table h6 {
     margin: 0;

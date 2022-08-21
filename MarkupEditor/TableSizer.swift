@@ -2,34 +2,42 @@
 //  TableSizer.swift
 //  MarkupEditor
 //
-//  A difficulty of the TableSizer is how to deal with both mouse and touch devices.
-//  In particular, the hover-based highlighting is really nice when you have a mouse,
-//  but otherwise, you have to drag to see a gesture. When you're hovering to set
-//  the table size, you want to use a positive gesture to indicate you are done, and
-//  this is a tap that occurs in the TableSizer grid.
-//
-//  If you are on a touch device without a mouse, the hover doesn't do anything, so
-//  rows and cols remain at 0 until you drag. If you are dragging on a touch device,
-//  then when you stop dragging, you want the table insertion to happen, so you don't
-//  need to tap. You can also drag with the mouse, in which case it behaves like the
-//  standard drag behavior, dismissing and inserting the table when you stop dragging.
-//
-//  The rows and cols are set to 0 to indicate the table should not be sized. This
-//  happens when the mouse or drag location is outside of the TableSizer grid, or
-//  (somewhat by definition) the tap is outside of the TableSizer grid.
-//
 //  Created by Steven Harris on 5/12/21.
 //  Copyright © 2021, 2022 Steven Harris. All rights reserved.
 //
 
 import SwiftUI
 
-/// Show an 8x10 grid for the user to choose a table size to create. 
+/// The TableSizer shows a grid for the user to choose a table size to create.
+///
+/// A difficulty of the TableSizer is how to deal with both mouse and touch devices.
+/// In particular, the hover-based highlighting is really nice when you have a mouse,
+/// but otherwise, you have to drag to see a gesture. When you're hovering to set
+/// the table size, you want to use a positive gesture to indicate you are done, and
+/// this is a tap that occurs in the TableSizer grid.
+///
+/// If you are on a touch device without a mouse, the hover doesn't do anything, so
+/// rows and cols remain at 0 until you drag. If you are dragging on a touch device,
+/// then when you stop dragging, you want the table insertion to happen, so you don't
+/// need to tap. You can also drag with the mouse, in which case it behaves like the
+/// standard drag behavior, dismissing and inserting the table when you stop dragging.
+///
+/// The rows and cols are set to 0 to indicate the table should not be sized. This
+/// happens when the mouse or drag location is outside of the TableSizer grid, or
+/// (somewhat by definition) the tap is outside of the TableSizer grid.
 struct TableSizer: View {
-    let maxRows: Int = 8
-    let maxCols: Int = 10
+    let maxRows: Int = 6
+    let maxCols: Int = 8
     let cellSize: CGFloat = 16
     let sizedColor = Color.accentColor.opacity(0.2)
+    //TODO: A hack, but I cannot find a way for the padding on the popover to look right in both environments
+    #if targetEnvironment(macCatalyst)
+    let topPadding: CGFloat = 8
+    let bottomPadding: CGFloat = 8
+    #else
+    let topPadding: CGFloat = 0
+    let bottomPadding: CGFloat = 20
+    #endif
     @Binding var rows: Int
     @Binding var cols: Int
     @Binding var showing: Bool
@@ -104,7 +112,7 @@ struct TableSizer: View {
             }
             .gesture(dragGesture)
         }
-        .padding(8)
+        .padding(EdgeInsets(top: topPadding, leading: 8, bottom: bottomPadding, trailing: 8))
     }
     
     init(rows: Binding<Int>, cols: Binding<Int>, showing: Binding<Bool>) {

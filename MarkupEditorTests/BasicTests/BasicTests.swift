@@ -10,7 +10,6 @@ import XCTest
 import MarkupEditor
 
 class BasicTests: XCTestCase, MarkupDelegate {
-    var selectionState: SelectionState = SelectionState()
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
     var loadedExpectation: XCTestExpectation = XCTestExpectation(description: "Loaded")
@@ -20,7 +19,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
     override func setUpWithError() throws {
         continueAfterFailure = false
         webView = MarkupWKWebView(markupDelegate: self)
-        coordinator = MarkupCoordinator(selectionState: selectionState, markupDelegate: self, webView: webView)
+        coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")

@@ -43,22 +43,16 @@ As you might expect, then, this feature set is pretty darned close to Markdown -
 * Highlighting
 * Font size changes (except as implied by identifying something as a paragraph or header)
 
-If you want a richer feature set, you can extend the MarkupEditor yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for saving what you edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
+If you want a richer feature set, you can extend the MarkupEditor yourself. The demos include examples of how to extend the MarkupEditor's core features and how to interact with the file system for selecting what to edit. It's my intent to keep the core MarkupEditor feature set to be similar to what you will see in GitHub Markdown.
 
 ### What is WYSIWYG, Really?
 
 The MarkupEditor is presenting an HTML document to you as you edit. It uses JavaScript to change the underlying DOM and calls back into Swift as you interact with the document. The MarkupEditor does not know how to save your document or transform it to some other format. This is something your application that consumes the MarkupEditor will need to do. The MarkupEditor will let your `MarkupDelegate` know as the underlying document changes state, and you can take advantage of those notifications to save and potentially transform the HTML into another form. If you're going to do that, then you should make sure that round-tripping back into HTML also works flawlessly. Otherwise, you are using a "What You See Is Not What You Get" editor, which is both less pronounceable and much less useful to your end users.
 
-## Consuming the MarkupEditor
+## Installing the MarkupEditor
 
-Behind the scenes, the MarkupEditor interacts with an HTML document (created in `markup.html`) that uses a single `contentEditable` DIV element to modify the DOM of the document you are editing. It uses a subclass of `WKWebView` - the `MarkupWKWebView` - to make calls to the JavaScript in `markup.js`. In turn, the JavaScript calls back into Swift to let the Swift side know that changes occurred. The callbacks on the Swift side are handled by the `MarkupCoordinator`. The `MarkupCoordinator` is the `WKScriptMessageHandler` for a single  `MarkupWKWebView` and receives all the JavaScript callbacks in `userContentController(_:didReceive:)`.  The `MarkupCoordinator` in turn notifies your `MarkupDelegate` of changes. See `MarkupDelegate.swift` for the full protocol and default implementations. 
-
-That sounds complicated, but it is mostly implementation details you should not need to worry about. The `MarkupDelegate` protocol is the key mechanism for your app to find out about changes as the user interacts with the document. The `MarkupWKWebView` is the key mechanism to make changes to the document from the Swift side or to obtain information from the document, such as its contents. The `MarkupToolbar` is a convenient, pre-built UI to invoke changes to the document by interacting with the `MarkupWKWebView`.
-
-To avoid spurious logging from the underlying `WKWebView` in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
-
-NOTE: The MarkupEditor at this point has only really been used as a Mac Catalyst app and has some implicit dependencies on using it with a keyboard.
-
+You can install the Swift package into your project, or you can build the MarkupEditor framework yourself and make that a dependency.
+ 
 ### Swift Package
 
 Add the `MarkupEditor` package to your Xcode project using File -> Swift Packages -> Add Package Dependency...
@@ -67,61 +61,68 @@ Add the `MarkupEditor` package to your Xcode project using File -> Swift Package
 
 Clone this repository and build the MarkupFramework target in Xcode. Add the MarkupEditor.framework as a dependency to your project.
 
+## Using the MarkupEditor
+
+Behind the scenes, the MarkupEditor interacts with an HTML document (created in `markup.html`) that uses a single `contentEditable` DIV element to modify the DOM of the document you are editing. It uses a subclass of `WKWebView` - the `MarkupWKWebView` - to make calls to the JavaScript in `markup.js`. In turn, the JavaScript calls back into Swift to let the Swift side know that changes occurred. The callbacks on the Swift side are handled by the `MarkupCoordinator`. The `MarkupCoordinator` is the `WKScriptMessageHandler` for a single  `MarkupWKWebView` and receives all the JavaScript callbacks in `userContentController(_:didReceive:)`.  The `MarkupCoordinator` in turn notifies your `MarkupDelegate` of changes. See `MarkupDelegate.swift` for the full protocol and default implementations. 
+
+That sounds complicated, but it is mostly implementation details you should not need to worry about. Your app will typically use either the `MarkupEditorView` for SwiftUI or the `MarkupEditorUIView` for UIKit. The `MarkupDelegate` protocol is the key mechanism for your app to find out about changes as the user interacts with the document. You will typically let your main SwiftUI ContentView or your UIKit UIViewController be your `MarkupDelegate`. You can customize the behavior of the MarkupEditor using the `MarkupEditor` struct (e.g., `MarkupEditor.toolbarStyle = .compact`).
+
+The `MarkupToolbar` is a convenient, pre-built UI to invoke changes to the document by interacting with the `MarkupWKWebView`. You don't need to use it, but if you do, then the easiest way to set it up is just to let the `MarkupEditorView` or `MarkupEditorUIView` handle it automatically. Your application may require something different with the toolbar than what the `MarkupEditorView` or `MarkupEditorUIView` provides. For example, you might have multiple `MarkupEditorViews` that need to share a single `MarkupToolbar`. In this case, you should specify `MarkupEditor.toolbarPosition = .none`. Then, for SwiftUI, use the `MarkupEditorView` together with the `MarkupToolbar` as standard SwiftUI views, identifying the `MarkupEditor.selectedWebView` by responding to the `markupTookFocus(_:)` callback in your `MarkupDelegate`. For UIKit, you can use the `MarkupEditorUIView` and `MarkupToolbarUIView`. See the code in the `MarkupEditorView` or `MarkupEditorUIView` for details.
+
+To avoid spurious logging from the underlying `WKWebView` in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
+
 ### SwiftUI Usage
 
-When consuming the MarkupEditor in SwiftUI, you can use the `MarkupToolbar` and `MarkupWebView` directly in your own View. The `MarkupWebView` is a UIViewRepresentable for the `MarkupWKWebView` and deals with setting up the `MarkupCoordinator` itself.
-
-In the simplest case, just add the `MarkupToolbar` and a `MarkupWebView` to your `ContentView`. We let the transient `SubToolbar` (used to create and edit images, links, and tables) be an overlay of `MarkupWebView`. The `selectedWebView` has to be accessed by both the `MarkupToolbar` and `MarkupWebView`, and is accessible via the `MarkupEnv`. By setting your `ContentView` as the `markupDelegate`, it will receive the `markupDidLoad` callback when a `MarkupWKWebView` has loaded its content along with the JavaScript held in `markup.js`. (If you have multiple `MarkupWebViews` and a single `MarkupToolbar`, you can use the `markupTookFocus` callback to tell the MarkupToolbar which view it should operate on.) The example below shows how to use the `markupDidLoad` callback to assign the `selectedWebView` so that the `MarkupToolbar` correctly reflects the `selectionState` as the user edits and positions the caret in the document.
+In the simplest case, just use the `MarkupEditorView` like you would any other SwiftUI view. By default, it will place a `MarkupToolbar` above a `UIViewRepresentable` that contains the `MarkupWKWebView`, which is where you do your editing. Your ContentView can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications. The `MarkupEditorView` acts as the `MarkupDelegate` if you don't specify one yourself.
 
 ```
 import SwiftUI
 import MarkupEditor
 
-struct ContentView: View {
-    private let markupEnv = MarkupEnv(style: .compact)
-    private let showSubToolbar = ShowSubToolbar()
-    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
-    @State private var demoContent: String = "<p>Hello world</p>"
+struct SimplestContentView: View {
+    
+    @State private var demoHtml: String = "<h1>Hello World</h1>"
     
     var body: some View {
-        VStack(spacing: 0) {
-            MarkupToolbar(markupDelegate: self)
-                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-            Divider()
-            MarkupWebView(markupDelegate: self, boundContent: $demoContent)
-                .overlay(
-                    SubToolbar(markupDelegate: self),
-                    alignment: .topLeading)
-        }
-        .environmentObject(markupEnv)
-        .environmentObject(markupEnv.toolbarPreference)
-        .environmentObject(markupEnv.selectionState)
-        .environmentObject(markupEnv.observedWebView)
-        .environmentObject(markupEnv.selectImage)
-        .environmentObject(showSubToolbar)
+        MarkupEditorView(html: $demoHtml)
     }
-}
-
-extension ContentView: MarkupDelegate {
-    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        markupEnv.observedWebView.selectedWebView = view
-    }
+    
 }
 ```
 
 ### UIKit Usage
 
-The `MarkupToolbar` is a SwiftUI View, so consuming it in UIKit is a bit more complicated than in SwiftUI. You also need to create and hook up the `MarkupCoordinator` yourself, something that is done by the SwiftUI `MarkupWebView`. Please refer to the UIKitDemo code for a detailed example. I'd like there to be less boilerplate code, but I'm also planning on using the MarkupEditor in a SwiftUI app so am likely not to put a lot of effort into that.
+In the simplest case, just use the `MarkupEditorUIView` like you would any other UIKit view. By default, it will place a `MarkupToolbarUIView` above a `MarkupWKWebView`, which is where you do your editing. Your ViewController can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications.  The `MarkupEditorUIView` acts as the `MarkupDelegate` if you don't specify one yourself.
 
-### Customizing Toolbar Contents
+```
+import UIKit
+import MarkupEditor
 
-You can customize toolbars by eliminating them and/or subsetting their contents. You do this by creating a new instance of ToolbarContents and assigning it to `ToolbarContents.custom`. The `MarkupMenu` also uses the `ToolbarContents` to customize what it holds, so it's important to have set `ToolbarContents.custom` *before* creating the `MarkupMenu`. An easy way to do that is to set it up in your `AppDelegate` by overriding `init()`. Here is an example that eliminates the `CorrectionToolbar` (that holds the `Undo` and `Redo` buttons) and `InsertToolbar`,  and only includes Bold, Italic, and Underline as formats in the FormatToolbar.
+class SimplestViewController: UIViewController {
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let markupEditorUIView = MarkupEditorUIView(html: "<h1>Hello World</h1>")
+        markupEditorUIView.frame = view.frame
+        markupEditorUIView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(markupEditorUIView)
+    }
+    
+}
+```
+
+### Customizing The Toolbar
+
+You can use either a compact style of toolbar with only buttons, or a labeled form that shows what each button does. The default style is labeled. If you want to use the compact form, set `MarkupEditor.style` to `.compact`.
+
+You can customize the various toolbars by eliminating them and/or subsetting their contents. You do this by creating a new instance of `ToolbarContents` and assigning it to `ToolbarContents.custom`. The `MarkupMenu` also uses the `ToolbarContents` to customize what it holds, so it's important to have set `ToolbarContents.custom` *before* creating the `MarkupMenu`. An easy way to do that is to set it up in your `AppDelegate` by overriding `init()`. Here is an example that adds the `CorrectionToolbar` (that holds the `Undo` and `Redo` buttons and is off by default) and only includes Bold, Italic, and Underline as formats in the FormatToolbar. It also sets up to use the compact style and to allow local images (as discussed below):
 
 ```
 override init() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
     let myToolbarContents = ToolbarContents(
-        correction: false,  // No undo/redo buttons, but will still show up in Edit menu
-        insert: false,      // Eliminate the entire InsertToolbar
+        correction: true,  // Off by default but accessible via menu, hotkeys, inputAccessoryView
         // Remove code, strikethrough, subscript, and superscript as formatting options
         formatContents: FormatContents(code: false, strike: false, subSuper: false)
     )
@@ -135,7 +136,7 @@ Being able to insert an image into a document you are editing is fundamental. In
 
 The MarkUpEditor refers to these images as "local images", in contrast to images that reside external to the document. Both can be useful! When you insert a local image (by selecting it from the Image Toolbar or by pasting it into the document), the MarkupEditor creates a _new_ image file using a UUID for the file name. By default, that file resides in the same location as the text you are editing. For the demos, the document HTML and local image files are held in an `id` subdirectory of the URL found from `FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)`. You can pass the `id` to your `MarkupWKWebView` when you create it - for example, it might be the name of the document you're editing. When the MarkupEditor creates a new local image file, your `MarkupDelegate` receives a notification via the `markupImageAdded(url: URL)` method, giving you the URL of the new local image.
 
-Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `allowLocalImages` when you create the MarkupEnv, like `MarkupEnv(style: .compact, allowLocalImages: true)`. This will add a Select button to the Image Toolbar.
+Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `MarkupEditor.allowLocalImages = true` early in your application lifecycle. This will add a Select button to the Image Toolbar.
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
 
@@ -147,15 +148,48 @@ The `BasicTests` target tests the "do" operations; i.e., the operations you can 
 
 ## Demos
 
-If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I find it to be a lot less hassle when developing the project overall, especially in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated. The demos have a dependency on the `MarkupEditor.framework`.
+If you consume just the package, you don't get the demo targets to build. If you create a workspace that contains the MarkupEditor project or just clone this repository, you will also get the two demo targets, creatively named `SwiftUIDemo` and `UIKitDemo`. There is also a MarkupEditor framework target in the project that is 100% the equivalent of the Swift package. By default, the demos both consume the framework, because I have found it to be a lot less hassle when developing the project in the early stage. The only difference between consuming the framework and the Swift package is how the `MarkupWKWebView` locates and loads its `markup.html` resource when it is instantiated.
 
-The demos open `demo.html`, which contains information about how to use the MarkupEditor as an end user and shows you the capabilities.
+The demos open `demo.html`, which contains information about how to use the MarkupEditor as an end user and shows you the capabilities. They populate the `leftToolbar` of the MarkupToolbar to include a `FileToolbar` that lets you create a new document for editing or open an existing HTML file. The ContentView (or ViewController in the UIKitDemo) acts both as the `MarkupDelegate` and the `FileToolbarDelegate`. As the `FileToolbarDelegate`, it opens a `TextView` to display the underlying raw HTML, which is nice for demo. The raw HTML updates as you type and make changes to the document, which is fun and has been helpful for debugging; however, you probably don't want to be doing heavyweight things like that for every keystroke in a real app.
+
+The demo directories also contain a "Simplest" version of a SwiftUI View and UIKit UIViewController, since the ContentView and ViewController for the demos are more complex, with pickers and the raw HTML display brought in with the `FileToolbar`, and the support for selecting local images. If you want to try the "Simplest" versions out, just edit the `SceneDelegate` to point at the `SimplestContentView` or `SimplestViewController`.
 
 ## Status
 
-The current version is closing in on feature-complete. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
+The current version is feature-complete. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
+
+### Known Issues
+
+[Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### *NOT RELEASED YET, work in `main`*
+
+I consider `main` to be (nearly) feature complete. If you were consuming earlier versions, you may encounter breaking changes, but I wanted to get those done before Beta. For example, the MarkupWebView previously was a UIViewRepresentable of the MarkupWKWebView. It has been eliminated in favor of a SwiftUI MarkupEditorView and a separate MarkupWKWebViewRepresentable.
+
+The major drivers of the pre-Beta work have been usability and proper support for touch devices. This release also completely eliminates any need for a user to know about the SubToolbar, which previous versions surfaced because of the need to overlay it on the MarkupWKWebView. This release includes a new MarkupEditorView and MarkupEditorUIView for SwiftUI and UIKit respectively. These Views/UIViews lay out and manage the MarkupToolbar and (new) MarkupToolbarUIView, providing a simpler end-user experience when you just want to drop in a View/UIView. There are lots of other improvements and features as outlined below.
+
+##### Closed Issues
+
+* Multi-indent/outdent operations work ([Issue 13](https://github.com/stevengharris/MarkupEditor/issues/13))
+* Easy image resizing ([Issue 14](https://github.com/stevengharris/MarkupEditor/issues/14)) [pinch gesture support underway now]
+* Table sizer works on touch devices ([Issue 15](https://github.com/stevengharris/MarkupEditor/issues/15))
+* User settable table bordering ([Issue 16](https://github.com/stevengharris/MarkupEditor/issues/16))
+* Complete menu/hotkey support that syncs with the ToolbarContents ([Issue 17](https://github.com/stevengharris/MarkupEditor/issues/17))
+* Toolbar visible selection state works properly for large selections ([Issue 18](https://github.com/stevengharris/MarkupEditor/issues/18))
+* Pasting HTML works properly ([Issue 20](https://github.com/stevengharris/MarkupEditor/issues/20))
+* Enter at end of indent outdents until no longer indented ([Issue 21](https://github.com/stevengharris/MarkupEditor/issues/21))
+* Block quote outdent works on one line at a time ([Issue 22](https://github.com/stevengharris/MarkupEditor/issues/22))
+* Easily customizable toolbar contents using ToolbarContents ([Issue 31](https://github.com/stevengharris/MarkupEditor/issues/31))
+
+##### Usability
+
+* MarkupEditor struct provides central access to configuration/customization
+* MarkupEditorView sets up and manages the MarkupToolbar automatically for SwiftUI development
+* MarkupEditorUIView set up and managed MarkupToolbarUIView automatically for UIKit development
+* MarkupWKWebView automatically installs a customized MarkupToolbarUIView as the inputAccessoryView
+* Eliminate need for users to set up EnvironmentObjects to use the MarkupEditor as in previous versions
 
 #### Version 0.3.3
 
@@ -196,13 +230,6 @@ The labeled toolbar took up too much screen real estate in my other project, so 
 #### Version 0.2.1
 
 * This was the first version made public and open sourced.
-
-### Known Issues
-
-[Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub, but the inlined summary below may be useful.
-
-1. At this point, the MarkupEditor is really only useful on devices with a keyboard. On the iPad (and worse on the iPhone), the toolbar is too wide, and it isn't set up for scrolling or, better, for a different display for the format. I intend to work on the iPad usage but have not put any time into it. I am primarily focused on using it on the Mac.
-2. Menus are incomplete, but the scaffolding is in place to be filled-out.
 
 ## Legacy and Acknowledgements
 

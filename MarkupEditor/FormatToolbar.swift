@@ -9,9 +9,9 @@
 import SwiftUI
 
 public struct FormatToolbar: View {
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    private var contents: FormatContents { ToolbarContents.shared.formatContents }
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
+    private let contents: FormatContents = MarkupEditor.toolbarContents.formatContents
     @State private var hoverLabel: Text = Text("Text Format")
 
     public init() {}
@@ -72,23 +72,15 @@ public struct FormatToolbar: View {
 
 struct FormatToolbar_Previews: PreviewProvider {
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
         VStack(alignment: .leading) {
             HStack {
                 FormatToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .frame(height: compactPreference.height())
+                    .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
                 FormatToolbar()
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .frame(height: labeledPreference.height())
+                    .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
             Spacer()

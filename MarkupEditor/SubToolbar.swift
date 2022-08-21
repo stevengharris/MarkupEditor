@@ -15,17 +15,22 @@ public struct SubToolbar: View {
         case image
         case link
         case table
+        case none
     }
-    
-    @EnvironmentObject var showSubToolbar: ShowSubToolbar
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
+
+    @State private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var showSubToolbar: ShowSubToolbar = MarkupEditor.showSubToolbar
+    @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
     private var markupDelegate: MarkupDelegate?
     
     public var body: some View {
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
         VStack(spacing: 0) {
             if showSubToolbar.type == .link {
-                LinkToolbar(selectionState: selectionState)
+                LinkToolbar()
                     .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .link)
                     }
@@ -35,7 +40,7 @@ public struct SubToolbar: View {
                     }
             }
             if showSubToolbar.type == .image {
-                ImageToolbar(selectionState: selectionState)
+                ImageToolbar()
                     .onAppear {
                         markupDelegate?.markupToolbarAppeared(type: .image)
                     }
@@ -56,41 +61,24 @@ public struct SubToolbar: View {
             }
             Divider()
         }
-        
+        .environmentObject(toolbarStyle)
     }
     
-    public init(markupDelegate: MarkupDelegate?) {
+    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil) {
+        let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
+        _toolbarStyle = State(initialValue: toolbarStyle)
         self.markupDelegate = markupDelegate
     }
     
 }
 
 struct SubToolbar_Previews: PreviewProvider {
-    // This is just a container for a specific SubToolbar dynamically specified by type
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let compactPreference = compactMarkupEnv.toolbarPreference
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
-        let labeledPreference = labeledMarkupEnv.toolbarPreference
-        let showSubToolbar = ShowSubToolbar()
         VStack(alignment: .leading) {
-            HStack {
-                SubToolbar(markupDelegate: nil)
-                    .environmentObject(SelectionState())
-                    .environmentObject(compactPreference)
-                    .environmentObject(showSubToolbar)
-                    .frame(height: compactPreference.height())
-                Spacer()
-            }
-            HStack {
-                SubToolbar(markupDelegate: nil)
-                    .environmentObject(SelectionState())
-                    .environmentObject(labeledPreference)
-                    .environmentObject(showSubToolbar)
-                    .frame(height: labeledPreference.height())
-                Spacer()
-            }
+            SubToolbar(.compact)
+            SubToolbar(.labeled)
             Spacer()
         }
+        .onAppear { MarkupEditor.showSubToolbar.type = .table }
     }
 }

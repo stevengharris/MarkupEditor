@@ -1,27 +1,25 @@
 //
-//  ToolbarPreference.swift
+//  ToolbarStyle.swift
 //  MarkupEditor
 //
-//  Created by Steven Harris on 9/3/21.
-//  Copyright © 2021 Steven Harris. All rights reserved.
+//  Created by Steven Harris on 8/8/22.
 //
 
-import SwiftUI
+import UIKit
 
-public class ToolbarPreference: ObservableObject {
+public class ToolbarStyle: ObservableObject {
     
-    @Published var style: Style
-
+    static let compact = ToolbarStyle(.compact)
+    static let labeled = ToolbarStyle(.labeled)
+    
+    var style: Style
+    
     public enum Style {
         case compact
         case labeled
     }
     
-    public init() {
-        self.style = .labeled
-    }
-    
-    public init(style: Style) {
+    public init(_ style: Style = .labeled) {
         self.style = style
     }
     

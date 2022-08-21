@@ -1,6 +1,6 @@
 //
 //  SceneDelegate.swift
-//  MarkupEditor
+//  SwiftUIDemo
 //
 //  Created by Steven Harris on 1/24/22.
 //
@@ -17,17 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         guard let _ = (scene as? UIWindowScene) else { return }
         
-        // Get the markupEnv from the AppDelegate
-        let markupEnv = (UIApplication.shared.delegate as! AppDelegate).markupEnv
-        
         // Create the SwiftUI view that provides the window contents.
-        let contentView = ContentView(url: demoUrl())
-            .environmentObject(markupEnv)
-            .environmentObject(markupEnv.observedWebView)
-            .environmentObject(markupEnv.selectionState)
-            .environmentObject(markupEnv.toolbarPreference)
-            .environmentObject(markupEnv.selectImage)
-            .environmentObject(markupEnv.showSubToolbar)
+        let contentView = ContentView()
         
         // Use a UIHostingController as window root view controller.
         if let windowScene = scene as? UIWindowScene {
@@ -45,10 +36,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.makeKeyAndVisible()
         }
             
-    }
-    
-    func demoUrl() -> URL? {
-        return Bundle.main.resourceURL?.appendingPathComponent("demo.html")
     }
     
 }

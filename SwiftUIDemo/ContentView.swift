@@ -8,47 +8,37 @@
 
 import SwiftUI
 import MarkupEditor
-import UniformTypeIdentifiers
 
 /// The main view for the SwiftUIDemo.
 ///
-/// Displays the MarkupToolbar at the top and the MarkupWebView at the bottom containing demo.html.
-/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
+/// Displays the MarkupEditorView containing demo.html and a TextView to display the raw HTML that can be toggled
+/// on and off from the FileToolbar. By default, the MarkupEditorView shows the MarkupToolbar at the top.
+/// 
+/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
+/// with the FileToolbar.
 struct ContentView: View {
 
-    @EnvironmentObject var markupEnv: MarkupEnv
-    @EnvironmentObject var selectImage: SelectImage
-    @EnvironmentObject var showSubToolbar: ShowSubToolbar
-    private var selectedWebView: MarkupWKWebView? { markupEnv.observedWebView.selectedWebView }
+    @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
-    @State private var demoContent: String
-    @State private var droppingImage: Bool = false
-    // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
+    @State private var demoHtml: String
+    //@State private var droppingImage: Bool = false
+    
+    // Note that we specify resourcesUrl when instantiating MarkupEditorView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
     // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
     // where your html file comes from, or in a directory that holds both the html file and all
     // of its resources.
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
-
+    
     var body: some View {
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
         VStack(spacing: 0) {
-            MarkupToolbar(
-                markupDelegate: self,
-                leftToolbar: AnyView(
-                    FileToolbar(fileToolbarDelegate: self)))
-                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-            Divider()
-            MarkupWebView(markupDelegate: self, boundContent: $demoContent, resourcesUrl: resourcesUrl, id: "Document")
-                .overlay(
-                    SubToolbar(markupDelegate: self),
-                    alignment: .topLeading)
-                .onDrop(of: markupEnv.supportedImageTypes, isTargeted: $droppingImage) { (providers, location) -> Bool in
-                    print("Dropping \(providers) at \(location)")
-                    return true
-                }
+            MarkupEditorView(markupDelegate: self, html: $demoHtml, resourcesUrl: resourcesUrl, id: "Document")
             if rawShowing {
                 VStack {
                     Divider()
@@ -57,35 +47,29 @@ struct ContentView: View {
                         Text("Document HTML")
                         Spacer()
                     }.background(Color(UIColor.systemGray5))
-                    TextView(text: $rawText)
+                    TextView(text: $rawText, isEditable: false)
                         .font(Font.system(size: StyleContext.P.fontSize))
                         .padding([.top, .bottom, .leading, .trailing], 8)
                 }
             }
         }
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: markupEnv.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
-        .environmentObject(showSubToolbar)
-        .environmentObject(markupEnv)
-        .environmentObject(markupEnv.toolbarPreference)
-        .environmentObject(markupEnv.selectionState)
-        .environmentObject(markupEnv.observedWebView)
-        .environmentObject(markupEnv.selectImage)
-        .onDisappear {
-            markupEnv.observedWebView.selectedWebView = nil
-        }
+        .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
+        // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
+        .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
+        .onDisappear { MarkupEditor.selectedWebView = nil }
     }
     
-    init(url: URL?) {
-        if let url = url {
-            _demoContent = State(initialValue: (try? String(contentsOf: url)) ?? "")
+    init() {
+        if let demoUrl = Bundle.main.resourceURL?.appendingPathComponent("demo.html") {
+            _demoHtml = State(initialValue: (try? String(contentsOf: demoUrl)) ?? "")
         } else {
-            _demoContent = State(initialValue: "")
+            _demoHtml = State(initialValue: "")
         }
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        selectedWebView?.getHtml { html in
+        MarkupEditor.selectedWebView?.getHtml { html in
             rawText = attributedString(from: html ?? "")
             handler?()
         }
@@ -100,11 +84,11 @@ struct ContentView: View {
     }
     
     private func openExistingDocument(url: URL) {
-        demoContent = (try? String(contentsOf: url)) ?? ""
+        demoHtml = (try? String(contentsOf: url)) ?? ""
     }
     
     private func imageSelected(url: URL) {
-        guard let view = selectedWebView else { return }
+        guard let view = MarkupEditor.selectedWebView else { return }
         markupImageToAdd(view, url: url)
     }
     
@@ -113,7 +97,7 @@ struct ContentView: View {
 extension ContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        markupEnv.observedWebView.selectedWebView = view
+        MarkupEditor.selectedWebView = view
         setRawText(handler)
     }
     
@@ -142,19 +126,19 @@ extension ContentView: MarkupDelegate {
 }
 
 extension ContentView: FileToolbarDelegate {
-    
+
     func newDocument(handler: ((URL?)->Void)? = nil) {
-        selectedWebView?.emptyDocument() {
+        MarkupEditor.selectedWebView?.emptyDocument() {
             setRawText()
         }
     }
-    
+
     func existingDocument(handler: ((URL?)->Void)? = nil) {
         documentPickerShowing.toggle()
     }
-    
+
     func rawDocument() {
         withAnimation { rawShowing.toggle()}
     }
-    
+
 }

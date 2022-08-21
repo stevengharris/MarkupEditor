@@ -8,7 +8,8 @@
 
 import SwiftUI
 
-/// The MarkupToolbar acts on the selectedWebView and shows the current selectionState.
+/// The MarkupToolbar shows the current selectionState and acts on the selectedWebView held
+/// by the observedWebView.
 ///
 /// The MarkupToolbar observes the selectionState so that its display reflects the current state.
 /// For example, when selectedWebView is nil, the toolbar is disabled, and when the selectionState shows
@@ -18,56 +19,87 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
-    @EnvironmentObject private var toolbarPreference: ToolbarPreference
-    @EnvironmentObject private var observedWebView: ObservedWebView
-    @EnvironmentObject private var selectionState: SelectionState
-    let contents = ToolbarContents.shared
-    @State var markupDelegate: MarkupDelegate?
-    /// User-supplied view to be shown on the left side of the default MarkupToolbar
-    private var leftToolbar: AnyView?
-    /// User-supplied view to be shown on the right side of the default MarkupToolbar
-    private var rightToolbar: AnyView?
+    private let toolbarStyle: ToolbarStyle
+    private let withKeyboardButton: Bool
+    public let withSubToolbar: Bool         // Set to false by MarkupToolbarUIView
+    public let subToolbarEdge: Edge
+    @ObservedObject private var observedWebView = MarkupEditor.observedWebView
+    @ObservedObject private var selectionState = MarkupEditor.selectionState
+    @ObservedObject private var showSubToolbar = MarkupEditor.showSubToolbar
+    private var contents: ToolbarContents
+    public var markupDelegate: MarkupDelegate?
+    private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
     
     public var body: some View {
-        HStack {
-            if leftToolbar != nil {
-                leftToolbar
-                Divider()
-            }
-            Group {
-                if contents.correction {
-                    CorrectionToolbar()
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
+        let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && MarkupEditor.showSubToolbar.type != .none
+        let topSubToolbar = withSubToolbar && subToolbarEdge == .top && MarkupEditor.showSubToolbar.type != .none
+        ZStack(alignment: .topLeading) {
+            if topSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
+            HStack {
+                ScrollView(.horizontal) {
+                    HStack {
+                        if contents.leftToolbar {
+                            MarkupEditor.leftToolbar!
+                        }
+                        if contents.correction {
+                            if contents.leftToolbar { Divider() }
+                            CorrectionToolbar()
+                        }
+                        if contents.insert {
+                            if contents.leftToolbar || contents.correction { Divider() }
+                            InsertToolbar()
+                        }
+                        if contents.style {
+                            if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
+                            StyleToolbar()
+                        }
+                        if contents.format {
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
+                            FormatToolbar()
+                        }
+                        if contents.rightToolbar {
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
+                            MarkupEditor.rightToolbar!
+                        }
+                        Spacer()                // Push everything to the left
+                    }
+                    .environmentObject(toolbarStyle)
+                    .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                    .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
+                }
+                .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
+                if withKeyboardButton {
                     Divider()
-                }
-                if contents.insert {
-                    InsertToolbar()
-                    Divider()
-                }
-                if contents.style {
-                    StyleToolbar()
-                    Divider()
-                }
-                if contents.format {
-                    FormatToolbar()
-                    Divider()           // Vertical on the right
+                    ToolbarImageButton(
+                        systemName: "keyboard.chevron.compact.down",
+                        action: {
+                            showSubToolbar.type = .none
+                            _ = MarkupEditor.selectedWebView?.resignFirstResponder()
+                        }
+                    )
+                    Spacer()
                 }
             }
-            if rightToolbar != nil {
-                rightToolbar
-                Divider()
-            }
-            Spacer()                // Push everything to the left
+            if bottomSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
         }
-        .frame(height: toolbarPreference.height())
-        .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
+        .frame(height: MarkupEditor.toolbarStyle.height())
+        .zIndex(999)
     }
     
-    public init(markupDelegate: MarkupDelegate? = nil, leftToolbar: AnyView? = nil, rightToolbar: AnyView? = nil) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, withSubToolbar: Bool = true, subToolbarEdge: Edge = .bottom) {
+        let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
+        self.toolbarStyle = toolbarStyle
+        let toolbarContents = contents == nil ? MarkupEditor.toolbarContents : contents!
+        self.contents = toolbarContents
+        self.withKeyboardButton = withKeyboardButton
+        self.withSubToolbar = withSubToolbar
+        self.subToolbarEdge = subToolbarEdge
         self.markupDelegate = markupDelegate
-        self.leftToolbar = leftToolbar
-        self.rightToolbar = rightToolbar
     }
-    
+
 }
 
 //MARK: Previews
@@ -75,18 +107,14 @@ public struct MarkupToolbar: View {
 struct MarkupToolbar_Previews: PreviewProvider {
     
     static var previews: some View {
-        let compactMarkupEnv = MarkupEnv(style: .compact)
-        let labeledMarkupEnv = MarkupEnv(style: .labeled)
         VStack(alignment: .leading) {
-            MarkupToolbar()
-                .environmentObject(compactMarkupEnv.selectionState)
-                .environmentObject(compactMarkupEnv.toolbarPreference)
-                .environmentObject(compactMarkupEnv.observedWebView)
-            MarkupToolbar()
-                .environmentObject(labeledMarkupEnv.selectionState)
-                .environmentObject(labeledMarkupEnv.toolbarPreference)
-                .environmentObject(labeledMarkupEnv.observedWebView)
+            MarkupToolbar(.compact)
+            MarkupToolbar(.labeled)
             Spacer()
+        }
+        .onAppear {
+            MarkupEditor.selectedWebView = MarkupWKWebView()
+            MarkupEditor.selectionState.valid = true
         }
     }
 }
