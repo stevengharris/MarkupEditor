@@ -1,6 +1,6 @@
 //
-//  UIMarkupEditorView.swift
-//  UIKitDemo
+//  MarkupEditorUIView.swift
+//  MarkupEditor
 //
 //  Created by Steven Harris on 8/18/22.
 //
@@ -8,21 +8,28 @@
 import WebKit
 import Combine
 
-/// MarkupEditorView is a UIKit view that holds a MarkupWKWebView and (optionally) a UIMarkupToolbar.
+/// MarkupEditorUIView is a UIKit view that holds a MarkupWKWebView and (optionally) a MarkupToolbarUIView.
 ///
-/// Specify the MarkupToolbar location separately using MarkupEditor.toolbarLocation. By default, the UIMarkupEditorView has a toolbar
-/// at the top for MacCatalyst and iPad, and only uses the inputAccessoryView on the keyboard for iPhone. If you have multiple MarkupWKWebViews
-/// in an application, there should be only one UIMarkupToolbar. In this case, you should probably specify MarkupEditor.toolbarLocation = .none
-/// and then use the UIMarkupToolbar UIView directly.
+/// Specify the toolbar location separately using MarkupEditor.toolbarLocation. By default, the MarkupEditorUIView has a toolbar
+/// at the top for all devices.
 ///
-/// In general, we don't want WebKit abstractions to leak into the MarkupEditor world. When the MarkupEditorView is instantiated,
+/// This MarkupEditorUIView observes changes to the MarkupEditor.showSubToolbar.type to adjust the toolbarHeightConstraint to
+/// accommodate the SubToolbar as needed. The MarkupWKWebView responds to keyboard show/hide events and by default includes
+/// the CorrectionToolbar only, along with the hideKeyboard button on the right.
+///
+/// If you have multiple MarkupWKWebViews in an application, there should be only one toolbar. In this case, you should probably specify
+/// MarkupEditor.toolbarLocation = .none and then use the MarkupToolbarUIView directly. If you do that, then you will need your UIView that
+/// holds the MarkupToolbarUIView to observe changes to the MarkupEditor.showSubToolbar.type to adjust the toolbar height like this
+/// view does. The SwiftUI MarkupToolbar handles such things itself, but that doesn't seem to fly in the UIKit world when consuming
+/// SwiftUI views 🤷‍♂️.
+///
+/// In general, we don't want WebKit abstractions to leak into the MarkupEditor world. When the MarkupEditorUIView is instantiated,
 /// you can optionally specify the WKUIDelegate and WKNavigationDelegate if needed, which will be assigned to the underlying MarkupWKWebView.
-public class MarkupEditorUIView: UIView {
-    var markupDelegate: MarkupDelegate?
-    var toolbar: MarkupToolbarUIView!
-    var toolbarHeightConstraint: NSLayoutConstraint!
+public class MarkupEditorUIView: UIView, MarkupDelegate {
+    private var toolbar: MarkupToolbarUIView!
+    private var toolbarHeightConstraint: NSLayoutConstraint!
     private var showSubToolbarType: AnyCancellable?
-    var webView: MarkupWKWebView!
+    private var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
     private var coordinator: MarkupCoordinator!
     
@@ -35,20 +42,19 @@ public class MarkupEditorUIView: UIView {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
-        content: String?,
+        html: String?,
         resourcesUrl: URL? = nil,
         id: String? = nil) {
             super.init(frame: CGRect.zero)
             observeShowSubToolbarType()
-            self.markupDelegate = markupDelegate
-            webView = MarkupWKWebView(html: content, resourcesUrl: resourcesUrl, id: "Document", markupDelegate: markupDelegate)
+            webView = MarkupWKWebView(html: html, resourcesUrl: resourcesUrl, id: "Document", markupDelegate: markupDelegate ?? self)
             // The coordinator acts as the WKScriptMessageHandler and will receive callbacks
             // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>)
             coordinator = MarkupCoordinator(markupDelegate: markupDelegate, webView: webView)
             webView.configuration.userContentController.add(coordinator, name: "markup")
             coordinator.webView = webView
             // By default, the webView responds to no navigation events unless the navigationDelegate is set
-            // during initialization of MarkupWebView.
+            // during initialization of MarkupEditorUIView.
             webView.navigationDelegate = wkNavigationDelegate
             webView.uiDelegate = wkUIDelegate
             webView.userScripts = userScripts

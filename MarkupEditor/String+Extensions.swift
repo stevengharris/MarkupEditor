@@ -36,13 +36,4 @@ extension String {
         return matches.count == 1 && matches[0].range.length == utf16.count
     }
     
-    /// Return a string with newlines inserted at the beginning of style, table, and div elements so it's minimally more readable.
-    public var prettyHTML: String {
-        var newString = replacingOccurrences(of: "<p", with: "\n<p")
-        newString = newString.replacingOccurrences(of: "<h", with: "\n<h")
-        newString = newString.replacingOccurrences(of: "<div", with: "\n<div")
-        newString = newString.replacingOccurrences(of: "<table", with: "\n<table")
-        return newString.trimmingCharacters(in: .whitespaces)
-    }
-    
 }

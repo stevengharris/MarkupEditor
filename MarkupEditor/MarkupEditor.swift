@@ -19,8 +19,16 @@ public struct MarkupEditor {
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
     public static var toolbarLocation = ToolbarLocation.automatic
-    public static var leftToolbar: AnyView?
-    public static var rightToolbar: AnyView?
+    public static var leftToolbar: AnyView? {
+        didSet {
+            toolbarContents.leftToolbar = leftToolbar != nil
+        }
+    }
+    public static var rightToolbar: AnyView? {
+        didSet {
+            toolbarContents.rightToolbar = rightToolbar != nil
+        }
+    }
     public static let observedWebView: ObservedWebView = ObservedWebView()
     public static var selectedWebView: MarkupWKWebView? {
         get { observedWebView.selectedWebView }
@@ -62,21 +70,18 @@ public struct MarkupEditor {
         case none
     }
 
+    /// Emum used to control the toolbar location when using the MarkupEditorView and MarkupEditorUIView
     public enum ToolbarLocation {
         case top
         case bottom
-        case keyboard
         case none
         
+        /// Always return .top, but logic left here in case it needs more specialization later
         static var automatic: ToolbarLocation {
             if ProcessInfo.processInfo.isMacCatalystApp  {
                 return .top
             } else {
-                if UIDevice.current.userInterfaceIdiom == .pad {
-                    return .top
-                } else {
-                    return .keyboard
-                }
+                return .top
             }
         }
     }

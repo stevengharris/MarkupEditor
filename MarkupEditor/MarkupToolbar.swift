@@ -20,13 +20,13 @@ import SwiftUI
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
     private let toolbarStyle: ToolbarStyle
-    private let hideKeyboardButton: Bool
-    public let withSubToolbar: Bool         // Set to false by UIMarkupToolbar
+    private let withKeyboardButton: Bool
+    public let withSubToolbar: Bool         // Set to false by MarkupToolbarUIView
     public let subToolbarEdge: Edge
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState = MarkupEditor.selectionState
     @ObservedObject private var showSubToolbar = MarkupEditor.showSubToolbar
-    private let contents = MarkupEditor.toolbarContents
+    private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
     private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
     
@@ -34,8 +34,6 @@ public struct MarkupToolbar: View {
         //if #available(macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
-        let leftToolbar = MarkupEditor.leftToolbar != nil
-        let rightToolbar = MarkupEditor.rightToolbar != nil
         let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && MarkupEditor.showSubToolbar.type != .none
         let topSubToolbar = withSubToolbar && subToolbarEdge == .top && MarkupEditor.showSubToolbar.type != .none
         ZStack(alignment: .topLeading) {
@@ -43,27 +41,27 @@ public struct MarkupToolbar: View {
             HStack {
                 ScrollView(.horizontal) {
                     HStack {
-                        if leftToolbar {
+                        if contents.leftToolbar {
                             MarkupEditor.leftToolbar!
                         }
                         if contents.correction {
-                            if hideKeyboardButton || leftToolbar { Divider() }
+                            if contents.leftToolbar { Divider() }
                             CorrectionToolbar()
                         }
                         if contents.insert {
-                            if hideKeyboardButton || leftToolbar || contents.correction { Divider() }
+                            if contents.leftToolbar || contents.correction { Divider() }
                             InsertToolbar()
                         }
                         if contents.style {
-                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert { Divider() }
+                            if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
                             StyleToolbar()
                         }
                         if contents.format {
-                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
                             FormatToolbar()
                         }
-                        if rightToolbar {
-                            if hideKeyboardButton || leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
+                        if contents.rightToolbar {
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
                             MarkupEditor.rightToolbar!
                         }
                         Spacer()                // Push everything to the left
@@ -72,8 +70,8 @@ public struct MarkupToolbar: View {
                     .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                     .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
                 }
-                .onTapGesture {}    // To make the buttons responsive inside of the ScrollViewif hideKeyboardButton
-                if !hideKeyboardButton {
+                .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
+                if withKeyboardButton {
                     Divider()
                     ToolbarImageButton(
                         systemName: "keyboard.chevron.compact.down",
@@ -91,17 +89,15 @@ public struct MarkupToolbar: View {
         .zIndex(999)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil, hideKeyboardButton: Bool = true, withSubToolbar: Bool = true, subToolbarEdge: Edge = .bottom) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, withSubToolbar: Bool = true, subToolbarEdge: Edge = .bottom) {
         let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
         self.toolbarStyle = toolbarStyle
-        self.hideKeyboardButton = hideKeyboardButton
+        let toolbarContents = contents == nil ? MarkupEditor.toolbarContents : contents!
+        self.contents = toolbarContents
+        self.withKeyboardButton = withKeyboardButton
         self.withSubToolbar = withSubToolbar
         self.subToolbarEdge = subToolbarEdge
         self.markupDelegate = markupDelegate
-    }
-    
-    public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbar {
-        MarkupToolbar(.compact, markupDelegate: markupDelegate, hideKeyboardButton: true, subToolbarEdge: .top)
     }
 
 }

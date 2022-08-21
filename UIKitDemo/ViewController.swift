@@ -13,15 +13,11 @@ import Combine
 
 /// The main view for the UIKitDemo.
 ///
-/// Displays the MarkupToolbar at the top and the MarkupWKWebView at the bottom containing demo.html.
-/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar.
+/// Displays the MarkupEditorUIView containing demo.html and a TextView to display the raw HTML that can be toggled
+/// on and off from the FileToolbar. By default, the MarkupEditorUIView shows the MarkupToolbarUIView at the top.
 ///
-/// Because the MarkupToolbar and its associated SubToolbar are written in SwiftUI, there is a ton of SwiftUI-driven cruft in this method
-/// compared to what is needed in "pure" SwiftUI. For example, the MarkupCoordinator is transparently hooked up in SwiftUI by the
-/// MarkupWebView. Worse, the support for local image selection uses a SwiftUI-style piece of state that is toggled off and on to
-/// determine if a picker should be shown, and that has to be hooked into the UIKit world using a Combine AnyCancellable. It's just
-/// crazy for a UIKit app, but I'm leaving it here for now.  I would really recommend creating a new UIKit version of MarkupToolbar.
-/// The MarkupWKWebView doesn't have any SwiftUI dependencies and can just be used directly.
+/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
+/// with the FileToolbar.
 class ViewController: UIViewController {
     var stack: UIStackView!
     var webView: MarkupWKWebView!
@@ -33,7 +29,7 @@ class ViewController: UIViewController {
     var selectedWebView: MarkupWKWebView? { MarkupEditor.selectedWebView }
     /// Toggle whether the file selector should be shown to select a local image
     var selectImageCancellable: AnyCancellable?
-    // Note that we specify resoucesUrl when instantiating MarkupWebView so that we can demonstrate
+    // Note that we specify resoucesUrl when instantiating MarkupEditorUIView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
     // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
@@ -73,27 +69,19 @@ class ViewController: UIViewController {
         return divider
     }
     
-    /// Set up the stack below the MarkupToolbar. The stack contains the MarkupWKWebView and the rawTextView.
+    /// Set up the stack that occupies the entire view. The stack contains the MarkupWKWebView and the rawTextView.
     ///
     /// The rawTextView height toggles as the raw text is shown.
-    ///
-    /// The subToolbar is overlayed on the MarkupWKWebView. This way it covers the content of that view when it is
-    /// turned off and on, as opposed to having the stack layout adjust.
     func initializeStackView() {
         // Create the stack
         stack = UIStackView()
         stack.axis = .vertical
         stack.distribution = .fill
+        stack.frame = view.frame
+        stack.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(stack)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            stack.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            stack.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
-        ])
         // Create the webView and overlay the subToolbar
-        let markupEditorView = MarkupEditorUIView(markupDelegate: self, content: demoContent(), resourcesUrl: resourcesUrl, id: "Document")
+        let markupEditorView = MarkupEditorUIView(markupDelegate: self, html: demoHtml(), resourcesUrl: resourcesUrl, id: "Document")
         stack.addArrangedSubview(markupEditorView)
         bottomStack = UIStackView()
         bottomStack.isHidden = true
@@ -106,10 +94,11 @@ class ViewController: UIViewController {
         label.backgroundColor = UIColor.systemGray5
         bottomStack.addArrangedSubview(label)
         rawTextView = UITextView()
+        rawTextView.isEditable = false
         rawTextView.contentInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         bottomStack.addArrangedSubview(rawTextView)
         stack.addArrangedSubview(bottomStack)
-        bottomStackHeightConstraint = NSLayoutConstraint(item: bottomStack!, attribute: .height, relatedBy: .equal, toItem: webView, attribute: .height, multiplier: 1, constant: 1)
+        bottomStackHeightConstraint = NSLayoutConstraint(item: bottomStack!, attribute: .height, relatedBy: .equal, toItem: markupEditorView, attribute: .height, multiplier: 1, constant: 1)
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -143,7 +132,7 @@ class ViewController: UIViewController {
         markupImageToAdd(view, url: url)
     }
     
-    private func demoContent() -> String {
+    private func demoHtml() -> String {
         guard let demoUrl = Bundle.main.url(forResource: "demo", withExtension: "html") else { return "" }
         return (try? String(contentsOf: demoUrl)) ?? ""
     }

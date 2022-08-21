@@ -18,14 +18,16 @@ import Foundation
 /// MarkupToolbar and MarkupMenu. Internally, the toolbars and menus access `shared`, which
 /// will be your `custom` ToolbarContents or the default ToolbarContents instance if you did not
 /// specify `custom`.
-public struct ToolbarContents {
+public class ToolbarContents {
     public static var custom: ToolbarContents?
     public static let shared = custom ?? ToolbarContents()
     
+    public var leftToolbar: Bool
     public var correction: Bool
     public var insert: Bool
     public var style: Bool
     public var format: Bool
+    public var rightToolbar: Bool
     
     public var insertContents: InsertContents
     public var styleContents: StyleContents
@@ -33,19 +35,23 @@ public struct ToolbarContents {
     public var tableContents: TableContents
     
     public init(
-        correction: Bool = true,
+        leftToolbar: Bool = MarkupEditor.leftToolbar != nil,
+        correction: Bool = false,
         insert: Bool = true,
         style: Bool = true,
         format: Bool = true,
+        rightToolbar: Bool = MarkupEditor.rightToolbar != nil,
         insertContents: InsertContents = InsertContents(),
         styleContents: StyleContents = StyleContents(),
         formatContents: FormatContents = FormatContents(),
         tableContents: TableContents = TableContents()
     ) {
+        self.leftToolbar = leftToolbar
         self.correction = correction
         self.insert = insert
         self.style = style
         self.format = format
+        self.rightToolbar = rightToolbar
         self.insertContents = insertContents
         self.styleContents = styleContents
         self.formatContents = formatContents
@@ -83,7 +89,7 @@ public struct FormatContents {
     public var strike: Bool
     public var subSuper: Bool
     
-    public init(code: Bool = true, strike: Bool = true, subSuper: Bool = true) {
+    public init(code: Bool = true, strike: Bool = true, subSuper: Bool = false) {
         self.code = code
         self.strike = strike
         self.subSuper = subSuper

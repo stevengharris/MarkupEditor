@@ -19,15 +19,9 @@ import WebKit
 /// MarkupWKWebView. The MarkupCoordinator receives the 'ready' message when the html document loads fully, at
 /// which point it is ready to be interacted-with.
 ///
-/// The MarkupCoordinator is used both in SwiftUI and non-SwiftUI apps. In SwiftUI, the MarkupWebView creates the
+/// The MarkupCoordinator is used both in SwiftUI and non-SwiftUI apps. In SwiftUI, the MarkupEditorView creates the
 /// MarkupCoordinator itself, since the MarkupWKWebView (a subclass of WKWebView) is a UIKit component and has
-/// to be dealt with by a Coordinator of some kind.
-///
-/// While the SwiftMarkupEditor is designed to handle multiple MarkupWKWebViews with a single MarkupToolbar,
-/// a MarkupCoordinator is coordinating between a single UIKit MarkupWKWebView and something that holds onto
-/// the state of the app that is using the MarkupEditor. The SelectionState and selectedWebView are need to be
-/// held in the top-level View for SwiftUI as StateObject or as properties of something that will be present
-/// for the proper lifetime in a UIKit app (e.g., the top-level UIViewController).
+/// to be dealt with by a Coordinator of some kind. In UIKit, the MarkupEditorUIView does the analogous work.
 ///
 /// As events arrive here in the MarkupCoordinator, it takes various steps to ensure our knowledge in Swift of
 /// what is in the MarkupWKWebView is maintained properly. Its other function is to inform the MarkupDelegate

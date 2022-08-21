@@ -31,9 +31,7 @@ public protocol MarkupDelegate {
     /// Called when the MarkupWKWebView has become ready to receive input.
     /// More concretely, is called when the internal WKWebView loads for the first time, and contentHtml is set.
     ///
-    /// Be sure to execute the handler if you override. The default behavior is to do nothing other than
-    /// execute the handler. The MarkupCoordinator uses the handler to have the MarkupWKWebView
-    /// becomeFirstResponder.
+    /// The default behavior is to set the selectedWebView and execute the handler. 
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?)
     
     /// Called when custom actions are called by callbacks in the JS.
@@ -81,12 +79,14 @@ public protocol MarkupDelegate {
     
     /// Respond whether a drop interaction can be handled.
     ///
+    /// *Note:* Drop interaction is currently disabled.
+    ///
     /// Returning false, means that neither the markupDropInteraction(\_, sessionDidUpdate) nor
     /// the markupDropInteraction(\_, performDrop) method will be called.
     ///
-    /// When using MarkupWebView in SwiftUI, return false to use .onDrop on that view.
+    /// When using MarkupEditorView in SwiftUI, return false to use .onDrop on that view.
     /// This is also the default behavior, so not implementing markupDropInteraction(\_, canHandle)
-    /// means you can just use .onDrop with MarkupWebView as you would expect. If you
+    /// means you can just use .onDrop with MarkupEditorView as you would expect. If you
     /// return true here, the .onDrop will never execute. In this case, you should override
     /// the markupDropInteraction(\_, sessionDidUpdate) and the markupDropInteraction(\_, performDrop)
     /// methods.
@@ -108,7 +108,16 @@ extension MarkupDelegate {
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
-    public func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) { handler?() }
+    
+    /// The MarkupWKWebView has loaded the JavaScript and any html contents.
+    ///
+    /// Let the MarkupEditor know this is the selectedWebView by default. If you have multiple
+    /// MarkupWKWebViews, you probably want to override.
+    public func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        MarkupEditor.selectedWebView = view
+        handler?()
+    }
+    
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
     public func markupSelectionChanged(_ view: MarkupWKWebView) {}
     
@@ -195,7 +204,7 @@ extension MarkupDelegate {
     }
     
     /// See important comments in the protocol. By default, DropInteraction is not supported; however, in SwiftUI you
-    /// can use .onDrop on MarkupWebView without reimplementing this default method.
+    /// can use .onDrop on MarkupEditorView without reimplementing this default method.
     public func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
         // An override might be something like: session.canLoadObjects(ofClass: <your model class>.self)
         false

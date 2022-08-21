@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
-		AA0DDC5D28A464AD0081B869 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5C28A464AD0081B869 /* UIView+Extensions.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
 		AA0DDC6628AE91920081B869 /* MarkupWKWebViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */; };
 		AA0DDC6C28AEF1B50081B869 /* MarkupEditorUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC6728AEA7280081B869 /* MarkupEditorUIView.swift */; };
@@ -71,6 +70,8 @@
 		AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Extensions.swift */; };
 		AAAF7A6D289AE4B9005EF58E /* ToolbarContents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6C289AE4B9005EF58E /* ToolbarContents.swift */; };
 		AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */; };
+		AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040728B1A0780063BE2A /* SimplestViewController.swift */; };
+		AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040928B1A3240063BE2A /* SimplestContentView.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* ContentView.swift */; };
 		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
@@ -149,7 +150,6 @@
 /* Begin PBXFileReference section */
 		AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditor.swift; sourceTree = "<group>"; };
 		AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStyle.swift; sourceTree = "<group>"; };
-		AA0DDC5C28A464AD0081B869 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupToolbarUIView.swift; sourceTree = "<group>"; };
 		AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewRepresentable.swift; sourceTree = "<group>"; };
 		AA0DDC6728AEA7280081B869 /* MarkupEditorUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditorUIView.swift; sourceTree = "<group>"; };
@@ -214,6 +214,8 @@
 		AAA1B0962889D2F000303721 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		AAAF7A6C289AE4B9005EF58E /* ToolbarContents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarContents.swift; sourceTree = "<group>"; };
 		AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupMenu.swift; sourceTree = "<group>"; };
+		AAB1040728B1A0780063BE2A /* SimplestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestViewController.swift; sourceTree = "<group>"; };
+		AAB1040928B1A3240063BE2A /* SimplestContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestContentView.swift; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
@@ -276,7 +278,6 @@
 			children = (
 				AA5EEF04264061B800B111A1 /* Image+Extensions.swift */,
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
-				AA0DDC5C28A464AD0081B869 /* UIView+Extensions.swift */,
 				AAA1B0962889D2F000303721 /* View+Extensions.swift */,
 			);
 			name = Extensions;
@@ -393,6 +394,7 @@
 				AA65296E260E814A000674B7 /* SwiftUIDemo.entitlements */,
 				AA434304279F252E002E2AFD /* SceneDelegate.swift */,
 				AAD26E85264463A300908777 /* ContentView.swift */,
+				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
 				AA65294D260E8114000674B7 /* Info.plist */,
@@ -415,6 +417,7 @@
 				AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */,
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* ViewController.swift */,
+				AAB1040728B1A0780063BE2A /* SimplestViewController.swift */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -774,7 +777,6 @@
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
 				AA408B292616685B00CAE8B9 /* StyleContext.swift in Sources */,
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
-				AA0DDC5D28A464AD0081B869 /* UIView+Extensions.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
 				AA0DDC6C28AEF1B50081B869 /* MarkupEditorUIView.swift in Sources */,
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
@@ -803,6 +805,7 @@
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
 				AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */,
 				AAD26E86264463A300908777 /* ContentView.swift in Sources */,
+				AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */,
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
@@ -815,6 +818,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529A2260E8450000674B7 /* ViewController.swift in Sources */,
+				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,

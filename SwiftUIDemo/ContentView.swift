@@ -11,19 +11,21 @@ import MarkupEditor
 
 /// The main view for the SwiftUIDemo.
 ///
-/// Displays the MarkupToolbar at the top and the MarkupWebView at the bottom containing demo.html.
-/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact with the FileToolbar. 
+/// Displays the MarkupEditorView containing demo.html and a TextView to display the raw HTML that can be toggled
+/// on and off from the FileToolbar. By default, the MarkupEditorView shows the MarkupToolbar at the top.
+/// 
+/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
+/// with the FileToolbar.
 struct ContentView: View {
 
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
-    @State private var demoContent: String
-    @State var foo: Bool = true
+    @State private var demoHtml: String
     //@State private var droppingImage: Bool = false
     
-    // Note that we specify resourcesUrl when instantiating MarkupWebView so that we can demonstrate
+    // Note that we specify resourcesUrl when instantiating MarkupEditorView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
     // with the rest of the demo app resources, so we get more than we wanted from resourcesUrl,
     // but that's okay for demo. Normally, you would want to put resources in a subdirectory of
@@ -32,8 +34,11 @@ struct ContentView: View {
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
     
     var body: some View {
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
         VStack(spacing: 0) {
-            MarkupEditorView(markupDelegate: self, boundContent: $demoContent, resourcesUrl: resourcesUrl, id: "Document")
+            MarkupEditorView(markupDelegate: self, html: $demoHtml, resourcesUrl: resourcesUrl, id: "Document")
             if rawShowing {
                 VStack {
                     Divider()
@@ -42,7 +47,7 @@ struct ContentView: View {
                         Text("Document HTML")
                         Spacer()
                     }.background(Color(UIColor.systemGray5))
-                    TextView(text: $rawText)
+                    TextView(text: $rawText, isEditable: false)
                         .font(Font.system(size: StyleContext.P.fontSize))
                         .padding([.top, .bottom, .leading, .trailing], 8)
                 }
@@ -52,16 +57,14 @@ struct ContentView: View {
         .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
         .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
-        .onDisappear {
-            MarkupEditor.selectedWebView = nil
-        }
+        .onDisappear { MarkupEditor.selectedWebView = nil }
     }
     
-    init(url: URL?) {
-        if let url = url {
-            _demoContent = State(initialValue: (try? String(contentsOf: url)) ?? "")
+    init() {
+        if let demoUrl = Bundle.main.resourceURL?.appendingPathComponent("demo.html") {
+            _demoHtml = State(initialValue: (try? String(contentsOf: demoUrl)) ?? "")
         } else {
-            _demoContent = State(initialValue: "")
+            _demoHtml = State(initialValue: "")
         }
     }
     
@@ -81,7 +84,7 @@ struct ContentView: View {
     }
     
     private func openExistingDocument(url: URL) {
-        demoContent = (try? String(contentsOf: url)) ?? ""
+        demoHtml = (try? String(contentsOf: url)) ?? ""
     }
     
     private func imageSelected(url: URL) {

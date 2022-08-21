@@ -11,9 +11,12 @@ import SwiftUI
 /// The TextView displays the raw html of the MarkupWKWebView.
 struct TextView: UIViewRepresentable {
     @Binding var text: NSAttributedString
+    var isEditable: Bool = true
 
     func makeUIView(context: Context) -> UITextView {
-        UITextView()
+        let textView = UIViewType()
+        textView.isEditable = isEditable
+        return textView
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {

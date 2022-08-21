@@ -16,11 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         MarkupEditor.style = .compact
         MarkupEditor.allowLocalImages = true
         //
-        // Here is an example that eliminates the CorrectionToolbar and some
+        // Here is an example that adds in the CorrectionToolbar and some
         // of the FormatToolbar contents. Note that the MarkupEditor adjusts
         // the MarkupMenu properly to correspond to ToolbarContents.custom
         //          let myToolbarContents = ToolbarContents(
-        //              correction: false,  // No undo/redo buttons, but will still show up in Edit menu
+        //              correction: true,  // Put the undo/redo buttons in
         //              // Remove code, strikethrough, subscript, and superscript as formatting options
         //              formatContents: FormatContents(code: false, strike: false, subSuper: false)
         //          )

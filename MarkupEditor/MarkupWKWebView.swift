@@ -26,11 +26,14 @@ import Combine
 /// let us know something happened on the JavaScript side . In this way, we we maintain up-to-date information
 /// as-needed in Swift about what is in the MarkupWKWebView.
 ///
-/// The MarkupWKWebView does the keyboard handling that presents the UIMarkupToolbar using inputAccessoryView.
-/// By default, the MarkupEditor.toolbarPosition is set to .top for larger format devices and to .keyboard for iPhones.
-/// The keyboard handling only presents the MarkupUIMarkupToolbar when MarkupEditor.toolbarPosition = .keyboard.
+/// The MarkupWKWebView does the keyboard handling that presents the MarkupToolbarUIView using inputAccessoryView.
+/// By default, the MarkupEditor.toolbarPosition is set to .top for all devices, but we still need a way to dismiss the keyboard
+/// and to undo/redo on devices that have no keyboard or menu access. Thus, by default, the inputAccessoryView has
+/// a MarkupToolbarUIView containing only the CorrectionToolbar and the hide keyboard button.
+///
 /// If you have your own inputAccessoryView, then you must set MarkupEditor.toolbarPosition to .none and deal with
-/// the MarkupToolbar layout manually.
+/// everything yourself. For example, you might want to leave the CorrectionToolbar in the MarkupToolbarUIView by default,
+/// and provide your own mechanism to dismiss the keyboard.
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
@@ -116,7 +119,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
-        if MarkupEditor.toolbarLocation == .keyboard {
+        if MarkupEditor.toolbarLocation != .none {
             markupToolbarUIView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
             // Use the keyboard notifications to add/remove the markupToolbar as the accessoryView
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -255,12 +258,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     @objc private func keyboardWillHide() {
-        // The keyboardIsAnimating is a hack to prevent out-of-sync hide/show coming in and
-        // leaving the accessoryView showing. There is probably a more elaborate or even
-        // foolproof way to do it by examining the userInfo in the Notification, but I hope
-        // it's not necessary.
         guard !keyboardIsAnimating && inputAccessoryView != nil else { return }
-        markupToolbarUIView?.isHidden = true    // At least we don't have to see it while remove it
+        markupToolbarUIView?.isHidden = true    // At least we don't have to watch while we remove it later
         keyboardIsAnimating = true
     }
     
