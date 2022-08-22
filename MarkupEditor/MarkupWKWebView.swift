@@ -126,7 +126,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
+            //NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChange), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+            //NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidChange), name: UIResponder.keyboardDidChangeFrameNotification, object: nil)
         }
+    }
+
+    @objc func keyboardWillChange() {
+        print("keyboardWillChange")
+    }
+    
+    @objc func keyboardDidChange() {
+        print("keyboardDidChange")
     }
     
     /// Return the bundle that is appropriate for the packaging.
@@ -245,25 +255,32 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // leaving the accessoryView showing. There is probably a more elaborate or even
         // foolproof way to do it by examining the userInfo in the Notification, but I hope
         // it's not necessary.
+        //print("keyboardWillShow")
         guard !keyboardIsAnimating && inputAccessoryView == nil else { return }
         keyboardIsAnimating = true
         markupToolbarUIView?.isHidden = false   // Make sure we can see it
         inputAccessoryView = markupToolbarUIView
+        //print(" done")
     }
     
     @objc private func keyboardDidShow(notification: Notification) {
+        //print("keyboardDidShow")
         guard keyboardIsAnimating else { return }
         keyboardIsAnimating = false
         keyboardIsShowing = true
+        //print(" done")
     }
     
     @objc private func keyboardWillHide() {
+        //print("keyboardWillHide")
         guard !keyboardIsAnimating && inputAccessoryView != nil else { return }
         markupToolbarUIView?.isHidden = true    // At least we don't have to watch while we remove it later
         keyboardIsAnimating = true
+        //print(" done")
     }
     
     @objc private func keyboardDidHide() {
+        //print("keyboardDidHide")
         // Removing the inputAccessoryView seems only to work consistently here.
         // All my attempts to remove it n keyboardWillHide result in random occasions of
         // the accessory being empty but still blocking the screen, perhaps because the
@@ -273,6 +290,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         inputAccessoryView = nil
         keyboardIsAnimating = false
         keyboardIsShowing = false
+        //print(" done")
     }
     
     //MARK: Overrides
@@ -348,29 +366,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     @objc public func showLinkToolbar() {
-        let type = MarkupEditor.showSubToolbar.type
-        if (type == .link) {
-            MarkupEditor.showSubToolbar.type = .none
+        let type = markupToolbarUIView.showSubToolbar.type
+        if type == .link {
+            markupToolbarUIView.showSubToolbar.type = .none
         } else {
-            MarkupEditor.showSubToolbar.type = .link
+            markupToolbarUIView.showSubToolbar.type = .link
         }
     }
     
     @objc public func showImageToolbar() {
-        let type = MarkupEditor.showSubToolbar.type
-        if (type == .image) {
-            MarkupEditor.showSubToolbar.type = .none
+        let type = markupToolbarUIView.showSubToolbar.type
+        if type == .image {
+            markupToolbarUIView.showSubToolbar.type = .none
         } else {
-            MarkupEditor.showSubToolbar.type = .image
+            markupToolbarUIView.showSubToolbar.type = .image
         }
     }
     
     @objc public func showTableToolbar() {
-        let type = MarkupEditor.showSubToolbar.type
-        if (type == .table) {
-            MarkupEditor.showSubToolbar.type = .none
+        let type = markupToolbarUIView.showSubToolbar.type
+        if type == .table {
+            markupToolbarUIView.showSubToolbar.type = .none
         } else {
-            MarkupEditor.showSubToolbar.type = .table
+            markupToolbarUIView.showSubToolbar.type = .table
         }
     }
     

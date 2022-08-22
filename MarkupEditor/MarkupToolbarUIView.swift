@@ -34,14 +34,16 @@ import Combine
 /// then it will work properly and expose the SubToolbar as part of the inputAccessoryView as needed.
 ///
 public class MarkupToolbarUIView: UIView {
+    private var markupToolbar: MarkupToolbar!
     private var markupDelegate: MarkupDelegate?
-    private var showSubToolbarType: AnyCancellable?
+    public var showSubToolbar: ShowSubToolbar { markupToolbar.showSubToolbar }
+    public var showSubToolbarCancellable: AnyCancellable?
     private var subToolbarHeightConstraint: NSLayoutConstraint!
     
     /// The intrinsicContentSize depends on the MarkupEditor.showSubToolbar.type so that there will be enough
     /// height to show the SubToolbar.
     public override var intrinsicContentSize: CGSize {
-        if MarkupEditor.showSubToolbar.type == .none {
+        if markupToolbar.showSubToolbar.type == .none {
             return CGSize(width: frame.width, height: MarkupEditor.toolbarStyle.height()) }
         else {
             return CGSize(width: frame.width, height: 2.0 * MarkupEditor.toolbarStyle.height())
@@ -54,14 +56,13 @@ public class MarkupToolbarUIView: UIView {
     
     public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, subToolbarEdge: Edge = .bottom) {
         super.init(frame: CGRect.zero)
-        observeShowSubToolbarType()
         self.markupDelegate = markupDelegate
         autoresizingMask = .flexibleHeight  // Needed for the intrinsicContentSize change to work
-        let markupToolbar = MarkupToolbar(style, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: withKeyboardButton, withSubToolbar: false)
+        markupToolbar = MarkupToolbar(style, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: withKeyboardButton, withSubToolbar: false)
         let markupToolbarHC = UIHostingController(rootView: markupToolbar)
         addSubview(markupToolbarHC.view)
         markupToolbarHC.view.translatesAutoresizingMaskIntoConstraints = false
-        let subToolbar = SubToolbar(markupDelegate: markupDelegate)
+        let subToolbar = SubToolbar(for: markupToolbar)
         let subToolbarHC = UIHostingController(rootView: subToolbar)
         addSubview(subToolbarHC.view)
         subToolbarHC.view.translatesAutoresizingMaskIntoConstraints = false
@@ -89,6 +90,7 @@ public class MarkupToolbarUIView: UIView {
                 subToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
             ])
         }
+        observeShowSubToolbarType()
     }
     
     public required init(coder: NSCoder) {
@@ -96,7 +98,7 @@ public class MarkupToolbarUIView: UIView {
     }
     
     private func observeShowSubToolbarType() {
-        showSubToolbarType = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
+        showSubToolbarCancellable = markupToolbar.showSubToolbar.$type.sink { [weak self] type in
             guard let self = self, let subToolbarHeightConstraint = self.subToolbarHeightConstraint else { return }
             if type == .none {
                 subToolbarHeightConstraint.constant = 0

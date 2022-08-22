@@ -18,8 +18,8 @@ public struct SubToolbar: View {
         case none
     }
 
-    @State private var toolbarStyle: ToolbarStyle
-    @ObservedObject private var showSubToolbar: ShowSubToolbar = MarkupEditor.showSubToolbar
+    private var toolbarStyle: ToolbarStyle
+    @ObservedObject private var showSubToolbar: ShowSubToolbar
     @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
     private var markupDelegate: MarkupDelegate?
@@ -64,10 +64,10 @@ public struct SubToolbar: View {
         .environmentObject(toolbarStyle)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, markupDelegate: MarkupDelegate? = nil) {
-        let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
-        _toolbarStyle = State(initialValue: toolbarStyle)
-        self.markupDelegate = markupDelegate
+    public init(for markupToolbar: MarkupToolbar) {
+        toolbarStyle = markupToolbar.toolbarStyle
+        markupDelegate = markupToolbar.markupDelegate
+        showSubToolbar = markupToolbar.showSubToolbar
     }
     
 }
@@ -75,10 +75,9 @@ public struct SubToolbar: View {
 struct SubToolbar_Previews: PreviewProvider {
     static var previews: some View {
         VStack(alignment: .leading) {
-            SubToolbar(.compact)
-            SubToolbar(.labeled)
+            SubToolbar(for: MarkupToolbar(.compact))
+            SubToolbar(for: MarkupToolbar(.labeled))
             Spacer()
         }
-        .onAppear { MarkupEditor.showSubToolbar.type = .table }
     }
 }

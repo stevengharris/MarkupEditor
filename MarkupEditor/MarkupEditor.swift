@@ -37,7 +37,6 @@ public struct MarkupEditor {
     public static let selectionState: SelectionState = SelectionState()
     public static let selectImage: SelectImage = SelectImage()
     public static let supportedImageTypes: [UTType] = [.image, .movie]
-    public static let showSubToolbar = ShowSubToolbar()
     public static var style: ToolbarStyle.Style = .labeled {
         didSet {
             toolbarStyle.style = style
@@ -114,7 +113,7 @@ public class SelectImage: ObservableObject {
 /// The observable object containing the type of SubToolbar to show, or nil for none.
 public class ShowSubToolbar: ObservableObject {
     @Published public var type: SubToolbar.ToolbarType
-    
+
     public init(_ type: SubToolbar.ToolbarType? = nil) {
         self.type = type ?? .none
     }

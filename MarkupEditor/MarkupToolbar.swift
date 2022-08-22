@@ -19,13 +19,13 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
-    private let toolbarStyle: ToolbarStyle
+    public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
     public let withSubToolbar: Bool         // Set to false by MarkupToolbarUIView
     public let subToolbarEdge: Edge
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState = MarkupEditor.selectionState
-    @ObservedObject private var showSubToolbar = MarkupEditor.showSubToolbar
+    @ObservedObject public var showSubToolbar: ShowSubToolbar = ShowSubToolbar()
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
     private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
@@ -34,10 +34,10 @@ public struct MarkupToolbar: View {
         //if #available(macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
-        let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && MarkupEditor.showSubToolbar.type != .none
-        let topSubToolbar = withSubToolbar && subToolbarEdge == .top && MarkupEditor.showSubToolbar.type != .none
+        let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && showSubToolbar.type != .none
+        let topSubToolbar = withSubToolbar && subToolbarEdge == .top && showSubToolbar.type != .none
         ZStack(alignment: .topLeading) {
-            if topSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
+            if topSubToolbar { SubToolbar(for: self).offset(y: subToolbarOffset) }
             HStack {
                 ScrollView(.horizontal) {
                     HStack {
@@ -50,7 +50,7 @@ public struct MarkupToolbar: View {
                         }
                         if contents.insert {
                             if contents.leftToolbar || contents.correction { Divider() }
-                            InsertToolbar()
+                            InsertToolbar(for: self)        // for: self because it uses the SubToolbar
                         }
                         if contents.style {
                             if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
@@ -83,7 +83,7 @@ public struct MarkupToolbar: View {
                     Spacer()
                 }
             }
-            if bottomSubToolbar { SubToolbar(markupDelegate: markupDelegate).offset(y: subToolbarOffset) }
+            if bottomSubToolbar { SubToolbar(for: self).offset(y: subToolbarOffset) }
         }
         .frame(height: MarkupEditor.toolbarStyle.height())
         .zIndex(999)

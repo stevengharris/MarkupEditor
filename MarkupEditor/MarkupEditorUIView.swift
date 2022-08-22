@@ -46,7 +46,6 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
         resourcesUrl: URL? = nil,
         id: String? = nil) {
             super.init(frame: CGRect.zero)
-            observeShowSubToolbarType()
             webView = MarkupWKWebView(html: html, resourcesUrl: resourcesUrl, id: "Document", markupDelegate: markupDelegate ?? self)
             // The coordinator acts as the WKScriptMessageHandler and will receive callbacks
             // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>)
@@ -62,6 +61,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             addSubview(webView)
             if MarkupEditor.toolbarLocation == .top {
                 toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .bottom)
+                observeShowSubToolbarType()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
@@ -77,6 +77,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
                 ])
             } else if MarkupEditor.toolbarLocation == .bottom {
                 toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .top)
+                observeShowSubToolbarType()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
@@ -105,7 +106,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
     }
 
     private func observeShowSubToolbarType() {
-        showSubToolbarType = MarkupEditor.showSubToolbar.$type.sink { [weak self] type in
+        showSubToolbarType = toolbar.showSubToolbar.$type.sink { [weak self] type in
             if type == .none {
                 self?.toolbarHeightConstraint?.constant = MarkupEditor.toolbarStyle.height()
             } else {

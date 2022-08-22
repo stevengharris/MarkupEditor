@@ -11,11 +11,14 @@ import SwiftUI
 /// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
-    @ObservedObject private var showSubToolbar: ShowSubToolbar = MarkupEditor.showSubToolbar
+    @ObservedObject private var showSubToolbar: ShowSubToolbar
     let contents: InsertContents = MarkupEditor.toolbarContents.insertContents
     private var showAnyToolbar: Bool { showSubToolbar.type != .none }
     @State private var hoverLabel: Text = Text("Insert")
     public var body: some View {
+        //if #available(macCatalyst 15.0, *) {
+        //    let _ = Self._printChanges()
+        //}
         LabeledToolbar(label: hoverLabel) {
             if contents.link {
                 ToolbarImageButton(
@@ -42,6 +45,10 @@ public struct InsertToolbar: View {
                 )
             }
         }
+    }
+    
+    public init(for markupToolbar: MarkupToolbar) {
+        showSubToolbar = markupToolbar.showSubToolbar
     }
     
     private func showOnly(_ type: SubToolbar.ToolbarType) {
@@ -73,12 +80,12 @@ struct InsertToolbar_Previews: PreviewProvider {
     static var previews: some View {
         VStack(alignment: .leading) {
             HStack {
-                InsertToolbar()
+                InsertToolbar(for: MarkupToolbar(.compact))
                     .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
-                InsertToolbar()
+                InsertToolbar(for: MarkupToolbar(.labeled))
                     .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
