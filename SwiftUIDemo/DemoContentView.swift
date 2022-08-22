@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  DemoContentView.swift
 //  SwiftUIDemo
 //
 //  Created by Steven Harris on 3/9/21.
@@ -16,14 +16,13 @@ import MarkupEditor
 /// 
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
 /// with the FileToolbar.
-struct ContentView: View {
+struct DemoContentView: View {
 
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
-    //@State private var droppingImage: Bool = false
     
     // Note that we specify resourcesUrl when instantiating MarkupEditorView so that we can demonstrate
     // loading of local resources in the edited document. That resource, a png, is packaged along
@@ -94,7 +93,7 @@ struct ContentView: View {
     
 }
 
-extension ContentView: MarkupDelegate {
+extension DemoContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.selectedWebView = view
@@ -125,7 +124,7 @@ extension ContentView: MarkupDelegate {
 
 }
 
-extension ContentView: FileToolbarDelegate {
+extension DemoContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {

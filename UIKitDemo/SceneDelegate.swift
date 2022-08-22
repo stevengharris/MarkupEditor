@@ -20,7 +20,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // No storyboard
         let window = UIWindow(windowScene: windowScene)
         window.backgroundColor = .systemBackground
-        window.rootViewController = ViewController()
+        window.rootViewController = DemoViewController()
         self.window = window
         window.makeKeyAndVisible()
     }

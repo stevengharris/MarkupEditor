@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  DemoViewController.swift
 //  UIKitDemo
 //
 //  Created by Steven Harris on 3/9/21.
@@ -18,7 +18,7 @@ import Combine
 ///
 /// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
 /// with the FileToolbar.
-class ViewController: UIViewController {
+class DemoViewController: UIViewController {
     var stack: UIStackView!
     var webView: MarkupWKWebView!
     /// To see the raw HTML
@@ -139,7 +139,7 @@ class ViewController: UIViewController {
 
 }
 
-extension ViewController: MarkupDelegate {
+extension DemoViewController: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.observedWebView.selectedWebView = view
@@ -155,18 +155,6 @@ extension ViewController: MarkupDelegate {
         print("Image added from \(url.path)")
     }
     
-    func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
-        true
-    }
-    
-    func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
-        UIDropProposal(operation: .copy)
-    }
-    
-    func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
-        print("Dropping")
-    }
-    
     /// Override the default behavior for when the MarkupEditor encounters an error.
     ///
     /// In the event of a MUError.Alert, play an alert sound.
@@ -177,7 +165,7 @@ extension ViewController: MarkupDelegate {
     
 }
 
-extension ViewController: FileToolbarDelegate {
+extension DemoViewController: FileToolbarDelegate {
     
     func newDocument(handler: ((URL?)->Void)? = nil) {
         selectedWebView?.emptyDocument() {
@@ -200,7 +188,7 @@ extension ViewController: FileToolbarDelegate {
     
 }
 
-extension ViewController: UIDocumentPickerDelegate {
+extension DemoViewController: UIDocumentPickerDelegate {
     
     /// Handle the two cases for the document picker: selecting a local image and opening an existing html document.
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {

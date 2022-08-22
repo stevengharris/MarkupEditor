@@ -6811,6 +6811,7 @@ const _deleteSelectedResizableImage = function(direction, undoable=true) {
     _showCaret();
     _callback('input');
     _callback('selectionChange');
+    _callback(JSON.stringify({'messageType' : 'deletedImage', 'src' : src }))
 };
 
 /**
