@@ -29,12 +29,12 @@ public struct MarkupEditor {
             toolbarContents.rightToolbar = rightToolbar != nil
         }
     }
-    public static let observedWebView: ObservedWebView = ObservedWebView()
+    public static let observedWebView = ObservedWebView()
     public static var selectedWebView: MarkupWKWebView? {
         get { observedWebView.selectedWebView }
         set { observedWebView.selectedWebView = newValue }
     }
-    public static let selectionState: SelectionState = SelectionState()
+    public static let selectionState = SelectionState()
     public static let selectImage: SelectImage = SelectImage()
     public static let supportedImageTypes: [UTType] = [.image, .movie]
     public static var style: ToolbarStyle.Style = .labeled {
@@ -110,7 +110,7 @@ public class SelectImage: ObservableObject {
     }
 }
 
-/// The observable object containing the type of SubToolbar to show, or nil for none.
+/// The observable object containing the type of SubToolbar to show.
 public class ShowSubToolbar: ObservableObject {
     @Published public var type: SubToolbar.ToolbarType
 

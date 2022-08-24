@@ -310,7 +310,11 @@ class ResizableImage {
         this._imageContainer = null;
         this._startEvent = null;
         this._startDimensions = {};
-        this._preventNextClick = false;  // Flag to avoid click after mouseup on resize
+        this._preventNextClick = false;     // Flag to avoid click after mouseup on resize
+        this._startDx = -1;                 // Delta x between the two touches for pinching; -1 = not pinching
+        this._startDy = -1;                 // Delta y between the two touches for pinching; -1 = not pinching
+        this._touchCache = [];              // Touches that are active, max 2, min 0
+        this._touchStartCache = [];         // Touches at the start of a pinch gesture, max 2, min 0
     };
     
     get isSelected() {
@@ -389,6 +393,7 @@ class ResizableImage {
      * resizableImage, while in the up/down it just passes thru after deselecting.
      *
      * Backspace and Delete do what you expect: delete the imageElement itself.
+     *
      */
     handleInput(ev) {
         // For metaKeys, handle copy/cut specially; otherwise pass thru.
@@ -453,6 +458,203 @@ class ResizableImage {
     };
     
     /**
+     * Add touch event listeners to support pinch resizing
+     *
+     * Listeners are added when the resizableImage is selected.
+     */
+    addPinchGestureEvents() {
+        document.addEventListener('touchstart', resizableImage.handleTouchStart);
+        document.addEventListener('touchmove', resizableImage.handleTouchMove);
+        document.addEventListener('touchend', resizableImage.handleTouchEnd);
+        document.addEventListener('touchcancel', resizableImage.handleTouchEnd);
+    };
+    
+    /**
+     * Remove event listeners supporting pinch resizing
+     *
+     * Listeners are removed when the resizableImage is deselected.
+     */
+    removePinchGestureEvents() {
+        document.removeEventListener('touchstart', resizableImage.handleTouchStart);
+        document.removeEventListener('touchmove', resizableImage.handleTouchMove);
+        document.removeEventListener('touchend', resizableImage.handleTouchEnd);
+        document.removeEventListener('touchcancel', resizableImage.handleTouchEnd);
+    };
+    
+    /**
+     * A touch started while the resizableImage was selected.
+     * Cache the touch to support 2-finger gestures only.
+     */
+    handleTouchStart(ev) {
+        ev.preventDefault();
+        if (resizableImage._touchCache.length < 2) {
+            const touch = ev.changedTouches.length > 0 ? ev.changedTouches[0] : null;
+            if (touch) {
+                resizableImage._touchCache.push(touch);
+                resizableImage._touchStartCache.push(touch);
+            };
+        };
+    };
+    
+    /**
+     * A touch moved while the resizableImage was selected.
+     *
+     * If this is a touch we are tracking already, then replace it in the touchCache.
+     *
+     * If we only have one finger down, the update the startCache for it, since we are
+     * moving a finger but haven't start pinching.
+     *
+     * Otherwise, we are pinching and need to resize.
+     */
+    handleTouchMove(ev) {
+        ev.preventDefault();
+        const touch = resizableImage.touchMatching(ev);
+        if (touch) {
+            // Replace the touch in the touchCache with this touch
+            resizableImage.replaceTouch(touch, resizableImage._touchCache)
+            if (resizableImage._touchCache.length < 2) {
+                // If we are only touching a single place, then replace it in the touchStartCache as it moves
+                resizableImage.replaceTouch(touch, resizableImage._touchStartCache);
+            } else {
+                // Otherwise, we are touching two places and are pinching
+                resizableImage.startPinch();   // A no-op if we have already started
+                resizableImage.pinch();
+            };
+        }
+    };
+    
+    /**
+     * A touch ended while the resizableImage was selected.
+     *
+     * Remove the touch from the caches, and end the pinch operation.
+     * We might still have a touch point down when one ends, but the pinch operation
+     * itself ends at that time.
+     */
+    handleTouchEnd(ev) {
+        const touch = resizableImage.touchMatching(ev);
+        if (touch) {
+            const touchIndex = resizableImage.indexOfTouch(touch, resizableImage._touchCache);
+            if (touchIndex !== null) {
+                resizableImage._touchCache.splice(touchIndex, 1);
+                resizableImage._touchStartCache.splice(touchIndex, 1);
+                resizableImage.endPinch();
+            };
+        };
+    };
+    
+    /**
+     * Return the touch in ev.changedTouches that matches what's in the touchCache, or null if it isn't there
+     */
+    touchMatching(ev) {
+        const changedTouches = ev.changedTouches;
+        const touchCache = resizableImage._touchCache;
+        for (let i = 0; i < touchCache.length; i++) {
+            for (let j = 0; j < changedTouches.length; j++) {
+                if (touchCache[i].identifier === changedTouches[j].identifier) {
+                    return changedTouches[j];
+                };
+            };
+        };
+        return null;
+    };
+    
+    /**
+     * Return the index into touchArray of touch based on identifier, or null if not found
+     *
+     * Note: Due to JavaScript idiocy, must always check return value against null, because
+     * indices of 1 and 0 are true and false, too. Fun!
+     */
+    indexOfTouch(touch, touchArray) {
+        for (let i = 0; i < touchArray.length; i++) {
+            if (touch.identifier === touchArray[i].identifier) {
+                return i;
+            };
+        };
+        return null;
+    };
+    
+    /**
+     * Replace the touch in touchArray if it has the same identifier, else do nothing
+     */
+    replaceTouch(touch, touchArray) {
+        const i = resizableImage.indexOfTouch(touch, touchArray);
+        if (i !== null) { touchArray[i] = touch }
+    };
+    
+    /**
+     * We received the touchmove event and need to initialize things for pinching.
+     *
+     * If the resizableImage._startDx is -1, then we need to initialize; otherwise,
+     * a call to startPinch is a no-op.
+     *
+     * The initialization captures a new startDx and startDy that track the distance
+     * between the two touch points when pinching starts. We also track the startDimensions,
+     * because scaling is done relative to it, and we need to know it for undo.
+     */
+    startPinch() {
+        if (resizableImage._startDx === -1) {
+            const touchStartCache = resizableImage._touchStartCache;
+            resizableImage._startDx = Math.abs(touchStartCache[0].pageX - touchStartCache[1].pageX);
+            resizableImage._startDy = Math.abs(touchStartCache[0].pageY - touchStartCache[1].pageY);
+            resizableImage._startDimensions = resizableImage.dimensionsFrom(resizableImage._imageElement);
+        };
+    };
+
+    /**
+     * Pinch the resizableImage based on the information in the touchCache and the startDx/startDy
+     * we captured when pinching started. The touchCache has the two touches that are active.
+     */
+    pinch() {
+        // Here currentDx and currentDx are the current distance between the two
+        // pointers, which have to be compared to the start distances to determine
+        // if we are zooming in or out
+        const touchCache = resizableImage._touchCache;
+        const x0 = touchCache[0].pageX
+        const y0 = touchCache[0].pageY
+        const x1 = touchCache[1].pageX
+        const y1 = touchCache[1].pageY
+        const currentDx = Math.abs(x1 - x0);
+        const currentDy = Math.abs(y1 - y0);
+        const dx = currentDx - resizableImage._startDx;
+        const dy = currentDy - resizableImage._startDy;
+        const scaleH = Math.abs(dy) > Math.abs(dx);
+        const w0 = resizableImage._startDimensions.width;
+        const h0 = resizableImage._startDimensions.height;
+        const ratio = w0 / h0;
+        let width, height;
+        if (scaleH) {
+            height = Math.max(h0 + dy, minImageSize);
+            width = Math.floor(height * ratio);
+        } else {
+            width = Math.max(w0 + dx, minImageSize);
+            height = Math.floor(width / ratio);
+        };
+        resizableImage._imageElement.setAttribute('width', width);
+        resizableImage._imageElement.setAttribute('height', height);
+    };
+    
+    /**
+     * The pinch operation has ended because we stopped touching one of the two touch points.
+     *
+     * If we are only touching one point, then endPinch is a no-op. For example, if the
+     * resizableImage is selected and you touch and release at a point, endPinch gets called
+     * but does nothing. Similarly for lifting the second touch point after releasing the first.
+     *
+     * Track the startDimensions so we can undo. The same undo is performed whether the resizing
+     * was handled via touch or the image handles.
+     */
+    endPinch() {
+        if (resizableImage._touchCache.length === 1) {
+            resizableImage._startDx = -1;
+            resizableImage._startDy = -1;
+            const startDimensions = resizableImage.startDimensions;
+            const undoerData = _undoerData('resizeImage', {imageElement: resizableImage.imageElement, startDimensions: startDimensions});
+            resizableImage._startDimensions = resizableImage.currentDimensions;
+            undoer.push(undoerData);
+        };
+    };
+   
+    /**
      * Start resize on mousedown in this resizableImage
      */
     startResize(ev) {
@@ -501,7 +703,6 @@ class ResizableImage {
             dy = y - y0;
         } else {
             // If not in a handle, treat movement like resize-handle-ne (upper right)
-            // This also makes it easier to resize on an iDevice
             dx = x - x0;
             dy = y0 - y;
         }
@@ -549,6 +750,7 @@ class ResizableImage {
         seHandle.setAttribute('class', 'resize-handle resize-handle-se');
         imageContainer.appendChild(seHandle);
         imageContainer.addEventListener('mousedown', this.startResize);
+        this.addPinchGestureEvents();
         this._imageElement = imageElement;
         this._imageContainer = imageContainer;
         this._startDimensions = this.dimensionsFrom(imageElement);
@@ -563,6 +765,7 @@ class ResizableImage {
         this._imageContainer.parentNode.insertBefore(this._imageElement, this._imageContainer.nextSibling);
         // Then delete the imageContainer. But since we moved the imageElement out, it will still be in the document.
         this._deleteImageContainer();
+        this.removePinchGestureEvents();
     };
     
     /**
