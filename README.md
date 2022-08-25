@@ -73,7 +73,7 @@ To avoid spurious logging from the underlying `WKWebView` in the Xcode console, 
 
 ### SwiftUI Usage
 
-In the simplest case, just use the `MarkupEditorView` like you would any other SwiftUI view. By default, it will place a `MarkupToolbar` above a `UIViewRepresentable` that contains the `MarkupWKWebView`, which is where you do your editing. Your ContentView can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications. The `MarkupEditorView` acts as the `MarkupDelegate` if you don't specify one yourself.
+In the simplest case, just use the `MarkupEditorView` like you would any other SwiftUI view. By default, on all but phone devices, it will place a `MarkupToolbar` above a `UIViewRepresentable` that contains the `MarkupWKWebView`, which is where you do your editing. On phone devices, it will make the toolbar the `inputAccessoryView` for the `MarkupWKWebView`, giving you access to the toolbar when the keyboard shows up. Your ContentView can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications. The `MarkupEditorView` acts as the `MarkupDelegate` if you don't specify one yourself.
 
 ```
 import SwiftUI
@@ -92,7 +92,7 @@ struct SimplestContentView: View {
 
 ### UIKit Usage
 
-In the simplest case, just use the `MarkupEditorUIView` like you would any other UIKit view. By default, it will place a `MarkupToolbarUIView` above a `MarkupWKWebView`, which is where you do your editing. Your ViewController can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications.  The `MarkupEditorUIView` acts as the `MarkupDelegate` if you don't specify one yourself.
+In the simplest case, just use the `MarkupEditorUIView` like you would any other UIKit view. By default, on all but phone devices, it will place a `MarkupToolbarUIView` above a `MarkupWKWebView`, which is where you do your editing. On phone devices, it will make the toolbar the `inputAccessoryView` for the `MarkupWKWebView`, giving you access to the toolbar when the keyboard shows up. Your ViewController can act as the `MarkupDelegate`, which is almost certainly what you want to do in all but the simplest applications.  The `MarkupEditorUIView` acts as the `MarkupDelegate` if you don't specify one yourself.
 
 ```
 import UIKit

@@ -72,6 +72,7 @@ public struct MarkupToolbar: View {
                 }
                 .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
                 if withKeyboardButton {
+                    Spacer()
                     Divider()
                     ToolbarImageButton(
                         systemName: "keyboard.chevron.compact.down",

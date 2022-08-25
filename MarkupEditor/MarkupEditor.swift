@@ -73,13 +73,17 @@ public struct MarkupEditor {
     public enum ToolbarLocation {
         case top
         case bottom
+        case keyboard
         case none
         
         /// Always return .top, but logic left here in case it needs more specialization later
         static var automatic: ToolbarLocation {
-            if ProcessInfo.processInfo.isMacCatalystApp  {
+            switch UIDevice.current.userInterfaceIdiom {
+            case .mac, .pad:
                 return .top
-            } else {
+            case .phone:
+                return .keyboard
+            default:
                 return .top
             }
         }

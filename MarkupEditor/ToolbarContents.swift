@@ -57,6 +57,22 @@ public class ToolbarContents {
         self.formatContents = formatContents
         self.tableContents = tableContents
     }
+    
+    public static func from(_ toolbarContents: ToolbarContents) -> ToolbarContents{
+        ToolbarContents(
+            leftToolbar: toolbarContents.leftToolbar,
+            correction: toolbarContents.correction,
+            insert: toolbarContents.insert,
+            style: toolbarContents.style,
+            format: toolbarContents.format,
+            rightToolbar: toolbarContents.rightToolbar,
+            insertContents: toolbarContents.insertContents,
+            styleContents: toolbarContents.styleContents,
+            formatContents: toolbarContents.formatContents,
+            tableContents: toolbarContents.tableContents
+        )
+    }
+    
 }
 
 /// Identify which of the InsertToolbar items will show up
