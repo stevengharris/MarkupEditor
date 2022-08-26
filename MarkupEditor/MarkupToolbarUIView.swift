@@ -34,7 +34,7 @@ import Combine
 /// then it will work properly and expose the SubToolbar as part of the inputAccessoryView as needed.
 ///
 public class MarkupToolbarUIView: UIView {
-    private var markupToolbar: MarkupToolbar!
+    public var markupToolbar: MarkupToolbar!
     private var markupDelegate: MarkupDelegate?
     public var showSubToolbar: ShowSubToolbar { markupToolbar.showSubToolbar }
     public var showSubToolbarCancellable: AnyCancellable?
@@ -109,10 +109,10 @@ public class MarkupToolbarUIView: UIView {
         }
     }
     
-    /// Return a MarkupToolbarUIView that contains only the CorrectionToolbar and the button to hide the keyboard.
+    /// Return a MarkupToolbarUIView that is compact, containing the current shared ToolbarContents, but makes sure keyboardButton is present.
     public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbarUIView {
-        let toolbarContents = ToolbarContents(leftToolbar: false, correction: true, insert: false, style: false, format: false, rightToolbar: false)
-        return MarkupToolbarUIView(.compact, contents: toolbarContents, markupDelegate: markupDelegate, withKeyboardButton: true, subToolbarEdge: .top)
+        let contents = ToolbarContents.from(ToolbarContents.shared)
+        return MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, subToolbarEdge: .top)
     }
     
 }

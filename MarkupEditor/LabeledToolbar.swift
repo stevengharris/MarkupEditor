@@ -28,7 +28,7 @@ public struct LabeledToolbar<Content: View>: View {
                 HStack (alignment: .bottom) {
                     content
                 }
-                .padding([.bottom], 1)
+                .padding([.bottom], 2)
                 // The following fixes a problem with the individual buttons only being partially
                 // tappable, while preserving the .onHover behavior.
                 .gesture(TapGesture(), including: .subviews)
@@ -37,6 +37,7 @@ public struct LabeledToolbar<Content: View>: View {
             HStack(alignment: .center) {
                 content
             }
+            .padding([.top, .bottom], 2)
             // The following fixes a problem with the individual buttons only being partially
             // tappable, while preserving the .onHover behavior.
             .gesture(TapGesture(), including: .subviews)

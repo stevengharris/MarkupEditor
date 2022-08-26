@@ -26,16 +26,24 @@ public class ToolbarStyle: ObservableObject {
     public func height() -> CGFloat {
         switch style {
         case .compact:
-            return 30
+            if UIDevice.current.userInterfaceIdiom == .mac {
+                return 30
+            } else {
+                return 40
+            }
         case .labeled:
-            return 47
+            return 48
         }
     }
     
     public func buttonHeight() -> CGFloat {
         switch style {
         case .compact:
-            return 24
+            if UIDevice.current.userInterfaceIdiom == .mac {
+                return 24
+            } else {
+                return 34
+            }
         case .labeled:
             return 30
         }
@@ -44,7 +52,11 @@ public class ToolbarStyle: ObservableObject {
     public static func symbolScale(for style: Style) -> UIImage.SymbolScale {
         switch style {
         case .compact:
-            return .medium
+            if UIDevice.current.userInterfaceIdiom == .mac {
+                return .medium
+            } else {
+                return .large
+            }
         case .labeled:
             return .large
         }

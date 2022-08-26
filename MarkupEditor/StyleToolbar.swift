@@ -44,7 +44,6 @@ public struct StyleToolbar: View {
                     .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
             }
             .menuStyle(BorderlessButtonMenuStyle())
-            .frame(width: 88, height: toolbarStyle.buttonHeight())
             .overlay(
                 RoundedRectangle(
                     cornerRadius: 3,
@@ -52,6 +51,7 @@ public struct StyleToolbar: View {
                 )
                 .stroke(Color.accentColor)
             )
+            .frame(width: 88, height: toolbarStyle.buttonHeight())
             .contentShape(Rectangle())
             .disabled(!selectionState.canStyle)
             if contents.list || contents.dent {

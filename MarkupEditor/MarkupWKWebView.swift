@@ -27,13 +27,12 @@ import Combine
 /// as-needed in Swift about what is in the MarkupWKWebView.
 ///
 /// The MarkupWKWebView does the keyboard handling that presents the MarkupToolbarUIView using inputAccessoryView.
-/// By default, the MarkupEditor.toolbarPosition is set to .top for all devices, but we still need a way to dismiss the keyboard
-/// and to undo/redo on devices that have no keyboard or menu access. Thus, by default, the inputAccessoryView has
-/// a MarkupToolbarUIView containing only the CorrectionToolbar and the hide keyboard button.
+/// By default, the MarkupEditor.toolbarPosition is set to .top for all but phone, but we still need a way to dismiss the keyboard
+/// on devices that have no keyboard or menu access. Thus, by default, the inputAccessoryView has the MarkupToolbar.shared,
+/// plus the hide keyboard button.
 ///
 /// If you have your own inputAccessoryView, then you must set MarkupEditor.toolbarPosition to .none and deal with
-/// everything yourself. For example, you might want to leave the CorrectionToolbar in the MarkupToolbarUIView by default,
-/// and provide your own mechanism to dismiss the keyboard.
+/// everything yourself.
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
@@ -63,8 +62,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView?
     private var markupToolbarUIView: MarkupToolbarUIView!
-    private var keyboardIsAnimating: Bool = false
-    private var keyboardIsShowing: Bool = false
+    private var markupToolbarHeightConstraint: NSLayoutConstraint!
+    private var showSubToolbarType: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
@@ -119,24 +118,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
-        if MarkupEditor.toolbarLocation != .none {
+        // Set up the accessoryView to be a MarkupToolbarUIView only if toolbarLocation == .keyboard
+        if MarkupEditor.toolbarLocation == .keyboard {
             markupToolbarUIView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
-            // Use the keyboard notifications to add/remove the markupToolbar as the accessoryView
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+            markupToolbarUIView.translatesAutoresizingMaskIntoConstraints = false
+            markupToolbarUIView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            markupToolbarHeightConstraint = NSLayoutConstraint(item: markupToolbarUIView!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
+            markupToolbarHeightConstraint.isActive = true
+            observeShowSubToolbarType()
+            accessoryView = markupToolbarUIView
+            // Use the keyboard notifications to resize the markupToolbar as the accessoryView
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
-            //NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChange), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
-            //NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidChange), name: UIResponder.keyboardDidChangeFrameNotification, object: nil)
         }
-    }
-
-    @objc func keyboardWillChange() {
-        print("keyboardWillChange")
-    }
-    
-    @objc func keyboardDidChange() {
-        print("keyboardDidChange")
     }
     
     /// Return the bundle that is appropriate for the packaging.
@@ -250,47 +244,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Keyboard handling and accessoryView setup
 
-    @objc private func keyboardWillShow(notification: Notification) {
-        // The keyboardIsAnimating is a hack to prevent out-of-sync hide/show coming in and
-        // leaving the accessoryView showing. There is probably a more elaborate or even
-        // foolproof way to do it by examining the userInfo in the Notification, but I hope
-        // it's not necessary.
-        //print("keyboardWillShow")
-        guard !keyboardIsAnimating && inputAccessoryView == nil else { return }
-        keyboardIsAnimating = true
-        markupToolbarUIView?.isHidden = false   // Make sure we can see it
-        inputAccessoryView = markupToolbarUIView
-        //print(" done")
-    }
-    
-    @objc private func keyboardDidShow(notification: Notification) {
-        //print("keyboardDidShow")
-        guard keyboardIsAnimating else { return }
-        keyboardIsAnimating = false
-        keyboardIsShowing = true
-        //print(" done")
-    }
-    
-    @objc private func keyboardWillHide() {
-        //print("keyboardWillHide")
-        guard !keyboardIsAnimating && inputAccessoryView != nil else { return }
-        markupToolbarUIView?.isHidden = true    // At least we don't have to watch while we remove it later
-        keyboardIsAnimating = true
-        //print(" done")
+    @objc func keyboardWillShow() {
+        markupToolbarHeightConstraint.constant = toolbarHeight()
     }
     
     @objc private func keyboardDidHide() {
-        //print("keyboardDidHide")
-        // Removing the inputAccessoryView seems only to work consistently here.
-        // All my attempts to remove it n keyboardWillHide result in random occasions of
-        // the accessory being empty but still blocking the screen, perhaps because the
-        // height doesn't get adjusted properly, I am not sure.
-        guard keyboardIsAnimating else { return }
-        inputAccessoryView?.removeFromSuperview()
-        inputAccessoryView = nil
-        keyboardIsAnimating = false
-        keyboardIsShowing = false
-        //print(" done")
+        markupToolbarHeightConstraint.constant = 0
+    }
+    
+    private func toolbarHeight(_ type: SubToolbar.ToolbarType? = nil) -> CGFloat {
+        let subToolbarType = type ?? markupToolbarUIView.markupToolbar.showSubToolbar.type
+        if subToolbarType == .none {
+            return MarkupEditor.toolbarStyle.height()
+        } else {
+            return 2.0 * MarkupEditor.toolbarStyle.height()
+        }
+    }
+    
+    private func observeShowSubToolbarType() {
+        showSubToolbarType = markupToolbarUIView?.markupToolbar.showSubToolbar.$type.sink { [weak self] type in
+            guard let self = self else { return }
+            self.markupToolbarHeightConstraint.constant = self.toolbarHeight(type)
+        }
     }
     
     //MARK: Overrides
@@ -332,13 +307,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Responder Handling
     
-    public override var canBecomeFirstResponder: Bool {
-        return hasFocus
-    }
+    // The following two overrides were removed because (perhaps among other weirdnesses)
+    // they cause the keyboardWillShow event to be fired too many times, and sometimes when
+    // it isn't going to show (such as on rotation while no keyboard is showing).
+    //public override var canBecomeFirstResponder: Bool {
+    //    return hasFocus
+    //}
     
-    public override var canResignFirstResponder: Bool {
-        return !hasFocus
-    }
+    //public override var canResignFirstResponder: Bool {
+    //    return !hasFocus
+    //}
     
     public override var inputAccessoryView: UIView? {
         get { accessoryView }

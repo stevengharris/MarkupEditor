@@ -28,7 +28,7 @@ public struct MarkupToolbar: View {
     @ObservedObject public var showSubToolbar: ShowSubToolbar = ShowSubToolbar()
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
-    private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
+    private var subToolbarOffset: CGFloat { (subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height()) + 2 }
     
     public var body: some View {
         //if #available(macCatalyst 15.0, *) {
@@ -72,6 +72,7 @@ public struct MarkupToolbar: View {
                 }
                 .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
                 if withKeyboardButton {
+                    Spacer()
                     Divider()
                     ToolbarImageButton(
                         systemName: "keyboard.chevron.compact.down",
