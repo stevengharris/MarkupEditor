@@ -12,9 +12,6 @@ import SwiftUI
 ///
 /// These RoundedRect buttons show text and outline in activeColor (.accentColor by default), with the
 /// backgroundColor of UIColor.systemBackground. When active, the text and background switch.
-/// The buttons should look nearly identical on for UIDevice.current.userInterfaceIdiom == .mac and .pad,
-/// but the Image passed-in using ViewBuilder should be set using Image.forToolbar() to have the image
-/// sizes match.
 public struct ToolbarImageButton<Content: View>: View {
     private var toolbarStyle: ToolbarStyle = MarkupEditor.toolbarStyle
     private let image: Content
@@ -53,7 +50,7 @@ public struct ToolbarImageButton<Content: View>: View {
         if systemName == nil {
             return AnyView(image)
         } else {
-            return AnyView(Image.forToolbar(systemName: systemName!, style: toolbarStyle.style))
+            return AnyView(Image(systemName: systemName!).imageScale(.large))
         }
     }
 

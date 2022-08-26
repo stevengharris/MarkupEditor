@@ -28,7 +28,7 @@ public struct MarkupToolbar: View {
     @ObservedObject public var showSubToolbar: ShowSubToolbar = ShowSubToolbar()
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
-    private var subToolbarOffset: CGFloat { subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height() }
+    private var subToolbarOffset: CGFloat { (subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height()) + 2 }
     
     public var body: some View {
         //if #available(macCatalyst 15.0, *) {

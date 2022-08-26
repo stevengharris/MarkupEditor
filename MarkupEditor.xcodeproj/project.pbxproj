@@ -48,7 +48,6 @@
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
-		AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5EEF04264061B800B111A1 /* Image+Extensions.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
 		AA652949260E8114000674B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
@@ -169,7 +168,6 @@
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA52F320280634B200EEC655 /* RedoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedoTests.swift; sourceTree = "<group>"; };
-		AA5EEF04264061B800B111A1 /* Image+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Image+Extensions.swift"; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
 		AA652942260E8114000674B7 /* SwiftUIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -276,7 +274,6 @@
 		AA0DDC6928AEA8C70081B869 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				AA5EEF04264061B800B111A1 /* Image+Extensions.swift */,
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
 				AAA1B0962889D2F000303721 /* View+Extensions.swift */,
 			);
@@ -784,7 +781,6 @@
 				AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */,
 				AA0DDC6628AE91920081B869 /* MarkupWKWebViewRepresentable.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
-				AA5EEF05264061B800B111A1 /* Image+Extensions.swift in Sources */,
 				AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */,
 				AA408B2B2616685B00CAE8B9 /* SelectionState.swift in Sources */,
 				AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */,

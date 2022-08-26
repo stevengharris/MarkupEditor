@@ -32,7 +32,7 @@ public class ToolbarStyle: ObservableObject {
                 return 40
             }
         case .labeled:
-            return 47
+            return 48
         }
     }
     

@@ -34,7 +34,7 @@ import Combine
 /// then it will work properly and expose the SubToolbar as part of the inputAccessoryView as needed.
 ///
 public class MarkupToolbarUIView: UIView {
-    private var markupToolbar: MarkupToolbar!
+    public var markupToolbar: MarkupToolbar!
     private var markupDelegate: MarkupDelegate?
     public var showSubToolbar: ShowSubToolbar { markupToolbar.showSubToolbar }
     public var showSubToolbarCancellable: AnyCancellable?
