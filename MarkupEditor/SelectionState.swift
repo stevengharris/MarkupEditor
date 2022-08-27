@@ -92,6 +92,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     public var canInsert: Bool { isInsertable }
     public var canLink: Bool { !isInLink && selection != nil }
     public var canFormat: Bool { true }
+    public var canCopyCut: Bool { selection != nil || isInImage }
     
     // CustomStringConvertible conformance
     public var description: String {

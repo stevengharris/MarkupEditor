@@ -109,10 +109,15 @@ public class MarkupToolbarUIView: UIView {
         }
     }
     
+    public func makeManaged() -> MarkupToolbarUIView {
+        markupToolbar = markupToolbar.makeManaged()
+        return self
+    }
+    
     /// Return a MarkupToolbarUIView that is compact, containing the current shared ToolbarContents, but makes sure keyboardButton is present.
     public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbarUIView {
         let contents = ToolbarContents.from(ToolbarContents.shared)
-        return MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, subToolbarEdge: .top)
+        return MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, subToolbarEdge: .top).makeManaged()
     }
     
 }

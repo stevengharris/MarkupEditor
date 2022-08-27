@@ -6790,7 +6790,7 @@ MU.insertImage = function(src, alt, undoable=true) {
  * @param {Boolean}             undoable    True if we should push undoerData onto the undo stack.
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
-    if (!resizableImage.isSelected) { return };   // Can't modify an iage that isn't selected
+    if (!resizableImage.isSelected) { return };   // Can't modify an image that isn't selected
     const img = resizableImage.imageElement;
     const existingSrc = img.getAttribute('src');
     const existingAlt = img.getAttribute('alt');
@@ -6815,6 +6815,14 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
         _setSrc(newImg, src);   // Will make newImg selected and call input/selectionChange
     };
     //TODO: Make modifyImage properly undoable again
+};
+
+
+MU.cutImage = function() {
+    if (!resizableImage.isSelected) { return };   // Can't cut an image that isn't selected
+    resizableImage.copyToClipboard();
+    resizableImage.deleteImage();
+    _showCaret();
 };
 
 const _setSrc = function(img, src) {
