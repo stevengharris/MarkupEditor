@@ -19,6 +19,7 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
+    public static var managed: MarkupToolbar?   // The toolbar created when using MarkupEditorView or MarkupEditorUIView
     public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
     public let withSubToolbar: Bool         // Set to false by MarkupToolbarUIView
@@ -99,6 +100,11 @@ public struct MarkupToolbar: View {
         self.withSubToolbar = withSubToolbar
         self.subToolbarEdge = subToolbarEdge
         self.markupDelegate = markupDelegate
+    }
+    
+    public func makeManaged() -> MarkupToolbar {
+        MarkupToolbar.managed = self
+        return self
     }
 
 }

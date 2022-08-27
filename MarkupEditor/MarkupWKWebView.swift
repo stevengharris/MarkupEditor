@@ -326,47 +326,81 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         guard selectionState.valid else { return false }
-        switch action {
-        case #selector(indent), #selector(outdent):
-            return selectionState.canDent
-        case #selector(bullets), #selector(numbers):
-            return selectionState.canList
-        case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
-            return selectionState.canStyle
-        case #selector(showLinkToolbar), #selector(showImageToolbar), #selector(showTableToolbar):
-            return true     // Toggles off and on
-        case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
-            return selectionState.canFormat
-        default:
-            //print("Unknown action: \(action)")
-            return false
+        // One day we will be able to do this at a case level https://forums.swift.org/t/switch-and-avaliable/39528
+        // Until then, don't forget to make changes in both switch statements!!!
+        if #available(macCatalyst 15.0, *) {
+            switch action {
+            case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
+                return selectionState.canCopyCut
+            case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
+                return pasteableType() != nil
+            case #selector(indent), #selector(outdent):
+                return selectionState.canDent
+            case #selector(bullets), #selector(numbers):
+                return selectionState.canList
+            case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
+                return selectionState.canStyle
+            case #selector(showLinkToolbar), #selector(showImageToolbar), #selector(showTableToolbar):
+                return true     // Toggles off and on
+            case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
+                return selectionState.canFormat
+            default:
+                //print("Unknown action: \(action)")
+                return false
+            }
+        } else {
+            switch action {
+            case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
+                return selectionState.canCopyCut
+            case #selector(UIResponderStandardEditActions.paste(_:)):
+                return pasteableType() != nil
+            case #selector(indent), #selector(outdent):
+                return selectionState.canDent
+            case #selector(bullets), #selector(numbers):
+                return selectionState.canList
+            case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
+                return selectionState.canStyle
+            case #selector(showLinkToolbar), #selector(showImageToolbar), #selector(showTableToolbar):
+                return true     // Toggles off and on
+            case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
+                return selectionState.canFormat
+            default:
+                //print("Unknown action: \(action)")
+                return false
+            }
         }
     }
     
     @objc public func showLinkToolbar() {
-        let type = markupToolbarUIView.showSubToolbar.type
-        if type == .link {
-            markupToolbarUIView.showSubToolbar.type = .none
+        guard let toolbar = MarkupToolbar.managed ?? markupToolbarUIView?.markupToolbar else {
+            return
+        }
+        if toolbar.showSubToolbar.type == .link {
+            toolbar.showSubToolbar.type = .none
         } else {
-            markupToolbarUIView.showSubToolbar.type = .link
+            toolbar.showSubToolbar.type = .link
         }
     }
     
     @objc public func showImageToolbar() {
-        let type = markupToolbarUIView.showSubToolbar.type
-        if type == .image {
-            markupToolbarUIView.showSubToolbar.type = .none
+        guard let toolbar = MarkupToolbar.managed ?? markupToolbarUIView?.markupToolbar else {
+            return
+        }
+        if toolbar.showSubToolbar.type == .image {
+            toolbar.showSubToolbar.type = .none
         } else {
-            markupToolbarUIView.showSubToolbar.type = .image
+            toolbar.showSubToolbar.type = .image
         }
     }
     
     @objc public func showTableToolbar() {
-        let type = markupToolbarUIView.showSubToolbar.type
-        if type == .table {
-            markupToolbarUIView.showSubToolbar.type = .none
+        guard let toolbar = MarkupToolbar.managed ?? markupToolbarUIView?.markupToolbar else {
+            return
+        }
+        if toolbar.showSubToolbar.type == .table {
+            toolbar.showSubToolbar.type = .none
         } else {
-            markupToolbarUIView.showSubToolbar.type = .table
+            toolbar.showSubToolbar.type = .table
         }
     }
     

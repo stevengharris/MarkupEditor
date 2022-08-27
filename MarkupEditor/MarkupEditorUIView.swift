@@ -60,7 +60,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             webView.translatesAutoresizingMaskIntoConstraints = false
             addSubview(webView)
             if MarkupEditor.toolbarLocation == .top {
-                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .bottom)
+                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .bottom).makeManaged()
                 observeShowSubToolbarType()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
@@ -76,7 +76,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
                     webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             } else if MarkupEditor.toolbarLocation == .bottom {
-                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .top)
+                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .top).makeManaged()
                 observeShowSubToolbarType()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
