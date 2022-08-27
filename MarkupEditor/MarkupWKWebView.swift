@@ -1111,6 +1111,24 @@ extension MarkupWKWebView {
         // Do nothing
     }
     
+    @objc public override func copy(_ sender: Any?) {
+        if selectionState.isInImage {
+            let width: Int? = selectionState.frame != nil ? Int(selectionState.frame!.width) : nil
+            let height: Int? = selectionState.frame != nil ? Int(selectionState.frame!.height) : nil
+            copyImage(src: selectionState.src!, alt: selectionState.alt, width: width, height: height)
+        } else {
+            super.copy(sender)
+        }
+    }
+    
+    @objc public override func cut(_ sender: Any?) {
+        if selectionState.isInImage {
+            evaluateJavaScript("MU.cutImage()") { result, error in }
+        } else {
+            super.cut(sender)
+        }
+    }
+    
     /// Invoke the paste method in the editor directly, passing the clipboard contents
     /// that would otherwise be obtained via the JavaScript event.
     ///
