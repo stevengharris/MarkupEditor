@@ -164,9 +164,9 @@ The current version is feature-complete. I am now consuming it myself in another
 
 ### History
 
-#### *NOT RELEASED YET, work in `main`*
+#### Version 0.4.0
 
-I consider `main` to be (nearly) feature complete. If you were consuming earlier versions, you may encounter breaking changes, but I wanted to get those done before Beta. For example, the MarkupWebView previously was a UIViewRepresentable of the MarkupWKWebView. It has been eliminated in favor of a SwiftUI MarkupEditorView and a separate MarkupWKWebViewRepresentable.
+I consider this release to be feature complete with the exception of some remaining UX problems on touch devices. If you were consuming earlier versions, you may encounter breaking changes, but I wanted to get those done before Beta. For example, the MarkupWebView previously was a UIViewRepresentable of the MarkupWKWebView. It has been eliminated in favor of a SwiftUI MarkupEditorView and a separate MarkupWKWebViewRepresentable.
 
 The major drivers of the pre-Beta work have been usability and proper support for touch devices. This release also completely eliminates any need for a user to know about the SubToolbar, which previous versions surfaced because of the need to overlay it on the MarkupWKWebView. This release includes a new MarkupEditorView and MarkupEditorUIView for SwiftUI and UIKit respectively. These Views/UIViews lay out and manage the MarkupToolbar and (new) MarkupToolbarUIView, providing a simpler end-user experience when you just want to drop in a View/UIView. There are lots of other improvements and features as outlined below.
 
@@ -182,6 +182,9 @@ The major drivers of the pre-Beta work have been usability and proper support fo
 * Enter at end of indent outdents until no longer indented ([Issue 21](https://github.com/stevengharris/MarkupEditor/issues/21))
 * Block quote outdent works on one line at a time ([Issue 22](https://github.com/stevengharris/MarkupEditor/issues/22))
 * Easily customizable toolbar contents using ToolbarContents ([Issue 31](https://github.com/stevengharris/MarkupEditor/issues/31))
+* Support pinch gesture for image resizing ([Issue 38](https://github.com/stevengharris/MarkupEditor/issues/38))
+* InputAccessoryView disappears on device rotation ([Issue 39](https://github.com/stevengharris/MarkupEditor/issues/39))
+* Provide context menus (copy/cut/paste) ([Issue 45](https://github.com/stevengharris/MarkupEditor/issues/45))
 
 ##### Usability
 
