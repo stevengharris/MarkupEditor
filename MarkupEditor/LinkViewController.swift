@@ -162,11 +162,6 @@ class LinkViewController: UIViewController {
         linkView?.layer.borderColor = view.tintColor.cgColor
     }
     
-    override func viewDidDisappear(_ animated: Bool) {
-        //TODO: Why doesn't this bring the keyboard back up
-        MarkupEditor.selectedWebView?.becomeFirstResponder()
-    }
-    
     /// Set the appearance of the saveButton and cancelButton.
     ///
     /// The cancelButton is always enabled, but will show filled with tintColor if the saveButton is disabled,
@@ -211,21 +206,36 @@ class LinkViewController: UIViewController {
     /// Remove the link at the selection and dismiss
     @objc private func remove() {
         MarkupEditor.selectedWebView?.insertLink(nil)
-        dismiss(animated: true, completion: nil)
+        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
     }
     
     /// Save the link for the current selection (which may or may not be collapsed) and dismiss
     @objc private func save() {
         MarkupEditor.selectedWebView?.insertLink(argHRef)
-        dismiss(animated: true, completion: nil)
+        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
     }
     
     /// Cancel the link action and dismiss
     @objc private func cancel() {
         // Use endModalInput because insertLink was never called to restore selection
         MarkupEditor.selectedWebView?.endModalInput {
-            self.dismiss(animated: true, completion: nil)
+            self.dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
         }
+    }
+    
+    /// Return false to disable various menu items depending on selectionState
+    @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        switch action {
+        case #selector(showLinkPopover):
+            return true     // Toggles off and on
+        default:
+            //print("Unknown action: \(action)")
+            return super.canPerformAction(action, withSender: sender)
+        }
+    }
+    
+    @objc func showLinkPopover() {
+        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
     }
     
 }
