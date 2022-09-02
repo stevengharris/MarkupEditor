@@ -15,15 +15,16 @@ public struct InsertToolbar: View {
     let contents: InsertContents = MarkupEditor.toolbarContents.insertContents
     private var showAnyToolbar: Bool { showSubToolbar.type != .none }
     @State private var hoverLabel: Text = Text("Insert")
+    
     public var body: some View {
-        //if #available(macCatalyst 15.0, *) {
+        //if #available(iOS 15.0, macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
         LabeledToolbar(label: hoverLabel) {
             if contents.link {
                 ToolbarImageButton(
                     systemName: "link",
-                    action: { withAnimation { showOnly(.link) } },
+                    action: { MarkupEditor.selectedWebView?.showLinkPopover() },
                     active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
                     onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .link : .none)) } }
                 )

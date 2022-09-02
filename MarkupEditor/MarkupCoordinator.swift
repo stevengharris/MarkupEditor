@@ -98,12 +98,12 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             // Note that selectionState remains the same object; just the state it holds onto is updated.
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
-                    //webView.becomeFirstResponder()
+                    //print("* selectionChange")
                     self.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
             //} else {
-            //    print("no focus")
+            //    print("* ignored selection change")
             }
         case "click":
             //print("click")

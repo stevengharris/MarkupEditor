@@ -33,7 +33,7 @@ struct DemoContentView: View {
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
     
     var body: some View {
-        //if #available(macCatalyst 15.0, *) {
+        //if #available(iOS 15.0, macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
         VStack(spacing: 0) {

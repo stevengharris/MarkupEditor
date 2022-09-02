@@ -14,14 +14,16 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var valid: Bool = false
     // Selected text
     @Published public var selection: String? = nil
+    @Published public var selrect: CGRect? = nil
     // Links
     @Published public var href: String? = nil
     @Published public var link: String? = nil
     // Images
     @Published public var src: String? = nil
     @Published public var alt: String? = nil
+    @Published public var width: Int? = nil
+    @Published public var height: Int? = nil
     @Published public var scale: Int? = nil  // Percent
-    @Published public var frame: CGRect? = nil
     // Tables
     @Published public var table: Bool = false
     @Published public var thead: Bool = false
@@ -90,7 +92,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     public var canStyle: Bool { style != .Undefined }
     public var canList: Bool { true }
     public var canInsert: Bool { isInsertable }
-    public var canLink: Bool { !isInLink && selection != nil }
+    public var canLink: Bool { !isInLink }
     public var canFormat: Bool { true }
     public var canCopyCut: Bool { selection != nil || isInImage }
     
@@ -113,13 +115,15 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     public func reset(from selectionState: SelectionState?) {
         selection = selectionState?.selection
+        selrect = selectionState?.selrect               // rect containing the selection if selected
         valid = selectionState?.valid ?? false          // true if document.getSelection().rangeCount > 0
         href = selectionState?.href                     // href for <a> if selected
         link = selectionState?.link                     // text linked to href in <a> if selected
         src = selectionState?.src                       // src for <img> if selected
         alt = selectionState?.alt                       // alt for <img> if selected
+        width = selectionState?.width                   // width for <img> if selected and defined
+        height = selectionState?.height                 // height for <img> if selected and defined
         scale = selectionState?.scale ?? 100            // scale for <img> if selected
-        frame = selectionState?.frame                   // frame of <img> if selected
         table = selectionState?.table ?? false          // Is selection in a table
         thead = selectionState?.thead ?? false          // Is selection in table header
         tbody = selectionState?.tbody ?? false          // Is selection in table body
@@ -170,7 +174,9 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     
     func imageString() -> String {
         guard let src = src else { return "none" }
-        return "\(src), alt: \(alt ?? "none"), scale: \(scale ?? 100)%, frame: \(frame ?? CGRect.zero)"
+        let width = width == nil ? "undefined" : "\(width!)"
+        let height = height == nil ? "undefined" : "\(height!)"
+        return "\(src), alt: \(alt ?? "none"), width: \(width), height: \(height), scale: \(scale ?? 100)%"
     }
     
     func tableString() -> String {

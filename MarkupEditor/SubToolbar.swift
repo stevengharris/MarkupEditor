@@ -25,20 +25,10 @@ public struct SubToolbar: View {
     private var markupDelegate: MarkupDelegate?
     
     public var body: some View {
-        //if #available(macCatalyst 15.0, *) {
+        //if #available(iOS 15.0, macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
         VStack(spacing: 0) {
-            if showSubToolbar.type == .link {
-                LinkToolbar()
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .link)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        observedWebView.selectedWebView?.becomeFirstResponder()
-                    }
-            }
             if showSubToolbar.type == .image {
                 ImageToolbar()
                     .onAppear {

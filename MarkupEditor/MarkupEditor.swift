@@ -35,7 +35,7 @@ public struct MarkupEditor {
         set { observedWebView.selectedWebView = newValue }
     }
     public static let selectionState = SelectionState()
-    public static let selectImage: SelectImage = SelectImage()
+    public static let selectImage = SelectImage()
     public static let supportedImageTypes: [UTType] = [.image, .movie]
     public static var style: ToolbarStyle.Style = .labeled {
         didSet {
