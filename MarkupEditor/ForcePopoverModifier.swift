@@ -32,26 +32,15 @@ struct ForcePopoverModifier<PopoverContent>: ViewModifier where PopoverContent: 
         popover.sourceView = anchorView
         popover.sourceRect = anchorView.bounds
         popover.delegate = contentController
-        closestVC(to: anchorView)?.present(contentController, animated: true)
+        anchorView.closestVC()?.present(contentController, animated: true)
     }
     
     private func dismissPopover() {
         // It's normal for there to be no sourceVC when things start
-        guard let sourceVC = closestVC(to: anchorView) else { return }
+        guard let sourceVC = anchorView.closestVC() else { return }
         if let presentedVC = sourceVC.presentedViewController {
             presentedVC.dismiss(animated: true)
         }
-    }
-    
-    private func closestVC(to uiView: UIView) -> UIViewController? {
-        var responder: UIResponder? = uiView
-        while responder != nil {
-            if let vc = responder as? UIViewController {
-                return vc
-            }
-            responder = responder?.next
-        }
-        return nil
     }
     
     private struct InternalAnchorView: UIViewRepresentable {

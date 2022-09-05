@@ -307,7 +307,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         markupToolbarHeightConstraint.constant = 0
     }
     
-    private func toolbarHeight(_ type: SubToolbar.ToolbarType? = nil) -> CGFloat {
+    private func toolbarHeight(_ type: MarkupToolbar.SubToolbarType? = nil) -> CGFloat {
         let subToolbarType = type ?? markupToolbarUIView.markupToolbar.showSubToolbar.type
         if subToolbarType == .none {
             return MarkupEditor.toolbarStyle.height()
@@ -454,7 +454,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             sourceRect = bounds
         }
         popover.sourceRect = sourceRect
-        closestVC(to: self)?.present(linkVC, animated: true)
+        closestVC()?.present(linkVC, animated: true)
     }
     
     @objc public func showImagePopover() {
@@ -473,29 +473,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             sourceRect = bounds
         }
         popover.sourceRect = sourceRect
-        closestVC(to: self)?.present(imageVC, animated: true)
-    }
-    
-    private func closestVC(to uiView: UIView) -> UIViewController? {
-        var responder: UIResponder? = uiView
-        while responder != nil {
-            if let vc = responder as? UIViewController {
-                return vc
-            }
-            responder = responder?.next
-        }
-        return nil
-    }
-    
-    @objc public func showImageToolbar() {
-        guard let toolbar = MarkupToolbar.managed ?? markupToolbarUIView?.markupToolbar else {
-            return
-        }
-        if toolbar.showSubToolbar.type == .image {
-            toolbar.showSubToolbar.type = .none
-        } else {
-            toolbar.showSubToolbar.type = .image
-        }
+        closestVC()?.present(imageVC, animated: true)
     }
     
     @objc public func showTableToolbar() {

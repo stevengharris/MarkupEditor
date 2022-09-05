@@ -116,9 +116,9 @@ public class SelectImage: ObservableObject {
 
 /// The observable object containing the type of SubToolbar to show.
 public class ShowSubToolbar: ObservableObject {
-    @Published public var type: SubToolbar.ToolbarType
+    @Published public var type: MarkupToolbar.SubToolbarType
 
-    public init(_ type: SubToolbar.ToolbarType? = nil) {
+    public init(_ type: MarkupToolbar.SubToolbarType? = nil) {
         self.type = type ?? .none
     }
 }

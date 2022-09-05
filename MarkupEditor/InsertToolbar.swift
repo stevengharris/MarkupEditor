@@ -26,23 +26,32 @@ public struct InsertToolbar: View {
                     systemName: "link",
                     action: { MarkupEditor.selectedWebView?.showLinkPopover() },
                     active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
-                    onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .link : .none)) } }
+                    onHover: { over in if over { hoverLabel = Text("Insert Link") } else { hoverLabel = Text("Insert") } }
                 )
             }
             if contents.image {
                 ToolbarImageButton(
                     systemName: "photo",
-                    action: { MarkupEditor.selectedWebView?.showImagePopover()  },
+                    action: { MarkupEditor.selectedWebView?.showImagePopover() },
                     active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
-                    onHover:  { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .image : .none)) } }
+                    onHover: { over in if over { hoverLabel = Text("Insert Image") } else { hoverLabel = Text("Insert") } }
                 )
             }
             if contents.table {
                 ToolbarImageButton(
                     systemName: "squareshape.split.3x3",
-                    action: { withAnimation { showOnly(.table)} },
+                    action: {
+                        withAnimation {
+                            if showSubToolbar.type == .table {
+                                showSubToolbar.type = .none
+                            } else {
+                                showSubToolbar.type = .table
+                            }
+                            hoverLabel = Text("Insert Table")
+                        }
+                    },
                     active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
-                    onHover: { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .table : .none)) } }
+                    onHover: { over in if over { hoverLabel = Text("Insert Table") } else { hoverLabel = Text("Insert") } }
                 )
             }
         }
@@ -50,29 +59,6 @@ public struct InsertToolbar: View {
     
     public init(for markupToolbar: MarkupToolbar) {
         showSubToolbar = markupToolbar.showSubToolbar
-    }
-    
-    private func showOnly(_ type: SubToolbar.ToolbarType) {
-        if showSubToolbar.type == .none || showSubToolbar.type != type {
-            showSubToolbar.type = type
-            hoverLabel = Text(labelString(for: type))
-        } else {
-            showSubToolbar.type = .none
-            hoverLabel = Text(labelString(for: .none))
-        }
-    }
-    
-    private func labelString(for type: SubToolbar.ToolbarType) -> String {
-        switch type {
-        case .link:
-            return "Insert Link"
-        case .image:
-            return "Insert Image"
-        case .table:
-            return "Insert Table"
-        case .none:
-            return "Insert"
-        }
     }
     
 }

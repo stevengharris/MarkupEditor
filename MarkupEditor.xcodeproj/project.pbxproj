@@ -71,6 +71,7 @@
 		AAB1041028BE911A0063BE2A /* BackgroundClearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */; };
 		AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1042F28C10B600063BE2A /* LinkViewController.swift */; };
 		AAB1043228C2AEA30063BE2A /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043128C2AEA30063BE2A /* ImageViewController.swift */; };
+		AAB1043428C6A26A0063BE2A /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AAD26E86264463A300908777 /* DemoContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* DemoContentView.swift */; };
 		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
@@ -214,6 +215,7 @@
 		AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundClearView.swift; sourceTree = "<group>"; };
 		AAB1042F28C10B600063BE2A /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
 		AAB1043128C2AEA30063BE2A /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
+		AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* DemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 			children = (
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
 				AAA1B0962889D2F000303721 /* View+Extensions.swift */,
+				AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */,
 			);
 			name = Extensions;
 			sourceTree = "<group>";
@@ -764,6 +767,7 @@
 				AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */,
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
 				AA408B242616685B00CAE8B9 /* MarkupEditorView.swift in Sources */,
+				AAB1043428C6A26A0063BE2A /* UIView+Extensions.swift in Sources */,
 				AAB1043228C2AEA30063BE2A /* ImageViewController.swift in Sources */,
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */,

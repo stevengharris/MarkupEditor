@@ -19,6 +19,12 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
+    
+    public enum SubToolbarType {
+        case table
+        case none
+    }
+    
     public static var managed: MarkupToolbar?   // The toolbar created when using MarkupEditorView or MarkupEditorUIView
     public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
