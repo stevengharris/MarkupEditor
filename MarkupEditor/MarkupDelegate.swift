@@ -57,12 +57,6 @@ public protocol MarkupDelegate {
     /// Take action when the user selects a table.
     func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState)
     
-    /// Take action when a toolbar appeared.
-    func markupToolbarAppeared(type: SubToolbar.ToolbarType)
-    
-    /// Take action when a toolbar disappeared.
-    func markupToolbarDisappeared()
-    
     /// Take action when the MarkupWKWebView is being set up.
     ///
     /// Called before the web view is setupForEditing.
@@ -174,9 +168,6 @@ extension MarkupDelegate {
     /// A table was selected, and selectionState contains information about it.
     public func markupTableSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {}
 
-    public func markupToolbarAppeared(type: SubToolbar.ToolbarType) {}
-    public func markupToolbarDisappeared() {}
-    
     /// By default, use the MarkupWKWebView's setup method to populate the cache directory resources.
     ///
     /// Override if you need some custom behavior. For example, you might want to refresh the cache directory

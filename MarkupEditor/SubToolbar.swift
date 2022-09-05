@@ -29,23 +29,13 @@ public struct SubToolbar: View {
         //    let _ = Self._printChanges()
         //}
         VStack(spacing: 0) {
-            if showSubToolbar.type == .image {
-                ImageToolbar()
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .image)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        observedWebView.selectedWebView?.becomeFirstResponder()
-                    }
-            }
             if showSubToolbar.type == .table {
                 TableToolbar()
                     .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .table)
+                        //markupDelegate?.markupToolbarAppeared(type: .table)
                     }
                     .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
+                        //markupDelegate?.markupToolbarDisappeared()
                         observedWebView.selectedWebView?.becomeFirstResponder()
                     }
             }

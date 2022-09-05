@@ -754,6 +754,11 @@ class ResizableImage {
         this._imageElement = imageElement;
         this._imageContainer = imageContainer;
         this._startDimensions = this.dimensionsFrom(imageElement);
+        const range = document.createRange();
+        range.selectNode(imageElement);
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     };
     
     /**
@@ -6374,7 +6379,7 @@ const _getSelectionState = function() {
     // Selected text
     state['selection'] = _getSelectionText();
     // The selrect tells us where the selection can be found
-    const selrect = document.getSelection().getRangeAt(0).getBoundingClientRect();
+    const selrect = _selrect();
     const selrectDict = {
         'x' : selrect.left,
         'y' : selrect.top,
@@ -6435,6 +6440,17 @@ const _getSelectionState = function() {
     //    state['focusOffset'] = focusOffset;
     //}
     return state;
+};
+
+/**
+ * Return the boundingClientRect for the selection, handling the resizableImage case
+ */
+const _selrect = function() {
+    if (resizableImage.isSelected) {
+        return resizableImage.imageElement.getBoundingClientRect()
+    } else {
+        return document.getSelection().getRangeAt(0).getBoundingClientRect();
+    };
 };
 
 /**
@@ -6866,6 +6882,10 @@ MU.insertImage = function(src, alt, undoable=true) {
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
     if (!resizableImage.isSelected) { return };   // Can't modify an image that isn't selected
+    if (!src) {
+        _deleteSelectedResizableImage('AFTER', undoable);
+        return;
+    };
     const img = resizableImage.imageElement;
     const existingSrc = img.getAttribute('src');
     const existingAlt = img.getAttribute('alt');

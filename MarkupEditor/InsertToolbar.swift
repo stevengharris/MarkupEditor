@@ -32,7 +32,7 @@ public struct InsertToolbar: View {
             if contents.image {
                 ToolbarImageButton(
                     systemName: "photo",
-                    action: { withAnimation { showOnly(.image) } },
+                    action: { MarkupEditor.selectedWebView?.showImagePopover()  },
                     active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
                     onHover:  { over in if !showAnyToolbar { hoverLabel = Text(labelString(for: over ? .image : .none)) } }
                 )

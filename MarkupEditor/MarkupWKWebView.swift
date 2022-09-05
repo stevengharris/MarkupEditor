@@ -133,6 +133,61 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+//TODO: Remove the swizzling code when it's sure not to be needed
+    //typealias NewClosureType = @convention(c) (Any, Selector, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void
+    
+    //func setKeyboardRequiresUserInteraction(_ value: Bool) {
+    //    guard
+    //        let WKContentViewClass: AnyClass = NSClassFromString("WKContentView") else {
+    //        print("Cannot find the WKContentView class")
+    //        return
+    //    }
+    //    let ios13Selector: Selector = sel_getUid("_elementDidFocus:userIsInteracting:blurPreviousNode:activityStateChanges:userObject:")
+    //    if let method = class_getInstanceMethod(WKContentViewClass, ios13Selector) {
+    //        swizzleAutofocusMethod(method, ios13Selector, value)
+    //    }
+    //}
+    
+    //func unsetKeyboardRequiresUserInteraction() {
+    //    guard
+    //        let WKContentViewClass: AnyClass = NSClassFromString("WKContentView") else {
+    //        print("Cannot find the WKContentView class")
+    //        return
+    //    }
+    //    let ios13Selector: Selector = sel_getUid("_elementDidFocus:userIsInteracting:blurPreviousNode:activityStateChanges:userObject:")
+    //    if let method = class_getInstanceMethod(WKContentViewClass, ios13Selector) {
+    //        unswizzleAutofocusMethod(method, ios13Selector)
+    //    }
+    //}
+    
+    //func swizzleAutofocusMethod(_ method: Method, _ selector: Selector, _ value: Bool) {
+    //    print("swizzling")
+    //    let originalImp: IMP = method_getImplementation(method)
+    //    let original: NewClosureType = unsafeBitCast(originalImp, to: NewClosureType.self)
+    //    let block : @convention(block) (Any, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void = { (me, arg0, arg1, arg2, arg3, arg4) in
+    //        original(me, selector, arg0, !value, arg2, arg3, arg4)
+    //    }
+    //    let imp: IMP = imp_implementationWithBlock(block)
+    //    method_setImplementation(method, imp)
+    //}
+    
+    //func unswizzleAutofocusMethod(_ method: Method, _ selector: Selector) {
+    //    print("unswizzling")
+    //    let originalImp: IMP = method_getImplementation(method)
+    //    let original: NewClosureType = unsafeBitCast(originalImp, to: NewClosureType.self)
+    //    let block : @convention(block) (Any, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void = { (me, arg0, arg1, arg2, arg3, arg4) in
+    //        original(me, selector, arg0, arg1, arg2, arg3, arg4)
+    //    }
+    //    let imp: IMP = imp_implementationWithBlock(block)
+    //    method_setImplementation(method, imp)
+    //}
+
+    //public func showKeyboard() {
+    //    setKeyboardRequiresUserInteraction(false)
+    //    becomeFirstResponder()
+    //    unsetKeyboardRequiresUserInteraction()
+    //}
+    
     /// Return the bundle that is appropriate for the packaging.
     func bundle() -> Bundle {
         // If you use the framework as a dependency, the bundle can be identified from
@@ -340,7 +395,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImageToolbar), #selector(showTableToolbar):
+            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTableToolbar):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -360,7 +415,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImageToolbar), #selector(showTableToolbar):
+            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTableToolbar):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -400,6 +455,25 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         popover.sourceRect = sourceRect
         closestVC(to: self)?.present(linkVC, animated: true)
+    }
+    
+    @objc public func showImagePopover() {
+        let imageVC = ImageViewController()
+        imageVC.modalPresentationStyle = .popover
+        imageVC.preferredContentSize = CGSize(width: 300, height: 140 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
+        guard let popover = imageVC.popoverPresentationController else { return }
+        popover.delegate = self
+        popover.sourceView = self
+        // The sourceRect needs a non-zero width/height, but when selection is collapsed, we get a zero width.
+        // So, modify the selectionState.sourceRect to make the popover work properly and point to the right place.
+        var sourceRect: CGRect
+        if let selrect = MarkupEditor.selectionState.selrect {
+            sourceRect = CGRect(origin: selrect.origin, size: CGSize(width: max(selrect.width, 1), height: max(selrect.height, 1)))
+        } else {
+            sourceRect = bounds
+        }
+        popover.sourceRect = sourceRect
+        closestVC(to: self)?.present(imageVC, animated: true)
     }
     
     private func closestVC(to uiView: UIView) -> UIViewController? {
@@ -575,19 +649,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func insertImage(src: String?, alt: String?, handler: (()->Void)? = nil) {
-        if src == nil {
-            modifyImage(src: nil, alt: nil, scale: nil, handler: handler)
-        } else {
-            var args = "'\(src!.escaped)'"
-            if alt != nil {
-                args += ", '\(alt!.escaped)'"
-            }
-            becomeFirstResponder()
-            evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
+        var args = "'\(src!.escaped)'"
+        if alt != nil {
+            args += ", '\(alt!.escaped)'"
         }
+        becomeFirstResponder()
+        evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
     }
     
-    public func insertLocalImage(url: URL, handler: (()->Void)? = nil) {
+    public func insertLocalImage(url: URL, handler: ((URL)->Void)? = nil) {
         // TODO: Use extended attributes for alt text if available
         // (see https://stackoverflow.com/a/38343753/8968411)
         // Make a new unique ID for the image to save in the cacheUrl directory
@@ -597,11 +667,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
             insertImage(src: path, alt: nil) {
                 self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
-                handler?()
+                handler?(cachedImageUrl)
             }
         } catch let error {
             print("Error inserting local image: \(error.localizedDescription)")
-            handler?()
+            handler?(cachedImageUrl)
         }
     }
     
@@ -729,20 +799,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Image editing
     
-    public func modifyImage(src: String?, alt: String?, scale: Int?, handler: (()->Void)?) {
+    public func modifyImage(src: String?, alt: String?, handler: (()->Void)?) {
         // If src is nil, then no arguments are passed and the image will be removed
-        // Otherwise, the src, alt, and scale will be applied to the selected image
-        // (or removed if alt or scale are nil)
+        // Otherwise, the src and alt will be applied to the selected image
         var args = ""
         if let src = src {
             args += "'\(src)'"
             if let alt = alt {
                 args += ", '\(alt)'"
-            } else {
-                args += ", null"
-            }
-            if let scale = scale {
-                args += ", \(scale)"
             } else {
                 args += ", null"
             }

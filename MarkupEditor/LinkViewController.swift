@@ -17,25 +17,40 @@ class LinkViewController: UIViewController {
     private var linkView: UITextView!
     private var buttonStack: UIStackView!
     private var removeButton: UIButton!
+    private var removeButtonWidthConstraint: NSLayoutConstraint!
+    private var spacer: UIView!
+    private var spacerWidthConstraint: NSLayoutConstraint!
     private var cancelButton: UIButton!
+    private var cancelButtonWidthConstraint: NSLayoutConstraint!
     private var saveButton: UIButton!
+    private var saveButtonWidthConstraint: NSLayoutConstraint!
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        initContents()
+        initializeContents()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
     
-    private func initContents() {
+    private func initializeContents() {
         view.backgroundColor = UIColor.systemBackground
+        initializeLabel()
+        initializeLinkView()
+        initializeButtons()
+        initializeLayout()
+    }
+    
+    private func initializeLabel() {
         label = UILabel()
-        label.text = "Enter the URL for this link:"
+        label.text = MarkupEditor.selectionState.href == nil ? "Add a link:" : "Modify the link:"
         label.autoresizingMask = [.flexibleWidth]
         label.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(label)
+    }
+    
+    private func initializeLinkView() {
         linkView = UITextView(frame: CGRect.zero)
         linkView.font = UIFont.systemFont(ofSize: UIFont.labelFontSize)
         linkView.text = MarkupEditor.selectionState.href
@@ -45,7 +60,13 @@ class LinkViewController: UIViewController {
         linkView.autocapitalizationType = .none
         linkView.autocorrectionType = .no
         linkView.delegate = self
+        // Show that the linkView has focus
+        linkView.layer.borderWidth = 2
+        linkView.layer.borderColor = view.tintColor.cgColor
         view.addSubview(linkView)
+    }
+    
+    private func initializeButtons() {
         buttonStack = UIStackView()
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .horizontal
@@ -68,13 +89,13 @@ class LinkViewController: UIViewController {
         removeButton.layer.borderWidth = 0.8
         removeButton.autoresizingMask = [.flexibleWidth]
         removeButton.translatesAutoresizingMaskIntoConstraints = false
-        let removeButtonWidthConstraint = removeButton.widthAnchor.constraint(equalToConstant: 110)
+        removeButtonWidthConstraint = removeButton.widthAnchor.constraint(equalToConstant: 110)
         removeButtonWidthConstraint.priority = .required
         removeButton.addTarget(self, action: #selector(remove), for: .touchUpInside)
         buttonStack.addArrangedSubview(removeButton)
-        let spacer = UIView()
+        spacer = UIView()
         spacer.autoresizingMask = [.flexibleWidth]
-        let spacerWidthConstraint = spacer.widthAnchor.constraint(equalToConstant: 0)
+        spacerWidthConstraint = spacer.widthAnchor.constraint(equalToConstant: 0)
         spacerWidthConstraint.priority = .defaultLow
         buttonStack.addArrangedSubview(spacer)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
@@ -90,9 +111,18 @@ class LinkViewController: UIViewController {
         }
         cancelButton.autoresizingMask = [.flexibleWidth]
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        let cancelButtonWidthConstraint = cancelButton.widthAnchor.constraint(equalToConstant: 70)
+        cancelButtonWidthConstraint = cancelButton.widthAnchor.constraint(equalToConstant: 70)
         cancelButtonWidthConstraint.priority = .defaultHigh
         cancelButton.addTarget(self, action: #selector(cancel), for: .touchUpInside)
+        // The cancelButton is always enabled, so it has an outline color.
+        // Its background changes to indicate whether it's the default action,
+        // which is something we change depending on whether we canSave().
+        // It's hard to believe I have to do this in the year 2022, but I guess
+        // so goes it when you actually want to be able to see a button rather than
+        // just random text on the screen that might or might not be a button.
+        cancelButton.layer.cornerRadius = 5
+        cancelButton.layer.borderWidth = 0.8
+        cancelButton.layer.borderColor = view.tintColor.cgColor
         buttonStack.addArrangedSubview(cancelButton)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
@@ -105,10 +135,24 @@ class LinkViewController: UIViewController {
         }
         saveButton.autoresizingMask = [.flexibleWidth]
         saveButton.translatesAutoresizingMaskIntoConstraints = false
-        let saveButtonWidthConstraint = saveButton.widthAnchor.constraint(equalTo: cancelButton.widthAnchor, multiplier: 1)
+        saveButtonWidthConstraint = saveButton.widthAnchor.constraint(equalTo: cancelButton.widthAnchor, multiplier: 1)
         saveButtonWidthConstraint.priority = .defaultHigh
         saveButton.addTarget(self, action: #selector(save), for: .touchUpInside)
         buttonStack.addArrangedSubview(saveButton)
+        if #available(iOS 15.0, macCatalyst 15.0, *) {
+            saveButton.configurationUpdateHandler = setSaveCancel(_:)
+            setButtons()
+        } else {
+            //TODO: Should test on pre iOS 15
+            if saveButton.isEnabled {
+                saveButton.layer.backgroundColor = view.tintColor.cgColor
+            } else {
+                cancelButton.layer.backgroundColor = view.tintColor.cgColor
+            }
+        }
+    }
+    
+    private func initializeLayout() {
         NSLayoutConstraint.activate([
             label.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor, constant: 8),
             label.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor, constant: -8),
@@ -129,37 +173,11 @@ class LinkViewController: UIViewController {
             linkView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
             linkView.bottomAnchor.constraint(equalTo: buttonStack.topAnchor, constant: -8),
         ])
-        initializeButtons()
-    }
-    
-    private func initializeButtons() {
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            saveButton.configurationUpdateHandler = setSaveCancel(_:)
-            setButtons()
-        } else {
-            //TODO: Should test on pre iOS 15
-            if saveButton.isEnabled {
-                saveButton.layer.backgroundColor = view.tintColor.cgColor
-            } else {
-                cancelButton.layer.backgroundColor = view.tintColor.cgColor
-            }
-        }
-        // The cancelButton is always enabled, so it has an outline color.
-        // It's background changes to indicate whether it's the default action,
-        // which is something we change depending on whether we canSave().
-        // It's hard to believe I have to do this in the year 2022, but I guess
-        // so goes it when you actually want to be able to see a button rather than
-        // just random text on the screen that might or might not be a button.
-        cancelButton.layer.cornerRadius = 5
-        cancelButton.layer.borderWidth = 0.8
-        cancelButton.layer.borderColor = view.tintColor.cgColor
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        linkView?.becomeFirstResponder()
-        // Show that the linkView has focus
-        linkView?.layer.borderWidth = 2
-        linkView?.layer.borderColor = view.tintColor.cgColor
+        setButtons()
+        linkView.becomeFirstResponder()
     }
     
     /// Set the appearance of the saveButton and cancelButton.
@@ -202,24 +220,30 @@ class LinkViewController: UIViewController {
         guard MarkupEditor.selectionState.canLink, let href = argHRef else { return false }
         return href.isValidURL
     }
+
+    private func dismiss() {
+        dismiss(animated: true) {
+            MarkupEditor.selectedWebView?.becomeFirstResponder()
+        }
+    }
     
     /// Remove the link at the selection and dismiss
     @objc private func remove() {
         MarkupEditor.selectedWebView?.insertLink(nil)
-        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
+        dismiss()
     }
     
     /// Save the link for the current selection (which may or may not be collapsed) and dismiss
     @objc private func save() {
         MarkupEditor.selectedWebView?.insertLink(argHRef)
-        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
+        dismiss()
     }
     
     /// Cancel the link action and dismiss
     @objc private func cancel() {
         // Use endModalInput because insertLink was never called to restore selection
         MarkupEditor.selectedWebView?.endModalInput {
-            self.dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
+            self.dismiss()
         }
     }
     
@@ -234,8 +258,9 @@ class LinkViewController: UIViewController {
         }
     }
     
+    /// Dismiss the popover if the hotkey to show it is used while it's already showing
     @objc func showLinkPopover() {
-        dismiss(animated: true) { MarkupEditor.selectedWebView?.becomeFirstResponder() }
+        dismiss()
     }
     
 }
