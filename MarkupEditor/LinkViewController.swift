@@ -11,10 +11,12 @@ class LinkViewController: UIViewController {
 
     private var selectionState: SelectionState = MarkupEditor.selectionState
     private var initialHref: String?
-    private var href: String = ""
+    private var href: String!
     private var argHRef: String? { href.isEmpty ? nil : href.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var originalHRef: String?
     private var label: UILabel!
     private var linkView: UITextView!
+    private var linkViewLabel: UILabel!
     private var buttonStack: UIStackView!
     private var removeButton: UIButton!
     private var removeButtonWidthConstraint: NSLayoutConstraint!
@@ -36,6 +38,8 @@ class LinkViewController: UIViewController {
     
     private func initializeContents() {
         view.backgroundColor = UIColor.systemBackground
+        originalHRef = MarkupEditor.selectionState.href
+        href = originalHRef ?? ""
         initializeLabel()
         initializeLinkView()
         initializeButtons()
@@ -53,13 +57,21 @@ class LinkViewController: UIViewController {
     private func initializeLinkView() {
         linkView = UITextView(frame: CGRect.zero)
         linkView.font = UIFont.systemFont(ofSize: UIFont.labelFontSize)
-        linkView.text = MarkupEditor.selectionState.href
+        linkView.text = originalHRef
         linkView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         linkView.translatesAutoresizingMaskIntoConstraints = false
         linkView.keyboardType = .URL
         linkView.autocapitalizationType = .none
         linkView.autocorrectionType = .no
         linkView.delegate = self
+        linkViewLabel = UILabel()
+        linkViewLabel.text = "Enter link URL"
+        linkViewLabel.font = .italicSystemFont(ofSize: (linkView.font?.pointSize)!)
+        linkViewLabel.sizeToFit()
+        linkView.addSubview(linkViewLabel)
+        linkViewLabel.frame.origin = CGPoint(x: 5, y: (linkView.font?.pointSize)! / 2)
+        linkViewLabel.textColor = .tertiaryLabel
+        linkViewLabel.isHidden = !linkView.text.isEmpty
         // Show that the linkView has focus
         linkView.layer.borderWidth = 2
         linkView.layer.borderColor = view.tintColor.cgColor
@@ -217,8 +229,16 @@ class LinkViewController: UIViewController {
     }
     
     private func canSave() -> Bool {
-        guard MarkupEditor.selectionState.canLink, let href = argHRef else { return false }
-        return href.isValidURL
+        if originalHRef == nil {
+            guard MarkupEditor.selectionState.canLink, let href = argHRef else { return false }
+            return href.isValidURL
+        } else {
+            if let href = argHRef {
+                return href.isValidURL
+            } else {
+                return false
+            }
+        }
     }
 
     private func dismiss() {
@@ -270,6 +290,7 @@ extension LinkViewController: UITextViewDelegate {
     /// Update href as the user types (note this never executes if shouldChangeTextIn returns false)
     func textViewDidChange(_ textView: UITextView) {
         href = textView.text
+        linkViewLabel.isHidden = !textView.text.isEmpty
         setButtons()
     }
     
