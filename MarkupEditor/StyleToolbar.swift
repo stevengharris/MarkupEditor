@@ -31,31 +31,33 @@ public struct StyleToolbar: View {
             // as "Scale Interface from iPad" due to the BorderlessButtonMenuStyle.
             // Like other uses of Button, I added contentShape here try to prevent responsiveness
             // problems per https://stackoverflow.com/a/67377002/8968411
-            Menu {
-                ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                    Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                        Text(styleContext.name)
-                            .font(.system(size: styleContext.fontSize))
+            if contents.paragraph {
+                Menu {
+                    ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                        Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
+                            Text(styleContext.name)
+                                .font(.system(size: styleContext.fontSize))
+                        }
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                } label: {
+                    Text(selectionState.style.name)
+                        .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
                 }
-            } label: {
-                Text(selectionState.style.name)
-                    .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
-            }
-            .menuStyle(BorderlessButtonMenuStyle())
-            .overlay(
-                RoundedRectangle(
-                    cornerRadius: 3,
-                    style: .continuous
+                .menuStyle(BorderlessButtonMenuStyle())
+                .overlay(
+                    RoundedRectangle(
+                        cornerRadius: 3,
+                        style: .continuous
+                    )
+                    .stroke(Color.accentColor)
                 )
-                .stroke(Color.accentColor)
-            )
-            .frame(width: 88, height: toolbarStyle.buttonHeight())
-            .contentShape(Rectangle())
-            .disabled(!selectionState.canStyle)
-            if contents.list || contents.dent {
-                Divider()
+                .frame(width: 88, height: toolbarStyle.buttonHeight())
+                .contentShape(Rectangle())
+                .disabled(!selectionState.canStyle)
+                if contents.list || contents.dent {
+                    Divider()
+                }
             }
             if contents.list {
                 ToolbarImageButton(

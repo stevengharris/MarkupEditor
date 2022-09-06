@@ -118,7 +118,7 @@ class ImageViewController: UIViewController {
         if MarkupEditor.allowLocalImages {
             if #available(iOS 15.0, macCatalyst 15.0, *) {
                 selectButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
-                selectButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+                selectButton.preferredBehavioralStyle = UIBehavioralStyle.pad
                 selectButton.configuration?.baseBackgroundColor = view.backgroundColor
                 selectButton.configuration?.title = "Select..."
                 // Avoid word wrapping
@@ -139,7 +139,7 @@ class ImageViewController: UIViewController {
         }
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
             cancelButton.configuration?.title = "Cancel"
             // Avoid word wrapping
             cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
@@ -156,7 +156,7 @@ class ImageViewController: UIViewController {
         buttonStack.addArrangedSubview(cancelButton)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
             saveButton.configuration?.title = "OK"
         } else {
             //TODO: Should test on pre iOS 15
