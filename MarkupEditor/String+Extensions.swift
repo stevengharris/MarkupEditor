@@ -31,6 +31,7 @@ extension String {
     
     /// Return true if self is a valid URL
     public var isValidURL: Bool {
+        guard !isEmpty else { return false }
         let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
         let matches = detector.matches(in: self, options: [], range: NSRange(location: 0, length: utf16.count))
         return matches.count == 1 && matches[0].range.length == utf16.count

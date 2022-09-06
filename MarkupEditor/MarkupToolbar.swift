@@ -19,6 +19,12 @@ import SwiftUI
 /// The InsertToolbar sets showSubToolbar.type, which in turn uncovers one of the specific
 /// subtoolbars that require additional user interaction.
 public struct MarkupToolbar: View {
+    
+    public enum SubToolbarType {
+        case table
+        case none
+    }
+    
     public static var managed: MarkupToolbar?   // The toolbar created when using MarkupEditorView or MarkupEditorUIView
     public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
@@ -32,7 +38,7 @@ public struct MarkupToolbar: View {
     private var subToolbarOffset: CGFloat { (subToolbarEdge == .bottom ? toolbarStyle.height() : -toolbarStyle.height()) + 2 }
     
     public var body: some View {
-        //if #available(macCatalyst 15.0, *) {
+        //if #available(iOS 15.0, macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
         let bottomSubToolbar = withSubToolbar && subToolbarEdge == .bottom && showSubToolbar.type != .none

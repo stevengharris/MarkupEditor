@@ -754,6 +754,11 @@ class ResizableImage {
         this._imageElement = imageElement;
         this._imageContainer = imageContainer;
         this._startDimensions = this.dimensionsFrom(imageElement);
+        const range = document.createRange();
+        range.selectNode(imageElement);
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     };
     
     /**
@@ -1224,12 +1229,42 @@ MU.editor.addEventListener('mousedown', function() {
 });
 
 /**
+ * Mute selectionChange notifications when touch starts.
+ */
+MU.editor.addEventListener('touchstart', function() {
+    _callback('click');
+    muteChanges();
+});
+
+/**
  * Unmute selectionChange on mouseup.
  *
  * When changes are muted, we want to callback selectionChange to update the
  * selection on the Swift side, so we see one selectionChange notification.
  */
 MU.editor.addEventListener('mouseup', function() {
+    if (_muteChanges) { _callback('selectionChange') };
+    unmuteChanges();
+});
+
+/**
+ * Unmute selectionChange on touch ends.
+ *
+ * When changes are muted, we want to callback selectionChange to update the
+ * selection on the Swift side, so we see one selectionChange notification.
+ */
+MU.editor.addEventListener('touchend', function() {
+    if (_muteChanges) { _callback('selectionChange') };
+    unmuteChanges();
+});
+
+/**
+ * Unmute selectionChange on touch cancels.
+ *
+ * When changes are muted, we want to callback selectionChange to update the
+ * selection on the Swift side, so we see one selectionChange notification.
+ */
+MU.editor.addEventListener('touchcancel', function() {
     if (_muteChanges) { _callback('selectionChange') };
     unmuteChanges();
 });
@@ -5830,6 +5865,23 @@ const _restoreRange = function(rangeProxy) {
 };
 
 /**
+ * Called before beginning a modal popover on the Swift side, to enable the selection
+ * to be restored by endModalInput
+ */
+MU.startModalInput = function() {
+    _backupSelection();
+}
+
+/**
+ * Called typically after cancelling a modal popover on the Swift side, since
+ * normally the result of using the popover is to modify the DOM and reset the
+ * selection.
+ */
+MU.endModalInput = function() {
+    _restoreSelection();
+}
+
+/**
  * Backup the range of the current selection into MU.currentSelection
  */
 const _backupSelection = function() {
@@ -5839,7 +5891,7 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
-        callback(selectionChange);
+        _callback(selectionChange);
     };
 };
 
@@ -6326,6 +6378,15 @@ const _getSelectionState = function() {
     state['valid'] = true;
     // Selected text
     state['selection'] = _getSelectionText();
+    // The selrect tells us where the selection can be found
+    const selrect = _selrect();
+    const selrectDict = {
+        'x' : selrect.left,
+        'y' : selrect.top,
+        'width' : selrect.width,
+        'height' : selrect.height
+    };
+    state['selrect'] = selrectDict;
     // Link
     const linkAttributes = _getLinkAttributesAtSelection();
     state['href'] = linkAttributes['href'];
@@ -6334,8 +6395,9 @@ const _getSelectionState = function() {
     const imageAttributes = _getImageAttributes();
     state['src'] = imageAttributes['src'];
     state['alt'] = imageAttributes['alt'];
+    state['width'] = imageAttributes['width'];
+    state['height'] = imageAttributes['height'];
     state['scale'] = imageAttributes['scale'];
-    state['frame'] = imageAttributes['frame'];
     // Table
     const tableAttributes = _getTableAttributesAtSelection();
     state['table'] = tableAttributes['table'];
@@ -6378,6 +6440,17 @@ const _getSelectionState = function() {
     //    state['focusOffset'] = focusOffset;
     //}
     return state;
+};
+
+/**
+ * Return the boundingClientRect for the selection, handling the resizableImage case
+ */
+const _selrect = function() {
+    if (resizableImage.isSelected) {
+        return resizableImage.imageElement.getBoundingClientRect()
+    } else {
+        return document.getSelection().getRangeAt(0).getBoundingClientRect();
+    };
 };
 
 /**
@@ -6618,7 +6691,9 @@ MU.testPasteTextPreprocessing = function(html) {
 //MARK: Links
 
 /**
- * Insert a link to url. The selection has to be across a range.
+ * Insert a link to url. When the selection is collapsed, the url is inserted
+ * at the selection point as a link.
+ *
  * When done, re-select the range and back it up.
  *
  * @param {String}  url             The url/href to use for the link
@@ -6630,15 +6705,30 @@ MU.insertLink = function(url, undoable=true) {
     if (!sel || (sel.rangeCount === 0)) { return };
     let range;
     if (sel.isCollapsed) {
-        range = _wordRangeAtCaret()
+        range = _wordRangeAtCaret();
     } else {
-        range = sel.getRangeAt(0).cloneRange();
-    }
+        range = sel.getRangeAt(0);
+    };
+    // At this point, range still might be nil, because the selection was collapsed
+    // but not within a word. In this case, we want to just insert a linked url
     const el = document.createElement('a');
     el.setAttribute('href', url);
-    el.appendChild(range.extractContents());
-    range.deleteContents();
-    range.insertNode(el);
+    if (range) {
+        el.appendChild(range.extractContents());
+        range.deleteContents();
+        range.insertNode(el);
+    } else {
+        // Sel is collapsed, so just put el in front of it with url as its contents
+        el.appendChild(document.createTextNode(url));
+        range = sel.getRangeAt(0);
+        const startContainer = range.startContainer;
+        if (_isTextNode(startContainer)) {
+            const trailingText = startContainer.splitText(range.startOffset);
+            trailingText.parentNode.insertBefore(el, trailingText);
+        } else {
+            startContainer.parentNode.insertBefore(el, startContainer);
+        };
+    };
     range.setStart(el.firstChild, 0);
     range.setEnd(el.firstChild, el.firstChild.textContent.length);
     sel.removeAllRanges();
@@ -6653,6 +6743,7 @@ MU.insertLink = function(url, undoable=true) {
         _restoreSelection();
     }
     _callback('input');
+    _callback('selectionChange')
 };
 
 /**
@@ -6791,6 +6882,10 @@ MU.insertImage = function(src, alt, undoable=true) {
  */
 MU.modifyImage = function(src, alt, scale, undoable=true) {
     if (!resizableImage.isSelected) { return };   // Can't modify an image that isn't selected
+    if (!src) {
+        _deleteSelectedResizableImage('AFTER', undoable);
+        return;
+    };
     const img = resizableImage.imageElement;
     const existingSrc = img.getAttribute('src');
     const existingAlt = img.getAttribute('alt');
@@ -7037,18 +7132,11 @@ const _getImageAttributes = function(image=null) {
     if (img) {
         attributes['src'] = img.getAttribute('src');
         attributes['alt'] = img.getAttribute('alt');
-        const scale = _imgScale(img);
-        if (scale) {
-            attributes['scale'] = scale;
-        };
-        const rect = img.getBoundingClientRect();
-        let rectDict = {
-            'x' : rect.left,
-            'y' : rect.top,
-            'width' : rect.width,
-            'height' : rect.height
-        }
-        attributes['frame'] = rectDict
+        let width = img.getAttribute('width');
+        let height = img.getAttribute('height');
+        attributes['width'] = width ? parseInt(width) : null;
+        attributes['height'] = height ? parseInt(height) : null;
+        attributes['scale'] = _imgScale(img);
     }
     return attributes;
 };

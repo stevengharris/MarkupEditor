@@ -8,16 +8,14 @@
 
 import SwiftUI
 
-/// The sub-toolbar used for creating/editing links, images, and tables.
+/// The sub-toolbar was designed to deal with multiple types of subtoolbars, originally one each for
+/// tables, links, and images. However, the user input required for links and images did not work well
+/// on non-hardware keyboard, and even then were constrained too much. So, the subtoolbars for
+/// links and images were replaced with popovers handled directly by the MarkupWKWebView, the
+/// LinkViewController and ImageViewController. The logic for conditionally popularing the SubToolbar
+/// is left here in case someone wants to add back in another MarkupToolbar.SubToolbarType.
 public struct SubToolbar: View {
     
-    public enum ToolbarType {
-        case image
-        case link
-        case table
-        case none
-    }
-
     private var toolbarStyle: ToolbarStyle
     @ObservedObject private var showSubToolbar: ShowSubToolbar
     @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
@@ -25,37 +23,13 @@ public struct SubToolbar: View {
     private var markupDelegate: MarkupDelegate?
     
     public var body: some View {
-        //if #available(macCatalyst 15.0, *) {
+        //if #available(iOS 15.0, macCatalyst 15.0, *) {
         //    let _ = Self._printChanges()
         //}
         VStack(spacing: 0) {
-            if showSubToolbar.type == .link {
-                LinkToolbar()
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .link)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        observedWebView.selectedWebView?.becomeFirstResponder()
-                    }
-            }
-            if showSubToolbar.type == .image {
-                ImageToolbar()
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .image)
-                    }
-                    .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
-                        observedWebView.selectedWebView?.becomeFirstResponder()
-                    }
-            }
             if showSubToolbar.type == .table {
                 TableToolbar()
-                    .onAppear {
-                        markupDelegate?.markupToolbarAppeared(type: .table)
-                    }
                     .onDisappear {
-                        markupDelegate?.markupToolbarDisappeared()
                         observedWebView.selectedWebView?.becomeFirstResponder()
                     }
             }

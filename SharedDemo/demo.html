@@ -1,6 +1,6 @@
 <h1>Welcome to the MarkupEditor Demo</h1>
 
-<h6>Version 0.4</h6>
+<h6>Version 0.5</h6>
 
 <p>The file you're looking at is just a simple HTML file that includes all the kinds of elements supported by the MarkupEditor by default. This document also serves as a brief tutorial on using the MarkupEditor as an end-user, along with some information for developers.</p>
 
@@ -51,21 +51,21 @@
 
 <h2>Inserted Elements</h2>
 
-<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor exposes an additional element-type-specific toolbar for each of these elements for you to create or edit them. To edit one of these elements, select an existing link, image, or table, and then expose the toolbar for that element.</p>
+<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor presents either a popover at the selection location, or in the case of tables, a sub-toolbar at the MarkupEditor toolbar.</p>
 
 <h4>Links</h4>
 
-<p>To insert a <a href="https://github.com/stevengharris/MarkupEditor">link</a>, start by selecting some text to link-to. When you select the <i>Insert Link</i> toolbar, it appears below. Enter a URL and <i>Save</i>. <i>Cancel</i> just closes the toolbar, leaving the original text/element unchanged. You can leave the toolbar open as you select other elements in the text, which allows you to view and/or edit existing elements more easily. To delete an existing link, use the <i>Delete Link</i> button or clear out the URL and press Save.</p>
+<p>To insert a <a href="https://github.com/stevengharris/MarkupEditor">link</a>, start by selecting some text to link-to. When you select the <i>Insert Link</i> button, a popover is presented at the selection location. Enter a URL and <i>Save</i> (or just hit Enter). <i>Cancel</i> closes the popover, leaving the original text/element unchanged. To delete an existing link, use the <i>Remove Link</i>.</p>
 
 <h4>Images</h4>
 
-<p>Images have to be inserted at a point in some text, or at the beginning or end of some text. You can paste-in an image using the usual Ctrl+V or the menu. You can also select an image from the file system or provide an URL. To do that, press the <i>Insert Image</i> button at the top to expose the image toolbar. Specify the URL or use the <i>Select</i> button for a standard file picker to select an image to insert. Specify additional descriptive text to go along with it (which is the right thing to do for people with visual impairment). Once you have the image in your document, you can resize it using the handles that show up when you select it.</p>
+<p>Images have to be inserted at a point in some text, or at the beginning or end of some text. You can paste-in an image using the usual Ctrl+V or the menu. You can also select an image from the file system or provide an URL. To do that, press the <i>Insert Image</i> button to bring up the image popover. Specify the URL or use the <i>Select</i> button for a standard file picker to select an image to insert. Specify additional descriptive text to go along with it (which is the right thing to do for people with visual impairment). As you tab between the URL and alt text fields, the MarkupEditor shows you the image in the document. Press OK when you are happy with the image, or Cancel to revert the document to its original state before you started inserting an image. Once you have the image in your document, you can resize it using the handles that show up when you select it, or using a pinch gesture on a touch device.</p>
 
 <p>Here is an inline image sourced from the Internet: <img src="https://en.gravatar.com/userimage/34783542/290b5fe4078e031aef18e02c7bd9103f.png" alt="Linked image">. Select it and then press the image button to see its URL and alt text. Here is the same image, but sourced from the local file system relative in the same location as this document:</p>
 
 <p><img src="steve.png" alt="Local image"></p>
 
-<p>You can leave the toolbar open to view other image elements. To delete an image, use the keyboard to delete it like text.</p>
+<p>To delete an image, use the keyboard to delete it like text.</p>
 
 <h4>Tables</h4>
 
@@ -73,7 +73,7 @@
 
 <p>The Add buttons in the table toolbar let you add a header at the top of the table or add rows/columns above/below the point you have selected in the table. The delete buttons remove the row/header you have selected in the table. To delete the header, select inside of it and press the delete row button. You can delete the table by backspacing over it, or using the <i>Delete</i> button in the toolbar.</p>
 
-<p>Below is an example table straight from the <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/table">HTML docs</a>. You can navigate forward using Tab (⇥) and backward using ⇧⇥. The header always spans across the table, with any text centered within it.</p>
+<p>Below is a simple two column table with a header. You can navigate forward using Tab (⇥) and backward using ⇧⇥. The header always spans across the table, with any text centered within it.</p>
 
 <table>
     <thead>
@@ -97,6 +97,6 @@
 
 <h2>Extending the MarkupEditor</h2>
 
-<p>The File toolbar is part of the demo, but the <code>MarkupToolbar</code> itself does not include the <code>FileToolbar</code>. Check out the <code>ContentView</code> in <code>SwiftUIDemo</code> and <code>ViewController</code> in the <code>UIKitDemo</code> to see details of how it was done. The demo starts with some initial HTML taken from <code>demo.html</code>, which you are looking at and editing. You can open a different HTML file to see how it behaves. You can also toggle a view of the raw HTML off-and-on from the File toolbar. The raw HTML updates as you edit the document, to show what the MarkupEditor is doing behind the scenes. Note that normally (i.e., when using the MarkupEditor outside of the demo), typing is a very lightweight operation. Because the demo is set up to update the raw HTML as you type, it's a bit more heavyweight than usual.</p>
+<p>The File toolbar is part of the demo, but the <code>MarkupToolbar</code> itself does not include the <code>FileToolbar</code>. Check out the <code>DemoContentView</code> in <code>SwiftUIDemo</code> and <code>DemoViewController</code> in the <code>UIKitDemo</code> to see details of how it was done. The demo starts with some initial HTML taken from <code>demo.html</code>, which you are looking at and editing. You can open a different HTML file to see how it behaves. You can also toggle a view of the raw HTML off-and-on from the File toolbar. The raw HTML updates as you edit the document, to show what the MarkupEditor is doing behind the scenes. Note that normally (i.e., when using the MarkupEditor outside of the demo), typing is a very lightweight operation. Because the demo is set up to update the raw HTML as you type, it's a bit more heavyweight than usual.</p>
 
-<p>The demo makes use of the <code>leftToolbar</code> option in the <code>MarkupToolbar</code>, which makes it simple to add your own toolbar to the left (and/or with <code>rightToolbar</code> for the other side) of the standard <code>MarkupToolbar</code>. You can just as easily construct your own toolbar in SwiftUI using the toolbar-level views like <code>StyleToolbar</code> and <code>FormatToolbar</code>, or with the <code>LabeledToolbar</code> and <code>ToolbarButton</code> used within them.</p>
+<p>The demo makes use of the <code>leftToolbar</code> option in the <code>MarkupEditor</code>, which makes it simple to add your own toolbar to the left (and/or with <code>rightToolbar</code> for the other side) of the standard <code>MarkupToolbar</code>. You can just as easily construct your own toolbar in SwiftUI using the toolbar-level views like <code>StyleToolbar</code> and <code>FormatToolbar</code>, or with the <code>LabeledToolbar</code> and <code>ToolbarButton</code> used within them.</p>
