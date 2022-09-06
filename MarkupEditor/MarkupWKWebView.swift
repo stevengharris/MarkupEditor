@@ -673,12 +673,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // The src is specified relative to the cacheUrl().
             if (url.path.starts(with: cacheUrl().path)) {
                 let cachedImageUrl = URL(fileURLWithPath: fileUrl.lastPathComponent, relativeTo: cacheUrl())
-                if let urlData = try? Data(contentsOf: cachedImageUrl), let image = UIImage(data: urlData) {
-                    items["public.png"] = image.pngData()
+                if let urlData = try? Data(contentsOf: cachedImageUrl) {
+                    let ext = cachedImageUrl.pathExtension
+                    if let publicName = ext.isEmpty ? nil : "public." + ext {
+                        items[publicName] = urlData
+                    }
                     html += "<img src=\"\(cachedImageUrl.relativePath)\""
                 }
             }
-            guard items["public.png"] != nil else {
+            guard !items.isEmpty else {
                 markupDelegate?.markupError(code: "Invalid local image", message: "Could not copy image data to pasteboard.", info: "src: \(src)", alert: true)
                 return
             }
