@@ -90,10 +90,12 @@ public struct InsertContents {
 
 /// Identify whether the list and indent/outdent items will show up
 public struct StyleContents {
+    public var paragraph: Bool
     public var list: Bool
     public var dent: Bool
     
-    public init(list: Bool = true, dent: Bool = true) {
+    public init(paragraph: Bool = true, list: Bool = true, dent: Bool = true) {
+        self.paragraph = paragraph
         self.list = list
         self.dent = dent
     }

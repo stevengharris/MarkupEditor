@@ -87,7 +87,7 @@ class LinkViewController: UIViewController {
         view.addSubview(buttonStack)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             removeButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
-            removeButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+            removeButton.preferredBehavioralStyle = UIBehavioralStyle.pad
             removeButton.configuration?.baseBackgroundColor = view.backgroundColor
             removeButton.configuration?.title = "Remove Link"
             // Avoid word wrapping
@@ -112,7 +112,7 @@ class LinkViewController: UIViewController {
         buttonStack.addArrangedSubview(spacer)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
             cancelButton.configuration?.title = "Cancel"
             // Avoid word wrapping
             cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
@@ -138,7 +138,7 @@ class LinkViewController: UIViewController {
         buttonStack.addArrangedSubview(cancelButton)
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad;
+            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
             saveButton.configuration?.title = "OK"
         } else {
             //TODO: Should test on pre iOS 15

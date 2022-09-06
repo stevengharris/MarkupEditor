@@ -58,7 +58,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
-    var pastedAsync = false;
+    var pastedAsync = false
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView?
     private var markupToolbarUIView: MarkupToolbarUIView!
