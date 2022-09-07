@@ -156,13 +156,24 @@ The demo directories also contain a "Simplest" version of a SwiftUI View and UIK
 
 ## Status
 
-The current version is feature-complete. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
+The current version is a feature-complete Beta. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
 
 ### Known Issues
 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### Version 0.5.0 (Beta 1)
+
+This is the first Beta release for the MarkupEditor! Please see [the announcement and discussion](https://github.com/stevengharris/MarkupEditor/discussions/52) about it.
+
+##### Closed Issues
+
+* Replace LinkToolbar and ImageToolbar with popovers ([Issue 42](https://github.com/stevengharris/MarkupEditor/issues/42))
+* Build from package is broken on iOS ([Issue 47](https://github.com/stevengharris/MarkupEditor/issues/47))
+* Touch device selection doesn't work properly ([Issue 48](https://github.com/stevengharris/MarkupEditor/issues/48))
+* Make paragraph style an optional part of StyleToolbar ([Issue 49](https://github.com/stevengharris/MarkupEditor/issues/49))
 
 #### Version 0.4.0
 
