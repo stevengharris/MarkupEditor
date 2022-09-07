@@ -18,7 +18,7 @@ Jealous of those JavaScript coders with their WYSIWYG text editors, but just can
 
 ## Demo
 
-![MarkupEditor](https://user-images.githubusercontent.com/1020361/125365436-17f49000-e329-11eb-98f2-1c509acade8a.mp4)
+![MarkupEditor](https://user-images.githubusercontent.com/1020361/188996859-0c32da80-151d-4595-8321-9bccd059b1a1.mp4)
 
 ## MarkupEditor Goals and Non-Goals
 
