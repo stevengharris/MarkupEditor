@@ -32,7 +32,7 @@ public class MarkupMenu {
         var children = [UIMenu]()
         if contents.insert { children.append(insertMenu()) }
         if contents.style {
-            children.append(styleMenu())
+            if contents.styleContents.paragraph { children.append(styleMenu()) }
             if contents.styleContents.list { children.append(listMenu()) }
             if contents.styleContents.dent { children.append(dentMenu()) }
         }
