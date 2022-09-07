@@ -41,7 +41,6 @@
 		AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A14260E9A00000674B7 /* ListContext.swift */; };
 		AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A00260E99FF000674B7 /* MarkupToolbar.swift */; };
 		AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A0C260E99FF000674B7 /* InsertToolbar.swift */; };
-		AA408B352616686C00CAE8B9 /* minimalMarkup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA652A08260E99FF000674B7 /* minimalMarkup.css */; };
 		AA408B362616686C00CAE8B9 /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA652A09260E99FF000674B7 /* markup.js */; };
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
@@ -186,7 +185,6 @@
 		AA6529D3260E8E8E000674B7 /* BasicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicTests.swift; sourceTree = "<group>"; };
 		AA652A00260E99FF000674B7 /* MarkupToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupToolbar.swift; sourceTree = "<group>"; };
 		AA652A06260E99FF000674B7 /* StyleContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StyleContext.swift; sourceTree = "<group>"; };
-		AA652A08260E99FF000674B7 /* minimalMarkup.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = minimalMarkup.css; sourceTree = "<group>"; };
 		AA652A09260E99FF000674B7 /* markup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
 		AA652A0A260E99FF000674B7 /* markup.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = markup.html; sourceTree = "<group>"; };
 		AA652A0C260E99FF000674B7 /* InsertToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InsertToolbar.swift; sourceTree = "<group>"; };
@@ -462,7 +460,6 @@
 		AA652A07260E99FF000674B7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				AA652A08260E99FF000674B7 /* minimalMarkup.css */,
 				AA652A09260E99FF000674B7 /* markup.js */,
 				AA1B81B8262CF16A00891FFB /* markup.css */,
 				AA652A0A260E99FF000674B7 /* markup.html */,
@@ -698,7 +695,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA408B352616686C00CAE8B9 /* minimalMarkup.css in Resources */,
 				AA408B362616686C00CAE8B9 /* markup.js in Resources */,
 				AA408B372616686C00CAE8B9 /* markup.html in Resources */,
 				AA1B81B9262CF16A00891FFB /* markup.css in Resources */,

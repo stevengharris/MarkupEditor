@@ -2463,7 +2463,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello world</p><p>st a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello worldst a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "
                 startOffset: 10,
                 endId: "p",
@@ -2473,7 +2473,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello <b>bold</b> world</p><p>st a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello <b>bold</b> worldst a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "
                 startOffset: 10,
                 endId: "p",
@@ -2491,19 +2491,9 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 pasteString: "<p>Hello <i>bold</i> world</p>"
             ),
             HtmlTest(
-                description: "P in P - Paste paragraph with embedded italic at insertion point in a bolded word",
-                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello <b>bold</b> world</p><p>st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
-                pasteString: "<p>Hello <b>bold</b> world</p>"
-            ),
-            HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello worldThis is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2513,7 +2503,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p>Hello <b>bold</b> world</p><p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello <b>bold</b> worldThis is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2523,7 +2513,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at end of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p><p><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p>",
                 startId: "p",     // Select "paragraph.|"
                 startOffset: 32,
                 endId: "p",
@@ -2533,7 +2523,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at end of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello <b>bold</b> world</p><p><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello <b>bold</b> world</p>",
                 startId: "p",     // Select "paragraph.|"
                 startOffset: 32,
                 endId: "p",
@@ -2678,7 +2668,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello world</p><p>st a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello worldst a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "
                 startOffset: 10,
                 endId: "p",
@@ -2688,7 +2678,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello bold world</p><p>st a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is juHello bold worldst a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "
                 startOffset: 10,
                 endId: "p",
@@ -2706,19 +2696,9 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 pasteString: "<p>Hello <i>bold</i> world</p>"
             ),
             HtmlTest(
-                description: "P in P - Paste paragraph with embedded italic at insertion point in a bolded word",
-                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is juHello bold world</p><p>st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
-                pasteString: "<p>Hello <b>bold</b> world</p>"
-            ),
-            HtmlTest(
                 description: "P in P - Paste simple paragraph at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p>Hello world</p><p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello worldThis is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2728,7 +2708,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at beginning of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p>Hello bold world</p><p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">Hello bold worldThis is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
                 startOffset: 0,
                 endId: "p",
@@ -2738,7 +2718,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at end of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p><p><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello world</p>",
                 startId: "p",     // Select "paragraph.|"
                 startOffset: 32,
                 endId: "p",
@@ -2748,7 +2728,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste paragraph with children at end of another",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello bold world</p><p><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.Hello bold world</p>",
                 startId: "p",     // Select "paragraph.|"
                 startOffset: 32,
                 endId: "p",

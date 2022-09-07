@@ -1976,13 +1976,41 @@ const _insertHTML = function(fragment) {
     // gets put at the end of the anchorNode.
     const anchorNodeParent = anchorNode.parentNode;
     const anchorNodeParentName = anchorNodeParent.nodeName;
+    let rejoinedText = false;
     if (firstFragEl && (firstFragEl.nodeName === anchorNodeParentName)) {
         let firstElChild = firstFragEl.firstChild;
+        let firstChild = firstElChild;
+        let lastChild;
         while (firstElChild) {
+            lastChild = firstElChild;
             anchorNodeParent.appendChild(firstElChild);
             firstElChild = firstFragEl.firstChild;
         };
         fragment.removeChild(firstFragEl);
+        // At this point, if fragment is empty, then we should re-join the trailingText
+        // to the anchorNode and use the lastChild and inserted*Offsets
+        if (_isEmpty(fragment) && lastChild) {
+            let lastChildRange = document.createRange()
+            if (_isTextNode(lastChild)) {
+                lastChildRange.setStart(lastChild, lastChild.textContent.length);
+                lastChildRange.setEnd(lastChild, lastChild.textContent.length);
+            } else {
+                lastChildRange.setStart(lastChild, lastChild.children.length);
+                lastChildRange.setEnd(lastChild, lastChild.children.length);
+            };
+            // JoinTextNodes uses the current selection, so we need to set it properly.
+            // Afterward, document.getSelection() is set properly for the joined nodes
+            document.getSelection().removeAllRanges();
+            document.getSelection().addRange(lastChildRange);
+            let lastEndOffset = lastChild.textContent.length;   // Offset to end of lastChild before joining
+            _joinTextNodes(lastChild, trailingText, rootName);
+            // But, we still need to track the insertedRange, which we now need to
+            // determine *after* joinTextNodes
+            insertedRange.setStart(firstChild, 0);
+            insertedRange.setEnd(lastChild, lastEndOffset)
+            trailingText = lastChild; // This will be where trailingText ended up
+            rejoinedText = true;
+        }
     };
     // SECOND, all the siblings of firstFragEl need to be added as siblings of anchorNode.parentNode.
     // The siblings start with what is now fragment.firstChild. If the nodeTypes didn't match, then
@@ -2002,29 +2030,35 @@ const _insertHTML = function(fragment) {
     };
     // If trailingText is empty, then we need to insert a <BR> in it so that the selection
     // works properly (similar to how Enter produces a <p><br></p>).
-    if (trailingText.length === 0) {
-        const trailingTextParent = trailingText.parentNode;
-        const modRange = _fillEmpty(trailingTextParent);
-        if (modRange) {
-            newSelRange = modRange;
-        } else {
+    // TODO: This logic about inserting BRs is a problem and was removed. Leaving commented for now.
+    //if (trailingText.length === 0) {
+    //    const trailingTextParent = trailingText.parentNode;
+    //    const modRange = _fillEmpty(trailingTextParent);
+    //    if (modRange) {
+    //        newSelRange = modRange;
+    //    } else {
+    //        newSelRange = document.getSelection().getRangeAt(0);
+    //    };
+    //    insertedRange.setStart(anchorNode, anchorNode.textContent.length);
+    //    insertedRange.setEnd(trailingTextParent, 0);
+    //} else if (anchorNode.length === 0) {
+    //    const modRange = _fillEmpty(anchorNodeParent);
+    //    if (modRange) {
+    //        newSelRange = modRange;
+    //    } else {
+    //        newSelRange = document.getSelection().getRangeAt(0);
+    //    };
+    //    insertedRange.setStart(anchorNodeParent, 0);
+    //    insertedRange.setEnd(trailingText, 0);
+    //} else {
+        if (rejoinedText) {
+            // After rejoining, the selection has been set properly, so just grab it here
             newSelRange = document.getSelection().getRangeAt(0);
-        };
-        insertedRange.setStart(anchorNode, anchorNode.textContent.length);
-        insertedRange.setEnd(trailingTextParent, 0);
-    } else if (anchorNode.length === 0) {
-        const modRange = _fillEmpty(anchorNodeParent);
-        if (modRange) {
-            newSelRange = modRange;
         } else {
-            newSelRange = document.getSelection().getRangeAt(0);
-        };
-        insertedRange.setStart(anchorNodeParent, 0);
-        insertedRange.setEnd(trailingText, 0);
-    } else {
-        newSelRange.setStart(trailingText, 0);
-        newSelRange.setEnd(trailingText, 0);
-    };
+            newSelRange.setStart(trailingText, 0);
+            newSelRange.setEnd(trailingText, 0);
+        }
+    //};
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
@@ -2224,8 +2258,13 @@ const _deleteRange = function(range, rootName) {
             trailingNode.parentNode.removeChild(trailingNode);
             trailingWasDeleted = true;
         }
+    } else {
+        endOffset = 0;  // Because we deleted up to the original endOffset
+    }
+    if (leadingNode === trailingNode) {
+        endOffset = startOffset;
     };
-    if (rootName && !leadingWasDeleted && !trailingWasDeleted) {
+    if (rootName && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
         _joinTextNodes(leadingNode, trailingNode, rootName);
     } else {
         const newRange = document.createRange();
@@ -7670,7 +7709,7 @@ const _setBorder = function(border, table) {
 
 const _getBorder = function(table) {
     const borderClass = table.getAttribute('class');
-    var border;
+    let border;
     switch (borderClass) {
         case 'bordered-table-outer':
             border = 'outer';
@@ -8400,7 +8439,7 @@ const _splitTextNode = function(textNode, offset, rootName=null, direction='AFTE
  * This is like the _splitTextNode equivalent of normalize() for _splitText.
  *
  * As we move contents from the trailingRoot into the leadingRoot, the selection will remain
- * valid unless we combine text nodes my modifying textContent. In that case, we need to reset
+ * valid unless we combine text nodes by modifying textContent. In that case, we need to reset
  * the selection. If we just move nodes around using appendChild or insertBefore, the selection
  * remains valid; if it was in the trailingRoot before, when done it will be in the leadingRoot.
  */
