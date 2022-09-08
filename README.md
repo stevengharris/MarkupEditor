@@ -164,6 +164,10 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
+#### Version 0.5.1 (Beta 1)
+
+Fix a tagging issue for the Swift package.
+
 #### Version 0.5.0 (Beta 1)
 
 This is the first Beta release for the MarkupEditor! Please see [the announcement and discussion](https://github.com/stevengharris/MarkupEditor/discussions/52) about it.
