@@ -250,11 +250,13 @@ class ImageViewController: UIViewController {
     /// Note that setting the saveButton enabled/disabled invokes its configurationUpdateHandler which
     /// in turn executes setSaveCancel to configure both the saveButton and cancelButton.
     private func setButtons() {
-        selectButton.isEnabled = MarkupEditor.selectionState.canInsert
-        if selectButton.isEnabled {
-            selectButton.layer.borderColor = view.tintColor.cgColor
-        } else {
-            selectButton.layer.borderColor = UIColor.clear.cgColor
+        if let selectButton = selectButton {
+            selectButton.isEnabled = MarkupEditor.selectionState.canInsert
+            if selectButton.isEnabled {
+                selectButton.layer.borderColor = view.tintColor.cgColor
+            } else {
+                selectButton.layer.borderColor = UIColor.clear.cgColor
+            }
         }
         saveButton.isEnabled = canSave()
     }

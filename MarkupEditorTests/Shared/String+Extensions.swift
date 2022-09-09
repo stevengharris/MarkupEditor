@@ -9,7 +9,7 @@
 import Foundation
 import MarkupEditor
 
-extension String {
+public extension String {
     
     //MARK: Html styling and formatting
     
