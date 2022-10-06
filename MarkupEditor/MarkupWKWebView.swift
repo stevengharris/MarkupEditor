@@ -639,7 +639,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // TODO: Use extended attributes for alt text if available
         // (see https://stackoverflow.com/a/38343753/8968411)
         // Make a new unique ID for the image to save in the cacheUrl directory
-        let path = "\(UUID().uuidString).\(url.pathExtension)"
+        var path = "\(UUID().uuidString).\(url.pathExtension)"
+        if let resourcesUrl {
+            path = resourcesUrl.appendingPathComponent(path).relativePath
+        }
         let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: cacheUrl())
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
@@ -865,7 +868,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         guard let image = image, let contents = image.pngData(), !pastedAsync else { return }
         // Make a new unique ID for the image to save in the cacheUrl directory
         pastedAsync = true
-        let path = "\(UUID().uuidString).png"
+        var path = "\(UUID().uuidString).png"
+        if let resourcesUrl {
+            path = resourcesUrl.appendingPathComponent(path).relativePath
+        }
         let cachedImageUrl = URL(fileURLWithPath: path, relativeTo: cacheUrl())
         do {
             if FileManager.default.fileExists(atPath: path) {
