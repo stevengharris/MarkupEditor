@@ -7112,7 +7112,14 @@ const _prepImage = function(img) {
     // For history, 'focusout' just never fires, either for image or the resizeContainer
     img.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
     _callback('updateHeight');
-    _callback('input');                                   // Because we changed the html
+    // Note that the html has changed, but we do not callback('input') because there
+    // is no change to the document contents itself. Doing a callback to input triggers
+    // MarkupDelegate.markupInput, which the user of MarkupEditor might tie into to
+    // do special handling when the user types. For example, in DemoContentView, this
+    // is what we use to update the raw HTML display. As a result of *not* doing the
+    // callback('input') here, that display will not reflect the attribute changes we
+    // do here in prepImage.
+    //_callback('input');                                   // Because we changed the html
 };
 
 /**

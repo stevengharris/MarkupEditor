@@ -947,7 +947,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -978,7 +978,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1122,7 +1122,8 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1149,7 +1150,8 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1174,7 +1176,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1198,7 +1201,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				"IPHONEOS_DEPLOYMENT_TARGET[sdk=macosx*]" = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
