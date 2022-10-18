@@ -48,6 +48,12 @@ public struct MarkupEditor {
         markupMenu.initMenu(with: builder)
     }
     
+    /// Enum to identify search direction
+    public enum FindDirection {
+        case forward
+        case backward
+    }
+    
     /// Enum to identify directions for adding rows and columns.
     ///
     /// Used by both icons and MarkupWKWebView.

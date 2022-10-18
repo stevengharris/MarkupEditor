@@ -36,6 +36,7 @@ import Combine
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
+    public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
@@ -708,6 +709,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
             handler(result as? Int ?? 0)
         }
+    }
+    
+    public func find(_ text: String, direction: FindDirection, handler: (()->Void)? = nil) {
+        becomeFirstResponder()
+        evaluateJavaScript("MU.find(\'\(text)\', \'\(direction)\')") { result, error in
+            if let error {
+                print("Error: \(error)")
+            //} else {
+            //    print("Found: \(findResult as? Int == 1)")
+            }
+        }
+        handler?()
     }
     
     //MARK: Undo/redo

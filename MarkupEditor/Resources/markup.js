@@ -54,6 +54,7 @@ MU.editor = document.getElementById('editor');
  * @param {String} message     The message, which might be a JSONified string
  */
 const _callback = function(message) {
+    if (message === 'input') { searcher.reset() };  // Search results are no longer valid
     window.webkit.messageHandlers.markup.postMessage(message);
 };
 
@@ -129,6 +130,117 @@ class MUError {
     
     callback() {
         _callback(JSON.stringify(this.messageDict()));
+    };
+};
+
+/**
+ * The Searcher class lets us find text ranges within the editor element that match a search string.
+ */
+class Searcher {
+    
+    constructor() {
+        this._searchString = null;      // what we are searching for
+        this._foundElementIndex = null; // null if never searched; else, last searched index into foundElements
+        this._foundElements = [];       // {textNode : TextNode, startOffset: Int} to construct ranges from
+        this._forceIndexing = true;     // true === rebuild foundElements before use; false === use foundElements
+    };
+    
+    find(text, direction) {
+        //_consoleLog("find(" + text + ", " + direction + ")");
+        if (this._forceIndexing || (text !== this._searchString)) {
+            this._searchString = text;
+            this._buildIndex();
+        };
+        if (this._foundElements.length === 0) {
+            return null;
+        }
+        if (this._foundElementIndex) {
+            // Move the searchIndex in the right direction, wrapping around
+            let nextSearchIndex = (direction === 'forward') ? this._foundElementIndex + 1 : this._foundElementIndex - 1;
+            if (nextSearchIndex === this._foundElements.length) {
+                this._foundElementIndex = 0;
+            } else if (nextSearchIndex < 0) {
+                this._foundElementIndex = this._foundElements.length - 1;
+            }
+        } else {
+            // Start at the beginning
+            this._foundElementIndex = 0;
+        };
+        const textNode = this._foundElements[this._foundElementIndex].textNode
+        const startOffset = this._foundElements[this._foundElementIndex].startOffset
+        const range = document.createRange();
+        range.setStart(textNode, startOffset);
+        range.setEnd(textNode, startOffset + this._searchString.length);
+        return range;
+    };
+    
+    reset() {
+        this._forceIndexing = true;
+    }
+    
+    _buildIndex() {
+        this._foundElements = [];
+        const xPathExpression = '*[contains(.,\'' + this._searchString + '\')]';
+        //_consoleLog(" xPathExpression: " + xPathExpression);
+        const contextNodes = document.evaluate(xPathExpression, editor, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
+        let contextNode = contextNodes.iterateNext();
+        while (contextNode) {
+            if (_isElementNode(contextNode)) {
+                const textNodes = _allChildNodesWithNames(contextNode, ['#text']).nodes;
+                for (let i = 0; i < textNodes.length; i++) {
+                    const textNode = textNodes[i];
+                    const indices = this._getIndicesOf(this._searchString, textNode.textContent);
+                    for (let j = 0; j < indices.length; j++) {
+                        this._foundElements.push({textNode: textNode, startOffset: indices[j]})
+                    };
+                };
+            } else if (_isTextNode(contextNode)) {
+                // TBH, not sure this will ever occur
+                const indices = this._getIndicesOf(this._searchString, contextNode.textContent);
+                for (let j = 0; j < indices.length; j++) {
+                    this._foundElements.push({textNode: contextNode, startOffset: indices[j]})
+                };
+            };
+            contextNode = contextNodes.iterateNext();
+        };
+        this._forceIndexing = false;
+        this._foundElementIndex = null;     // Forces search from beginning
+    };
+    
+    _getIndicesOf(searchStr, str, caseSensitive=false) {
+        // https://stackoverflow.com/a/3410557/8968411
+        let searchStrLen = searchStr.length;
+        if (searchStrLen == 0) {
+            return [];
+        }
+        let startIndex = 0, index, indices = [];
+        if (!caseSensitive) {
+            str = str.toLowerCase();
+            searchStr = searchStr.toLowerCase();
+        }
+        while ((index = str.indexOf(searchStr, startIndex)) > -1) {
+            indices.push(index);
+            startIndex = index + searchStrLen;
+        }
+        return indices;
+    };
+    
+};
+
+/**
+ * The searcher is the singleton that handles finding ranges within editor that
+ * contain a search string.
+ */
+const searcher = new Searcher();
+
+MU.find = function(text, direction) {
+    const range = searcher.find(text, direction);
+    if (range) {
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        _backupSelection();
+        _callback('selectionChange');
     };
 };
 
@@ -1211,7 +1323,7 @@ const _backupUndoerRange = function(undoerData) {
  *
  * 2. We purposely set the selection at many points; for example, after an insert
  *    operation of some kind. From here: https://developer.mozilla.org/en-US/docs/Web/API/Selection,
- *    it's clear that the selectionChanged occurs multiple times as we do things like
+ *    it's clear that the selectionChange occurs multiple times as we do things like
  *    Range.setStart(), Range.setEnd(), and Selection.setRange(). So, whenever we're
  *    setting the selection, we try to encapsulate it so that we can mute the
  *    selectionChange callback until it matters.
@@ -5930,7 +6042,7 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
-        _callback(selectionChange);
+        _callback('selectionChange');
     };
 };
 
