@@ -35,4 +35,8 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
+        # try hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
+        swift package dump-pif > /dev/null
+        xcodebuild clean -scheme MarkupEditor -destination 'generic/platform=iOS' > /dev/null
+
         xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
