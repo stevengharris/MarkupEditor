@@ -105,19 +105,19 @@
 			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
 			remoteInfo = MarkupEditor;
 		};
-		AAD455AB2800DACC00270E4C /* PBXContainerItemProxy */ = {
+		AAF404D6290B004900129FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AA652941260E8113000674B7;
-			remoteInfo = SwiftUIDemo;
+			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
+			remoteInfo = MarkupEditor;
 		};
-		AAD455AD2800DAF200270E4C /* PBXContainerItemProxy */ = {
+		AAF404D8290B005000129FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AA652941260E8113000674B7;
-			remoteInfo = SwiftUIDemo;
+			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
+			remoteInfo = MarkupEditor;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -537,7 +537,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AAD455AE2800DAF200270E4C /* PBXTargetDependency */,
+				AAF404D9290B005000129FD9 /* PBXTargetDependency */,
 			);
 			name = UndoTests;
 			productName = UndoTests;
@@ -615,7 +615,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AAD455AC2800DACC00270E4C /* PBXTargetDependency */,
+				AAF404D7290B004900129FD9 /* PBXTargetDependency */,
 			);
 			name = BasicTests;
 			productName = FooTests;
@@ -850,15 +850,15 @@
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */;
 		};
-		AAD455AC2800DACC00270E4C /* PBXTargetDependency */ = {
+		AAF404D7290B004900129FD9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
-			targetProxy = AAD455AB2800DACC00270E4C /* PBXContainerItemProxy */;
+			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
+			targetProxy = AAF404D6290B004900129FD9 /* PBXContainerItemProxy */;
 		};
-		AAD455AE2800DAF200270E4C /* PBXTargetDependency */ = {
+		AAF404D9290B005000129FD9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
-			targetProxy = AAD455AD2800DAF200270E4C /* PBXContainerItemProxy */;
+			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
+			targetProxy = AAF404D8290B005000129FD9 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -946,7 +946,7 @@
 		AA408B01261666D200CAE8B9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -979,7 +979,7 @@
 		AA408B02261666D200CAE8B9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
