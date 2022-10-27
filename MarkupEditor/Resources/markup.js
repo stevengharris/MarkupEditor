@@ -54,6 +54,11 @@ MU.editor = document.getElementById('editor');
  * @param {String} message     The message, which might be a JSONified string
  */
 const _callback = function(message) {
+    if (message === 'input') {
+        searcher.resetIndex();      // Search results are no longer valid
+    } else if (message === 'click') {
+        searcher.resetSelection();  // We need to start search from a new location
+    };
     window.webkit.messageHandlers.markup.postMessage(message);
 };
 
@@ -130,6 +135,308 @@ class MUError {
     callback() {
         _callback(JSON.stringify(this.messageDict()));
     };
+};
+
+/**
+ * The Searcher class lets us find text ranges that match a search string within the editor element.
+ */
+class Searcher {
+    
+    constructor() {
+        this._searchString = null;      // what we are searching for
+        this._direction = 'forward';    // direction we are searching in
+        this._caseSensitive = false;    // whether the search is case sensitive
+        this._foundRangeIndex = null;   // null if never searched; else, last searched index into foundRanges
+        this._foundRanges = [];         // ranges that contain searchString
+        this._foundIndices = [];        // index arrays below editor for each startContainer of foundRanges
+        this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges
+        this._isActive = false;         // whether Enter gets captured for search
+    };
+    
+    /**
+     * Return the range in the direction relative to the selection point that matches text.
+     *
+     * The range is found relative to the selection point, as cached in _foundRangeIndex.
+     * The text is passed from the Swift side with smartquote nonsense removed and '&quot;'
+     * instead of quotes and '&apos;' instead of apostrophes, so that we can search on text
+     * that includes them and pass them from Swift to JavaScript consistently.
+     */
+    searchFor(text, direction='forward') {
+        if (!text || (text.length === 0)) {
+            this._isActive = false;
+            return null;
+        }
+        text = text.replaceAll('&quot;', '"')       // Fix the hack for quotes in the call
+        text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
+        // Rebuild the index if forced or if the search string changed
+        if (this._forceIndexing || (text !== this._searchString)) {
+            this._searchString = text;
+            this._buildIndex();
+        };
+        if (this._foundRanges.length === 0) {
+            this._isActive = false;
+            return null;
+        }
+        this._direction = direction;
+        this._isActive = true;
+        if (this._foundRangeIndex !== null) { // Can't just check on (this._foundRangeIndex), eh JavaScript
+            // Move the foundRangeIndex in the right direction, wrapping around
+            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
+        } else {
+            // Start at the selection if we can, and find the element at the proper location
+            this._foundRangeIndex = this._elementIndexAtSelection(direction) ?? 0;
+        };
+        return this._foundRanges[this._foundRangeIndex];
+    };
+    
+    /**
+     * Reset the index by forcing it to be recomputed at find time.
+     */
+    resetIndex() {
+        this._forceIndexing = true;
+    };
+    
+    /**
+     * Reset the _foundRangeIndex so that it will always be computed again
+     * relative to the selection at find time.
+     */
+    resetSelection() {
+        this._foundRangeIndex = null;
+    };
+    
+    /**
+     * Return whether search is active, and Enter should be interpreted as a search request
+     */
+    get isActive() {
+        return this._isActive;
+    };
+    
+    /**
+     * Invoke the previous search again in the same direction
+     */
+    searchForNext() {
+        if (this._searchString && (this._searchString.length > 0)) {
+            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, this._direction);
+            this.selectRange(this._foundRanges[this._foundRangeIndex]);
+        };
+    };
+    
+    selectRange(range) {
+        if (range) {
+            const sel = document.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            _backupSelection();
+            _callback('selectionChange');
+        };
+    };
+    
+    /**
+     * Return the next index in _foundRanges given the currentIndex and direction.
+     *
+     * The next index is circular, so returns to the beginning when moving 'forward'
+     * from the end, and returns to the end when moving 'backward' from the beginning.
+     */
+    _nextIndex(currentIndex, direction) {
+        // Move the foundRangeIndex in the right direction, wrapping around
+        let nextSearchIndex = (direction === 'forward') ? currentIndex + 1 : currentIndex - 1;
+        if (nextSearchIndex === this._foundRanges.length) {
+            nextSearchIndex = 0;
+        } else if (nextSearchIndex < 0) {
+            nextSearchIndex = this._foundRanges.length - 1;
+        };
+        return nextSearchIndex;
+    };
+    
+    /**
+     * Use XPath to build an array of ranges in _foundRanges.
+     *
+     * While we identify the foundRanges, we also track the childNodeIndices for the text nodes the
+     * ranges are in. This gives us a relatively easy way to tell, given the selection, which range
+     * comes before or after the selection point.
+     */
+    _buildIndex() {
+        this._foundRanges = [];
+        this._foundIndices = [];
+        let xPathExpression;
+        if (!this._caseSensitive) {// Just remove all the special characters from the text to translate to lowercase
+            let translateText = this._xPathTranslateString(this._searchString);
+            xPathExpression = "*[contains(translate(., '" + translateText.toUpperCase() + "', '" + translateText.toLowerCase() + "'), " + this._xPathSearchString(this._searchString.toLowerCase()) + ")]";
+        } else {
+            xPathExpression = "*[contains(., " + this._xPathSearchString(this._searchString) + ")]";
+        }
+        const contextNodes = document.evaluate(xPathExpression, editor, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
+        let contextNode = contextNodes.iterateNext();
+        while (contextNode) {
+            if (_isElementNode(contextNode)) {
+                const textNodes = _allChildNodesWithNames(contextNode, ['#text']).nodes;
+                for (let i = 0; i < textNodes.length; i++) {
+                    const textNode = textNodes[i];
+                    const offsets = this._getOffsetsOf(this._searchString, textNode.textContent, this._caseSensitive);
+                    for (let j = 0; j < offsets.length; j++) {
+                        const range = document.createRange();
+                        range.setStart(textNode, offsets[j]);
+                        range.setEnd(textNode, offsets[j] + this._searchString.length);
+                        this._foundRanges.push(range);
+                        this._foundIndices.push(_childNodeIndicesByParent(textNode, editor));
+                    };
+                };
+            } else if (_isTextNode(contextNode)) {
+                // TBH, not sure this will ever occur
+                const offsets = this._getOffsetsOf(this._searchString, contextNode.textContent, this._caseSensitive);
+                for (let j = 0; j < offsets.length; j++) {
+                    const range = document.createRange();
+                    range.setStart(contextNode, offsets[j]);
+                    range.setEnd(contextNode, offsets[j] + this._searchString.length);
+                    this._foundRanges.push(range);
+                    this._foundIndices.push(_childNodeIndicesByParent(contextNode, editor));
+                };
+            };
+            contextNode = contextNodes.iterateNext();
+        };
+        this._forceIndexing = false;
+        this._foundRangeIndex = null;     // Forces search from beginning
+    };
+    
+    /*
+     * Return the quoted string that works properly as an XPath search string when
+     * it has embedded apostrophes and/or quotes. See https://stackoverflow.com/a/38254661/8968411
+     */
+    _xPathSearchString(str) {
+        if (!str.includes("'")) {
+            return '\'' + str + '\'';
+        } else if (!str.includes('"')) {
+            return '"' + str + '"'
+        }
+        return "concat('" + str.replaceAll("'", "',\"'\",'") + "')";
+    };
+    
+    /**
+     * Return a string without characters that interfere with translation
+     */
+    _xPathTranslateString(str) {
+        return str
+            .replaceAll('&', '')
+            .replaceAll("'", '')
+            .replaceAll('"', '')
+            .replaceAll('<', '')
+            .replaceAll('>', '');
+    };
+    
+    /**
+     * Return an array of offsets into searchStr that locate str
+     */
+    _getOffsetsOf(searchStr, str, caseSensitive=false) {
+        // https://stackoverflow.com/a/3410557/8968411
+        let searchStrLen = searchStr.length;
+        if (searchStrLen == 0) {
+            return [];
+        }
+        let startOffset = 0, offset, offsets = [];
+        if (!caseSensitive) {
+            str = str.toLowerCase();
+            searchStr = searchStr.toLowerCase();
+        }
+        while ((offset = str.indexOf(searchStr, startOffset)) > -1) {
+            offsets.push(offset);
+            startOffset = offset + searchStrLen;
+        }
+        return offsets;
+    };
+    
+    /**
+     * Given the selection, return the index into this._foundRanges that identifies
+     * the next range to select in the specified direction.
+     */
+    _elementIndexAtSelection(direction='forward') {
+        const sel = document.getSelection();
+        if (sel.rangeCount === 0) { return null };
+        const selRange = sel.getRangeAt(0);
+        const selStartContainer = selRange.startContainer;
+        const selStartOffset = selRange.startOffset;
+        const selEndOffset = selRange.endOffset;
+        let startTextNode;
+        if (_isTextNode(selStartContainer)) {
+            startTextNode = selStartContainer;
+        } else {
+            if (direction === 'forward') {
+                startTextNode = _firstTextNodeAfter(selStartContainer);
+            } else {
+                startTextNode = _firstTextNodeBefore(selStartContainer);
+            };
+        };
+        if (!startTextNode) { return null };
+        const selectionIndex = _childNodeIndicesByParent(startTextNode, editor);
+        // _compareIndicesDepthwise(foundIndex, selectionIndex) returns:
+        //      -1 if foundIndex comes before selectionIndex
+        //      1 if foundIndex comes after selectionIndex
+        //      0 if they are the same
+        let elementIndex;
+        if (direction === 'forward') {
+            elementIndex = this._foundIndices.findIndex(foundIndex => {
+                return _compareIndicesDepthwise(foundIndex, selectionIndex) >= 0
+            })
+        } else {
+            elementIndex = this._foundIndices.reverse().findIndex(foundIndex => {
+                return _compareIndicesDepthwise(foundIndex, selectionIndex) <= 0
+            })
+        };
+        let foundRange = this._foundRanges[elementIndex];
+        let foundRangeContainer = foundRange.startContainer;
+        if (foundRangeContainer === selStartContainer) {
+            // We found a range in the same container as the selection, but we don't know
+            // if it is before or after the selection until we check.
+            if (direction === 'forward') {
+                if (foundRange.startOffset >= selStartOffset) {
+                    return elementIndex;    // The index points to the next range at/after selection
+                } else {
+                    elementIndex = this._nextIndex(elementIndex, direction);
+                    while (this._foundRanges[elementIndex].startContainer === selStartContainer) {
+                        if (this._foundRanges[elementIndex].startOffset >= selStartOffset) {
+                            return elementIndex;    // The index points to the next range at/after selection
+                        } else {
+                            elementIndex = this._nextIndex(elementIndex, direction);
+                        };
+                    };
+                };
+            } else {
+                if (foundRange.endOffset <= selEndOffset) {
+                    return elementIndex;    // The index points to the next range at/before selection
+                } else {
+                    elementIndex = this._nextIndex(elementIndex, direction);
+                    while (this._foundRanges[elementIndex].startContainer === selStartContainer) {
+                        if (this._foundRanges[elementIndex].startOffset <= selStartOffset) {
+                            return elementIndex;    // The index points to the next range at/before selection
+                        } else {
+                            elementIndex = this._nextIndex(elementIndex, direction);
+                        };
+                    };
+                };
+            };
+        };
+        // We found a range in a different container than the selection
+        return elementIndex;
+    };
+
+};
+
+/**
+ * The searcher is the singleton that handles finding ranges that
+ * contain a search string within editor.
+ */
+const searcher = new Searcher();
+
+/**
+ * Public entry point for search.
+ *
+ * When text is empty, search is canceled.
+ *
+ * CAUTION: Search must be cancelled once started, or Enter will be intercepted
+ * to mean searcher.searchForNext()
+ */
+MU.searchFor = function(text, direction) {
+    const range = searcher.searchFor(text, direction);
+    searcher.selectRange(range);
 };
 
 /*
@@ -1211,7 +1518,7 @@ const _backupUndoerRange = function(undoerData) {
  *
  * 2. We purposely set the selection at many points; for example, after an insert
  *    operation of some kind. From here: https://developer.mozilla.org/en-US/docs/Web/API/Selection,
- *    it's clear that the selectionChanged occurs multiple times as we do things like
+ *    it's clear that the selectionChange occurs multiple times as we do things like
  *    Range.setStart(), Range.setEnd(), and Selection.setRange(). So, whenever we're
  *    setting the selection, we try to encapsulate it so that we can mute the
  *    selectionChange callback until it matters.
@@ -1469,6 +1776,11 @@ MU.editor.addEventListener('keydown', function(ev) {
             const sel = document.getSelection()
             const selNode = (sel) ? sel.anchorNode : null;
             if (!selNode) { return };
+            if (searcher.isActive) {
+                ev.preventDefault();
+                searcher.searchForNext();
+                return;
+            };
             const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL']);
             const inBlockQuote = _findFirstParentElementInNodeNames(selNode, ['BLOCKQUOTE']);
             if ((inList && _doListEnter()) || (inBlockQuote && _doBlockquoteEnter()) || (!inList && _doEnter())) {
@@ -5647,41 +5959,6 @@ const _outdent = function(node) {
     return node;
 }
 
-/*
- const _doEnter = function(undoable=true) {
-     let sel = document.getSelection();
-     let selNode = (sel) ? sel.anchorNode : null;
-     if (!selNode || !sel.isCollapsed) { return null };
-     const existingRange = sel.getRangeAt(0);
-     const selectionAtEnd = _isTextNode(selNode) && (existingRange.endOffset === selNode.textContent.length);
-     const nextSiblingIsEmpty = (!selNode.nextSibling) || _isEmpty(selNode.nextSibling);
-     const parent = _findFirstParentElementInNodeNames(selNode, _paragraphStyleTags);
-     if (selectionAtEnd && nextSiblingIsEmpty && parent) {
-         // We are at the end of the last text node in some element, so we want to
-         // create a new <P> to keep typing. Note this means we get <p> when hitting return
-         // at the end of, say, <H3>. I believe this is the "expected" behavior.
-         const p = document.createElement('p');
-         p.appendChild(document.createElement('br'));
-         parent.parentNode.insertBefore(p, parent.nextSibling);
-         const range = document.createRange();
-         // And leave selection in the newElement
-         range.setStart(p, 0);
-         range.setEnd(p, 0);
-         sel.removeAllRanges();
-         sel.addRange(range);
-         if (undoable) {
-             _backupSelection();
-             const undoerData = _undoerData('enter');
-             undoer.push(undoerData);
-             _restoreSelection();
-         }
-         _callback('input');
-         return p;   // To preventDefault() on Enter
-     };
-     return null;    // Let the MarkupWKWebView do its normal thing
- };
- */
-
 /**
  * Handle the Enter key in Blockquotes so we always split them.
  * Caller has to ensure we are in a blockquote.
@@ -5930,7 +6207,7 @@ const _backupSelection = function() {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
         error.callback();
-        _callback(selectionChange);
+        _callback('selectionChange');
     };
 };
 
@@ -6580,9 +6857,10 @@ const _getTableTags = function() {
  */
 const _getSelectionText = function() {
     const sel = document.getSelection();
-    if (sel) {
-        return sel.toString();
-    }
+    if (sel && (sel.rangeCount > 0)) {
+        // Note: sel.toString will pad with a trailing blank if one exists
+        return sel.getRangeAt(0).toString();
+    };
     return '';
 };
 

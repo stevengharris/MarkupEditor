@@ -14,7 +14,11 @@ import UniformTypeIdentifiers
 /// The state is all held in statics to provide convenient access. The MarkupEditor holds onto several
 /// ObservableObjects used by the toolbars.
 public struct MarkupEditor {
-    
+    public static var observedFirstResponder = ObservedFirstResponder()
+    public static var firstResponder: String? {
+        get { observedFirstResponder.id }
+        set { observedFirstResponder.id = newValue }
+    }
     public static let markupMenu = MarkupMenu()
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
@@ -46,6 +50,12 @@ public struct MarkupEditor {
     
     public static func initMenu(with builder: UIMenuBuilder) {
         markupMenu.initMenu(with: builder)
+    }
+    
+    /// Enum to identify search direction
+    public enum FindDirection {
+        case forward
+        case backward
     }
     
     /// Enum to identify directions for adding rows and columns.
@@ -89,6 +99,10 @@ public struct MarkupEditor {
         }
     }
 
+}
+
+public class ObservedFirstResponder: ObservableObject {
+    @Published public var id: String?
 }
 
 /// The observable object containing the selectedWebView.

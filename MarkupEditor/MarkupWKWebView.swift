@@ -36,6 +36,7 @@ import Combine
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
+    public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
     let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
     public var hasFocus: Bool = false
@@ -64,6 +65,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var markupToolbarUIView: MarkupToolbarUIView!
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
     private var showSubToolbarType: AnyCancellable?
+    private var firstResponder: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
     public enum PasteableType {
@@ -130,6 +132,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // Use the keyboard notifications to resize the markupToolbar as the accessoryView
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
+        }
+        observeFirstResponder()
+    }
+    
+    private func observeFirstResponder() {
+        firstResponder = MarkupEditor.observedFirstResponder.$id.sink { [weak self] selectedId in
+            guard let self, self.id == selectedId, !self.hasFocus else { return }
+            if (self.becomeFirstResponder()) {
+                //print("\(self.id) became firstResponder")
+                MarkupEditor.selectedWebView = self
+                self.hasFocus = true
+                self.getSelectionState()
+            }
         }
     }
     
@@ -710,6 +725,43 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
         evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
             handler(result as? Int ?? 0)
+        }
+    }
+    
+    /// Search for text in the direction specified.
+    ///
+    /// *NOTE*: It's important to cancelSearch once a search is performed using this method. On the JavaScript
+    /// side, a search becomes "active", and subsequent input of Enter in the MKMarkupWebView search for
+    /// the next occurrence of text in the direction specified until cancelSearch is called.
+    public func search(for text: String, direction: FindDirection, handler: (()->Void)? = nil) {
+        becomeFirstResponder()
+        // Remove the "smartquote" stuff that happens when inputting search into a TextField.
+        // On the Swift side, replace the search string characters with the proper equivalents
+        // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
+        // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
+        // replace with "\"" and "'" on the JavaScript side before doing a search.
+        let patchedText = text
+            .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
+            .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
+            .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
+            .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
+            .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
+            .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
+        evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\")") { result, error in
+            if let error {
+                print("Error: \(error)")
+            }
+            handler?()
+        }
+    }
+    
+    /// Cancel the search that is underway, so that Enter is no longer intercepted on the JavaScript side.
+    public func cancelSearch(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.searchFor(\"\")") { result, error in
+            if let error {
+                print("Error: \(error)")
+            }
+            handler?()
         }
     }
     
