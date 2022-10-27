@@ -3108,5 +3108,149 @@ class BasicTests: XCTestCase, MarkupDelegate {
             wait(for: [expectation], timeout: 3)
         }
     }
+    
+    // Repurpose the endHtml, undoHtml, and pasteString state in HtmlTest as commented below for search tests
+    func testSearch() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "Exact word match",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "just",        // Search forward result
+                undoHtml: "just",       // Search backward result
+                startId: "p",           // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "just"     // Search for
+            ),
+            HtmlTest(
+                description: "Partial word match",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "us",          // Search forward result
+                undoHtml: "us",         // Search backward result
+                startId: "p",           // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "us"       // Search for
+            ),
+            HtmlTest(
+                description: "Mixed case word match",
+                startHtml: "<p id=\"p\">This is just a SiMpLe paragraph.</p>",
+                endHtml: "SiMpLe",      // Search forward result
+                undoHtml: "SiMpLe",     // Search backward result
+                startId: "p",           // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "simple"   // Search for
+            ),
+            HtmlTest(
+                description: "Mixed case search for lowercase word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "simple",      // Search forward result
+                undoHtml: "simple",     // Search backward result
+                startId: "p",           // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "SiMpLe"   // Search for
+            ),
+            HtmlTest(
+                description: "Search with apostrophe",
+                startHtml: "<p id=\"p\">This isn't just a simple paragraph.</p>",
+                endHtml: "isn't",       // Search forward result
+                undoHtml: "isn't",      // Search backward result
+                startId: "p",           // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "isn't"     // Search for
+            ),
+            HtmlTest(
+                description: "Search with apostrophe and quotes",
+                startHtml: "<p id=\"p\">This isn't just a \"simple\" paragraph.</p>",
+                endHtml: "isn't just a \"simple\"",         // Search forward result
+                undoHtml: "isn't just a \"simple\"",        // Search backward result
+                startId: "p",                               // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "isn't just a \"simple\""      // Search for
+            ),
+            HtmlTest(
+                description: "Search with smart quotes",
+                startHtml: "<p id=\"p\">This isn't just a \"simple\" paragraph.</p>",
+                endHtml: "\"simple\"",          // Search forward result
+                undoHtml: "\"simple\"",         // Search backward result
+                startId: "p",                   // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "“simple”"         // Search for
+            ),
+            HtmlTest(
+                description: "Search with smart apostrophe",
+                startHtml: "<p id=\"p\">This isn't just a \"simple\" paragraph.</p>",
+                endHtml: "isn't",               // Search forward result
+                undoHtml: "isn't",              // Search backward result
+                startId: "p",                   // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "isn’t"            // Search for
+            ),
+            HtmlTest(
+                description: "Search with mixed smart apostrophe and quotes",
+                startHtml: "<p id=\"p\">This isn't just a \"simple\" paragraph.</p>",
+                endHtml: "isn't just a \"simple\"",         // Search forward result
+                undoHtml: "isn't just a \"simple\"",        // Search backward result
+                startId: "p",                               // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "isn’t just a “simple”"        // Search for
+            ),
+            HtmlTest(
+                description: "Search relative to selection",
+                startHtml: "<p id=\"p\">This is just a SiMpLe word in a sImPlE paragraph.</p>",
+                endHtml: "sImPlE",      // Search forward result
+                undoHtml: "SiMpLe",     // Search backward result
+                startId: "p",           // Select "word|"
+                startOffset: 26,
+                endId: "p",
+                endOffset: 26,
+                pasteString: "simple"   // Search for
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let searchString = test.pasteString ?? ""
+            let expectation = XCTestExpectation(description: "Search forward and backward")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        self.webView.search(for: searchString, direction: .forward) {
+                            self.webView.getSelectionState() { state in
+                                XCTAssertTrue(state.selection == test.endHtml)   // Selection extends beyond word!
+                                self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                                    self.webView.search(for: searchString, direction: .backward) {
+                                        self.webView.getSelectionState() { state in
+                                            // In some cases, selection extends beyond a word to include blanks. Not sure if this is a bug, frankly.
+                                            XCTAssertTrue(state.selection == test.undoHtml)
+                                            expectation.fulfill()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 3)
+        }
+    }
 
 }

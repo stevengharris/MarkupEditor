@@ -6857,9 +6857,10 @@ const _getTableTags = function() {
  */
 const _getSelectionText = function() {
     const sel = document.getSelection();
-    if (sel) {
-        return sel.toString();
-    }
+    if (sel && (sel.rangeCount > 0)) {
+        // Note: sel.toString will pad with a trailing blank if one exists
+        return sel.getRangeAt(0).toString();
+    };
     return '';
 };
 
