@@ -114,7 +114,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -157,7 +157,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -218,7 +218,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -557,7 +557,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -640,7 +640,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -742,7 +742,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 
@@ -879,7 +879,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1139,7 +1139,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1294,7 +1294,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                      }
                  }
              }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 
@@ -1485,7 +1485,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1837,7 +1837,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2034,7 +2034,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2291,7 +2291,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2347,7 +2347,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2552,7 +2552,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2620,7 +2620,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 self.assertEqualStrings(expected: endHtml, saw: cleaned)
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2805,7 +2805,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2883,7 +2883,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 self.assertEqualStrings(expected: endHtml, saw: cleaned)
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -3068,7 +3068,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -3105,7 +3105,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -3249,7 +3249,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 

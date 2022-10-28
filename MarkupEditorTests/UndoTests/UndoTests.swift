@@ -111,7 +111,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -164,7 +164,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -518,7 +518,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -608,7 +608,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -715,7 +715,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -857,7 +857,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1104,7 +1104,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1267,7 +1267,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1463,7 +1463,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1839,7 +1839,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -1971,7 +1971,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 
@@ -2129,7 +2129,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2194,7 +2194,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 
@@ -2404,7 +2404,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 
@@ -2609,7 +2609,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2814,7 +2814,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
     
@@ -2863,7 +2863,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 5)
+            wait(for: [expectation], timeout: 15)
         }
     }
 

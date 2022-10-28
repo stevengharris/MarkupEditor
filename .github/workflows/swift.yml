@@ -9,13 +9,13 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: macos-12
 
     steps:
     - uses: actions/checkout@v3
     - name: Build and Test
       env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       run: |
@@ -35,8 +35,10 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        # try hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
-        swift package dump-pif > /dev/null
-        xcodebuild clean -scheme MarkupEditor -destination 'generic/platform=iOS' > /dev/null
+        # NOTE: Specify -destination 'platform=macOS,variant=Mac Catalyst' for Catalyst build
 
-        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+        # hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
+        swift package dump-pif > /dev/null
+        xcodebuild clean -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' > /dev/null
+
+        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
