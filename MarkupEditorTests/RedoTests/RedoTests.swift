@@ -22,7 +22,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
         // The coordinator will receive callbacks from markup.js
         // using window.webkit.messageHandlers.test.postMessage(<message>);
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        wait(for: [loadedExpectation], timeout: 15)
+        wait(for: [loadedExpectation], timeout: 30)
     }
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
@@ -116,7 +116,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -174,7 +174,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -533,7 +533,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -628,7 +628,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -740,7 +740,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -887,7 +887,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -1139,7 +1139,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -1309,7 +1309,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -1509,7 +1509,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -1872,7 +1872,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2011,7 +2011,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2177,7 +2177,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2247,7 +2247,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2462,7 +2462,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
 
@@ -2674,7 +2674,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2886,7 +2886,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
@@ -2947,7 +2947,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             }
-            wait(for: [expectation], timeout: 15)
+            wait(for: [expectation], timeout: 30)
         }
     }
     
