@@ -142,11 +142,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         firstResponder = MarkupEditor.observedFirstResponder.$id.sink { [weak self] selectedId in
             guard let self, self.id == selectedId, !self.hasFocus else { return }
             if (self.becomeFirstResponder()) {
-                print("\(self.id) became firstResponder")
                 MarkupEditor.selectedWebView = self
                 self.hasFocus = true
                 self.getSelectionState { selectionState in
-                    print(" Resetting MarkupEditor selectionState")
                     MarkupEditor.selectionState.reset(from: selectionState)
                 }
             }
