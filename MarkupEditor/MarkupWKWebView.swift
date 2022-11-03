@@ -44,6 +44,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     private var html: String?
+    private var select: Bool = true     // Whether to set the selection after loading html
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
     public var userScripts: [String]? {
@@ -86,9 +87,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, select: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
+        self.select = select
         self.resourcesUrl = resourcesUrl
         if id != nil {
             self.id = id!
@@ -140,10 +142,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         firstResponder = MarkupEditor.observedFirstResponder.$id.sink { [weak self] selectedId in
             guard let self, self.id == selectedId, !self.hasFocus else { return }
             if (self.becomeFirstResponder()) {
-                //print("\(self.id) became firstResponder")
+                print("\(self.id) became firstResponder")
                 MarkupEditor.selectedWebView = self
                 self.hasFocus = true
-                self.getSelectionState()
+                self.getSelectionState { selectionState in
+                    print(" Resetting MarkupEditor selectionState")
+                    MarkupEditor.selectionState.reset(from: selectionState)
+                }
             }
         }
     }
@@ -605,7 +610,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func setHtml(_ html: String, handler: (()->Void)? = nil) {
         self.html = html    // Our local record of what we set, used by setHtmlIfChanged
-        evaluateJavaScript("MU.setHTML('\(html.escaped)')") { result, error in
+        evaluateJavaScript("MU.setHTML('\(html.escaped)', \(select))") { result, error in
             handler?()
         }
     }
@@ -625,6 +630,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 handler?(self.contentHeight(from: clientHeight))
             }
         }
+    }
+    
+    private func contentHeight(from clientHeight: Int) -> Int {
+        return clientHeight + 2 * bodyMargin
     }
     
     public func cleanUpHtml(handler: ((Error?)->Void)?) {
@@ -852,22 +861,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK: Autosizing
-    
-    public func setHtmlAndHeight(_ html: String, handler: ((Int) -> Void)? = nil) {
-        evaluateJavaScript("MU.setHtml('\(html.escaped)')") { result, error in
-            self.getClientHeight() { clientHeight in
-                // Note that clientHeight does not reflect css-specified body margin
-                // which is present at top and bottom in addition to clientHeight
-                handler?(self.contentHeight(from: clientHeight))
-            }
-        }
-    }
-    
-    private func contentHeight(from clientHeight: Int) -> Int {
-        return clientHeight + 2 * bodyMargin
-    }
-    
     //MARK: Paste
     
     /// Return the Pasteable type based on the types found in the UIPasteboard.general
@@ -1028,7 +1021,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Get the selectionState async and execute a handler with it.
     ///
     /// Note we keep a local copy up-to-date so we can use it for handling actions coming in from
-    /// the MarkupMenu and hot-keys
+    /// the MarkupMenu and hot-keys. Calls to getSelectionState here only affect the locally cached
+    /// selectionState, not the MarkupEditor.selectionState that is reflected in the MarkupToolbar.
     public func getSelectionState(handler: ((SelectionState)->Void)? = nil) {
         evaluateJavaScript("MU.getSelectionState()") { result, error in
             guard
@@ -1049,7 +1043,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 newSelectionState = SelectionState()
             }
             self.selectionState.reset(from: newSelectionState)
-            handler?(self.selectionState)
+            handler?(newSelectionState)
         }
     }
     
