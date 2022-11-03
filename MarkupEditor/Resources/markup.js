@@ -1615,7 +1615,7 @@ const unmuteFocusBlur = function() {
  * Restore the range captured on blur and then let Swift know focus happened.
  */
 MU.editor.addEventListener('focus', function(ev) {
-    _restoreSelection();
+    if (MU.currentSelection) { _restoreSelection() };   // No need if nothing to restore
     if (!_muteFocusBlur) {
         //_consoleLog("focused: " + ev.target.id)
         _callback('focus');
@@ -2617,7 +2617,7 @@ MU.emptyDocument = function() {
  *
  * @param {String} contents The HTML for the editor element
  */
-MU.setHTML = function(contents) {
+MU.setHTML = function(contents, select=true) {
     // Note for history:
     // Originally this method used a div tempWrapper and just assigned contents to its innerHTML.
     // In doing so, the image.onload method would fire, but I could never get an event listener to
@@ -2630,7 +2630,19 @@ MU.setHTML = function(contents) {
     _prepImages(element);
     MU.editor.innerHTML = '';   // Clean it out!
     MU.editor.appendChild(element);
-    _initializeRange();
+    // By default, we initialize range to point to the first element. In cases where you are
+    // using multiple MarkupWKWebViews, you may want to explicitly prevent the range from
+    // being initialized and the first element being selected by passing select=false. Otherwise,
+    // each of your views will receive a multiple selectionChange events after they load,
+    // which in turn will propagate calls to the MarkupDelegate about that change, and potentially
+    // update the MarkupToolbar when all you wanted to do was to load the content and deal
+    // with selection later.
+    if (select) {
+        _initializeRange();                                         // Causes a selectionChange event
+        _focusOn(MU.editor, 30).then(_callback('updateHeight'));    // Longer delay helps
+    } else {
+        _callback('updateHeight');
+    };
 };
 
 /**
@@ -2769,8 +2781,8 @@ const _initializeRange = function() {
         _backupSelection();
     } else {
         MU.emptyDocument()
-    }
-    _focusOn(MU.editor).then(_callback('updateHeight'));
+    };
+    // Caller has to do _focusOn and/or callback to updateHeight if needed
 };
 
 /**
