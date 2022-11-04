@@ -2646,6 +2646,20 @@ MU.setHTML = function(contents, select=true) {
 };
 
 /**
+ * Focus immediately, leaving range alone
+ */
+MU.focus = function() {
+    MU.editor.focus({ preventScroll:true });
+};
+
+/**
+ * Reset the selection to the beginning of the document
+ */
+MU.resetSelection = function() {
+    _initializeRange();
+};
+
+/**
  * Get the contents of the editor element.
  *
  * If pretty, then the text will be nicely formatted for reading.
