@@ -2610,7 +2610,7 @@ MU.emptyDocument = function() {
     sel.removeAllRanges();
     sel.addRange(range);
     _backupSelection();
-}
+};
 
 /**
  * Set the contents of the editor element
@@ -2624,6 +2624,14 @@ MU.setHTML = function(contents, select=true) {
     // fire for the image. I fixed this by using a template, which presumably preserves the actual
     // image element so that image that I assign the event listener to is preserved.
     const template = document.createElement('template');
+    // When contents is empty, replace it with valid minimal HTML for a properly behaved
+    // MarkupEditor document. A lot of the editing functions in MarkupEditor depend on content
+    // being held in "style" elements. Without them, things will display properly, but the behavior
+    // is going to be unpredictable. The intervention on contents here is similar to what happens in
+    // MU.emptyDocument, but doing it here avoids having selection change.
+    if (contents.trim().length === 0) {
+        contents = '<p><br></p>';
+    };
     template.innerHTML = contents;
     const element = template.content;
     _cleanUpEmptyTextNodes(element);
@@ -2643,6 +2651,20 @@ MU.setHTML = function(contents, select=true) {
     } else {
         _callback('updateHeight');
     };
+};
+
+/**
+ * Focus immediately, leaving range alone
+ */
+MU.focus = function() {
+    MU.editor.focus({ preventScroll:true });
+};
+
+/**
+ * Reset the selection to the beginning of the document
+ */
+MU.resetSelection = function() {
+    _initializeRange();
 };
 
 /**

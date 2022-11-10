@@ -138,73 +138,69 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         observeFirstResponder()
     }
     
+    /// Monitor the setting for MarkupEditor.observedFirstResponder, and set this MarkupWKWebView to be the first responder
+    /// when the id matches.
+    ///
+    /// Becoming the first reponder also means that focus and selection state are set properly.
     private func observeFirstResponder() {
         firstResponder = MarkupEditor.observedFirstResponder.$id.sink { [weak self] selectedId in
-            guard let self, self.id == selectedId, !self.hasFocus else { return }
-            if (self.becomeFirstResponder()) {
+            guard let self, self.id == selectedId else { return }
+            if self.becomeFirstResponder() {
                 MarkupEditor.selectedWebView = self
-                self.hasFocus = true
-                self.getSelectionState { selectionState in
-                    MarkupEditor.selectionState.reset(from: selectionState)
+                if !self.hasFocus {     // Do nothing if we are already focused
+                    self.focus {        // Else focus and setSelection properly
+                        self.setSelection()
+                    }
                 }
             }
         }
     }
     
-//TODO: Remove the swizzling code when it's sure not to be needed
-    //typealias NewClosureType = @convention(c) (Any, Selector, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void
+    /// Set the selection properly if we are focused.
+    ///
+    /// If the selection is invalid (e.g., it has never been focused/selected before), then we attempt to set the selection into an
+    /// initial state, positioning selection at the beginning of the document. If selection state is valid, we reset the
+    /// local cache and the global MarkupEditor.selectionState.
+    private func setSelection() {
+        guard hasFocus else { return }
+        getSelectionState { selectionState in
+            if selectionState.valid {
+                self.selectionState.reset(from: selectionState)             // cache it here
+                MarkupEditor.selectionState.reset(from: selectionState)     // and set globally
+            } else {    // Should not happen
+                self.resetSelection {
+                    self.getSelectionState { newSelectionState in
+                        if newSelectionState.valid {
+                            self.selectionState.reset(from: newSelectionState)         // cache it here
+                            MarkupEditor.selectionState.reset(from: newSelectionState) // and set globally
+                        } else {
+                            print(" Could not reset selectionState")
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-    //func setKeyboardRequiresUserInteraction(_ value: Bool) {
-    //    guard
-    //        let WKContentViewClass: AnyClass = NSClassFromString("WKContentView") else {
-    //        print("Cannot find the WKContentView class")
-    //        return
-    //    }
-    //    let ios13Selector: Selector = sel_getUid("_elementDidFocus:userIsInteracting:blurPreviousNode:activityStateChanges:userObject:")
-    //    if let method = class_getInstanceMethod(WKContentViewClass, ios13Selector) {
-    //        swizzleAutofocusMethod(method, ios13Selector, value)
-    //    }
-    //}
+    /// Reset the selection to the beginning of the document.
+    func resetSelection(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.resetSelection()") { result, error in
+            if let error {
+                print("resetSelection error: \(error.localizedDescription)")
+            }
+            handler?()
+        }
+    }
     
-    //func unsetKeyboardRequiresUserInteraction() {
-    //    guard
-    //        let WKContentViewClass: AnyClass = NSClassFromString("WKContentView") else {
-    //        print("Cannot find the WKContentView class")
-    //        return
-    //    }
-    //    let ios13Selector: Selector = sel_getUid("_elementDidFocus:userIsInteracting:blurPreviousNode:activityStateChanges:userObject:")
-    //    if let method = class_getInstanceMethod(WKContentViewClass, ios13Selector) {
-    //        unswizzleAutofocusMethod(method, ios13Selector)
-    //    }
-    //}
-    
-    //func swizzleAutofocusMethod(_ method: Method, _ selector: Selector, _ value: Bool) {
-    //    print("swizzling")
-    //    let originalImp: IMP = method_getImplementation(method)
-    //    let original: NewClosureType = unsafeBitCast(originalImp, to: NewClosureType.self)
-    //    let block : @convention(block) (Any, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void = { (me, arg0, arg1, arg2, arg3, arg4) in
-    //        original(me, selector, arg0, !value, arg2, arg3, arg4)
-    //    }
-    //    let imp: IMP = imp_implementationWithBlock(block)
-    //    method_setImplementation(method, imp)
-    //}
-    
-    //func unswizzleAutofocusMethod(_ method: Method, _ selector: Selector) {
-    //    print("unswizzling")
-    //    let originalImp: IMP = method_getImplementation(method)
-    //    let original: NewClosureType = unsafeBitCast(originalImp, to: NewClosureType.self)
-    //    let block : @convention(block) (Any, UnsafeRawPointer, Bool, Bool, Bool, Any?) -> Void = { (me, arg0, arg1, arg2, arg3, arg4) in
-    //        original(me, selector, arg0, arg1, arg2, arg3, arg4)
-    //    }
-    //    let imp: IMP = imp_implementationWithBlock(block)
-    //    method_setImplementation(method, imp)
-    //}
-
-    //public func showKeyboard() {
-    //    setKeyboardRequiresUserInteraction(false)
-    //    becomeFirstResponder()
-    //    unsetKeyboardRequiresUserInteraction()
-    //}
+    /// Focus on MU.editor, which triggers a focus event and sets hasFocus
+    func focus(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.focus()") { result, error in
+            if let error {
+                print("focus error: \(error.localizedDescription)")
+            }
+            handler?()
+        }
+    }
     
     /// Return the bundle that is appropriate for the packaging.
     func bundle() -> Bundle {
