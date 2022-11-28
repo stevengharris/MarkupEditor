@@ -1284,14 +1284,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -1986,14 +1986,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -2152,14 +2152,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -2222,14 +2222,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -2649,14 +2649,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -2861,14 +2861,14 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { formatted in
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: undoHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 self.assertEqualStrings(expected: endHtml, saw: reformatted)
                                                 expectation.fulfill()
@@ -2913,7 +2913,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
                         // Define the handler to execute after undoSet is received (i.e., once the undoData has
                         // been pushed to the stack and can be executed).
-                        self.addUndoSetHandler {
+                        self.addInputHandler {
                             self.webView.getRawHtml { pasted in
                                 if let imageFileName = pasted?.imageFileNameInTag() {
                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
@@ -2921,10 +2921,10 @@ class RedoTests: XCTestCase, MarkupDelegate {
                                     XCTFail("The pasted HTML was not returned properly.")
                                 }
                                 // Define the handler after input is received (i.e., once the undo is complete)
-                                self.addInputHandler {
+                                self.addUndoSetHandler {
                                     self.webView.getRawHtml { unformatted in
                                         self.assertEqualStrings(expected: startHtml, saw: unformatted)
-                                        self.addInputHandler {
+                                        self.addUndoSetHandler {
                                             self.webView.getRawHtml { reformatted in
                                                 if let imageFileName = pasted?.imageFileNameInTag() {
                                                     XCTAssertTrue(self.webView.resourceExists(imageFileName))
