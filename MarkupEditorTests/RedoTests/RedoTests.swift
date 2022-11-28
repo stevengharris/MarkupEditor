@@ -1144,7 +1144,6 @@ class RedoTests: XCTestCase, MarkupDelegate {
     }
     
     func testRedoBlockquoteEnter() throws {
-        throw XCTSkip("Flaky test on GitHub actions.")
         let htmlTests: [HtmlTest] = [
             HtmlTest(
                 description: "Enter at beginning of simple paragraph in blockquote",
