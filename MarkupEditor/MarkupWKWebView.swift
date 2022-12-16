@@ -453,6 +453,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     @objc public func showLinkPopover() {
+        startModalInput()
         let linkVC = LinkViewController()
         linkVC.modalPresentationStyle = .popover
         linkVC.preferredContentSize = CGSize(width: 300, height: 100 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
@@ -472,6 +473,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     @objc public func showImagePopover() {
+        startModalInput()
         let imageVC = ImageViewController()
         imageVC.modalPresentationStyle = .popover
         imageVC.preferredContentSize = CGSize(width: 300, height: 140 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
