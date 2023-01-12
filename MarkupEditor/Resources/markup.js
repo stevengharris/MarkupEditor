@@ -2673,17 +2673,15 @@ MU.setHTML = function(contents, select=true) {
     // with selection later.
     if (select) {
         _initializeRange();                                         // Causes a selectionChange event
-        _focusOn(MU.editor, 30).then(_callback('updateHeight'));    // Longer delay helps
-    } else {
-        _callback('updateHeight');
     };
+    _callback('updateHeight');
 };
 
 /**
  * Focus immediately, leaving range alone
  */
 MU.focus = function() {
-    MU.editor.focus({ preventScroll:true });
+    _focusOn(MU.editor);    // Does async after a delay, else caret sometimes is hidden
 };
 
 /**
@@ -7376,7 +7374,6 @@ const _prepImage = function(img) {
     };
     // For history, 'focusout' just never fires, either for image or the resizeContainer
     img.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
-    _callback('updateHeight');
     _callback('input');                                   // Because we changed the html
 };
 

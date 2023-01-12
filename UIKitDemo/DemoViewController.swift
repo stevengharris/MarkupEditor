@@ -142,7 +142,7 @@ class DemoViewController: UIViewController {
 extension DemoViewController: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        MarkupEditor.observedWebView.selectedWebView = view
+        MarkupEditor.selectedWebView = view
         setRawText(handler)
     }
     
