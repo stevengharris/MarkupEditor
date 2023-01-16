@@ -29,7 +29,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     private var resourcesUrl: URL?
     private var id: String?
     @Binding private var html: String
-    private var select: Bool
+    private var selectAfterLoad: Bool
     
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
     ///
@@ -40,7 +40,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         html: Binding<String>? = nil,
-        select: Bool = true,
+        selectAfterLoad: Bool = true,
         resourcesUrl: URL? = nil,
         id: String? = nil) {
             self.markupDelegate = markupDelegate
@@ -48,7 +48,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
             _html = html ?? .constant("")
-            self.select = select
+            self.selectAfterLoad = selectAfterLoad
             self.resourcesUrl = resourcesUrl
             self.id = id
         }
@@ -58,7 +58,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     }
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {
-        let webView = MarkupWKWebView(html: html, select: select, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
+        let webView = MarkupWKWebView(html: html, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupEditorUIView.
         webView.navigationDelegate = wkNavigationDelegate

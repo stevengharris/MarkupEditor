@@ -38,13 +38,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableDirection = MarkupEditor.TableDirection
     public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
-    let bodyMargin: Int = 8         // As specified in markup.css. Needed to adjust clientHeight
+    let bodyMargin: Int = 8                             // As specified in markup.css. Needed to adjust clientHeight
+    public private(set) var isReady: Bool = false       // Ready for editing
     public var hasFocus: Bool = false
     private var editorHeight: Int = 0
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     private var html: String?
-    private var select: Bool = true     // Whether to set the selection after loading html
+    public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
     public var userScripts: [String]? {
@@ -87,10 +88,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, select: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
-        self.select = select
+        self.selectAfterLoad = selectAfterLoad
         self.resourcesUrl = resourcesUrl
         if id != nil {
             self.id = id!
@@ -144,14 +145,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Becoming the first reponder also means that focus and selection state are set properly.
     private func observeFirstResponder() {
         firstResponder = MarkupEditor.observedFirstResponder.$id.sink { [weak self] selectedId in
-            guard let self, self.id == selectedId else { return }
-            if self.becomeFirstResponder() {
-                MarkupEditor.selectedWebView = self
-                if !self.hasFocus {     // Do nothing if we are already focused
-                    self.focus {        // Else focus and setSelection properly
-                        self.setSelection()
-                    }
+            guard let selectedId, let self, self.id == selectedId else {
+                return
+            }
+            self.becomeFirstResponderIfReady()
+        }
+    }
+    
+    /// Have this MarkupWKWebView becomeFirstResponder if loadInitialHtml has been called after the coordinator sees "ready" callback.
+    ///
+    /// If we can becomeFirstResponder, then we let MarkupEditor know this is the selectedWebView,
+    /// and we set the selection, focusing first if necessary.
+    public func becomeFirstResponderIfReady() {
+        guard isReady else { return }
+        if becomeFirstResponder() {
+            MarkupEditor.selectedWebView = self
+            //print("*** Became first responder \(id)")
+            if !hasFocus {     // Do nothing if we are already focused
+                focus {        // Else focus and setSelection properly
+                    self.setSelection()
                 }
+            } else {
+                setSelection()
             }
         }
     }
@@ -196,7 +211,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     func focus(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.focus()") { result, error in
             if let error {
-                print("focus error: \(error.localizedDescription)")
+                print("focus error: \(error)")
+                self.hasFocus = false
+            } else {
+                self.hasFocus = true
             }
             handler?()
         }
@@ -299,14 +317,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return cacheUrls[0].appendingPathComponent(id)
     }
     
+    /// Load the initialHtml, let the delegate know, and becomeFirstResponder if
+    /// selectAfterLoad is true.
+    ///
+    /// In some cases, you won't want to select after load. For example, if you are
+    /// using multiple MarkupWKWebViews in a single View/UIView or even a List,
+    /// then you want to set MarkupEditor.firstResponder by id, not just have each
+    /// MarkupWKWebView becomeFirstResponder and trigger a SelectionState
+    /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
         setHtml(html ?? "") {
+            //print("isReady: \(self.id)")
+            self.isReady = true
             if let delegate = self.markupDelegate {
                 delegate.markupDidLoad(self) {
-                    self.becomeFirstResponder()
+                    if self.selectAfterLoad {
+                        self.becomeFirstResponderIfReady()
+                    }
                 }
             } else {
-                self.becomeFirstResponder()
+                if self.selectAfterLoad {
+                    self.becomeFirstResponderIfReady()
+                }
             }
         }
     }
@@ -606,7 +638,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func setHtml(_ html: String, handler: (()->Void)? = nil) {
         self.html = html    // Our local record of what we set, used by setHtmlIfChanged
-        evaluateJavaScript("MU.setHTML('\(html.escaped)', \(select))") { result, error in
+        evaluateJavaScript("MU.setHTML('\(html.escaped)', \(selectAfterLoad))") { result, error in
             handler?()
         }
     }
