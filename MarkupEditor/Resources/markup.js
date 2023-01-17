@@ -7359,22 +7359,31 @@ const _redoDeleteImage = function(undoerData) {
  * Callback invoked after the load or error event on an image
  *
  * The purpose of this method is to set attributes of every image to be
- * selectable and resizable.
+ * selectable and resizable and to have width and height preset.
  */
 const _prepImage = function(img) {
-    img.setAttribute('class', 'resize-image');            // Make it resizable
-    img.setAttribute('tabindex', -1);                     // Make it selectable
+    let changedHTML = false;
+    if (img.getAttribute('class') !== 'resize-image') {
+        img.setAttribute('class', 'resize-image');          // Make it resizable
+        changedHTML = true;
+    }
+    if (img.getAttribute('tabindex') !== "-1") {
+        img.setAttribute('tabindex', -1);                   // Make it selectable
+        changedHTML = true;
+    }
     // Per https://www.youtube.com/watch?v=YM3KszYmn58, we always want dimensions
-    const width = img.getAttribute('width');
     if (!img.getAttribute('width')) {
         img.setAttribute('width', Math.max(img.naturalWidth ?? 0, minImageSize));
+        changedHTML = true;
     };
     if (!img.getAttribute('height')) {
         img.setAttribute('height', Math.max(img.naturalHeight ?? 0, minImageSize));
+        changedHTML = true;
     };
     // For history, 'focusout' just never fires, either for image or the resizeContainer
-    img.addEventListener('focusin', _focusInImage);       // Allow resizing when focused
-    _callback('input');                                   // Because we changed the html
+    img.addEventListener('focusin', _focusInImage);         // Allow resizing when focused
+    // Only notify the Swift side if we modified the HTML
+    if (changedHTML) { _callback('input') };                // Because we changed the html
 };
 
 /**
