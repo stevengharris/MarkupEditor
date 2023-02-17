@@ -33,7 +33,7 @@ a:hover {
 }
 
 p, ul, ol, dl, table, pre {
-    margin: 15px 0;
+    margin: 0 0 15px;
 }
 
 ul, ol {
