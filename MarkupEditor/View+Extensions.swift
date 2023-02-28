@@ -10,7 +10,13 @@ import SwiftUI
 extension View {
     
     public func forcePopover<Content>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View where Content : View {
-        modifier(ForcePopoverModifier(isPresented: isPresented, contentBlock: content))
+        // On macCatalyst, the standard .popover works properly, and the ForcePopoverModifier presents
+        // across the entire screen.
+        #if targetEnvironment(macCatalyst)
+            self.popover(isPresented: isPresented, content: content)
+        #else
+            modifier(ForcePopoverModifier(isPresented: isPresented, content: content))
+        #endif
     }
 
 }
