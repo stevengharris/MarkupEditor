@@ -15,6 +15,9 @@ public struct InsertToolbar: View {
     let contents: InsertContents = MarkupEditor.toolbarContents.insertContents
     private var showAnyToolbar: Bool { showSubToolbar.type != .none }
     @State private var hoverLabel: Text = Text("Insert")
+    @State private var showTablePopover: Bool = false
+    @State private var rows: Int = 0
+    @State private var cols: Int = 0
     
     public var body: some View {
         //if #available(iOS 15.0, macCatalyst 15.0, *) {
@@ -41,18 +44,31 @@ public struct InsertToolbar: View {
                 ToolbarImageButton(
                     systemName: "squareshape.split.3x3",
                     action: {
-                        withAnimation {
-                            if showSubToolbar.type == .table {
-                                showSubToolbar.type = .none
-                            } else {
-                                showSubToolbar.type = .table
-                            }
-                            hoverLabel = Text("Insert Table")
-                        }
+                        MarkupEditor.selectedWebView?.startModalInput()
+                        showTablePopover = true
                     },
                     active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
-                    onHover: { over in if over { hoverLabel = Text("Insert Table") } else { hoverLabel = Text("Insert") } }
+                    onHover: { over in if over { hoverLabel = Text(selectionState.isInTable ? "Edit Table" : "Insert Table") } else { hoverLabel = Text("Insert") } }
                 )
+                .forcePopover(isPresented: $showTablePopover) {
+                    if selectionState.isInTable {
+                        TableToolbar(showing: $showTablePopover)
+                            .padding()
+                            .environmentObject(MarkupEditor.toolbarStyle)
+                    } else {
+                        TableSizer(rows: $rows, cols: $cols, showing: $showTablePopover)
+                            .onAppear() {
+                                rows = 0
+                                cols = 0
+                            }
+                            .onDisappear() {
+                                if rows > 0 && cols > 0 {
+                                    MarkupEditor.selectedWebView?.insertTable(rows: rows, cols: cols)
+                                }
+                            }
+                    }
+                    
+                }
             }
         }
     }

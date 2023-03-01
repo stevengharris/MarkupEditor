@@ -8034,10 +8034,10 @@ const _getTableAttributesAtSelection = function() {
     const attributes = {};
     const elements = _getTableElementsAtSelection();
     const table = elements['table'];
-    attributes['table'] = table != null;
+    attributes['table'] = table != undefined;
     if (!attributes['table']) { return attributes };
-    attributes['thead'] = elements['thead'] != null;
-    attributes['tbody'] = elements['tbody'] != null;
+    attributes['thead'] = elements['thead'] != undefined;
+    attributes['tbody'] = elements['tbody'] != undefined;
     attributes['header'] = elements['header'];
     attributes['colspan'] = elements['colspan'];
     attributes['cols'] = elements['cols'];

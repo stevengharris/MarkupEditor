@@ -441,7 +441,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTableToolbar):
+            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTablePopover):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -461,7 +461,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTableToolbar):
+            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTablePopover):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -524,15 +524,21 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         closestVC()?.present(imageVC, animated: true)
     }
     
-    @objc public func showTableToolbar() {
-        guard let toolbar = MarkupToolbar.managed ?? markupToolbarUIView?.markupToolbar else {
-            return
-        }
-        if toolbar.showSubToolbar.type == .table {
-            toolbar.showSubToolbar.type = .none
+    @objc public func showTablePopover() {
+        guard selectionState.canInsert else { return }
+        if selectionState.isInTable {
+            showTableEditPopover()
         } else {
-            toolbar.showSubToolbar.type = .table
+            showTableSizerPopover()
         }
+    }
+    
+    public func showTableSizerPopover() {
+        // TODO: Fix for menu
+    }
+    
+    public func showTableEditPopover() {
+        // TODO: Fix for menu
     }
     
     //MARK: Testing support

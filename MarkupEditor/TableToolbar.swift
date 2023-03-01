@@ -14,36 +14,15 @@ public struct TableToolbar: View {
     @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
     private var contents: TableContents { MarkupEditor.toolbarContents.tableContents }
-    @State private var showTableSizer: Bool = false
-    @State private var rows: Int = 0
-    @State private var cols: Int = 0
     @State private var addHoverLabel: Text = Text("Add")
     @State private var deleteHoverLabel: Text = Text("Delete")
     @State private var borderHoverLabel: Text = Text("Border")
+    @Binding var showing: Bool
     
     public var body: some View {
         ScrollView(.horizontal) {
             VStack(spacing: 2) {
-                HStack(alignment: .center) {
-                    LabeledToolbar(label: Text("Create")) {
-                        ToolbarImageButton(action: { showTableSizer.toggle() } ) {
-                            CreateTable()
-                        }
-                        .disabled(selectionState.isInTable)
-                        .forcePopover(isPresented: $showTableSizer) {
-                            TableSizer(rows: $rows, cols: $cols, showing: $showTableSizer)
-                                .onAppear() {
-                                    rows = 0
-                                    cols = 0
-                                }
-                                .onDisappear() {
-                                    if rows > 0 && cols > 0 {
-                                        observedWebView.selectedWebView?.insertTable(rows: rows, cols: cols)
-                                    }
-                                }
-                        }
-                    }
-                    Divider()
+                HStack {
                     LabeledToolbar(label: addHoverLabel) {
                         ToolbarImageButton(
                             action: { observedWebView.selectedWebView?.addHeader() },
@@ -98,7 +77,12 @@ public struct TableToolbar: View {
                         }
                         .disabled(!selectionState.isInTable || (selectionState.thead && selectionState.colspan))
                         ToolbarImageButton(
-                            action: { observedWebView.selectedWebView?.deleteTable() },
+                            action: {
+                                showing = false
+                                observedWebView.selectedWebView?.focus {
+                                    observedWebView.selectedWebView?.deleteTable()
+                                }
+                            },
                             onHover: { over in deleteHoverLabel = Text(over ? "Delete Table" : "Delete") }
                         ) {
                             DeleteTable()
@@ -163,12 +147,12 @@ struct TableToolbar_Previews: PreviewProvider {
     static var previews: some View {
         VStack(alignment: .leading) {
             HStack {
-                TableToolbar()
+                TableToolbar(showing: .constant(true))
                     .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
-                TableToolbar()
+                TableToolbar(showing: .constant(true))
                     .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
