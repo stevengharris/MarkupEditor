@@ -66,7 +66,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var accessoryView: UIView?
     private var markupToolbarUIView: MarkupToolbarUIView!
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
-    private var showSubToolbarType: AnyCancellable?
     private var firstResponder: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
@@ -130,7 +129,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             markupToolbarUIView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             markupToolbarHeightConstraint = NSLayoutConstraint(item: markupToolbarUIView!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
             markupToolbarHeightConstraint.isActive = true
-            observeShowSubToolbarType()
             accessoryView = markupToolbarUIView
             // Use the keyboard notifications to resize the markupToolbar as the accessoryView
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -346,27 +344,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK: Keyboard handling and accessoryView setup
 
     @objc func keyboardWillShow() {
-        markupToolbarHeightConstraint.constant = toolbarHeight()
+        markupToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
     }
     
     @objc private func keyboardDidHide() {
         markupToolbarHeightConstraint.constant = 0
-    }
-    
-    private func toolbarHeight(_ type: MarkupToolbar.SubToolbarType? = nil) -> CGFloat {
-        let subToolbarType = type ?? markupToolbarUIView.markupToolbar.showSubToolbar.type
-        if subToolbarType == .none {
-            return MarkupEditor.toolbarStyle.height()
-        } else {
-            return 2.0 * MarkupEditor.toolbarStyle.height()
-        }
-    }
-    
-    private func observeShowSubToolbarType() {
-        showSubToolbarType = markupToolbarUIView?.markupToolbar.showSubToolbar.$type.sink { [weak self] type in
-            guard let self = self else { return }
-            self.markupToolbarHeightConstraint.constant = self.toolbarHeight(type)
-        }
     }
     
     //MARK: Overrides

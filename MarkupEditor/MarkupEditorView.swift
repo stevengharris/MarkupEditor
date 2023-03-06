@@ -32,13 +32,13 @@ public struct MarkupEditorView: View, MarkupDelegate {
     public var body: some View {
         VStack(spacing: 0) {
             if MarkupEditor.toolbarLocation == .top {
-                MarkupToolbar(markupDelegate: markupDelegate, subToolbarEdge: .bottom).makeManaged()
+                MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
                 Divider()
             }
             MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, html: html, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
-                MarkupToolbar(markupDelegate: markupDelegate, subToolbarEdge: .top).makeManaged()
+                MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
             }
         }
     }

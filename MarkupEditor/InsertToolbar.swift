@@ -8,12 +8,10 @@
 
 import SwiftUI
 
-/// The toolbar used to open the subtoolbars for creating/editing links, images, and tables.
+/// The toolbar used for creating/editing links, images, and tables.
 public struct InsertToolbar: View {
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
-    @ObservedObject private var showSubToolbar: ShowSubToolbar
     let contents: InsertContents = MarkupEditor.toolbarContents.insertContents
-    private var showAnyToolbar: Bool { showSubToolbar.type != .none }
     @State private var hoverLabel: Text = Text("Insert")
     @State private var showTablePopover: Bool = false
     @State private var rows: Int = 0
@@ -67,14 +65,9 @@ public struct InsertToolbar: View {
                                 }
                             }
                     }
-                    
                 }
             }
         }
-    }
-    
-    public init(for markupToolbar: MarkupToolbar) {
-        showSubToolbar = markupToolbar.showSubToolbar
     }
     
 }
@@ -83,12 +76,12 @@ struct InsertToolbar_Previews: PreviewProvider {
     static var previews: some View {
         VStack(alignment: .leading) {
             HStack {
-                InsertToolbar(for: MarkupToolbar(.compact))
+                InsertToolbar()
                     .environmentObject(ToolbarStyle.compact)
                 Spacer()
             }
             HStack {
-                InsertToolbar(for: MarkupToolbar(.labeled))
+                InsertToolbar()
                     .environmentObject(ToolbarStyle.labeled)
                 Spacer()
             }
