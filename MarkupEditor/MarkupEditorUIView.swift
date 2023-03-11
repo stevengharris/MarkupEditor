@@ -13,22 +13,14 @@ import Combine
 /// Specify the toolbar location separately using MarkupEditor.toolbarLocation. By default, the MarkupEditorUIView has a toolbar
 /// at the top for all devices.
 ///
-/// This MarkupEditorUIView observes changes to the MarkupEditor.showSubToolbar.type to adjust the toolbarHeightConstraint to
-/// accommodate the SubToolbar as needed. The MarkupWKWebView responds to keyboard show/hide events and by default includes
-/// the CorrectionToolbar only, along with the hideKeyboard button on the right.
-///
 /// If you have multiple MarkupWKWebViews in an application, there should be only one toolbar. In this case, you should probably specify
-/// MarkupEditor.toolbarLocation = .none and then use the MarkupToolbarUIView directly. If you do that, then you will need your UIView that
-/// holds the MarkupToolbarUIView to observe changes to the MarkupEditor.showSubToolbar.type to adjust the toolbar height like this
-/// view does. The SwiftUI MarkupToolbar handles such things itself, but that doesn't seem to fly in the UIKit world when consuming
-/// SwiftUI views 🤷‍♂️.
+/// MarkupEditor.toolbarLocation = .none and then use the MarkupToolbarUIView directly.
 ///
 /// In general, we don't want WebKit abstractions to leak into the MarkupEditor world. When the MarkupEditorUIView is instantiated,
 /// you can optionally specify the WKUIDelegate and WKNavigationDelegate if needed, which will be assigned to the underlying MarkupWKWebView.
 public class MarkupEditorUIView: UIView, MarkupDelegate {
     private var toolbar: MarkupToolbarUIView!
     private var toolbarHeightConstraint: NSLayoutConstraint!
-    private var showSubToolbarType: AnyCancellable?
     private var webView: MarkupWKWebView!
     /// The MarkupCoordinator deals with the interaction with the MarkupWKWebView
     private var coordinator: MarkupCoordinator!
@@ -61,8 +53,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             webView.translatesAutoresizingMaskIntoConstraints = false
             addSubview(webView)
             if MarkupEditor.toolbarLocation == .top {
-                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .bottom).makeManaged()
-                observeShowSubToolbarType()
+                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate).makeManaged()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
@@ -77,8 +68,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
                     webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             } else if MarkupEditor.toolbarLocation == .bottom {
-                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate, subToolbarEdge: .top).makeManaged()
-                observeShowSubToolbarType()
+                toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate).makeManaged()
                 toolbar.translatesAutoresizingMaskIntoConstraints = false
                 toolbarHeightConstraint = NSLayoutConstraint(item: toolbar!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: MarkupEditor.toolbarStyle.height())
                 addSubview(toolbar) // Is on top
@@ -104,16 +94,6 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
     
     public required init(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    private func observeShowSubToolbarType() {
-        showSubToolbarType = toolbar.showSubToolbar.$type.sink { [weak self] type in
-            if type == .none {
-                self?.toolbarHeightConstraint?.constant = MarkupEditor.toolbarStyle.height()
-            } else {
-                self?.toolbarHeightConstraint?.constant = 2.0 * MarkupEditor.toolbarStyle.height()
-            }
-        }
     }
 
 }

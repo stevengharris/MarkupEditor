@@ -80,7 +80,7 @@ class DemoViewController: UIViewController {
         stack.frame = view.frame
         stack.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(stack)
-        // Create the webView and overlay the subToolbar
+        // Create the webView
         let markupEditorView = MarkupEditorUIView(markupDelegate: self, html: demoHtml(), resourcesUrl: resourcesUrl, id: "Document")
         stack.addArrangedSubview(markupEditorView)
         bottomStack = UIStackView()

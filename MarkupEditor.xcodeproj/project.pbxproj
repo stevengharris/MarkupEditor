@@ -59,7 +59,6 @@
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
 		AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
-		AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CDA8E268900380046D308 /* SubToolbar.swift */; };
 		AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */; };
 		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
 		AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Extensions.swift */; };
@@ -202,7 +201,6 @@
 		AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
 		AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionToolbar.swift; sourceTree = "<group>"; };
 		AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableToolbar.swift; sourceTree = "<group>"; };
-		AA9CDA8E268900380046D308 /* SubToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubToolbar.swift; sourceTree = "<group>"; };
 		AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForcePopoverModifier.swift; sourceTree = "<group>"; };
 		AAA1B0942889D2E200303721 /* PopoverHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHostingController.swift; sourceTree = "<group>"; };
 		AAA1B0962889D2F000303721 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
@@ -477,7 +475,6 @@
 				AA652A00260E99FF000674B7 /* MarkupToolbar.swift */,
 				AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */,
 				AA8EFACB261E068F008AE31E /* StyleToolbar.swift */,
-				AA9CDA8E268900380046D308 /* SubToolbar.swift */,
 				AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */,
 			);
 			name = Toolbars;
@@ -781,7 +778,6 @@
 				AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */,
 				AA0DDC6628AE91920081B869 /* MarkupWKWebViewRepresentable.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
-				AA9CDA8F268900380046D308 /* SubToolbar.swift in Sources */,
 				AA408B2B2616685B00CAE8B9 /* SelectionState.swift in Sources */,
 				AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */,
 				AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */,

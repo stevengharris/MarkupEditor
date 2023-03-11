@@ -51,7 +51,7 @@ public class MarkupMenu {
             children.append(UICommand(title: "Image", action: #selector(MarkupWKWebView.showImagePopover)))
         }
         if contents.insertContents.table {
-            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showTableToolbar)))
+            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showTablePopover)))
         }
         return UIMenu(title: "Insert", children: children)
     }

@@ -27,56 +27,32 @@ import Combine
 /// physical keyboard, the undo/redo are available from the menu and has hotkeys, but not on a device without
 /// a physical keyboard.
 ///
-/// Note that a MarkupToolbarUIView at the top of a view would by default extend its subtoolbar to the bottom,
-/// this is not the case for the inputAccessoryView, since it sits at the top of the keyboard but has to show the
-/// SubToolbar above. By default, no SubToolbar is used. If you want to override the default behavior, though,
-/// and set MarkupEditor.toolbarPosition = .none and use the entire MarkupToolbar in as the inputAccessoryView,
-/// then it will work properly and expose the SubToolbar as part of the inputAccessoryView as needed.
-///
 public class MarkupToolbarUIView: UIView {
     public var markupToolbar: MarkupToolbar!
     private var markupDelegate: MarkupDelegate?
-    public var showSubToolbar: ShowSubToolbar { markupToolbar.showSubToolbar }
-    public var showSubToolbarCancellable: AnyCancellable?
-    private var subToolbarHeightConstraint: NSLayoutConstraint!
     
-    /// The intrinsicContentSize depends on the MarkupEditor.showSubToolbar.type so that there will be enough
-    /// height to show the SubToolbar.
     public override var intrinsicContentSize: CGSize {
-        if markupToolbar.showSubToolbar.type == .none {
-            return CGSize(width: frame.width, height: MarkupEditor.toolbarStyle.height()) }
-        else {
-            return CGSize(width: frame.width, height: 2.0 * MarkupEditor.toolbarStyle.height())
-        }
+        CGSize(width: frame.width, height: MarkupEditor.toolbarStyle.height())
     }
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, subToolbarEdge: Edge = .bottom) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false) {
         super.init(frame: CGRect.zero)
         self.markupDelegate = markupDelegate
         autoresizingMask = .flexibleHeight  // Needed for the intrinsicContentSize change to work
-        markupToolbar = MarkupToolbar(style, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: withKeyboardButton, withSubToolbar: false)
+        markupToolbar = MarkupToolbar(style, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: withKeyboardButton)
         let markupToolbarHC = UIHostingController(rootView: markupToolbar)
         addSubview(markupToolbarHC.view)
         markupToolbarHC.view.translatesAutoresizingMaskIntoConstraints = false
-        let subToolbar = SubToolbar(for: markupToolbar)
-        let subToolbarHC = UIHostingController(rootView: subToolbar)
-        addSubview(subToolbarHC.view)
-        subToolbarHC.view.translatesAutoresizingMaskIntoConstraints = false
-        subToolbarHeightConstraint = NSLayoutConstraint(item: subToolbarHC.view!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
-        if subToolbarEdge == .bottom {
+        if MarkupEditor.toolbarLocation == .top {
             NSLayoutConstraint.activate([
                 markupToolbarHC.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
                 markupToolbarHC.view.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
                 markupToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
                 markupToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
-                subToolbarHC.view.topAnchor.constraint(equalTo: markupToolbarHC.view.bottomAnchor),
-                subToolbarHeightConstraint,
-                subToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
-                subToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
             ])
         } else {
             NSLayoutConstraint.activate([
@@ -84,29 +60,12 @@ public class MarkupToolbarUIView: UIView {
                 markupToolbarHC.view.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
                 markupToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
                 markupToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
-                subToolbarHC.view.bottomAnchor.constraint(equalTo: markupToolbarHC.view.topAnchor),
-                subToolbarHeightConstraint,
-                subToolbarHC.view.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
-                subToolbarHC.view.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor),
             ])
         }
-        observeShowSubToolbarType()
     }
     
     public required init(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func observeShowSubToolbarType() {
-        showSubToolbarCancellable = markupToolbar.showSubToolbar.$type.sink { [weak self] type in
-            guard let self = self, let subToolbarHeightConstraint = self.subToolbarHeightConstraint else { return }
-            if type == .none {
-                subToolbarHeightConstraint.constant = 0
-            } else {
-                subToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
-            }
-            self.invalidateIntrinsicContentSize()
-        }
     }
     
     public func makeManaged() -> MarkupToolbarUIView {
@@ -117,7 +76,7 @@ public class MarkupToolbarUIView: UIView {
     /// Return a MarkupToolbarUIView that is compact, containing the current shared ToolbarContents, but makes sure keyboardButton is present.
     public static func inputAccessory(markupDelegate: MarkupDelegate? = nil) -> MarkupToolbarUIView {
         let contents = ToolbarContents.from(ToolbarContents.shared)
-        return MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, subToolbarEdge: .top).makeManaged()
+        return MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true).makeManaged()
     }
     
 }
