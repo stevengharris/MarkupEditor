@@ -34,6 +34,12 @@ public class ToolbarContents {
     public var formatContents: FormatContents
     public var tableContents: TableContents
     
+    public enum PopoverType: String, CaseIterable {
+        case link
+        case image
+        case table
+    }
+    
     public init(
         leftToolbar: Bool = MarkupEditor.leftToolbar != nil,
         correction: Bool = false,
@@ -72,7 +78,7 @@ public class ToolbarContents {
             tableContents: toolbarContents.tableContents
         )
     }
-    
+
 }
 
 /// Identify which of the InsertToolbar items will show up

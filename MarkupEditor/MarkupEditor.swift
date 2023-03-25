@@ -40,6 +40,7 @@ public struct MarkupEditor {
     }
     public static let selectionState = SelectionState()
     public static let selectImage = SelectImage()
+    public static let showInsertPopover = ShowInsertPopover()
     public static let supportedImageTypes: [UTType] = [.image, .movie]
     public static var style: ToolbarStyle.Style = .labeled {
         didSet {
@@ -126,4 +127,17 @@ public class SelectImage: ObservableObject {
     public init(_ value: Bool = false) {
         self.value = value
     }
+}
+
+/// The observable object containing the type of popover that should be shown or nil for none.
+///
+/// The value is used by the InsertToolbar to show the default TableSizer and TableToolbar.
+public class ShowInsertPopover: ObservableObject, Equatable {
+    
+    public static func == (lhs: ShowInsertPopover, rhs: ShowInsertPopover) -> Bool {
+        guard let lType = lhs.type, let rType = rhs.type else { return false }
+        return lType == rType
+    }
+    
+    @Published var type: ToolbarContents.PopoverType?
 }

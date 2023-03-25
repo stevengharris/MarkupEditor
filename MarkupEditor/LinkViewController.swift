@@ -270,7 +270,7 @@ class LinkViewController: UIViewController {
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         switch action {
-        case #selector(showLinkPopover):
+        case #selector(showPluggableLinkPopover):
             return true     // Toggles off and on
         default:
             //print("Unknown action: \(action)")
@@ -279,7 +279,7 @@ class LinkViewController: UIViewController {
     }
     
     /// Dismiss the popover if the hotkey to show it is used while it's already showing
-    @objc func showLinkPopover() {
+    @objc func showPluggableLinkPopover() {
         dismiss()
     }
     
