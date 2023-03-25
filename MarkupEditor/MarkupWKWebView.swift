@@ -231,7 +231,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         #endif
     }
     
-    /// Initialize the directory at cacheUrl with a clean copy of the root resource files. 
+    /// Initialize the directory at cacheUrl with a clean copy of the root resource files.
     ///
     /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
     private func initRootFiles() {
@@ -240,9 +240,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             let rootHtml = bundle.url(forResource: "markup", withExtension: "html"),
             let rootCss = bundle.url(forResource: "markup", withExtension: "css"),
             let rootJs = bundle.url(forResource: "markup", withExtension: "js") else {
-                assertionFailure("Could not find markup.html, css, and js for this bundle.")
-                return
-            }
+            assertionFailure("Could not find markup.html, css, and js for this bundle.")
+            return
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
@@ -423,7 +423,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTablePopover):
+            case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -443,7 +443,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return selectionState.canList
             case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
                 return selectionState.canStyle
-            case #selector(showLinkPopover), #selector(showImagePopover), #selector(showTablePopover):
+            case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
                 return true     // Toggles off and on
             case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
                 return selectionState.canFormat
@@ -466,8 +466,25 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Indirect the presentation of the link popover thru the markupDelegate to allow overriding.
+    @objc public func showPluggableLinkPopover() {
+        markupDelegate?.markupShowLinkPopover(self)
+    }
+    
+    /// Indirect the presentation of the image popover thru the markupDelegate to allow overriding.
+    @objc public func showPluggableImagePopover() {
+        markupDelegate?.markupShowImagePopover(self)
+    }
+    
+    /// Indirect the presentation of the table popover thru the markupDelegate to allow overriding.
+    @objc public func showPluggableTablePopover() {
+        markupDelegate?.markupShowTablePopover(self)
+    }
+    
+    /// Show the default link popover using the LinkViewController.
     @objc public func showLinkPopover() {
-        startModalInput()
+        MarkupEditor.showInsertPopover.type = .link     // Does nothing by default
+        startModalInput()                               // Required to deal with focus properly for popovers
         let linkVC = LinkViewController()
         linkVC.modalPresentationStyle = .popover
         linkVC.preferredContentSize = CGSize(width: 300, height: 100 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
@@ -486,8 +503,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         closestVC()?.present(linkVC, animated: true)
     }
     
+    /// Show the default link popover using the ImageViewController.
     @objc public func showImagePopover() {
-        startModalInput()
+        MarkupEditor.showInsertPopover.type = .image    // Does nothing by default
+        startModalInput()                               // Required to deal with focus properly for popovers
         let imageVC = ImageViewController()
         imageVC.modalPresentationStyle = .popover
         imageVC.preferredContentSize = CGSize(width: 300, height: 140 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
@@ -506,21 +525,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         closestVC()?.present(imageVC, animated: true)
     }
     
+    /// Show the default table popover by setting the state of `MarkupEditor.showInsertPopover` to `.table`,
+    /// which will in turn `forcePopover` of either the TableSizer or TableToolbar.
     @objc public func showTablePopover() {
         guard selectionState.canInsert else { return }
-        if selectionState.isInTable {
-            showTableEditPopover()
-        } else {
-            showTableSizerPopover()
-        }
-    }
-    
-    public func showTableSizerPopover() {
-        // TODO: Fix for menu
-    }
-    
-    public func showTableEditPopover() {
-        // TODO: Fix for menu
+        startModalInput()                               // Required to deal with focus properly for popovers
+        MarkupEditor.showInsertPopover.type = .table    // Triggers default SwiftUI TableSizer or TableToolbar
     }
     
     //MARK: Testing support

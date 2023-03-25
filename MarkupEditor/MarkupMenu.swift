@@ -45,13 +45,13 @@ public class MarkupMenu {
     private func insertMenu() -> UIMenu {
         var children = [UICommand]()
         if contents.insertContents.link {
-            children.append(UIKeyCommand(title: "Link", action: #selector(MarkupWKWebView.showLinkPopover), input: "K", modifierFlags: .command))
+            children.append(UIKeyCommand(title: "Link", action: #selector(MarkupWKWebView.showPluggableLinkPopover), input: "K", modifierFlags: .command))
         }
         if contents.insertContents.image {
-            children.append(UICommand(title: "Image", action: #selector(MarkupWKWebView.showImagePopover)))
+            children.append(UICommand(title: "Image", action: #selector(MarkupWKWebView.showPluggableImagePopover)))
         }
         if contents.insertContents.table {
-            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showTablePopover)))
+            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showPluggableTablePopover)))
         }
         return UIMenu(title: "Insert", children: children)
     }

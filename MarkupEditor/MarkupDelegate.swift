@@ -100,6 +100,18 @@ public protocol MarkupDelegate {
     /// An error occurred on the JavaScript side
     func markupError(code: String, message: String, info: String?, alert: Bool)
     
+    /// Show the link popover for the view in response to a menu selection or button press.
+    /// See the default implementation for details.
+    func markupShowLinkPopover(_ view: MarkupWKWebView)
+    
+    /// Show the image popover for the view in response to a menu selection or button press.
+    /// See the default implementation for details.
+    func markupShowImagePopover(_ view: MarkupWKWebView)
+    
+    /// Show the table popover for the view in response to a menu selection or button press.
+    /// See the default implementation for details. 
+    func markupShowTablePopover(_ view: MarkupWKWebView)
+    
 }
 
 extension MarkupDelegate {
@@ -235,6 +247,36 @@ extension MarkupDelegate {
     public func markupError(code: String, message: String, info: String?, alert: Bool) {
         print("Error \(code): \(message)")
         if let info = info { print(" \(info)") }
+    }
+
+    /// By default, the insert link popover is kicked off in the MarkupWKWebView using the LinkViewController.
+    ///
+    /// By overriding the `markupShowLinkPopover` method you can plug-in
+    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
+    /// so that focus is returned properly when done. See `showLinkPopover`  for an example.
+    public func markupShowLinkPopover(_ view: MarkupWKWebView) {
+        view.showLinkPopover()
+    }
+    
+    /// By default, the insert image popover is kicked off in the MarkupWKWebView using the ImageViewController.
+    ///
+    /// By overriding the `markupShowImagePopover` method you can plug-in
+    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
+    /// so that focus is returned properly when done. See `showImagePopover` for an example.
+    public func markupShowImagePopover(_ view: MarkupWKWebView) {
+        view.showImagePopover()
+    }
+    
+    /// By default, the insert table popover is kicked off using the MarkupWKWebView using
+    /// the SwiftUI TableSizer and TableToolbar which are presented from the InsertToolbar when
+    /// `MarkupEditor.showInsertPopover.type` changes to `.table`.
+    ///
+    /// By overriding the `markupShowTablePopover` method you can plug-in
+    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
+    /// so that focus is returned properly when done. See`showTablePopover` for an example which will
+    /// lead to the InsertToolbar.
+    public func markupShowTablePopover(_ view: MarkupWKWebView) {
+        view.showTablePopover()
     }
     
 }
