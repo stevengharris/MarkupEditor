@@ -139,5 +139,5 @@ public class ShowInsertPopover: ObservableObject, Equatable {
         return lType == rType
     }
     
-    @Published var type: ToolbarContents.PopoverType?
+    @Published public var type: ToolbarContents.PopoverType?
 }
