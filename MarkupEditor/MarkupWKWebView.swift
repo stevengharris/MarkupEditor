@@ -492,14 +492,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.delegate = self
         popover.sourceView = self
         // The sourceRect needs a non-zero width/height, but when selection is collapsed, we get a zero width.
-        // So, modify the selectionState.sourceRect to make the popover work properly and point to the right place.
-        var sourceRect: CGRect
-        if let selrect = MarkupEditor.selectionState.selrect {
-            sourceRect = CGRect(origin: selrect.origin, size: CGSize(width: max(selrect.width, 1), height: max(selrect.height, 1)))
-        } else {
-            sourceRect = bounds
-        }
-        popover.sourceRect = sourceRect
+        // The selectionState.sourceRect makes sure selRect has non-zero width/height.
+        popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(linkVC, animated: true)
     }
     
@@ -514,14 +508,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.delegate = self
         popover.sourceView = self
         // The sourceRect needs a non-zero width/height, but when selection is collapsed, we get a zero width.
-        // So, modify the selectionState.sourceRect to make the popover work properly and point to the right place.
-        var sourceRect: CGRect
-        if let selrect = MarkupEditor.selectionState.selrect {
-            sourceRect = CGRect(origin: selrect.origin, size: CGSize(width: max(selrect.width, 1), height: max(selrect.height, 1)))
-        } else {
-            sourceRect = bounds
-        }
-        popover.sourceRect = sourceRect
+        // The selectionState.sourceRect makes sure selRect has non-zero width/height.
+        popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(imageVC, animated: true)
     }
     

@@ -12,6 +12,8 @@ struct ForcePopoverModifier<PopoverContent>: ViewModifier where PopoverContent: 
     
     let isPresented: Binding<Bool>
     let content: () -> PopoverContent
+    let sourceRect: CGRect
+    let arrowEdge: Edge
     @State private var anchorView = UIView()
     @State private var presentedVC: UIViewController?
     
@@ -25,18 +27,21 @@ struct ForcePopoverModifier<PopoverContent>: ViewModifier where PopoverContent: 
             .background(InternalAnchorView(uiView: anchorView))
     }
     
-    init(isPresented: Binding<Bool>, content: @escaping ()->PopoverContent) {
+    init(isPresented: Binding<Bool>, at sourceRect: CGRect? = nil, arrowEdge: Edge? = nil, content: @escaping ()->PopoverContent) {
         self.isPresented = isPresented
         self.content = content
+        self.sourceRect = sourceRect ?? CGRect.zero
+        self.arrowEdge = arrowEdge ?? .top
     }
-    
+
     private func presentPopover() {
         let hostingController = PopoverHostingController(rootView: content(), isPresented: isPresented)
         hostingController.modalPresentationStyle = .popover
         guard let popover = hostingController.popoverPresentationController else { return }
         popover.sourceView = anchorView
-        popover.sourceRect = anchorView.bounds
+        popover.sourceRect = sourceRect
         popover.delegate = hostingController
+        //TODO: Make arrowEdge work. It is not used.
         guard let sourceVC = anchorView.closestVC() else { return }
         sourceVC.present(hostingController, animated: true) {
             // When the popover is presented from the keyboard inputAccessory,
