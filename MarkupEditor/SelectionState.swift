@@ -49,6 +49,15 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     @Published public var sup: Bool = false
     @Published public var code: Bool = false
     
+    //MARK: Source rect for popovers
+    public var sourceRect: CGRect? {
+        guard let selrect else {
+            return nil
+        }
+        // Popover source rect must have non-zero width/height
+        return CGRect(origin: selrect.origin, size: CGSize(width: max(selrect.width, 1), height: max(selrect.height, 1)))
+    }
+    
     //MARK: Selection state queries
     public var isLinkable: Bool {
         href == nil          // Can't link when selection is in a link
