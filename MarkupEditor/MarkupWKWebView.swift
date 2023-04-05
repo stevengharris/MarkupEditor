@@ -45,6 +45,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     private var html: String?
+    private var placeholder: String?            // A string to show when html is nil or empty
     public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
@@ -87,9 +88,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
+        self.placeholder = placeholder
         self.selectAfterLoad = selectAfterLoad
         self.resourcesUrl = resourcesUrl
         if id != nil {
@@ -324,18 +326,20 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// MarkupWKWebView becomeFirstResponder and trigger a SelectionState
     /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
-        setHtml(html ?? "") {
-            //print("isReady: \(self.id)")
-            self.isReady = true
-            if let delegate = self.markupDelegate {
-                delegate.markupDidLoad(self) {
+        setPlaceholder {
+            self.setHtml(self.html ?? "") {
+                //print("isReady: \(self.id)")
+                self.isReady = true
+                if let delegate = self.markupDelegate {
+                    delegate.markupDidLoad(self) {
+                        if self.selectAfterLoad {
+                            self.becomeFirstResponderIfReady()
+                        }
+                    }
+                } else {
                     if self.selectAfterLoad {
                         self.becomeFirstResponderIfReady()
                     }
-                }
-            } else {
-                if self.selectAfterLoad {
-                    self.becomeFirstResponderIfReady()
                 }
             }
         }
@@ -618,6 +622,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func emptyDocument(handler: (()->Void)?) {
         evaluateJavaScript("MU.emptyDocument()") { result, error in
+            handler?()
+        }
+    }
+    
+    public func setPlaceholder(handler: (()->Void)? = nil) {
+        guard let placeholder else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.setPlaceholder('\(placeholder.escaped)')") { result, error in
             handler?()
         }
     }

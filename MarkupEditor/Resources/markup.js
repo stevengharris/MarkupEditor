@@ -69,6 +69,7 @@ const _callback = function(message) {
  */
 window.addEventListener('load', function () {
     undoer.enable();
+    _updatePlaceholder();
     _callback('ready');
 });
 
@@ -1612,6 +1613,7 @@ document.addEventListener('selectionchange', function(ev) {
 });
 
 MU.editor.addEventListener('input', function() {
+    _updatePlaceholder();
     _backupSelection();
     _callback('input');
 });
@@ -2636,6 +2638,7 @@ MU.emptyDocument = function() {
     sel.removeAllRanges();
     sel.addRange(range);
     _backupSelection();
+    _updatePlaceholder();
 };
 
 /**
@@ -2674,6 +2677,7 @@ MU.setHTML = function(contents, select=true) {
     if (select) {
         _initializeRange();                                         // Causes a selectionChange event
     };
+    _updatePlaceholder()
     _callback('updateHeight');
 };
 
@@ -6619,6 +6623,25 @@ const _tripleClickSelect = function(sel) {
     }
 };
 
+/**
+ * Placeholder
+ */
+
+MU.setPlaceholder = function(text) {
+    MU.editor.setAttribute('placeholder', text);
+};
+
+const _updatePlaceholder = function() {
+    // Do nothing if we don't have a placeholder
+    if (!MU.editor.getAttribute('placeholder')) { return };
+    // Else, add/remove the placeholder class as identified in css
+    if (_isEmptyEditor()) {
+        MU.editor.classList.add('placeholder');
+    } else {
+        MU.editor.classList.remove('placeholder');
+    };
+};
+
 /********************************************************************************
  * Selection
  */
@@ -8506,6 +8529,20 @@ const _isEmpty = function(element) {
         };
     }
     return empty;
+};
+        
+/**
+ * Return true if MU.editor is truly empty.
+ *
+ * By definition, an "empty" MU.editor contains <p><br></p>.
+ */
+const _isEmptyEditor = function() {
+    const childNodes = MU.editor.childNodes;
+    if (childNodes.length !== 1) { return false };
+    const childNode = childNodes[0];
+    if (!_isElementNode(childNode)) { return false };
+    if (childNode.childNodes.length != 1) { return false };
+    return _isBRElement(childNode.childNodes[0]);
 };
 
 /**
