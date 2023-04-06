@@ -28,6 +28,8 @@ public struct MarkupEditorView: View, MarkupDelegate {
     private var id: String?
     private var html: Binding<String>?
     private var selectAfterLoad: Bool = true
+    /// The placeholder text that should be shown when there is no user input.
+    public var placeholder: String?
     
     public var body: some View {
         VStack(spacing: 0) {
@@ -35,7 +37,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
                 Divider()
             }
-            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, html: html, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
+            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
@@ -49,6 +51,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         html: Binding<String>? = nil,
+        placeholder: String? = nil,
         selectAfterLoad: Bool = true,
         resourcesUrl: URL? = nil,
         id: String? = nil) {
@@ -60,6 +63,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
             self.selectAfterLoad = selectAfterLoad
             self.resourcesUrl = resourcesUrl
             self.id = id
+            self.placeholder = placeholder
         }
 
 }

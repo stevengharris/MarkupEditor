@@ -35,11 +35,12 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
         html: String?,
+        placeholder: String? = nil,
         selectAfterLoad: Bool = true,
         resourcesUrl: URL? = nil,
         id: String? = nil) {
             super.init(frame: CGRect.zero)
-            webView = MarkupWKWebView(html: html, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: "Document", markupDelegate: markupDelegate ?? self)
+            webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: "Document", markupDelegate: markupDelegate ?? self)
             // The coordinator acts as the WKScriptMessageHandler and will receive callbacks
             // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>)
             coordinator = MarkupCoordinator(markupDelegate: markupDelegate, webView: webView)

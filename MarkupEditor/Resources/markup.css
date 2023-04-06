@@ -226,3 +226,10 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
     bottom: -8px;
     right: -8px;
 }
+
+.placeholder[placeholder]:after {
+    content: attr(placeholder);
+    position: absolute;
+    top: 8px;
+    color: #ccc;
+}
