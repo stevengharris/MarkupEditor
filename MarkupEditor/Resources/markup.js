@@ -1861,6 +1861,11 @@ MU.editor.addEventListener('keydown', function(ev) {
                 // the cursor should be positioned on undo.
                 _deleteSelectedResizableImage('AFTER');
             };
+            // Avoid deleting the <p> when MU.editor is empty
+            if (_isEmptyEditor()) {
+                ev.preventDefault();
+                break;
+            }
             break;
         case 'Delete':
             // Note Delete is handled by ResizableImage if it's selected
