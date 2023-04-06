@@ -106,11 +106,16 @@ public struct ToolbarTextButton: View {
     
 }
 
-struct ToolbarButtonStyle: ButtonStyle {
+public struct ToolbarButtonStyle: ButtonStyle {
     @Binding var active: Bool
     let activeColor: Color
     
-    func makeBody(configuration: Self.Configuration) -> some View {
+    public init(active: Binding<Bool>, activeColor: Color) {
+        _active = active
+        self.activeColor = activeColor
+    }
+    
+    public func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .cornerRadius(3)
             .foregroundColor(active ? Color(UIColor.systemBackground) : activeColor)
