@@ -1561,7 +1561,6 @@ MU.editor.addEventListener('mousedown', function() {
  * Mute selectionChange notifications when touch starts.
  */
 MU.editor.addEventListener('touchstart', function() {
-    _callback('click');
     muteChanges();
 });
 
