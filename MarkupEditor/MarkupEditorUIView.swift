@@ -46,7 +46,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             coordinator = MarkupCoordinator(markupDelegate: markupDelegate, webView: webView)
             webView.configuration.userContentController.add(coordinator, name: "markup")
             coordinator.webView = webView
-            if #available(macOS 13.3, iOS 16.4, tvOS 16.4, *) {
+            if #available(iOS 16.4, *) {
                 webView.isInspectable = true
             }
             // By default, the webView responds to no navigation events unless the navigationDelegate is set
