@@ -70,6 +70,11 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>);
         let coordinator = context.coordinator
         webView.configuration.userContentController.add(coordinator, name: "markup")
+        #if !targetEnvironment(macCatalyst)     // Prevent GitHub Actions failure on build
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
+        #endif
         coordinator.webView = webView
         webView.userScripts = userScripts
         return webView
