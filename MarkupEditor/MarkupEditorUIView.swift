@@ -46,7 +46,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             coordinator = MarkupCoordinator(markupDelegate: markupDelegate, webView: webView)
             webView.configuration.userContentController.add(coordinator, name: "markup")
             coordinator.webView = webView
-            #if os(iOS)     // Prevent GitHub Actions failure on build
+            #if !targetEnvironment(macCatalyst)     // Prevent GitHub Actions failure on build
             if #available(iOS 16.4, *) {
                 webView.isInspectable = true
             }
