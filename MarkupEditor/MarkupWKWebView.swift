@@ -65,8 +65,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     var pastedAsync = false
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView?
-    private var markupToolbarUIView: MarkupToolbarUIView!
-    private var markupToolbarHeightConstraint: NSLayoutConstraint!
+//    private var markupToolbarUIView: MarkupToolbarUIView!
+//    private var markupToolbarHeightConstraint: NSLayoutConstraint!
     private var firstResponder: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
@@ -126,15 +126,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         tintColor = tintColor.resolvedColor(with: .current)
         // Set up the accessoryView to be a MarkupToolbarUIView only if toolbarLocation == .keyboard
         if MarkupEditor.toolbarLocation == .keyboard {
-            markupToolbarUIView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
-            markupToolbarUIView.translatesAutoresizingMaskIntoConstraints = false
-            markupToolbarUIView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            markupToolbarHeightConstraint = NSLayoutConstraint(item: markupToolbarUIView!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
-            markupToolbarHeightConstraint.isActive = true
-            accessoryView = markupToolbarUIView
+//            markupToolbarUIView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
+//            markupToolbarUIView.translatesAutoresizingMaskIntoConstraints = false
+//            markupToolbarUIView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+//            markupToolbarHeightConstraint = NSLayoutConstraint(item: markupToolbarUIView!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
+//            markupToolbarHeightConstraint.isActive = true
+//            accessoryView = markupToolbarUIView
             // Use the keyboard notifications to resize the markupToolbar as the accessoryView
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
+//            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+//            NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
         }
         observeFirstResponder()
     }
@@ -345,15 +345,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK: Keyboard handling and accessoryView setup
-
-    @objc func keyboardWillShow() {
-        markupToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
-    }
-    
-    @objc private func keyboardDidHide() {
-        markupToolbarHeightConstraint.constant = 0
-    }
+//    //MARK: Keyboard handling and accessoryView setup
+//
+//    @objc func keyboardWillShow() {
+//        markupToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
+//    }
+//
+//    @objc private func keyboardDidHide() {
+//        markupToolbarHeightConstraint.constant = 0
+//    }
     
     //MARK: Overrides
     
