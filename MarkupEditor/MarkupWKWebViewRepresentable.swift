@@ -62,6 +62,10 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
 
     public func makeUIView(context: Context) -> MarkupWKWebView  {
         let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
+        if MarkupEditor.toolbarLocation == .keyboard {
+            // for the scenario that requires an override of inputAccessoryView
+            webView.inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
+        }
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupEditorUIView.
         webView.navigationDelegate = wkNavigationDelegate
