@@ -88,10 +88,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
         }
     }
-//    private var markupToolbarUIView: MarkupToolbarUIView? {
-//        get { accessoryView as? MarkupToolbarUIView }
-//        set { self.accessoryView = newValue }
-//    }
+
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
     private var firstResponder: AnyCancellable?
     
