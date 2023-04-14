@@ -84,12 +84,14 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
                     toolbar.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
             } else {
+                let toolbar = MarkupToolbarUIView(markupDelegate: markupDelegate).makeManaged()
                 NSLayoutConstraint.activate([
                     webView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
                     webView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
                     webView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
                     webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
+                webView.inputAccessoryView = toolbar
             }
         }
     
