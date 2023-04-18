@@ -417,6 +417,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Until then, don't forget to make changes in both switch statements!!!
         if #available(iOS 15.0, macCatalyst 15.0, *) {
             switch action {
+            case #selector(UIResponderStandardEditActions.selectAll(_:)):
+                return super.canPerformAction(action, withSender: sender)
             case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
                 return selectionState.canCopyCut
             case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
@@ -437,6 +439,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         } else {
             switch action {
+            case #selector(UIResponderStandardEditActions.selectAll(_:)):
+                return super.canPerformAction(action, withSender: sender)
             case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
                 return selectionState.canCopyCut
             case #selector(UIResponderStandardEditActions.paste(_:)):
