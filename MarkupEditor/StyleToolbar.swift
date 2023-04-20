@@ -25,36 +25,60 @@ public struct StyleToolbar: View {
             // AFAICT, Apple is doing something aggressive to prevent that from happening.
             // Maybe it messes something up on MacOS. OTOH, I see it on OneNote as a kind of
             // tooltip-looking thing. I suppose the only way to work around it for now would
-            // be to build it myself and not use Menu. I might do this using a drop-down toolbar
-            // like I did for insert operations.
-            // Note that the "Optimize Interface for Mac" deployment choice looks the same
-            // as "Scale Interface from iPad" due to the BorderlessButtonMenuStyle.
-            // Like other uses of Button, I added contentShape here try to prevent responsiveness
-            // problems per https://stackoverflow.com/a/67377002/8968411
+            // be to build it myself and not use Menu.
+            // Note that for Mac Catalyst, the "Optimize Interface for Mac" deployment choice
+            // looks different than "Scale Interface from iPad". They used to look the same,
+            // but as of iOS 16, the "Optimize Interface for Mac" always has the drop-down
+            // arrow next to the title.
             if contents.paragraph {
-                Menu {
-                    ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                        Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                            Text(styleContext.name)
-                                .font(.system(size: styleContext.fontSize))
+                if #available(iOS 16, macCatalyst 16, *) {
+                    Menu {
+                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
+                                Text(styleContext.name)
+                                    .font(.system(size: styleContext.fontSize))
+                            }
                         }
-                        .contentShape(Rectangle())
+                    } label: {
+                        // Note foreground color is black on Mac Catalyst, which
+                        // doesn't seem to be settable at all with "Optimized for Mac"
+                        Text(selectionState.style.name)
+                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
                     }
-                } label: {
-                    Text(selectionState.style.name)
-                        .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
-                }
-                .menuStyle(BorderlessButtonMenuStyle())
-                .overlay(
-                    RoundedRectangle(
-                        cornerRadius: 3,
-                        style: .continuous
+                    .buttonStyle(.borderless)
+                    .menuStyle(.button)         // Not available until iOS 16
+                    .frame(width: 88, height: toolbarStyle.buttonHeight())
+                    .overlay(
+                        RoundedRectangle(
+                            cornerRadius: 3,
+                            style: .continuous
+                        )
+                        .stroke(Color.accentColor)
                     )
-                    .stroke(Color.accentColor)
-                )
-                .frame(width: 88, height: toolbarStyle.buttonHeight())
-                .contentShape(Rectangle())
-                .disabled(!selectionState.canStyle)
+                    .disabled(!selectionState.canStyle)
+                } else {
+                    Menu {
+                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
+                                Text(styleContext.name)
+                                    .font(.system(size: styleContext.fontSize))
+                            }
+                        }
+                    } label: {
+                        Text(selectionState.style.name)
+                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
+                    }
+                    .menuStyle(.borderlessButton)   // Deprecated as of iOS14
+                    .frame(width: 88, height: toolbarStyle.buttonHeight())
+                    .overlay(
+                        RoundedRectangle(
+                            cornerRadius: 3,
+                            style: .continuous
+                        )
+                        .stroke(Color.accentColor)
+                    )
+                    .disabled(!selectionState.canStyle)
+                }
                 if contents.list || contents.dent {
                     Divider()
                 }
