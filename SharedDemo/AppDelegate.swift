@@ -15,6 +15,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     override init() {
         MarkupEditor.style = .compact
         MarkupEditor.allowLocalImages = true
+        // Set to true to allow the MarkupWKWebView to be inspectable from the Safari Development
+        // menu in iOS/macCatalyst 16.4 or higher.
+        MarkupEditor.isInspectable = true
         //
         // Here is an example that adds in the CorrectionToolbar and some
         // of the FormatToolbar contents. Note that the MarkupEditor adjusts

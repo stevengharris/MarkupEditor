@@ -48,6 +48,10 @@ public struct MarkupEditor {
         }
     }
     public static var allowLocalImages: Bool = false
+    /// Set to true to allow the MarkupWKWebView to be inspectable from the Safari Development
+    /// menu in iOS/macCatalyst 16.4 or higher. Default is false to be consistent with the WKWebView
+    /// default.
+    public static var isInspectable: Bool = false
     
     public static func initMenu(with builder: UIMenuBuilder) {
         markupMenu.initMenu(with: builder)
