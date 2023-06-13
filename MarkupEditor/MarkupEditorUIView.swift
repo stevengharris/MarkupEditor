@@ -60,7 +60,7 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
             coordinator.webView = webView
 #if compiler(>=5.8)
             if #available(iOS 16.4, *) {
-                webView.isInspectable = true
+                webView.isInspectable = MarkupEditor.isInspectable
             }
 #endif
             // By default, the webView responds to no navigation events unless the navigationDelegate is set

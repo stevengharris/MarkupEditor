@@ -83,7 +83,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         webView.configuration.userContentController.add(coordinator, name: "markup")
 #if compiler(>=5.8)
         if #available(iOS 16.4, *) {
-            webView.isInspectable = true
+            webView.isInspectable = MarkupEditor.isInspectable
         }
 #endif
         coordinator.webView = webView
