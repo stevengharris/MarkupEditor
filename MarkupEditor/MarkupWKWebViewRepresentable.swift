@@ -60,6 +60,17 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         return Coordinator(markupDelegate: markupDelegate)
     }
 
+    /// Return the MarkupWKWebView.
+    ///
+    /// The `isInspectable` attribute for WKWebView was added in iOS 16.4. However, code won't
+    /// compile in MacOS versions prior to Ventura (MacOS 10.13). Just checking at runtime for iOS 16.4 doesn't
+    /// work for macCatalyst builds on Monterey (MacOS 12.6), because `#available(iOS 16.4, *)`
+    /// returns `true`. The only way to make builds work for both macCatalyst and iOS on Ventura+ and
+    /// Monterey that I could find was to check on `compiler(>=5.8)` to avoid compiling
+    /// `webView.isInspectable = true` on Monterey. Then on Ventura+, we still need a check
+    /// on `#available(iOS 16.4, *)`. Now we can build on Ventura+ for iOS 15.5 and 16.4, and for
+    /// macCatalyst 16.4, and we can build on Monterey for iOS 15.5 for pre-iOS 16.4 versions. This gating
+    /// also allows GitHub actions that use the older MacOS version to work, even if you're working locally on Ventura.
     public func makeUIView(context: Context) -> MarkupWKWebView  {
         let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
@@ -70,11 +81,11 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>);
         let coordinator = context.coordinator
         webView.configuration.userContentController.add(coordinator, name: "markup")
-        #if !targetEnvironment(macCatalyst)     // Prevent GitHub Actions failure on build
+#if compiler(>=5.8)
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
-        #endif
+#endif
         coordinator.webView = webView
         webView.userScripts = userScripts
         return webView
