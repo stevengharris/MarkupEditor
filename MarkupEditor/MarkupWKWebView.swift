@@ -413,52 +413,28 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         guard selectionState.valid else { return false }
-        // One day we will be able to do this at a case level https://forums.swift.org/t/switch-and-avaliable/39528
-        // Until then, don't forget to make changes in both switch statements!!!
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            switch action {
-            case #selector(UIResponderStandardEditActions.selectAll(_:)):
-                return super.canPerformAction(action, withSender: sender)
-            case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
-                return selectionState.canCopyCut
-            case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
-                return pasteableType() != nil
-            case #selector(indent), #selector(outdent):
-                return selectionState.canDent
-            case #selector(bullets), #selector(numbers):
-                return selectionState.canList
-            case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
-                return selectionState.canStyle
-            case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
-                return true     // Toggles off and on
-            case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
-                return selectionState.canFormat
-            default:
-                //print("Unknown action: \(action)")
-                return false
-            }
-        } else {
-            switch action {
-            case #selector(UIResponderStandardEditActions.selectAll(_:)):
-                return super.canPerformAction(action, withSender: sender)
-            case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
-                return selectionState.canCopyCut
-            case #selector(UIResponderStandardEditActions.paste(_:)):
-                return pasteableType() != nil
-            case #selector(indent), #selector(outdent):
-                return selectionState.canDent
-            case #selector(bullets), #selector(numbers):
-                return selectionState.canList
-            case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
-                return selectionState.canStyle
-            case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
-                return true     // Toggles off and on
-            case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
-                return selectionState.canFormat
-            default:
-                //print("Unknown action: \(action)")
-                return false
-            }
+        switch action {
+        case #selector(getter: undoManager):
+            return true
+        case #selector(UIResponderStandardEditActions.selectAll(_:)):
+            return super.canPerformAction(action, withSender: sender)
+        case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
+            return selectionState.canCopyCut
+        case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
+            return pasteableType() != nil
+        case #selector(indent), #selector(outdent):
+            return selectionState.canDent
+        case #selector(bullets), #selector(numbers):
+            return selectionState.canList
+        case #selector(pStyle), #selector(h1Style), #selector(h2Style), #selector(h3Style), #selector(h4Style), #selector(h5Style), #selector(h6Style), #selector(pStyle):
+            return selectionState.canStyle
+        case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
+            return true     // Toggles off and on
+        case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
+            return selectionState.canFormat
+        default:
+            //print("Unknown action: \(action)")
+            return false
         }
     }
     
@@ -808,17 +784,20 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Undo/redo
     
+    
+    /// Invoke the undo function from the undo button, same as occurs with Command-S.
+    ///
+    /// Note that this operation interleaves the browser-native undo (e.g., undoing typing)
+    /// with the _undoOperation implemented in markup.js.
     public func undo(handler: (()->Void)? = nil) {
-        // Invoke the undo function from the undo button, same as occurs with Command-S.
-        // Note that this operation interleaves the browser-native undo (e.g., undoing typing)
-        // with the _undoOperation implemented in markup.js.
         evaluateJavaScript("MU.undo()") { result, error in handler?() }
     }
     
+    /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
+    ///
+    /// Note that this operation interleaves the browser-native redo (e.g., redoing typing)
+    /// with the _redoOperation implemented in markup.js.
     public func redo(handler: (()->Void)? = nil) {
-        // Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
-        // Note that this operation interleaves the browser-native redo (e.g., redoing typing)
-        // with the _redoOperation implemented in markup.js.
         evaluateJavaScript("MU.redo()") { result, error in handler?() }
     }
     
