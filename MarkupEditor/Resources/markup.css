@@ -153,6 +153,11 @@ p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
     margin: 0 auto;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 .resize-container img {
     display: block;
     outline: 1px black dashed;
