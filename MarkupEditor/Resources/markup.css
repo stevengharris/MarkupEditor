@@ -17,6 +17,7 @@ body {
 
 #editor:focus {
     outline: none !important;
+    padding-block: 0 100%;
 }
 
 a {

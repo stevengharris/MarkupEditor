@@ -416,7 +416,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         switch action {
         case #selector(getter: undoManager):
             return true
-        case #selector(UIResponderStandardEditActions.selectAll(_:)):
+        case #selector(UIResponderStandardEditActions.select(_:)), #selector(UIResponderStandardEditActions.selectAll(_:)):
             return super.canPerformAction(action, withSender: sender)
         case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
             return selectionState.canCopyCut
