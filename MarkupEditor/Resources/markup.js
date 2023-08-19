@@ -8521,7 +8521,9 @@ const _depthWithin = function(node, nodeNames) {
 const _isEmpty = function(element) {
     let empty;
     if (_isTextNode(element)) {
-        empty = element.textContent.trim().length === 0;
+        let textContent = element.textContent;
+        // Text is empty if it's all whitespace and contains no nbsp
+        empty = (textContent.trim().length === 0) && (!textContent.includes('\u00A0'));
     } else if (_isImageElement(element)) {
         empty = false;
     } else {
