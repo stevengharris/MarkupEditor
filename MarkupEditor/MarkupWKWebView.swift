@@ -66,7 +66,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView? {
         willSet {
-            if newValue != accessoryView {
+            if accessoryView != nil && newValue != accessoryView {
                 // remove height constraints and notification observers
                 self.markupToolbarHeightConstraint = nil
                 NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -74,7 +74,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
         didSet {
-            guard let accessoryView = accessoryView else {
+            guard let accessoryView else {
                 // remove height constraints and notification observers
                 self.markupToolbarHeightConstraint = nil
                 NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
