@@ -65,24 +65,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     var pastedAsync = false
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView? {
-        willSet {
-            if accessoryView != nil && newValue != accessoryView {
-                // remove height constraints and notification observers
-                self.markupToolbarHeightConstraint = nil
-                NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-                NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardDidHideNotification, object: nil)
-            }
-        }
         didSet {
             guard let accessoryView else {
-                // remove height constraints and notification observers
-                self.markupToolbarHeightConstraint = nil
+                // Remove height constraints and notification observers if accessoryView was set to nil
+                markupToolbarHeightConstraint = nil
                 NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
                 NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardDidHideNotification, object: nil)
                 return
             }
-            self.markupToolbarHeightConstraint = NSLayoutConstraint(item: accessoryView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
-            self.markupToolbarHeightConstraint.isActive = true
+            markupToolbarHeightConstraint = NSLayoutConstraint(item: accessoryView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 1, constant: 0)
+            markupToolbarHeightConstraint.isActive = true
             // Use the keyboard notifications to resize the markupToolbar as the accessoryView
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
