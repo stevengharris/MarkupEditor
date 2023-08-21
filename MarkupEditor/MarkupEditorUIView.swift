@@ -107,6 +107,8 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
                     webView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor),
                     webView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor)
                 ])
+                // for the scenario that requires an override of inputAccessoryView
+                webView.inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
             }
         }
     
