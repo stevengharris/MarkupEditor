@@ -47,7 +47,7 @@ public class MarkupToolbarUIView: UIView {
         let markupToolbarHC = UIHostingController(rootView: markupToolbar)
         addSubview(markupToolbarHC.view)
         markupToolbarHC.view.translatesAutoresizingMaskIntoConstraints = false
-        if MarkupEditor.toolbarLocation == .top {
+        if MarkupEditor.toolbarLocation == .top || MarkupEditor.toolbarLocation == .keyboard {
             NSLayoutConstraint.activate([
                 markupToolbarHC.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
                 markupToolbarHC.view.heightAnchor.constraint(equalToConstant: MarkupEditor.toolbarStyle.height()),
