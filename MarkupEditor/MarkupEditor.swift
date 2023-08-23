@@ -23,7 +23,6 @@ public struct MarkupEditor {
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
     public static var toolbarLocation = ToolbarLocation.automatic
-    public static var keyboardGap: CGFloat = 22 // See comments in MarkupWKWebView.keyboardWillShow
     public static var leftToolbar: AnyView? {
         didSet {
             toolbarContents.leftToolbar = leftToolbar != nil

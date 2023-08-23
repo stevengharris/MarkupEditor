@@ -359,13 +359,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// We adjust toolbar height constraint so it shows properly and scroll the selection so it is not obscured by
     /// the keyboard.
     ///
-    /// Note that there is an area above the keyboard (or the toolbar when present) that is blank. It's present whether the keyboard is
-    /// presented on a TextField or on a MarkupWKWebView. This basically means that the keyboardFrameEnd reported in userInfo
-    /// is wrong and needs to be extended for the general avoidance strategy of scrolling to work properly. We do this here by
-    /// extending keyboardFrameEnd by MarkupEditor.keyboardGap. If at some point in the future this changes (and I don't see it
-    /// on "normal" Apple iOS apps, then we can set the keyboardGap to 0. For now, it's a hack, but I don't know what else to
-    /// do to deal with it properly.
-    ///
     /// We want to restore any contentOffset we started with when the keyboard hides. However, we get multiple keyboardWillShow
     /// events, and during ones after the first, the contentOffset may have been magically changed to something we don't want to
     /// reset-to. For this reason, we only capture and restore the contentOffset that was present at the first keyboardWillShow event.
@@ -380,19 +373,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             guard let screen = notification.object as? UIScreen,
                   // Get the keyboard’s frame at the end of its animation
                   let keyboardFrameEnd = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-            // Adjust keyboardFrameEnd origin up by MarkupEditor.keyboardGap and height by adding keyboardGap
-            let extendedKeyboardFrameEnd = CGRect(
-                x: keyboardFrameEnd.origin.x,
-                y: keyboardFrameEnd.origin.y - MarkupEditor.keyboardGap,
-                width: keyboardFrameEnd.width,
-                height: keyboardFrameEnd.height + MarkupEditor.keyboardGap
-            )
             // Use the screen to get the coordinate space to convert from
             let fromCoordinateSpace = screen.coordinateSpace
             // Get this view's coordinate space
             let toCoordinateSpace: UICoordinateSpace = self
             // Convert the extended keyboard frame from the screen's coordinate space to this view's coordinate space
-            let convertedKeyboardFrameEnd = fromCoordinateSpace.convert(extendedKeyboardFrameEnd, to: toCoordinateSpace)
+            let convertedKeyboardFrameEnd = fromCoordinateSpace.convert(keyboardFrameEnd, to: toCoordinateSpace)
             // Get the intersection between the keyboard's frame and the view's bounds. Unlike, say a TextView
             // where we would want to use that view's scrollview to push it up out of the keyboard's way, here
             // we want to scroll the text inside of the MarkupWKWenbView up if the keyboard overlaps the selection
