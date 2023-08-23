@@ -80,7 +80,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
         }
     }
-
+    private var oldContentOffset: CGPoint?
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
     private var firstResponder: AnyCancellable?
     
@@ -354,12 +354,56 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Keyboard handling and accessoryView setup
 
-    @objc func keyboardWillShow() {
+    /// Respond to keyboardWillShow event.
+    ///
+    /// We adjust toolbar height constraint so it shows properly and scroll the selection so it is not obscured by
+    /// the keyboard.
+    ///
+    /// We want to restore any contentOffset we started with when the keyboard hides. However, we get multiple keyboardWillShow
+    /// events, and during ones after the first, the contentOffset may have been magically changed to something we don't want to
+    /// reset-to. For this reason, we only capture and restore the contentOffset that was present at the first keyboardWillShow event.
+    @objc private func keyboardWillShow(_ notification: NSNotification) {
         markupToolbarHeightConstraint.constant = MarkupEditor.toolbarStyle.height()
+        // Gate the oldContentOffset setting so it only happens once; reset to nil at keyboardDidHide time
+        if oldContentOffset == nil { oldContentOffset = scrollView.contentOffset }
+        if hasFocus, let oldContentOffset, let actualSourceRect = selectionState.sourceRect {
+            let sourceRect = CGRect(origin: actualSourceRect.origin, size: CGSize(width: actualSourceRect.width, height: actualSourceRect.height))
+            guard let userInfo = notification.userInfo else { return }
+            // In iOS 16.1 and later, the keyboard notification object is the screen the keyboard appears on.
+            guard let screen = notification.object as? UIScreen,
+                  // Get the keyboard’s frame at the end of its animation
+                  let keyboardFrameEnd = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            // Use the screen to get the coordinate space to convert from
+            let fromCoordinateSpace = screen.coordinateSpace
+            // Get this view's coordinate space
+            let toCoordinateSpace: UICoordinateSpace = self
+            // Convert the extended keyboard frame from the screen's coordinate space to this view's coordinate space
+            let convertedKeyboardFrameEnd = fromCoordinateSpace.convert(keyboardFrameEnd, to: toCoordinateSpace)
+            // Get the intersection between the keyboard's frame and the view's bounds. Unlike, say a TextView
+            // where we would want to use that view's scrollview to push it up out of the keyboard's way, here
+            // we want to scroll the text inside of the MarkupWKWenbView up if the keyboard overlaps the selection
+            // which is held in sourceRect.
+            let viewIntersection = bounds.intersection(convertedKeyboardFrameEnd)
+            let sourceIntersection = sourceRect.intersection(convertedKeyboardFrameEnd)
+            // Check whether the keyboard intersects the selection before announcing the offset needed. We
+            // don't need to do anything if the keyboard isn't covering the sourceRect at all.
+            if !sourceIntersection.isEmpty {
+                let bottomOffset = sourceIntersection.maxY - viewIntersection.minY
+                if bottomOffset > 0 {
+                    scrollView.setContentOffset(CGPoint(x: oldContentOffset.x, y: oldContentOffset.y + bottomOffset), animated: true)
+                }
+            }
+        }
     }
-
+    
+    /// Respond to the keyboardDidHide event.
+    ///
+    /// Adjust the height contstraint on the MarkupToolbar and reset the contentOffset.
+    /// Reset oldContentOffset so we can key off of it being nil the next time keyBoardWillShow happens.
     @objc private func keyboardDidHide() {
         markupToolbarHeightConstraint.constant = 0
+        scrollView.setContentOffset(oldContentOffset ?? CGPoint.zero, animated: true)
+        oldContentOffset = nil
     }
     
     //MARK: Overrides

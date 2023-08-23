@@ -6771,13 +6771,22 @@ const _getSelectionState = function() {
 };
 
 /**
- * Return the boundingClientRect for the selection, handling the resizableImage case
+ * Return the boundingClientRect for the selection, handling the resizableImage case.
+ *
+ * If the selection is a "zero" rectangle (e.g., for a <p><br></p>), return the selection's
+ * focusNode boundingClientRect.
  */
 const _selrect = function() {
     if (resizableImage.isSelected) {
-        return resizableImage.imageElement.getBoundingClientRect()
+        return resizableImage.imageElement.getBoundingClientRect();
     } else {
-        return document.getSelection().getRangeAt(0).getBoundingClientRect();
+        const sel = document.getSelection();
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        if ((rect.x == 0) && (rect.y == 0) && (rect.width == 0) && (rect.height == 0)) {
+            return sel.focusNode.getBoundingClientRect();
+        } else {
+            return rect;
+        };
     };
 };
 
