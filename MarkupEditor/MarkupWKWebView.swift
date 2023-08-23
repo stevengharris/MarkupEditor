@@ -683,7 +683,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func updateHeight(handler: ((Int)->Void)?) {
-        getClientHeight() { clientHeight in
+        getHeight() { clientHeight in
             if self.editorHeight != clientHeight {
                 self.editorHeight = clientHeight
                 handler?(self.contentHeight(from: clientHeight))
@@ -790,8 +790,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         pasteboard.setItems([items])
     }
     
-    private func getClientHeight(_ handler: @escaping ((Int)->Void)) {
-        evaluateJavaScript("document.getElementById('editor').clientHeight") { result, error in
+    private func getHeight(_ handler: @escaping ((Int)->Void)) {
+        evaluateJavaScript("MU.getHeight()") { result, error in
             handler(result as? Int ?? 0)
         }
     }

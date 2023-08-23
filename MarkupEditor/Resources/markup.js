@@ -2686,6 +2686,35 @@ MU.setHTML = function(contents, select=true) {
 };
 
 /**
+ * Return the height of the editor element that encloses the text.
+ *
+ * The padding-block is set in CSS to allow touch selection outside of text on iOS.
+ * An unfortunate side-effect of that setting is that getBoundingClientRect() returns
+ * a height that has nothing to do with the actual text, because it's been padded.
+ * A workaround for this is to get the computed style for editor using
+ * window.getComputedStyle(editor, null), and then asking that for the height. It does
+ * not include padding. This kind of works, except that I found the height changed as
+ * soon as I add a single character to the text. So, for example, it shows 21px when it
+ * opens with just a single <p>Foo</p>, but once you add a character to the text, the
+ * height shows up as 36px. If you remove padding-block, then the behavior goes away.
+ * To work around the problem, we set the padding block to 0 before getting height, and
+ * then set it back afterward. With this change, both the touch-outside-of-text works
+ * and the height is reported accurately. Height needs to be reported accurately for
+ * auto-sizing of a WKWebView based on its contents.
+ */
+MU.getHeight = function() {
+    const paddingBlockStart = editor.style.getPropertyValue("padding-block-start");
+    const paddingBlockEnd = editor.style.getPropertyValue("padding-block-end");
+    editor.style["padding-block-start"] = "0px";
+    editor.style["padding-block-end"] = "0px";
+    const style = window.getComputedStyle(editor, null);
+    const height = parseInt(style.getPropertyValue("height"));
+    editor.style["padding-block-start"] = paddingBlockStart;
+    editor.style["padding-block-end"] = paddingBlockEnd;
+    return height;
+};
+
+/**
  * Focus immediately, leaving range alone
  */
 MU.focus = function() {
