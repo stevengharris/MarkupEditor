@@ -30,12 +30,13 @@ public struct FormatToolbar: View {
                 active: $selectionState.italic,
                 onHover: { over in hoverLabel = Text(over ? "Italic" : "Text Format") }
             )
-            ToolbarImageButton(
-                systemName: "underline",
-                action: { observedWebView.selectedWebView?.underline() },
-                active: $selectionState.underline,
-                onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
-            )
+            // MARK: - We don't use underline in the app, that's why it's commented out
+//            ToolbarImageButton(
+//                systemName: "underline",
+//                action: { observedWebView.selectedWebView?.underline() },
+//                active: $selectionState.underline,
+//                onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
+//            )
             if contents.code {
                 ToolbarImageButton(
                     systemName: "curlybraces",

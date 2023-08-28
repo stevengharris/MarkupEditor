@@ -2884,11 +2884,11 @@ const _firstEditorElement = function() {
 //MARK: Formatting
 
 MU.toggleBold = function() {
-    _toggleFormat('B');
+    _toggleFormat('STRONG');
 };
 
 MU.toggleItalic = function() {
-    _toggleFormat('I');
+    _toggleFormat('EM');
 };
 
 MU.toggleUnderline = function() {
@@ -6381,7 +6381,7 @@ const _cleanUpPREs = function(node) {
  * These are currently <strong> -> <b> and <em> -> <i>.
  */
 const _cleanUpAliases = function(node) {
-    const _aliases = {'STRONG' : 'B', 'EM' : 'I'}
+    const _aliases = {'B' : 'STRONG', 'I' : 'EM'}
     let childNodes = node.childNodes;
     for (let i=0; i < childNodes.length; i++) {
         _cleanUpAliases(childNodes[i]);
@@ -6687,7 +6687,7 @@ const _updatePlaceholder = function() {
  */
 const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];                  // All paragraph styles
 
-const _formatTags = ['B', 'I', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];                       // All possible (nestable) formats
+const _formatTags = ['STRONG', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];                       // All possible (nestable) formats
 
 const _listTags = ['UL', 'OL'];                                                         // Types of lists
 
@@ -6780,8 +6780,8 @@ const _getSelectionState = function() {
     state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
     // Format
     const formatTags = _getFormatTags();
-    state['bold'] = formatTags.includes('B');
-    state['italic'] = formatTags.includes('I');
+    state['bold'] = formatTags.includes('STRONG');
+    state['italic'] = formatTags.includes('EM');
     state['underline'] = formatTags.includes('U');
     state['strike'] = formatTags.includes('DEL');
     state['sub'] = formatTags.includes('SUB');
@@ -6840,7 +6840,7 @@ const _getParagraphStyle = function() {
 
 /**
  * Return an array of format tags at the selection. For example, the selection could
- * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['U', 'I', 'B'],
+ * be in the word "Hello" in <B><I><U>Hello</U></I></B>, returning ['U', 'EM', 'STRONG'],
  * from innermost to outermost tag.
  *
  * For multiformatting, return formatTags such that the only the formats identified
@@ -9995,7 +9995,7 @@ const _getElementAtSelection = function(nodeName) {
  * If not in a word or in a non-collapsed range, create an empty element of
  * type tag and select it so that new input begins in that element immediately.
  *
- * @param   {String}            type    The tag name to set; e.g., 'B'.
+ * @param   {String}            type    The tag name to set; e.g., 'STRONG'.
  * @param   {HTML Range}        range   The range, typically the current selection.
  */
 const _setTagInRange = function(type, range) {
@@ -10109,7 +10109,7 @@ const _setTagInRange = function(type, range) {
  * If not in a word or in a non-collapsed range, create an empty element of
  * type tag and select it so that new input begins in that element immediately.
  *
- * @param   {String}            type    The tag name to set; e.g., 'B'.
+ * @param   {String}            type    The tag name to set; e.g., 'STRONG'.
  * @param   {HTML Selection}    sel     The current selection.
  */
 const _setTag = function(type, sel) {
@@ -10427,7 +10427,7 @@ const _unsetTag = function(oldElement, sel, merge=false) {
  * across multiple paragraphs.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
- * @param   {String}        nodeName    The type of element we want; e.g., 'B'.
+ * @param   {String}        nodeName    The type of element we want; e.g., 'STRONG'.
  *
  */
 const _replaceTag = function(oldElement, nodeName) {
@@ -10464,7 +10464,7 @@ const _replaceTag = function(oldElement, nodeName) {
  * Return the count of the element's children that have the nodeName.
  *
  * @param   {HTML Element}  element     The element for which we are replacing the tag.
- * @param   {String}        nodeName     The type of element we want; e.g., 'B'.
+ * @param   {String}        nodeName     The type of element we want; e.g., 'STRONG'.
  */
 const _childrenWithNodeNameCount = function(element, nodeName) {
     let count = 0;
