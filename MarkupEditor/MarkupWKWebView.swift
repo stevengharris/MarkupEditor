@@ -471,7 +471,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return super.canPerformAction(action, withSender: sender)
         case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
             return selectionState.canCopyCut
-        case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
+        case #selector(UIResponderStandardEditActions.paste(_:)):
             return pasteableType() != nil
         case #selector(indent), #selector(outdent):
             return selectionState.canDent
