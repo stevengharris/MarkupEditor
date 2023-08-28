@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "MarkupEditor",
     platforms: [
-        .macCatalyst(.v15),
-        .iOS(.v15)
+        .macCatalyst(.v14),
+        .iOS(.v14)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
