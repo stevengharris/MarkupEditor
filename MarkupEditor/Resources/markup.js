@@ -5155,6 +5155,9 @@ const _undoListEnter = function(undoerData) {
  *
  * When we reach this point, we have undone the Enter that preceded and now need
  * to re-insert the non-collapsed selection that we extracted and placed in fragment.
+ *
+ * Return the selection range in case it's needed, altho selection
+ * is reset by this function.
  */
 const _insertInList = function(fragment) {
     //_consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
@@ -5168,6 +5171,7 @@ const _insertInList = function(fragment) {
     // Handle specially if fragment contains no elements (i.e., just text nodes).
     const simpleFragment = fragment.childElementCount === 0;
     const singleListItemFragment = (fragment.childElementCount === 1) && (fragment.firstElementChild.nodeName !== 'LI');
+    let newRange;
     if (simpleFragment || singleListItemFragment) {
         //_consoleLog("* _insertInList (simple)")
         const firstFragChild = fragment.firstChild;
@@ -5199,9 +5203,9 @@ const _insertInList = function(fragment) {
         anchorNode.parentNode.normalize();
         sel.removeAllRanges();
         sel.addRange(textRange);
-        _maximizedRange(); // Enclose the element
+        newRange = _maximizedRange(); // Enclose the element
         //_consoleLog("* Done _insertInList (simple)")
-        return;
+        return newRange;
     }
     const existingList = _findFirstParentElementInNodeNames(anchorNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(anchorNode, ['LI'])
@@ -5219,7 +5223,7 @@ const _insertInList = function(fragment) {
             existingList.insertBefore(fragEl, existingListItem);
             fragEl = fragment.firstElementChild;
         }
-        const newRange = document.createRange();
+        newRange = document.createRange();
         newRange.setStart(firstFragEl, 0);
         newRange.setEnd(existingListItem, 0);
         sel.removeAllRanges();
@@ -5300,7 +5304,23 @@ const _insertInList = function(fragment) {
             }
         }
         // TODO: Maybe have to deal with siblings
-        appendTrailingTarget.appendChild(trailingText);
+        const startContainer = anchorNode;
+        const startOffset = anchorNode.textContent.length;
+        const previousSib = appendTrailingTarget.lastChild;
+        // If the trailingText and its previous sibling are both
+        // textNodes, then we split them before and they should
+        // be rejoined.
+        let endContainer, endOffset;
+        if (_isTextNode(previousSib)) {
+            endContainer = previousSib;
+            endOffset = previousSib.textContent.length;
+            previousSib.textContent = previousSib.textContent + trailingText.textContent;
+            trailingText.parentNode.removeChild(trailingText);
+        } else {
+            endContainer = trailingText;
+            endOffset = 0;
+            appendTrailingTarget.appendChild(trailingText);
+        }
         // FINALLY, if we ended up with two lists of the same type as siblings, then merge them
         const currentList = _findFirstParentElementInNodeNames(lastChildEl, ['OL', 'UL']);
         const nextList = currentList.nextSibling;
@@ -5312,13 +5332,14 @@ const _insertInList = function(fragment) {
             }
             nextList.parentNode.removeChild(nextList);
         };
-        const newRange = document.createRange();
-        newRange.setStart(anchorNode, anchorNode.textContent.length);
-        newRange.setEnd(trailingText, 0);
+        newRange = document.createRange();
+        newRange.setStart(startContainer, startOffset);
+        newRange.setEnd(endContainer, endOffset);
         sel.removeAllRanges();
         sel.addRange(newRange);
     };
     //_consoleLog("* Done _insertInList")
+    return newRange;
 };
 
 /**
