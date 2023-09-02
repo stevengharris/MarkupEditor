@@ -7229,6 +7229,10 @@ const _extractContentsRestoreSelection = function(range) {
     const endContainer = range.endContainer;
     const endOffset = range.endOffset;
     const fragment = range.extractContents();
+    // Remove any leading or trailing empty elements in fragment.
+    // These exist just to match whatever was outside of the range and are useless.
+    if (_isEmpty(fragment.firstChild)) { fragment.removeChild(fragment.firstChild) };
+    if (_isEmpty(fragment.lastChild)) { fragment.removeChild(fragment.lastChild) };
     if (startContainer === endContainer) { return fragment };
     const sel = document.getSelection();
     const restoredRange = document.createRange();
