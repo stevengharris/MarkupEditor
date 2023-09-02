@@ -625,12 +625,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Invoke the \_doBlockquoteEnter operation directly.
     public func testBlockquoteEnter(handler: (()->Void)? = nil) {
-        self.evaluateJavaScript("MU.testBlockquoteEnter()") { result, error in handler?() }
+        evaluateJavaScript("MU.testBlockquoteEnter()") { result, error in handler?() }
     }
     
     /// Invoke the \_doListEnter operation directly.
     public func testListEnter(handler: (()->Void)? = nil) {
-        self.evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }
+        evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }
+    }
+    
+    /// Ensure extractContents behaves as expected, since we depend on it.
+    public func testExtractContents(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.testExtractContents()") { result, error in handler?() }
     }
     
     //MARK: Javascript interactions

@@ -1492,14 +1492,14 @@ const _focusOn = function(target, delay=20) {
 const _restoreUndoerRange = function(undoerData) {
     const range = undoerData.range;
     if (range) {
-        const startContainer = range.startContainer;
-        if ((startContainer === range.endContainer) && (_isImageElement(startContainer))) {
-            resizableImage.select(startContainer);
-        } else {
-            const sel = document.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
+        // For historical purposes, note we used to select the resizableImage
+        // when restoringUndoerRange. The problem is that by selecting the image
+        // it causes the html to change to show the resizing elements, which
+        // then messes things up. Also, we really don't know here if it was
+        // selected before.
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     };
 };
 
@@ -1975,8 +1975,8 @@ MU.editor.addEventListener('paste', function(ev) {
  * unformatted text.
  */
 MU.pasteText = function(html) {
-    const fragment = _patchPasteHTML(html);            // Remove all the cruft first, leaving BRs
-    const minimalHTML = _minimalHTML(fragment);
+    const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
+    const minimalHTML = _minimalHTML(fragment);         // Reduce to MarkupEditor-equivalent of "plain" text
     _pasteHTML(minimalHTML);
 };
 
@@ -1984,7 +1984,18 @@ MU.pasteText = function(html) {
  * Do a custom paste operation of html.
  */
 MU.pasteHTML = function(html) {
-    _pasteHTML(html);
+    const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
+    const fragmentHTML = _fragmentHTML(fragment)        // Extract html again from cleaned up fragment
+    _pasteHTML(fragmentHTML);
+};
+
+/**
+ * Return the innerHTML string contained in fragment
+ */
+const _fragmentHTML = function(fragment) {
+    const div = document.createElement('div');
+    div.appendChild(fragment);
+    return div.innerHTML;
 };
 
 /**
@@ -2103,7 +2114,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     // result ensure it is the same as hitting Backspace.
     //_callback('input');
     //return true;
-    const newElement = _patchPasteHTML(html)
+    const newElement = _fragmentFrom(html)
     const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
     const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
     const anchorIsEmpty = _isEmpty(anchorNode);
@@ -2151,8 +2162,6 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     // As we patch up the results of pasting later, the offsets in the undoerData.range get
     // set to zero, even tho the startContainer and endContainer remain valid. We hold onto
     // them separately in undoerData so we can restore them later.
-    const startOffset = pasteRange.startOffset;
-    const endOffset = pasteRange.endOffset;
     if (redoing) {
         oldUndoerData.range = pasteRange;
         oldUndoerData.data.rootName = rootName;
@@ -2181,9 +2190,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
  * is "clean" by MarkupEditor standards.
  */
 const _patchPasteHTML = function(html) {
-    const template = document.createElement('template');
-    template.innerHTML = html;
-    const element = template.content;
+    const element = _fragmentFrom(html);
     _cleanUpSpansWithin(element);
     _cleanUpDivsWithin(element);
     _cleanUpAttributesWithin('style', element);
@@ -2196,6 +2203,12 @@ const _patchPasteHTML = function(html) {
     _prepImages(element);
     return element;
 };
+
+const _fragmentFrom = function(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content;
+}
 
 /**
  * Insert the fragment at the current selection point.
@@ -2249,7 +2262,7 @@ const _insertHTML = function(fragment) {
             };
         };
     };
-    if ((direction === null) && (noChildElements || noTopLevelChildren)) {
+    if (((direction === null) || (direction === 'BEFORE')) && (noChildElements || noTopLevelChildren)) {
         //_consoleLog("Simple")
         const firstFragChild = fragment.firstChild;
         const lastFragChild = fragment.lastChild;
@@ -2265,6 +2278,13 @@ const _insertHTML = function(fragment) {
             newSelRange.setEnd(anchorNode, anchorNode.textContent.length);
         } else {
             //_consoleLog(" Inserting")
+            // Remove the BR in an empty anchorNode before insert
+            if (_isEmptyElement(anchorNode)) {
+                let firstChild = anchorNode.firstChild;
+                if (_isBRElement(firstChild)) {
+                    anchorNode.removeChild(firstChild);
+                };
+            };
             // Fragment becomes anchorNode's nextSibling, selection set to end
             selRange.insertNode(fragment);
             _stripZeroWidthChars(anchorNode.parentNode);
@@ -2304,6 +2324,13 @@ const _insertHTML = function(fragment) {
         return null;
     };
     //_consoleLog(" Complex")
+    // Remove the BR in an empty anchorNode before insert
+    if (_isEmptyElement(anchorNode)) {
+        let firstChild = anchorNode.firstChild;
+        if (_isBRElement(firstChild)) {
+            anchorNode.removeChild(firstChild);
+        };
+    };
     const rootName = topLevelNode.nodeName;
     let trailingText = _splitTextNode(anchorNode, selRange.startOffset, rootName, direction);
     // Regardless of what we do now to insert the fragment, the trailingText and anchorNode define
@@ -2372,37 +2399,27 @@ const _insertHTML = function(fragment) {
         }
         nextFragSib = fragment.firstChild;
     };
-    // If trailingText is empty, then we need to insert a <BR> in it so that the selection
-    // works properly (similar to how Enter produces a <p><br></p>).
-    // TODO: This logic about inserting BRs is a problem and was removed. Leaving commented for now.
-    //if (trailingText.length === 0) {
-    //    const trailingTextParent = trailingText.parentNode;
-    //    const modRange = _fillEmpty(trailingTextParent);
-    //    if (modRange) {
-    //        newSelRange = modRange;
-    //    } else {
-    //        newSelRange = document.getSelection().getRangeAt(0);
-    //    };
-    //    insertedRange.setStart(anchorNode, anchorNode.textContent.length);
-    //    insertedRange.setEnd(trailingTextParent, 0);
-    //} else if (anchorNode.length === 0) {
-    //    const modRange = _fillEmpty(anchorNodeParent);
-    //    if (modRange) {
-    //        newSelRange = modRange;
-    //    } else {
-    //        newSelRange = document.getSelection().getRangeAt(0);
-    //    };
-    //    insertedRange.setStart(anchorNodeParent, 0);
-    //    insertedRange.setEnd(trailingText, 0);
-    //} else {
-        if (rejoinedText) {
-            // After rejoining, the selection has been set properly, so just grab it here
-            newSelRange = document.getSelection().getRangeAt(0);
+    if (rejoinedText) {
+        // After rejoining, the selection has been set properly, so just grab it here
+        newSelRange = document.getSelection().getRangeAt(0);
+    } else {
+        if (_isEmpty(trailingText)) {
+            const startContainer = trailingText.previousSibling ?? trailingText.parentNode;
+            let offset;
+            if (_isTextNode(startContainer)) {
+                offset = startContainer.textContent.length;
+            } else {
+                offset = startContainer.childNodes.length;
+            };
+            newSelRange.setStart(startContainer, offset);
+            newSelRange.setEnd(startContainer, offset);
+            insertedRange.setEnd(startContainer, offset);
+            trailingText.parentNode.removeChild(trailingText);
         } else {
             newSelRange.setStart(trailingText, 0);
             newSelRange.setEnd(trailingText, 0);
         }
-    //};
+    }
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
@@ -2572,7 +2589,7 @@ const _deleteRange = function(range, rootName) {
     let startContainer = leadingNode;
     let endContainer = trailingNode;
     if (_isEmpty(leadingNode)) {
-        startContainer = leadingNode.nextSibling;
+        startContainer = _firstNonEmptyNextSibling(leadingNode);
         if (startContainer) {
             startOffset = 0;
         } else {
@@ -2588,19 +2605,38 @@ const _deleteRange = function(range, rootName) {
             endOffset = startOffset;
             trailingWasDeleted = leadingWasDeleted;
         } else {
-            endContainer = trailingNode.previousSibling;
+            if (_isEmpty(trailingNode.parentNode)) {
+                trailingNode = trailingNode.parentNode;
+            };
+            endContainer = _firstNonEmptyPreviousSibling(trailingNode);
             if (endContainer) {
                 if (_isTextNode(endContainer)) {
                     endOffset = endContainer.textContent.length;
                 } else {
-                    endOffset = endContainer.childNodes.length;
+                    let lastChild = endContainer.lastChild;
+                    if (_isTextNode(lastChild)) {
+                        endContainer = lastChild;
+                        endOffset = lastChild.textContent.length;
+                    } else {
+                        endOffset = endContainer.childNodes.length;
+                    };
                 };
             } else {
                 endContainer = trailingNode.parentNode;
-                endOffset = endContainer.childNodes.length - 1; // We are deleting one next
+                if (_isEmpty(endContainer)) {
+                    endContainer = _firstNonEmptyPreviousSibling(endContainer);
+                }
+                if (_isTextNode(endContainer)) {
+                    endOffset = endContainer.textContent.length;
+                } else {
+                    endOffset = endContainer.childNodes.length - 1; // We are deleting one next
+                }
             };
             trailingNode.parentNode.removeChild(trailingNode);
             trailingWasDeleted = true;
+            if (trailingNode.parentNode === leadingNode.parentNode) {
+                startOffset = Math.max(0, startOffset - 1);
+            }
         }
     } else {
         endOffset = 0;  // Because we deleted up to the original endOffset
@@ -2614,10 +2650,27 @@ const _deleteRange = function(range, rootName) {
         const newRange = document.createRange();
         newRange.setStart(startContainer, startOffset);
         newRange.setEnd(endContainer, endOffset);
+        const minimizedRange = _minimizedRangeFrom(newRange);
         const sel = document.getSelection();
         sel.removeAllRanges();
-        sel.addRange(newRange);
+        sel.addRange(minimizedRange);
     };
+};
+
+const _firstNonEmptyNextSibling = function(node) {
+    let sib = node.nextSibling;
+    while (sib && _isEmpty(sib)) {
+        sib = sib.nextSibling;
+    };
+    return sib;
+};
+
+const _firstNonEmptyPreviousSibling = function(node) {
+    let sib = node.previousSibling;
+    while (sib && _isEmpty(sib)) {
+        sib = sib.previousSibling;
+    };
+    return sib;
 };
 
 /********************************************************************************
@@ -4489,6 +4542,118 @@ const _isNakedListSelection = function(node) {
 };
 
 /**
+ * Select a range that is wrapped around an inner element if possible.
+ *
+ * See comments in _minimizedRangeFrom().
+ */
+const _minimizedRange = function() {
+    const sel = document.getSelection();
+    const selRange = sel.getRangeAt(0);
+    const range = _minimizedRangeFrom(selRange);
+    sel.removeAllRanges;
+    sel.addRange(range);
+    return range;
+};
+
+/**
+ * Return a range that is wrapped around an inner element if possible.
+ *
+ * For example, selRange looks like:
+ *      startContainer: <TextElement>, content: \"Bulleted \"
+ *      startOffset: 9
+ *      endContainer: <TextElement>, content: \"item\"
+ *      endOffset: 4
+ * when "item" is selected in <p>Bulleted <i>item</i> 1</p>.
+ * We want to set it to be the textElement only.
+ */
+const _minimizedRangeFrom = function(selRange) {
+    const anchor = selRange.startContainer;
+    const anchorOffset = selRange.startOffset;
+    const focus = selRange.endContainer;
+    const focusOffset = selRange.endOffset;
+    const endsAtLength = selRange.collapsed && _isElementNode(focus) && (focusOffset === focus.childNodes.length);
+    if (anchor === focus) {
+        if (endsAtLength) {
+            const lastChild = focus.lastChild;
+            if (!lastChild) { return selRange };
+            const range = document.createRange();
+            if (_isTextNode(lastChild)) {
+                range.setStart(lastChild, lastChild.textContent.length);
+                range.setEnd(lastChild, lastChild.textContent.length);
+            } else {
+                range.setStart(lastChild, lastChild.childNodes.length);
+                range.setEnd(lastChild, lastChild.childNodes.length);
+            }
+            return range;
+        } else {
+            return selRange;
+        }
+    }
+    if (!_isTextNode(anchor) || !_isTextNode(focus)) { return selRange };
+    const moveAnchorToFocusStart = (anchor.nextSibling === focus.parentNode) && (anchorOffset === anchor.length);
+    const moveFocusToAnchorEnd = (focus.previousSibling === anchor.parentNode) && (focusOffset === 0);
+    if (!moveAnchorToFocusStart && !moveFocusToAnchorEnd) { return selRange };
+    const range = document.createRange();
+    if (moveAnchorToFocusStart) {
+        range.setStart(focus, 0);
+        range.setEnd(focus, focusOffset);
+    } else {
+        range.setStart(anchor, anchorOffset);
+        range.setEnd(anchor, anchor.length);
+    }
+    return range;
+};
+
+/**
+ * Select a range that is wrapped around an outer element if possible.
+ *
+ * See comments in _maximizedRangeFrom()
+ */
+const _maximizedRange = function() {
+    const sel = document.getSelection();
+    const selRange = sel.getRangeAt(0);
+    const range = _maximizedRangeFrom(selRange);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+/**
+ * Return a range that is wrapped around an outer element if possible.
+ *
+ * For example, selRange looks like:
+ *      startContainer: <I>, content: \"item\"
+ *      startOffset: 0
+ *      endContainer: <I>, content: \"item\"
+ *      endOffset: 1
+ * when "item" is selected in <p>Bulleted <i>item</i> 1</p>.
+ * We want to set it to be:.
+ *      startContainer: <TextElement>, content: \"Bulleted \"
+ *      startOffset: 9
+ *      endContainer: <TextElement>, content: \"item\"
+ *      endOffset: 4
+ */
+const _maximizedRangeFrom = function(selRange) {
+    const anchor = selRange.startContainer;
+    const anchorOffset = selRange.startOffset;
+    const focus = selRange.endContainer;
+    const focusOffset = selRange.endOffset;
+    if (anchor !== focus) { return selRange };
+    if (!_isFormatElement(anchor)) { return selRange };
+    if ((anchorOffset !== 0) || (focusOffset !== anchor.childNodes.length)) { return selRange };
+    // The entire format element was selected, which doesn't happen via normal user interaction.
+    // In _doListEnter, we previously _minimizedRange in this case, so now we want to restore the
+    // selection to select from before the anchor to the end of the text element in the anchor.
+    const range = document.createRange();
+    const startContainer = anchor.previousSibling ?? anchor;
+    const endContainer = anchor.lastChild;
+    const startOffset = _isTextNode(startContainer) ? startContainer.textContent.length : 0;
+    const endOffset = _isTextNode(endContainer) ? endContainer.length : anchor.childNodes.length;
+    range.setStart(startContainer, startOffset);
+    range.setEnd(endContainer, endOffset);
+    return range;
+};
+
+/**
  * We are inside of a list and hit Enter.
  *
  * The default behavior is to put in a div, but we want Enter to produce new list elements
@@ -4517,8 +4682,9 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     // Track the deletedFragment and whether it came from a selection that spanned list items
     let deletedFragment, selWithinListItem;
     if (!sel.isCollapsed) {
-        const selRange = sel.getRangeAt(0).cloneRange();
+        const selRange = _minimizedRange();
         if (redoing) {
+            // If we are redoing, join any previously split text nodes using "normalize"
             if (selRange.startContainer.nodeType === Node.TEXT_NODE) {
                 selRange.startContainer.parentNode.normalize();
             } else {
@@ -4535,7 +4701,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         const selStartListItem = _findFirstParentElementInNodeNames(selRange.startContainer, ['LI']);
         const selEndListItem = _findFirstParentElementInNodeNames(selRange.endContainer, ['LI']);
         selWithinListItem = selStartListItem && selEndListItem && (selStartListItem === selEndListItem);
-        deletedFragment = selRange.extractContents();
+        deletedFragment = _extractContentsRestoreSelection(selRange);
         if (redoing) {
             oldUndoerData.data.deletedFragment = deletedFragment;
         }
@@ -4548,7 +4714,8 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         }
         // Even now selection might not be collapsed if, for example, the selection was everything within a
         // formatting node (like <b>).
-        if (!document.getSelection().isCollapsed) {
+        const collapsedAndEmpty = document.getSelection().isCollapsed && _isEmpty(document.getSelection().anchorNode);
+        if (!document.getSelection().isCollapsed || collapsedAndEmpty) {
             _patchEmptyFormatNodeEnter();
         }
         sel = document.getSelection();
@@ -4576,8 +4743,10 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
     // The childNodeIndices also reflect the state *after* a non-collapsed selection has
     // been extracted into deletedFragment and the dom has been patched-up properly.
     const childNodeIndices = _childNodeIndicesByName(selNode, existingList.nodeName);
-    const textNode = selNode.nodeType === Node.TEXT_NODE
-    const beginningListNode = (startOffset === 0) && (!selNode.previousSibling)
+    // The selNode can be a text node or a list item
+    const textNode = _isTextNode(selNode);
+    const listItem = _isListItemElement(selNode) || (_isListItemElement(selNode.parentNode) && (!selNode.previousSibling))
+    const beginningListNode = (textNode && (startOffset === 0) && (!selNode.previousSibling)) || (listItem && (startOffset === 0))
     const endOfTextNode = textNode && (endOffset === selNode.textContent.length);
     const emptyNode = textNode && (selNode.textContent.length === 0);
     const nextSib = selNode.nextSibling;
@@ -4801,7 +4970,7 @@ const _patchMultiListItemEnter = function(deletedFragment) {
 /**
  * The deletedFragment contains the entire contents within a format node (like <b>).
  * We want the Enter to split the format node. To make that happen, insert a non-printing
- * pair of characters inside of the format node, and position selection between them.
+ * character inside of the format node, and position selection after it.
  * Now when splitText happens, we end up with two text nodes and both are formatted
  * like the original we extracted the deletedFragment from.
  */
@@ -4824,26 +4993,26 @@ const _patchEmptyFormatNodeEnter = function() {
         MUError.PatchFormatNodeNotSiblings.callback();
         return;
     }
-    const npcPair = document.createTextNode('\u200B\u200B');
+    const npc = document.createTextNode('\u200B');
     const range = document.createRange();
     // The node that is an empty tag (likely) has an empty text node in it which we
     // want to replace with the non-printing character pair so we can split them.
     if (anchorIsInTag) {
         if (anchorNode.parentNode.childNodes.length === 1) {
-            anchorNode.parentNode.childNodes[0].replaceWith(npcPair)
+            anchorNode.parentNode.childNodes[0].replaceWith(npc)
         } else {
-            anchorNode.parentNode.appendChild(npcPair);
+            anchorNode.parentNode.appendChild(npc);
         }
-        range.setStart(npcPair, 1);
-        range.setEnd(npcPair, 1);
+        range.setStart(npc, 1);
+        range.setEnd(npc, 1);
     } else if (focusIsInTag) {
         if (focusNode.parentNode.childNodes.length === 1) {
-            focusNode.parentNode.childNodes[0].replaceWith(npcPair)
+            focusNode.parentNode.childNodes[0].replaceWith(npc)
         } else {
-            focusNode.parentNode.appendChild(npcPair);
+            focusNode.parentNode.appendChild(npc);
         }
-        range.setStart(npcPair, 1);
-        range.setEnd(npcPair, 1);
+        range.setStart(npc, 1);
+        range.setEnd(npc, 1);
     } else {
         _consoleLog("Error - neither anchor nor focus is in a format tag");
         return;
@@ -4986,19 +5155,23 @@ const _undoListEnter = function(undoerData) {
  *
  * When we reach this point, we have undone the Enter that preceded and now need
  * to re-insert the non-collapsed selection that we extracted and placed in fragment.
+ *
+ * Return the selection range in case it's needed, altho selection
+ * is reset by this function.
  */
 const _insertInList = function(fragment) {
     //_consoleLog("* _insertInList(" + _fragmentString(fragment) + ")")
     const sel = document.getSelection();
     const range = sel.getRangeAt(0).cloneRange();
     const anchorNode = (sel) ? sel.anchorNode : null;   // Selection is collapsed
-    if (!sel.isCollapsed || !anchorNode || (anchorNode.nodeType != Node.TEXT_NODE)) {
+    if (!sel.isCollapsed || !anchorNode) {
         MUError.CantInsertInList.callback();
         return;
     };
     // Handle specially if fragment contains no elements (i.e., just text nodes).
     const simpleFragment = fragment.childElementCount === 0;
     const singleListItemFragment = (fragment.childElementCount === 1) && (fragment.firstElementChild.nodeName !== 'LI');
+    let newRange;
     if (simpleFragment || singleListItemFragment) {
         //_consoleLog("* _insertInList (simple)")
         const firstFragChild = fragment.firstChild;
@@ -5030,8 +5203,9 @@ const _insertInList = function(fragment) {
         anchorNode.parentNode.normalize();
         sel.removeAllRanges();
         sel.addRange(textRange);
+        newRange = _maximizedRange(); // Enclose the element
         //_consoleLog("* Done _insertInList (simple)")
-        return;
+        return newRange;
     }
     const existingList = _findFirstParentElementInNodeNames(anchorNode, ['UL', 'OL'])
     const existingListItem = _findFirstParentElementInNodeNames(anchorNode, ['LI'])
@@ -5049,7 +5223,7 @@ const _insertInList = function(fragment) {
             existingList.insertBefore(fragEl, existingListItem);
             fragEl = fragment.firstElementChild;
         }
-        const newRange = document.createRange();
+        newRange = document.createRange();
         newRange.setStart(firstFragEl, 0);
         newRange.setEnd(existingListItem, 0);
         sel.removeAllRanges();
@@ -5130,7 +5304,23 @@ const _insertInList = function(fragment) {
             }
         }
         // TODO: Maybe have to deal with siblings
-        appendTrailingTarget.appendChild(trailingText);
+        const startContainer = anchorNode;
+        const startOffset = anchorNode.textContent.length;
+        const previousSib = appendTrailingTarget.lastChild;
+        // If the trailingText and its previous sibling are both
+        // textNodes, then we split them before and they should
+        // be rejoined.
+        let endContainer, endOffset;
+        if (_isTextNode(previousSib)) {
+            endContainer = previousSib;
+            endOffset = previousSib.textContent.length;
+            previousSib.textContent = previousSib.textContent + trailingText.textContent;
+            trailingText.parentNode.removeChild(trailingText);
+        } else {
+            endContainer = trailingText;
+            endOffset = 0;
+            appendTrailingTarget.appendChild(trailingText);
+        }
         // FINALLY, if we ended up with two lists of the same type as siblings, then merge them
         const currentList = _findFirstParentElementInNodeNames(lastChildEl, ['OL', 'UL']);
         const nextList = currentList.nextSibling;
@@ -5142,13 +5332,14 @@ const _insertInList = function(fragment) {
             }
             nextList.parentNode.removeChild(nextList);
         };
-        const newRange = document.createRange();
-        newRange.setStart(anchorNode, anchorNode.textContent.length);
-        newRange.setEnd(trailingText, 0);
+        newRange = document.createRange();
+        newRange.setStart(startContainer, startOffset);
+        newRange.setEnd(endContainer, endOffset);
         sel.removeAllRanges();
         sel.addRange(newRange);
     };
     //_consoleLog("* Done _insertInList")
+    return newRange;
 };
 
 /**
@@ -6328,7 +6519,7 @@ const _cleanUpBRs = function(node) {
         if (_isBRElement(child)) {
             const nextChild = child.nextSibling;
             const nextNextChild = (nextChild) ? nextChild.nextSibling : null;
-            if ((!nextChild) || (nextChild && (nextChild.nodeType !== Node.TEXT_NODE))) {
+            if ((!nextChild) || (nextChild && (!_isTextNode(nextChild) && !_isBRElement(nextChild)))) {
                 // This BR is not part of a text string, it's just sitting alone
                 const p = document.createElement('p');
                 p.appendChild(document.createElement('br'));
@@ -6542,32 +6733,30 @@ const _patchNewlines = function(node) {
         return node;
     };
     const rawContent = node.textContent;
-    const leadingNl = rawContent.slice(1) === '\n';
-    const trailingNl = rawContent.slice(-1) === '\n';
+    // Ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split
+    // If separator appears at the beginning (or end) of the string, it still
+    // has the effect of splitting, resulting in an empty (i.e. zero length) string
+    // appearing at the first (or last) position of the returned array.
     const lines = rawContent.split('\n');
     if (lines.length === 1) { return node };
     const insertTarget = node.nextSibling;
-    let textNode;
-    let initialI = 0;
-    if (leadingNl) {
-        const p = document.createElement('p');
-        p.appendChild(document.createElement('br'));
-        node.parentNode.insertBefore(p, insertTarget);
-        initialI = 1;
-    };
-    for (let i = initialI; i < lines.length; i++) {
-        textNode = document.createTextNode(_patchWhiteSpace(lines[i], 'LEADING'));
-        node.parentNode.insertBefore(textNode, insertTarget);
-        if (i < lines.length - 1) {
-            node.parentNode.insertBefore(document.createElement('br'), insertTarget);
+    let line, nextLine, p, textNode;
+    for (let i = 0; i < lines.length; i++) {
+        line = lines[i];
+        nextLine = (i < lines.length - 1) ? lines[i + 1]  : null;
+        if (((i === 0) || (i === lines.length - 1)) && (line.length === 0)) {
+            p = document.createElement('p');
+            textNode = document.createElement('br');
+            p.appendChild(textNode);
+            node.parentNode.insertBefore(p, insertTarget);
+        } else {
+            textNode = document.createTextNode(_patchWhiteSpace(line, 'LEADING'));
+            node.parentNode.insertBefore(textNode, insertTarget);
+            if ((i < lines.length - 1) && (nextLine && (nextLine.length > 0))) {
+                node.parentNode.insertBefore(document.createElement('br'), insertTarget);
+            };
         };
     };
-    if (trailingNl) {
-        const p = document.createElement('p');
-        textNode = document.createElement('br')
-        p.appendChild(textNode);
-        node.parentNode.insertBefore(p, insertTarget);
-    }
     node.parentNode.removeChild(node);
     return textNode;
 };
@@ -7027,6 +7216,34 @@ MU.testListEnter = function() {
 };
 
 /**
+ * For testing purposes, invoke extractContents() on the selected range
+ * to make sure the selection is as expected.
+ */
+MU.testExtractContents = function() {
+    document.getSelection().getRangeAt(0).extractContents();
+};
+
+const _extractContentsRestoreSelection = function(range) {
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endContainer = range.endContainer;
+    const endOffset = range.endOffset;
+    const fragment = range.extractContents();
+    // Remove any leading or trailing empty elements in fragment.
+    // These exist just to match whatever was outside of the range and are useless.
+    if (_isEmpty(fragment.firstChild)) { fragment.removeChild(fragment.firstChild) };
+    if (_isEmpty(fragment.lastChild)) { fragment.removeChild(fragment.lastChild) };
+    if (startContainer === endContainer) { return fragment };
+    const sel = document.getSelection();
+    const restoredRange = document.createRange();
+    restoredRange.setStart(startContainer, startOffset);
+    restoredRange.setEnd(endContainer, endOffset);
+    sel.removeAllRanges();
+    sel.addRange(restoredRange);
+    return fragment;
+};
+
+/**
  * For testing purposes, execute _patchPasteHTML and return the resulting
  * html as a string. Testing in this way lets us do simple pasteHTML tests with
  * clean HTML and test the _patchPasteHTML functionality separately. The
@@ -7035,7 +7252,8 @@ MU.testListEnter = function() {
  */
 MU.testPasteHTMLPreprocessing = function(html) {
     const fragment = _patchPasteHTML(html);
-    return _fragmentString(fragment);
+    const fragmentHTML = _fragmentHTML(fragment);
+    return fragmentHTML;
 };
 
 /**
@@ -7049,7 +7267,8 @@ MU.testPasteHTMLPreprocessing = function(html) {
  */
 MU.testPasteTextPreprocessing = function(html) {
     const fragment = _patchPasteHTML(html);
-    return _minimalHTML(fragment);
+    const minimalHTML = _minimalHTML(fragment);
+    return minimalHTML;
 };
 
 /********************************************************************************
@@ -9356,6 +9575,16 @@ const _isBRElement = function(node) {
 };
 
 /**
+ * Return whether node is an empty element with only a BR in it.
+ *
+ * This is the minimal selectable element, because we cannot set
+ * selection inside of something like <p></p>, only <p><br></p>.
+ */
+const _isEmptyElement = function(node) {
+    return _isElementNode(node) && (node.childNodes.length === 1) && _isBRElement(node.firstChild)
+};
+
+/**
  * Return whether node is a BLOCKQUOTE element
  */
 const _isBlockquoteElement = function(node) {
@@ -10442,9 +10671,9 @@ const _replaceTag = function(oldElement, nodeName) {
     const startOffset = oldRange.startOffset;
     const endContainer = oldRange.endContainer;
     const endOffset = oldRange.endOffset;
+    const newElement = document.createElement(nodeName);
     const newStartContainer = (startContainer === oldElement) ? newElement : startContainer;
     const newEndContainer = (endContainer === oldElement) ? newElement : endContainer;
-    const newElement = document.createElement(nodeName);
     oldElement.parentNode.insertBefore(newElement, oldElement.nextSibling);
     let child = oldElement.firstChild;
     while (child) {
