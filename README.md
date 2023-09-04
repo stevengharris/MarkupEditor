@@ -1,8 +1,8 @@
 <p align="center">
     <img src="https://github.com/stevengharris/MarkupEditor/actions/workflows/swift.yml/badge.svg">
-    <img src="https://img.shields.io/badge/Swift-5.5-blue.svg">
-    <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+">
-    <img src="https://img.shields.io/badge/MacCatalyst-14.5-blue" alt="MacCatalyst 14.5+">
+    <img src="https://img.shields.io/badge/Swift-5.7-blue.svg">
+    <img src="https://img.shields.io/badge/iOS-15+-blue.svg" alt="iOS 14.5+">
+    <img src="https://img.shields.io/badge/MacCatalyst-15+-blue" alt="MacCatalyst 14.5+">
     <a href="https://twitter.com/stevengharris">
         <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris">
     </a>
