@@ -9,6 +9,7 @@
 import SwiftUI
 import WebKit
 import Combine
+import OSLog
 
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
@@ -167,7 +168,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         guard isReady else { return }
         if becomeFirstResponder() {
             MarkupEditor.selectedWebView = self
-            //print("*** Became first responder \(id)")
+            //Logger.webView.debug("*** Became first responder \(id)")
             if !hasFocus {     // Do nothing if we are already focused
                 focus {        // Else focus and setSelection properly
                     self.setSelection()
@@ -196,7 +197,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                             self.selectionState.reset(from: newSelectionState)         // cache it here
                             MarkupEditor.selectionState.reset(from: newSelectionState) // and set globally
                         } else {
-                            print(" Could not reset selectionState")
+                            Logger.webview.error(" Could not reset selectionState")
                         }
                     }
                 }
@@ -208,7 +209,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     func resetSelection(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.resetSelection()") { result, error in
             if let error {
-                print("resetSelection error: \(error.localizedDescription)")
+                Logger.webview.error("resetSelection error: \(error.localizedDescription)")
             }
             handler?()
         }
@@ -218,7 +219,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     func focus(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.focus()") { result, error in
             if let error {
-                print("focus error: \(error)")
+                Logger.webview.error("focus error: \(error)")
                 self.hasFocus = false
             } else {
                 self.hasFocus = true
@@ -300,7 +301,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
             
         } catch let error {
-            print("Failure copying resource files: \(error.localizedDescription)")
+            Logger.webview.error("Failure copying resource files: \(error.localizedDescription)")
         }
     }
     
@@ -335,7 +336,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func loadInitialHtml() {
         setPlaceholder {
             self.setHtml(self.html ?? "") {
-                //print("isReady: \(self.id)")
+                //Logger.webview.debug("isReady: \(self.id)")
                 self.isReady = true
                 if let delegate = self.markupDelegate {
                     delegate.markupDidLoad(self) {
@@ -432,13 +433,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         switch event.type {
         case .hover, .motion, .presses, .remoteControl, .scroll, .touches, .transform:
             // Let the superclass handle all the publicly recognized event types
-            //if event.type != .hover { // Else mouse movement over the view produces a zillion hover prints
-            //    print("Letting WKWebView handle: \(event.description)")
+            //if event.type != .hover { // Else mouse movement over the view produces a zillion hover log messages
+            //    Logger.webview.debug("Letting WKWebView handle: \(event.description)")
             //}
             return super.hitTest(point, with: event)
         default:
             // We will handle the UIDragEvent ourselves
-            //print("MarkupWKWebView handling: \(event.description)")
+            //Logger.webview.debug("MarkupWKWebView handling: \(event.description)")
             return self
         }
     }
@@ -484,7 +485,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
-            //print("Unknown action: \(action)")
+            //Logger.webview.debug("Unknown action: \(action)")
             return false
         }
     }
@@ -739,7 +740,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 handler?(cachedImageUrl)
             }
         } catch let error {
-            print("Error inserting local image: \(error.localizedDescription)")
+            Logger.webview.error("Error inserting local image: \(error.localizedDescription)")
             handler?(cachedImageUrl)
         }
     }
@@ -822,7 +823,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
         evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\")") { result, error in
             if let error {
-                print("Error: \(error)")
+                Logger.webview.error("Error: \(error)")
             }
             handler?()
         }
@@ -832,7 +833,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func cancelSearch(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.searchFor(\"\")") { result, error in
             if let error {
-                print("Error: \(error)")
+                Logger.webview.error("Error: \(error)")
             }
             handler?()
         }
@@ -997,7 +998,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 handler?()
             }
         } catch let error {
-            print("Error inserting local image: \(error.localizedDescription)")
+            Logger.webview.error("Error inserting local image: \(error.localizedDescription)")
             handler?()
         }
     }
@@ -1005,7 +1006,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func pasteImageUrl(_ url: URL?, handler: (()->Void)? = nil) {
         guard let url = url, !pastedAsync else { return }
         //TODO: Make it work
-        print("Save the image url: \(url)")
+        Logger.webview.error("Save the image url: \(url)")
         pastedAsync = false
     }
     
@@ -1104,7 +1105,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 let stateDictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
                 newSelectionState = self.selectionState(from: stateDictionary)
             } catch let error {
-                print("Error decoding selectionState data: \(error.localizedDescription)")
+                Logger.webview.error("Error decoding selectionState data: \(error.localizedDescription)")
                 newSelectionState = SelectionState()
             }
             self.selectionState.reset(from: newSelectionState)
@@ -1115,7 +1116,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func selectionState(from stateDictionary: [String : Any]?) -> SelectionState {
         let selectionState = SelectionState()
         guard let stateDictionary = stateDictionary else {
-            print("State decoded from JSON was nil")
+            Logger.webview.error("State decoded from JSON was nil")
             return selectionState
         }
         // Validity (i.e., document.getSelection().rangeCount > 0

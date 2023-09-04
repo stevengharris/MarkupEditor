@@ -7,6 +7,7 @@
 //
 
 import WebKit
+import OSLog
 
 /// Tracks changes to a single MarkupWKWebView, updating the selectionState and informing the MarkupDelegate of what happened.
 ///
@@ -54,16 +55,16 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     /// Messages with arguments were encoded using JSON.
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let messageBody = message.body as? String else {
-            print("Unknown message received: \(message.body)")
+            Logger.coordinator.error("Unknown message received: \(String(describing: message.body))")
             return
         }
         guard let webView = message.webView as? MarkupWKWebView else {
-            print("message.webView was not a MarkupWKWebView")
+            Logger.coordinator.error("message.webView was not a MarkupWKWebView")
             return
         }
         switch messageBody {
         case "ready":
-            //print("ready")
+            //Logger.coordinator.debug("ready")
             loadInitialHtml()
         case "input":
             markupDelegate?.markupInput(webView)
@@ -71,19 +72,19 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         case "updateHeight":
             updateHeight()
         case "blur":
-            //print("* blur")
+            //Logger.coordinator.debug("* blur")
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
             markupDelegate?.markupLostFocus(webView)
             // TODO: Determine whether to clean up HTML or perhaps leave that to a markupDelegate
             // For now, we clean up the HTML when we lose focus
             //webView.cleanUpHtml() { error in
             //    if error != nil {
-            //        print("Error cleaning up html: \(error!.localizedDescription)")
+            //        Logger.coordinator.error("Error cleaning up html: \(error!.localizedDescription)")
             //    }
             //    self.markupDelegate?.markupLostFocus(webView)
             //}
         case "focus":
-            //print("* focus")
+            //Logger.coordinator.debug("* focus")
             webView.hasFocus = true         // Track focus state so delegate can find it if needed
             // NOTE: Just because the webView here has focus does not mean it becomes the
             // selectedWebView, just like losing focus does not mean selectedWebView becomes nil.
@@ -98,19 +99,19 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             // Note that selectionState remains the same object; just the state it holds onto is updated.
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
-                    //print("* selectionChange")
+                    //Logger.coordinator.debug("* selectionChange")
                     self.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
             //} else {
-            //    print("* ignored selection change")
+            //    Logger.coordinator.debug("* ignored selection change")
             }
         case "click":
-            //print("click")
+            //Logger.coordinator.debug("click")
             webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
         case "undoSet":
-            //print("undoSet")
+            //Logger.coordinator.debug("undoSet")
             markupDelegate?.markupUndoSet(webView)
         default:
             // Try to decode a complex JSON stringified message
@@ -119,13 +120,13 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                     if let messageData = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any] {
                         receivedMessageData(messageData)
                     } else {
-                        print("Error: Decoded message data was nil")
+                        Logger.coordinator.error("Error: Decoded message data was nil")
                     }
                 } catch let error {
-                    print("Error decoding message data: \(error.localizedDescription)")
+                    Logger.coordinator.error("Error decoding message data: \(error.localizedDescription)")
                 }
             } else {
-                print("Error: Data could not be derived from message body")
+                Logger.coordinator.error("Error: Data could not be derived from message body")
             }
         }
     }
@@ -135,17 +136,25 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     /// the key of the messageType.
     private func receivedMessageData(_ messageData: [String : Any]) {
         guard let messageType = messageData["messageType"] as? String else {
-            print("Unknown message received: \(messageData)")
+            Logger.coordinator.error("Unknown message received: \(messageData)")
             return
         }
         switch messageType {
         case "action":
-            print(messageData["action"] as? String ?? "Bad action message.")
+            if let message = messageData["action"] as? String {
+                Logger.coordinator.info("\(message)")
+            } else {
+                Logger.coordinator.error("Bad action message.")
+            }
         case "log":
-            print(messageData["log"] as? String ?? "Bad log message.")
+            if let message = messageData["log"] as? String {
+                Logger.coordinator.info("\(message)")
+            } else {
+                Logger.coordinator.error("Bad log message.")
+            }
         case "error":
             guard let code = messageData["code"] as? String, let message = messageData["message"] as? String else {
-                print("Bad error message.")
+                Logger.coordinator.error("Bad error message.")
                 return
             }
             let info = messageData["info"] as? String
@@ -156,7 +165,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 let src = messageData["src"] as? String,
                 let dimensions = messageData["dimensions"] as? [String : Int]
             else {
-                print("Src or dimensions was missing")
+                Logger.coordinator.error("Src or dimensions was missing")
                 return
             }
             let alt = messageData["alt"] as? String
@@ -165,12 +174,12 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             webView.copyImage(src: src, alt: alt, width: width, height: height)
         case "deletedImage":
             guard let src = messageData["src"] as? String, let url = URL(string: src) else {
-                print("Src was missing or malformed")
+                Logger.coordinator.error("Src was missing or malformed")
                 return
             }
             markupDelegate?.markupImageDeleted(url: url)
         default:
-            print("Unknown message of type \(messageType): \(messageData).")
+            Logger.coordinator.error("Unknown message of type \(messageType): \(messageData).")
         }
     }
     
