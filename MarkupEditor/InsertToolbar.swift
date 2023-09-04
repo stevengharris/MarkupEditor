@@ -27,9 +27,6 @@ public struct InsertToolbar: View {
     @State private var cols: Int = 0
     
     public var body: some View {
-        //if #available(iOS 15.0, macCatalyst 15.0, *) {
-        //    let _ = Self._printChanges()
-        //}
         LabeledToolbar(label: hoverLabel) {
             if contents.link {
                 ToolbarImageButton(

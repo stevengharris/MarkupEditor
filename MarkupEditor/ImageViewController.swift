@@ -116,18 +116,12 @@ class ImageViewController: UIViewController {
         buttonStack.distribution = .fill
         view.addSubview(buttonStack)
         if MarkupEditor.allowLocalImages {
-            if #available(iOS 15.0, macCatalyst 15.0, *) {
-                selectButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
-                selectButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-                selectButton.configuration?.baseBackgroundColor = view.backgroundColor
-                selectButton.configuration?.title = "Select..."
-                // Avoid word wrapping
-                selectButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
-            } else {
-                //TODO: Should test on pre iOS 15
-                selectButton = UIButton()
-                selectButton.setTitle("Select...", for: .normal)
-            }
+            selectButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
+            selectButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+            selectButton.configuration?.baseBackgroundColor = view.backgroundColor
+            selectButton.configuration?.title = "Select..."
+            // Avoid word wrapping
+            selectButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
             selectButton.layer.cornerRadius = 5
             selectButton.layer.borderWidth = 0.8
             selectButton.autoresizingMask = [.flexibleWidth]
@@ -137,49 +131,28 @@ class ImageViewController: UIViewController {
             selectButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
             buttonStack.addArrangedSubview(selectButton)
         }
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-            cancelButton.configuration?.title = "Cancel"
-            // Avoid word wrapping
-            cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
-        } else {
-            //TODO: Should test on pre iOS 15
-            cancelButton = UIButton()
-            cancelButton.setTitle("Cancel", for: .normal)
-        }
+        cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
+        cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+        cancelButton.configuration?.title = "Cancel"
+        // Avoid word wrapping
+        cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
         cancelButton.autoresizingMask = [.flexibleWidth]
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButtonWidthConstraint = cancelButton.widthAnchor.constraint(equalToConstant: 70)
         cancelButtonWidthConstraint.priority = .defaultHigh
         cancelButton.addTarget(self, action: #selector(cancel), for: .touchUpInside)
         buttonStack.addArrangedSubview(cancelButton)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-            saveButton.configuration?.title = "OK"
-        } else {
-            //TODO: Should test on pre iOS 15
-            saveButton = UIButton()
-            saveButton.setTitle("OK", for: .normal)
-        }
+        saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
+        saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+        saveButton.configuration?.title = "OK"
         saveButton.autoresizingMask = [.flexibleWidth]
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButtonWidthConstraint = saveButton.widthAnchor.constraint(equalTo: cancelButton.widthAnchor, multiplier: 1)
         saveButtonWidthConstraint.priority = .defaultHigh
         saveButton.addTarget(self, action: #selector(save), for: .touchUpInside)
         buttonStack.addArrangedSubview(saveButton)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            saveButton.configurationUpdateHandler = setSaveCancel(_:)
-            setButtons()
-        } else {
-            //TODO: Should test on pre iOS 15
-            if saveButton.isEnabled {
-                saveButton.layer.backgroundColor = view.tintColor.cgColor
-            } else {
-                cancelButton.layer.backgroundColor = view.tintColor.cgColor
-            }
-        }
+        saveButton.configurationUpdateHandler = setSaveCancel(_:)
+        setButtons()
         // The cancelButton is always enabled, so it has an outline color.
         // It's background changes to indicate whether it's the default action,
         // which is something we change depending on whether we canSave().
@@ -230,7 +203,6 @@ class ImageViewController: UIViewController {
     /// indicating that the default action when enter is pressed is to cancel. When the saveButton is enabled,
     /// it shows with tintColor, and the cancelButton shows its border but is backgroundColor, indicating the
     /// default action when enter is pressed is to save.
-    @available(iOS 15.0, macCatalyst 15.0, *)
     private func setSaveCancel(_ button: UIButton) {
         if saveButton.isEnabled {
             saveButton.configuration?.baseBackgroundColor = view.tintColor

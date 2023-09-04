@@ -33,9 +33,6 @@ struct DemoContentView: View {
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
     
     var body: some View {
-        //if #available(iOS 15.0, macCatalyst 15.0, *) {
-        //    let _ = Self._printChanges()
-        //}
         VStack(spacing: 0) {
             MarkupEditorView(markupDelegate: self, html: $demoHtml, resourcesUrl: resourcesUrl, id: "Document")
             if rawShowing {

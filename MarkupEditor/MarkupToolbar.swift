@@ -27,9 +27,6 @@ public struct MarkupToolbar: View {
     public var markupDelegate: MarkupDelegate?
     
     public var body: some View {
-        //if #available(iOS 15.0, macCatalyst 15.0, *) {
-        //    let _ = Self._printChanges()
-        //}
         ZStack(alignment: .topLeading) {
             HStack {
                 ScrollView(.horizontal) {
