@@ -67,10 +67,23 @@ const _callback = function(message) {
  *
  * Note for history, replaced window.onload with this eventListener.
  */
-window.addEventListener('load', function () {
+window.addEventListener('load', function() {
     undoer.enable();
     _updatePlaceholder();
     _callback('ready');
+});
+
+/**
+ * Capture all unexpected runtime errors in this script, report to the Swift side for debugging.
+ *
+ * There is not any useful debug information for users, but as a developer,
+ * you can place a break in this method to examine the call stack.
+ * Please file issues for any errors captured by this function,
+ * with the call stack and reproduction instructions if at all possible.
+ */
+window.addEventListener('error', function(ev) {
+    const muError = new MUError('Unexpected', 'Break at MUError(\'Unexpected\'... in Safari Web Inspector to debug.');
+    muError.callback()
 });
 
 /**
