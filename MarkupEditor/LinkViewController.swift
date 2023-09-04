@@ -85,18 +85,12 @@ class LinkViewController: UIViewController {
         buttonStack.spacing = 4
         buttonStack.distribution = .fill
         view.addSubview(buttonStack)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            removeButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
-            removeButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-            removeButton.configuration?.baseBackgroundColor = view.backgroundColor
-            removeButton.configuration?.title = "Remove Link"
-            // Avoid word wrapping
-            removeButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
-        } else {
-            //TODO: Should test on pre iOS 15
-            removeButton = UIButton()
-            removeButton.setTitle("Remove Link", for: .normal)
-        }
+        removeButton = UIButton(configuration: .borderedTinted(), primaryAction: nil)
+        removeButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+        removeButton.configuration?.baseBackgroundColor = view.backgroundColor
+        removeButton.configuration?.title = "Remove Link"
+        // Avoid word wrapping
+        removeButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
         removeButton.layer.cornerRadius = 5
         removeButton.layer.borderWidth = 0.8
         removeButton.autoresizingMask = [.flexibleWidth]
@@ -110,17 +104,11 @@ class LinkViewController: UIViewController {
         spacerWidthConstraint = spacer.widthAnchor.constraint(equalToConstant: 0)
         spacerWidthConstraint.priority = .defaultLow
         buttonStack.addArrangedSubview(spacer)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-            cancelButton.configuration?.title = "Cancel"
-            // Avoid word wrapping
-            cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
-        } else {
-            //TODO: Should test on pre iOS 15
-            cancelButton = UIButton()
-            cancelButton.setTitle("Cancel", for: .normal)
-        }
+        cancelButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
+        cancelButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+        cancelButton.configuration?.title = "Cancel"
+        // Avoid word wrapping
+        cancelButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
         cancelButton.autoresizingMask = [.flexibleWidth]
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButtonWidthConstraint = cancelButton.widthAnchor.constraint(equalToConstant: 70)
@@ -136,32 +124,17 @@ class LinkViewController: UIViewController {
         cancelButton.layer.borderWidth = 0.8
         cancelButton.layer.borderColor = view.tintColor.cgColor
         buttonStack.addArrangedSubview(cancelButton)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
-            saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
-            saveButton.configuration?.title = "OK"
-        } else {
-            //TODO: Should test on pre iOS 15
-            saveButton = UIButton()
-            saveButton.setTitle("OK", for: .normal)
-        }
+        saveButton = UIButton(configuration: .borderedProminent(), primaryAction: nil)
+        saveButton.preferredBehavioralStyle = UIBehavioralStyle.pad
+        saveButton.configuration?.title = "OK"
         saveButton.autoresizingMask = [.flexibleWidth]
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButtonWidthConstraint = saveButton.widthAnchor.constraint(equalTo: cancelButton.widthAnchor, multiplier: 1)
         saveButtonWidthConstraint.priority = .defaultHigh
         saveButton.addTarget(self, action: #selector(save), for: .touchUpInside)
         buttonStack.addArrangedSubview(saveButton)
-        if #available(iOS 15.0, macCatalyst 15.0, *) {
-            saveButton.configurationUpdateHandler = setSaveCancel(_:)
-            setButtons()
-        } else {
-            //TODO: Should test on pre iOS 15
-            if saveButton.isEnabled {
-                saveButton.layer.backgroundColor = view.tintColor.cgColor
-            } else {
-                cancelButton.layer.backgroundColor = view.tintColor.cgColor
-            }
-        }
+        saveButton.configurationUpdateHandler = setSaveCancel(_:)
+        setButtons()
     }
     
     private func initializeLayout() {
@@ -199,7 +172,6 @@ class LinkViewController: UIViewController {
     /// it shows with tintColor, and the cancelButton shows its border but is backgroundColor, indicating the
     /// default action when enter is pressed is to save. The removeButton is enabled or disabled but is never
     /// the default action so is not changed here.
-    @available(iOS 15.0, macCatalyst 15.0, *)
     private func setSaveCancel(_ button: UIButton) {
         if saveButton.isEnabled {
             saveButton.configuration?.baseBackgroundColor = view.tintColor
