@@ -8,6 +8,7 @@
 
 import XCTest
 import MarkupEditor
+import OSLog
 
 class BasicTests: XCTestCase, MarkupDelegate {
     var webView: MarkupWKWebView!
@@ -71,12 +72,12 @@ class BasicTests: XCTestCase, MarkupDelegate {
     }
     
     func testLoad() throws {
-        print("Test: Ensure loadInitialHtml has run.")
+        Logger.test.info("Test: Ensure loadInitialHtml has run.")
         // Do nothing other than run setupWithError
     }
     
     func testBaselineBehavior() throws {
-        print("Test: Ensure baseline behaviors are correct.")
+        Logger.test.info("Test: Ensure baseline behaviors are correct.")
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
                 HtmlTest(
@@ -216,7 +217,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: format.tag)
             let startHtml = formattedString.styledHtml(adding: .P)
             let description = "Select inside of format \(format.tag)"
-            print(" * Test: \(description)")
+            Logger.test.info("\(description)")
             let expectation = XCTestExpectation(description: description)
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in

@@ -273,7 +273,6 @@ class LinkViewController: UIViewController {
         case #selector(showPluggableLinkPopover):
             return true     // Toggles off and on
         default:
-            //print("Unknown action: \(action)")
             return super.canPerformAction(action, withSender: sender)
         }
     }
