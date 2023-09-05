@@ -74,6 +74,9 @@ public struct MarkupToolbar: View {
                 }
             }
         }
+        // Because the icons in toolbars are sized based on font, we need to limit their dynamicTypeSize
+        // or they become illegible at very large sizes.
+        .dynamicTypeSize(.small ... .xLarge)
         .frame(height: MarkupEditor.toolbarStyle.height())
         .zIndex(999)
     }
