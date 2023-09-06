@@ -770,6 +770,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection across indented paragraphs",
+                    startHtml: "<blockquote><p id=\"p1\">Paragraph 1</p></blockquote><blockquote><p id=\"p2\">Paragraph 2</p></blockquote><blockquote><p id=\"p3\">Paragraph 3</p></blockquote>",
+                    endHtml: "<blockquote><h1>Paragraph 1</h1></blockquote><blockquote><h1>Paragraph 2</h1></blockquote><blockquote><h1>Paragraph 3</h1></blockquote>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
@@ -1313,6 +1331,15 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 startOffset: 1,
                 endId: "p",
                 endOffset: 1
+            ),
+            HtmlTest(
+                description: "Enter at end of text in formatted element",
+                startHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote><blockquote><p><b><br></b></p></blockquote>",
+                startId: "b",
+                startOffset: 5,
+                endId: "b",
+                endOffset: 5
             ),
         ]
         for test in htmlTests {
