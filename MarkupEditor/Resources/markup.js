@@ -82,7 +82,7 @@ window.addEventListener('load', function() {
  * with the call stack and reproduction instructions if at all possible.
  */
 window.addEventListener('error', function(ev) {
-    const muError = new MUError('Unexpected', 'Break at MUError(\'Unexpected\'... in Safari Web Inspector to debug.');
+    const muError = new MUError('Internal', 'Break at MUError(\'Internal\'... in Safari Web Inspector to debug.');
     muError.callback()
 });
 
@@ -8894,14 +8894,22 @@ const _splitElement = function(element, offset, rootName=null, direction='AFTER'
         // up from element to rootNode and creating new elements in trailingRoot.
         // Identify newElement along the way.
         let lastLeadingElement = element;
-        let lastTrailingElement;
+        let newTrailingElement, lastTrailingElement;
+        // Consider <blockquote><p><b>Hello|</b></p></blockquote> where element is the <b>
+        // which we are splitting at the end. When we get here, trailingRoot is
+        // <blockquote></blockquote>, and we are walking up from element to produce
+        // an empty tree of elements: <blockquote><p><b></b></p></blockquote>
         while (lastLeadingElement !== rootNode) {
-            let newTrailingElement = document.createElement(lastLeadingElement.nodeName);
-            trailingRoot.insertBefore(newTrailingElement, lastTrailingElement);
-            if (!newElement) { newElement = newTrailingElement };               // The rootNode contains element
-            lastLeadingElement = lastLeadingElement.parentNode;                 // What we will create next as we go up from element
-            lastTrailingElement = newTrailingElement;                           // What to insert the next one before in trailingRoot
+            newTrailingElement = document.createElement(lastLeadingElement.nodeName);
+            if (lastTrailingElement) {
+                newTrailingElement.appendChild(lastTrailingElement);    // Append the previous lastTrailingElement into the new parent
+            } else {
+                newElement = newTrailingElement;                        // The newElement is the initial one we create
+            }
+            lastTrailingElement = newTrailingElement;                   // Track the new trailing element we just created
+            lastLeadingElement = lastLeadingElement.parentNode;         // Walk up the further from the lastLeadingElement
         };
+        trailingRoot.appendChild(newTrailingElement)                    // Put the new trailing element into trailingRoot
     }
     // We have the structure below trailingRoot, but we haven't moved anything
     // from element into it yet.
