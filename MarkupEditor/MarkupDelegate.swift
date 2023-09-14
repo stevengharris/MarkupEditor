@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import OSLog
 
 /// MarkupDelegate defines app-specific functionality that will be invoked as the MarkupWKWebView state changes.
 ///
@@ -239,14 +240,18 @@ extension MarkupDelegate {
     /// Override this method to perform the drop.
     public func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {}
     
-    /// By default, print to the console when an error occurs on the JavaScript side of the MarkupEditor.
+    /// By default, log when an error occurs on the JavaScript side of the MarkupEditor.
     ///
     /// Most errors are internal and should never occur. See MUError in markup.js for details. The value of alert can be used to filter out
     /// informational errors vs ones you might want to alert users about. If you want to let your user know about an error, then override this
     /// method in your delegate.
     public func markupError(code: String, message: String, info: String?, alert: Bool) {
-        print("Error \(code): \(message)")
-        if let info = info { print(" \(info)") }
+        if alert {
+            Logger.script.notice("Error \(code): \(message)")
+        } else {
+            Logger.script.error("Error \(code): \(message)")
+        }
+        if let info { Logger.script.info("\(info)") }
     }
 
     /// By default, the insert link popover is kicked off in the MarkupWKWebView using the LinkViewController.

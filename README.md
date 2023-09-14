@@ -1,8 +1,8 @@
 <p align="center">
     <img src="https://github.com/stevengharris/MarkupEditor/actions/workflows/swift.yml/badge.svg">
-    <img src="https://img.shields.io/badge/Swift-5.5-blue.svg">
-    <img src="https://img.shields.io/badge/iOS-14.5+-blue.svg" alt="iOS 14.5+">
-    <img src="https://img.shields.io/badge/MacCatalyst-14.5-blue" alt="MacCatalyst 14.5+">
+    <img src="https://img.shields.io/badge/Swift-5.7+-blue.svg">
+    <img src="https://img.shields.io/badge/iOS-15+-blue.svg" alt="iOS 14.5+">
+    <img src="https://img.shields.io/badge/MacCatalyst-15+-blue" alt="MacCatalyst 14.5+">
     <a href="https://twitter.com/stevengharris">
         <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris">
     </a>
@@ -69,7 +69,7 @@ That sounds complicated, but it is mostly implementation details you should not 
 
 The `MarkupToolbar` is a convenient, pre-built UI to invoke changes to the document by interacting with the `MarkupWKWebView`. You don't need to use it, but if you do, then the easiest way to set it up is just to let the `MarkupEditorView` or `MarkupEditorUIView` handle it automatically. Your application may require something different with the toolbar than what the `MarkupEditorView` or `MarkupEditorUIView` provides. For example, you might have multiple `MarkupEditorViews` that need to share a single `MarkupToolbar`. In this case, you should specify `MarkupEditor.toolbarPosition = .none`. Then, for SwiftUI, use the `MarkupEditorView` together with the `MarkupToolbar` as standard SwiftUI views, identifying the `MarkupEditor.selectedWebView` by responding to the `markupTookFocus(_:)` callback in your `MarkupDelegate`. For UIKit, you can use the `MarkupEditorUIView` and `MarkupToolbarUIView`. See the code in the `MarkupEditorView` or `MarkupEditorUIView` for details.
 
-To avoid spurious logging from the underlying `WKWebView` in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target.
+To avoid spurious logging from the underlying `WKWebView` in the Xcode console, you can set `OS_ACTIVITY_MODE` to `disable` in the Run properties for your target. However, this has the side-effect of removing OSLog messages from the MarkupEditor from showing up, too, and is probably not a good idea in general.
 
 ### SwiftUI Usage
 

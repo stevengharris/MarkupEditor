@@ -690,11 +690,31 @@ class UndoTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection across indented paragraphs",
+                    startHtml: "<blockquote><p id=\"p1\">Paragraph 1</p></blockquote><blockquote><p id=\"p2\">Paragraph 2</p></blockquote><blockquote><p id=\"p3\">Paragraph 3</p></blockquote>",
+                    endHtml: "<blockquote><h1>Paragraph 1</h1></blockquote><blockquote><h1>Paragraph 2</h1></blockquote><blockquote><h1>Paragraph 3</h1></blockquote>",
+                    undoHtml: "<blockquote><p>Paragraph 1</p></blockquote><blockquote><p>Paragraph 2</p></blockquote><blockquote><p>Paragraph 3</p></blockquote>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
             let startHtml = test.startHtml
             let endHtml = test.endHtml
+            let undoHtml = test.undoHtml ?? startHtml
             let expectation = XCTestExpectation(description: "Setting and replacing styles across multiple paragraphs")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
@@ -706,7 +726,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
                                 self.webView.testUndo() {
                                     self.webView.getRawHtml { unformatted in
-                                        self.assertEqualStrings(expected: startHtml, saw: unformatted)
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
                                         expectation.fulfill()
                                     }
                                 }
@@ -1227,11 +1247,18 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">Hello</p></blockquote>",
                 endHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p>Hello</p></blockquote>",
                 startId: "p",
-                startOffset: 0,
+                startOffset: 1,
                 endId: "p",
-                endOffset: 0,
-                startChildNodeIndex: 1,
-                endChildNodeIndex: 1
+                endOffset: 1
+            ),
+            HtmlTest(
+                description: "Enter at end of text in formatted element",
+                startHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote><blockquote><p><b><br></b></p></blockquote>",
+                startId: "b",
+                startOffset: 5,
+                endId: "b",
+                endOffset: 5
             ),
         ]
         for test in htmlTests {
@@ -2013,7 +2040,16 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 description: "The entire formatted item in a styled list item (note the zero width chars in the result)",
                 startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                 endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">\u{200B}</i></h5></li><li><h5><i>\u{200B}</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                startId: "i",     // Select the entire "<i id=\"i\">item</i>" which is itself inside of an <h5>
+                startId: "h5",     // Select the entire "<i id=\"i\">item</i>" which is itself inside of an <h5>
+                startOffset: 9,
+                endId: "i",
+                endOffset: 4
+            ),
+            HtmlTest(
+                description: "Only the enclosed formatted item in a styled list item (note the zero width chars in the result)",
+                startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">\u{200B}</i></h5></li><li><h5><i>\u{200B}</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                startId: "i",     // Select only the text "item" inside of <i>item</i> which is itself inside of an <h5>
                 startOffset: 0,
                 endId: "i",
                 endOffset: 4

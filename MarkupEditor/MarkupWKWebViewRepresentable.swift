@@ -100,7 +100,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     /// html in state properly. The bottom line is that for anything other than a quick demo, you really should
     /// hold the html in state someplace properly and then pass the binding to that state to init.
     public func updateUIView(_ webView: MarkupWKWebView, context: Context) {
-        //print("MarkupWKWebViewRepresentable updateUIView")
+        //Logger.webview.debug("MarkupWKWebViewRepresentable updateUIView")
         webView.setHtmlIfChanged(html)
     }
     

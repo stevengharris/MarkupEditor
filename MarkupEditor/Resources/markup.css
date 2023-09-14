@@ -2,7 +2,6 @@ body {
     font-family: -apple-system;
     font: -apple-system-body;
     caret-color: red;   /* Helps with debugging since should not appear */
-    font-size: 1.0em;
 }
 
 #editor {
@@ -31,6 +30,10 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+p {
+    font-size: 1.0em;
 }
 
 p, ul, ol, dl, table, pre {

@@ -33,9 +33,6 @@ struct DemoContentView: View {
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
     
     var body: some View {
-        //if #available(iOS 15.0, macCatalyst 15.0, *) {
-        //    let _ = Self._printChanges()
-        //}
         VStack(spacing: 0) {
             MarkupEditorView(markupDelegate: self, html: $demoHtml, resourcesUrl: resourcesUrl, id: "Document")
             if rawShowing {
@@ -113,14 +110,7 @@ extension DemoContentView: MarkupDelegate {
     func markupImageAdded(url: URL) {
         print("Image added from \(url.path)")
     }
-    
-    /// Override the default behavior for when the MarkupEditor encounters an error.
-    ///
-    /// In the event of a MUError.Alert, play an alert sound.
-    func markupError(code: String, message: String, info: String?, alert: Bool) {
-        print("Error \(code): \(message)")
-        if let info = info { print(" \(info)") }
-    }
+
 
 }
 

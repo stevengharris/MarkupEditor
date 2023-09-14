@@ -8,6 +8,7 @@
 
 import XCTest
 import MarkupEditor
+import OSLog
 
 class BasicTests: XCTestCase, MarkupDelegate {
     var webView: MarkupWKWebView!
@@ -71,8 +72,55 @@ class BasicTests: XCTestCase, MarkupDelegate {
     }
     
     func testLoad() throws {
-        print("Test: Ensure loadInitialHtml has run.")
+        Logger.test.info("Test: Ensure loadInitialHtml has run.")
         // Do nothing other than run setupWithError
+    }
+    
+    func testBaselineBehavior() throws {
+        Logger.test.info("Test: Ensure baseline behaviors are correct.")
+        let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
+            (
+                HtmlTest(
+                    description: "Extract when selection begins in one styled list item, ends in another",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P </p></li><li id=\"ol3\"><p>Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "ol1",     // Select "P |Numbered item 1."
+                    startOffset: 2,
+                    endId: "ol3",       // Select "P |Numbered item 3."
+                    endOffset: 2,
+                    startChildNodeIndex: 0,
+                    endChildNodeIndex: 0
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testExtractContents {
+                            handler()
+                        }
+                    }
+                }
+            ),
+        ]
+        for (test, action) in htmlTestAndActions {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let endHtml = test.endHtml
+            let expectation = XCTestExpectation(description: test.description ?? "Basic operations")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Execute the action to press Enter at the selection
+                        action() {
+                            self.webView.getRawHtml { formatted in
+                                self.assertEqualStrings(expected: endHtml, saw: formatted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 30)
+        }
     }
 
     func testFormats() throws {
@@ -169,7 +217,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let formattedString = rawString.formattedHtml(adding: format, startingAt: 5, endingAt: 7, withId: format.tag)
             let startHtml = formattedString.styledHtml(adding: .P)
             let description = "Select inside of format \(format.tag)"
-            print(" * Test: \(description)")
+            Logger.test.info("\(description)")
             let expectation = XCTestExpectation(description: description)
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
@@ -722,6 +770,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest(
+                    description: "Replace p with h1, selection across indented paragraphs",
+                    startHtml: "<blockquote><p id=\"p1\">Paragraph 1</p></blockquote><blockquote><p id=\"p2\">Paragraph 2</p></blockquote><blockquote><p id=\"p3\">Paragraph 3</p></blockquote>",
+                    endHtml: "<blockquote><h1>Paragraph 1</h1></blockquote><blockquote><h1>Paragraph 2</h1></blockquote><blockquote><h1>Paragraph 3</h1></blockquote>",
+                    startId: "p1",
+                    startOffset: 2,
+                    endId: "p3",
+                    endOffset: 2
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .H1) {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
@@ -1262,11 +1328,18 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 startHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">Hello</p></blockquote>",
                 endHtml: "<blockquote><p id=\"p\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p>Hello</p></blockquote>",
                 startId: "p",
-                startOffset: 0,
+                startOffset: 1,
                 endId: "p",
-                endOffset: 0,
-                startChildNodeIndex: 1,
-                endChildNodeIndex: 1
+                endOffset: 1
+            ),
+            HtmlTest(
+                description: "Enter at end of text in formatted element",
+                startHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote>",
+                endHtml: "<blockquote><p id=\"p\"><b id=\"b\">Hello</b></p></blockquote><blockquote><p><b><br></b></p></blockquote>",
+                startId: "b",
+                startOffset: 5,
+                endId: "b",
+                endOffset: 5
             ),
         ]
         for test in htmlTests {
@@ -2106,7 +2179,25 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     description: "The entire formatted item in a styled list item (note the zero width chars in the result)",
                     startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
                     endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">\u{200B}</i></h5></li><li><h5><i>\u{200B}</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",     // Select the entire "<i id=\"i\">item</i>" which is itself inside of an <h5>
+                    startId: "h5",     // Select the entire "<i id=\"i\">item</i>" which is itself inside of an <h5>
+                    startOffset: 9,
+                    endId: "i",
+                    endOffset: 4
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.testListEnter {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest(
+                    description: "Only the enclosed formatted item in a styled list item (note the zero width chars in the result)",
+                    startHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">item</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li id=\"ul1\"><h5 id=\"h5\">Bulleted <i id=\"i\">\u{200B}</i></h5></li><li><h5><i>\u{200B}</i> 1.</h5><ol><li id=\"ol1\"><p>P Numbered item 1.</p></li><li id=\"ol2\"><p>P Numbered item 2.</p></li><li id=\"ol3\"><p>P Numbered item 3.</p></li><li id=\"ol4\"><p>P Numbered item 4.</p></li><li id=\"ol5\">Numbered item 5.</li><li id=\"ol6\">Numbered item 6.</li><li id=\"ol7\">Numbered item 7.</li><li id=\"ol8\">Numbered item 8.</li></ol></li><li id=\"ul2\"><h5>Bulleted item 2.</h5></li></ul>",
+                    startId: "i",     // Select only the text "item" inside of <i>item</i> which is itself inside of an <h5>
                     startOffset: 0,
                     endId: "i",
                     endOffset: 4
@@ -2610,6 +2701,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endId: "p",
                 endOffset: 10
             ),
+            HtmlTest(
+                description: "Simple multiline text from MacOS Notes",
+                startHtml: "This is a test<br><br>Of a note<br>But what is this?",
+                endHtml: "This is a test<br><br>Of a note<br>But what is this?",
+                startId: "p",
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10
+            ),
+            HtmlTest(
+                description: "Trailing <BR> in MacOS Notes",
+                startHtml: "This is a test<br>",
+                endHtml: "This is a test<p><br></p>",
+                startId: "p",
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10
+            ),
         ]
         for test in htmlTests {
             test.printDescription()
@@ -2871,6 +2980,24 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 startId: "h1",
                 startOffset: 10,
                 endId: "h1",
+                endOffset: 10
+            ),
+            HtmlTest(
+                description: "Simple multiline text from MacOS Notes",
+                startHtml: "This is a test<br><br>Of a note<br>But what is this?",
+                endHtml: "This is a test<br><br>Of a note<br>But what is this?",
+                startId: "p",
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10
+            ),
+            HtmlTest(
+                description: "Trailing <BR> in MacOS Notes",
+                startHtml: "This is a test<br>",
+                endHtml: "This is a test<p><br></p>",
+                startId: "p",
+                startOffset: 10,
+                endId: "p",
                 endOffset: 10
             ),
         ]

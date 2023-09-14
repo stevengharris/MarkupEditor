@@ -7,6 +7,7 @@
 
 import Foundation
 import MarkupEditor
+import OSLog
 
 public struct HtmlTest {
     public var description: String? = nil
@@ -72,7 +73,7 @@ public struct HtmlTest {
     }
     
     public func printDescription() {
-        if let description = description { print(" * Test: \(description)") }
+        if let description = description { Logger.test.info("\(description)") }
     }
     
 }
