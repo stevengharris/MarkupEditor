@@ -129,6 +129,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
     private func initForEditing() {
+        isOpaque = false                // Eliminate flash in dark mode
+        backgroundColor = .clear        // Eliminate flash in dark mode
         initRootFiles()
         markupDelegate?.markupSetup(self)
         // Enable drop interaction
