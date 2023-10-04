@@ -11,12 +11,14 @@ body {
      * selecting resizable images that are at the edge of the screen.
      */
     overflow: visible;
-    margin: 0 2px 0 2px;
+    margin: 2px;
+    /* MU.padBottom() sets this value in px based on fullHeight */
+    --padBottom: 0;
+    padding-block: 0 var(--padBottom);
 }
 
 #editor:focus {
     outline: none !important;
-    padding-block: 0 100%;
 }
 
 a {

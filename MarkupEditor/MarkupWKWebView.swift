@@ -39,7 +39,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableDirection = MarkupEditor.TableDirection
     public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
-    let bodyMargin: Int = 8                             // As specified in markup.css. Needed to adjust clientHeight
+    public var clientHeightPad: Int = 8                 // Value to adjust html clientHeight
     public private(set) var isReady: Bool = false       // Ready for editing
     public var hasFocus: Bool = false
     private var editorHeight: Int = 0
@@ -688,17 +688,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func updateHeight(handler: ((Int)->Void)?) {
-        getHeight() { clientHeight in
-            if self.editorHeight != clientHeight {
-                self.editorHeight = clientHeight
-                handler?(self.contentHeight(from: clientHeight))
+    /// Set the CSS padding-block bottom so that the padding fills the frame height.
+    public func padBottom(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.padBottom('\(frame.height)')") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
             }
+            handler?()
         }
     }
     
-    private func contentHeight(from clientHeight: Int) -> Int {
-        return clientHeight + 2 * bodyMargin
+    /// Update the internal height tracking.
+    public func updateHeight(handler: ((Int)->Void)?) {
+        self.getHeight() { clientHeight in
+            if self.editorHeight != clientHeight {
+                self.editorHeight = clientHeight
+                handler?(clientHeight + self.clientHeightPad)
+            }
+        }
     }
     
     public func cleanUpHtml(handler: ((Error?)->Void)?) {

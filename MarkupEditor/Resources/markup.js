@@ -2769,15 +2769,32 @@ MU.setHTML = function(contents, select=true) {
  * auto-sizing of a WKWebView based on its contents.
  */
 MU.getHeight = function() {
-    const paddingBlockStart = editor.style.getPropertyValue("padding-block-start");
-    const paddingBlockEnd = editor.style.getPropertyValue("padding-block-end");
-    editor.style["padding-block-start"] = "0px";
-    editor.style["padding-block-end"] = "0px";
+    const paddingBlockStart = editor.style.getPropertyValue('padding-block-start');
+    const paddingBlockEnd = editor.style.getPropertyValue('padding-block-end');
+    editor.style['padding-block-start'] = '0px';
+    editor.style['padding-block-end'] = '0px';
     const style = window.getComputedStyle(editor, null);
-    const height = parseInt(style.getPropertyValue("height"));
-    editor.style["padding-block-start"] = paddingBlockStart;
-    editor.style["padding-block-end"] = paddingBlockEnd;
+    const height = parseInt(style.getPropertyValue('height'));
+    editor.style['padding-block-start'] = paddingBlockStart;
+    editor.style['padding-block-end'] = paddingBlockEnd;
     return height;
+};
+
+/*
+ * Pad the bottom of the text in editor to fill fullHeight.
+ *
+ * Setting padBottom pads the editor all the way to the bottom, so that the
+ * focus area occupies the entire view. This allows long-press on iOS to bring up the
+ * context menu anywhere on the screen, even when text only occupies a small portion
+ * of the screen. 
+ */
+MU.padBottom = function(fullHeight) {
+    const padHeight = fullHeight - MU.getHeight();
+    if (padHeight > 0) {
+        editor.style.setProperty('--padBottom', padHeight+'px');
+    } else {
+        editor.style.setProperty('--padBottom', '0');
+    };
 };
 
 /**
@@ -7680,7 +7697,11 @@ const _prepImage = function(img) {
     // For history, 'focusout' just never fires, either for image or the resizeContainer
     img.addEventListener('focusin', _focusInImage);         // Allow resizing when focused
     // Only notify the Swift side if we modified the HTML
-    if (changedHTML) { _callback('input') };                // Because we changed the html
+    if (changedHTML) {
+        _callback('input') // Because we changed the html
+    } else {
+        _callback('updateHeight')
+    }
 };
 
 /**

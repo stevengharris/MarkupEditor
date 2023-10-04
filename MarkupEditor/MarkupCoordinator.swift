@@ -40,9 +40,14 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         super.init()
     }
     
+    /// The height changed on the JavaScript side, so update our local value held by the webView, and set the
+    /// bottom padding (https://developer.mozilla.org/en-US/docs/Web/CSS/padding-bottom)
+    /// height so that it fills the full height of webView.
     private func updateHeight() {
         webView.updateHeight() { height in
-            self.markupDelegate?.markup(self.webView, heightDidChange: height)
+            self.webView.padBottom() {
+                self.markupDelegate?.markup(self.webView, heightDidChange: height)
+            }
         }
     }
     
