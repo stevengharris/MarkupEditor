@@ -91,7 +91,7 @@ public class MarkupMenu {
         children.append(UIKeyCommand(title: "Italic", action: #selector(MarkupWKWebView.italic), input: "I", modifierFlags: .command))
         children.append(UIKeyCommand(title: "Underline", action: #selector(MarkupWKWebView.underline), input: "U", modifierFlags: .command))
         if contents.formatContents.code {
-            children.append(UIKeyCommand(title: "Code", action: #selector(MarkupWKWebView.code), input: "{", modifierFlags: .command))
+            children.append(UIKeyCommand(title: "Code", action: #selector(MarkupWKWebView.code), input: "`", modifierFlags: .command))
         }
         if contents.formatContents.strike {
             children.append(UIKeyCommand(title: "Strikethrough", action: #selector(MarkupWKWebView.strike), input: "-", modifierFlags: [.control, .command]))
