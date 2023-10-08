@@ -54,11 +54,6 @@ MU.editor = document.getElementById('editor');
  * @param {String} message     The message, which might be a JSONified string
  */
 const _callback = function(message) {
-    if (message === 'input') {
-        searcher.resetIndex();      // Search results are no longer valid
-    } else if (message === 'click') {
-        searcher.resetSelection();  // We need to start search from a new location
-    };
     window.webkit.messageHandlers.markup.postMessage(message);
 };
 
@@ -175,9 +170,9 @@ class Searcher {
      * instead of quotes and '&apos;' instead of apostrophes, so that we can search on text
      * that includes them and pass them from Swift to JavaScript consistently.
      */
-    searchFor(text, direction='forward') {
+    searchFor(text, direction='forward', searchOnEnter=false) {
         if (!text || (text.length === 0)) {
-            this._isActive = false;
+            this.cancel()
             return null;
         }
         text = text.replaceAll('&quot;', '"')       // Fix the hack for quotes in the call
@@ -192,8 +187,8 @@ class Searcher {
             return null;
         }
         this._direction = direction;
-        this._isActive = true;
-        if (this._foundRangeIndex !== null) { // Can't just check on (this._foundRangeIndex), eh JavaScript
+        this._isActive = searchOnEnter;         // Only intercept Enter if searchOnEnter is explicitly passed as true
+        if (this._foundRangeIndex !== null) {   // Can't just check on (this._foundRangeIndex), eh JavaScript
             // Move the foundRangeIndex in the right direction, wrapping around
             this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
         } else {
@@ -206,7 +201,7 @@ class Searcher {
     /**
      * Reset the index by forcing it to be recomputed at find time.
      */
-    resetIndex() {
+    _resetIndex() {
         this._forceIndexing = true;
     };
     
@@ -214,7 +209,7 @@ class Searcher {
      * Reset the _foundRangeIndex so that it will always be computed again
      * relative to the selection at find time.
      */
-    resetSelection() {
+    _resetSelection() {
         this._foundRangeIndex = null;
     };
     
@@ -226,12 +221,29 @@ class Searcher {
     };
     
     /**
+     * Deactivate search mode where Enter is being intercepted
+     */
+    deactivate() {
+        this._isActive = false;
+    }
+    
+    /**
+     * Stop searchForNext from being executed on Enter. Force reindexing for next search.
+     */
+    cancel() {
+        this.deactivate()
+        this._resetIndex();
+        this._resetSelection;
+    };
+    
+    /**
      * Invoke the previous search again in the same direction
      */
     searchForNext() {
         if (this._searchString && (this._searchString.length > 0)) {
             this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, this._direction);
             this.selectRange(this._foundRanges[this._foundRangeIndex]);
+            _callback("searched")
         };
     };
     
@@ -448,10 +460,20 @@ const searcher = new Searcher();
  * CAUTION: Search must be cancelled once started, or Enter will be intercepted
  * to mean searcher.searchForNext()
  */
-MU.searchFor = function(text, direction) {
-    const range = searcher.searchFor(text, direction);
+MU.searchFor = function(text, direction, activate) {
+    const searchOnEnter = activate === "true";
+    const range = searcher.searchFor(text, direction, searchOnEnter);
     searcher.selectRange(range);
+    _callback("searched")
 };
+
+MU.deactivateSearch = function() {
+    searcher.deactivate();
+};
+
+MU.cancelSearch = function() {
+    searcher.cancel()
+}
 
 /*
  * The Undoer class below was adopted from https://github.com/samthor/undoer
@@ -1565,15 +1587,23 @@ const unmuteChanges = function() { _muteChanges = false };
 
 /**
  * Mute selectionChange notifications when mouse is down.
+ *
+ * Cancel the searcher, so Enter is no longer intercepted to invoke
+ * searchForNext().
  */
 MU.editor.addEventListener('mousedown', function() {
+    searcher.cancel()
     muteChanges();
 });
 
 /**
  * Mute selectionChange notifications when touch starts.
+ *
+ * Cancel the searcher, so Enter is no longer intercepted to invoke
+ * searchForNext().
  */
 MU.editor.addEventListener('touchstart', function() {
+    searcher.cancel()
     muteChanges();
 });
 
@@ -1893,6 +1923,8 @@ MU.editor.addEventListener('keydown', function(ev) {
             };
             break;
     };
+    // Always cancel search if we fall thru
+    searcher.cancel()
 });
 
 /**
