@@ -836,6 +836,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 if let error {
                     Logger.webview.error("Error: \(error)")
                 }
+                handler?()
             }
         }
     }
