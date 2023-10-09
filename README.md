@@ -264,6 +264,33 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
+#### Version 0.6.0 (Beta 2)
+
+There have been a lot of changes since Beta 1 was released. Beta 2 pulls them all together in what I hope is closer to a proper release candidate.
+
+#### Features
+
+* The MarkupEditor did not support text search, but now does. See [Search](#search) in this README.
+* There was no way to provide "placeholder" text for an empty MarkupWKWebView, but it is now supported.  (https://github.com/stevengharris/MarkupEditor/issues/101)
+* Setting the selection when the MarkupWKWebView is opened (which updates the MarkupToolbar) was automatic but is now optional. (https://github.com/stevengharris/MarkupEditor/issues/70)
+
+#### Closed Issues
+
+* Enter and multi-element styling operations were broken inside of indents. (https://github.com/stevengharris/MarkupEditor/issues/57)
+* Local images did not respect the resourcesUrl setting relative to the base URL. (https://github.com/stevengharris/MarkupEditor/issues/59)
+* Image sizing was absolute, which caused problems moving between devices, but display is now limited to the width of the device/window. (https://github.com/stevengharris/MarkupEditor/issues/69)
+* Editing *only on Intel-based Mac Catalyst apps on MacOS 13 Ventura* was buggy/broken due to a base WKWebView regression that Apple fixed in MacOS 14 Sonoma. (https://github.com/stevengharris/MarkupEditor/issues/76)
+* Paste alerts (e.g., "... would like to paste from ...") were being presented unnecessarily. (https://github.com/stevengharris/MarkupEditor/issues/77)
+* Link URLs were being inserted at the incorrect selection point. (https://github.com/stevengharris/MarkupEditor/issues/79)
+* The selection caret was missing sometimes when the MarkupWKWebView was opened. (https://github.com/stevengharris/MarkupEditor/issues/83)
+* Spurious notifications of content changes were issued when images were prepped to be resizable. (https://github.com/stevengharris/MarkupEditor/issues/86)
+* Editing on touch devices had various issues. (https://github.com/stevengharris/MarkupEditor/issues/89, https://github.com/stevengharris/MarkupEditor/issues/93, https://github.com/stevengharris/MarkupEditor/issues/106)
+* Pasting content with newlines (e.g., from the Notes app) was buggy. (https://github.com/stevengharris/MarkupEditor/issues/128)
+* The TableSizer drag operation would not produce a table properly on Mac Catalyst. (https://github.com/stevengharris/MarkupEditor/issues/142)
+* There was a white flash when the MarkupWKWebView was presented initially in dark mode. (https://github.com/stevengharris/MarkupEditor/issues/143)
+* A change introduced to fix the responsive area on touch devices resulted in an incorrect scroll height. (https://github.com/stevengharris/MarkupEditor/issues/144)
+* The hot-key combo to use the `code` style was cumbersome and was changed from ⌘{ to ⌘\`. (https://github.com/stevengharris/MarkupEditor/issues/148)
+
 #### Version 0.5.1 (Beta 1)
 
 Fix a tagging issue for the Swift package.
