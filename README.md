@@ -146,7 +146,7 @@ This section addresses searching within the document you are editing using the M
 
 ### Searching Within A Document
 
-For many applications, you will have no need to search the content you are editing in the MarkupEditor. But when content gets larger, it's very handy to be able to find a word or phrase, just like you would expect in any text editor. The MarkupEditor supports search with the function `MarkupWKWebView.search(for:direction:activate:handler:)`:
+For many applications, you will have no need to search the content you are editing in the MarkupEditor. But when content gets larger, it's very handy to be able to find a word or phrase, just like you would expect in any text editor. The MarkupEditor supports search with the function:
 
 ```
 func search(
@@ -171,7 +171,7 @@ The SwiftUI demo includes a `SearchableContentView` that uses a `SearchBar` to i
 
 ### Searching for MarkupEditor Documents
 
-You can use CoreSpotlight to search for documents created by the MarkupEditor. That's because CoreSpotlight already knows how to deal properly with HTML documents. To be specific, this means that when you put a table and image in your document, although the underlying HTML contains `<table>` and `<image>' tags, the indexing works on the DOM and therefore only indexes the text content. If you search for "table" or "image", it won't find your document unless there is a text element containing the word "table" or "image".
+You can use CoreSpotlight to search for documents created by the MarkupEditor. That's because CoreSpotlight already knows how to deal properly with HTML documents. To be specific, this means that when you put a table and image in your document, although the underlying HTML contains `<table>` and `<image>` tags, the indexing works on the DOM and therefore only indexes the text content. If you search for "table" or "image", it won't find your document unless there is a text element containing the word "table" or "image".
 
 How might you make use of CoreSpotlight? Typically you would have some kind of model object whose `contents` includes the HTML text produced-by and edited-using the MarkupEditor. Your model objects can provide indexing functionality. Here is an example (with some debug printing and \<substitutions> below):
 
