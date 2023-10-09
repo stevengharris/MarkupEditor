@@ -659,7 +659,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func emptyDocument(handler: (()->Void)?) {
+    public func emptyDocument(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.emptyDocument()") { result, error in
             handler?()
         }
@@ -813,43 +813,94 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Search for text in the direction specified.
     ///
-    /// *NOTE*: It's important to cancelSearch once a search is performed using this method. On the JavaScript
-    /// side, a search becomes "active", and subsequent input of Enter in the MKMarkupWebView search for
-    /// the next occurrence of text in the direction specified until cancelSearch is called.
-    public func search(for text: String, direction: FindDirection, handler: (()->Void)? = nil) {
-        becomeFirstResponder()
-        // Remove the "smartquote" stuff that happens when inputting search into a TextField.
-        // On the Swift side, replace the search string characters with the proper equivalents
-        // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
-        // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
-        // replace with "\"" and "'" on the JavaScript side before doing a search.
-        let patchedText = text
-            .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
-            .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
-            .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
-            .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
-            .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
-            .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
-        evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\")") { result, error in
-            if let error {
-                Logger.webview.error("Error: \(error)")
+    /// *NOTE*: If you specify `activate: true`, then It is very important to `deactivateSearch` or `cancelSearch`
+    /// when you're done searching. When `activate: true` is specified, on the JavaScript side a search becomes "active",
+    /// and subsequent input of Enter in the MarkupWKWebView will search for the next occurrence of `text` in the `direction`
+    /// specified until `deactivateSearch` or `cancelSearch` is called.
+    public func search(for text: String, direction: FindDirection, activate: Bool = false, handler: (()->Void)? = nil) {
+        startModalInput() {
+            self.becomeFirstResponder()
+            // Remove the "smartquote" stuff that happens when inputting search into a TextField.
+            // On the Swift side, replace the search string characters with the proper equivalents
+            // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
+            // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
+            // replace with "\"" and "'" on the JavaScript side before doing a search.
+            let patchedText = text
+                .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
+                .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
+                .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
+                .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
+                .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
+                .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
+            self.evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\", \"\(activate)\")") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
             }
-            handler?()
         }
     }
     
-    /// Cancel the search that is underway, so that Enter is no longer intercepted on the JavaScript side.
-    public func cancelSearch(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.searchFor(\"\")") { result, error in
-            if let error {
-                Logger.webview.error("Error: \(error)")
+    /// Stop intercepting Enter to invoke searchForNext().
+    public func deactivateSearch(handler: (()->Void)? = nil) {
+        endModalInput() {
+            self.evaluateJavaScript("MU.deactivateSearch()") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
             }
+        }
+    }
+    
+    /// Cancel the search that is underway, so that Enter is no longer intercepted and indexes are cleared on the JavaScript side.
+    public func cancelSearch(handler: (()->Void)? = nil) {
+        endModalInput() {
+            self.evaluateJavaScript("MU.cancelSearch()") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
+            }
+        }
+    }
+    
+    /// Scroll the view so that the selection is visible.
+    ///
+    /// We use the selrect found in selection state, pad it by 8 vertically, and scroll a minimum
+    /// amount to keep put that padded rectangle fully in the view. Scrolling never moves the
+    /// top below 0 or the bottom above the scrollView.contentHeight.
+    public func makeSelectionVisible(handler: (()->Void)? = nil) {
+        getSelectionState() { state in
+            guard let selrect = state.selrect else {
+                handler?()
+                return
+            }
+            // We pad selrect because we don't want to scroll so it is right at the top
+            // or bottom, but instead is a reasonable amount inset.
+            let padrect = selrect.insetBy(dx: 0, dy: -8)
+            // Find intersection of padrect and visible portion of document. The selrect is always
+            // relative to the frame, so we can use frame for the intersection.
+            let intersection = padrect.intersection(self.frame)
+            // If the intersection is the full padrect, then it is fully visible and we can return
+            // without scrolling.
+            if intersection == padrect {
+                handler?()
+                return
+            }
+            // Set the scroll targets so that padRect's bottom is fully within the frame, but scroll
+            // by as little as needed to bring it in frame.
+            let topTarget = padrect.origin.y + padrect.height + self.scrollView.contentOffset.y - self.frame.height
+            // Keep the target so that it doesn't scroll the content above the bottom.
+            let bottomTarget = self.scrollView.contentSize.height - self.frame.height
+            let target = min(bottomTarget, max(0, topTarget))
+            let scrollPoint = CGPoint(x: 0, y: target)
+            self.scrollView.setContentOffset(scrollPoint, animated: true)
             handler?()
         }
     }
     
     //MARK: Undo/redo
-    
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.
     ///

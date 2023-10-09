@@ -140,6 +140,104 @@ Although local image support was a must-have in my case, it seems likely some Ma
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
 
+## Search
+
+This section addresses searching within the document you are editing using the MarkupEditor but also provides some guidance on searching for the documents you create or edit using MarkupEditor.
+
+### Searching Within A Document
+
+For many applications, you will have no need to search the content you are editing in the MarkupEditor. But when content gets larger, it's very handy to be able to find a word or phrase, just like you would expect in any text editor. The MarkupEditor supports search with the function:
+
+```
+func search(
+    for text: String,
+    direction: FindDirection,
+    activate: Bool = false,
+    handler: (() -> Void)? = nil
+)
+```
+
+The FindDirection is either `.forward` or `.backward`, indicating the direction to search from the selection point in the document. The MarkupWKWebView scrolls to make the text that was found visible. 
+
+Specify `activate: true` to activate a "search mode" where Enter is interpreted as meaning "search for the next occurrence in the same direction". Often when you are searching in a large document, you want to just type the search string, hit Enter, see what was selected, and hit Enter again to continue searching. This "search mode" style is supported in the MarkupEditor by capturing Enter on the JavaScript side and interpreting it as `searchForNext` until you do one of the following:
+
+1. You invoke `MarkupWKWebView.deactivateSearch(handler:)` to stop intercepting Enter, but leaving the search state in place.
+2. You invoke `MarkupWKWebView.cancelSearch(handler:)` to stop intercepting Enter and clear all search state.
+3. You click-on, touch, or otherwise type into the document. Your action automatically disables intercepting of Enter.
+
+Note that by default, search mode is never activated. To activate it, you must use `activate: true` in your call to `MarkupWKWebView.search(for:direction:activate:handler:)`.
+
+The SwiftUI demo includes a `SearchableContentView` that uses a `SearchBar` to invoke search on `demo.html`. The `SearchBar` is not part of the MarkupEditor library, since it's likely most users will implement search in a way that is specific to their app. For example, you might use the `.searchable` modifier on a NavigationStack. You can use the `SearchBar` as a kind of reference implementation, since it also demonstrates the use of "search mode" by specifying `activate: true` when you submit text in the `SearchBar's` TextField.
+
+### Searching for MarkupEditor Documents
+
+You can use CoreSpotlight to search for documents created by the MarkupEditor. That's because CoreSpotlight already knows how to deal properly with HTML documents. To be specific, this means that when you put a table and image in your document, although the underlying HTML contains `<table>` and `<image>` tags, the indexing works on the DOM and therefore only indexes the text content. If you search for "table" or "image", it won't find your document unless there is a text element containing the word "table" or "image".
+
+How might you make use of CoreSpotlight? Typically you would have some kind of model object whose `contents` includes the HTML text produced-by and edited-using the MarkupEditor. Your model objects can provide indexing functionality. Here is an example (with some debug printing and \<substitutions> below):
+
+```
+/// Add this instance of MyModelObject to the Spotlight index
+func index() {
+    let attributeSet = CSSearchableItemAttributeSet(contentType: UTType.html)
+    attributeSet.kind = "<MyModelObject>"
+    let contentData = contents.data(using: .utf8)
+    // Set the htmlContentData based on the entire document contents
+    attributeSet.htmlContentData = contentData
+    if let data = contentData {
+        if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
+            // Put a snippet of content in the contentDescription that will show up in Spotlight searches
+            if attributedString.length > 30 {
+                attributeSet.contentDescription = "\(attributedString.string.prefix(30))..."
+            } else {
+                attributeSet.contentDescription = attributedString.string
+            }
+        }
+    }
+    // Now create the CSSearchableItem with the attributeSet we just created, using MyModelObject's unique id
+    let item = CSSearchableItem(uniqueIdentifier: <MyModelObject's id>, domainIdentifier: <MyModelObject's container domain>, attributeSet: attributeSet)
+    item.expirationDate = Date.distantFuture
+    CSSearchableIndex.default().indexSearchableItems([item]) { error in
+        if let error = error {
+            print("Indexing error: \(error.localizedDescription)")
+        } else {
+            print("Search item successfully indexed!")
+        }
+    }
+}
+
+/// Remove this instance of MyModelObject from the Spotlight index
+func deindex() {
+    CSSearchableIndex.default().deleteSearchableItems(withIdentifiers: [idString]) { error in
+        if let error = error {
+            print("Deindexing error: \(error.localizedDescription)")
+        } else {
+            print("Search item successfully removed!")
+        }
+    }
+}
+```
+
+Once you have indexed your model objects, you can then execute a case-insensitive search query to locate model objects that include a `text` String like this:
+
+```
+let queryString = "domainIdentifier == \'\(<MyModelObject's id)\' && textContent == \"*\(text)*\"c"
+searchQuery = CSSearchQuery(queryString: queryString, attributes: nil)
+searchQuery?.foundItemsHandler = { items in
+    ...
+    ... Append contents of items to an array tracking the MyModelObjects that contain text
+    ...
+}
+searchQuery?.completionHandler = { error in
+    ...
+    ... Do whatever you need afterward, such as additional filtering
+    ...
+}
+// Then run the query
+searchQuery?.start()
+```
+
+Then, if you need to locate the `text` in the document itself once you dereference it from the `id`, you would use the approach in [Searching Within A Document](#searching-within-a-document) on a MarkupWKWebView containing the `contents`.
+
 ## Tests
 
 There are three test targets: `BasicTests`, `UndoTests`, and `RedoTests`. Proper undo and redo has been one of the more challenging parts of the project. Essentially, every time the MarkupEditor implements changes to the underlying DOM, it also has to support undoing and redoing those changes. (As a historical aside, the MarkupEditor does not use the deprecated HTML `document.execCommand`, except in a very limited way. The `execCommand` takes care of undo and redo for anything you use it for. For example, if you use `document.execCommand('bold')` to bold the document selection, undo and redo "just work", albeit leaving behind various spans and styles in their wake. Because the MarkupEditor doesn't use `execCommand`, the undo and redo logic for every operation supported by the MarkupEditor has been hand-crafted with a mixture of love, frustration, and occasional anger.)
@@ -153,6 +251,8 @@ If you consume just the package, you don't get the demo targets to build. If you
 The demos open `demo.html`, which contains information about how to use the MarkupEditor as an end user and shows you the capabilities. They populate the `leftToolbar` of the MarkupToolbar to include a `FileToolbar` that lets you create a new document for editing or open an existing HTML file. The `DemoContentView` (or `DemoViewController` in the UIKitDemo) acts both as the `MarkupDelegate` and the `FileToolbarDelegate`. As the `FileToolbarDelegate`, it opens a `TextView` to display the underlying raw HTML, which is nice for demo. The raw HTML updates as you type and make changes to the document, which is fun and has been helpful for debugging; however, you probably don't want to be doing heavyweight things like that for every keystroke in a real app.
 
 The demo directories also contain a "Simplest" version of a SwiftUI View and UIKit UIViewController, since the `DemoContentView` and `DemoViewController` for the demos are more complex, with pickers and the raw HTML display brought in with the `FileToolbar`, and the support for selecting local images. If you want to try the "Simplest" versions out, just edit the `SceneDelegate` to point at the `SimplestContentView` or `SimplestViewController`.
+
+As discussed in the [Searching Within A Document](#searching-within-a-document) section, a SwiftUI `SearchableContentView` is also provided to demonstrate the ability to search within a MarkupEditor HTML document, along with a `SearchBar` to invoke the functionality.
 
 ## Status
 

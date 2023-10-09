@@ -118,6 +118,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         case "undoSet":
             //Logger.coordinator.debug("undoSet")
             markupDelegate?.markupUndoSet(webView)
+        case "searched":
+            webView.makeSelectionVisible()
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {
