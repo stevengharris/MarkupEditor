@@ -82,6 +82,13 @@ window.addEventListener('error', function(ev) {
 });
 
 /**
+ * If the window is resized, let the Swift side know so that it can adjust its height tracking if needed.
+ */
+window.addEventListener('resize', function() {
+    _callback('updateHeight');
+});
+
+/**
  * MUError captures internal errors and makes it easy to communicate them to the
  * Swift side.
  *
