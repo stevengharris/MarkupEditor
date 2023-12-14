@@ -58,6 +58,8 @@
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
 		AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
+		AA98B0EE2B2B75A400B224B1 /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
+		AA98B0EF2B2B75A400B224B1 /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */; };
 		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
 		AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Extensions.swift */; };
@@ -99,6 +101,13 @@
 			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
 			remoteInfo = MarkupEditor;
 		};
+		AA98B0F02B2B75A400B224B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
+			remoteInfo = MarkupEditor;
+		};
 		AAF404D6290B004900129FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
@@ -116,6 +125,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		AA98B0F22B2B75A400B224B1 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AA98B0EF2B2B75A400B224B1 /* MarkupEditor.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AAD455A02800CE3300270E4C /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -223,6 +243,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA98B0EE2B2B75A400B224B1 /* MarkupEditor.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -512,10 +533,12 @@
 				AA25486F2805FAE300C9DEB2 /* Sources */,
 				AA2548702805FAE300C9DEB2 /* Frameworks */,
 				AA2548712805FAE300C9DEB2 /* Resources */,
+				AA98B0F22B2B75A400B224B1 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA98B0F12B2B75A400B224B1 /* PBXTargetDependency */,
 			);
 			name = RedoTests;
 			productName = RedoTests;
@@ -842,6 +865,11 @@
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */;
+		};
+		AA98B0F12B2B75A400B224B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
+			targetProxy = AA98B0F02B2B75A400B224B1 /* PBXContainerItemProxy */;
 		};
 		AAF404D7290B004900129FD9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
