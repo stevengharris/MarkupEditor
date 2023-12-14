@@ -38,7 +38,7 @@ jobs:
         # NOTE: Specify -destination 'platform=macOS,variant=Mac Catalyst' for Catalyst build
 
         # hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
-        swift package dump-pif > /dev/null
-        xcodebuild clean -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' > /dev/null
+        # swift package dump-pif > /dev/null
+        # xcodebuild clean -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' > /dev/null
 
         xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
