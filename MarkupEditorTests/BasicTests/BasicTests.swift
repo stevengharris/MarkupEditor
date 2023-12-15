@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import SharedTest
+// import SharedTest    <- Needed for "swift test" but breaks "xcodebuild test"
 import MarkupEditor
 import OSLog
 
