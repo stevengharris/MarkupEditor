@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import SharedTest
 import MarkupEditor
 import OSLog
 

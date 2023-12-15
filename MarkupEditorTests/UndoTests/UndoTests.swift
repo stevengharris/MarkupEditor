@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import SharedTest
 import MarkupEditor
 
 class UndoTests: XCTestCase, MarkupDelegate {
