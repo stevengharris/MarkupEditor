@@ -67,3 +67,9 @@ public struct MarkupEditorView: View, MarkupDelegate {
         }
 
 }
+
+struct MarkupEditorView_Previews: PreviewProvider {
+    static var previews: some View {
+            MarkupEditorView()
+    }
+}

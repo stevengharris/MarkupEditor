@@ -6,6 +6,7 @@
 //
 
 import XCTest
+// import SharedTest    <- Needed for "swift test" but breaks "xcodebuild test"
 import MarkupEditor
 
 class UndoTests: XCTestCase, MarkupDelegate {
