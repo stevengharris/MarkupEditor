@@ -248,9 +248,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         #endif
     }
     
+    /// Return the url for the named resource, always using the one in Bundle.main first if it exists.
+    ///
+    /// Users can package their own markup.html, css, and js to replace the ones that are used by
+    /// default in the MarkupEditor.
     func url(forResource name: String, withExtension ext: String?) -> URL? {
         let url = bundle().url(forResource: name, withExtension: ext)
-        return url ?? Bundle.main.url(forResource: name, withExtension: ext)
+        return Bundle.main.url(forResource: name, withExtension: ext) ?? url
     }
     
     /// Initialize the directory at cacheUrl with a clean copy of the root resource files.
