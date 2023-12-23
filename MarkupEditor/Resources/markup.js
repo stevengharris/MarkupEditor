@@ -58,6 +58,31 @@ const _callback = function(message) {
 };
 
 /**
+ * Called to set attributes to the editor div, typically to make it contenteditable,
+ * but also to set spellcheck and autocorrect.
+ */
+MU.setTopLevelAttributes = function(jsonString) {
+    const attributes = JSON.parse(jsonString);
+    if (attributes) {
+        for (const [key, value] of Object.entries(attributes)) {
+            MU.editor.setAttribute(key, value);
+        };
+    };
+};
+
+/**
+ * Called to load user CSS before loading html if userCSSFile has been defined for this MarkupWKWebView
+ */
+MU.loadUserCSS = function(file) {
+    let head = document.getElementsByTagName('head')[0];
+    let link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = file;
+    head.appendChild(link);
+};
+
+/**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded.
  *
  * Note for history, replaced window.onload with this eventListener.
@@ -2825,7 +2850,7 @@ MU.getHeight = function() {
  * Setting padBottom pads the editor all the way to the bottom, so that the
  * focus area occupies the entire view. This allows long-press on iOS to bring up the
  * context menu anywhere on the screen, even when text only occupies a small portion
- * of the screen. 
+ * of the screen.
  */
 MU.padBottom = function(fullHeight) {
     const padHeight = fullHeight - MU.getHeight();
@@ -6986,10 +7011,20 @@ MU.getSelectionState = function() {
  */
 const _getSelectionState = function() {
     const state = {};
-    if (!document.getSelection() || (document.getSelection().rangeCount == 0)) {
+    const selection = document.getSelection();
+    if (!selection || (selection.rangeCount == 0)) {
         state['valid'] = false;
         return state;
     }
+    // When we have multiple contentEditable elements within editor, we need to
+    // make sure we selected something that isContentEditable. If we didn't
+    // then just return state, which will be invalid without an ID.
+    if (!selection.focusNode?.parentElement?.isContentEditable) {
+        state['valid'] = false;
+        return state;
+    } else {
+        state['id'] = _findContentEditableID(selection.focusNode);
+    };
     state['valid'] = true;
     // Selected text
     state['selection'] = _getSelectionText();
@@ -10828,6 +10863,24 @@ const _firstTextNodeChild = function(element) {
     };
     return null;
 };
+
+/**
+ * Search parents until we find one that has contentEditable set, and return its ID.
+ */
+const _findContentEditableID = function(node) {
+    var element = node;
+    if (!_isElementNode(node)) {
+        element = node?.parentElement;
+    };
+    if (!element || !element.isContentEditable) { return null };
+    while (element) {
+        if (element.getAttribute('contenteditable') === "true") {
+            return element.id;
+        }
+        element = element.parentElement;
+    }
+    return null;
+}
 
 /**
  * Recursively search parent elements to find the first one included in matchNames

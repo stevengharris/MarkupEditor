@@ -52,7 +52,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var id: String = UUID().uuidString
     public var userScripts: [String]? {
         didSet {
-            if let userScripts = userScripts {
+            if let userScripts {
                 for script in userScripts {
                     let wkUserScript = WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
                     configuration.userContentController.addUserScript(wkUserScript)
@@ -60,6 +60,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
+    /// Name of css file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
+    public var userCssFile: String?
     // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
@@ -104,7 +106,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, userCssFile: String? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.placeholder = placeholder
@@ -114,6 +116,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.id = id!
         }
         self.markupDelegate = markupDelegate
+        self.userCssFile = userCssFile
         initForEditing()
     }
     
@@ -231,11 +234,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     /// Return the bundle that is appropriate for the packaging.
+    ///
+    /// If you use the framework as a dependency, the bundle can be identified from
+    /// the place where MarkupWKWebView is found. If you use the Swift package as a
+    /// dependency, it does some BundleFinder hocus pocus behind the scenes to allow
+    /// Bundle to respond to module, where we can find markup.html etc that are
+    /// part of the package.
     func bundle() -> Bundle {
-        // If you use the framework as a dependency, the bundle can be identified from
-        // the place where MarkupWKWebView is found. If you use the Swift package as a
-        // dependency, it does some BundleFinder hocus pocus behind the scenes to allow
-        // Bundle to respond to module.
         #if SWIFT_PACKAGE
         return Bundle.module
         #else
@@ -243,17 +248,26 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         #endif
     }
     
+    func url(forResource name: String, withExtension ext: String?) -> URL? {
+        let url = bundle().url(forResource: name, withExtension: ext)
+        return url ?? Bundle.main.url(forResource: name, withExtension: ext)
+    }
+    
     /// Initialize the directory at cacheUrl with a clean copy of the root resource files.
     ///
     /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
     private func initRootFiles() {
-        let bundle = bundle()
         guard
-            let rootHtml = bundle.url(forResource: "markup", withExtension: "html"),
-            let rootCss = bundle.url(forResource: "markup", withExtension: "css"),
-            let rootJs = bundle.url(forResource: "markup", withExtension: "js") else {
+            let rootHtml = url(forResource: "markup", withExtension: "html"),
+            let rootCss = url(forResource: "markup", withExtension: "css"),
+            let rootJs = url(forResource: "markup", withExtension: "js") else {
             assertionFailure("Could not find markup.html, css, and js for this bundle.")
             return
+        }
+        var srcUrls = [rootHtml, rootCss, rootJs]
+        // If specified, the userCSS comes from the app's main bundle, not something MarkupEditor provides
+        if let userCssFile, let userCss = url(forResource: userCssFile, withExtension: nil) {
+            srcUrls.append(userCss)
         }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
@@ -262,7 +276,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let cacheUrlPath = cacheUrl.path
         do {
             try fileManager.createDirectory(atPath: cacheUrlPath, withIntermediateDirectories: true, attributes: nil)
-            for srcUrl in [rootHtml, rootCss, rootJs] {
+            for srcUrl in srcUrls {
                 let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
@@ -325,6 +339,31 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func cacheUrl() -> URL {
         let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
         return cacheUrls[0].appendingPathComponent(id)
+    }
+    
+    public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
+        let attributes = MarkupEditor.topLevelAttributes
+        guard 
+            !attributes.isEmpty,
+            let jsonData = try? JSONSerialization.data(withJSONObject: attributes),
+            let jsonString = String(data: jsonData, encoding: .utf8)
+        else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
+            handler?()
+        }
+    }
+    
+    public func loadUserCss(_ handler: (()->Void)? = nil) {
+        guard let userCssFile else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.loadUserCSS('\(userCssFile)')") { result, error in
+            handler?()
+        }
     }
     
     /// Load the initialHtml, let the delegate know, and becomeFirstResponder if

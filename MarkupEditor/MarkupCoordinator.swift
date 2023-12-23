@@ -51,11 +51,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
     }
     
-    private func loadInitialHtml() {
-        // Let the webView handle loading its own html
-        webView.loadInitialHtml()
-    }
-    
     /// Take action based on the message body received from JavaScript via the userContentController.
     /// Messages with arguments were encoded using JSON.
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -70,7 +65,11 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         switch messageBody {
         case "ready":
             //Logger.coordinator.debug("ready")
-            loadInitialHtml()
+            webView.loadUserCss {
+                webView.setTopLevelAttributes {
+                    webView.loadInitialHtml()
+                }
+            }
         case "input":
             markupDelegate?.markupInput(webView)
             updateHeight()

@@ -26,11 +26,12 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
+    private var userCssFile: String?
+    @Binding private var html: String
+    private var placeholder: String?
+    private var selectAfterLoad: Bool
     private var resourcesUrl: URL?
     private var id: String?
-    @Binding private var html: String
-    private var selectAfterLoad: Bool
-    private var placeholder: String?
     
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
     ///
@@ -40,6 +41,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
+        userCssFile: String? = nil,
         html: Binding<String>? = nil,
         placeholder: String? = nil,
         selectAfterLoad: Bool = true,
@@ -49,6 +51,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
+            self.userCssFile = userCssFile
             _html = html ?? .constant("")
             self.placeholder = placeholder
             self.selectAfterLoad = selectAfterLoad
@@ -72,7 +75,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     /// macCatalyst 16.4, and we can build on Monterey for iOS 15.5 for pre-iOS 16.4 versions. This gating
     /// also allows GitHub actions that use the older MacOS version to work, even if you're working locally on Ventura.
     public func makeUIView(context: Context) -> MarkupWKWebView  {
-        let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate)
+        let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate, userCssFile: userCssFile)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupEditorUIView.
         webView.navigationDelegate = wkNavigationDelegate
