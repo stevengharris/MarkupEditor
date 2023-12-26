@@ -126,7 +126,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.id = id!
         }
         self.markupDelegate = markupDelegate
-        markupConfiguration = configuration
+        // If configuration arrives as nil, set it to the default.
+        // This way the setTopLevelAttributes will set editor to be contenteditable.
+        markupConfiguration = configuration ?? MarkupWKWebViewConfiguration()
         initForEditing()
     }
     
@@ -212,7 +214,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                             self.selectionState.reset(from: newSelectionState)         // cache it here
                             MarkupEditor.selectionState.reset(from: newSelectionState) // and set globally
                         } else {
-                            Logger.webview.error(" Could not reset selectionState")
+                            // This can be a normal case when selecting outside of an editable area,
+                            // so log info if needed. Theoretically, the editor should keep you from
+                            // selecting outside of a selectable area, but there are initial conditions
+                            // where this occurs and will result in a disabled MarkupToolbar, which will
+                            // be what you want. In this case, why annoy yourself over and over with the info?
+                            // Logger.webview.info(" Could not reset selectionState")
                         }
                     }
                 }
@@ -359,10 +366,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
-        let attributes = markupConfiguration?.topLevelAttributes ?? MarkupWKWebViewConfiguration.defaultTopLevelAttributes
         guard 
+            let attributes = markupConfiguration?.topLevelAttributes,
             !attributes.isEmpty,
-            let jsonData = try? JSONSerialization.data(withJSONObject: attributes),
+            let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
             let jsonString = String(data: jsonData, encoding: .utf8)
         else {
             handler?()

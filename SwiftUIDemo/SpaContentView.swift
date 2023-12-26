@@ -45,7 +45,7 @@ struct SpaContentView: View {
     init() {
         /// Don't specify any top-level attributes for the editor div in this demo.
         markupConfiguration = MarkupWKWebViewConfiguration()
-        markupConfiguration.topLevelAttributes = [:]
+        markupConfiguration.topLevelAttributes = EditableAttributes.empty
         markupConfiguration.userCssFile = "spaDemo.css"
         markupConfiguration.userScriptFile = "spaDemo.js"
         if let demoUrl = Bundle.main.resourceURL?.appendingPathComponent("demo.html") {

@@ -27,15 +27,9 @@ import Foundation
 /// those settings dynamically later.
 public class MarkupWKWebViewConfiguration {
     
-    static let defaultTopLevelAttributes: [String : String] = [
-        "contenteditable" : "true",
-        "spellcheck" : "false",
-        "autocorrect" : "true"
-    ]
-
     public var userScriptFile: String? = nil
     public var userCssFile: String? = nil
-    public lazy var topLevelAttributes: [String : String] = Self.defaultTopLevelAttributes
+    public var topLevelAttributes = EditableAttributes.standard
     
     public init() {}
 }
