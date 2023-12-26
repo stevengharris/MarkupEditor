@@ -24,7 +24,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
-    private var userCssFile: String?
+    private var markupConfiguration: MarkupWKWebViewConfiguration?
     private var resourcesUrl: URL?
     private var id: String?
     private var html: Binding<String>?
@@ -38,7 +38,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
                 Divider()
             }
-            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, userCssFile: userCssFile, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
+            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
@@ -51,7 +51,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
-        userCssFile: String? = nil,
+        configuration: MarkupWKWebViewConfiguration? = nil,
         html: Binding<String>? = nil,
         placeholder: String? = nil,
         selectAfterLoad: Bool = true,
@@ -61,7 +61,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
-            self.userCssFile = userCssFile
+            self.markupConfiguration = configuration
             self.html = html
             self.selectAfterLoad = selectAfterLoad
             self.resourcesUrl = resourcesUrl

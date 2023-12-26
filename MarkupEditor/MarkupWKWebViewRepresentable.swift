@@ -26,7 +26,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     private var wkNavigationDelegate: WKNavigationDelegate?
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
-    private var userCssFile: String?
+    private var markupConfiguration: MarkupWKWebViewConfiguration?
     @Binding private var html: String
     private var placeholder: String?
     private var selectAfterLoad: Bool
@@ -41,7 +41,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         wkNavigationDelegate: WKNavigationDelegate? = nil,
         wkUIDelegate: WKUIDelegate? = nil,
         userScripts: [String]? = nil,
-        userCssFile: String? = nil,
+        configuration: MarkupWKWebViewConfiguration? = nil,
         html: Binding<String>? = nil,
         placeholder: String? = nil,
         selectAfterLoad: Bool = true,
@@ -51,7 +51,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate
             self.userScripts = userScripts
-            self.userCssFile = userCssFile
+            self.markupConfiguration = configuration
             _html = html ?? .constant("")
             self.placeholder = placeholder
             self.selectAfterLoad = selectAfterLoad
@@ -75,7 +75,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     /// macCatalyst 16.4, and we can build on Monterey for iOS 15.5 for pre-iOS 16.4 versions. This gating
     /// also allows GitHub actions that use the older MacOS version to work, even if you're working locally on Ventura.
     public func makeUIView(context: Context) -> MarkupWKWebView  {
-        let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate, userCssFile: userCssFile)
+        let webView = MarkupWKWebView(html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, markupDelegate: markupDelegate, configuration: markupConfiguration)
         // By default, the webView responds to no navigation events unless the navigationDelegate is set
         // during initialization of MarkupEditorUIView.
         webView.navigationDelegate = wkNavigationDelegate

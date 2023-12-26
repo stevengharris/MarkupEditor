@@ -50,9 +50,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
+    /// User scripts that are injected at the end of document.
     public var userScripts: [String]? {
         didSet {
             if let userScripts {
+                configuration.userContentController.removeAllUserScripts()
                 for script in userScripts {
                     let wkUserScript = WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
                     configuration.userContentController.addUserScript(wkUserScript)
@@ -60,8 +62,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    /// Name of css file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
-    public var userCssFile: String?
+    public var markupConfiguration: MarkupWKWebViewConfiguration?
+    /// A js file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
+    ///
+    /// The file should be included as a resource of the app that consumes the MarkupEditor. The file
+    /// specified here is independent of the userScripts strings. Either, both, or none can be specified.
+    private var userScriptFile: String? { markupConfiguration?.userScriptFile }
+    /// A css file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
+    ///
+    /// The file should be included as a resource of the app that consumes the MarkupEditor.
+    private var userCssFile: String? { markupConfiguration?.userCssFile }
     // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
@@ -106,7 +116,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, userCssFile: String? = nil) {
+    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, configuration: MarkupWKWebViewConfiguration? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.placeholder = placeholder
@@ -116,7 +126,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.id = id!
         }
         self.markupDelegate = markupDelegate
-        self.userCssFile = userCssFile
+        markupConfiguration = configuration
         initForEditing()
     }
     
@@ -273,6 +283,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if let userCssFile, let userCss = url(forResource: userCssFile, withExtension: nil) {
             srcUrls.append(userCss)
         }
+        if let userScriptFile, let userScript = url(forResource: userScriptFile, withExtension: nil) {
+            srcUrls.append(userScript)
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
@@ -346,7 +359,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
-        let attributes = MarkupEditor.topLevelAttributes
+        let attributes = markupConfiguration?.topLevelAttributes ?? MarkupWKWebViewConfiguration.defaultTopLevelAttributes
         guard 
             !attributes.isEmpty,
             let jsonData = try? JSONSerialization.data(withJSONObject: attributes),
@@ -356,6 +369,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return
         }
         evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
+            handler?()
+        }
+    }
+    
+    public func loadUserFiles(_ handler: (()->Void)? = nil) {
+        guard userScriptFile != nil || userCssFile != nil else {
+            handler?()
+            return
+        }
+        let scriptFile = userScriptFile == nil ? "null": "'\(userScriptFile!)'"
+        let cssFile = userCssFile == nil ? "null" : "'\(userCssFile!)'"
+        evaluateJavaScript("MU.loadUserFiles(\(scriptFile), \(cssFile))") { result, error in
             handler?()
         }
     }

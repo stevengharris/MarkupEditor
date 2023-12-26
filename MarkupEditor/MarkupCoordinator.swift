@@ -65,7 +65,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         switch messageBody {
         case "ready":
             //Logger.coordinator.debug("ready")
-            webView.loadUserCss {
+            webView.loadUserFiles {
                 webView.setTopLevelAttributes {
                     webView.loadInitialHtml()
                 }

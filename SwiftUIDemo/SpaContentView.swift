@@ -10,6 +10,7 @@ import MarkupEditor
 
 struct SpaContentView: View {
 
+    private var markupConfiguration: MarkupWKWebViewConfiguration
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
@@ -19,7 +20,7 @@ struct SpaContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            MarkupEditorView(markupDelegate: self, userCssFile: "spaDemo.css", html: $spaDemoHtml, id: "SpaDocument")
+            MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $spaDemoHtml, id: "SpaDocument")
             if rawShowing {
                 VStack {
                     Divider()
@@ -43,7 +44,10 @@ struct SpaContentView: View {
     
     init() {
         /// Don't specify any top-level attributes for the editor div in this demo.
-        MarkupEditor.topLevelAttributes = [:]
+        markupConfiguration = MarkupWKWebViewConfiguration()
+        markupConfiguration.topLevelAttributes = [:]
+        markupConfiguration.userCssFile = "spaDemo.css"
+        markupConfiguration.userScriptFile = "spaDemo.js"
         if let demoUrl = Bundle.main.resourceURL?.appendingPathComponent("demo.html") {
             _demoHtml = State(initialValue: (try? String(contentsOf: demoUrl)) ?? "")
         } else {

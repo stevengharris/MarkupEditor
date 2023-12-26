@@ -71,9 +71,31 @@ MU.setTopLevelAttributes = function(jsonString) {
 };
 
 /**
+ * Called to load user script and CSS before loading html.
+ */
+MU.loadUserFiles = function(scriptFile, cssFile) {
+    if (scriptFile) {
+        _loadUserScriptFile(scriptFile);
+    };
+    if (cssFile) {
+        _loadUserCSSFile(cssFile);
+    };
+};
+
+/**
+ * Called to load user script before loading html if userCSSFile has been defined for this MarkupWKWebView
+ */
+const _loadUserScriptFile = function(file) {
+    let body = document.getElementsByTagName('body')[0];
+    let script = document.createElement('script');
+    script.setAttribute('src', file);
+    body.appendChild(script);
+};
+
+/**
  * Called to load user CSS before loading html if userCSSFile has been defined for this MarkupWKWebView
  */
-MU.loadUserCSS = function(file) {
+const _loadUserCSSFile = function(file) {
     let head = document.getElementsByTagName('head')[0];
     let link = document.createElement('link');
     link.rel = 'stylesheet';
