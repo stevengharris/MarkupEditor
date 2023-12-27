@@ -14,7 +14,7 @@ public struct EditableAttributes: OptionSet {
     public static let spellcheck = EditableAttributes(rawValue: 1 << 1)
     public static let autocorrect = EditableAttributes(rawValue: 1 << 2)
     
-    public static let standard: EditableAttributes = [.contenteditable, .spellcheck, .autocorrect]
+    public static let standard: EditableAttributes = [.contenteditable, .autocorrect]
     public static let empty: EditableAttributes = []
     
     public init(rawValue: Int) {
@@ -23,12 +23,12 @@ public struct EditableAttributes: OptionSet {
     
     /// Return a dictionary of the options that are set in this EditableAttributes instance.
     ///
-    /// We use this to get JSON from it, so only the set attributes populate the dictionary with true values.
+    /// We use this to get JSON from, so populate the dictionary with booleans for all values.
     var options: [String : Bool] {
         var options: [String : Bool] = [:]
-        if contains(.contenteditable) { options["contenteditable"] = true }
-        if contains(.spellcheck) { options["spellcheck"] = true }
-        if contains(.autocorrect) { options["autocorrect"] = true }
+        options["contenteditable"] = contains(.contenteditable)
+        options["spellcheck"] = contains(.spellcheck)
+        options["autocorrect"] = contains(.autocorrect)
         return options
     }
 }
