@@ -975,6 +975,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    //MARK: DivRepresentables
+    
+    public func addDiv(_ div: DivRepresentable, handler: (()->Void)? = nil) {
+        let id = div.id
+        let cssClass = div.cssClass
+        let attributes = div.attributes
+        var jsonString: String?
+        if !attributes.isEmpty, let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options) {
+            jsonString = String(data: jsonData, encoding: .utf8)
+        }
+        let htmlContents = div.htmlContents.escaped
+        evaluateJavaScript("MU.addDiv('\(id)', '\(cssClass)', '\(jsonString ?? "null")', '\(htmlContents)')") { result, error in
+            handler?()
+        }
+    }
+    
     //MARK: Undo/redo
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.

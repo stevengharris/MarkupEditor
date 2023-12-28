@@ -64,9 +64,16 @@ const _callback = function(message) {
 MU.setTopLevelAttributes = function(jsonString) {
     const attributes = JSON.parse(jsonString);
     if (attributes) {
-        for (const [key, value] of Object.entries(attributes)) {
-            MU.editor.setAttribute(key, value);
-        };
+        _setAttributes(MU.editor, attributes);
+    };
+};
+
+/**
+ * Set attributes of an HTML element.
+ */
+const _setAttributes = function(element, attributes) {
+    for (const [key, value] of Object.entries(attributes)) {
+        element.setAttribute(key, value);
     };
 };
 
@@ -2814,7 +2821,7 @@ MU.setHTML = function(contents, select=true) {
     // being held in "style" elements. Without them, things will display properly, but the behavior
     // is going to be unpredictable. The intervention on contents here is similar to what happens in
     // MU.emptyDocument, but doing it here avoids having selection change.
-    if (contents.trim().length === 0) {
+    if ((contents.trim().length === 0) && (MU.editor.isContentEditable)) {
         contents = '<p><br></p>';
     };
     template.innerHTML = contents;
@@ -3032,7 +3039,7 @@ const _initializeRange = function() {
         selection.addRange(range);
         _backupSelection();
     } else {
-        MU.emptyDocument()
+        if (MU.editor.isContentEditable) { MU.emptyDocument() }
     };
     // Caller has to do _focusOn and/or callback to updateHeight if needed
 };
@@ -3044,6 +3051,23 @@ const _firstEditorElement = function() {
     const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
     return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
+
+//MARK: DivRepresentables
+
+MU.addDiv = function(id, cssClass, jsonString, htmlContents) {
+    const div = document.createElement('div');
+    div.setAttribute('id', id);
+    div.setAttribute('class', cssClass);
+    const editableAttributes = JSON.parse(jsonString);
+    if (editableAttributes) {
+        _setAttributes(div, editableAttributes);
+    };
+    const template = document.createElement('template');
+    template.innerHTML = htmlContents;
+    const newElement = template.content;
+    div.appendChild(newElement);
+    MU.editor.appendChild(div);
+}
 
 /********************************************************************************
  * Formatting

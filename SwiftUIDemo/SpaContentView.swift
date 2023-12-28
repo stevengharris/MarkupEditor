@@ -18,6 +18,15 @@ struct SpaContentView: View {
     @State private var demoHtml: String
     @State private var spaDemoHtml: String
     
+    let documentDivs: [DivRepresentable] = [
+        Chapter(name: "Chapter 1 - It Begins"),
+        Section(name: "We Have Liftoff"),
+        SubSection(contents: "<p>This is an editable subsection</p>"),
+        SubSection(contents: "<p>This is also an editable subsection</p>"),
+        Section(name: "Epilogue"),
+        SubSection(contents: "<p>The demo is over</p>"),
+    ]
+    
     var body: some View {
         VStack(spacing: 0) {
             MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $spaDemoHtml, id: "SpaDocument")
@@ -38,7 +47,9 @@ struct SpaContentView: View {
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
-        .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
+        .onAppear {
+            MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self))
+        }
         .onDisappear { MarkupEditor.selectedWebView = nil }
     }
     
@@ -53,11 +64,11 @@ struct SpaContentView: View {
         } else {
             _demoHtml = State(initialValue: "")
         }
-        if let spaDemoUrl = Bundle.main.resourceURL?.appendingPathComponent("spaDemo.html") {
-            _spaDemoHtml = State(initialValue: (try? String(contentsOf: spaDemoUrl)) ?? "")
-        } else {
+        //if let spaDemoUrl = Bundle.main.resourceURL?.appendingPathComponent("spaDemo.html") {
+        //    _spaDemoHtml = State(initialValue: (try? String(contentsOf: spaDemoUrl)) ?? "")
+        //} else {
             _spaDemoHtml = State(initialValue: "")
-        }
+        //}
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -90,6 +101,11 @@ extension SpaContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.selectedWebView = view
+        for div in documentDivs {
+            view.addDiv(div) {
+                print("Added a div")
+            }
+        }
         setRawText(handler)
     }
     
