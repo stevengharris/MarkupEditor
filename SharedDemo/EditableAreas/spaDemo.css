@@ -1,0 +1,22 @@
+.div1 {
+    text-align: center;
+    font-size: 3.0em;
+}
+
+.div2 {
+    font-size: 2.0em;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* .div3 will just be styled using the MarkupEditor default */
+
+.markupbutton {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.markupbuttongroup {
+    display: flex;
+    justify-content: space-between;
+}

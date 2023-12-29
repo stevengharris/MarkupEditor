@@ -718,20 +718,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Javascript interactions
     
-    public func getHtml(_ handler: ((String?)->Void)?) {
-        getPrettyHtml(handler)
+    public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
+        // By default, we get "pretty" and "clean" HTML.
+        //  Pretty HTML is formatted to be readable.
+        //  Clean HTML has divs, spans, and empty text nodes removed.
+        evaluateJavaScript("MU.getHTML('\(pretty)', '\(clean)')") { result, error in
+            handler?(result as? String)
+        }
     }
     
     public func getRawHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML(false)") { result, error in
-            handler?(result as? String)
-        }
-    }
-    
-    public func getPrettyHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML()") { result, error in
-            handler?(result as? String)
-        }
+        getHtml(pretty: false, handler)
     }
     
     public func emptyDocument(handler: (()->Void)? = nil) {
@@ -971,22 +968,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             let target = min(bottomTarget, max(0, topTarget))
             let scrollPoint = CGPoint(x: 0, y: target)
             self.scrollView.setContentOffset(scrollPoint, animated: true)
-            handler?()
-        }
-    }
-    
-    //MARK: DivRepresentables
-    
-    public func addDiv(_ div: DivRepresentable, handler: (()->Void)? = nil) {
-        let id = div.id
-        let cssClass = div.cssClass
-        let attributes = div.attributes
-        var jsonString: String?
-        if !attributes.isEmpty, let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options) {
-            jsonString = String(data: jsonData, encoding: .utf8)
-        }
-        let htmlContents = div.htmlContents.escaped
-        evaluateJavaScript("MU.addDiv('\(id)', '\(cssClass)', '\(jsonString ?? "null")', '\(htmlContents)')") { result, error in
             handler?()
         }
     }

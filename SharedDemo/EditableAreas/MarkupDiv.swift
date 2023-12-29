@@ -1,5 +1,5 @@
 //
-//  HtmlDiv.swift
+//  MarkupDiv.swift
 //  MarkupEditor
 //  Adapted from https://stackoverflow.com/a/38885813/8968411
 //
@@ -7,33 +7,42 @@
 //
 
 import Foundation
+import MarkupEditor
 
 public struct HtmlDiv {
     public var id: String
+    public var parentId: String
     public var cssClass: String = "editor"
     public var attributes: EditableAttributes = EditableAttributes.standard
-    public var htmlContents: String = ""
+    public var htmlContents: String
+    public var buttonGroup: MarkupButtonGroup?
     
-    public init(id: String, cssClass: String, attributes: EditableAttributes, htmlContents: String) {
+    public init(id: String, parentId: String = "editor", cssClass: String, attributes: EditableAttributes, htmlContents: String = "", buttonGroup: MarkupButtonGroup? = nil) {
         self.id = id
+        self.parentId = parentId
         self.cssClass = cssClass
         self.attributes = attributes
         self.htmlContents = htmlContents
+        self.buttonGroup = buttonGroup
     }
 }
 
-public protocol HasHtmlDiv {
+public protocol HasMarkupDiv {
     var htmlDiv: HtmlDiv { get set }
 }
 
-public protocol DivRepresentable: HasHtmlDiv { }
+public protocol MarkupDiv: HasMarkupDiv { }
 
-extension DivRepresentable {
+extension MarkupDiv {
     public var id: String {
         get { htmlDiv.id }
         set { htmlDiv.id = newValue }
     }
-    public var cssClass: String { 
+    public var parentId: String {
+        get { htmlDiv.parentId }
+        set { htmlDiv.parentId = newValue }
+    }
+    public var cssClass: String {
         get { htmlDiv.cssClass }
         set { htmlDiv.cssClass = newValue }
     }
@@ -44,5 +53,9 @@ extension DivRepresentable {
     public var htmlContents: String {
         get { htmlDiv.htmlContents }
         set { htmlDiv.htmlContents = newValue }
+    }
+    public var buttonGroup: MarkupButtonGroup? {
+        get { htmlDiv.buttonGroup }
+        set { htmlDiv.buttonGroup = newValue }
     }
 }

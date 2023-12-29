@@ -2919,9 +2919,11 @@ MU.resetSelection = function() {
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function(pretty=true, clean=true) {
+MU.getHTML = function(pretty, clean) {
+    const prettyHTML = pretty === "true";
+    const cleanHTML = clean === "true";
     let editor, text;
-    if (clean) {
+    if (cleanHTML) {
         const template = document.createElement('template');
         template.innerHTML = MU.editor.innerHTML;
         editor = template.content;
@@ -2931,7 +2933,7 @@ MU.getHTML = function(pretty=true, clean=true) {
     } else {
         editor = MU.editor;
     };
-    if (pretty) {
+    if (prettyHTML) {
         text = _allPrettyHTML(editor);
     } else {
         text = MU.editor.innerHTML;
@@ -3051,23 +3053,6 @@ const _firstEditorElement = function() {
     const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
     return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
-
-//MARK: DivRepresentables
-
-MU.addDiv = function(id, cssClass, jsonString, htmlContents) {
-    const div = document.createElement('div');
-    div.setAttribute('id', id);
-    div.setAttribute('class', cssClass);
-    const editableAttributes = JSON.parse(jsonString);
-    if (editableAttributes) {
-        _setAttributes(div, editableAttributes);
-    };
-    const template = document.createElement('template');
-    template.innerHTML = htmlContents;
-    const newElement = template.content;
-    div.appendChild(newElement);
-    MU.editor.appendChild(div);
-}
 
 /********************************************************************************
  * Formatting

@@ -24,7 +24,7 @@ public struct EditableAttributes: OptionSet {
     /// Return a dictionary of the options that are set in this EditableAttributes instance.
     ///
     /// We use this to get JSON from, so populate the dictionary with booleans for all values.
-    var options: [String : Bool] {
+    public var options: [String : Bool] {
         var options: [String : Bool] = [:]
         options["contenteditable"] = contains(.contenteditable)
         options["spellcheck"] = contains(.spellcheck)

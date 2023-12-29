@@ -16,20 +16,30 @@ struct SpaContentView: View {
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
-    @State private var spaDemoHtml: String
     
-    let documentDivs: [DivRepresentable] = [
-        Chapter(name: "Chapter 1 - It Begins"),
-        Section(name: "We Have Liftoff"),
-        SubSection(contents: "<p>This is an editable subsection</p>"),
-        SubSection(contents: "<p>This is also an editable subsection</p>"),
-        Section(name: "Epilogue"),
-        SubSection(contents: "<p>The demo is over</p>"),
+    let documentDivs: [MarkupDiv] = [
+        Div1(name: "Chapter 1 - It Begins"),
+        Div2(id: "Section1", name: "We Have Liftoff"),
+        Div3(contents: "<p>This is an editable subsection</p>"),
+        Div3(contents: "<p>This is also an editable subsection</p>"),
+        Div2(id: "Section2", name: "Epilogue"),
+        Div3(contents: "<p>The demo is over</p>"),
+    ]
+    
+    let divButtonGroups: [MarkupButtonGroup] = [
+        MarkupButtonGroup(id: "ButtonGroup1", in: "Section1", buttons: [
+            MarkupButton(label: "trash", callbackName: "trash"),
+            MarkupButton(label: "eye", callbackName: "eye")
+        ]),
+        MarkupButtonGroup(id: "ButtonGroup2", in: "Section2", buttons: [
+            MarkupButton(label: "trash", callbackName: "trash"),
+            MarkupButton(label: "link", callbackName: "link")
+        ])
     ]
     
     var body: some View {
         VStack(spacing: 0) {
-            MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $spaDemoHtml, id: "SpaDocument")
+            MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $demoHtml, id: "SpaDocument")
             if rawShowing {
                 VStack {
                     Divider()
@@ -59,20 +69,11 @@ struct SpaContentView: View {
         markupConfiguration.topLevelAttributes = EditableAttributes.empty
         markupConfiguration.userCssFile = "spaDemo.css"
         markupConfiguration.userScriptFile = "spaDemo.js"
-        if let demoUrl = Bundle.main.resourceURL?.appendingPathComponent("demo.html") {
-            _demoHtml = State(initialValue: (try? String(contentsOf: demoUrl)) ?? "")
-        } else {
-            _demoHtml = State(initialValue: "")
-        }
-        //if let spaDemoUrl = Bundle.main.resourceURL?.appendingPathComponent("spaDemo.html") {
-        //    _spaDemoHtml = State(initialValue: (try? String(contentsOf: spaDemoUrl)) ?? "")
-        //} else {
-            _spaDemoHtml = State(initialValue: "")
-        //}
+        _demoHtml = State(initialValue: "")
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        MarkupEditor.selectedWebView?.getHtml { html in
+        MarkupEditor.selectedWebView?.getHtml(clean: false) { html in
             rawText = attributedString(from: html ?? "")
             handler?()
         }
@@ -102,8 +103,17 @@ extension SpaContentView: MarkupDelegate {
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.selectedWebView = view
         for div in documentDivs {
-            view.addDiv(div) {
-                print("Added a div")
+            view.addDiv(div)
+            if let buttonGroup = div.buttonGroup {
+                for button in buttonGroup.buttons {
+                    view.addButton(button, in: buttonGroup.id)
+                }
+            }
+        }
+        for divButtonGroup in self.divButtonGroups {
+            view.addDiv(divButtonGroup)
+            for button in divButtonGroup.buttons {
+                view.addButton(button, in: divButtonGroup.id)
             }
         }
         setRawText(handler)
