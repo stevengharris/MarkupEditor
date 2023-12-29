@@ -87,6 +87,7 @@ MU.loadUserFiles = function(scriptFile, cssFile) {
     if (cssFile) {
         _loadUserCSSFile(cssFile);
     };
+    _callback('loadedUserFiles');
 };
 
 /**
