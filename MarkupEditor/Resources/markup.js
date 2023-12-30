@@ -79,23 +79,38 @@ const _setAttributes = function(element, attributes) {
 
 /**
  * Called to load user script and CSS before loading html.
+ *
+ * The scriptFile and cssFile are loaded in sequence, with the single 'loadedUserFiles'
+ * callback only happening after their load events trigger. If neither scriptFile
+ * nor cssFile are specified, then the 'loadedUserFiles' callback happens anyway,
+ * since this ends up driving the loading process further.
  */
 MU.loadUserFiles = function(scriptFile, cssFile) {
     if (scriptFile) {
-        _loadUserScriptFile(scriptFile);
-    };
-    if (cssFile) {
+        if (cssFile) {
+            _loadUserScriptFile(scriptFile, function() { _loadUserCSSFile(cssFile) });
+        } else {
+            _loadUserScriptFile(scriptFile, function() { _loadedUserFiles() });
+        }
+    } else if (cssFile) {
         _loadUserCSSFile(cssFile);
-    };
-    _callback('loadedUserFiles');
+    } else {
+        _loadedUserFiles();
+    }
 };
 
+const _loadedUserFiles = function() {
+    _callback('loadedUserFiles');
+}
+
 /**
- * Called to load user script before loading html if userCSSFile has been defined for this MarkupWKWebView
+ * Called to load user script before loading html.
  */
-const _loadUserScriptFile = function(file) {
+const _loadUserScriptFile = function(file, callback) {
     let body = document.getElementsByTagName('body')[0];
     let script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.addEventListener('load', callback);
     script.setAttribute('src', file);
     body.appendChild(script);
 };
@@ -108,6 +123,7 @@ const _loadUserCSSFile = function(file) {
     let link = document.createElement('link');
     link.rel = 'stylesheet';
     link.type = 'text/css';
+    link.addEventListener('load', function() { _loadedUserFiles() });
     link.href = file;
     head.appendChild(link);
 };

@@ -365,6 +365,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return cacheUrls[0].appendingPathComponent(id)
     }
     
+    /// Set the EditableAttributes for the editor element.
     public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
         guard 
             let attributes = markupConfiguration?.topLevelAttributes,
@@ -380,24 +381,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Invoke `loadUserFiles` with the `userScriptFile` and `userCssFile` regardless of whether either is
+    /// specified. The result will be a callback to `loadedUserFiles`, which causes `loadInitialHtml` and the
+    /// call to MarkupDelegate.markupLoaded to happen.
     public func loadUserFiles(_ handler: (()->Void)? = nil) {
-        guard userScriptFile != nil || userCssFile != nil else {
-            handler?()
-            return
-        }
         let scriptFile = userScriptFile == nil ? "null": "'\(userScriptFile!)'"
         let cssFile = userCssFile == nil ? "null" : "'\(userCssFile!)'"
         evaluateJavaScript("MU.loadUserFiles(\(scriptFile), \(cssFile))") { result, error in
-            handler?()
-        }
-    }
-    
-    public func loadUserCss(_ handler: (()->Void)? = nil) {
-        guard let userCssFile else {
-            handler?()
-            return
-        }
-        evaluateJavaScript("MU.loadUserCSS('\(userCssFile)')") { result, error in
             handler?()
         }
     }
