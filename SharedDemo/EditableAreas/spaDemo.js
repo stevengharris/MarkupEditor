@@ -20,7 +20,7 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
         div.appendChild(newElement);
     };
     parent.appendChild(div);
-}
+};
 
 MU.addButton = function(id, cssClass, label, divId, callbackName) {
     const button = document.createElement('button');
@@ -35,4 +35,4 @@ MU.addButton = function(id, cssClass, label, divId, callbackName) {
     } else {
         MU.editor.appendChild(button);
     }
-}
+};

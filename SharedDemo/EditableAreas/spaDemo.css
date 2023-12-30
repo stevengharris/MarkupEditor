@@ -1,22 +1,31 @@
 .div1 {
     text-align: center;
-    font-size: 3.0em;
+    font-size: 3.0rem;
+    align-items: center;
 }
 
 .div2 {
-    font-size: 2.0em;
+    background-color: lightgray;
+    font-size: 2.0rem;
     display: flex;
+    align-items: center;
     justify-content: space-between;
 }
 
 /* .div3 will just be styled using the MarkupEditor default */
 
 .markupbutton {
+    background-color: transparent;
+    border: none;
+    font-size: 1.0rem;
+    width: 1.0rem;
     display: flex;
+    align-items: center;
     justify-content: flex-end;
 }
 
 .markupbuttongroup {
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }

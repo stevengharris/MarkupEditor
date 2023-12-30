@@ -6,20 +6,24 @@
 //
 
 import MarkupEditor
+import OSLog
 
 extension MarkupWKWebView {
-
+    
     public func addDiv(_ div: MarkupDiv, handler: (()->Void)? = nil) {
         let id = div.id
         let parentId = div.parentId
         let cssClass = div.cssClass
         let attributes = div.attributes
-        var jsonString: String?
+        var jsonAttributes: String?
         if !attributes.isEmpty, let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options) {
-            jsonString = String(data: jsonData, encoding: .utf8)
+            jsonAttributes = String(data: jsonData, encoding: .utf8)
         }
         let htmlContents = div.htmlContents.escaped
-        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(jsonString ?? "null")', '\(htmlContents)')") { result, error in
+        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(jsonAttributes ?? "null")', '\(htmlContents)')") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
+            }
             handler?()
         }
     }
@@ -29,6 +33,9 @@ extension MarkupWKWebView {
         let cssClass = buttonGroup.cssClass
         let divId = buttonGroup.divId
         evaluateJavaScript("MU.addDiv('\(id)', '\(divId)', '\(cssClass)')") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
+            }
             handler?()
         }
     }
@@ -39,6 +46,9 @@ extension MarkupWKWebView {
         let label = button.label
         let callbackName = button.callbackName
         evaluateJavaScript("MU.addButton('\(id)', '\(cssClass)', '\(label)', '\(divId)', '\(callbackName)')") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
+            }
             handler?()
         }
     }
