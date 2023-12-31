@@ -9,7 +9,6 @@ import Foundation
 import MarkupEditor
 
 public class MarkupButtonGroup: MarkupDiv {
-
     public var id: String
     public var htmlDiv: HtmlDiv
     public var cssClass: String

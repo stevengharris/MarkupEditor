@@ -22,17 +22,36 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
     parent.appendChild(div);
 };
 
-MU.addButton = function(id, cssClass, label, divId, callbackName) {
+MU.addButton = function(id, cssClass, label, divId) {
     const button = document.createElement('button');
     button.setAttribute('id', id);
     button.setAttribute('class', cssClass);
     button.setAttribute('type', 'button');
     button.appendChild(document.createTextNode(label));
-    button.addEventListener('click', function() { _consoleLog("Clicked on " + label + " button") });
+    button.addEventListener('click', function() {
+        _callback(
+            JSON.stringify({
+                'messageType' : 'buttonClicked',
+                'id' : id,
+                'rect' : _getButtonRect(button)
+            })
+        )
+    });
     const div = document.getElementById(divId);
     if (div) {
         div.appendChild(button);
     } else {
         MU.editor.appendChild(button);
     }
+};
+
+const _getButtonRect = function(button) {
+    const boundingRect = button.getBoundingClientRect();
+    const buttonRect = {
+        'x' : boundingRect.left,
+        'y' : boundingRect.top,
+        'width' : boundingRect.width,
+        'height' : boundingRect.height
+    };
+    return buttonRect;
 };

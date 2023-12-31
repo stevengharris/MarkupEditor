@@ -7066,12 +7066,13 @@ const _getSelectionState = function() {
     }
     // When we have multiple contentEditable elements within editor, we need to
     // make sure we selected something that isContentEditable. If we didn't
-    // then just return state, which will be invalid without an ID.
+    // then just return state, which will be invalid but have the enclosing div ID.
     if (!selection.focusNode?.parentElement?.isContentEditable) {
+        state['divid'] = _findDivID(selection.focusNode);
         state['valid'] = false;
         return state;
     } else {
-        state['id'] = _findContentEditableID(selection.focusNode);
+        state['divid'] = _findContentEditableID(selection.focusNode);
     };
     state['valid'] = true;
     // Selected text
@@ -9683,6 +9684,13 @@ const _allChildElementsWithType = function(element, nodeType, existingElements=[
 };
 
 /**
+ * Return whether node is a div
+ */
+const _isDiv = function(node) {
+    return node && (node.nodeName === "DIV");
+};
+
+/**
  * Return whether node is a textNode or not
  */
 const _isTextNode = function(node) {
@@ -10928,7 +10936,22 @@ const _findContentEditableID = function(node) {
         element = element.parentElement;
     }
     return null;
-}
+};
+
+const _findDivID = function(node) {
+    var nextNode = node;
+    while (nextNode) {
+        if (_isDiv(nextNode)) {
+            return nextNode.id;
+        }
+        nextNode = nextNode.parentElement;
+    }
+    return null;
+};
+
+/**
+ * Search parents until we find a div and return its id
+ */
 
 /**
  * Recursively search parent elements to find the first one included in matchNames

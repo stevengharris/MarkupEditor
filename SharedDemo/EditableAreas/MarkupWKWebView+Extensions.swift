@@ -44,8 +44,7 @@ extension MarkupWKWebView {
         let id = button.id
         let cssClass = button.cssClass
         let label = button.label
-        let callbackName = button.callbackName
-        evaluateJavaScript("MU.addButton('\(id)', '\(cssClass)', '\(label)', '\(divId)', '\(callbackName)')") { result, error in
+        evaluateJavaScript("MU.addButton('\(id)', '\(cssClass)', '\(label)', '\(divId)')") { result, error in
             if let error {
                 Logger.webview.error("Error: \(error)")
             }

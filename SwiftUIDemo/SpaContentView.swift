@@ -17,27 +17,7 @@ struct SpaContentView: View {
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
     
-    let documentDivs: [MarkupDiv] = [
-        Div1(name: "Chapter 1 - It Begins"),
-        Div2(id: "Section1", name: "We Have Liftoff"),
-        Div3(contents: "<p>This is an editable subsection</p>"),
-        Div3(contents: "<p>This is also an editable subsection</p>"),
-        Div2(id: "Section2", name: "Epilogue"),
-        Div3(contents: "<p>The demo is over</p>"),
-    ]
-    
-    let divButtonGroups: [MarkupButtonGroup] = [
-        MarkupButtonGroup(id: "ButtonGroup1", in: "Section1", buttons: [
-            MarkupButton(label: "trash", callbackName: "trash"),
-            MarkupButton(label: "eye", callbackName: "eye")
-        ]),
-        MarkupButtonGroup(id: "ButtonGroup2", in: "Section2", buttons: [
-            MarkupButton(label: "trash", callbackName: "trash"),
-            MarkupButton(label: "link", callbackName: "link")
-        ])
-    ]
-    
-    var body: some View {
+var body: some View {
         VStack(spacing: 0) {
             MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $demoHtml, id: "SpaDocument")
             if rawShowing {
@@ -96,11 +76,40 @@ struct SpaContentView: View {
         markupImageToAdd(view, url: url)
     }
     
+    private func delete(_ element: String) {
+        print("Delete element: \(element)")
+    }
+    
+    private func inspect(_ element: String) {
+        print("Inspect element: \(element)")
+    }
+    
 }
 
 extension SpaContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        
+        let documentDivs: [MarkupDiv] = [
+            Div1(name: "Chapter 1 - It Begins"),
+            Div2(id: "Section1", name: "We Have Liftoff"),
+            Div3(contents: "<p>This is an editable subsection</p>"),
+            Div3(contents: "<p>This is also an editable subsection</p>"),
+            Div2(id: "Section2", name: "Epilogue"),
+            Div3(contents: "<p>The demo is over</p>"),
+        ]
+        
+        let divButtonGroups: [MarkupButtonGroup] = [
+            MarkupButtonGroup(in: "Section1", buttons: [
+                MarkupButton(label: "eye", action: { inspect("Section1") }),
+                MarkupButton(label: "trash", action: { delete("Section1") }),
+            ]),
+            MarkupButtonGroup(in: "Section2", buttons: [
+                MarkupButton(label: "eye", action: { inspect("Section2") }),
+                MarkupButton(label: "trash", action: { delete("Section2") }),
+            ])
+        ]
+        
         MarkupEditor.selectedWebView = view
         for div in documentDivs {
             view.addDiv(div)
@@ -110,13 +119,23 @@ extension SpaContentView: MarkupDelegate {
                 }
             }
         }
-        for divButtonGroup in self.divButtonGroups {
+        for divButtonGroup in divButtonGroups {
             view.addDiv(divButtonGroup)
             for button in divButtonGroup.buttons {
                 view.addButton(button, in: divButtonGroup.id)
             }
         }
         setRawText(handler)
+    }
+    
+    func markupClicked(_ view: MarkupWKWebView) {
+        view.getSelectionState { state in
+            print("Selected div ID: \(state.divid ?? "nil")")
+        }
+    }
+    
+    func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
+        print("Button \(id) at \(rect) was clicked.")
     }
     
     func markupInput(_ view: MarkupWKWebView) {
@@ -152,4 +171,13 @@ extension SpaContentView: FileToolbarDelegate {
         withAnimation { rawShowing.toggle()}
     }
 
+}
+
+extension String {
+    var unicodeName: String {
+        let cfstr = NSMutableString(string: self) as CFMutableString
+        var range = CFRangeMake(0, CFStringGetLength(cfstr))
+        CFStringTransform(cfstr, &range, kCFStringTransformToUnicodeName, false)
+        return String(cfstr)
+    }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import MarkupEditor
 
-struct Div1: MarkupDiv, Identifiable {
+struct Div1: MarkupDiv {
     var id: String
     var htmlDiv: HtmlDiv
     
@@ -19,7 +19,7 @@ struct Div1: MarkupDiv, Identifiable {
     
 }
 
-struct Div2: MarkupDiv, Identifiable {
+struct Div2: MarkupDiv {
     var id: String
     var htmlDiv: HtmlDiv
 
@@ -30,7 +30,7 @@ struct Div2: MarkupDiv, Identifiable {
     
 }
 
-struct Div3: MarkupDiv, Identifiable {
+struct Div3: MarkupDiv {
     var id: String
     var htmlDiv: HtmlDiv
     

@@ -12,6 +12,8 @@ import UIKit
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
     // Validity
     @Published public var valid: Bool = false
+    // ID of the contenteditable of the selection or of the enclosing div
+    @Published public var divid: String? = nil
     // Selected text
     @Published public var selection: String? = nil
     @Published public var selrect: CGRect? = nil
@@ -59,6 +61,9 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     }
     
     //MARK: Selection state queries
+    public var isEditable: Bool {
+        valid && divid != nil
+    }
     public var isLinkable: Bool {
         href == nil          // Can't link when selection is in a link
     }
@@ -110,6 +115,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         valid ?
         """
           selection: \(selection ?? "none")
+          divid: \(divid ?? "none")
           style: \(style.tag)
           formats: \(formatString())
           list: \(listString())
@@ -117,7 +123,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           link: \(linkString())
           image: \(imageString())
           table: \(tableString())
-        """ : "invalid"
+        """ : "invalid, divid: \(divid ?? "none"))"
     }
     
     public init() {}
@@ -126,6 +132,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
         selection = selectionState?.selection
         selrect = selectionState?.selrect               // rect containing the selection if selected
         valid = selectionState?.valid ?? false          // true if document.getSelection().rangeCount > 0
+        divid = selectionState?.divid                   // Usually "editor", but could be another enclosing div id
         href = selectionState?.href                     // href for <a> if selected
         link = selectionState?.link                     // text linked to href in <a> if selected
         src = selectionState?.src                       // src for <img> if selected

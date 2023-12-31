@@ -1243,6 +1243,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         // Validity (i.e., document.getSelection().rangeCount > 0
         selectionState.valid = stateDictionary["valid"] as? Bool ?? false
+        // The contenteditable div ID or the enclosing DIV id if not contenteditable
+        selectionState.divid = stateDictionary["divid"] as? String
         // Selected text
         if let selectedText = stateDictionary["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
@@ -1299,7 +1301,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return selectionState
     }
     
-    private func rectFromDict(_ rectDict: [String : CGFloat]?) -> CGRect? {
+    public func rectFromDict(_ rectDict: [String : CGFloat]?) -> CGRect? {
         guard let rectDict = rectDict else { return nil }
         guard
             let x = rectDict["x"],

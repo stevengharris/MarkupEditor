@@ -191,6 +191,16 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 return
             }
             markupDelegate?.markupImageDeleted(url: url)
+        case "buttonClicked":
+            guard
+                let id = messageData["id"] as? String,
+                let rectDict = messageData["rect"] as? [String : CGFloat],
+                let rect = webView.rectFromDict(rectDict)
+            else {
+                Logger.coordinator.error("Button id or rect was missing")
+                return
+            }
+            markupDelegate?.markupButtonClicked(webView, id: id, rect: rect)
         default:
             Logger.coordinator.error("Unknown message of type \(messageType): \(messageData).")
         }

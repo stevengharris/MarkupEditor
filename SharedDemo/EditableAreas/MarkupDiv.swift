@@ -9,7 +9,7 @@
 import Foundation
 import MarkupEditor
 
-public struct HtmlDiv {
+public struct HtmlDiv: Identifiable {
     public var id: String
     public var parentId: String
     public var cssClass: String = "editor"
