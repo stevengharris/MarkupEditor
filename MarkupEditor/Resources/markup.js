@@ -2242,25 +2242,39 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
  * is "clean" by MarkupEditor standards.
  */
 const _patchPasteHTML = function(html) {
+    
+    // We need a document fragment from the html so we can use its dom for cleaning up.
     const element = _fragmentFrom(html);
-    _cleanUpSpansWithin(element);
-    _cleanUpDivsWithin(element);
-    _cleanUpAttributesWithin('style', element);
-    _cleanUpAttributesWithin('class', element);
-    _cleanUpMetas(element);
-    _cleanUpBRs(element);
-    _cleanUpNewlines(element);
-    _cleanUpPREs(element);
-    _cleanUpAliases(element);
-    _prepImages(element);
-    return element;
+    
+    // Sometimes (e.g., iOS Note) the fragment is an entire HTML document.
+    // In this case, we only want the body, but let's clean up these items
+    // that should be outside of it just in case something wacky is going on.
+    _cleanUpTypesWithin(['head', 'meta', 'title', 'style'], element);
+    const body = element.body ?? element;
+    
+    // Now do the extensive clean up required for the body
+    _cleanUpSpansWithin(body);
+    _cleanUpDivsWithin(body);
+    _cleanUpAttributesWithin('style', body);
+    _cleanUpAttributesWithin('class', body);
+    _cleanUpEmptyTextNodes(body);
+    _cleanUpBRs(body);
+    _cleanUpNewlines(body);
+    _cleanUpTabs(body);
+    _cleanUpPREs(body);
+    _cleanUpAliases(body);
+    _prepImages(body);
+    return body;
 };
 
+/**
+ * Return a document fragment element derived from the html.
+ */
 const _fragmentFrom = function(html) {
     const template = document.createElement('template');
     template.innerHTML = html;
     return template.content;
-}
+};
 
 /**
  * Insert the fragment at the current selection point.
@@ -6563,6 +6577,19 @@ MU.cleanUpHTML = function() {
     _cleanUpAttributes('style');
 };
 
+const _cleanUpTypesWithin = function(names, node) {
+    const ucNames = names.map((name) => name.toUpperCase());
+    const childNodes = node.childNodes;
+    for (let i=0; i < childNodes.length; i++) {
+        const child = childNodes[i];
+        if (ucNames.includes(child.nodeName)) {
+            node.removeChild(child);
+        } else if (child.childNodes.length > 0) {
+            _cleanUpTypesWithin(names, child);
+        };
+    };
+};
+
 /**
  * Remove meta tags contained in node, typically a document fragment.
  */
@@ -6613,6 +6640,25 @@ const _cleanUpNewlines = function(node) {
         } else {
             child = child.nextSibling;
         };
+    };
+};
+
+/**
+ * Patch up text nodes that have tabs
+ */
+const _cleanUpTabs = function(node) {
+    let child = node.firstChild;
+    while (child) {
+        let nextChild = child.nextSibling;
+        if (_isElementNode(child)) {
+            _cleanUpTabs(child);
+        } else if (_isTextNode(child)) {
+            const rawContent = child.textContent;
+            if (rawContent.includes('\t')) {
+                child.textContent = rawContent.replaceAll('\t', '\xA0\xA0\xA0\xA0'); // Four spaces for tabs, don't @ me
+            };
+        };
+        child = nextChild;
     };
 };
 
@@ -6830,13 +6876,6 @@ const _patchNewlines = function(node) {
     return textNode;
 };
 
-const _patchAngleBrackets = function(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    node.textContent = _replaceAngles(node.textContent);
-};
-                                
 /********************************************************************************
  * Explicit handling of multi-click
  * TODO: Remove?
