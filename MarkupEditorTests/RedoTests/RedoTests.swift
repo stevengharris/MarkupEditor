@@ -2757,7 +2757,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
                 startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello <i>bold</i> world</p><p><b>st</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello <i>bold</i> worldst</b> a simple paragraph.</p>",
                 startId: "b",     // Select "ju|st "
                 startOffset: 2,
                 endId: "b",
@@ -2969,7 +2969,7 @@ class RedoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
                 startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello bold world</p><p><b>st</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello bold worldst</b> a simple paragraph.</p>",
                 startId: "b",     // Select "ju|st "
                 startOffset: 2,
                 endId: "b",
