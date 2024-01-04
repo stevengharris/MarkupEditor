@@ -2118,9 +2118,12 @@ const _minimalLink = function(div) {
     while (element) {
         if (element.getAttribute('href')) {
             element.replaceWith(document.createTextNode(element.text));
-            elements = div.getElementsByTagName('A');
-            element = (elements.length > 0) ? elements[0] : null;
+        } else {
+            // This link has no href and is therefore not allowed
+            element.parentNode.removeChild(element);
         };
+        elements = div.getElementsByTagName('A');
+        element = (elements.length > 0) ? elements[0] : null;
     };
 };
 
@@ -2167,11 +2170,18 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     //_callback('input');
     //return true;
     const newElement = _fragmentFrom(html)
-    const anchorIsElement = anchorNode.nodeType === Node.ELEMENT_NODE;
-    const firstChildIsElement = newElement.firstChild && (newElement.firstChild.nodeType === Node.ELEMENT_NODE);
+    const anchorIsElement = _isElementNode(anchorNode);
+    const firstChildIsElement = newElement.firstChild && (_isElementNode(newElement.firstChild));
+    const firstChildIsFormat = newElement.firstChild && (_isFormatElement(newElement.firstChild));
     const anchorIsEmpty = _isEmpty(anchorNode);
     let pasteRange = selRange.cloneRange();
     let newSelRange, rootName, replacedEmpty;
+    // If the anchorNode is text, and the fragment's first child is not a format node, then we will
+    // replace the fragment's first child with its contents.
+    if (_isTextNode(anchorNode) && !firstChildIsFormat) {
+        const newFirstChild = _fragmentFrom(newElement.firstChild.innerHTML);
+        newElement.firstChild.replaceWith(newFirstChild);
+    };
     if (anchorIsElement && firstChildIsElement && anchorIsEmpty) {
         // We are in an empty paragraph, typically, like <p><br></p>. Replace it with the newElement
         // manually by replacing the anchor with the firstChild, followed by all of its siblings.
@@ -2182,12 +2192,13 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         let lastChild = newElement.firstChild;
         let nextSib = lastChild.nextSibling;
         const beforeTarget = anchorNode.nextElementSibling;
+        const insertTarget = beforeTarget?.parentNode ?? anchorNode.parentNode ?? MU.editor;
         anchorNode.replaceWith(lastChild);
         // Now we need put the rest of the newElement fragment in as siblings,
         // tracking lastChild as we go thru them.
         while (nextSib) {
             lastChild = nextSib;
-            beforeTarget.parentNode.insertBefore(nextSib, beforeTarget);
+            insertTarget.insertBefore(nextSib, beforeTarget);
             nextSib = newElement.firstChild;
         };
         newSelRange = document.createRange();
@@ -2255,13 +2266,15 @@ const _patchPasteHTML = function(html) {
     // Now do the extensive clean up required for the body
     _cleanUpSpansWithin(body);
     _cleanUpDivsWithin(body);
+    _cleanUpTypesWithin(['label', 'button'], body)
     _cleanUpAttributesWithin('style', body);
     _cleanUpAttributesWithin('class', body);
     _cleanUpEmptyTextNodes(body);
+    _cleanUpPREs(body);
+    _cleanUpOrphanNodes(body);
     _cleanUpBRs(body);
     _cleanUpNewlines(body);
     _cleanUpTabs(body);
-    _cleanUpPREs(body);
     _cleanUpAliases(body);
     _prepImages(body);
     return body;
@@ -2909,7 +2922,6 @@ MU.getHTML = function(pretty=true, clean=true) {
  */
 const _allPrettyHTML = function(editor) {
     let text = '';
-    let firstTopLevelNode = true;
     const childNodes = editor.childNodes;
     const childNodesLength = childNodes.length;
     for (let i = 0; i < childNodesLength; i++) {
@@ -6636,10 +6648,11 @@ const _cleanUpNewlines = function(node) {
     let child = node.firstChild;
     while (child) {
         if (_isTextNode(child)) {
-            child = _patchNewlines(child).nextSibling;
+            _patchNewlines(child);
         } else {
-            child = child.nextSibling;
+            _cleanUpNewlines(child);
         };
+        child = child.nextSibling;
     };
 };
 
@@ -6663,21 +6676,23 @@ const _cleanUpTabs = function(node) {
 };
 
 /*
- * Replace PREs with Ps. They should only occur at the top level.
+ * Replace PREs with Ps if they contain a text node; else,
+ * leave their contents in place without the PRE.
  */
 const _cleanUpPREs = function(node) {
-    let childNodes = node.childNodes;
+    const childNodes = node.childNodes;
     for (let i=0; i < childNodes.length; i++) {
-        const child = childNodes[i];
-        const childName = child.nodeName;
-        if (childName === 'PRE') {
+        let child = childNodes[i];
+        if (_isPreElement(child)) {
             const p = document.createElement('p');
             const template = document.createElement('template');
             template.innerHTML = child.innerHTML;
             const newElement = template.content;
             p.appendChild(newElement);
             child.replaceWith(p);
-        };
+        } else if (_isElementNode(child)) {
+            _cleanUpPREs(child);
+        }
     };
 };
 
@@ -6818,6 +6833,9 @@ const _cleanUpAttributesWithin = function(attribute, node) {
     return attributesRemoved;
 };
 
+/*
+ * Do a depth-first traversal from node, removing all empty text nodes at the leaf nodes.
+ */
 const _cleanUpEmptyTextNodes = function(node) {
     let child = node.firstChild;
     while (child) {
@@ -6828,6 +6846,33 @@ const _cleanUpEmptyTextNodes = function(node) {
             child.parentNode.removeChild(child);
         };
         child = nextChild;
+    };
+};
+
+/*
+ * Traverse all immediate childnodes of node. If they are not part of _topLevelNodes,
+ * then put the childNode in a <p> element and call it a day. During paste, we sometimes
+ * receive <a> and text nodes that are not properly styled (by the MarkupEditor definition),
+ * so we will put them in a "normal" paragraph so we don't lose them.
+ */
+const _cleanUpOrphanNodes = function(node) {
+    const children = node.childNodes;
+    let child = children.isEmpty ? null : children[0];
+    while (child) {
+        let nextSib = child.nextSibling;
+        if (!_topLevelTags.includes(child.nodeName)) {
+            // Create a new <p> and put this non-top-level node in it
+            const newChild = document.createElement('p');
+            node.insertBefore(newChild, nextSib);
+            newChild.appendChild(child);
+            // Keep putting children in the same p until we hit a top-level tag
+            while (nextSib && !_topLevelTags.includes(nextSib.nodeName)) {
+                let nextNextSib = nextSib.nextSibling;
+                newChild.appendChild(nextSib);
+                nextSib = nextNextSib;
+            };
+        }
+        child = nextSib;
     };
 };
 
@@ -6860,10 +6905,14 @@ const _patchNewlines = function(node) {
         line = lines[i];
         nextLine = (i < lines.length - 1) ? lines[i + 1]  : null;
         if (((i === 0) || (i === lines.length - 1)) && (line.length === 0)) {
-            p = document.createElement('p');
-            textNode = document.createElement('br');
-            p.appendChild(textNode);
-            node.parentNode.insertBefore(p, insertTarget);
+            // If we have a newline at beginning or end but are in a formatTag, then
+            // do nothing; otherwise, insert an editable <p><br></p> line.
+            if (!_formatTags.includes(node.parentNode.nodeName)) {
+                p = document.createElement('p');
+                textNode = document.createElement('br');
+                p.appendChild(textNode);
+                node.parentNode.insertBefore(p, insertTarget);
+            };
         } else {
             textNode = document.createTextNode(_patchWhiteSpace(line, 'LEADING'));
             node.parentNode.insertBefore(textNode, insertTarget);
@@ -7001,7 +7050,7 @@ const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);            
 const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
 
 //TODO: Include BLOCKQUOTE?
-const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE']));          // Allowed top-level tags within editor
+const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));          // Allowed top-level tags within editor
 
 const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
@@ -9651,6 +9700,10 @@ const _isTextNode = function(node) {
 const _isElementNode = function(node) {
     return node && (node.nodeType === Node.ELEMENT_NODE);
 };
+
+const _isPreElement = function(node) {
+    return node && (node.nodeName === 'PRE');
+}
 
 /**
  * Return whether node is a style element; i.e., its nodeName is in _styleTags
