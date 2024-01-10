@@ -2906,6 +2906,16 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endOffset: 0,
                 pasteString: "<h5>Hello <b>bold</b> world</h5>"
             ),
+            HtmlTest(
+                description: "P in Empty Document - Paste multiple paragraphs into an empty document",
+                startHtml: "<p id=\"blank\"><br></p>",
+                endHtml: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>",
+                startId: "blank",     // Select "|"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
+            ),
         ]
         for test in htmlTests {
             test.printDescription()
@@ -3195,6 +3205,16 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endId: "blank",
                 endOffset: 0,
                 pasteString: "<h5>Hello <b>bold</b> world</h5>"
+            ),
+            HtmlTest(
+                description: "P in Empty Document - Paste multiple paragraphs into an empty document",
+                startHtml: "<p id=\"blank\"><br></p>",
+                endHtml: "<p>A title</p><p>A subtitle</p><p>A paragraph.</p>",
+                startId: "blank",     // Select "|"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
         ]
         for test in htmlTests {

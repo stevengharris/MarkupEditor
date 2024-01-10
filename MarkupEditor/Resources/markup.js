@@ -2583,12 +2583,18 @@ const _undoPasteHTML = function(undoerData) {
         newEmptyElement.appendChild(br);
         const startContainer = newRange.startContainer;
         const startNode = (_isTextNode(startContainer)) ? startContainer : startContainer.children[newRange.startOffset];
-        const beforeTarget = (_isTextNode(startContainer)) ? startContainer.nextSibling : startNode;
-        const topLevelNode = _findFirstParentElementInNodeNames(startNode, _topLevelTags);
-        if (topLevelNode) {
-            topLevelNode.parentNode.insertBefore(newEmptyElement, beforeTarget);
+        if (!startNode) {
+            startContainer.appendChild(newEmptyElement)
             newRange.setStart(newEmptyElement, 0);
             newRange.setEnd(newEmptyElement, 0);
+        } else {
+            const beforeTarget = (_isTextNode(startContainer)) ? startContainer.nextSibling : startNode;
+            const topLevelNode = _findFirstParentElementInNodeNames(startNode, _topLevelTags);
+            if (topLevelNode) {
+                topLevelNode.parentNode.insertBefore(newEmptyElement, beforeTarget);
+                newRange.setStart(newEmptyElement, 0);
+                newRange.setEnd(newEmptyElement, 0);
+            };
         };
     };
     // At this point, what was pasted-in is gone, and the document looks like if it had
@@ -2676,7 +2682,7 @@ const _deleteRange = function(range, rootName) {
     // we need to put it back in place in the nearest non-empty text node.
     // Note that a deleted style node will be replaced later based on replacedEmpty
     // being present in undoerData.
-    if (_isEmpty(leadingNode)) {    // It was deleted
+    if (_isEmpty(leadingNode) && (leadingNode !== MU.editor)) {    // It was deleted
         startContainer = _firstNonEmptyNextSibling(leadingNode);
         if (startContainer) {
             startOffset = 0;
@@ -2702,10 +2708,7 @@ const _deleteRange = function(range, rootName) {
         }
         leadingWasDeleted = true;
     };
-    if (_isEmpty(trailingNode)) {
-        if (_isEmpty(trailingNode.parentNode)) {
-            trailingNode = trailingNode.parentNode;
-        };
+    if (_isEmpty(trailingNode) && (leadingNode !== trailingNode) && (trailingNode !== MU.editor)) {
         endContainer = _firstNonEmptyNextSibling(trailingNode);
         if (endContainer) {
             endOffset = 0;
@@ -2880,6 +2883,7 @@ MU.setHTML = function(contents, select=true) {
  * auto-sizing of a WKWebView based on its contents.
  */
 MU.getHeight = function() {
+    const editor = MU.editor;
     const paddingBlockStart = editor.style.getPropertyValue('padding-block-start');
     const paddingBlockEnd = editor.style.getPropertyValue('padding-block-end');
     editor.style['padding-block-start'] = '0px';
@@ -2900,6 +2904,7 @@ MU.getHeight = function() {
  * of the screen. 
  */
 MU.padBottom = function(fullHeight) {
+    const editor = MU.editor;
     const padHeight = fullHeight - MU.getHeight();
     if (padHeight > 0) {
         editor.style.setProperty('--padBottom', padHeight+'px');
