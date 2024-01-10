@@ -101,6 +101,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public enum PasteableType {
         case Text
         case Html
+        case Rtf
         case ExternalImage
         case LocalImage
         case Url
@@ -1053,7 +1054,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Paste
     
-    /// Return the Pasteable type based on the types found in the UIPasteboard.general
+    /// Return the Pasteable type based on the types found in the UIPasteboard.general.
+    ///
+    /// The order is important, since it identifies what will be pasted, and multiple of these
+    /// pasteboard types may be included. Thus, the ordering translates to:
+    ///
+    /// 1. Paste a local image from the MarkupEditor if present.
+    /// 2. Paste an image copied from an external source/app if present.
+    /// 3. Paste an image that exists at a URL if present.
+    /// 4. Paste html if present, which might be pasted as text or html depending on choice.
+    /// 5. Paste text if present.
     ///
     /// When we copy from the MarkupEditor itself, we populate both the "markup.image" of the
     /// pasteboard as well as the "image". This lets us paste the image to an external app,
@@ -1072,6 +1082,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         } else if pasteboard.contains(pasteboardTypes: ["public.html"]) {
             // We have HTML, which we will have to sanitize before pasting
             return .Html
+        } else if pasteboard.contains(pasteboardTypes: ["public.rtf"]) {
+            return .Rtf
         } else if pasteboard.hasStrings {
             // We have a string that we can paste
             return .Text
@@ -1463,6 +1475,22 @@ extension MarkupWKWebView {
             if let data = pasteboard.data(forPasteboardType: "public.html") {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
+        case .Rtf:
+            if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
+                do {
+                    let attrString = try NSAttributedString(
+                        data: rtfData,
+                        options: [.documentType: NSAttributedString.DocumentType.rtf],
+                        documentAttributes: nil)
+                    let htmlData = try attrString.data(
+                        from: NSRange(location: 0, length: attrString.length),
+                        documentAttributes: [.documentType : NSAttributedString.DocumentType.html])
+                    let html = String(data: htmlData, encoding: .utf8)
+                    pasteHtml(html)
+                } catch let error {
+                    Logger.webview.error("Error getting html from rtf: \(error.localizedDescription)")
+                }
+            }
         case .ExternalImage:
             pasteImage(pasteboard.image)
         case .LocalImage:
@@ -1482,7 +1510,7 @@ extension MarkupWKWebView {
         guard let pasteableType = pasteableType() else { return }
         let pasteboard = UIPasteboard.general
         switch pasteableType {
-        case .Text:
+        case .Text, .Rtf:
             pasteText(pasteboard.string)
         case .Html:
             if let data = pasteboard.data(forPasteboardType: "public.html") {

@@ -2523,7 +2523,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
                 startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello <i>bold</i> world</p><p><b>st</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello <i>bold</i> worldst</b> a simple paragraph.</p>",
                 startId: "b",     // Select "ju|st "
                 startOffset: 2,
                 endId: "b",
@@ -2613,6 +2613,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endId: "blank",
                 endOffset: 0,
                 pasteString: "<h5>Hello <b>bold</b> world</h5>"
+            ),
+            HtmlTest(
+                description: "P in Empty Document - Paste multiple paragraphs into an empty document",
+                startHtml: "<p id=\"blank\"><br></p>",
+                endHtml: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>",
+                undoHtml: "<p><br></p>",
+                startId: "blank",     // Select "|"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
         ]
         for test in htmlTests {
@@ -2728,7 +2739,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
             HtmlTest(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
                 startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
-                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><p>Hello bold world</p><p><b>st</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">juHello bold worldst</b> a simple paragraph.</p>",
                 startId: "b",     // Select "ju|st "
                 startOffset: 2,
                 endId: "b",
@@ -2818,6 +2829,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endId: "blank",
                 endOffset: 0,
                 pasteString: "<h5>Hello <b>bold</b> world</h5>"
+            ),
+            HtmlTest(
+                description: "P in Empty Document - Paste multiple paragraphs into an empty document",
+                startHtml: "<p id=\"blank\"><br></p>",
+                endHtml: "<p>A title</p><p>A subtitle</p><p>A paragraph.</p>",
+                undoHtml: "<p><br></p>",
+                startId: "blank",     // Select "|"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
         ]
         for test in htmlTests {
