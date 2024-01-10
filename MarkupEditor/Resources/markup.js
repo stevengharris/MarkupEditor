@@ -2576,14 +2576,17 @@ const _undoPasteHTML = function(undoerData) {
     const deletedFragment = undoerData.data.deletedFragment;
     _deleteRange(pasteRange, rootName);
     const sel = document.getSelection();
-    let newRange = sel.getRangeAt(0);
+    let newRange = _minimizedRangeFrom(sel.getRangeAt(0));
     if (replacedEmpty) {
         const newEmptyElement = document.createElement(replacedEmpty);
         const br = document.createElement('br');
         newEmptyElement.appendChild(br);
-        const topLevelNode = _findFirstParentElementInNodeNames(newRange.startContainer, _topLevelTags);
+        const startContainer = newRange.startContainer;
+        const startNode = (_isTextNode(startContainer)) ? startContainer : startContainer.children[newRange.startOffset];
+        const beforeTarget = (_isTextNode(startContainer)) ? startContainer.nextSibling : startNode;
+        const topLevelNode = _findFirstParentElementInNodeNames(startNode, _topLevelTags);
         if (topLevelNode) {
-            topLevelNode.parentNode.insertBefore(newEmptyElement, topLevelNode.nextSibling);
+            topLevelNode.parentNode.insertBefore(newEmptyElement, beforeTarget);
             newRange.setStart(newEmptyElement, 0);
             newRange.setEnd(newEmptyElement, 0);
         };
@@ -2665,63 +2668,105 @@ const _deleteRange = function(range, rootName) {
     range.deleteContents();
     let leadingWasDeleted = false;
     let trailingWasDeleted = false;
+    let leadingDeletedIndex, trailingDeletedIndex;
     let startContainer = leadingNode;
     let endContainer = trailingNode;
-    if (_isEmpty(leadingNode)) {
+    // When we do deleteContents, the range contains empty text nodes so that
+    // it still remains valid. If the deletion wiped out the selection, then
+    // we need to put it back in place in the nearest non-empty text node.
+    // Note that a deleted style node will be replaced later based on replacedEmpty
+    // being present in undoerData.
+    if (_isEmpty(leadingNode)) {    // It was deleted
         startContainer = _firstNonEmptyNextSibling(leadingNode);
         if (startContainer) {
             startOffset = 0;
         } else {
-            startContainer = leadingNode.parentNode;
-            startOffset = startContainer.childNodes.length - 1;  // We are deleting one next
+            startContainer = _firstNonEmptyPreviousSibling(leadingNode);
+            if (startContainer) {
+                if (_isTextNode(startContainer)) {
+                    startOffset = startContainer.length;
+                } else {
+                    startOffset = _childNodeIndex(startContainer);
+                };
+            } else {
+                startContainer = leadingNode.parentNode;
+                const leadingNodeIndex = _childNodeIndex(leadingNode);
+                // We are going to delete the leadingNode and set the startOffset
+                // to the node following if possible; else the one before.
+                if (leadingNode.nextSibling) {
+                    startOffset = leadingNodeIndex; // This will be the nextSibling after deleting leadingNode
+                } else {
+                    startOffset = Math.max(0, leadingNodeIndex - 1);
+                };
+            };
         }
-        leadingNode.parentNode.removeChild(leadingNode);
         leadingWasDeleted = true;
     };
     if (_isEmpty(trailingNode)) {
-        if (leadingNode === trailingNode) {
-            endContainer = startContainer;
-            endOffset = startOffset;
-            trailingWasDeleted = leadingWasDeleted;
+        if (_isEmpty(trailingNode.parentNode)) {
+            trailingNode = trailingNode.parentNode;
+        };
+        endContainer = _firstNonEmptyNextSibling(trailingNode);
+        if (endContainer) {
+            endOffset = 0;
         } else {
-            if (_isEmpty(trailingNode.parentNode)) {
-                trailingNode = trailingNode.parentNode;
-            };
             endContainer = _firstNonEmptyPreviousSibling(trailingNode);
             if (endContainer) {
                 if (_isTextNode(endContainer)) {
-                    endOffset = endContainer.textContent.length;
+                    endOffset = endContainer.length;
                 } else {
-                    let lastChild = endContainer.lastChild;
-                    if (_isTextNode(lastChild)) {
-                        endContainer = lastChild;
-                        endOffset = lastChild.textContent.length;
-                    } else {
-                        endOffset = endContainer.childNodes.length;
-                    };
+                    endOffset = _childNodeIndex(endContainer);
                 };
             } else {
                 endContainer = trailingNode.parentNode;
-                if (_isEmpty(endContainer)) {
-                    endContainer = _firstNonEmptyPreviousSibling(endContainer);
-                }
-                if (_isTextNode(endContainer)) {
-                    endOffset = endContainer.textContent.length;
+                const trailingNodeIndex = _childNodeIndex(trailingNode);
+                // We are going to delete the trailingNode and set the endOffset
+                // to the node following if possible; else the one before.
+                if (trailingNode.nextSibling) {
+                    endOffset = trailingNodeIndex; // This will be the nextSibling after deleting trailingNode
                 } else {
-                    endOffset = endContainer.childNodes.length - 1; // We are deleting one next
-                }
+                    endOffset = Math.max(0, trailingNodeIndex - 1);
+                };
             };
-            trailingNode.parentNode.removeChild(trailingNode);
-            trailingWasDeleted = true;
-            if (trailingNode.parentNode === leadingNode.parentNode) {
-                startOffset = Math.max(0, startOffset - 1);
-            }
-        }
+        };
+        trailingWasDeleted = true;
     } else {
         endOffset = 0;  // Because we deleted up to the original endOffset
-    }
-    if (leadingNode === trailingNode) {
+    };
+    if (leadingNode && trailingNode && (leadingNode === trailingNode)) {
+        endContainer = startContainer;
         endOffset = startOffset;
+    };
+    // We have as many empty text nodes as once existed in the range we deleted, and the
+    // trailingNode may not be the same or even the nextSibling of leadingNode.
+    // For example, in a range across the leading and trailing text nodes of 
+    // <p>Hello <b>bold</b> world</p>, we end up with three empty text nodes.
+    const sharedParent = leadingNode && trailingNode && (leadingNode.parentNode === trailingNode.parentNode);
+    if (leadingWasDeleted && trailingWasDeleted) {
+        if (leadingNode === trailingNode) {
+            leadingNode.parentNode.removeChild(leadingNode);
+        } else {
+            if (sharedParent) {
+                let parent = leadingNode.parentNode;
+                let child = leadingNode;
+                while (child) {
+                    let nextChild = child.nextSibling;
+                    child.parentNode.removeChild(child);
+                    if (nextChild && (nextChild !== trailingNode)) {
+                        child = nextChild
+                    } else {
+                        child = null;
+                    };
+                }
+            } else {
+                leadingNode.parentNode.removeChild(leadingNode);
+                trailingNode.parentNode.removeChild(trailingNode);
+            };
+        };
+    } else if (leadingWasDeleted) {
+        leadingNode.parentNode.removeChild(leadingNode);
+    } else if (trailingWasDeleted) {
+        trailingNode.parentNode.removeChild(trailingNode);
     };
     if (rootName && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
         _joinTextNodes(leadingNode, trailingNode, rootName);
@@ -4667,6 +4712,7 @@ const _minimizedRangeFrom = function(selRange) {
     const focus = selRange.endContainer;
     const focusOffset = selRange.endOffset;
     const endsAtLength = selRange.collapsed && _isElementNode(focus) && (focusOffset === focus.childNodes.length);
+    const beginsAtZero = selRange.collapsed && _isElementNode(anchor) && (anchorOffset === 0);
     if (anchor === focus) {
         if (endsAtLength) {
             const lastChild = focus.lastChild;
@@ -4679,6 +4725,13 @@ const _minimizedRangeFrom = function(selRange) {
                 range.setStart(lastChild, lastChild.childNodes.length);
                 range.setEnd(lastChild, lastChild.childNodes.length);
             }
+            return range;
+        } else if (beginsAtZero) {
+            const firstChild = anchor.firstChild;
+            if (!firstChild) { return selRange };
+            const range = document.createRange();
+            range.setStart(firstChild, 0);
+            range.setEnd(firstChild, 0);
             return range;
         } else {
             return selRange;
