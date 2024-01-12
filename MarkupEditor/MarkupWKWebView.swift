@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 import Combine
 import OSLog
+import UniformTypeIdentifiers
 
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
@@ -1015,7 +1016,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // We have copied an image into the pasteboard
             return .ExternalImage
         } else if pasteboard.url != nil {
-            // We have a url which we assume identifies an image we can display
+            // We have a url which might be an image we can display or not
             return .Url
         } else if pasteboard.contains(pasteboardTypes: ["public.html"]) {
             // We have HTML, which we will have to sanitize before pasting
@@ -1073,13 +1074,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             Logger.webview.error("Error inserting local image: \(error.localizedDescription)")
             handler?()
         }
-    }
-    
-    public func pasteImageUrl(_ url: URL?, handler: (()->Void)? = nil) {
-        guard let url = url, !pastedAsync else { return }
-        //TODO: Make it work
-        Logger.webview.error("Save the image url: \(url)")
-        pastedAsync = false
     }
     
     //MARK: Formatting
@@ -1437,8 +1431,65 @@ extension MarkupWKWebView {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
         case .Url:
-            pasteImageUrl(pasteboard.url)
+            pasteUrl(url: pasteboard.url)
         }
+    }
+    
+    /// Paste the url as an img or as a link depending on its content.
+    ///
+    /// This method is public so it can be used from tests and the tests can ensure the
+    /// logic does the right thing for various URL forms.
+    public func pasteUrl(url: URL?, handler: (()->Void)? = nil) {
+        guard let url else {
+            handler?()
+            return
+        }
+        let urlString = url.absoluteString
+        // StartModalInput saves the selection before inserting and is "normally"
+        // done before opening the LinkViewController or ImageViewController.
+        // However, since pasteUrl is invoked directly when using paste, without
+        // the intervening dialog, we need to do it here.
+        startModalInput {
+            if self.isImageUrl(url: url) {
+                self.insertImage(src: urlString, alt: nil) {
+                    handler?()
+                }
+            } else {
+                self.insertLink(urlString) {
+                    handler?()
+                }
+            }
+        }
+    }
+    
+    /// Return true if the url points to an image or movie that can be inserted into the document
+    private func isImageUrl(url: URL?) -> Bool {
+        guard let url else { return false }
+        if url.isFileURL {
+            return isLocalImage(url: url)
+        } else {
+            return isRemoteImage(url: url)
+        }
+    }
+    
+    /// Return true if the url points to an image in a local file.
+    ///
+    /// We can use `resourceValues(forKeys:)` on local files, whereas we have to infer whether the file is an image
+    /// from the extension on non-local files.
+    private func isLocalImage(url: URL) -> Bool {
+        do {
+            guard let typeID = try url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier else { return false }
+            guard let supertypes = UTType(typeID)?.supertypes else { return false }
+            return supertypes.contains(.image) || supertypes.contains(.movie)
+        } catch {
+            return false
+        }
+    }
+    
+    /// Return true if the url points to a remote image file, based only on the file extension.
+    private func isRemoteImage(url: URL) -> Bool {
+        guard let utType = UTType(tag: url.pathExtension, tagClass: .filenameExtension, conformingTo: nil) else { return false }
+        return utType.conforms(to: .image) || utType.conforms(to: .movie)
     }
     
     /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
