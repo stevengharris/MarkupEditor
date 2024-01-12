@@ -747,7 +747,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
             insertImage(src: path, alt: nil) {
-                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
                 handler?(cachedImageUrl)
             }
         } catch let error {
@@ -1067,7 +1066,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
             insertImage(src: path, alt: nil) {
                 self.pastedAsync = false
-                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
                 handler?()
             }
         } catch let error {

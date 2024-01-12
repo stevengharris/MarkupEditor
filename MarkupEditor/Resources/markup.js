@@ -2942,9 +2942,11 @@ MU.resetSelection = function() {
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function(pretty=true, clean=true) {
+MU.getHTML = function(pretty, clean) {
+    const prettyHTML = pretty === "true";
+    const cleanHTML = clean === "true";
     let editor, text;
-    if (clean) {
+    if (cleanHTML) {
         const template = document.createElement('template');
         template.innerHTML = MU.editor.innerHTML;
         editor = template.content;
@@ -2954,7 +2956,7 @@ MU.getHTML = function(pretty=true, clean=true) {
     } else {
         editor = MU.editor;
     };
-    if (pretty) {
+    if (prettyHTML) {
         text = _allPrettyHTML(editor);
     } else {
         text = MU.editor.innerHTML;
@@ -7721,9 +7723,24 @@ MU.cutImage = function() {
     _showCaret();
 };
 
+/**
+ * Set up load events 1) to call back to tell the Swift side the image
+ * loaded, and to select the image once it's loaded. Do the same on error
+ * to handle the case of "broken images". Then set src.
+ */
 const _setSrc = function(img, src) {
-    img.addEventListener('load', function() {_makeSelected(img)});
-    img.addEventListener('error', function() {_makeSelected(img)});
+    img.addEventListener('load', function() {
+        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+    });
+    img.addEventListener('load', function() {
+        _makeSelected(img);
+    });
+    img.addEventListener('error', function() {
+       _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+    });
+    img.addEventListener('load', function() {
+        _makeSelected(img);
+    });
     img.setAttribute('src', src);
 };
 
@@ -7954,8 +7971,27 @@ const _getImageAttributes = function(image=null) {
     return attributes;
 };
 
+/**
+ * Reset the resizableImage based on the undoerRange and delete it.
+ */
 const _undoInsertImage = function(undoerData) {
     _restoreUndoerRange(undoerData);
+    const sel = document.getSelection();
+    const selRange = sel?.getRangeAt(0);
+    if (!selRange) { return };
+    const startContainer = selRange.startContainer;
+    let img;
+    if (_isImageElement(startContainer)) {
+        img = startContainer;
+    } else if (_isElementNode(startContainer)) {
+        const child = startContainer.childNodes[selRange.startOffset];
+        if (_isImageElement(child)) {
+            img = child;
+        };
+    };
+    if (img) {
+        resizableImage.select(img);
+    };
     if (resizableImage.isSelected) {
         resizableImage.deleteImage()
         undoerData.range = document.getSelection().getRangeAt(0);
