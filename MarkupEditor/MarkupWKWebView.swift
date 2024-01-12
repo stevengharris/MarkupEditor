@@ -1431,10 +1431,33 @@ extension MarkupWKWebView {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
         case .Url:
-            if isImageUrl(url: pasteboard.url) {
-                insertImage(src: pasteboard.url?.absoluteString, alt: nil)
+            pasteUrl(url: pasteboard.url)
+        }
+    }
+    
+    /// Paste the url as an img or as a link depending on its content.
+    ///
+    /// This method is public so it can be used from tests and the tests can ensure the
+    /// logic does the right thing for various URL forms.
+    public func pasteUrl(url: URL?, handler: (()->Void)? = nil) {
+        guard let url else {
+            handler?()
+            return
+        }
+        let urlString = url.absoluteString
+        // StartModalInput saves the selection before inserting and is "normally"
+        // done before opening the LinkViewController or ImageViewController.
+        // However, since pasteUrl is invoked directly when using paste, without
+        // the intervening dialog, we need to do it here.
+        startModalInput {
+            if self.isImageUrl(url: url) {
+                self.insertImage(src: urlString, alt: nil) {
+                    handler?()
+                }
             } else {
-                insertLink(pasteboard.url?.absoluteString)
+                self.insertLink(urlString) {
+                    handler?()
+                }
             }
         }
     }

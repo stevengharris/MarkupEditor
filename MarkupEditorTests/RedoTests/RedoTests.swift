@@ -3189,4 +3189,136 @@ class RedoTests: XCTestCase, MarkupDelegate {
         }
     }
     
+    func testRedoPasteUrl() throws {
+        let htmlTests: [HtmlTest] = [
+            HtmlTest(
+                description: "MP4 URL in P - Paste image URL at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.mp4\">st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.mp4"
+            ),
+            HtmlTest(
+                description: "JPG URL in P - Paste image URL at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.jpg\">st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.jpg"
+            ),
+            HtmlTest(
+                description: "PNG URL in P - Paste image URL at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.png\">st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.png"
+            ),
+            HtmlTest(
+                description: "Non-image URL in P - Paste Non-image URL at insertion point in a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a> a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st "
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
+            ),
+            // Note: When pasting a url without an existing selection (e.g., like the "ju|st" case above), the MarkupEditor inserts the url string
+            // text and makes it into a link. The undo operation just removes the link and leaves the inserted text. You can argue this is a bug,
+            // and maybe it is, but it also leaves the text selected, which can be removed with one keystroke. In any case, this is why the undoHtml
+            // might look a little weird below. On redo, it then just re-inserts the link.
+            HtmlTest(
+                description: "Non-image URL in P - Paste Non-image URL at end of a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a> a simple paragraph.</p>",
+                undoHtml: "<p id=\"p\">This is justhttps://github.com/stevengharris/MarkupEditor/foo.bogus a simple paragraph.</p>",
+                startId: "p",     // Select "just|"
+                startOffset: 12,
+                endId: "p",
+                endOffset: 12,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
+            ),
+            HtmlTest(
+                description: "Non-image URL in P - Paste Non-image URL at beginning of a word",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>just a simple paragraph.</p>",
+                undoHtml: "<p id=\"p\">This is https://github.com/stevengharris/MarkupEditor/foo.bogusjust a simple paragraph.</p>",
+                startId: "p",     // Select "|just"
+                startOffset: 8,
+                endId: "p",
+                endOffset: 8,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
+            ),
+            HtmlTest(
+                description: "Non-image URL in P - Paste Non-image URL at beginning of paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\"><a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>This is just a simple paragraph.</p>",
+                undoHtml: "<p id=\"p\">https://github.com/stevengharris/MarkupEditor/foo.bogusThis is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
+            ),
+            HtmlTest(
+                description: "Non-image URL in P - Paste Non-image URL at end of paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a></p>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.https://github.com/stevengharris/MarkupEditor/foo.bogus</p>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
+            ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let undoHtml = test.undoHtml ?? test.startHtml
+            let expectation = XCTestExpectation(description: "Redo paste of a URL")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        // Define the handler to execute after undoSet is received (i.e., once the undoData has
+                        // been pushed to the stack and can be executed).
+                        self.addInputHandler {
+                            self.webView.getRawHtml { pasted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: pasted)
+                                // Define the handler after input is received (i.e., once the undo is complete)
+                                self.addUndoSetHandler {
+                                    self.webView.getRawHtml { unformatted in
+                                        self.assertEqualStrings(expected: undoHtml, saw: unformatted)
+                                        self.addUndoSetHandler {
+                                            self.webView.getRawHtml { reformatted in
+                                                self.assertEqualStrings(expected: test.endHtml, saw: reformatted)
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                        // Kick off the redo operation on the paste
+                                        self.webView.testRedo()
+                                    }
+                                }
+                                // Kick off the undo operation on the paste
+                                self.webView.testUndo()
+                            }
+                        }
+                        // Kick off the paste operation
+                        self.webView.pasteUrl(url: URL(string: test.pasteString!))
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 30)
+        }
+    }
+    
 }
