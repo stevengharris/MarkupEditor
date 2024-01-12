@@ -3276,7 +3276,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         }
     }
     
-    func testPasteUrl() throws {
+    func testPasteImageUrl() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
                 description: "MP4 URL in P - Paste image URL at insertion point in a word",
@@ -3308,8 +3308,32 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endOffset: 10,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.png"
             ),
+        ]
+        for test in htmlTests {
+            test.printDescription()
+            let startHtml = test.startHtml
+            let expectation = XCTestExpectation(description: "Paste an image URL")
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: startHtml, saw: contents)
+                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
+                        self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
+                            self.webView.getRawHtml() { pasted in
+                                self.assertEqualStrings(expected: test.endHtml, saw: pasted)
+                                expectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            wait(for: [expectation], timeout: 30)
+        }
+    }
+    
+    func testPasteLink() throws {
+        let htmlTests: [HtmlTest] = [
             HtmlTest(
-                description: "Non-image URL in P - Paste Non-image URL at insertion point in a word",
+                description: "Link in P - Paste link at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a> a simple paragraph.</p>",
                 startId: "p",     // Select "ju|st "
@@ -3319,7 +3343,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
             HtmlTest(
-                description: "Non-image URL in P - Paste Non-image URL at end of a word",
+                description: "Link in P - Paste link at end of a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is just<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a> a simple paragraph.</p>",
                 startId: "p",     // Select "just|"
@@ -3329,7 +3353,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
             HtmlTest(
-                description: "Non-image URL in P - Paste Non-image URL at beginning of a word",
+                description: "Link in P - Paste link at beginning of a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>just a simple paragraph.</p>",
                 startId: "p",     // Select "|just"
@@ -3339,7 +3363,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
             HtmlTest(
-                description: "Non-image URL in P - Paste Non-image URL at beginning of paragraph",
+                description: "Link in P - Paste link at beginning of paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\"><a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>This is just a simple paragraph.</p>",
                 startId: "p",     // Select "|This"
@@ -3349,7 +3373,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
             HtmlTest(
-                description: "Non-image URL in P - Paste Non-image URL at end of paragraph",
+                description: "Link in P - Paste link at end of paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is just a simple paragraph.<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a></p>",
                 startId: "p",     // Select "paragraph.|"
@@ -3362,7 +3386,7 @@ class BasicTests: XCTestCase, MarkupDelegate {
         for test in htmlTests {
             test.printDescription()
             let startHtml = test.startHtml
-            let expectation = XCTestExpectation(description: "Paste a URL")
+            let expectation = XCTestExpectation(description: "Paste a link")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
                     self.assertEqualStrings(expected: startHtml, saw: contents)
