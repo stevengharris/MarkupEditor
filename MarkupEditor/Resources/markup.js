@@ -10528,7 +10528,9 @@ const _setTagInRange = function(type, range) {
         // endContainer empty. If so, we need to remove them to avoid messing up
         // future navigation by indices from parents in undo.
         let startContainer = range.startContainer;
+        _cleanUpEmptyTextNodes(startContainer);
         let endContainer = range.endContainer;
+        _cleanUpEmptyTextNodes(endContainer);
         while (_isEmpty(startContainer)) {
             startContainer.parentNode.removeChild(startContainer);
             startContainer = range.startContainer;
