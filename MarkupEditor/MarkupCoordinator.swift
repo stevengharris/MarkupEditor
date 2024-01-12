@@ -185,6 +185,12 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             let width = dimensions["width"]
             let height = dimensions["height"]
             webView.copyImage(src: src, alt: alt, width: width, height: height)
+        case "addedImage":
+            guard let src = messageData["src"] as? String, let url = URL(string: src) else {
+                Logger.coordinator.error("Src was missing or malformed")
+                return
+            }
+            markupDelegate?.markupImageAdded(url: url)
         case "deletedImage":
             guard let src = messageData["src"] as? String, let url = URL(string: src) else {
                 Logger.coordinator.error("Src was missing or malformed")

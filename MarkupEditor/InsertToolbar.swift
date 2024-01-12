@@ -10,10 +10,10 @@ import SwiftUI
 
 /// The toolbar used for creating/editing links, images, and tables.
 ///
-/// Note the flow of control. The button actions invoke the `showPluggable[Link/Image/Table]Toolbar` method
-/// in the `selectedWebView`. These in turn invoke the MarkupDelegate's `show[Link/Image/Table]Toolbar` method.
+/// Note the flow of control. The button actions invoke the `showPluggable[Link/Image/Table]Popover` method
+/// in the `selectedWebView`. These in turn invoke the MarkupDelegate's `show[Link/Image/Table]Popover` method.
 /// You can override those methods in your delegate to plug in your own views instead of the defaults. By default, the
-/// MarkupDelegate calls back to the `selectedWebView.show[Link/Image/Table]Toolbar` method, which
+/// MarkupDelegate calls back to the `selectedWebView.show[Link/Image/Table]Popover` method, which
 /// uses a UIKit or SwiftUI method depending on the type of insert popover chosen. This way we also get consistent
 /// behavior between buttons in the InsertToolbar and the menu selections while giving flexibility on user-supplied
 /// presentation.
