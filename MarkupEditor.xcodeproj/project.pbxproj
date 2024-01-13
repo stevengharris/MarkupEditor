@@ -25,6 +25,7 @@
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
 		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
+		AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -175,6 +176,7 @@
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
 		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
@@ -466,6 +468,7 @@
 				AA652A11260E9A00000674B7 /* MarkupEditorView.swift */,
 				AA0DDC6728AEA7280081B869 /* MarkupEditorUIView.swift */,
 				AA652A15260E9A00000674B7 /* MarkupWKWebView.swift */,
+				AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */,
 				AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */,
 				AA652A07260E99FF000674B7 /* Resources */,
 				AA652A3B260E9B55000674B7 /* Selection */,
@@ -788,6 +791,7 @@
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */,
 				AAAF7A6D289AE4B9005EF58E /* ToolbarContents.swift in Sources */,
+				AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
 				AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */,
