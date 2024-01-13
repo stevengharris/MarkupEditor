@@ -27,6 +27,10 @@
 		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */; };
 		AA2EB17E2B53446300224F5E /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17D2B53446300224F5E /* EditableAttributes.swift */; };
+		AA2EB1802B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
+		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
+		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
+		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -179,6 +183,8 @@
 		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
 		AA2EB17D2B53446300224F5E /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
+		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
+		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
@@ -328,6 +334,8 @@
 				AA65299D260E8450000674B7 /* AppDelegate.swift */,
 				AA652948260E8114000674B7 /* Assets.xcassets */,
 				AA1B816C26265CAD00891FFB /* demo.html */,
+				AA2EB17F2B534BC900224F5E /* custom.css */,
+				AA2EB1822B534BE600224F5E /* custom.js */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
@@ -732,7 +740,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */,
+				AA2EB1802B534BC900224F5E /* custom.css in Resources */,
 				AA1B816D26265CAD00891FFB /* demo.html in Resources */,
+				AA2EB1832B534BE600224F5E /* custom.js in Resources */,
 				AAFB64DB277CEED70032E859 /* steve.png in Resources */,
 				AA652949260E8114000674B7 /* Assets.xcassets in Resources */,
 			);
@@ -742,6 +752,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA2EB1842B534BE600224F5E /* custom.js in Resources */,
+				AA2EB1812B534BC900224F5E /* custom.css in Resources */,
 				AAFB64DC277CEED80032E859 /* steve.png in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
 				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,
