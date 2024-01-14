@@ -58,6 +58,77 @@ const _callback = function(message) {
 };
 
 /**
+ * Called to set attributes to the editor div, typically to make it contenteditable,
+ * but also to set spellcheck and autocorrect.
+ */
+MU.setTopLevelAttributes = function(jsonString) {
+    const attributes = JSON.parse(jsonString);
+    if (attributes) {
+        _setAttributes(MU.editor, attributes);
+    };
+};
+
+/**
+ * Set attributes of an HTML element.
+ */
+const _setAttributes = function(element, attributes) {
+    for (const [key, value] of Object.entries(attributes)) {
+        element.setAttribute(key, value);
+    };
+};
+
+/**
+ * Called to load user script and CSS before loading html.
+ *
+ * The scriptFile and cssFile are loaded in sequence, with the single 'loadedUserFiles'
+ * callback only happening after their load events trigger. If neither scriptFile
+ * nor cssFile are specified, then the 'loadedUserFiles' callback happens anyway,
+ * since this ends up driving the loading process further.
+ */
+MU.loadUserFiles = function(scriptFile, cssFile) {
+    if (scriptFile) {
+        if (cssFile) {
+            _loadUserScriptFile(scriptFile, function() { _loadUserCSSFile(cssFile) });
+        } else {
+            _loadUserScriptFile(scriptFile, function() { _loadedUserFiles() });
+        }
+    } else if (cssFile) {
+        _loadUserCSSFile(cssFile);
+    } else {
+        _loadedUserFiles();
+    }
+};
+
+const _loadedUserFiles = function() {
+    _callback('loadedUserFiles');
+}
+
+/**
+ * Called to load user script before loading html.
+ */
+const _loadUserScriptFile = function(file, callback) {
+    let body = document.getElementsByTagName('body')[0];
+    let script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.addEventListener('load', callback);
+    script.setAttribute('src', file);
+    body.appendChild(script);
+};
+
+/**
+ * Called to load user CSS before loading html if userCSSFile has been defined for this MarkupWKWebView
+ */
+const _loadUserCSSFile = function(file) {
+    let head = document.getElementsByTagName('head')[0];
+    let link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.addEventListener('load', function() { _loadedUserFiles() });
+    link.href = file;
+    head.appendChild(link);
+};
+
+/**
  * The 'ready' callback lets Swift know the editor and this js is properly loaded.
  *
  * Note for history, replaced window.onload with this eventListener.
@@ -2942,7 +3013,7 @@ MU.resetSelection = function() {
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function(pretty, clean) {
+MU.getHTML = function(pretty="true", clean="true") {
     const prettyHTML = pretty === "true";
     const cleanHTML = clean === "true";
     let editor, text;

@@ -1,0 +1,43 @@
+/**
+ * custom.css for the MarkupEditor StyledContentView demo.
+ * It is just a minimal styling when class="title" and class="subtitle" have been set.
+ * In the demo, classes are set when the MarkupWKWebView.assignClasses method is invoked
+ * from the markupDidLoad method.
+ */
+
+/* Override the font-weight: bold used for h4 in markup.css */
+h4 {
+    font-weight: normal;
+}
+
+/* Override the caret-color in markup.css */
+#editor {
+    caret-color: black;
+}
+@media (prefers-color-scheme: dark) {
+    #editor {
+        caret-color: yellow;
+    }
+}
+
+/* Use a gray background on elements with class="title" */
+.title {
+    background-color: gray;
+}
+@media (prefers-color-scheme: dark) {
+    .title {
+        color: black;
+        caret-color: lightgray;
+    }
+}
+
+/* Use a lightgray background on elements with class="subtitle" */
+.subtitle {
+    background-color: lightgray;
+}
+@media (prefers-color-scheme: dark) {
+    .subtitle {
+        color: black;
+        caret-color: gray;
+    }
+}
