@@ -701,20 +701,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Javascript interactions
     
-    public func getHtml(_ handler: ((String?)->Void)?) {
-        getPrettyHtml(handler)
+    /// Return the HTML contained in this MarkupWKWebView.
+    ///
+    /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
+    public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
+        //  Pretty HTML is formatted to be readable.
+        //  Clean HTML has divs, spans, and empty text nodes removed.
+        evaluateJavaScript("MU.getHTML('\(pretty)', '\(clean)')") { result, error in
+            handler?(result as? String)
+        }
     }
     
+    /// Return unformatted but clean HTML contained in this MarkupWKWebView.
+    ///
+    /// The HTML is functionally equivalent to `getHtml()` but is compressed.
     public func getRawHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML(false)") { result, error in
-            handler?(result as? String)
-        }
-    }
-    
-    public func getPrettyHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML()") { result, error in
-            handler?(result as? String)
-        }
+        getHtml(pretty: false, handler)
     }
     
     public func emptyDocument(handler: (()->Void)? = nil) {
