@@ -6,9 +6,12 @@
 //
 
 /**
- * Make H1 elements be class .title, and H2 elements be class .subtitle.
+ * A public method that can be invoked from MarkupWKWebView to execute the
+ * assignment of classes to h1 and h2 elements, so that custom.css styling
+ * will show up. Invoking this method requires an extension to MarkupWKWebView
+ * which can be called from the MarkupDelegate.markupLoaded method.
  */
-const _assignClasses = function() {
+MU.assignClasses = function() {
     const h1Elements = document.getElementsByTagName('h1');
     for (let i = 0; i < h1Elements.length; i++) {
         element = h1Elements[i];
@@ -20,13 +23,3 @@ const _assignClasses = function() {
         element.classList.add('subtitle');
     };
 };
-
-/**
- * A public method that can be invoked from MarkupWKWebView to execute the
- * assignment of classes to h1 and h2 elements, so that custom.css styling
- * will show up. Invoking this method requires an extension to MarkupWKWebView
- * which can be called from the MarkupDelegate.markupLoaded method.
- */
-MU.assignClasses = function() {
-    _assignClasses()
-}

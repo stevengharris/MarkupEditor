@@ -218,13 +218,16 @@ markupConfiguration.userScriptFile = "custom.js"
 
 The `userScriptFile` is loaded after `markup.js`. Your code can use the functions in `markup.js` or which you loaded using `userScripts` if needed.
 
-To invoke a function in your custom script, you should extend the MarkupWKWebView. For example, if you have a `custom.js` file that contains these functions:
+To invoke a function in your custom script, you should extend the MarkupWKWebView. For example, if you have a `custom.js` file that contains this function:
 
 ```
 /**
- * Make H1 elements be class .title, and H2 elements be class .subtitle.
+ * A public method that can be invoked from MarkupWKWebView to execute the
+ * assignment of classes to h1 and h2 elements, so that custom.css styling
+ * will show up. Invoking this method requires an extension to MarkupWKWebView
+ * which can be called from the MarkupDelegate.markupLoaded method.
  */
-const _assignClasses = function() {
+MU.assignClasses = function() {
     const h1Elements = document.getElementsByTagName('h1');
     for (let i = 0; i < h1Elements.length; i++) {
         element = h1Elements[i];
@@ -236,16 +239,6 @@ const _assignClasses = function() {
         element.classList.add('subtitle');
     };
 };
-
-/**
- * A public method that can be invoked from MarkupWKWebView to execute the
- * assignment of classes to h1 and h2 elements, so that custom.css styling
- * will show up. Invoking this method requires an extension to MarkupWKWebView
- * which can be called from the MarkupDelegate.markupLoaded method.
- */
-MU.assignClasses = function() {
-    _assignClasses()
-}
 ```
 
 then you can extend MarkupWKWebView to be able to invoke `MU.assignClasses`:
@@ -402,7 +395,7 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
-#### Version 0.6.1 (Beta 3)
+#### Version 0.6.2 (Beta 3)
 
 * Update README to clarify how to get modified HTML, a recurring issue for users (e.g., https://github.com/stevengharris/MarkupEditor/issues/176).
 * Update README to include a [Customizing the MarkupEditor](#customizing-the-markupeditor) section.
