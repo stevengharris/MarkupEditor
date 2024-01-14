@@ -127,7 +127,7 @@ var body: some View {
 }
 ```
 
-In this example, `demoHtml` is **not** modified by the MarkupEditor as you edit the document. The `html` is passed as a binding so that you can modify it from your app.
+In this example, `demoHtml` is **not** modified by the MarkupEditor as you edit the document. The `html` is passed as a binding so that you can modify it from your app. You must use `MarkupWKWebView.getHtml()` to get the modified HTML.
 
 ## Customizing the MarkupEditor
 
@@ -135,7 +135,7 @@ You can do some limited customization of the MarkupToolbar and the MarkupEditor 
 
 You can also provide your own CSS-based style customization and JavaScript scripts for the MarkupEditor to use in your app. The StyledContentView and StyledViewController demonstrate usage of custom CSS and scripts on the `demo.html` document and are discussed below.
 
-### Customizing The Toolbar
+### Customizing the Toolbar
 
 You can use either a compact style of toolbar with only buttons, or a labeled form that shows what each button does. The default style is labeled. If you want to use the compact form, set `MarkupEditor.style` to `.compact`.
 
@@ -170,7 +170,7 @@ The MarkupEditor uses a subset of HTML elements and generally does not specify t
 * Tables: `<TABLE>`, `<THEAD>`, `<TBODY>`, `<TR>`, `<TH>`, `<TD>`.
 * Indenting: `<BLOCKQUOTE>`.
 
-All editable content is contained in a single <DIV> with the id of `editor`. Occasionally a `<BR>` element will be used to enable selection within an empty element. For example, if you hit Enter, the MarkupEditor produces a new paragraph as `<P><BR></P>`. `<SPAN>` elements are used for the image resizing handles but are never returned in HTML when you use `MarkupWKWebView.getHtml()`
+All editable content is contained in a single `<DIV>` with the id of `editor`. Occasionally a `<BR>` element will be used to enable selection within an empty element. For example, if you hit Enter, the MarkupEditor produces a new paragraph as `<P><BR></P>`. `<SPAN>` elements are used for the image resizing handles but are never returned in HTML when you use `MarkupWKWebView.getHtml()`
 
 The MarkupEditor uses a "baseline" styling that is provided in `markup.css`. One way to customize the MarkupEditor style is to fork the repository and edit `markup.css` to fit your needs. A less intrusive mechanism is to include your own CSS file with your app that uses the MarkupEditor, and identify the file using `MarkupWKWebViewConfiguration` that you can pass when you instantiate a MarkupEditorView or MarkupEditorUIView. The CSS file you identify this way is loaded *after* `markup.css`, so its contents follows the normal [CSS cascading rules](https://russmaxdesign.github.io/maxdesign-slides/02-css/207-css-cascade.html#/). 
 
@@ -405,10 +405,10 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 #### Version 0.6.1 (Beta 3)
 
 * Update README to clarify how to get modified HTML, a recurring issue for users (e.g., https://github.com/stevengharris/MarkupEditor/issues/176).
-* Update README to include a [Customizing The Markup Editor](https://github.com/stevengharris/MarkupEditor#customizing-the-markupeditor) section.
-* Add ability to customize [CSS](https://github.com/stevengharris/MarkupEditor#customizing-document-style) and [scripts](https://github.com/stevengharris/MarkupEditor#adding-custom-scripts) in MarkupWKWebViewConfiguration.
-* Fixed various paste issues (https://github.com/stevengharris/MarkupEditor/issues/184, https://github.com/stevengharris/MarkupEditor/issues/179, https://github.com/stevengharris/MarkupEditor/issues/128)
-* Removed empty text element left on formatting (https://github.com/stevengharris/MarkupEditor/issues/181)
+* Update README to include a [Customizing the MarkupEditor](#customizing-the-markupeditor) section.
+* Add ability to customize [CSS](#customizing-document-style) and [scripts](#adding-custom-scripts) in MarkupWKWebViewConfiguration.
+* Fixed various paste issues (https://github.com/stevengharris/MarkupEditor/issues/184, https://github.com/stevengharris/MarkupEditor/issues/179, https://github.com/stevengharris/MarkupEditor/issues/128).
+* Removed empty text element left on formatting (https://github.com/stevengharris/MarkupEditor/issues/181).
 
 #### Version 0.6.0 (Beta 2)
 
