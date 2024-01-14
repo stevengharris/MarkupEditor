@@ -31,6 +31,11 @@
 		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
+		AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
+		AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
+		AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* StyledContentView.swift */; };
+		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
+		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -185,6 +190,9 @@
 		AA2EB17D2B53446300224F5E /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
 		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
+		AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
+		AA2EB1882B53579900224F5E /* StyledContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledContentView.swift; sourceTree = "<group>"; };
+		AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledViewController.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
@@ -338,6 +346,7 @@
 				AA2EB1822B534BE600224F5E /* custom.js */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
+				AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
@@ -427,6 +436,7 @@
 				AAB411252AD069F80072C765 /* SearchableContentView.swift */,
 				AAB411222AD0695F0072C765 /* SearchBar.swift */,
 				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
+				AA2EB1882B53579900224F5E /* StyledContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
 				AA65294D260E8114000674B7 /* Info.plist */,
@@ -450,6 +460,7 @@
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* DemoViewController.swift */,
 				AAB1040728B1A0780063BE2A /* SimplestViewController.swift */,
+				AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -838,6 +849,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
 				AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */,
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
 				AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */,
@@ -846,6 +858,8 @@
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
 				AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
+				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
+				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
@@ -856,10 +870,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */,
+				AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
+				AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
