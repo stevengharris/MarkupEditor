@@ -2,7 +2,7 @@
 //  MarkupWKWebView+Extensions.swift
 //  MarkupEditor
 //
-//  Created by Steven Harris on 12/28/23.
+//  Created by Steven Harris on 1/15/24.
 //
 
 import MarkupEditor
@@ -53,4 +53,3 @@ extension MarkupWKWebView {
     }
 
 }
-
