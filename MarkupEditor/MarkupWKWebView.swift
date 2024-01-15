@@ -361,22 +361,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try? FileManager.default.removeItem(atPath: cacheUrl().path)
     }
     
-    /// Set the EditableAttributes for the editor element.
-    public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
-        guard
-            let attributes = markupConfiguration?.topLevelAttributes,
-            !attributes.isEmpty,
-            let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
-            let jsonString = String(data: jsonData, encoding: .utf8)
-        else {
-            handler?()
-            return
-        }
-        evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
-            handler?()
-        }
-    }
-    
     /// Return the URL for an "id" subdirectory below the app's cache directory
     private func cacheUrl() -> URL {
         let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
