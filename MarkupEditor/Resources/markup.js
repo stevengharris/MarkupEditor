@@ -3013,7 +3013,7 @@ MU.resetSelection = function() {
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function(pretty, clean) {
+MU.getHTML = function(pretty="true", clean="true") {
     const prettyHTML = pretty === "true";
     const cleanHTML = clean === "true";
     let editor, text;

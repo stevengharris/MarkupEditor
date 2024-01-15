@@ -361,6 +361,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try? FileManager.default.removeItem(atPath: cacheUrl().path)
     }
     
+    /// Set the EditableAttributes for the editor element.
+    public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
+        guard
+            let attributes = markupConfiguration?.topLevelAttributes,
+            !attributes.isEmpty,
+            let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
+            let jsonString = String(data: jsonData, encoding: .utf8)
+        else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
+            handler?()
+        }
+    }
+    
     /// Return the URL for an "id" subdirectory below the app's cache directory
     private func cacheUrl() -> URL {
         let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
@@ -710,6 +726,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Javascript interactions
     
+    /// Return the HTML contained in this MarkupWKWebView.
+    ///
+    /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
     public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
         // By default, we get "pretty" and "clean" HTML.
         //  Pretty HTML is formatted to be readable.
@@ -719,6 +738,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    /// Return unformatted but clean HTML contained in this MarkupWKWebView.
+    ///
+    /// The HTML is functionally equivalent to `getHtml()` but is compressed.
     public func getRawHtml(_ handler: ((String?)->Void)?) {
         getHtml(pretty: false, handler)
     }

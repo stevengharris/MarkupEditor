@@ -27,11 +27,11 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     private var wkUIDelegate: WKUIDelegate?
     private var userScripts: [String]?
     private var markupConfiguration: MarkupWKWebViewConfiguration?
-    @Binding private var html: String
-    private var placeholder: String?
-    private var selectAfterLoad: Bool
     private var resourcesUrl: URL?
     private var id: String?
+    @Binding private var html: String
+    private var selectAfterLoad: Bool
+    private var placeholder: String?
     
     /// Initialize with html content that is bound to an externally-held String (and therefore changable)
     ///

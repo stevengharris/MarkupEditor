@@ -111,7 +111,31 @@ class SimplestViewController: UIViewController {
 }
 ```
 
-### Customizing The Toolbar
+### Getting Edited HTML
+
+As you edit your document, you can see its contents change in proper WYSIWYG fashion. The document HTML is *not* automatically passed back to Swift as you make changes. You must retrieve the HTML at an appropriate place in your app using `MarkupWKWebView.getHtml()`. This leaves the question: what is "an appropriate place"? The answer is dependent on how you are using the MarkupEditor. In the demo, where you can display the HTML as you type, the HTML is retrieved at every keystroke by using the `MarkupDelegate.markupInput(_:)` method. This is generally going to be a bad idea, since it makes typing much more heavyweight than it should be. You might only retrieve the edited HTML when your user presses a "Save" button. You might want to implement an autosave type of approach by tracking when changes are happening using `MarkupDelegate.markupInput(_:)`, and only invoking `MarkupWKWebView.getHtml()` when enough time has passed.
+
+The `getHtml()` method needs to be invoked on a MarkupWKWebView instance. Generally you will need to hold onto that instance yourself in your MarkupDelegate. You can get access to it in almost all of the MarkupDelegate methods (e.g., `MarkupWKWebView.markupLoaded` or `MarkupWKWebView.markupInput`). Using `MarkupEditor.selectedWebView` to get the instance will not be reliable, because the value becomes nil when no MarkupWKWebView has focus.
+
+Note that in SwiftUI, when you pass HTML to the MarkupEditorView, you pass a binding to a String. For example:
+
+```
+@State private var demoHtml: String = "<h1>Hello World</h1>"
+    
+var body: some View {
+    MarkupEditorView(html: $demoHtml)
+}
+```
+
+In this example, `demoHtml` is **not** modified by the MarkupEditor as you edit the document. The `html` is passed as a binding so that you can modify it from your app. You must use `MarkupWKWebView.getHtml()` to get the modified HTML.
+
+## Customizing the MarkupEditor
+
+You can do some limited customization of the MarkupToolbar and the MarkupEditor behavior overall. You should always do these customizations early in your app lifecycle.
+
+You can also provide your own CSS-based style customization and JavaScript scripts for the MarkupEditor to use in your app. The StyledContentView and StyledViewController demonstrate usage of custom CSS and scripts on the `demo.html` document and are discussed below.
+
+### Customizing the Toolbar
 
 You can use either a compact style of toolbar with only buttons, or a labeled form that shows what each button does. The default style is labeled. If you want to use the compact form, set `MarkupEditor.style` to `.compact`.
 
@@ -129,6 +153,113 @@ override init() {
     ToolbarContents.custom = myToolbarContents
 }
 ```
+
+Note that the MarkupToolbar uses the static value `MarkupEditor.selectedWebView` to determine which MarkupWKWebView to invoke operations on. This means that generally you should only have a single MarkupToolbar. It's possible to use multiple MarkupToolbars in your app, but you need to be aware that they will each operate against and display the state of the MarkupWKWebView held in `MarkupEditor.selectedWebView`.
+
+### Customizing Document Style
+
+A great byproduct of using HTML under the covers of the MarkupEditor is that you can use CSS to style the way the document looks. To do so means you need to know something about CSS and a bit about the internals of the MarkupEditor. 
+
+The MarkupEditor uses a subset of HTML elements and generally does not specify the HTML element "class" at all. (The one exception is for images and the associated resizing handles that are displayed when you select an image.) The MarkupEditor uses the following HTML elements:
+
+* Paragraph Styles: `<H1>`, `<H2>`, `<H3>`, `<H4>`, `<H5>`, `<H6>`, `<P>`. `<P>` is the default style, also referred to as "Normal" in various places.
+* Formatting: `<B>`, `<I>`, `<U>`, `<CODE>`, `<DEL>`.
+* Images: `<IMG class="resize-image">`. The internal details of the styling and classes to support resizable images are in `markup.js` but will not be covered here.
+* Links: `<A>`.
+* Lists: `<UL>`, `<OL>`, `<LI>`.
+* Tables: `<TABLE>`, `<THEAD>`, `<TBODY>`, `<TR>`, `<TH>`, `<TD>`.
+* Indenting: `<BLOCKQUOTE>`.
+
+All editable content is contained in a single `<DIV>` with the id of `editor`. Occasionally a `<BR>` element will be used to enable selection within an empty element. For example, if you hit Enter, the MarkupEditor produces a new paragraph as `<P><BR></P>`. `<SPAN>` elements are used for the image resizing handles but are never returned in HTML when you use `MarkupWKWebView.getHtml()`
+
+The MarkupEditor uses a "baseline" styling that is provided in `markup.css`. One way to customize the MarkupEditor style is to fork the repository and edit `markup.css` to fit your needs. A less intrusive mechanism is to include your own CSS file with your app that uses the MarkupEditor, and identify the file using `MarkupWKWebViewConfiguration` that you can pass when you instantiate a MarkupEditorView or MarkupEditorUIView. The CSS file you identify this way is loaded *after* `markup.css`, so its contents follows the normal [CSS cascading rules](https://russmaxdesign.github.io/maxdesign-slides/02-css/207-css-cascade.html#/). 
+
+To specify the MarkupWKWebViewConfiguration, you might hold onto it in your MarkupDelegate as `markupConfiguration = MarkupWKWebViewConfiguration()`. Assuming you created a custom CSS file called `custom.css` and packaged it as a resource with your app, specify it in the `markupConfiguration` using:
+
+```
+markupConfiguration.userCssFile = "custom.css"
+```
+
+Here is an example of how to override the `font-weight: bold` used for `<H4>` in `markup.css`:
+
+```
+h4 {
+    font-weight: normal;
+}
+```
+
+Here is an example showing how to modify the caret and selection colors (blue by default), with special behavior for dark mode:
+
+```
+#editor {
+    caret-color: black;
+}
+@media (prefers-color-scheme: dark) {
+    #editor {
+        caret-color: yellow;
+    }
+}
+```
+
+CSS is an incredibly powerful tool for customization. The contents of `markup.css` itself are minimal but show you how the basic elements are styled by default. If there is something the MarkupEditor is doing to prevent the kind of custom styling you are after, please file an issue; however, please do not file issues with questions about CSS.
+
+### Adding Custom Scripts
+
+MarkupEditor functionality that modifies and reports on the state of the HTML DOM in the MarkupWKWebView is all contained in `markup.js`. If you have scripting you want to add, there are two mechanisms for doing so:
+
+1. Create an array of strings that contain valid JavaScript scripts that will be loaded after `markup.js`. Pass these scripts to the MarkupEditorView or MarkupEditorUIView using the `userScripts` parameter at instantiation time.
+2. Create a file containing your JavaScript code, and identify the file in your MarkupWKWebViewConfiguration.
+
+To specify the MarkupWKWebViewConfiguration, you might hold onto it in your MarkupDelegate as `markupConfiguration = MarkupWKWebViewConfiguration()`. Assuming you created a script file called `custom.js` and packaged it as a resource with your app, specify it in the `markupConfiguration` using:
+
+```
+markupConfiguration.userScriptFile = "custom.js"
+```
+
+The `userScriptFile` is loaded after `markup.js`. Your code can use the functions in `markup.js` or which you loaded using `userScripts` if needed.
+
+To invoke a function in your custom script, you should extend the MarkupWKWebView. For example, if you have a `custom.js` file that contains this function:
+
+```
+/**
+ * A public method that can be invoked from MarkupWKWebView to execute the
+ * assignment of classes to h1 and h2 elements, so that custom.css styling
+ * will show up. Invoking this method requires an extension to MarkupWKWebView
+ * which can be called from the MarkupDelegate.markupLoaded method.
+ */
+MU.assignClasses = function() {
+    const h1Elements = document.getElementsByTagName('h1');
+    for (let i = 0; i < h1Elements.length; i++) {
+        element = h1Elements[i];
+        element.classList.add('title');
+    };
+    const h2Elements = document.getElementsByTagName('h2');
+    for (let i = 0; i < h2Elements.length; i++) {
+        element = h2Elements[i];
+        element.classList.add('subtitle');
+    };
+};
+```
+
+then you can extend MarkupWKWebView to be able to invoke `MU.assignClasses`:
+
+```
+extension MarkupWKWebView {
+    
+    /// Invoke the MU.assignClasses method on the JavaScript side that was added-in via custom.js.
+    public func assignClasses(_ handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.assignClasses()") { result, error in
+            if let error {
+                print(error.localizedDescription)
+            }
+            handler?()
+        }
+    }
+    
+}
+```
+
+The StyledContentView and StyledViewController demos use this approach along with `custom.css` to set the `title` class on `H1` elements, and `subtitle` class on `H2` elements and apply styling to them. This is a contrived use case (you could just use `custom.css` to style `H1` and `H2` directly), but it shows both custom scripting and CSS being used.
 
 ## Local Images
 
@@ -263,6 +394,14 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### Version 0.6.2 (Beta 3)
+
+* Update README to clarify how to get modified HTML, a recurring issue for users (e.g., https://github.com/stevengharris/MarkupEditor/issues/176).
+* Update README to include a [Customizing the MarkupEditor](#customizing-the-markupeditor) section.
+* Add ability to customize [CSS](#customizing-document-style) and [scripts](#adding-custom-scripts) in MarkupWKWebViewConfiguration.
+* Fixed various paste issues (https://github.com/stevengharris/MarkupEditor/issues/184, https://github.com/stevengharris/MarkupEditor/issues/179, https://github.com/stevengharris/MarkupEditor/issues/128).
+* Removed empty text element left on formatting (https://github.com/stevengharris/MarkupEditor/issues/181).
 
 #### Version 0.6.0 (Beta 2)
 
