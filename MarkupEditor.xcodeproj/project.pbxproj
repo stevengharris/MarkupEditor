@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4766AFA72B3E42AE00D9E1E5 /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA52B3E422400D9E1E5 /* MarkupWKWebView+Extensions.swift */; };
-		4766AFA82B3E42AF00D9E1E5 /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA52B3E422400D9E1E5 /* MarkupWKWebView+Extensions.swift */; };
 		4766AFA92B3E42B800D9E1E5 /* MarkupDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */; };
 		4766AFAA2B3E42B900D9E1E5 /* MarkupDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */; };
 		4766AFAB2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */; };
@@ -80,6 +78,7 @@
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* DemoViewController.swift */; };
 		AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
+		AA7B24D82B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */; };
 		AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA806A392652ED49008F60E2 /* Icons.swift */; };
 		AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFACB261E068F008AE31E /* StyleToolbar.swift */; };
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
@@ -189,7 +188,6 @@
 
 /* Begin PBXFileReference section */
 		4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupButton.swift; sourceTree = "<group>"; };
-		4766AFA52B3E422400D9E1E5 /* MarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
 		4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupButtonGroup.swift; sourceTree = "<group>"; };
 		AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditor.swift; sourceTree = "<group>"; };
 		AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStyle.swift; sourceTree = "<group>"; };
@@ -255,6 +253,7 @@
 		AA652A2E260E9A27000674B7 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		AA652A30260E9A27000674B7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA652ABB260EA194000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
+		AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditableMarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
 		AA806A392652ED49008F60E2 /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		AA8EFACB261E068F008AE31E /* StyleToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleToolbar.swift; sourceTree = "<group>"; };
 		AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
@@ -340,7 +339,7 @@
 				4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */,
 				4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */,
 				AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */,
-				4766AFA52B3E422400D9E1E5 /* MarkupWKWebView+Extensions.swift */,
+				AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */,
 			);
 			path = EditableAreas;
 			sourceTree = "<group>";
@@ -910,6 +909,7 @@
 				AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */,
 				4766AFAC2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
+				AA7B24D82B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift in Sources */,
 				AA4EBE8B2B3390F4006C614B /* SpaContentView.swift in Sources */,
 				4766AFB22B3F523500D9E1E5 /* MarkupButtonGroup.swift in Sources */,
 				AA4EBEA62B3CC262006C614B /* Divs.swift in Sources */,
@@ -917,7 +917,6 @@
 				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
-				4766AFA82B3E42AF00D9E1E5 /* MarkupWKWebView+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -933,7 +932,6 @@
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
-				4766AFA72B3E42AE00D9E1E5 /* MarkupWKWebView+Extensions.swift in Sources */,
 				AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,
 				4766AFAB2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */,
