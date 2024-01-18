@@ -7,14 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4766AFA92B3E42B800D9E1E5 /* MarkupDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */; };
-		4766AFAA2B3E42B900D9E1E5 /* MarkupDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */; };
-		4766AFAB2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */; };
-		4766AFAC2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */; };
-		4766AFAD2B3E42CA00D9E1E5 /* spaDemo.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* spaDemo.css */; };
-		4766AFAE2B3E42CF00D9E1E5 /* spaDemo.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* spaDemo.js */; };
-		4766AFB22B3F523500D9E1E5 /* MarkupButtonGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */; };
-		4766AFB32B3F523500D9E1E5 /* MarkupButtonGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */; };
+		4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
+		4766AFAE2B3E42CF00D9E1E5 /* demoDivs.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* demoDivs.js */; };
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
@@ -33,14 +27,12 @@
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
 		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
-		AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */; };
-		AA2EB17E2B53446300224F5E /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17D2B53446300224F5E /* EditableAttributes.swift */; };
 		AA2EB1802B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
-		AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
-		AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
+		AA2EB1862B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
+		AA2EB1872B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
 		AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* StyledContentView.swift */; };
 		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
 		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
@@ -62,13 +54,12 @@
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
-		AA4EBE8B2B3390F4006C614B /* SpaContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* SpaContentView.swift */; };
-		AA4EBE912B34FA3C006C614B /* spaDemo.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* spaDemo.css */; };
+		AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */; };
+		AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
 		AA4EBE952B3747D6006C614B /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE942B3747D6006C614B /* markup.js */; };
-		AA4EBE9B2B37542C006C614B /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9A2B37542C006C614B /* MarkupWKWebViewConfiguration.swift */; };
-		AA4EBE9E2B3B4FFE006C614B /* spaDemo.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* spaDemo.js */; };
+		AA4EBE9E2B3B4FFE006C614B /* demoDivs.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* demoDivs.js */; };
 		AA4EBEA42B3B8700006C614B /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */; };
-		AA4EBEA62B3CC262006C614B /* Divs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* Divs.swift */; };
+		AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
 		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
@@ -78,9 +69,14 @@
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* DemoViewController.swift */; };
 		AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
-		AA7B24D82B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */; };
-		AA7B24DD2B5896B2003C607A /* MarkupDivStructure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */; };
-		AA7B24DF2B58A043003C607A /* HtmlDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DE2B58A043003C607A /* HtmlDiv.swift */; };
+		AA7B24E02B59A617003C607A /* HtmlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */; };
+		AA7B24E12B59A61E003C607A /* HtmlButtonGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */; };
+		AA7B24E22B59A628003C607A /* HtmlDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DE2B58A043003C607A /* HtmlDiv.swift */; };
+		AA7B24E32B59A630003C607A /* HtmlDivHolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */; };
+		AA7B24E42B59A636003C607A /* MarkupDivStructure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */; };
+		AA7B24E52B59A72F003C607A /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
+		AA7B24E62B59A83B003C607A /* MarkupWKWebView+DivExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24D72B55ED72003C607A /* MarkupWKWebView+DivExtensions.swift */; };
+		AA7B24E92B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24E82B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift */; };
 		AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA806A392652ED49008F60E2 /* Icons.swift */; };
 		AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFACB261E068F008AE31E /* StyleToolbar.swift */; };
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
@@ -189,8 +185,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupButton.swift; sourceTree = "<group>"; };
-		4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupButtonGroup.swift; sourceTree = "<group>"; };
+		4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButton.swift; sourceTree = "<group>"; };
+		4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButtonGroup.swift; sourceTree = "<group>"; };
 		AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditor.swift; sourceTree = "<group>"; };
 		AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStyle.swift; sourceTree = "<group>"; };
 		AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupToolbarUIView.swift; sourceTree = "<group>"; };
@@ -205,11 +201,9 @@
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
 		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
-		AA2EB17D2B53446300224F5E /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
 		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
-		AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
+		AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+CustomExtensions.swift"; sourceTree = "<group>"; };
 		AA2EB1882B53579900224F5E /* StyledContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledContentView.swift; sourceTree = "<group>"; };
 		AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledViewController.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
@@ -218,14 +212,13 @@
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		AA4EBE8A2B3390F4006C614B /* SpaContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaContentView.swift; sourceTree = "<group>"; };
-		AA4EBE8E2B34C9DA006C614B /* spaDemo.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = spaDemo.css; sourceTree = "<group>"; };
+		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
+		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
 		AA4EBE942B3747D6006C614B /* markup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
-		AA4EBE9A2B37542C006C614B /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
-		AA4EBE9C2B378647006C614B /* spaDemo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = spaDemo.js; sourceTree = "<group>"; };
-		AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDiv.swift; sourceTree = "<group>"; };
+		AA4EBE9C2B378647006C614B /* demoDivs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = demoDivs.js; sourceTree = "<group>"; };
+		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
-		AA4EBEA52B3CC262006C614B /* Divs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Divs.swift; sourceTree = "<group>"; };
+		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
 		AA52F320280634B200EEC655 /* RedoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedoTests.swift; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
@@ -255,9 +248,10 @@
 		AA652A2E260E9A27000674B7 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		AA652A30260E9A27000674B7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA652ABB260EA194000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
-		AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditableMarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
+		AA7B24D72B55ED72003C607A /* MarkupWKWebView+DivExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+DivExtensions.swift"; sourceTree = "<group>"; };
 		AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDivStructure.swift; sourceTree = "<group>"; };
 		AA7B24DE2B58A043003C607A /* HtmlDiv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDiv.swift; sourceTree = "<group>"; };
+		AA7B24E82B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
 		AA806A392652ED49008F60E2 /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		AA8EFACB261E068F008AE31E /* StyleToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleToolbar.swift; sourceTree = "<group>"; };
 		AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
@@ -334,22 +328,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4766AFB02B3E439800D9E1E5 /* EditableAreas */ = {
-			isa = PBXGroup;
-			children = (
-				AA4EBE9C2B378647006C614B /* spaDemo.js */,
-				AA4EBE8E2B34C9DA006C614B /* spaDemo.css */,
-				AA4EBEA52B3CC262006C614B /* Divs.swift */,
-				AA7B24DE2B58A043003C607A /* HtmlDiv.swift */,
-				4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */,
-				4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */,
-				AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */,
-				AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */,
-				AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */,
-			);
-			path = EditableAreas;
-			sourceTree = "<group>";
-		};
 		AA0DDC6928AEA8C70081B869 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -367,7 +345,6 @@
 				AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */,
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */,
-				AA2EB17D2B53446300224F5E /* EditableAttributes.swift */,
 				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AAB1043128C2AEA30063BE2A /* ImageViewController.swift */,
@@ -387,13 +364,15 @@
 			children = (
 				AA65299D260E8450000674B7 /* AppDelegate.swift */,
 				AA652948260E8114000674B7 /* Assets.xcassets */,
-				AA1B816C26265CAD00891FFB /* demo.html */,
-				4766AFB02B3E439800D9E1E5 /* EditableAreas */,
 				AA2EB17F2B534BC900224F5E /* custom.css */,
 				AA2EB1822B534BE600224F5E /* custom.js */,
+				AA1B816C26265CAD00891FFB /* demo.html */,
+				AA4EBE8E2B34C9DA006C614B /* demoDivs.css */,
+				AA4EBE9C2B378647006C614B /* demoDivs.js */,
+				AA4EBEA52B3CC262006C614B /* DemoDivs.swift */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
-				AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */,
+				AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
@@ -480,10 +459,10 @@
 				AA65296E260E814A000674B7 /* SwiftUIDemo.entitlements */,
 				AA434304279F252E002E2AFD /* SceneDelegate.swift */,
 				AAD26E85264463A300908777 /* DemoContentView.swift */,
+				AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */,
 				AAB411252AD069F80072C765 /* SearchableContentView.swift */,
 				AAB411222AD0695F0072C765 /* SearchBar.swift */,
 				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
-				AA4EBE8A2B3390F4006C614B /* SpaContentView.swift */,
 				AA2EB1882B53579900224F5E /* StyledContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
@@ -538,14 +517,14 @@
 				AA652A11260E9A00000674B7 /* MarkupEditorView.swift */,
 				AA0DDC6728AEA7280081B869 /* MarkupEditorUIView.swift */,
 				AA652A15260E9A00000674B7 /* MarkupWKWebView.swift */,
-				AA4EBE9A2B37542C006C614B /* MarkupWKWebViewConfiguration.swift */,
-				AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */,
+				AA7B24E82B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift */,
 				AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */,
 				AA652A07260E99FF000674B7 /* Resources */,
 				AA652A3B260E9B55000674B7 /* Selection */,
 				AA652A38260E9B24000674B7 /* Toolbars */,
 				AA1749E4269B9444005F0428 /* Utilities */,
 				AA0DDC6928AEA8C70081B869 /* Extensions */,
+				AA7B24EA2B59D338003C607A /* Divs */,
 			);
 			path = MarkupEditor;
 			sourceTree = "<group>";
@@ -584,6 +563,19 @@
 				AA652A14260E9A00000674B7 /* ListContext.swift */,
 			);
 			name = Selection;
+			sourceTree = "<group>";
+		};
+		AA7B24EA2B59D338003C607A /* Divs */ = {
+			isa = PBXGroup;
+			children = (
+				4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */,
+				4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */,
+				AA7B24DE2B58A043003C607A /* HtmlDiv.swift */,
+				AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */,
+				AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */,
+				AA7B24D72B55ED72003C607A /* MarkupWKWebView+DivExtensions.swift */,
+			);
+			name = Divs;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -800,8 +792,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */,
-				AA4EBE912B34FA3C006C614B /* spaDemo.css in Resources */,
-				AA4EBE9E2B3B4FFE006C614B /* spaDemo.js in Resources */,
+				AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */,
+				AA4EBE9E2B3B4FFE006C614B /* demoDivs.js in Resources */,
 				AA2EB1802B534BC900224F5E /* custom.css in Resources */,
 				AA1B816D26265CAD00891FFB /* demo.html in Resources */,
 				AA2EB1832B534BE600224F5E /* custom.js in Resources */,
@@ -814,13 +806,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4766AFAE2B3E42CF00D9E1E5 /* spaDemo.js in Resources */,
+				4766AFAE2B3E42CF00D9E1E5 /* demoDivs.js in Resources */,
 				AA2EB1842B534BE600224F5E /* custom.js in Resources */,
 				AA2EB1812B534BC900224F5E /* custom.css in Resources */,
 				AAFB64DC277CEED80032E859 /* steve.png in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
 				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,
-				4766AFAD2B3E42CA00D9E1E5 /* spaDemo.css in Resources */,
+				4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -861,6 +853,7 @@
 				AA408B202616685B00CAE8B9 /* MarkupCoordinator.swift in Sources */,
 				AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */,
 				AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */,
+				AA7B24E32B59A630003C607A /* HtmlDivHolder.swift in Sources */,
 				AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */,
 				AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */,
 				AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */,
@@ -871,14 +864,16 @@
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */,
 				AAAF7A6D289AE4B9005EF58E /* ToolbarContents.swift in Sources */,
-				AA4EBE9B2B37542C006C614B /* MarkupWKWebViewConfiguration.swift in Sources */,
-				AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
+				AA7B24E92B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift in Sources */,
 				AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
 				AA408B292616685B00CAE8B9 /* StyleContext.swift in Sources */,
-				AA2EB17E2B53446300224F5E /* EditableAttributes.swift in Sources */,
+				AA7B24E12B59A61E003C607A /* HtmlButtonGroup.swift in Sources */,
+				AA7B24E02B59A617003C607A /* HtmlButton.swift in Sources */,
+				AA7B24E62B59A83B003C607A /* MarkupWKWebView+DivExtensions.swift in Sources */,
+				AA7B24E22B59A628003C607A /* HtmlDiv.swift in Sources */,
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
 				AABBAD4C2AA6382C00ADDA55 /* OSLogger+Extensions.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
@@ -889,6 +884,7 @@
 				AA0DDC6628AE91920081B869 /* MarkupWKWebViewRepresentable.swift in Sources */,
 				AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */,
 				AA408B2B2616685B00CAE8B9 /* SelectionState.swift in Sources */,
+				AA7B24E42B59A636003C607A /* MarkupDivStructure.swift in Sources */,
 				AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */,
 				AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */,
 				AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */,
@@ -904,26 +900,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
-				AA7B24DD2B5896B2003C607A /* MarkupDivStructure.swift in Sources */,
+				AA2EB1862B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */,
 				AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */,
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
-				4766AFAA2B3E42B900D9E1E5 /* MarkupDiv.swift in Sources */,
 				AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */,
 				AAD26E86264463A300908777 /* DemoContentView.swift in Sources */,
 				AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */,
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
 				AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */,
-				4766AFAC2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
-				AA7B24D82B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift in Sources */,
-				AA4EBE8B2B3390F4006C614B /* SpaContentView.swift in Sources */,
-				4766AFB22B3F523500D9E1E5 /* MarkupButtonGroup.swift in Sources */,
-				AA4EBEA62B3CC262006C614B /* Divs.swift in Sources */,
+				AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */,
+				AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */,
 				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
 				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
-				AA7B24DF2B58A043003C607A /* HtmlDiv.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -932,17 +922,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4766AFA92B3E42B800D9E1E5 /* MarkupDiv.swift in Sources */,
-				4766AFB32B3F523500D9E1E5 /* MarkupButtonGroup.swift in Sources */,
 				AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */,
 				AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
+				AA7B24E52B59A72F003C607A /* DemoDivs.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
-				AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
+				AA2EB1872B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,
-				4766AFAB2B3E42C000D9E1E5 /* MarkupButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

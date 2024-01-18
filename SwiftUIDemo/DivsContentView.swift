@@ -1,5 +1,5 @@
 //
-//  SpaContentView.swift
+//  DivsContentView.swift
 //  SwiftUIDemo
 //
 //  Created by Steven Harris on 12/20/23.
@@ -8,7 +8,7 @@
 import SwiftUI
 import MarkupEditor
 
-struct SpaContentView: View {
+struct DivsContentView: View {
 
     private var markupConfiguration: MarkupWKWebViewConfiguration
     private let divStructure = MarkupDivStructure()
@@ -48,14 +48,14 @@ struct SpaContentView: View {
         /// Don't specify any top-level attributes for the editor div in this demo.
         markupConfiguration = MarkupWKWebViewConfiguration()
         markupConfiguration.topLevelAttributes = EditableAttributes.empty
-        markupConfiguration.userCssFile = "spaDemo.css"
-        markupConfiguration.userScriptFile = "spaDemo.js"
+        markupConfiguration.userCssFile = "demoDivs.css"
+        markupConfiguration.userScriptFile = "demoDivs.js"
         _demoHtml = State(initialValue: "")
         initDivStructure()
     }
     
     private func initDivStructure() {
-        let documentDivs: [MarkupDiv] = [
+        let documentDivs: [HtmlDivHolder] = [
             Div1(name: "Chapter 1 - It Begins"),
             Div2(id: "Section1", name: "We Have Liftoff"),
             Div3(contents: "<p>This is an editable subsection</p>"),
@@ -69,8 +69,11 @@ struct SpaContentView: View {
             // For Div2's, which are kind Section separators, we want buttons
             if div is Div2 {
                 divStructure.add([
-                    MarkupButton(label: "􀋭", action: { inspect(div.id) }),
-                    MarkupButton(label: "􀈑", action: { delete(div.id) }),
+                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                    // See https://feedbackassistant.apple.com/feedback/13537558.
+                    // For now, fill in with Emojis.
+                    HtmlButton(label: "🧐", targetId: div.id, action: { actionInfo in inspect(actionInfo) }),
+                    HtmlButton(label: "🗑️", targetId: div.id, action: { actionInfo in delete(actionInfo) }),
                 ], in: div.id)
             }
         }
@@ -100,17 +103,17 @@ struct SpaContentView: View {
         markupImageToAdd(view, url: url)
     }
     
-    private func delete(_ element: String) {
-        print("Delete element: \(element)")
+    private func delete(_ actionInfo: HtmlButton.ActionInfo) {
+        print("Delete element: \(actionInfo.targetId ?? "nil")")
     }
     
-    private func inspect(_ element: String) {
-        print("Inspect element: \(element)")
+    private func inspect(_ actionInfo: HtmlButton.ActionInfo) {
+        print("Inspect element: \(actionInfo.targetId ?? "nil")")
     }
     
 }
 
-extension SpaContentView: MarkupDelegate {
+extension DivsContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         
@@ -140,8 +143,8 @@ extension SpaContentView: MarkupDelegate {
     
     func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
         print("Button \(id) at \(rect) was clicked.")
-        if let action = divStructure.action(for: id) {
-            action()
+        if let button = divStructure.button(for: id) {
+            button.executeAction(view: view, rect: rect)
         }
     }
     
@@ -162,7 +165,7 @@ extension SpaContentView: MarkupDelegate {
 
 }
 
-extension SpaContentView: FileToolbarDelegate {
+extension DivsContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {
@@ -178,13 +181,4 @@ extension SpaContentView: FileToolbarDelegate {
         withAnimation { rawShowing.toggle()}
     }
 
-}
-
-extension String {
-    var unicodeName: String {
-        let cfstr = NSMutableString(string: self) as CFMutableString
-        var range = CFRangeMake(0, CFStringGetLength(cfstr))
-        CFStringTransform(cfstr, &range, kCFStringTransformToUnicodeName, false)
-        return String(cfstr)
-    }
 }

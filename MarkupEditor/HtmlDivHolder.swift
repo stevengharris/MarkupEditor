@@ -1,5 +1,5 @@
 //
-//  MarkupDiv.swift
+//  HtmlDivHolder.swift
 //  MarkupEditor
 //  Adapted from https://stackoverflow.com/a/38885813/8968411
 //
@@ -7,16 +7,15 @@
 //
 
 import Foundation
-import MarkupEditor
 
-public protocol HasMarkupDiv {
+public protocol HasHtmlDiv {
     var htmlDiv: HtmlDiv { get set }
 }
 
-public protocol MarkupDiv: HasMarkupDiv { }
+public protocol HtmlDivHolder: HasHtmlDiv { }
 
-/// The MarkupDiv extension just trampolines to get/set the corresponding HtmlDiv values.
-extension MarkupDiv {
+/// The HtmlDivHolder extension just trampolines to get/set the corresponding HtmlDiv values.
+extension HtmlDivHolder {
     public var id: String {
         get { htmlDiv.id }
         set { htmlDiv.id = newValue }
@@ -37,7 +36,7 @@ extension MarkupDiv {
         get { htmlDiv.htmlContents }
         set { htmlDiv.htmlContents = newValue }
     }
-    public var buttonGroup: MarkupButtonGroup? {
+    public var buttonGroup: HtmlButtonGroup? {
         get { htmlDiv.buttonGroup }
         set { htmlDiv.buttonGroup = newValue }
     }

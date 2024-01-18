@@ -1,5 +1,5 @@
 //
-//  MarkupWKWebView+Extensions.swift
+//  MarkupWKWebView+CustomExtensions.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 1/13/24.

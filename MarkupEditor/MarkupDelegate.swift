@@ -113,7 +113,7 @@ public protocol MarkupDelegate {
     /// See the default implementation for details. 
     func markupShowTablePopover(_ view: MarkupWKWebView)
     
-    /// A MarkupButton that was added to the view was clicked.
+    /// An HtmlButton that was added to the view was clicked.
     /// The button's id and its rectangle position is returned.
     func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect)
     

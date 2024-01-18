@@ -1,3 +1,8 @@
+/********************************************************************************
+ * DIV and Button-related functionality in support of DIVS defining
+ * separate editable (or non-editable) styled areas within the MU.editor.
+ */
+
 MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
     const parent = document.getElementById(parentId);
     if (!parent) {

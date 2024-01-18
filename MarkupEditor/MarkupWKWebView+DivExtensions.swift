@@ -1,16 +1,15 @@
 //
-//  MarkupWKWebView+Extensions.swift
+//  MarkupWKWebView+DivExtensions.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 1/15/24.
 //
 
-import MarkupEditor
 import OSLog
 
 extension MarkupWKWebView {
     
-    public func addDiv(_ div: MarkupDiv, handler: (()->Void)? = nil) {
+    public func addDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
         let id = div.id
         let parentId = div.parentId
         let cssClass = div.cssClass
@@ -28,7 +27,7 @@ extension MarkupWKWebView {
         }
     }
     
-    public func addButtonGroup(_ buttonGroup: MarkupButtonGroup, handler: (()->Void)? = nil) {
+    public func addButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         let id = buttonGroup.id
         let cssClass = buttonGroup.cssClass
         let divId = buttonGroup.divId
@@ -40,7 +39,7 @@ extension MarkupWKWebView {
         }
     }
 
-    public func addButton(_ button: MarkupButton, in divId: String, handler: (()->Void)? = nil) {
+    public func addButton(_ button: HtmlButton, in divId: String, handler: (()->Void)? = nil) {
         let id = button.id
         let cssClass = button.cssClass
         let label = button.label
