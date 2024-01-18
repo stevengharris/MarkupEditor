@@ -11,13 +11,14 @@ import MarkupEditor
 struct SpaContentView: View {
 
     private var markupConfiguration: MarkupWKWebViewConfiguration
+    private let divStructure = MarkupDivStructure()
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
     
-var body: some View {
+    var body: some View {
         VStack(spacing: 0) {
             MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $demoHtml, id: "SpaDocument")
             if rawShowing {
@@ -50,6 +51,29 @@ var body: some View {
         markupConfiguration.userCssFile = "spaDemo.css"
         markupConfiguration.userScriptFile = "spaDemo.js"
         _demoHtml = State(initialValue: "")
+        initDivStructure()
+    }
+    
+    private func initDivStructure() {
+        let documentDivs: [MarkupDiv] = [
+            Div1(name: "Chapter 1 - It Begins"),
+            Div2(id: "Section1", name: "We Have Liftoff"),
+            Div3(contents: "<p>This is an editable subsection</p>"),
+            Div3(contents: "<p>This is also an editable subsection</p>"),
+            Div2(id: "Section2", name: "Epilogue"),
+            Div3(contents: "<p>The demo is over</p>"),
+        ]
+        
+        for div in documentDivs {
+            divStructure.add(div)
+            // For Div2's, which are kind Section separators, we want buttons
+            if div is Div2 {
+                divStructure.add([
+                    MarkupButton(label: "􀋭", action: { inspect(div.id) }),
+                    MarkupButton(label: "􀈑", action: { delete(div.id) }),
+                ], in: div.id)
+            }
+        }
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
@@ -90,28 +114,8 @@ extension SpaContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         
-        let documentDivs: [MarkupDiv] = [
-            Div1(name: "Chapter 1 - It Begins"),
-            Div2(id: "Section1", name: "We Have Liftoff"),
-            Div3(contents: "<p>This is an editable subsection</p>"),
-            Div3(contents: "<p>This is also an editable subsection</p>"),
-            Div2(id: "Section2", name: "Epilogue"),
-            Div3(contents: "<p>The demo is over</p>"),
-        ]
-        
-        let divButtonGroups: [MarkupButtonGroup] = [
-            MarkupButtonGroup(in: "Section1", buttons: [
-                MarkupButton(label: "eye", action: { inspect("Section1") }),
-                MarkupButton(label: "trash", action: { delete("Section1") }),
-            ]),
-            MarkupButtonGroup(in: "Section2", buttons: [
-                MarkupButton(label: "eye", action: { inspect("Section2") }),
-                MarkupButton(label: "trash", action: { delete("Section2") }),
-            ])
-        ]
-        
         MarkupEditor.selectedWebView = view
-        for div in documentDivs {
+        for div in divStructure.divs {
             view.addDiv(div)
             if let buttonGroup = div.buttonGroup {
                 for button in buttonGroup.buttons {
@@ -119,10 +123,10 @@ extension SpaContentView: MarkupDelegate {
                 }
             }
         }
-        for divButtonGroup in divButtonGroups {
-            view.addDiv(divButtonGroup)
-            for button in divButtonGroup.buttons {
-                view.addButton(button, in: divButtonGroup.id)
+        for buttonGroup in divStructure.buttonGroups {
+            view.addDiv(buttonGroup)
+            for button in buttonGroup.buttons {
+                view.addButton(button, in: buttonGroup.id)
             }
         }
         setRawText(handler)
@@ -136,6 +140,9 @@ extension SpaContentView: MarkupDelegate {
     
     func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
         print("Button \(id) at \(rect) was clicked.")
+        if let action = divStructure.action(for: id) {
+            action()
+        }
     }
     
     func markupInput(_ view: MarkupWKWebView) {

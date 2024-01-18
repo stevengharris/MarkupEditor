@@ -9,30 +9,13 @@
 import Foundation
 import MarkupEditor
 
-public struct HtmlDiv: Identifiable {
-    public var id: String
-    public var parentId: String
-    public var cssClass: String = "editor"
-    public var attributes: EditableAttributes = EditableAttributes.standard
-    public var htmlContents: String
-    public var buttonGroup: MarkupButtonGroup?
-    
-    public init(id: String, parentId: String = "editor", cssClass: String, attributes: EditableAttributes, htmlContents: String = "", buttonGroup: MarkupButtonGroup? = nil) {
-        self.id = id
-        self.parentId = parentId
-        self.cssClass = cssClass
-        self.attributes = attributes
-        self.htmlContents = htmlContents
-        self.buttonGroup = buttonGroup
-    }
-}
-
 public protocol HasMarkupDiv {
     var htmlDiv: HtmlDiv { get set }
 }
 
 public protocol MarkupDiv: HasMarkupDiv { }
 
+/// The MarkupDiv extension just trampolines to get/set the corresponding HtmlDiv values.
 extension MarkupDiv {
     public var id: String {
         get { htmlDiv.id }

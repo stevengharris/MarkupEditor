@@ -8,6 +8,10 @@
 import Foundation
 import MarkupEditor
 
+/// MarkupButtonGroups are styled containers for buttons.
+///
+/// We use them so that the CSS styling can push the group of buttons to the edge. They are not typically referenced directly, but are created by
+/// adding a button or array of buttons to the MarkupDivStructure, which is always done by identifying the id of the div they reside in.
 public class MarkupButtonGroup: MarkupDiv {
     public var id: String
     public var htmlDiv: HtmlDiv

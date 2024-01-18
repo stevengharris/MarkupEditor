@@ -79,6 +79,8 @@
 		AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* DemoViewController.swift */; };
 		AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA7B24D82B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */; };
+		AA7B24DD2B5896B2003C607A /* MarkupDivStructure.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */; };
+		AA7B24DF2B58A043003C607A /* HtmlDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DE2B58A043003C607A /* HtmlDiv.swift */; };
 		AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA806A392652ED49008F60E2 /* Icons.swift */; };
 		AA8EFACC261E068F008AE31E /* StyleToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFACB261E068F008AE31E /* StyleToolbar.swift */; };
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
@@ -254,6 +256,8 @@
 		AA652A30260E9A27000674B7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA652ABB260EA194000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditableMarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
+		AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDivStructure.swift; sourceTree = "<group>"; };
+		AA7B24DE2B58A043003C607A /* HtmlDiv.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDiv.swift; sourceTree = "<group>"; };
 		AA806A392652ED49008F60E2 /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		AA8EFACB261E068F008AE31E /* StyleToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleToolbar.swift; sourceTree = "<group>"; };
 		AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
@@ -336,9 +340,11 @@
 				AA4EBE9C2B378647006C614B /* spaDemo.js */,
 				AA4EBE8E2B34C9DA006C614B /* spaDemo.css */,
 				AA4EBEA52B3CC262006C614B /* Divs.swift */,
+				AA7B24DE2B58A043003C607A /* HtmlDiv.swift */,
 				4766AFA32B3E230500D9E1E5 /* MarkupButton.swift */,
 				4766AFB12B3F523500D9E1E5 /* MarkupButtonGroup.swift */,
 				AA4EBE9F2B3B83D0006C614B /* MarkupDiv.swift */,
+				AA7B24DC2B5896B2003C607A /* MarkupDivStructure.swift */,
 				AA7B24D72B55ED72003C607A /* EditableMarkupWKWebView+Extensions.swift */,
 			);
 			path = EditableAreas;
@@ -899,6 +905,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
+				AA7B24DD2B5896B2003C607A /* MarkupDivStructure.swift in Sources */,
 				AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */,
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
 				4766AFAA2B3E42B900D9E1E5 /* MarkupDiv.swift in Sources */,
@@ -916,6 +923,7 @@
 				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
 				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
+				AA7B24DF2B58A043003C607A /* HtmlDiv.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
