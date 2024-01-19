@@ -29,6 +29,11 @@ public protocol MarkupDelegate {
     /// Called when the MarkupWKWebView stops editing or loses focus.
     func markupLostFocus(_ view: MarkupWKWebView)
     
+    /// Called before the initial HTML is loaded, allowing you to perform any pre-load activity.
+    ///
+    /// When this call is made, the root files, userCSS, and userScripts have been loaded already.
+    func markupWillLoad(_ view: MarkupWKWebView)
+    
     /// Called when the MarkupWKWebView has become ready to receive input.
     /// More concretely, is called when the internal WKWebView loads for the first time, and contentHtml is set.
     ///
@@ -124,6 +129,10 @@ extension MarkupDelegate {
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
+    
+    /// The MarkupWKWebView has loaded the JavaScript and CSS, but the editor html has
+    /// not been loaded.
+    public func markupWillLoad(_ view: MarkupWKWebView) {}
     
     /// The MarkupWKWebView has loaded the JavaScript and any html contents.
     ///

@@ -49,6 +49,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var html: String?
     private var placeholder: String?            // A string to show when html is nil or empty
     public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
+    public var baseUrl: URL { cacheUrl() }      // The working directory for this WKWebView, where markup.html etc are loaded-from
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
     /// User scripts that are injected at the end of document.
@@ -404,6 +405,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
         setPlaceholder {
+            self.markupDelegate?.markupWillLoad(self)
             self.setHtml(self.html ?? "") {
                 //Logger.webview.debug("isReady: \(self.id)")
                 self.isReady = true
