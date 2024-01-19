@@ -49,6 +49,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var html: String?
     private var placeholder: String?            // A string to show when html is nil or empty
     public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
+    public var baseUrl: URL { cacheUrl() }      // The working directory for this WKWebView, where markup.html etc are loaded-from
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
     public var userScripts: [String]? {
