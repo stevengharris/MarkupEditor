@@ -396,6 +396,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
         setPlaceholder {
+            self.markupDelegate?.markupWillLoad(self)
             self.setHtml(self.html ?? "") {
                 //Logger.webview.debug("isReady: \(self.id)")
                 self.isReady = true
