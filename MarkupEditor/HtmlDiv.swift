@@ -16,14 +16,16 @@ public struct HtmlDiv {
     public var cssClass: String = "editor"
     public var attributes: EditableAttributes = EditableAttributes.standard
     public var htmlContents: String
+    public var resourcesUrl: URL?
     public var buttonGroup: HtmlButtonGroup?
     
-    public init(id: String, parentId: String = "editor", cssClass: String, attributes: EditableAttributes, htmlContents: String = "", buttonGroup: HtmlButtonGroup? = nil) {
+    public init(id: String, parentId: String = "editor", cssClass: String, attributes: EditableAttributes, htmlContents: String = "", resourcesUrl: URL? = nil, buttonGroup: HtmlButtonGroup? = nil) {
         self.id = id
         self.parentId = parentId
         self.cssClass = cssClass
         self.attributes = attributes
         self.htmlContents = htmlContents
+        self.resourcesUrl = resourcesUrl
         self.buttonGroup = buttonGroup
     }
 }

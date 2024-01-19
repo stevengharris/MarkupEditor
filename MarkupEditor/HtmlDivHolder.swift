@@ -36,6 +36,10 @@ extension HtmlDivHolder {
         get { htmlDiv.htmlContents }
         set { htmlDiv.htmlContents = newValue }
     }
+    public var resourcesUrl: URL? {
+        get { htmlDiv.resourcesUrl }
+        set { htmlDiv.resourcesUrl = newValue }
+    }
     public var buttonGroup: HtmlButtonGroup? {
         get { htmlDiv.buttonGroup }
         set { htmlDiv.buttonGroup = newValue }
