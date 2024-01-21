@@ -24,6 +24,14 @@ extension HtmlDivHolder {
         get { htmlDiv.parentId }
         set { htmlDiv.parentId = newValue }
     }
+    public var targetId: String? {
+        get { htmlDiv.targetId }
+        set { htmlDiv.targetId = newValue }
+    }
+    public var focusId: String? {
+        get { htmlDiv.focusId }
+        set { htmlDiv.focusId = newValue }
+    }
     public var cssClass: String {
         get { htmlDiv.cssClass }
         set { htmlDiv.cssClass = newValue }
@@ -43,5 +51,9 @@ extension HtmlDivHolder {
     public var buttonGroup: HtmlButtonGroup? {
         get { htmlDiv.buttonGroup }
         set { htmlDiv.buttonGroup = newValue }
+    }
+    public var buttons: [HtmlButton] {
+        get { buttonGroup?.buttons ?? [] }
+        set { buttonGroup = HtmlButtonGroup(in: id, buttons: newValue) }
     }
 }

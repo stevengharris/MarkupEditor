@@ -13,15 +13,15 @@ import Foundation
 /// adding a button or array of buttons to the MarkupDivStructure, which is always done by identifying the id of the div they reside in.
 public class HtmlButtonGroup: HtmlDivHolder {
     public var id: String
+    public var parentId: String
     public var htmlDiv: HtmlDiv
     public var cssClass: String
-    public var divId: String
     public var buttons: [HtmlButton]
     
-    public init(id: String = UUID().uuidString, in divId: String = "editor", cssClass: String = "markupbuttongroup", buttons: [HtmlButton]) {
+    public init(id: String = UUID().uuidString, in parentId: String, focusId: String? = nil, cssClass: String = "markupbuttongroup", buttons: [HtmlButton]) {
         self.id = id
-        self.divId = divId
-        htmlDiv = HtmlDiv(id: id, parentId: divId, cssClass: "markupbuttongroup", attributes: EditableAttributes.empty)
+        self.parentId = parentId
+        htmlDiv = HtmlDiv(id: id, in: parentId, focusId: focusId, cssClass: "markupbuttongroup", attributes: EditableAttributes.empty)
         self.cssClass = cssClass
         self.buttons = buttons
     }

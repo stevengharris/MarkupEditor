@@ -10,7 +10,7 @@ import Foundation
 /// A Swift struct that represents an HTML button that calls back to the Swift side when pressed.
 ///
 /// An HtmlButton always resides in an HtmlDiv of some kind, typically an HtmlButtonGroup.
-public struct HtmlButton {
+public class HtmlButton {
     
     public struct ActionInfo {
         public let view: MarkupWKWebView
@@ -33,9 +33,10 @@ public struct HtmlButton {
         self.action = action
     }
     
-    public func executeAction(view: MarkupWKWebView, rect: CGRect) {
+    public func executeAction(view: MarkupWKWebView, rect: CGRect, handler: (()->Void)? = nil) {
         let actionInfo = ActionInfo(view: view, originId: id, targetId: targetId, rect: rect)
         action(actionInfo)
+        handler?()
     }
 
 }

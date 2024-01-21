@@ -27,7 +27,7 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
     parent.appendChild(div);
 };
 
-MU.addButton = function(id, cssClass, label, divId) {
+MU.addButton = function(id, parentId, cssClass, label) {
     const button = document.createElement('button');
     button.setAttribute('id', id);
     button.setAttribute('class', cssClass);
@@ -42,7 +42,7 @@ MU.addButton = function(id, cssClass, label, divId) {
             })
         )
     });
-    const div = document.getElementById(divId);
+    const div = document.getElementById(parentId);
     if (div) {
         div.appendChild(button);
     } else {

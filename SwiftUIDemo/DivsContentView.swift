@@ -57,25 +57,33 @@ struct DivsContentView: View {
     private func initDivStructure() {
         let documentDivs: [HtmlDivHolder] = [
             Div1(name: "Chapter 1 - It Begins"),
-            Div2(id: "Section1", name: "We Have Liftoff"),
+            Div2(
+                name: "We Have Liftoff",
+                buttons: [
+                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                    // See https://feedbackassistant.apple.com/feedback/13537558.
+                    // For now, fill in with Emojis.
+                    HtmlButton(label: "🧐", targetId: "Section1", action: { actionInfo in inspect(actionInfo) }),
+                    HtmlButton(label: "🗑️", targetId: "Section1", action: { actionInfo in delete(actionInfo) }),
+                ]
+            ),
             Div3(contents: "<p>This is an editable subsection</p>"),
             Div3(contents: "<p>This is also an editable subsection</p>"),
-            Div2(id: "Section2", name: "Epilogue"),
+            Div2(
+                name: "Epilogue",
+                buttons: [
+                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                    // See https://feedbackassistant.apple.com/feedback/13537558.
+                    // For now, fill in with Emojis.
+                    HtmlButton(label: "🧐", targetId: "Section2", action: { actionInfo in inspect(actionInfo) }),
+                    HtmlButton(label: "🗑️", targetId: "Section2", action: { actionInfo in delete(actionInfo) }),
+                ]
+            ),
             Div3(contents: "<p>The demo is over</p>"),
         ]
         
         for div in documentDivs {
             divStructure.add(div)
-            // For Div2's, which are kind Section separators, we want buttons
-            if div is Div2 {
-                divStructure.add([
-                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
-                    // See https://feedbackassistant.apple.com/feedback/13537558.
-                    // For now, fill in with Emojis.
-                    HtmlButton(label: "🧐", targetId: div.id, action: { actionInfo in inspect(actionInfo) }),
-                    HtmlButton(label: "🗑️", targetId: div.id, action: { actionInfo in delete(actionInfo) }),
-                ], in: div.id)
-            }
         }
     }
     
@@ -120,17 +128,6 @@ extension DivsContentView: MarkupDelegate {
         MarkupEditor.selectedWebView = view
         for div in divStructure.divs {
             view.addDiv(div)
-            if let buttonGroup = div.buttonGroup {
-                for button in buttonGroup.buttons {
-                    view.addButton(button, in: buttonGroup.id)
-                }
-            }
-        }
-        for buttonGroup in divStructure.buttonGroups {
-            view.addDiv(buttonGroup)
-            for button in buttonGroup.buttons {
-                view.addButton(button, in: buttonGroup.id)
-            }
         }
         setRawText(handler)
     }
