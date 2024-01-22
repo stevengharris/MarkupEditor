@@ -61,14 +61,5 @@ extension MarkupWKWebView {
             handler?()
         }
     }
-    
-    public func focus(on id: String, handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.focusOn('\(id)')") { result, error in
-            if let error {
-                Logger.webview.error("Error focusing on element with id \(id): \(error)")
-            }
-            handler?()
-        }
-    }
 
 }
