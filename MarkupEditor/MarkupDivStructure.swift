@@ -29,6 +29,9 @@ public class MarkupDivStructure {
         if let targetId = div.targetId {
             targetIdsByDivId[div.id] = targetId
         }
+        if let buttonGroup = div.buttonGroup {
+            divsById[buttonGroup.id] = div  // Identify the enclosing div for a ButtonGroup
+        }
         for button in div.buttons {
             buttonsById[button.id] = button
         }
