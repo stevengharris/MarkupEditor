@@ -207,13 +207,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func setSelection() {
         guard hasFocus else { return }
         getSelectionState { selectionState in
-            if selectionState.valid {
+            if selectionState.isValid {
                 self.selectionState.reset(from: selectionState)             // cache it here
                 MarkupEditor.selectionState.reset(from: selectionState)     // and set globally
             } else {    // Should not happen
                 self.resetSelection {
                     self.getSelectionState { newSelectionState in
-                        if newSelectionState.valid {
+                        if newSelectionState.isValid {
                             self.selectionState.reset(from: newSelectionState)         // cache it here
                             MarkupEditor.selectionState.reset(from: newSelectionState) // and set globally
                         } else {
@@ -535,7 +535,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        guard selectionState.valid else { return false }
+        guard selectionState.isValid else { return false }
         switch action {
         case #selector(getter: undoManager):
             return true
@@ -715,11 +715,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return the HTML contained in this MarkupWKWebView.
     ///
     /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
-    public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
+    public func getHtml(pretty: Bool = true, clean: Bool = true, divID: String? = nil, _ handler: ((String?)->Void)?) {
         // By default, we get "pretty" and "clean" HTML.
         //  Pretty HTML is formatted to be readable.
         //  Clean HTML has divs, spans, and empty text nodes removed.
-        evaluateJavaScript("MU.getHTML('\(pretty)', '\(clean)')") { result, error in
+        let argString = divID == nil ? "'\(pretty)', '\(clean)'" : "'\(pretty)', '\(clean)', '\(divID!)'"
+        evaluateJavaScript("MU.getHTML(\(argString))") { result, error in
             handler?(result as? String)
         }
     }
@@ -727,8 +728,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return unformatted but clean HTML contained in this MarkupWKWebView.
     ///
     /// The HTML is functionally equivalent to `getHtml()` but is compressed.
-    public func getRawHtml(_ handler: ((String?)->Void)?) {
-        getHtml(pretty: false, handler)
+    public func getRawHtml(divID: String? = nil, _ handler: ((String?)->Void)?) {
+        getHtml(pretty: false, divID: divID, handler)
     }
     
     public func emptyDocument(handler: (()->Void)? = nil) {

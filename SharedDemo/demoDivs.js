@@ -12,6 +12,12 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
     const div = document.createElement('div');
     div.setAttribute('id', id);
     div.setAttribute('class', cssClass);
+    div.addEventListener('focus', function(ev) {
+        _selectedID = ev.target.id;
+    });
+    div.addEventListener('blur', function(ev) {
+        _selectedID = null;
+    });
     if (jsonAttributes) {
         const editableAttributes = JSON.parse(jsonAttributes);
         if (editableAttributes) {

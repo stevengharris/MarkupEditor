@@ -62,6 +62,21 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             Logger.coordinator.error("message.webView was not a MarkupWKWebView")
             return
         }
+        // Given it occurs with every change, treat "input" separately up front
+        if messageBody.hasPrefix("input") {
+            // We encode divId within the input message. Generally it will be "editor".
+            let index = messageBody.index(messageBody.startIndex, offsetBy: 5)
+            let divId = String(messageBody[index...])
+            if divId == "editor" {
+                markupDelegate?.markupInput(webView)
+                updateHeight()
+            } else if !divId.isEmpty {
+                markupDelegate?.markupInput(webView, divId: divId)
+            } else {
+                Logger.coordinator.error("Error: The div id could not be decoded for input.")
+            }
+            return
+        }
         switch messageBody {
         case "ready":
             //Logger.coordinator.debug("ready")
@@ -77,9 +92,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             webView.setTopLevelAttributes() {
                 webView.loadInitialHtml()
             }
-        case "input":
-            markupDelegate?.markupInput(webView)
-            updateHeight()
         case "updateHeight":
             updateHeight()
         case "blur":

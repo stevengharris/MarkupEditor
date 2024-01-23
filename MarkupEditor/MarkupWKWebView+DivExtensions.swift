@@ -53,7 +53,7 @@ extension MarkupWKWebView {
     public func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
         let id = button.id
         let cssClass = button.cssClass
-        let label = button.label
+        let label = button.label.escaped
         evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButton: \(error)")

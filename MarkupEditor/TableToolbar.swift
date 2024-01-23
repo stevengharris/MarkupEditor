@@ -136,7 +136,7 @@ public struct TableToolbar: View {
             }
             .frame(height: toolbarStyle.height())
             .padding([.leading], 8)
-            .disabled(observedWebView.selectedWebView == nil || !selectionState.valid)
+            .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid)
         }
         .background(Blur(style: .systemUltraThinMaterial))
         .onTapGesture {}

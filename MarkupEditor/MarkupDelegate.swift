@@ -16,8 +16,11 @@ import OSLog
 /// Implement any of these methods in your MarkupDelegate to customize the behavior for your app.
 public protocol MarkupDelegate {
     
-    /// Called whenever input is received in the view (e.g., typing).
+    /// Called whenever input is received in the contenteditable editor element in the view  (e.g., typing).
     func markupInput(_ view: MarkupWKWebView)
+    
+    /// Called whenever input is received in a contenteditable element other than "editor" in the view  (e.g., typing).
+    func markupInput(_ view: MarkupWKWebView, divId: String)
     
     /// Called when the inner height of the text being displayed changes.
     /// Can be used to update the UI.
@@ -126,6 +129,7 @@ public protocol MarkupDelegate {
 
 extension MarkupDelegate {
     public func markupInput(_ view: MarkupWKWebView) {}
+    public func markupInput(_ view: MarkupWKWebView, divId: String) {}
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}

@@ -61,6 +61,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
     }
     
     //MARK: Selection state queries
+    public var isValid: Bool { valid }
     public var isEditable: Bool {
         valid && divid != nil
     }

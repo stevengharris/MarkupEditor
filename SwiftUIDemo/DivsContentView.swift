@@ -17,6 +17,7 @@ struct DivsContentView: View {
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
+    @State private var selectedDivID: String?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -67,8 +68,8 @@ struct DivsContentView: View {
                     HtmlButton(label: "🗑️", targetId: "Section1", action: { actionInfo in delete(actionInfo) }),
                 ]
             ),
-            Div3(contents: "<p>This is an editable subsection</p>"),
-            Div3(contents: "<p>This is also an editable subsection</p>"),
+            Div3(contents: "<p>This is an editable subsection with some <b>bold</b> text.</p>"),
+            Div3(contents: "<p>This is also an editable subsection with a list.</p><ul><li><p>First item</p></li><li><p>Second item</p></li></ul>"),
             Div2(
                 name: "Epilogue",
                 buttons: [
@@ -88,7 +89,7 @@ struct DivsContentView: View {
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
-        MarkupEditor.selectedWebView?.getHtml(clean: false) { html in
+        MarkupEditor.selectedWebView?.getHtml(clean: false, divID: selectedDivID) { html in
             rawText = attributedString(from: html ?? "")
             handler?()
         }
@@ -134,7 +135,9 @@ extension DivsContentView: MarkupDelegate {
     
     func markupClicked(_ view: MarkupWKWebView) {
         view.getSelectionState { state in
-            print("Selected div ID: \(state.divid ?? "nil")")
+            self.selectedDivID = state.isValid ? state.divid : nil
+            print("Selected div ID: \(self.selectedDivID ?? "nil")")
+            setRawText()
         }
     }
     
@@ -148,6 +151,10 @@ extension DivsContentView: MarkupDelegate {
     func markupInput(_ view: MarkupWKWebView) {
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
+    }
+    
+    func markupTookFocus(_ view: MarkupWKWebView) {
+        print("Focused")
     }
     
     /// Callback received after a local image has been added to the document.

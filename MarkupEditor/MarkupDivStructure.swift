@@ -12,7 +12,7 @@ public class MarkupDivStructure {
     public var divs: [HtmlDivHolder] = []
     private var divsById: [String : HtmlDivHolder] = [:]
     private var buttonsById: [String : HtmlButton] = [:]
-    private var targetIdsByDivId: [String : String] = [:]
+    private var focusIdsByDivId: [String : String] = [:]
     
     public init() {}
     
@@ -20,14 +20,14 @@ public class MarkupDivStructure {
         divs = []
         divsById = [:]
         buttonsById = [:]
-        targetIdsByDivId = [:]
+        focusIdsByDivId = [:]
     }
     
     public func add(_ div: HtmlDivHolder) {
         divs.append(div)
         divsById[div.id] = div
-        if let targetId = div.targetId {
-            targetIdsByDivId[div.id] = targetId
+        if let focusId = div.focusId {
+            focusIdsByDivId[div.id] = focusId
         }
         if let buttonGroup = div.buttonGroup {
             divsById[buttonGroup.id] = div  // Identify the enclosing div for a ButtonGroup
@@ -41,7 +41,7 @@ public class MarkupDivStructure {
         guard let index = divs.firstIndex(where: {existing in existing.id == div.id }) else { return }
         divs.remove(at: index)
         divsById.removeValue(forKey: div.id)
-        targetIdsByDivId.removeValue(forKey: div.id)
+        focusIdsByDivId.removeValue(forKey: div.id)
         for button in div.buttons {
             buttonsById.removeValue(forKey: button.id)
         }
@@ -55,8 +55,8 @@ public class MarkupDivStructure {
         divsById[divId]
     }
     
-    public func targetId(forDivId divId: String) -> String? {
-        targetIdsByDivId[divId]
+    public func focusId(forDivId divId: String) -> String? {
+        focusIdsByDivId[divId]
     }
     
 }
