@@ -3049,7 +3049,8 @@ MU.getHTML = function(pretty="true", clean="true", divID) {
     if (prettyHTML) {
         text = _allPrettyHTML(editor);
     } else {
-        text = editor.innerHTML;
+        text = MU.editor.innerHTML;
+        //text = _isFragment(editor) ? _fragmentString(editor) : editor.innerHTML;
     };
     return text;
 };
@@ -6685,6 +6686,9 @@ const _textString = function(node, title="") {
     }
 }
 
+/**
+ * Return the "innerHTML" of a fragment, with an optional title at the front
+ */
 const _fragmentString = function(fragment, title="") {
     if (!fragment) return title + "null"
     let div = document.createElement('div');
@@ -9888,6 +9892,13 @@ const _allChildElementsWithType = function(element, nodeType, existingElements=[
 const _isDiv = function(node) {
     return node && (node.nodeName === "DIV");
 };
+
+/**
+ * Return whether node is a fragment
+ */
+const _isFragment = function(node) {
+    return node && (node.nodeName === "#document-fragment");
+}
 
 /**
  * Return whether node is a textNode or not

@@ -67,7 +67,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             // We encode divId within the input message. Generally it will be "editor".
             let index = messageBody.index(messageBody.startIndex, offsetBy: 5)
             let divId = String(messageBody[index...])
-            if divId == "editor" {
+            if divId.isEmpty || divId == "editor" {
                 markupDelegate?.markupInput(webView)
                 updateHeight()
             } else if !divId.isEmpty {
