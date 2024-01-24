@@ -5852,7 +5852,7 @@ const _splitList = function(listItemElement, newListType) {
         if (postList.children.length > 0) {
             insertionPoint = postList;
         } else {
-            insertionPoint = oldList.nextSibling ?? MU.editor.lastChild;
+            insertionPoint = oldList.nextSibling ?? (_findContentEditable(oldList) ?? MU.editor).lastChild;
         };
         let child;
         const firstChild = listItemElement.firstChild;
@@ -11143,10 +11143,14 @@ const _firstTextNodeChild = function(element) {
     return null;
 };
 
+const _findContentEditableID = function(node) {
+    return _findContentEditable(node)?.id;
+}
+
 /**
  * Search parents until we find one that has contentEditable set, and return its ID.
  */
-const _findContentEditableID = function(node) {
+const _findContentEditable = function(node) {
     var element = node;
     if (!_isElementNode(node)) {
         element = node?.parentElement;
@@ -11154,7 +11158,7 @@ const _findContentEditableID = function(node) {
     if (!element || !element.isContentEditable) { return null };
     while (element) {
         if (element.getAttribute('contenteditable') === "true") {
-            return element.id;
+            return element;
         }
         element = element.parentElement;
     }
