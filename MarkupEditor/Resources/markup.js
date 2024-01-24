@@ -7236,14 +7236,21 @@ const _getSelectionState = function() {
     // When we have multiple contentEditable elements within editor, we need to
     // make sure we selected something that isContentEditable. If we didn't
     // then just return state, which will be invalid but have the enclosing div ID.
-    if (!_selectedID) {
-        state['divid'] = _findDivID(selection.focusNode);
+    // Note: _callbackInput() uses a cached value of the *contentEditable* div ID
+    // because it is called at every keystroke and change, whereas here we take
+    // the time to find the enclosing div ID from the selection so we are sure it
+    // absolutely reflects the selection state at the time of the call regardless
+    // of whether it is contentEditable or not.
+    var divID = _findContentEditableID(selection.focusNode);
+    if (divID) {
+        state['divid'] = divID;
+        state['valid'] = true;
+    } else {
+        divID = _findDivID(selection.focusNode);
+        state['divid'] = divID;
         state['valid'] = false;
         return state;
-    } else {
-        state['divid'] = _selectedID;
     };
-    state['valid'] = true;
     // Selected text
     state['selection'] = _getSelectionText();
     // The selrect tells us where the selection can be found
@@ -11154,6 +11161,9 @@ const _findContentEditableID = function(node) {
     return null;
 };
 
+/**
+ * Return the id of the div that node resides in, whether it's contentEditable or not
+ */
 const _findDivID = function(node) {
     var nextNode = node;
     while (nextNode) {
