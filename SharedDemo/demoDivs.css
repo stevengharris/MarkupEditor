@@ -2,37 +2,62 @@
  * Styling for DIVs and BUTTONs with specific classes identified.
  */
 
-.div1 {
+.title {
     text-align: center;
-    font-size: 3.0rem;
+    font-size: 2.0em;
+    margin: 4px 0;
+    padding: 2px 4px;
     align-items: center;
 }
 
-.div2 {
+.section {
     background-color: lightgray;
-    font-size: 2.0rem;
+    margin: 4px 0;
+    padding: 2px 4px;
     display: flex;
     align-items: center;
+    align-content: center;
+    font-size: 1.2rem;
+    overflow: clip;
     justify-content: space-between;
     @media (prefers-color-scheme: dark) {
         background-color: darkgray;
     }
 }
 
-/* .div3 will just be styled using the MarkupEditor default */
+/* Normally, clip the logEntry if lines extend beyond bounds */
+.content {
+    overflow: clip;
+    padding: 2px 4px;
+}
+
+/* Show anything outside of the "normal" bounds when the content has focus,
+ * so we can scroll to see code as an example
+ */
+.content:focus {
+    outline: none;
+    overflow: visible;
+}
 
 .markupbutton {
     background-color: transparent;
+    white-space: nowrap;
     border: none;
-    font-size: 1.0rem;
+    font-size: 1.2rem;
     width: 1.0rem;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
 }
 
 .markupbuttongroup {
+    padding: 2px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    /* visibility: hidden; <- Does hide, but neither "hidden" nor "collapse" collapses the width */
+    max-width: 0;
+    @media (prefers-color-scheme: dark) {
+        background-color: darkgray;
+    }
 }

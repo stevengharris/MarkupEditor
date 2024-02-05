@@ -23,16 +23,20 @@ extension MarkupWKWebView {
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
-            if let buttonGroup = div.buttonGroup {
-                self.addButtonGroup(buttonGroup) {
-                    handler?()
-                }
-            } else {
-                handler?()
-            }
+            handler?()
         }
     }
     
+    public func removeDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.removeDiv('\(div.id)')") { result, error in
+            if let error {
+                Logger.webview.error("Error removing HtmlDiv: \(error)")
+            }
+            handler?()
+        }
+    }
+    
+    /// A button group is a DIV that holds buttons, so they can be positioned as a group.
     public func addButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         let id = buttonGroup.id
         let parentId = buttonGroup.parentId
@@ -49,6 +53,15 @@ extension MarkupWKWebView {
             handler?()
         }
     }
+    
+    public func removeButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.removeDiv('\(buttonGroup.id)')") { result, error in
+            if let error {
+                Logger.webview.error("Error removing HtmlButtonGroup: \(error)")
+            }
+            handler?()
+        }
+    }
 
     public func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
         let id = button.id
@@ -57,6 +70,45 @@ extension MarkupWKWebView {
         evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButton: \(error)")
+            }
+            handler?()
+        }
+    }
+    
+    public func removeButton(_ button: HtmlButton, handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.removeButton('\(button.id)')") { result, error in
+            if let error {
+                Logger.webview.error("Error removing HtmlButton: \(error)")
+            }
+            handler?()
+        }
+    }
+    
+    public func focus(on id: String?, handler: (()->Void)? = nil) {
+        guard let id else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.focusOn('\(id)')") { result, error in
+            if let error {
+                Logger.webview.error("Error focusing on element with id \(id): \(error)")
+            }
+            self.becomeFirstResponder()
+            self.getSelectionState { selectionState in
+                MarkupEditor.selectionState.reset(from: selectionState)
+                handler?()
+            }
+        }
+    }
+    
+    public func scrollIntoView(id: String?, handler: (()->Void)? = nil) {
+        guard let id else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.scrollIntoView('\(id)')") { result, error in
+            if let error {
+                Logger.webview.error("Error scrolling to element with id \(id): \(error)")
             }
             handler?()
         }

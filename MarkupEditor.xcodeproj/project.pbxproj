@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
-		4766AFAE2B3E42CF00D9E1E5 /* demoDivs.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* demoDivs.js */; };
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
@@ -57,7 +56,6 @@
 		AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */; };
 		AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
 		AA4EBE952B3747D6006C614B /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE942B3747D6006C614B /* markup.js */; };
-		AA4EBE9E2B3B4FFE006C614B /* demoDivs.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE9C2B378647006C614B /* demoDivs.js */; };
 		AA4EBEA42B3B8700006C614B /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */; };
 		AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
 		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
@@ -215,7 +213,6 @@
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
 		AA4EBE942B3747D6006C614B /* markup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
-		AA4EBE9C2B378647006C614B /* demoDivs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = demoDivs.js; sourceTree = "<group>"; };
 		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
@@ -368,7 +365,6 @@
 				AA2EB1822B534BE600224F5E /* custom.js */,
 				AA1B816C26265CAD00891FFB /* demo.html */,
 				AA4EBE8E2B34C9DA006C614B /* demoDivs.css */,
-				AA4EBE9C2B378647006C614B /* demoDivs.js */,
 				AA4EBEA52B3CC262006C614B /* DemoDivs.swift */,
 				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
@@ -793,7 +789,6 @@
 			files = (
 				AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */,
 				AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */,
-				AA4EBE9E2B3B4FFE006C614B /* demoDivs.js in Resources */,
 				AA2EB1802B534BC900224F5E /* custom.css in Resources */,
 				AA1B816D26265CAD00891FFB /* demo.html in Resources */,
 				AA2EB1832B534BE600224F5E /* custom.js in Resources */,
@@ -806,7 +801,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4766AFAE2B3E42CF00D9E1E5 /* demoDivs.js in Resources */,
 				AA2EB1842B534BE600224F5E /* custom.js in Resources */,
 				AA2EB1812B534BC900224F5E /* custom.css in Resources */,
 				AAFB64DC277CEED80032E859 /* steve.png in Resources */,

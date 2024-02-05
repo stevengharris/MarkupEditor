@@ -50,42 +50,38 @@ struct DivsContentView: View {
         markupConfiguration = MarkupWKWebViewConfiguration()
         markupConfiguration.topLevelAttributes = EditableAttributes.empty
         markupConfiguration.userCssFile = "demoDivs.css"
-        markupConfiguration.userScriptFile = "demoDivs.js"
         _demoHtml = State(initialValue: "")
         initDivStructure()
     }
     
+    /// Create the DivStructure that holds the array of HtmlDivs in the document we are editing.
     private func initDivStructure() {
-        let documentDivs: [HtmlDivHolder] = [
-            Div1(name: "Chapter 1 - It Begins"),
-            Div2(
-                name: "We Have Liftoff",
-                buttons: [
-                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
-                    // See https://feedbackassistant.apple.com/feedback/13537558.
-                    // For now, fill in with Emojis.
-                    HtmlButton(label: "🧐", targetId: "Section1", action: { actionInfo in inspect(actionInfo) }),
-                    HtmlButton(label: "🗑️", targetId: "Section1", action: { actionInfo in delete(actionInfo) }),
-                ]
-            ),
-            Div3(contents: "<p>This is an editable subsection with some <b>bold</b> text.</p>"),
-            Div3(contents: "<p>This is also an editable subsection with a list.</p><ul><li><p>First item</p></li><li><p>Second item</p></li></ul>"),
-            Div2(
-                name: "Epilogue",
-                buttons: [
-                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
-                    // See https://feedbackassistant.apple.com/feedback/13537558.
-                    // For now, fill in with Emojis.
-                    HtmlButton(label: "🧐", targetId: "Section2", action: { actionInfo in inspect(actionInfo) }),
-                    HtmlButton(label: "🗑️", targetId: "Section2", action: { actionInfo in delete(actionInfo) }),
-                ]
-            ),
-            Div3(contents: "<p>The demo is over</p>"),
-        ]
-        
-        for div in documentDivs {
-            divStructure.add(div)
-        }
+        divStructure.add(TitleDiv(name: "Multi-Div Editing")
+        )
+        divStructure.add(SectionDiv(
+            name: "Multiple Editable Areas",
+            buttons: [
+                // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                // See https://feedbackassistant.apple.com/feedback/13537558.
+                // For now, fill in with Emojis.
+                HtmlButton(label: "🧐", targetId: "Section1", action: { actionInfo in inspect(actionInfo) }),
+                HtmlButton(label: "🗑️", targetId: "Section1", action: { actionInfo in delete(actionInfo) }),
+            ])
+        )
+        divStructure.add(ContentDiv(contents: "<p>The document consists of several sections. Think of each section as representing a model object in your application. Each section has a header to delineate it. The header itself is not editable, but you can still select it. When you select the header or the content below it, the <code>markupClicked</code> callback is invoked. We can identify the id of the div that was clicked-in based on the <code>selectionState</code>. From the div id, we can use <code>divStructure</code> to identify the section, and based on the section, we can add buttons to the header that let us perform operations on that section or the model object it represents.</p>")
+        )
+        divStructure.add(SectionDiv(
+            name: "HtmlDiv",
+            buttons: [
+                // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                // See https://feedbackassistant.apple.com/feedback/13537558.
+                // For now, fill in with Emojis.
+                HtmlButton(label: "🧐", targetId: "Section2", action: { actionInfo in inspect(actionInfo) }),
+                HtmlButton(label: "🗑️", targetId: "Section2", action: { actionInfo in delete(actionInfo) }),
+            ])
+        )
+        divStructure.add(ContentDiv(contents: "<p>An <code>HtmlDiv</code> is a Swift class that represents an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div\">HTML Content Division Element</a> or &lt;div&gt; that we insert into the document.</p><p>Every HtmlDiv needs a unique ID, since it will ultimately be placed in an HTML DOM as a &lt;div&gt; with that ID.</p><p>For each kind of HtmlDiv you are going to use, you should create a Swift class or struct that conforms to HtmlDivHolder. In this example, we use a single TitleDiv, and multiple pairs of SectionDiv and ContentDiv. Each one holds an HtmlDiv that specifies the ID and other properties of the div itself. Your HtmlDivHolder class/struct provides the behavior and state on the Swift side to make it simpler to instantiate and otherwise use in the context of your app. So, for example, to instantiate a TitleDiv, we simply have to pass a string. The TitleDiv itself creates the HtmlDiv with a cssClass of <code>title</code> that lets us control the styling of the title.</p><p>Besides its own <code>id</code>, an HtmlDiv can hold onto three other IDs:</p><ul><li><p><code>parentId</code>: The ID of the HtmlDiv that this HtmlDiv should be a child of.</p></li><li><p><code>targetId</code>: An ID that can be used to dereference a Swift object from this HtmlDiv.</p></li><li><p><code>focusId</code>: An ID that can be used to identify an HtmlDiv that should take focus when this HtmlDiv is clicked.</p></li></ul>")
+        )
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {

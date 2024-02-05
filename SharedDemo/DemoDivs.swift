@@ -8,16 +8,16 @@
 import Foundation
 import MarkupEditor
 
-struct Div1: HtmlDivHolder {
+struct TitleDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
     init(id: String = UUID().uuidString, targetId: String? = nil, name: String) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "div1", attributes: EditableAttributes.empty, htmlContents: name)
+        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "title", attributes: EditableAttributes.empty, htmlContents: name)
     }
     
 }
 
-struct Div2: HtmlDivHolder {
+struct SectionDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     var buttons: [HtmlButton] {
         get { htmlDiv.buttons }
@@ -25,15 +25,15 @@ struct Div2: HtmlDivHolder {
     }
 
     init(id: String = UUID().uuidString, targetId: String? = nil, name: String, buttons: [HtmlButton] = []) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "div2", attributes: EditableAttributes.empty, htmlContents: name, buttons: buttons)
+        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: name, buttons: buttons)
     }
     
 }
 
-struct Div3: HtmlDivHolder {
+struct ContentDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
     init(id: String = UUID().uuidString, targetId: String? = nil, contents: String) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "div3", attributes: EditableAttributes.standard, htmlContents: contents)
+        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "content", attributes: EditableAttributes.standard, htmlContents: contents.escaped)
     }
 }

@@ -3168,6 +3168,114 @@ const _firstEditorElement = function() {
 };
 
 /********************************************************************************
+ * DIV and Button-related functionality in support of DIVS defining
+ * separate editable (or non-editable) styled areas within the MU.editor.
+ */
+//MARK: DIV and Button Support
+
+MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
+    const parent = document.getElementById(parentId);
+    if (!parent) {
+        _consoleLog("Cannot find parent " + parentId + " to add div " + id);
+        return
+    }
+    const div = document.createElement('div');
+    div.setAttribute('id', id);
+    div.setAttribute('class', cssClass);
+    div.addEventListener('focus', function(ev) {
+        _selectedID = ev.target.id;
+    });
+    div.addEventListener('blur', function(ev) {
+        _selectedID = null;
+    });
+    var contenteditable;
+    if (jsonAttributes) {
+        const editableAttributes = JSON.parse(jsonAttributes);
+        if (editableAttributes) {
+            contenteditable = editableAttributes.contenteditable;
+            _setAttributes(div, editableAttributes);
+        };
+    };
+    if (htmlContents) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlContents;
+        const newElement = template.content;
+        div.appendChild(newElement);
+    } else if (contenteditable === true) {
+        // Always make the empty div contents selectable. Note we do not send an 'input'
+        // callback, so we won't signal any change has occurred to the contents
+        // until there is some actual change.
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        div.appendChild(p);
+    };
+    parent.appendChild(div);
+};
+
+MU.removeDiv = function(id) {
+    const element = document.getElementById(id);
+    if (_isDiv(element)) {
+        element.parentNode.removeChild(element);
+    };
+};
+
+MU.addButton = function(id, parentId, cssClass, label) {
+    const button = document.createElement('button');
+    button.setAttribute('id', id);
+    button.setAttribute('class', cssClass);
+    button.setAttribute('type', 'button');
+    button.appendChild(document.createTextNode(label));
+    button.addEventListener('click', function() {
+        _callback(
+            JSON.stringify({
+                'messageType' : 'buttonClicked',
+                'id' : id,
+                'rect' : _getButtonRect(button)
+            })
+        )
+    });
+    const div = document.getElementById(parentId);
+    if (div) {
+        div.appendChild(button);
+    } else {
+        MU.editor.appendChild(button);
+    };
+};
+
+MU.removeButton = function(id) {
+    const element = document.getElementById(id);
+    if (_isButton(element)) {
+        element.parentNode.removeChild(element);
+    };
+};
+
+const _getButtonRect = function(button) {
+    const boundingRect = button.getBoundingClientRect();
+    const buttonRect = {
+        'x' : boundingRect.left,
+        'y' : boundingRect.top,
+        'width' : boundingRect.width,
+        'height' : boundingRect.height
+    };
+    return buttonRect;
+};
+
+MU.focusOn = function(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.focus();
+    };
+};
+
+MU.scrollIntoView = function(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.scrollIntoView();
+    };
+};
+
+
+/********************************************************************************
  * Formatting
  * 1. Formats (B, I, U, DEL, CODE, SUB, SUP) are toggled off and on
  * 2. Formats can be nested, but not inside themselves; e.g., B cannot be within B
@@ -9897,14 +10005,21 @@ const _allChildElementsWithType = function(element, nodeType, existingElements=[
  * Return whether node is a div
  */
 const _isDiv = function(node) {
-    return node && (node.nodeName === "DIV");
+    return node && (node.nodeName === 'DIV');
 };
 
 /**
  * Return whether node is a fragment
  */
 const _isFragment = function(node) {
-    return node && (node.nodeName === "#document-fragment");
+    return node && (node.nodeName === '#document-fragment');
+}
+
+/**
+ * Return whether node is a button
+ */
+const _isButton = function(node) {
+    return node && (node.nodeName === 'BUTTON');
 }
 
 /**
