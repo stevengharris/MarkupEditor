@@ -13,6 +13,7 @@ public class MarkupDivStructure {
     private var divsById: [String : HtmlDivHolder] = [:]
     private var buttonsById: [String : HtmlButton] = [:]
     private var focusIdsByDivId: [String : String] = [:]
+    private var buttonGroupIdsByFocusId: [String : String] = [:]
     
     public init() {}
     
@@ -21,6 +22,7 @@ public class MarkupDivStructure {
         divsById = [:]
         buttonsById = [:]
         focusIdsByDivId = [:]
+        buttonGroupIdsByFocusId = [:]
     }
     
     public func add(_ div: HtmlDivHolder) {
@@ -30,7 +32,10 @@ public class MarkupDivStructure {
             focusIdsByDivId[div.id] = focusId
         }
         if let buttonGroup = div.buttonGroup {
-            divsById[buttonGroup.id] = div  // Identify the enclosing div for a ButtonGroup
+            divsById[buttonGroup.id] = buttonGroup
+            if let focusId = buttonGroup.focusId {
+                buttonGroupIdsByFocusId[focusId] = buttonGroup.id
+            }
         }
         for button in div.buttons {
             buttonsById[button.id] = button
@@ -42,21 +47,28 @@ public class MarkupDivStructure {
         divs.remove(at: index)
         divsById.removeValue(forKey: div.id)
         focusIdsByDivId.removeValue(forKey: div.id)
+        buttonGroupIdsByFocusId.removeValue(forKey: div.id)
         for button in div.buttons {
             buttonsById.removeValue(forKey: button.id)
         }
     }
     
-    public func button(for buttonId: String) -> HtmlButton? {
+    public func button(forButtonId buttonId: String) -> HtmlButton? {
         buttonsById[buttonId]
     }
     
-    public func div(forDivId divId: String) -> HtmlDivHolder? {
-        divsById[divId]
+    public func div(forDivId divId: String?) -> HtmlDivHolder? {
+        guard let divId else { return nil }
+        return divsById[divId]
     }
     
     public func focusId(forDivId divId: String) -> String? {
         focusIdsByDivId[divId]
+    }
+    
+    public func buttonGroupId(forDivId divId: String?) -> String? {
+        guard let divId else { return nil }
+        return buttonGroupIdsByFocusId[divId]
     }
     
 }

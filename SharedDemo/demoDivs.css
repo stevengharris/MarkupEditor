@@ -51,12 +51,9 @@
 }
 
 .markupbuttongroup {
-    padding: 2px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* visibility: hidden; <- Does hide, but neither "hidden" nor "collapse" collapses the width */
-    max-width: 0;
     @media (prefers-color-scheme: dark) {
         background-color: darkgray;
     }

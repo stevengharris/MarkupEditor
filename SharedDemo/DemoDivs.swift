@@ -11,8 +11,8 @@ import MarkupEditor
 struct TitleDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
-    init(id: String = UUID().uuidString, targetId: String? = nil, name: String) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "title", attributes: EditableAttributes.empty, htmlContents: name)
+    init(id: String = UUID().uuidString, contents: String) {
+        htmlDiv = HtmlDiv(id: id, cssClass: "title", attributes: EditableAttributes.empty, htmlContents: contents)
     }
     
 }
@@ -24,8 +24,8 @@ struct SectionDiv: HtmlDivHolder {
         set { htmlDiv.buttons = newValue }
     }
 
-    init(id: String = UUID().uuidString, targetId: String? = nil, name: String, buttons: [HtmlButton] = []) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: name, buttons: buttons)
+    init(id: String = UUID().uuidString, focusId: String? = nil, contents: String, buttons: [HtmlButton] = [], dynamic: Bool = false) {
+        htmlDiv = HtmlDiv(id: id, focusId: focusId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: contents, buttons: buttons, dynamic: dynamic)
     }
     
 }
@@ -33,7 +33,7 @@ struct SectionDiv: HtmlDivHolder {
 struct ContentDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
-    init(id: String = UUID().uuidString, targetId: String? = nil, contents: String) {
-        htmlDiv = HtmlDiv(id: id, targetId: targetId, cssClass: "content", attributes: EditableAttributes.standard, htmlContents: contents.escaped)
+    init(id: String = UUID().uuidString, contents: String) {
+        htmlDiv = HtmlDiv(id: id, cssClass: "content", attributes: EditableAttributes.standard, htmlContents: contents.escaped)
     }
 }

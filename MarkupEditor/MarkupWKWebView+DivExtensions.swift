@@ -9,6 +9,65 @@ import OSLog
 
 extension MarkupWKWebView {
     
+    /// Recursively load all divs in `divStructure` into this view, executing the handler when they are all done.
+    public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: @escaping (()->Void)) {
+        loadDiv(divStructure: divStructure, atIndex: index) { nextIndex in
+            if let nextIndex {
+                self.load(divStructure: divStructure, index: nextIndex, handler: handler)
+            } else {
+                handler()
+            }
+        }
+    }
+    
+    /// Load the div found at index into the view and execute the handler with the next index when done.
+    ///
+    /// Note that "done" just means the async call into JavaScript returned, not that whatever we are loading
+    /// on the JavaScript side actually loaded. The reason to execute the loading process in this way is to avoid
+    /// triggering IPC throttling when executing hundreds of evaluateJavaScript calls without waiting for them to
+    /// execute their handler. See https://forums.developer.apple.com/forums/thread/670959 as an example,
+    /// but I have seen "IPC throttling was triggered (has 625 pending incoming messages, will only process 600 before yielding)".
+    private func loadDiv(divStructure: MarkupDivStructure, atIndex index: Int, handler: @escaping (Int?)->Void) {
+        guard index < divStructure.divs.count else {
+            handler(nil)
+            return
+        }
+        let div = divStructure.divs[index]
+        if let resourcesUrl = div.resourcesUrl {
+            copyResources(from: resourcesUrl)
+        }
+        addDiv(div) {
+            handler(index + 1)
+        }
+    }
+    
+    /// Copy all the resources from the baseUrl into the temp path used for editing.
+    ///
+    /// Note that resources need to be uniquely named across all divs in the document.
+    private func copyResources(from resourcesUrl: URL) {
+        let fileManager = FileManager.default
+        var tempResourcesUrl: URL
+        if resourcesUrl.baseURL == nil {
+            tempResourcesUrl = baseUrl
+        } else {
+            tempResourcesUrl = baseUrl.appendingPathComponent(resourcesUrl.relativePath)
+        }
+        let tempResourcesUrlPath = tempResourcesUrl.path
+        do {
+            try fileManager.createDirectory(atPath: tempResourcesUrlPath, withIntermediateDirectories: true, attributes: nil)
+            // If we specify the resourceUrl but there are no resources, it's not an error
+            let resources = (try? fileManager.contentsOfDirectory(at: resourcesUrl, includingPropertiesForKeys: nil, options: [])) ?? []
+            for srcUrl in resources {
+                let dstUrl = tempResourcesUrl.appendingPathComponent(srcUrl.lastPathComponent)
+                try? fileManager.removeItem(at: dstUrl)
+                try fileManager.copyItem(at: srcUrl, to: dstUrl)
+            }
+        } catch let error {
+            Logger.webview.error("Failure copying resource files: \(error.localizedDescription)")
+        }
+    }
+
+    /// Add the `div` into the view, including its buttons if they are not dynamically created.
     public func addDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
         let id = div.id
         let parentId = div.parentId
@@ -19,14 +78,22 @@ extension MarkupWKWebView {
             jsonAttributes = String(data: jsonData, encoding: .utf8)
         }
         let htmlContents = div.htmlContents.escaped
+        let buttonGroup = div.buttonGroup
         evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(jsonAttributes ?? "null")', '\(htmlContents)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
-            handler?()
+            if let buttonGroup, !buttonGroup.isDynamic {
+                self.addButtonGroup(buttonGroup) {
+                    handler?()
+                }
+            } else {
+                handler?()
+            }
         }
     }
     
+    /// Remove the `div` from the view.
     public func removeDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.removeDiv('\(div.id)')") { result, error in
             if let error {
@@ -36,7 +103,10 @@ extension MarkupWKWebView {
         }
     }
     
-    /// A button group is a DIV that holds buttons, so they can be positioned as a group.
+    /// Add the `buttonGroup` to the view.
+    ///
+    /// A button group is a div containing buttons, so they can be positioned as a group.
+    /// Button groups always reside in some parent, typically non-contenteditable header with a focusId of the contentEditable div.
     public func addButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         let id = buttonGroup.id
         let parentId = buttonGroup.parentId
@@ -54,6 +124,7 @@ extension MarkupWKWebView {
         }
     }
     
+    /// Remove the `buttonGroup` from the view.
     public func removeButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.removeDiv('\(buttonGroup.id)')") { result, error in
             if let error {
@@ -63,7 +134,8 @@ extension MarkupWKWebView {
         }
     }
 
-    public func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
+    /// Add a `button` into a parent HtmlButtonGroup div with id `parentId`.
+private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
         let id = button.id
         let cssClass = button.cssClass
         let label = button.label.escaped
@@ -75,7 +147,8 @@ extension MarkupWKWebView {
         }
     }
     
-    public func removeButton(_ button: HtmlButton, handler: (()->Void)? = nil) {
+    /// Remove a `button` based on its id.
+    private func removeButton(_ button: HtmlButton, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.removeButton('\(button.id)')") { result, error in
             if let error {
                 Logger.webview.error("Error removing HtmlButton: \(error)")
@@ -84,6 +157,9 @@ extension MarkupWKWebView {
         }
     }
     
+    /// Focus on the element with `id`.
+    ///
+    /// Used to set the focus on a contenteditable div. After focusing, the selection state is reset.
     public func focus(on id: String?, handler: (()->Void)? = nil) {
         guard let id else {
             handler?()
@@ -101,6 +177,7 @@ extension MarkupWKWebView {
         }
     }
     
+    /// Scroll the element with `id` into the view.
     public func scrollIntoView(id: String?, handler: (()->Void)? = nil) {
         guard let id else {
             handler?()

@@ -24,14 +24,15 @@ public class HtmlDiv {
         get { buttonGroup?.buttons ?? [] }
         set {
             if buttonGroup == nil {
-                buttonGroup = HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue)
+                buttonGroup = HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue, dynamic: dynamic)
             } else {
                 buttonGroup?.buttons = newValue
             }
         }
     }
+    private var dynamic: Bool
     
-    public init(id: String, in parentId: String = "editor", targetId: String? = nil, focusId: String? = nil, cssClass: String, attributes: EditableAttributes, htmlContents: String = "", resourcesUrl: URL? = nil, buttons: [HtmlButton]? = nil) {
+    public init(id: String, in parentId: String = "editor", targetId: String? = nil, focusId: String? = nil, cssClass: String, attributes: EditableAttributes, htmlContents: String = "", resourcesUrl: URL? = nil, buttons: [HtmlButton]? = nil, dynamic: Bool = false) {
         self.id = id
         self.parentId = parentId
         self.targetId = targetId
@@ -40,6 +41,7 @@ public class HtmlDiv {
         self.attributes = attributes
         self.htmlContents = htmlContents
         self.resourcesUrl = resourcesUrl
+        self.dynamic = dynamic
         if let buttons {
             self.buttons = buttons
         }
