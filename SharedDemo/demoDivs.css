@@ -44,16 +44,18 @@
     white-space: nowrap;
     border: none;
     font-size: 1.2rem;
-    width: 1.0rem;
+    width: 1.2rem;
     display: flex;
     align-items: center;
+    align-content: center;
     justify-content: center;
 }
 
 .markupbuttongroup {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    align-content: center;
+    justify-content: space-between;
     @media (prefers-color-scheme: dark) {
         background-color: darkgray;
     }
