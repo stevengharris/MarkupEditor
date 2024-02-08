@@ -33,12 +33,12 @@ public class MarkupDivStructure {
         }
         if let buttonGroup = div.buttonGroup {
             divsById[buttonGroup.id] = buttonGroup
-            if let focusId = buttonGroup.focusId {
+            if let focusId = div.focusId {
                 buttonGroupIdsByFocusId[focusId] = buttonGroup.id
             }
-        }
-        for button in div.buttons {
-            buttonsById[button.id] = button
+            for button in buttonGroup.buttons {
+                buttonsById[button.id] = button
+            }
         }
     }
     
@@ -47,7 +47,7 @@ public class MarkupDivStructure {
         divs.remove(at: index)
         divsById.removeValue(forKey: div.id)
         focusIdsByDivId.removeValue(forKey: div.id)
-        buttonGroupIdsByFocusId.removeValue(forKey: div.id)
+        buttonGroupIdsByFocusId.removeValue(forKey: div.id) // If this div.id was a focusId, then remove it
         for button in div.buttons {
             buttonsById.removeValue(forKey: button.id)
         }

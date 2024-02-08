@@ -3216,6 +3216,12 @@ MU.removeDiv = function(id) {
     const element = document.getElementById(id);
     if (_isDiv(element)) {
         element.parentNode.removeChild(element);
+    } else {
+        if (element) {
+            _consoleLog("Element to remove with id " + id + " is not a DIV");
+        } else {
+            _consoleLog("Element to remove with id " + id + " does not exist");
+        };
     };
 };
 
@@ -3264,6 +3270,8 @@ MU.focusOn = function(id) {
     const element = document.getElementById(id);
     if (element) {
         element.focus();
+    } else {
+        _consoleLog("Element to focus on does not exist: " + id);
     };
 };
 
@@ -3271,8 +3279,20 @@ MU.scrollIntoView = function(id) {
     const element = document.getElementById(id);
     if (element) {
         element.scrollIntoView();
+    } else {
+        _consoleLog("Element to scroll into view does not exist: " + id);
     };
 };
+
+/**
+ * Remove all child divs of MU.editor
+ */
+MU.removeAllDivs = function() {
+    const divs = [].filter.call(MU.editor.childNodes, function(el) { return _isDiv(el) });
+    for (const div of divs) {
+        div.remove();
+    };
+}
 
 
 /********************************************************************************

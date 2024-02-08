@@ -12,7 +12,7 @@ public protocol HasHtmlDiv {
     var htmlDiv: HtmlDiv { get set }
 }
 
-public protocol HtmlDivHolder: HasHtmlDiv { }
+public protocol HtmlDivHolder: HasHtmlDiv, CustomStringConvertible { }
 
 /// The HtmlDivHolder extension just trampolines to get/set the corresponding HtmlDiv values.
 extension HtmlDivHolder {
@@ -56,4 +56,5 @@ extension HtmlDivHolder {
         get { buttonGroup?.buttons ?? [] }
         set { buttonGroup = HtmlButtonGroup(in: id, buttons: newValue) }
     }
+    public var description: String { htmlDiv.description }
 }

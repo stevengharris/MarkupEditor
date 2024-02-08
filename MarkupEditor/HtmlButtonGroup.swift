@@ -17,7 +17,7 @@ public class HtmlButtonGroup: HtmlDivHolder {
     public var htmlDiv: HtmlDiv         // The HTMLDiv we are holding onto to be an HTMLDivHolder
     public var cssClass: String         // The CSS class for this div
     public var buttons: [HtmlButton]    // An array or buttons that will be at the trailing edge of the div
-    private var dynamic: Bool            // True if the buttons will be added/removed dynamically at focus/blur
+    private var dynamic: Bool           // True if the buttons will be added/removed dynamically
     public var isDynamic: Bool { dynamic }
     
     public init(id: String = UUID().uuidString, in parentId: String, focusId: String? = nil, cssClass: String = "markupbuttongroup", buttons: [HtmlButton], dynamic: Bool = false) {

@@ -9,13 +9,43 @@ import OSLog
 
 extension MarkupWKWebView {
     
+    /// Add all the divs in `divStructure` into this view along with their resources which must be uniquely named.
+    ///
+    /// This method invokes many async JavaScript methods to add the `divStructure` divs, without waiting for any response.
+    public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
+        for div in divStructure.divs {
+            if let resourcesUrl = div.resourcesUrl {
+                copyResources(from: resourcesUrl)
+            }
+            addDiv(div)
+        }
+        handler?()
+    }
+    
+    /// Unload all divs in the `divStructure`.
+    ///
+    /// This method invokes many async JavaScript methods to remove the `divStructure` divs, without waiting for any response.
+    /// As an alternative, we could use `removeAllDivs`, but we do it explicitly this way because we want it to be obvious if
+    /// the contents of divStructure does not correspond to what is in the view. This can happen if the view is SwiftUI view that holds
+    /// the MarkupEditorView gets initialized because of a state change.
+    public func unload(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
+        for div in divStructure.divs {
+            // Note we do not remove resources from the temp directory
+            removeDiv(div)
+        }
+        handler?()
+    }
+    
+    /* Alternative to use recursion and wait for callbacks */
+    /*
     /// Recursively load all divs in `divStructure` into this view, executing the handler when they are all done.
-    public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: @escaping (()->Void)) {
+    public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
         loadDiv(divStructure: divStructure, atIndex: index) { nextIndex in
             if let nextIndex {
                 self.load(divStructure: divStructure, index: nextIndex, handler: handler)
             } else {
-                handler()
+                print("executing load handler")
+                handler?()
             }
         }
     }
@@ -40,6 +70,30 @@ extension MarkupWKWebView {
             handler(index + 1)
         }
     }
+    
+    public func unload(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
+        unloadDiv(divStructure: divStructure, atIndex: index) { nextIndex in
+            if let nextIndex {
+                self.unload(divStructure: divStructure, index: nextIndex, handler: handler)
+            } else {
+                print("executing unload handler")
+                handler?()
+            }
+        }
+    }
+    
+    private func unloadDiv(divStructure: MarkupDivStructure, atIndex index: Int, handler: @escaping (Int?)->Void) {
+        guard index < divStructure.divs.count else {
+            handler(nil)
+            return
+        }
+        let div = divStructure.divs[index]
+        // TODO: Remove resources
+        removeDiv(div) {
+            handler(index + 1)
+        }
+    }
+    */
     
     /// Copy all the resources from the baseUrl into the temp path used for editing.
     ///
@@ -66,7 +120,7 @@ extension MarkupWKWebView {
             Logger.webview.error("Failure copying resource files: \(error.localizedDescription)")
         }
     }
-
+    
     /// Add the `div` into the view, including its buttons if they are not dynamically created.
     public func addDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
         let id = div.id
@@ -186,6 +240,15 @@ private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->
         evaluateJavaScript("MU.scrollIntoView('\(id)')") { result, error in
             if let error {
                 Logger.webview.error("Error scrolling to element with id \(id): \(error)")
+            }
+            handler?()
+        }
+    }
+    
+    public func removeAllDivs(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.removeAllDivs()") { result, error in
+            if let error {
+                Logger.webview.error("Error removing all divs: \(error)")
             }
             handler?()
         }

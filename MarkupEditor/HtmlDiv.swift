@@ -10,7 +10,7 @@ import Foundation
 /// A class representing a DIV on the JavaScript side.
 ///
 /// The class is used here so that we can have other structs that implement HtmlDivHolder protocol, which means they have an HtmlDiv instance.
-public class HtmlDiv {
+public class HtmlDiv: CustomStringConvertible {
     public var id: String
     public var parentId: String
     public var targetId: String?
@@ -22,15 +22,12 @@ public class HtmlDiv {
     public var buttonGroup: HtmlButtonGroup?
     public var buttons: [HtmlButton] {
         get { buttonGroup?.buttons ?? [] }
-        set {
-            if buttonGroup == nil {
-                buttonGroup = HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue, dynamic: dynamic)
-            } else {
-                buttonGroup?.buttons = newValue
-            }
-        }
+        set { buttonGroup = HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue, dynamic: dynamic) }
     }
     private var dynamic: Bool
+    public var description: String {
+        "\(cssClass) id: \(id), parentId: \(parentId)"
+    }
     
     public init(id: String, in parentId: String = "editor", targetId: String? = nil, focusId: String? = nil, cssClass: String, attributes: EditableAttributes, htmlContents: String = "", resourcesUrl: URL? = nil, buttons: [HtmlButton]? = nil, dynamic: Bool = false) {
         self.id = id
