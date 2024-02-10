@@ -20,10 +20,11 @@ public class HtmlButtonGroup: HtmlDivHolder {
     private var dynamic: Bool           // True if the buttons will be added/removed dynamically
     public var isDynamic: Bool { dynamic }
     
-    public init(id: String = UUID().uuidString, in parentId: String, focusId: String? = nil, cssClass: String = "markupbuttongroup", buttons: [HtmlButton], dynamic: Bool = false) {
-        self.id = id
+    public init(in parentId: String, focusId: String? = nil, cssClass: String = "markupbuttongroup", buttons: [HtmlButton], dynamic: Bool = false) {
+        let bgId = "BG.\(parentId)"
+        self.id = bgId
         self.parentId = parentId
-        htmlDiv = HtmlDiv(id: id, in: parentId, focusId: focusId, cssClass: "markupbuttongroup", attributes: EditableAttributes.empty)
+        htmlDiv = HtmlDiv(id: bgId, in: parentId, focusId: focusId, cssClass: "markupbuttongroup", attributes: EditableAttributes.empty)
         self.cssClass = cssClass
         self.buttons = buttons
         self.dynamic = dynamic
