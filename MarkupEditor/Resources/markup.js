@@ -6790,6 +6790,7 @@ MU.endModalInput = function() {
 const _backupSelection = function() {
     const rangeProxy = _rangeProxy();
     MU.currentSelection = rangeProxy;
+    MU.currentDivID = _selectedID;
     if (!rangeProxy) {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
@@ -6802,6 +6803,7 @@ const _backupSelection = function() {
  * Restore the selection to the range held in MU.currentSelection
  */
 const _restoreSelection = function() {
+    _selectedID = MU.currentDivID;
     _restoreRange(MU.currentSelection);
 };
 
