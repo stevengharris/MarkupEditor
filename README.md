@@ -395,6 +395,44 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
+#### Version 0.7.0 (Beta 4)
+
+The main change in this version is to adopt strict concurrency in anticipation of Swift 6. You may have to make source code changes to use this version. Specifically, the `MarkupEditor` class, whose statics contain settings and defaults is now marked `@MainActor`. If you access `MarkupEditor` from a class that is itself not main-actor-isolated, perhaps in a method that sets MarkupEditor defaults like this:
+
+```
+private static func initializeMarkupEditor() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
+    MarkupEditor.toolbarLocation = .keyboard
+    #if DEBUG
+    MarkupEditor.isInspectable = true
+    #endif
+}
+```
+
+then you will see errors like:
+
+```
+Main actor-isolated static property 'style' can not be mutated from a non-isolated context
+```
+
+You can fix the errors by making the method accessing the `MarkupEditor` class main actor-isolated like this:
+
+```
+@MainActor
+private static func initializeMarkupEditor() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
+    MarkupEditor.toolbarLocation = .keyboard
+    #if DEBUG
+    MarkupEditor.isInspectable = true
+    #endif
+}
+```
+
+* Enforce strict concurrency, update to @MainActor in various places (https://github.com/stevengharris/MarkupEditor/issues/193)
+* Expose public MarkupWKWebView.baseUrl (per https://github.com/stevengharris/MarkupEditor/issues/175#issuecomment-1900884682)
+
 #### Version 0.6.2 (Beta 3)
 
 * Update README to clarify how to get modified HTML, a recurring issue for users (e.g., https://github.com/stevengharris/MarkupEditor/issues/176).
