@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 ///
 /// The state is all held in statics to provide convenient access. The MarkupEditor holds onto several
 /// ObservableObjects used by the toolbars.
+@MainActor
 public struct MarkupEditor {
     public static var observedFirstResponder = ObservedFirstResponder()
     public static var firstResponder: String? {
@@ -85,6 +86,7 @@ public struct MarkupEditor {
     }
 
     /// Emum used to control the toolbar location when using the MarkupEditorView and MarkupEditorUIView
+    @MainActor
     public enum ToolbarLocation {
         case top
         case bottom

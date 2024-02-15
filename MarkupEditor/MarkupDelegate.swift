@@ -14,6 +14,7 @@ import OSLog
 /// Default implementations of MarkupDelegate methods are provided, so all are optional.
 /// Most of the default methods do nothing, although some take care of simple behaviors.
 /// Implement any of these methods in your MarkupDelegate to customize the behavior for your app.
+@MainActor
 public protocol MarkupDelegate {
     
     /// Called whenever input is received in the view (e.g., typing).
