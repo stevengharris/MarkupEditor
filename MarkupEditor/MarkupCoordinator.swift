@@ -43,6 +43,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     /// The height changed on the JavaScript side, so update our local value held by the webView, and set the
     /// bottom padding (https://developer.mozilla.org/en-US/docs/Web/CSS/padding-bottom)
     /// height so that it fills the full height of webView.
+    @MainActor
     private func updateHeight() {
         webView.updateHeight() { height in
             self.webView.padBottom() {
@@ -58,6 +59,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     
     /// Take action based on the message body received from JavaScript via the userContentController.
     /// Messages with arguments were encoded using JSON.
+    @MainActor
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let messageBody = message.body as? String else {
             Logger.coordinator.error("Unknown message received: \(String(describing: message.body))")
@@ -151,6 +153,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
     /// Take action on messages with arguments that were received from JavaScript via the userContentController.
     /// On the JavaScript side, the messageType with string key 'messageType', and the argument has
     /// the key of the messageType.
+    @MainActor
     private func receivedMessageData(_ messageData: [String : Any]) {
         guard let messageType = messageData["messageType"] as? String else {
             Logger.coordinator.error("Unknown message received: \(messageData)")
