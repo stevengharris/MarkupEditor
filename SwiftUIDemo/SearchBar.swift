@@ -81,12 +81,14 @@ struct SearchBar: View {
     }
     
     /// Initiate search for `searchString`, entering into a mode where Enter will find next in the same direction.
+    @MainActor
     private func search() {
         guard !searchString.isEmpty, let selectedWebView = MarkupEditor.selectedWebView else { return }
         selectedWebView.search(for: searchString, direction: direction, activate: true)
     }
     
     /// Clear the search string, suppress Enter doing next search, and make sure the selectedWebView is firstResponder.
+    @MainActor
     private func cancelSearch() {
         searchString = ""
         guard let selectedWebView = MarkupEditor.selectedWebView else { return }

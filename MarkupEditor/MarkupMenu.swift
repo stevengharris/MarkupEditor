@@ -21,6 +21,7 @@ import UIKit
 /// will bold/unbold even if there is no MarkupMenu, but command+] will not indent. This is a byproduct of the
 /// "native" support of WKWebView.
 ///
+@MainActor
 public class MarkupMenu {
     let contents = MarkupEditor.toolbarContents
     
