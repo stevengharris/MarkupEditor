@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,9 +23,19 @@
 		AA1B818126273D9200891FFB /* demo.html in Resources */ = {isa = PBXBuildFile; fileRef = AA1B816C26265CAD00891FFB /* demo.html */; };
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
-		AA2548772805FAE300C9DEB2 /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
 		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
+		AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */; };
+		AA2EB17E2B53446300224F5E /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB17D2B53446300224F5E /* EditableAttributes.swift */; };
+		AA2EB1802B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
+		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
+		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
+		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
+		AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
+		AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */; };
+		AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* StyledContentView.swift */; };
+		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
+		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
@@ -59,6 +69,8 @@
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
 		AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
+		AA98B0EE2B2B75A400B224B1 /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
+		AA98B0EF2B2B75A400B224B1 /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */; };
 		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
 		AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Extensions.swift */; };
@@ -70,6 +82,8 @@
 		AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1042F28C10B600063BE2A /* LinkViewController.swift */; };
 		AAB1043228C2AEA30063BE2A /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043128C2AEA30063BE2A /* ImageViewController.swift */; };
 		AAB1043428C6A26A0063BE2A /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */; };
+		AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB411222AD0695F0072C765 /* SearchBar.swift */; };
+		AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB411252AD069F80072C765 /* SearchableContentView.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
 		AABBAD4C2AA6382C00ADDA55 /* OSLogger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBAD4B2AA6382C00ADDA55 /* OSLogger+Extensions.swift */; };
 		AAD26E86264463A300908777 /* DemoContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* DemoContentView.swift */; };
@@ -84,13 +98,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AA2548782805FAE300C9DEB2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA652923260E80EE000674B7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
-			remoteInfo = MarkupEditor;
-		};
 		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
@@ -99,6 +106,13 @@
 			remoteInfo = MarkupEditor;
 		};
 		AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
+			remoteInfo = MarkupEditor;
+		};
+		AA98B0F02B2B75A400B224B1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
@@ -122,6 +136,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		AA98B0F22B2B75A400B224B1 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AA98B0EF2B2B75A400B224B1 /* MarkupEditor.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AAD455A02800CE3300270E4C /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -161,6 +186,13 @@
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
 		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupWKWebViewConfiguration.swift; sourceTree = "<group>"; };
+		AA2EB17D2B53446300224F5E /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
+		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
+		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
+		AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+Extensions.swift"; sourceTree = "<group>"; };
+		AA2EB1882B53579900224F5E /* StyledContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledContentView.swift; sourceTree = "<group>"; };
+		AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledViewController.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
@@ -213,6 +245,8 @@
 		AAB1042F28C10B600063BE2A /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
 		AAB1043128C2AEA30063BE2A /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
+		AAB411222AD0695F0072C765 /* SearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBar.swift; sourceTree = "<group>"; };
+		AAB411252AD069F80072C765 /* SearchableContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableContentView.swift; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
 		AABBAD4B2AA6382C00ADDA55 /* OSLogger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLogger+Extensions.swift"; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* DemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoContentView.swift; sourceTree = "<group>"; };
@@ -227,7 +261,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA2548772805FAE300C9DEB2 /* MarkupEditor.framework in Frameworks */,
+				AA98B0EE2B2B75A400B224B1 /* MarkupEditor.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -287,6 +321,7 @@
 			children = (
 				AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */,
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
+				AA2EB17D2B53446300224F5E /* EditableAttributes.swift */,
 				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
 				AA806A392652ED49008F60E2 /* Icons.swift */,
 				AAB1043128C2AEA30063BE2A /* ImageViewController.swift */,
@@ -306,9 +341,12 @@
 			children = (
 				AA65299D260E8450000674B7 /* AppDelegate.swift */,
 				AA652948260E8114000674B7 /* Assets.xcassets */,
-				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B816C26265CAD00891FFB /* demo.html */,
+				AA2EB17F2B534BC900224F5E /* custom.css */,
+				AA2EB1822B534BE600224F5E /* custom.js */,
+				AA1B80CD2620C87C00891FFB /* FileToolbar.swift */,
 				AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */,
+				AA2EB1852B5352A600224F5E /* MarkupWKWebView+Extensions.swift */,
 				AAFB64DA277CEECB0032E859 /* steve.png */,
 			);
 			path = SharedDemo;
@@ -395,7 +433,10 @@
 				AA65296E260E814A000674B7 /* SwiftUIDemo.entitlements */,
 				AA434304279F252E002E2AFD /* SceneDelegate.swift */,
 				AAD26E85264463A300908777 /* DemoContentView.swift */,
+				AAB411252AD069F80072C765 /* SearchableContentView.swift */,
+				AAB411222AD0695F0072C765 /* SearchBar.swift */,
 				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
+				AA2EB1882B53579900224F5E /* StyledContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
 				AA65294D260E8114000674B7 /* Info.plist */,
@@ -419,6 +460,7 @@
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* DemoViewController.swift */,
 				AAB1040728B1A0780063BE2A /* SimplestViewController.swift */,
+				AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -448,6 +490,7 @@
 				AA652A11260E9A00000674B7 /* MarkupEditorView.swift */,
 				AA0DDC6728AEA7280081B869 /* MarkupEditorUIView.swift */,
 				AA652A15260E9A00000674B7 /* MarkupWKWebView.swift */,
+				AA2EB17B2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift */,
 				AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */,
 				AA652A07260E99FF000674B7 /* Resources */,
 				AA652A3B260E9B55000674B7 /* Selection */,
@@ -515,11 +558,12 @@
 				AA25486F2805FAE300C9DEB2 /* Sources */,
 				AA2548702805FAE300C9DEB2 /* Frameworks */,
 				AA2548712805FAE300C9DEB2 /* Resources */,
+				AA98B0F22B2B75A400B224B1 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				AA2548792805FAE300C9DEB2 /* PBXTargetDependency */,
+				AA98B0F12B2B75A400B224B1 /* PBXTargetDependency */,
 			);
 			name = RedoTests;
 			productName = RedoTests;
@@ -628,8 +672,9 @@
 		AA652923260E80EE000674B7 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1330;
-				LastUpgradeCheck = 1420;
+				LastUpgradeCheck = 1520;
 				TargetAttributes = {
 					AA2548722805FAE300C9DEB2 = {
 						CreatedOnToolsVersion = 13.3;
@@ -706,7 +751,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA65294C260E8114000674B7 /* Preview Assets.xcassets in Resources */,
+				AA2EB1802B534BC900224F5E /* custom.css in Resources */,
 				AA1B816D26265CAD00891FFB /* demo.html in Resources */,
+				AA2EB1832B534BE600224F5E /* custom.js in Resources */,
 				AAFB64DB277CEED70032E859 /* steve.png in Resources */,
 				AA652949260E8114000674B7 /* Assets.xcassets in Resources */,
 			);
@@ -716,6 +763,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA2EB1842B534BE600224F5E /* custom.js in Resources */,
+				AA2EB1812B534BC900224F5E /* custom.css in Resources */,
 				AAFB64DC277CEED80032E859 /* steve.png in Resources */,
 				AA1B818126273D9200891FFB /* demo.html in Resources */,
 				AA1749E12699128C005F0428 /* Assets.xcassets in Resources */,
@@ -768,11 +817,13 @@
 				AA1749E3269B8EC3005F0428 /* Blur.swift in Sources */,
 				AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */,
 				AAAF7A6D289AE4B9005EF58E /* ToolbarContents.swift in Sources */,
+				AA2EB17C2B5343CE00224F5E /* MarkupWKWebViewConfiguration.swift in Sources */,
 				AA408B252616685B00CAE8B9 /* MarkupWKWebView.swift in Sources */,
 				AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */,
 				AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */,
 				AA408B262616685B00CAE8B9 /* String+Extensions.swift in Sources */,
 				AA408B292616685B00CAE8B9 /* StyleContext.swift in Sources */,
+				AA2EB17E2B53446300224F5E /* EditableAttributes.swift in Sources */,
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
 				AABBAD4C2AA6382C00ADDA55 /* OSLogger+Extensions.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
@@ -798,12 +849,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA2EB1862B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
+				AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */,
 				AA1B8151262633F600891FFB /* FileToolbarDelegate.swift in Sources */,
 				AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */,
 				AAD26E86264463A300908777 /* DemoContentView.swift in Sources */,
 				AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */,
 				AA1B80D82620ECD100891FFB /* TextView.swift in Sources */,
+				AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */,
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
+				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
+				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
@@ -814,10 +870,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */,
+				AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */,
 				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
 				AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */,
 				AA1B817326273CE400891FFB /* FileToolbar.swift in Sources */,
+				AA2EB1872B5352A600224F5E /* MarkupWKWebView+Extensions.swift in Sources */,
 				AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -835,11 +893,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AA2548792805FAE300C9DEB2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
-			targetProxy = AA2548782805FAE300C9DEB2 /* PBXContainerItemProxy */;
-		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
@@ -849,6 +902,11 @@
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA8EFBAA2620B379008AE31E /* PBXContainerItemProxy */;
+		};
+		AA98B0F12B2B75A400B224B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
+			targetProxy = AA98B0F02B2B75A400B224B1 /* PBXContainerItemProxy */;
 		};
 		AAF404D7290B004900129FD9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -931,7 +989,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -956,7 +1014,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -977,6 +1035,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 15;
@@ -985,6 +1044,8 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				OTHER_SWIFT_FLAGS = "\"-DUSEFRAMEWORK\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditor;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -1013,6 +1074,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 15;
@@ -1021,6 +1083,8 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				OTHER_SWIFT_FLAGS = "\"-DUSEFRAMEWORK\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.MarkupEditor;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -1041,6 +1105,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1074,6 +1139,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1102,6 +1168,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1135,6 +1202,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1180,6 +1248,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1212,6 +1281,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1241,6 +1311,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1270,6 +1341,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1294,7 +1366,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.BasicTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
@@ -1321,7 +1393,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.BasicTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;

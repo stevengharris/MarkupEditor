@@ -105,9 +105,13 @@ struct TableSizer: View {
             }
             .highPriorityGesture(tapGesture)
             .onHover { hovering in
-                // Let the user know visually that the table won't be sized
-                rows = 0
-                cols = 0
+                // Let the user know visually that the table won't be sized.
+                // Guard by dragged, because onHover can occur after onEnded,
+                // which results in no table being created.
+                if !dragged {
+                    rows = 0
+                    cols = 0
+                }
                 setBackground()
             }
             .gesture(dragGesture)

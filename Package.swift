@@ -44,3 +44,9 @@ let package = Package(
             path: "MarkupEditorTests/RedoTests"),
     ]
 )
+
+for target in package.targets {
+  var settings = target.swiftSettings ?? []
+  settings.append(.enableExperimentalFeature("StrictConcurrency"))
+  target.swiftSettings = settings
+}

@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 import Combine
 import OSLog
+import UniformTypeIdentifiers
 
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
@@ -39,7 +40,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableDirection = MarkupEditor.TableDirection
     public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
-    let bodyMargin: Int = 8                             // As specified in markup.css. Needed to adjust clientHeight
+    public var clientHeightPad: Int = 8                 // Value to adjust html clientHeight
     public private(set) var isReady: Bool = false       // Ready for editing
     public var hasFocus: Bool = false
     private var editorHeight: Int = 0
@@ -48,6 +49,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var html: String?
     private var placeholder: String?            // A string to show when html is nil or empty
     public var selectAfterLoad: Bool = true     // Whether to set the selection after loading html
+    public var baseUrl: URL { cacheUrl() }      // The working directory for this WKWebView, where markup.html etc are loaded-from
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
     public var userScripts: [String]? {
@@ -60,6 +62,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
+    public var markupConfiguration: MarkupWKWebViewConfiguration?
+    /// A js file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
+    ///
+    /// The file should be included as a resource of the app that consumes the MarkupEditor. The file
+    /// specified here is independent of the userScripts strings. Either, both, or none can be specified.
+    private var userScriptFile: String? { markupConfiguration?.userScriptFile }
+    /// A css file provided by the user, loaded when this view `isReady` but before `loadInitialHtml`.
+    ///
+    /// The file should be included as a resource of the app that consumes the MarkupEditor.
+    private var userCssFile: String? { markupConfiguration?.userCssFile }
     // Doesn't seem like any way around holding on to markupDelegate here, as forced by drop support
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
@@ -89,6 +101,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public enum PasteableType {
         case Text
         case Html
+        case Rtf
         case ExternalImage
         case LocalImage
         case Url
@@ -104,7 +117,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil) {
+    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, configuration: MarkupWKWebViewConfiguration? = nil) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.placeholder = placeholder
@@ -114,6 +127,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.id = id!
         }
         self.markupDelegate = markupDelegate
+        // If configuration arrives as nil, set it to the default.
+        // This way the setTopLevelAttributes will set editor to be contenteditable.
+        markupConfiguration = configuration ?? MarkupWKWebViewConfiguration()
         initForEditing()
     }
     
@@ -129,6 +145,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
     private func initForEditing() {
+        isOpaque = false                        // Eliminate flash in dark mode
+        backgroundColor = .systemBackground     // Eliminate flash in dark mode
         initRootFiles()
         markupDelegate?.markupSetup(self)
         // Enable drop interaction
@@ -241,17 +259,33 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         #endif
     }
     
+    /// Return the url for the named resource, always using the one in Bundle.main first if it exists.
+    ///
+    /// Users can package their own markup.html, css, and js to replace the ones that are used by
+    /// default in the MarkupEditor.
+    func url(forResource name: String, withExtension ext: String?) -> URL? {
+        let url = bundle().url(forResource: name, withExtension: ext)
+        return Bundle.main.url(forResource: name, withExtension: ext) ?? url
+    }
+    
     /// Initialize the directory at cacheUrl with a clean copy of the root resource files.
     ///
     /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
     private func initRootFiles() {
-        let bundle = bundle()
         guard
-            let rootHtml = bundle.url(forResource: "markup", withExtension: "html"),
-            let rootCss = bundle.url(forResource: "markup", withExtension: "css"),
-            let rootJs = bundle.url(forResource: "markup", withExtension: "js") else {
+            let rootHtml = url(forResource: "markup", withExtension: "html"),
+            let rootCss = url(forResource: "markup", withExtension: "css"),
+            let rootJs = url(forResource: "markup", withExtension: "js") else {
             assertionFailure("Could not find markup.html, css, and js for this bundle.")
             return
+        }
+        var srcUrls = [rootHtml, rootCss, rootJs]
+        // If specified, the userCSS comes from the app's main bundle, not something MarkupEditor provides
+        if let userCssFile, let userCss = url(forResource: userCssFile, withExtension: nil) {
+            srcUrls.append(userCss)
+        }
+        if let userScriptFile, let userScript = url(forResource: userScriptFile, withExtension: nil) {
+            srcUrls.append(userScript)
         }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
@@ -260,7 +294,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let cacheUrlPath = cacheUrl.path
         do {
             try fileManager.createDirectory(atPath: cacheUrlPath, withIntermediateDirectories: true, attributes: nil)
-            for srcUrl in [rootHtml, rootCss, rootJs] {
+            for srcUrl in srcUrls {
                 let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
@@ -319,10 +353,37 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try? FileManager.default.removeItem(atPath: cacheUrl().path)
     }
     
+    /// Set the EditableAttributes for the editor element.
+    public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
+        guard
+            let attributes = markupConfiguration?.topLevelAttributes,
+            !attributes.isEmpty,
+            let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
+            let jsonString = String(data: jsonData, encoding: .utf8)
+        else {
+            handler?()
+            return
+        }
+        evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
+            handler?()
+        }
+    }
+    
     /// Return the URL for an "id" subdirectory below the app's cache directory
     private func cacheUrl() -> URL {
         let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
         return cacheUrls[0].appendingPathComponent(id)
+    }
+    
+    /// Invoke `loadUserFiles` with the `userScriptFile` and `userCssFile` regardless of whether either is
+    /// specified. The result will be a callback to `loadedUserFiles`, which causes `loadInitialHtml` and the
+    /// call to MarkupDelegate.markupLoaded to happen.
+    public func loadUserFiles(_ handler: (()->Void)? = nil) {
+        let scriptFile = userScriptFile == nil ? "null": "'\(userScriptFile!)'"
+        let cssFile = userCssFile == nil ? "null" : "'\(userCssFile!)'"
+        evaluateJavaScript("MU.loadUserFiles(\(scriptFile), \(cssFile))") { result, error in
+            handler?()
+        }
     }
     
     /// Load the initialHtml, let the delegate know, and becomeFirstResponder if
@@ -641,23 +702,25 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Javascript interactions
     
-    public func getHtml(_ handler: ((String?)->Void)?) {
-        getPrettyHtml(handler)
+    /// Return the HTML contained in this MarkupWKWebView.
+    ///
+    /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
+    public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
+        //  Pretty HTML is formatted to be readable.
+        //  Clean HTML has divs, spans, and empty text nodes removed.
+        evaluateJavaScript("MU.getHTML('\(pretty)', '\(clean)')") { result, error in
+            handler?(result as? String)
+        }
     }
     
+    /// Return unformatted but clean HTML contained in this MarkupWKWebView.
+    ///
+    /// The HTML is functionally equivalent to `getHtml()` but is compressed.
     public func getRawHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML(false)") { result, error in
-            handler?(result as? String)
-        }
+        getHtml(pretty: false, handler)
     }
     
-    public func getPrettyHtml(_ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getHTML()") { result, error in
-            handler?(result as? String)
-        }
-    }
-    
-    public func emptyDocument(handler: (()->Void)?) {
+    public func emptyDocument(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.emptyDocument()") { result, error in
             handler?()
         }
@@ -688,17 +751,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func updateHeight(handler: ((Int)->Void)?) {
-        getHeight() { clientHeight in
-            if self.editorHeight != clientHeight {
-                self.editorHeight = clientHeight
-                handler?(self.contentHeight(from: clientHeight))
+    /// Set the CSS padding-block bottom so that the padding fills the frame height.
+    public func padBottom(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.padBottom('\(frame.height)')") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
             }
+            handler?()
         }
     }
     
-    private func contentHeight(from clientHeight: Int) -> Int {
-        return clientHeight + 2 * bodyMargin
+    /// Update the internal height tracking.
+    public func updateHeight(handler: ((Int)->Void)?) {
+        self.getHeight() { clientHeight in
+            if self.editorHeight != clientHeight {
+                self.editorHeight = clientHeight
+                handler?(clientHeight + self.clientHeightPad)
+            }
+        }
     }
     
     public func cleanUpHtml(handler: ((Error?)->Void)?) {
@@ -736,7 +806,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         do {
             try FileManager.default.copyItem(at: url, to: cachedImageUrl)
             insertImage(src: path, alt: nil) {
-                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
                 handler?(cachedImageUrl)
             }
         } catch let error {
@@ -804,43 +873,94 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Search for text in the direction specified.
     ///
-    /// *NOTE*: It's important to cancelSearch once a search is performed using this method. On the JavaScript
-    /// side, a search becomes "active", and subsequent input of Enter in the MKMarkupWebView search for
-    /// the next occurrence of text in the direction specified until cancelSearch is called.
-    public func search(for text: String, direction: FindDirection, handler: (()->Void)? = nil) {
-        becomeFirstResponder()
-        // Remove the "smartquote" stuff that happens when inputting search into a TextField.
-        // On the Swift side, replace the search string characters with the proper equivalents
-        // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
-        // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
-        // replace with "\"" and "'" on the JavaScript side before doing a search.
-        let patchedText = text
-            .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
-            .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
-            .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
-            .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
-            .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
-            .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
-        evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\")") { result, error in
-            if let error {
-                Logger.webview.error("Error: \(error)")
+    /// *NOTE*: If you specify `activate: true`, then It is very important to `deactivateSearch` or `cancelSearch`
+    /// when you're done searching. When `activate: true` is specified, on the JavaScript side a search becomes "active",
+    /// and subsequent input of Enter in the MarkupWKWebView will search for the next occurrence of `text` in the `direction`
+    /// specified until `deactivateSearch` or `cancelSearch` is called.
+    public func search(for text: String, direction: FindDirection, activate: Bool = false, handler: (()->Void)? = nil) {
+        startModalInput() {
+            self.becomeFirstResponder()
+            // Remove the "smartquote" stuff that happens when inputting search into a TextField.
+            // On the Swift side, replace the search string characters with the proper equivalents
+            // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
+            // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
+            // replace with "\"" and "'" on the JavaScript side before doing a search.
+            let patchedText = text
+                .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
+                .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
+                .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
+                .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
+                .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
+                .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
+            self.evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\", \"\(activate)\")") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
             }
-            handler?()
         }
     }
     
-    /// Cancel the search that is underway, so that Enter is no longer intercepted on the JavaScript side.
-    public func cancelSearch(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.searchFor(\"\")") { result, error in
-            if let error {
-                Logger.webview.error("Error: \(error)")
+    /// Stop intercepting Enter to invoke searchForNext().
+    public func deactivateSearch(handler: (()->Void)? = nil) {
+        endModalInput() {
+            self.evaluateJavaScript("MU.deactivateSearch()") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
             }
+        }
+    }
+    
+    /// Cancel the search that is underway, so that Enter is no longer intercepted and indexes are cleared on the JavaScript side.
+    public func cancelSearch(handler: (()->Void)? = nil) {
+        endModalInput() {
+            self.evaluateJavaScript("MU.cancelSearch()") { result, error in
+                if let error {
+                    Logger.webview.error("Error: \(error)")
+                }
+                handler?()
+            }
+        }
+    }
+    
+    /// Scroll the view so that the selection is visible.
+    ///
+    /// We use the selrect found in selection state, pad it by 8 vertically, and scroll a minimum
+    /// amount to keep put that padded rectangle fully in the view. Scrolling never moves the
+    /// top below 0 or the bottom above the scrollView.contentHeight.
+    public func makeSelectionVisible(handler: (()->Void)? = nil) {
+        getSelectionState() { state in
+            guard let selrect = state.selrect else {
+                handler?()
+                return
+            }
+            // We pad selrect because we don't want to scroll so it is right at the top
+            // or bottom, but instead is a reasonable amount inset.
+            let padrect = selrect.insetBy(dx: 0, dy: -8)
+            // Find intersection of padrect and visible portion of document. The selrect is always
+            // relative to the frame, so we can use frame for the intersection.
+            let intersection = padrect.intersection(self.frame)
+            // If the intersection is the full padrect, then it is fully visible and we can return
+            // without scrolling.
+            if intersection == padrect {
+                handler?()
+                return
+            }
+            // Set the scroll targets so that padRect's bottom is fully within the frame, but scroll
+            // by as little as needed to bring it in frame.
+            let topTarget = padrect.origin.y + padrect.height + self.scrollView.contentOffset.y - self.frame.height
+            // Keep the target so that it doesn't scroll the content above the bottom.
+            let bottomTarget = self.scrollView.contentSize.height - self.frame.height
+            let target = min(bottomTarget, max(0, topTarget))
+            let scrollPoint = CGPoint(x: 0, y: target)
+            self.scrollView.setContentOffset(scrollPoint, animated: true)
             handler?()
         }
     }
     
     //MARK: Undo/redo
-    
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.
     ///
@@ -931,7 +1051,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Paste
     
-    /// Return the Pasteable type based on the types found in the UIPasteboard.general
+    /// Return the Pasteable type based on the types found in the UIPasteboard.general.
+    ///
+    /// The order is important, since it identifies what will be pasted, and multiple of these
+    /// pasteboard types may be included. Thus, the ordering translates to:
+    ///
+    /// 1. Paste a local image from the MarkupEditor if present.
+    /// 2. Paste an image copied from an external source/app if present.
+    /// 3. Paste an image that exists at a URL if present.
+    /// 4. Paste html if present, which might be pasted as text or html depending on choice.
+    /// 5. Paste text if present.
     ///
     /// When we copy from the MarkupEditor itself, we populate both the "markup.image" of the
     /// pasteboard as well as the "image". This lets us paste the image to an external app,
@@ -945,11 +1074,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // We have copied an image into the pasteboard
             return .ExternalImage
         } else if pasteboard.url != nil {
-            // We have a url which we assume identifies an image we can display
+            // We have a url which might be an image we can display or not
             return .Url
         } else if pasteboard.contains(pasteboardTypes: ["public.html"]) {
             // We have HTML, which we will have to sanitize before pasting
             return .Html
+        } else if pasteboard.contains(pasteboardTypes: ["public.rtf"]) {
+            return .Rtf
         } else if pasteboard.hasStrings {
             // We have a string that we can paste
             return .Text
@@ -994,20 +1125,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
             insertImage(src: path, alt: nil) {
                 self.pastedAsync = false
-                self.markupDelegate?.markupImageAdded(url: cachedImageUrl)
                 handler?()
             }
         } catch let error {
             Logger.webview.error("Error inserting local image: \(error.localizedDescription)")
             handler?()
         }
-    }
-    
-    public func pasteImageUrl(_ url: URL?, handler: (()->Void)? = nil) {
-        guard let url = url, !pastedAsync else { return }
-        //TODO: Make it work
-        Logger.webview.error("Save the image url: \(url)")
-        pastedAsync = false
     }
     
     //MARK: Formatting
@@ -1339,6 +1462,22 @@ extension MarkupWKWebView {
             if let data = pasteboard.data(forPasteboardType: "public.html") {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
+        case .Rtf:
+            if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
+                do {
+                    let attrString = try NSAttributedString(
+                        data: rtfData,
+                        options: [.documentType: NSAttributedString.DocumentType.rtf],
+                        documentAttributes: nil)
+                    let htmlData = try attrString.data(
+                        from: NSRange(location: 0, length: attrString.length),
+                        documentAttributes: [.documentType : NSAttributedString.DocumentType.html])
+                    let html = String(data: htmlData, encoding: .utf8)
+                    pasteHtml(html)
+                } catch let error {
+                    Logger.webview.error("Error getting html from rtf: \(error.localizedDescription)")
+                }
+            }
         case .ExternalImage:
             pasteImage(pasteboard.image)
         case .LocalImage:
@@ -1349,8 +1488,65 @@ extension MarkupWKWebView {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
         case .Url:
-            pasteImageUrl(pasteboard.url)
+            pasteUrl(url: pasteboard.url)
         }
+    }
+    
+    /// Paste the url as an img or as a link depending on its content.
+    ///
+    /// This method is public so it can be used from tests and the tests can ensure the
+    /// logic does the right thing for various URL forms.
+    public func pasteUrl(url: URL?, handler: (()->Void)? = nil) {
+        guard let url else {
+            handler?()
+            return
+        }
+        let urlString = url.absoluteString
+        // StartModalInput saves the selection before inserting and is "normally"
+        // done before opening the LinkViewController or ImageViewController.
+        // However, since pasteUrl is invoked directly when using paste, without
+        // the intervening dialog, we need to do it here.
+        startModalInput {
+            if self.isImageUrl(url: url) {
+                self.insertImage(src: urlString, alt: nil) {
+                    handler?()
+                }
+            } else {
+                self.insertLink(urlString) {
+                    handler?()
+                }
+            }
+        }
+    }
+    
+    /// Return true if the url points to an image or movie that can be inserted into the document
+    private func isImageUrl(url: URL?) -> Bool {
+        guard let url else { return false }
+        if url.isFileURL {
+            return isLocalImage(url: url)
+        } else {
+            return isRemoteImage(url: url)
+        }
+    }
+    
+    /// Return true if the url points to an image in a local file.
+    ///
+    /// We can use `resourceValues(forKeys:)` on local files, whereas we have to infer whether the file is an image
+    /// from the extension on non-local files.
+    private func isLocalImage(url: URL) -> Bool {
+        do {
+            guard let typeID = try url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier else { return false }
+            guard let supertypes = UTType(typeID)?.supertypes else { return false }
+            return supertypes.contains(.image) || supertypes.contains(.movie)
+        } catch {
+            return false
+        }
+    }
+    
+    /// Return true if the url points to a remote image file, based only on the file extension.
+    private func isRemoteImage(url: URL) -> Bool {
+        guard let utType = UTType(tag: url.pathExtension, tagClass: .filenameExtension, conformingTo: nil) else { return false }
+        return utType.conforms(to: .image) || utType.conforms(to: .movie)
     }
     
     /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
@@ -1358,7 +1554,7 @@ extension MarkupWKWebView {
         guard let pasteableType = pasteableType() else { return }
         let pasteboard = UIPasteboard.general
         switch pasteableType {
-        case .Text:
+        case .Text, .Rtf:
             pasteText(pasteboard.string)
         case .Html:
             if let data = pasteboard.data(forPasteboardType: "public.html") {

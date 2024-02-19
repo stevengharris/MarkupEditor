@@ -18,6 +18,7 @@ import Foundation
 /// MarkupToolbar and MarkupMenu. Internally, the toolbars and menus access `shared`, which
 /// will be your `custom` ToolbarContents or the default ToolbarContents instance if you did not
 /// specify `custom`.
+@MainActor
 public class ToolbarContents {
     public static var custom: ToolbarContents?
     public static let shared = custom ?? ToolbarContents()
@@ -41,23 +42,23 @@ public class ToolbarContents {
     }
     
     public init(
-        leftToolbar: Bool = MarkupEditor.leftToolbar != nil,
+        leftToolbar: Bool = false,
         correction: Bool = false,
         insert: Bool = true,
         style: Bool = true,
         format: Bool = true,
-        rightToolbar: Bool = MarkupEditor.rightToolbar != nil,
+        rightToolbar: Bool = false,
         insertContents: InsertContents = InsertContents(),
         styleContents: StyleContents = StyleContents(),
         formatContents: FormatContents = FormatContents(),
         tableContents: TableContents = TableContents()
     ) {
-        self.leftToolbar = leftToolbar
+        self.leftToolbar = leftToolbar ? MarkupEditor.leftToolbar != nil : false
         self.correction = correction
         self.insert = insert
         self.style = style
         self.format = format
-        self.rightToolbar = rightToolbar
+        self.rightToolbar = rightToolbar ? MarkupEditor.rightToolbar != nil : false
         self.insertContents = insertContents
         self.styleContents = styleContents
         self.formatContents = formatContents

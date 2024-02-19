@@ -111,7 +111,31 @@ class SimplestViewController: UIViewController {
 }
 ```
 
-### Customizing The Toolbar
+### Getting Edited HTML
+
+As you edit your document, you can see its contents change in proper WYSIWYG fashion. The document HTML is *not* automatically passed back to Swift as you make changes. You must retrieve the HTML at an appropriate place in your app using `MarkupWKWebView.getHtml()`. This leaves the question: what is "an appropriate place"? The answer is dependent on how you are using the MarkupEditor. In the demo, where you can display the HTML as you type, the HTML is retrieved at every keystroke by using the `MarkupDelegate.markupInput(_:)` method. This is generally going to be a bad idea, since it makes typing much more heavyweight than it should be. You might only retrieve the edited HTML when your user presses a "Save" button. You might want to implement an autosave type of approach by tracking when changes are happening using `MarkupDelegate.markupInput(_:)`, and only invoking `MarkupWKWebView.getHtml()` when enough time has passed.
+
+The `getHtml()` method needs to be invoked on a MarkupWKWebView instance. Generally you will need to hold onto that instance yourself in your MarkupDelegate. You can get access to it in almost all of the MarkupDelegate methods (e.g., `MarkupWKWebView.markupLoaded` or `MarkupWKWebView.markupInput`). Using `MarkupEditor.selectedWebView` to get the instance will not be reliable, because the value becomes nil when no MarkupWKWebView has focus.
+
+Note that in SwiftUI, when you pass HTML to the MarkupEditorView, you pass a binding to a String. For example:
+
+```
+@State private var demoHtml: String = "<h1>Hello World</h1>"
+    
+var body: some View {
+    MarkupEditorView(html: $demoHtml)
+}
+```
+
+In this example, `demoHtml` is **not** modified by the MarkupEditor as you edit the document. The `html` is passed as a binding so that you can modify it from your app. You must use `MarkupWKWebView.getHtml()` to get the modified HTML.
+
+## Customizing the MarkupEditor
+
+You can do some limited customization of the MarkupToolbar and the MarkupEditor behavior overall. You should always do these customizations early in your app lifecycle.
+
+You can also provide your own CSS-based style customization and JavaScript scripts for the MarkupEditor to use in your app. The StyledContentView and StyledViewController demonstrate usage of custom CSS and scripts on the `demo.html` document and are discussed below.
+
+### Customizing the Toolbar
 
 You can use either a compact style of toolbar with only buttons, or a labeled form that shows what each button does. The default style is labeled. If you want to use the compact form, set `MarkupEditor.style` to `.compact`.
 
@@ -130,6 +154,113 @@ override init() {
 }
 ```
 
+Note that the MarkupToolbar uses the static value `MarkupEditor.selectedWebView` to determine which MarkupWKWebView to invoke operations on. This means that generally you should only have a single MarkupToolbar. It's possible to use multiple MarkupToolbars in your app, but you need to be aware that they will each operate against and display the state of the MarkupWKWebView held in `MarkupEditor.selectedWebView`.
+
+### Customizing Document Style
+
+A great byproduct of using HTML under the covers of the MarkupEditor is that you can use CSS to style the way the document looks. To do so means you need to know something about CSS and a bit about the internals of the MarkupEditor. 
+
+The MarkupEditor uses a subset of HTML elements and generally does not specify the HTML element "class" at all. (The one exception is for images and the associated resizing handles that are displayed when you select an image.) The MarkupEditor uses the following HTML elements:
+
+* Paragraph Styles: `<H1>`, `<H2>`, `<H3>`, `<H4>`, `<H5>`, `<H6>`, `<P>`. `<P>` is the default style, also referred to as "Normal" in various places.
+* Formatting: `<B>`, `<I>`, `<U>`, `<CODE>`, `<DEL>`.
+* Images: `<IMG class="resize-image">`. The internal details of the styling and classes to support resizable images are in `markup.js` but will not be covered here.
+* Links: `<A>`.
+* Lists: `<UL>`, `<OL>`, `<LI>`.
+* Tables: `<TABLE>`, `<THEAD>`, `<TBODY>`, `<TR>`, `<TH>`, `<TD>`.
+* Indenting: `<BLOCKQUOTE>`.
+
+All editable content is contained in a single `<DIV>` with the id of `editor`. Occasionally a `<BR>` element will be used to enable selection within an empty element. For example, if you hit Enter, the MarkupEditor produces a new paragraph as `<P><BR></P>`. `<SPAN>` elements are used for the image resizing handles but are never returned in HTML when you use `MarkupWKWebView.getHtml()`
+
+The MarkupEditor uses a "baseline" styling that is provided in `markup.css`. One way to customize the MarkupEditor style is to fork the repository and edit `markup.css` to fit your needs. A less intrusive mechanism is to include your own CSS file with your app that uses the MarkupEditor, and identify the file using `MarkupWKWebViewConfiguration` that you can pass when you instantiate a MarkupEditorView or MarkupEditorUIView. The CSS file you identify this way is loaded *after* `markup.css`, so its contents follows the normal [CSS cascading rules](https://russmaxdesign.github.io/maxdesign-slides/02-css/207-css-cascade.html#/). 
+
+To specify the MarkupWKWebViewConfiguration, you might hold onto it in your MarkupDelegate as `markupConfiguration = MarkupWKWebViewConfiguration()`. Assuming you created a custom CSS file called `custom.css` and packaged it as a resource with your app, specify it in the `markupConfiguration` using:
+
+```
+markupConfiguration.userCssFile = "custom.css"
+```
+
+Here is an example of how to override the `font-weight: bold` used for `<H4>` in `markup.css`:
+
+```
+h4 {
+    font-weight: normal;
+}
+```
+
+Here is an example showing how to modify the caret and selection colors (blue by default), with special behavior for dark mode:
+
+```
+#editor {
+    caret-color: black;
+}
+@media (prefers-color-scheme: dark) {
+    #editor {
+        caret-color: yellow;
+    }
+}
+```
+
+CSS is an incredibly powerful tool for customization. The contents of `markup.css` itself are minimal but show you how the basic elements are styled by default. If there is something the MarkupEditor is doing to prevent the kind of custom styling you are after, please file an issue; however, please do not file issues with questions about CSS.
+
+### Adding Custom Scripts
+
+MarkupEditor functionality that modifies and reports on the state of the HTML DOM in the MarkupWKWebView is all contained in `markup.js`. If you have scripting you want to add, there are two mechanisms for doing so:
+
+1. Create an array of strings that contain valid JavaScript scripts that will be loaded after `markup.js`. Pass these scripts to the MarkupEditorView or MarkupEditorUIView using the `userScripts` parameter at instantiation time.
+2. Create a file containing your JavaScript code, and identify the file in your MarkupWKWebViewConfiguration.
+
+To specify the MarkupWKWebViewConfiguration, you might hold onto it in your MarkupDelegate as `markupConfiguration = MarkupWKWebViewConfiguration()`. Assuming you created a script file called `custom.js` and packaged it as a resource with your app, specify it in the `markupConfiguration` using:
+
+```
+markupConfiguration.userScriptFile = "custom.js"
+```
+
+The `userScriptFile` is loaded after `markup.js`. Your code can use the functions in `markup.js` or which you loaded using `userScripts` if needed.
+
+To invoke a function in your custom script, you should extend the MarkupWKWebView. For example, if you have a `custom.js` file that contains this function:
+
+```
+/**
+ * A public method that can be invoked from MarkupWKWebView to execute the
+ * assignment of classes to h1 and h2 elements, so that custom.css styling
+ * will show up. Invoking this method requires an extension to MarkupWKWebView
+ * which can be called from the MarkupDelegate.markupLoaded method.
+ */
+MU.assignClasses = function() {
+    const h1Elements = document.getElementsByTagName('h1');
+    for (let i = 0; i < h1Elements.length; i++) {
+        element = h1Elements[i];
+        element.classList.add('title');
+    };
+    const h2Elements = document.getElementsByTagName('h2');
+    for (let i = 0; i < h2Elements.length; i++) {
+        element = h2Elements[i];
+        element.classList.add('subtitle');
+    };
+};
+```
+
+then you can extend MarkupWKWebView to be able to invoke `MU.assignClasses`:
+
+```
+extension MarkupWKWebView {
+    
+    /// Invoke the MU.assignClasses method on the JavaScript side that was added-in via custom.js.
+    public func assignClasses(_ handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.assignClasses()") { result, error in
+            if let error {
+                print(error.localizedDescription)
+            }
+            handler?()
+        }
+    }
+    
+}
+```
+
+The StyledContentView and StyledViewController demos use this approach along with `custom.css` to set the `title` class on `H1` elements, and `subtitle` class on `H2` elements and apply styling to them. This is a contrived use case (you could just use `custom.css` to style `H1` and `H2` directly), but it shows both custom scripting and CSS being used.
+
 ## Local Images
 
 Being able to insert an image into a document you are editing is fundamental. In Markdown, you do this by referencing a URL, and the URL can point to a file on your local file system. The MarkupEditor can do the same, of course, but when you insert an image into a document in even the simplest WYSIWYG editor, you don't normally have to think, "Hmm, I'll have to remember to copy this file around with my document when I move my document" or "Hmm, where can I stash this image so it will be accessible across the Internet in the future."  From an end-user perspective, the image is just part of the document. Furthermore, you expect to be able to paste images into your document that you copied from elsewhere. Nobody wants to think about creating and tracking a local file in that case.
@@ -139,6 +270,104 @@ The MarkUpEditor refers to these images as "local images", in contrast to images
 Although local image support was a must-have in my case, it seems likely some MarkupEditor consumers would feel like it's overkill or would like to preclude its use. It also requires you to do something special with the local images when you save your document. For these reasons, there is an option to control whether to allow selection of images from local files. Local images are disallowed by default. To enable them, specify `MarkupEditor.allowLocalImages = true` early in your application lifecycle. This will add a Select button to the Image Toolbar.
 
 A reminder: The MarkupEditor does not know how/where you want to save the document you're editing or the images you have added locally. This is the responsibility of your app.
+
+## Search
+
+This section addresses searching within the document you are editing using the MarkupEditor but also provides some guidance on searching for the documents you create or edit using MarkupEditor.
+
+### Searching Within A Document
+
+For many applications, you will have no need to search the content you are editing in the MarkupEditor. But when content gets larger, it's very handy to be able to find a word or phrase, just like you would expect in any text editor. The MarkupEditor supports search with the function:
+
+```
+func search(
+    for text: String,
+    direction: FindDirection,
+    activate: Bool = false,
+    handler: (() -> Void)? = nil
+)
+```
+
+The FindDirection is either `.forward` or `.backward`, indicating the direction to search from the selection point in the document. The MarkupWKWebView scrolls to make the text that was found visible. 
+
+Specify `activate: true` to activate a "search mode" where Enter is interpreted as meaning "search for the next occurrence in the same direction". Often when you are searching in a large document, you want to just type the search string, hit Enter, see what was selected, and hit Enter again to continue searching. This "search mode" style is supported in the MarkupEditor by capturing Enter on the JavaScript side and interpreting it as `searchForNext` until you do one of the following:
+
+1. You invoke `MarkupWKWebView.deactivateSearch(handler:)` to stop intercepting Enter, but leaving the search state in place.
+2. You invoke `MarkupWKWebView.cancelSearch(handler:)` to stop intercepting Enter and clear all search state.
+3. You click-on, touch, or otherwise type into the document. Your action automatically disables intercepting of Enter.
+
+Note that by default, search mode is never activated. To activate it, you must use `activate: true` in your call to `MarkupWKWebView.search(for:direction:activate:handler:)`.
+
+The SwiftUI demo includes a `SearchableContentView` that uses a `SearchBar` to invoke search on `demo.html`. The `SearchBar` is not part of the MarkupEditor library, since it's likely most users will implement search in a way that is specific to their app. For example, you might use the `.searchable` modifier on a NavigationStack. You can use the `SearchBar` as a kind of reference implementation, since it also demonstrates the use of "search mode" by specifying `activate: true` when you submit text in the `SearchBar's` TextField.
+
+### Searching for MarkupEditor Documents
+
+You can use CoreSpotlight to search for documents created by the MarkupEditor. That's because CoreSpotlight already knows how to deal properly with HTML documents. To be specific, this means that when you put a table and image in your document, although the underlying HTML contains `<table>` and `<image>` tags, the indexing works on the DOM and therefore only indexes the text content. If you search for "table" or "image", it won't find your document unless there is a text element containing the word "table" or "image".
+
+How might you make use of CoreSpotlight? Typically you would have some kind of model object whose `contents` includes the HTML text produced-by and edited-using the MarkupEditor. Your model objects can provide indexing functionality. Here is an example (with some debug printing and \<substitutions> below):
+
+```
+/// Add this instance of MyModelObject to the Spotlight index
+func index() {
+    let attributeSet = CSSearchableItemAttributeSet(contentType: UTType.html)
+    attributeSet.kind = "<MyModelObject>"
+    let contentData = contents.data(using: .utf8)
+    // Set the htmlContentData based on the entire document contents
+    attributeSet.htmlContentData = contentData
+    if let data = contentData {
+        if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
+            // Put a snippet of content in the contentDescription that will show up in Spotlight searches
+            if attributedString.length > 30 {
+                attributeSet.contentDescription = "\(attributedString.string.prefix(30))..."
+            } else {
+                attributeSet.contentDescription = attributedString.string
+            }
+        }
+    }
+    // Now create the CSSearchableItem with the attributeSet we just created, using MyModelObject's unique id
+    let item = CSSearchableItem(uniqueIdentifier: <MyModelObject's id>, domainIdentifier: <MyModelObject's container domain>, attributeSet: attributeSet)
+    item.expirationDate = Date.distantFuture
+    CSSearchableIndex.default().indexSearchableItems([item]) { error in
+        if let error = error {
+            print("Indexing error: \(error.localizedDescription)")
+        } else {
+            print("Search item successfully indexed!")
+        }
+    }
+}
+
+/// Remove this instance of MyModelObject from the Spotlight index
+func deindex() {
+    CSSearchableIndex.default().deleteSearchableItems(withIdentifiers: [idString]) { error in
+        if let error = error {
+            print("Deindexing error: \(error.localizedDescription)")
+        } else {
+            print("Search item successfully removed!")
+        }
+    }
+}
+```
+
+Once you have indexed your model objects, you can then execute a case-insensitive search query to locate model objects that include a `text` String like this:
+
+```
+let queryString = "domainIdentifier == \'\(<MyModelObject's id)\' && textContent == \"*\(text)*\"c"
+searchQuery = CSSearchQuery(queryString: queryString, attributes: nil)
+searchQuery?.foundItemsHandler = { items in
+    ...
+    ... Append contents of items to an array tracking the MyModelObjects that contain text
+    ...
+}
+searchQuery?.completionHandler = { error in
+    ...
+    ... Do whatever you need afterward, such as additional filtering
+    ...
+}
+// Then run the query
+searchQuery?.start()
+```
+
+Then, if you need to locate the `text` in the document itself once you dereference it from the `id`, you would use the approach in [Searching Within A Document](#searching-within-a-document) on a MarkupWKWebView containing the `contents`.
 
 ## Tests
 
@@ -154,6 +383,8 @@ The demos open `demo.html`, which contains information about how to use the Mark
 
 The demo directories also contain a "Simplest" version of a SwiftUI View and UIKit UIViewController, since the `DemoContentView` and `DemoViewController` for the demos are more complex, with pickers and the raw HTML display brought in with the `FileToolbar`, and the support for selecting local images. If you want to try the "Simplest" versions out, just edit the `SceneDelegate` to point at the `SimplestContentView` or `SimplestViewController`.
 
+As discussed in the [Searching Within A Document](#searching-within-a-document) section, a SwiftUI `SearchableContentView` is also provided to demonstrate the ability to search within a MarkupEditor HTML document, along with a `SearchBar` to invoke the functionality.
+
 ## Status
 
 The current version is a feature-complete Beta. I am now consuming it myself in another project I am developing, so changes are being driven primarily by MarkupEditor uptake in that project (and any issues people might raise).
@@ -163,6 +394,79 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### Version 0.7.0 (Beta 4)
+
+The main change in this version is to adopt strict concurrency in anticipation of Swift 6. You may have to make source code changes to use this version. Specifically, the `MarkupEditor` class, whose statics contain settings and defaults is now marked `@MainActor`. If you access `MarkupEditor` from a class that is itself not main-actor-isolated, perhaps in a method that sets MarkupEditor defaults like this:
+
+```
+private static func initializeMarkupEditor() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
+    MarkupEditor.toolbarLocation = .keyboard
+    #if DEBUG
+    MarkupEditor.isInspectable = true
+    #endif
+}
+```
+
+then you will see errors like:
+
+```
+Main actor-isolated static property 'style' can not be mutated from a non-isolated context
+```
+
+You can fix the errors by making the method accessing the `MarkupEditor` class main actor-isolated like this:
+
+```
+@MainActor
+private static func initializeMarkupEditor() {
+    MarkupEditor.style = .compact
+    MarkupEditor.allowLocalImages = true
+    MarkupEditor.toolbarLocation = .keyboard
+    #if DEBUG
+    MarkupEditor.isInspectable = true
+    #endif
+}
+```
+
+* Enforce strict concurrency, update to @MainActor in various places (https://github.com/stevengharris/MarkupEditor/issues/193)
+* Expose public MarkupWKWebView.baseUrl (per https://github.com/stevengharris/MarkupEditor/issues/175#issuecomment-1900884682)
+
+#### Version 0.6.2 (Beta 3)
+
+* Update README to clarify how to get modified HTML, a recurring issue for users (e.g., https://github.com/stevengharris/MarkupEditor/issues/176).
+* Update README to include a [Customizing the MarkupEditor](#customizing-the-markupeditor) section.
+* Add ability to customize [CSS](#customizing-document-style) and [scripts](#adding-custom-scripts) in MarkupWKWebViewConfiguration.
+* Fixed various paste issues (https://github.com/stevengharris/MarkupEditor/issues/184, https://github.com/stevengharris/MarkupEditor/issues/179, https://github.com/stevengharris/MarkupEditor/issues/128).
+* Removed empty text element left on formatting (https://github.com/stevengharris/MarkupEditor/issues/181).
+
+#### Version 0.6.0 (Beta 2)
+
+There have been a lot of changes since Beta 1 was released. Beta 2 pulls them all together in what I hope is closer to a proper release candidate.
+
+#### Features
+
+* The MarkupEditor did not support text search, but now does. See [Search](#search) in this README.
+* There was no way to provide "placeholder" text for an empty MarkupWKWebView, but it is now supported.  (https://github.com/stevengharris/MarkupEditor/issues/101)
+* Setting the selection when the MarkupWKWebView is opened (which updates the MarkupToolbar) was automatic but is now optional. (https://github.com/stevengharris/MarkupEditor/issues/70)
+
+#### Closed Issues
+
+* Enter and multi-element styling operations were broken inside of indents. (https://github.com/stevengharris/MarkupEditor/issues/57)
+* Local images did not respect the resourcesUrl setting relative to the base URL. (https://github.com/stevengharris/MarkupEditor/issues/59)
+* Image sizing was absolute, which caused problems moving between devices, but display is now limited to the width of the device/window. (https://github.com/stevengharris/MarkupEditor/issues/69)
+* Editing *only on Intel-based Mac Catalyst apps on MacOS 13 Ventura* was buggy/broken due to a base WKWebView regression that Apple fixed in MacOS 14 Sonoma. (https://github.com/stevengharris/MarkupEditor/issues/76)
+* Paste alerts (e.g., "... would like to paste from ...") were being presented unnecessarily. (https://github.com/stevengharris/MarkupEditor/issues/77)
+* Link URLs were being inserted at the incorrect selection point. (https://github.com/stevengharris/MarkupEditor/issues/79)
+* The selection caret was missing sometimes when the MarkupWKWebView was opened. (https://github.com/stevengharris/MarkupEditor/issues/83)
+* Spurious notifications of content changes were issued when images were prepped to be resizable. (https://github.com/stevengharris/MarkupEditor/issues/86)
+* Editing on touch devices had various issues. (https://github.com/stevengharris/MarkupEditor/issues/89, https://github.com/stevengharris/MarkupEditor/issues/93, https://github.com/stevengharris/MarkupEditor/issues/106)
+* Pasting content with newlines (e.g., from the Notes app) was buggy. (https://github.com/stevengharris/MarkupEditor/issues/128)
+* The TableSizer drag operation would not produce a table properly on Mac Catalyst. (https://github.com/stevengharris/MarkupEditor/issues/142)
+* There was a white flash when the MarkupWKWebView was presented initially in dark mode. (https://github.com/stevengharris/MarkupEditor/issues/143)
+* A change introduced to fix the responsive area on touch devices resulted in an incorrect scroll height. (https://github.com/stevengharris/MarkupEditor/issues/144)
+* The hot-key combo to use the `code` style was cumbersome and was changed from ⌘{ to ⌘\`. (https://github.com/stevengharris/MarkupEditor/issues/148)
 
 #### Version 0.5.1 (Beta 1)
 
