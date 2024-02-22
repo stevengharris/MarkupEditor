@@ -205,7 +205,21 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 Logger.coordinator.error("Src was missing or malformed")
                 return
             }
-            markupDelegate?.markupImageAdded(url: url)
+            if let divId = messageData["divId"] as? String {
+                // Even if divid is identified, if it's empty or the editor element, then
+                // use the old call without divid to maintain compatibility with earlier versions
+                // that did not support multi-contenteditable divs.
+                if divId.isEmpty || divId == "editor" {
+                    markupDelegate?.markupImageAdded(url: url)
+                    updateHeight()
+                } else if !divId.isEmpty {
+                    markupDelegate?.markupImageAdded(webView, url: url, divId: divId)
+                } else {
+                    Logger.coordinator.error("Error: The div id for the image could not be decoded.")
+                }
+            } else {
+                markupDelegate?.markupImageAdded(url: url)
+            }
         case "deletedImage":
             guard let src = messageData["src"] as? String, let url = URL(string: src) else {
                 Logger.coordinator.error("Src was missing or malformed")

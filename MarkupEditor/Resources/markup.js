@@ -67,7 +67,7 @@ const _callback = function(message) {
 };
 
 const _callbackInput = function() {
-    window.webkit.messageHandlers.markup.postMessage('input' + (_selectedID ?? ""));
+    window.webkit.messageHandlers.markup.postMessage('input' + (_selectedID ?? ''));
 }
 
 /**
@@ -7952,7 +7952,7 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
     } else {
         const newImg = document.createElement('img');
         newImg.setAttribute('alt', alt);
-        _setSrc(newImg, src);   // Will make newImg selected and call input/selectionChange
+        _setSrc(newImg, src, _selectedID);   // Will make newImg selected and call input/selectionChange
     };
     //TODO: Make modifyImage properly undoable again
 };
@@ -7968,17 +7968,18 @@ MU.cutImage = function() {
 /**
  * Set up load events 1) to call back to tell the Swift side the image
  * loaded, and to select the image once it's loaded. Do the same on error
- * to handle the case of "broken images". Then set src.
+ * to handle the case of "broken images". Then set src. Pass-along the divId
+ * the image was placed in.
  */
-const _setSrc = function(img, src) {
+const _setSrc = function(img, src, divId) {
     img.addEventListener('load', function() {
-        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (divId ?? '') }));
     });
     img.addEventListener('load', function() {
         _makeSelected(img);
     });
     img.addEventListener('error', function() {
-       _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+       _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (divId ?? '') }));
     });
     img.addEventListener('load', function() {
         _makeSelected(img);
@@ -8021,7 +8022,7 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
     } else {
         range.insertNode(img);
     };
-    _setSrc(img, src)   // Initiate load/error callback and prepping of image
+    _setSrc(img, src, _selectedID)   // Initiate load/error callback and prepping of image
     return img;
 };
 

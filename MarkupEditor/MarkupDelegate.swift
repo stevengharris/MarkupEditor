@@ -79,6 +79,10 @@ public protocol MarkupDelegate {
     /// src parameter in the document.
     func markupImageAdded(url: URL)
     
+    /// A image/resource was added at the url. The url is derived from the image/resource
+    /// src parameter in the document that is in the identified divId ("editor" by default).
+    func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String)
+    
     /// An image/resource was removed in the document. This image/resource has the url
     /// specified, as derived from its src parameter in the document.
     func markupImageDeleted(url: URL)
@@ -221,7 +225,12 @@ extension MarkupDelegate {
     /// You might, for example, want to copy the image to somewhere, since the url passed-in
     /// will be a location in the cache.
     public func markupImageAdded(url: URL) {}
-    
+
+    /// Take action after an image had been added in `divId` of `view`, if needed; default is to do nothing.
+    ///
+    /// You might, for example, want to copy the image to somewhere, since the url passed-in
+    /// will be a location in the cache, which can be found from `view.baseUrl`.
+    public func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String) {}
     
     /// Take action after an image had been deleted, if needed; default is to do nothing.
     ///
