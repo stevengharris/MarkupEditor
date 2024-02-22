@@ -87,6 +87,10 @@ public protocol MarkupDelegate {
     /// specified, as derived from its src parameter in the document.
     func markupImageDeleted(url: URL)
     
+    /// An image/resource was removed in the document. This image/resource has the url
+    /// specified, as derived from its src parameter in the document, that is in the identified divId ("editor" by default).
+    func markupImageDeleted(_ view: MarkupWKWebView?, url: URL, divId: String)
+    
     /// A local image has been identified to add to the view.
     func markupImageToAdd(_ view: MarkupWKWebView, url: URL)
     
@@ -228,6 +232,8 @@ extension MarkupDelegate {
 
     /// Take action after an image had been added in `divId` of `view`, if needed; default is to do nothing.
     ///
+    /// This method is only called when using contentEditable divs other than the `editor` div.
+    ///
     /// You might, for example, want to copy the image to somewhere, since the url passed-in
     /// will be a location in the cache, which can be found from `view.baseUrl`.
     public func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String) {}
@@ -243,6 +249,20 @@ extension MarkupDelegate {
     /// 
     /// Note FWIW that by default, the image will remain in the cache. This is important to support undo!
     public func markupImageDeleted(url: URL) {}
+    
+    /// Take action after an image had been deleted in `divId` of `view`, if needed; default is to do nothing.
+    ///
+    /// This method is only called when using contentEditable divs other than the `editor` div.
+    /// 
+    /// You might, for example, want to remove a copy of the image that you put somewhere. If so, you
+    /// will need to use the same name (a UUID by default) so it's easy to find, or you will need to maintain
+    /// a map between the url used by the MarkupEditor and the local copy you save.
+    ///
+    /// The notification arrives regardless of whether the url represents a local image or a remote one. Your code
+    /// will need to sort out the difference.
+    ///
+    /// Note FWIW that by default, the image will remain in the cache. This is important to support undo!
+    public func markupImageDeleted(_ view: MarkupWKWebView?, url: URL, divId: String) {}
     
     /// Take action needed to add the local image to the document being edited.
     ///
