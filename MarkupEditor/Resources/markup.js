@@ -3173,12 +3173,19 @@ const _firstEditorElement = function() {
  */
 //MARK: DIV and Button Support
 
+/**
+ * Add a div with id to parentId.
+ *
+ * Return a string indicating what happened if there was a problem; else nil.
+ */
 MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
     const parent = document.getElementById(parentId);
     if (!parent) {
-        _consoleLog("Cannot find parent " + parentId + " to add div " + id);
-        return
-    }
+        return 'Cannot find parent ' + parentId + ' to add div ' + id;
+    };
+    if (document.getElementById(id)) {
+        return 'Div with id ' + id + ' already exists';
+    };
     const div = document.createElement('div');
     div.setAttribute('id', id);
     div.setAttribute('class', cssClass);
@@ -3278,7 +3285,7 @@ MU.focusOn = function(id) {
 MU.scrollIntoView = function(id) {
     const element = document.getElementById(id);
     if (element) {
-        element.scrollIntoView();
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
         _consoleLog("Element to scroll into view does not exist: " + id);
     };

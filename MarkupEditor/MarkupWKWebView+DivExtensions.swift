@@ -168,6 +168,8 @@ extension MarkupWKWebView {
         evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButtonGroup: \(error)")
+            } else if let result {
+                Logger.webview.warning("\(result as? String ?? "nil")")
             } else {
                 // We are going to be running handler before all the buttons are added, but we don't care
                 for button in buttonGroup.buttons {
