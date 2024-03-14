@@ -79,24 +79,30 @@ public struct StyleToolbar: View {
                     )
                     .disabled(!selectionState.canStyle)
                 }
-                if contents.list || contents.dent {
+                if !contents.listType.isEmpty || contents.dent {
                     Divider()
                 }
             }
-            if contents.list {
-                ToolbarImageButton(
-                    systemName: "list.bullet",
-                    action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
-                    active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
-                    onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
-                )
-                ToolbarImageButton(
-                    systemName: "list.number",
-                    action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
-                    active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
-                    onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
-                )
+
+            ForEach(contents.listType, id: \.self) { type in
+                switch type {
+                case .bullet:
+                    ToolbarImageButton(
+                        systemName: "list.bullet",
+                        action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
+                        active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
+                        onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
+                    )
+                case .number:
+                    ToolbarImageButton(
+                        systemName: "list.number",
+                        action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
+                        active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
+                        onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
+                    )
+                }
             }
+
             if contents.dent {
                 ToolbarImageButton(
                     systemName: "increase.quotelevel",
