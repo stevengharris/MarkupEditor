@@ -97,13 +97,25 @@ public struct InsertContents {
 
 /// Identify whether the list and indent/outdent items will show up
 public struct StyleContents {
+
+    /// Determin which kind of list format we want
+    public enum ListType {
+        case bullet, number
+    }
+
     public var paragraph: Bool
-    public var list: Bool
+    public var listType: [ListType]
     public var dent: Bool
-    
+
+    public init(paragraph: Bool = true, listType: [ListType], dent: Bool = true) {
+        self.paragraph = paragraph
+        self.listType = listType
+        self.dent = dent
+    }
+
     public init(paragraph: Bool = true, list: Bool = true, dent: Bool = true) {
         self.paragraph = paragraph
-        self.list = list
+        self.listType = list ? [.bullet, .number] : []
         self.dent = dent
     }
 }

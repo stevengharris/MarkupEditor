@@ -34,7 +34,7 @@ public class MarkupMenu {
         if contents.insert { children.append(insertMenu()) }
         if contents.style {
             if contents.styleContents.paragraph { children.append(styleMenu()) }
-            if contents.styleContents.list { children.append(listMenu()) }
+            if !contents.styleContents.listType.isEmpty { children.append(listMenu()) }
             if contents.styleContents.dent { children.append(dentMenu()) }
         }
         if contents.format { children.append(formatMenu()) }
@@ -79,10 +79,15 @@ public class MarkupMenu {
     }
     
     private func listMenu() -> UIMenu {
-        let children: [UICommand] = [
-            UIKeyCommand(title: "Bullets", action: #selector(MarkupWKWebView.bullets), input: ".", modifierFlags: .command),
-            UIKeyCommand(title: "Numbers", action: #selector(MarkupWKWebView.numbers), input: "/", modifierFlags: .command)
-        ]
+        let children: [UICommand] = contents.styleContents.listType.map { type in
+            switch type {
+            case .bullet:
+                return UIKeyCommand(title: "Bullets", action: #selector(MarkupWKWebView.bullets), input: ".", modifierFlags: .command)
+            case .number:
+                return UIKeyCommand(title: "Numbers", action: #selector(MarkupWKWebView.numbers), input: "/", modifierFlags: .command)
+            }
+        }
+
         return UIMenu(title: "List", options: .displayInline, children: children)
     }
     
