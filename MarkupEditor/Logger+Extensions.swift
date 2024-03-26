@@ -1,5 +1,5 @@
 //
-//  OSLogger+Extensions.swift
+//  Logger+Extensions.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 9/4/23.
@@ -7,9 +7,9 @@
 
 import OSLog
 
-extension Logger {
+extension Logger: @unchecked Sendable {
 
-    private static var subsystem = Bundle.main.bundleIdentifier!
+    private static let subsystem = Bundle.main.bundleIdentifier!
 
     public static let script = Logger(subsystem: subsystem, category: "script")
     public static let coordinator = Logger(subsystem: subsystem, category: "coordinator")

@@ -40,9 +40,18 @@
 const MU = {};
 
 /**
- * The editor element contains the HTML being edited
+ * MU.editor is the default contentEditable DIV containing the HTML being edited.
  */
 MU.editor = document.getElementById('editor');
+
+/**
+ * MU.selectedID is the id of the contentEditable DIV containing the currently selected element.
+ *
+ * MU.selectedID will be "editor" by default when editing, but when using multiple contentEditable DIVs,
+ * may be a different ID. It is set when focus fires, nulled when blur fires.
+ */
+let _selectedID;
+MU.selectedDiv = (_selectedID) ? document.getElementById(_selectedID) : null;
 
 /**
  * Callback into Swift.
@@ -56,6 +65,10 @@ MU.editor = document.getElementById('editor');
 const _callback = function(message) {
     window.webkit.messageHandlers.markup.postMessage(message);
 };
+
+const _callbackInput = function() {
+    window.webkit.messageHandlers.markup.postMessage('input' + (_selectedID ?? ''));
+}
 
 /**
  * Called to set attributes to the editor div, typically to make it contenteditable,
@@ -191,6 +204,7 @@ class MUError {
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
     static InvalidSplitElement = new MUError('InvalidSplitElement', 'Node passed to _splitElement must be an ELEMENT_NODE.');
     static InvalidSplitElementRoot = new MUError('InvalidSplitElementRoot', 'Root name passed to _splitElement was not a parent of element.');
+    static NoDiv = new MUError('NoDiv', "A div could not be found to return HTML from.");
     static NoEndContainerInRange = new MUError('NoEndContainerInRange', 'Range endContainer not found in _nodesWithNamesInRange');
     static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
@@ -869,7 +883,7 @@ class ResizableImage {
                 resizableImage.deselect();
                 _selectFollowingInsert(existingImageElement, 'BEFORE');
                 _showCaret();
-                _callback('input');
+                _callbackInput();
                 _callback('selectionChange');
                 break;
             case 'ArrowRight':
@@ -878,14 +892,14 @@ class ResizableImage {
                 resizableImage.deselect();
                 _selectFollowingInsert(existingImageElement, 'AFTER');
                 _showCaret();
-                _callback('input');
+                _callbackInput();
                 _callback('selectionChange');
                 break;
             case 'ArrowUp':
             case 'ArrowDown':
                 resizableImage.deselect();
                 _showCaret();
-                _callback('input');
+                _callbackInput();
                 _callback('selectionChange');
                 break;
             case 'Backspace':
@@ -1735,7 +1749,7 @@ document.addEventListener('selectionchange', function(ev) {
 MU.editor.addEventListener('input', function() {
     _updatePlaceholder();
     _backupSelection();
-    _callback('input');
+    _callbackInput();
 });
 
 /**
@@ -1760,7 +1774,7 @@ const unmuteFocusBlur = function() {
 MU.editor.addEventListener('focus', function(ev) {
     if (MU.currentSelection) { _restoreSelection() };   // No need if nothing to restore
     if (!_muteFocusBlur) {
-        //_consoleLog("focused: " + ev.target.id)
+        _selectedID = _findContentEditableID(document.getSelection()?.focusNode);
         _callback('focus');
     //} else {
     //    _consoleLog(" (muted focused: " + ev.target.id + ")")
@@ -1821,13 +1835,13 @@ MU.editor.addEventListener('click', function(ev) {
     if (resizableImage.preventNextClick) {
         resizableImage.preventNextClick = false;
         ev.preventDefault();
-        _callback('input');     // Because the html changed to indicate a new size
+        _callbackInput();     // Because the html changed to indicate a new size
     } else if (!_isResizableImage(target) && resizableImage.isSelected && !_isImageElement(target)) {
         ev.preventDefault();
         resizableImage.deselect();
         _showCaret();
         _callback('selectionChange')
-        _callback('input');
+        _callbackInput();
     } else {
         const nclicks = ev.detail;
         if (nclicks === 1) {
@@ -1952,7 +1966,7 @@ MU.editor.addEventListener('keydown', function(ev) {
                 ev.stopPropagation();
                 resizableImage.select(sib);
                 _hideCaret();
-                _callback('input');
+                _callbackInput();
                 _callback('selectionChange');
             };
             break;
@@ -1965,7 +1979,7 @@ MU.editor.addEventListener('keydown', function(ev) {
                 ev.stopPropagation();
                 resizableImage.select(sib);
                 _hideCaret();
-                _callback('input');
+                _callbackInput();
                 _callback('selectionChange');
             };
             break;
@@ -2037,7 +2051,7 @@ const _doEnter = function(undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         }
-        _callback('input');
+        _callbackInput();
         return p;   // To preventDefault() on Enter
     };
     return null;    // Let the MarkupWKWebView do its normal thing
@@ -2238,7 +2252,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     // DEBUGGING TIP:
     // By executing an 'input' callback and returning true at this point, we can debug the
     // result ensure it is the same as hitting Backspace.
-    //_callback('input');
+    //_callbackInput();
     //return true;
     const newElement = _fragmentFrom(html)
     const anchorIsElement = _isElementNode(anchorNode);
@@ -2315,7 +2329,7 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
         const undoerData = _undoerData('pasteHTML', {html: html, deletedFragment: deletedFragment, rootName: rootName, replacedEmpty: replacedEmpty}, pasteRange);
         undoer.push(undoerData);
     }
-    _callback('input');
+    _callbackInput();
     return true;
 };
 
@@ -2684,7 +2698,7 @@ const _undoPasteHTML = function(undoerData) {
     sel.addRange(newRange);
     undoerData.range = newRange;
     _backupSelection();
-    _callback('input');
+    _callbackInput();
 };
 
 const _redoPasteHTML = function(undoerData) {
@@ -2913,7 +2927,7 @@ MU.setHTML = function(contents, select=true) {
     // being held in "style" elements. Without them, things will display properly, but the behavior
     // is going to be unpredictable. The intervention on contents here is similar to what happens in
     // MU.emptyDocument, but doing it here avoids having selection change.
-    if (contents.trim().length === 0) {
+    if ((contents.trim().length === 0) && (MU.editor.isContentEditable)) {
         contents = '<p><br></p>';
     };
     template.innerHTML = contents;
@@ -2972,7 +2986,7 @@ MU.getHeight = function() {
  * Setting padBottom pads the editor all the way to the bottom, so that the
  * focus area occupies the entire view. This allows long-press on iOS to bring up the
  * context menu anywhere on the screen, even when text only occupies a small portion
- * of the screen. 
+ * of the screen.
  */
 MU.padBottom = function(fullHeight) {
     const editor = MU.editor;
@@ -3013,24 +3027,30 @@ MU.resetSelection = function() {
  *
  * @return {string} The HTML for the editor element
  */
-MU.getHTML = function(pretty="true", clean="true") {
+MU.getHTML = function(pretty="true", clean="true", divID) {
     const prettyHTML = pretty === "true";
     const cleanHTML = clean === "true";
+    const div = (divID) ? document.getElementById(divID) : MU.editor;
+    if (!div) {
+        MUError.NoDiv.callback();
+        return "";
+    }
     let editor, text;
     if (cleanHTML) {
         const template = document.createElement('template');
-        template.innerHTML = MU.editor.innerHTML;
+        template.innerHTML = div.innerHTML;
         editor = template.content;
         _cleanUpDivsWithin(editor);
         _cleanUpSpansWithin(editor);
         _cleanUpEmptyTextNodes(editor);
     } else {
-        editor = MU.editor;
+        editor = div;
     };
     if (prettyHTML) {
         text = _allPrettyHTML(editor);
     } else {
         text = MU.editor.innerHTML;
+        //text = _isFragment(editor) ? _fragmentString(editor) : editor.innerHTML;
     };
     return text;
 };
@@ -3134,7 +3154,7 @@ const _initializeRange = function() {
         selection.addRange(range);
         _backupSelection();
     } else {
-        MU.emptyDocument()
+        if (MU.editor.isContentEditable) { MU.emptyDocument() }
     };
     // Caller has to do _focusOn and/or callback to updateHeight if needed
 };
@@ -3146,6 +3166,141 @@ const _firstEditorElement = function() {
     const firstTextNode = _getFirstChildOfTypeWithin(MU.editor, Node.TEXT_NODE);
     return firstTextNode ? firstTextNode : MU.editor.firstChild;
 };
+
+/********************************************************************************
+ * DIV and Button-related functionality in support of DIVS defining
+ * separate editable (or non-editable) styled areas within the MU.editor.
+ */
+//MARK: DIV and Button Support
+
+/**
+ * Add a div with id to parentId.
+ *
+ * Return a string indicating what happened if there was a problem; else nil.
+ */
+MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
+    const parent = document.getElementById(parentId);
+    if (!parent) {
+        return 'Cannot find parent ' + parentId + ' to add div ' + id;
+    };
+    if (document.getElementById(id)) {
+        return 'Div with id ' + id + ' already exists';
+    };
+    const div = document.createElement('div');
+    div.setAttribute('id', id);
+    div.setAttribute('class', cssClass);
+    div.addEventListener('focus', function(ev) {
+        _selectedID = ev.target.id;
+    });
+    div.addEventListener('blur', function(ev) {
+        _selectedID = null;
+    });
+    var contenteditable;
+    if (jsonAttributes) {
+        const editableAttributes = JSON.parse(jsonAttributes);
+        if (editableAttributes) {
+            contenteditable = editableAttributes.contenteditable;
+            _setAttributes(div, editableAttributes);
+        };
+    };
+    if (htmlContents) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlContents;
+        const newElement = template.content;
+        div.appendChild(newElement);
+    } else if (contenteditable === true) {
+        // Always make the empty div contents selectable. Note we do not send an 'input'
+        // callback, so we won't signal any change has occurred to the contents
+        // until there is some actual change.
+        const p = document.createElement('p');
+        p.appendChild(document.createElement('br'));
+        div.appendChild(p);
+    };
+    parent.appendChild(div);
+};
+
+MU.removeDiv = function(id) {
+    const element = document.getElementById(id);
+    if (_isDiv(element)) {
+        element.parentNode.removeChild(element);
+    } else {
+        if (element) {
+            _consoleLog("Element to remove with id " + id + " is not a DIV");
+        } else {
+            _consoleLog("Element to remove with id " + id + " does not exist");
+        };
+    };
+};
+
+MU.addButton = function(id, parentId, cssClass, label) {
+    const button = document.createElement('button');
+    button.setAttribute('id', id);
+    button.setAttribute('class', cssClass);
+    button.setAttribute('type', 'button');
+    button.appendChild(document.createTextNode(label));
+    button.addEventListener('click', function() {
+        _callback(
+            JSON.stringify({
+                'messageType' : 'buttonClicked',
+                'id' : id,
+                'rect' : _getButtonRect(button)
+            })
+        )
+    });
+    const div = document.getElementById(parentId);
+    if (div) {
+        div.appendChild(button);
+    } else {
+        MU.editor.appendChild(button);
+    };
+};
+
+MU.removeButton = function(id) {
+    const element = document.getElementById(id);
+    if (_isButton(element)) {
+        element.parentNode.removeChild(element);
+    };
+};
+
+const _getButtonRect = function(button) {
+    const boundingRect = button.getBoundingClientRect();
+    const buttonRect = {
+        'x' : boundingRect.left,
+        'y' : boundingRect.top,
+        'width' : boundingRect.width,
+        'height' : boundingRect.height
+    };
+    return buttonRect;
+};
+
+MU.focusOn = function(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.focus();
+    } else {
+        _consoleLog("Element to focus on does not exist: " + id);
+    };
+};
+
+MU.scrollIntoView = function(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        _consoleLog("Element to scroll into view does not exist: " + id);
+    };
+};
+
+/**
+ * Remove all child divs of MU.editor
+ */
+MU.removeAllDivs = function() {
+    const divs = [].filter.call(MU.editor.childNodes, function(el) { return _isDiv(el) });
+    for (const div of divs) {
+        div.remove();
+    };
+}
+
 
 /********************************************************************************
  * Formatting
@@ -3267,7 +3422,7 @@ const _toggleFormat = function(type, undoable=true) {
         //_consoleLog("undoerData.data: " + JSON.stringify(undoerData.data));
         undoer.push(undoerData);
     }
-    _callback('input');
+    _callbackInput();
     return tagRange;
 };
 
@@ -3454,7 +3609,7 @@ const _multiFormat = function(newFormat, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection()
     };
-    _callback('input');
+    _callbackInput();
     return range;
 };
 
@@ -3538,7 +3693,7 @@ const _undoMultiFormat = function(undoerData) {
     sel.removeAllRanges();
     sel.addRange(range);
     undoerData.range = range;
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -3636,7 +3791,7 @@ const _redoMultiFormat = function(undoerData) {
     sel.removeAllRanges();
     sel.addRange(range);
     undoerData.range = range;
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -3844,7 +3999,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
             const undoerData = _undoerData('style', {oldStyle: oldStyle, newStyle: newStyle});
             undoer.push(undoerData);
         }
-        _callback('input');
+        _callbackInput();
     } else if (selNode.nodeType === Node.TEXT_NODE) {
         // We occasionally (e.g., in lists) select unstyled text nodes.
         // In these cases, we need to select the entire text node, set the style,
@@ -3867,7 +4022,7 @@ MU.replaceStyle = function(oldStyle, newStyle, undoable=true) {
             const undoerData = _undoerData('style', {oldStyle: null, newStyle: newStyle});
             undoer.push(undoerData);
         }
-        _callback('input');
+        _callbackInput();
     };
 };
 
@@ -3899,7 +4054,7 @@ const _multiStyle = function(newStyle, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection()
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -4197,7 +4352,7 @@ MU.toggleListItem = function(newListType, restoreContainingList=false, undoable=
         undoer.push(undoerData);
         _restoreSelection();
     }
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -4375,7 +4530,7 @@ const _multiList = function(newListType, undoable) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -4511,7 +4666,7 @@ const _undoMultiList = function(undoerData) {
     });
     _restoreRange(savedRange);
     undoerData.range = savedRange;
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -4634,7 +4789,7 @@ const _redoMultiList = function(undoerData) {
         undoerData.data.indices.push(_childNodeIndicesByParent(newListableElements[i], commonAncestor));
     };
     _restoreRange(savedRange);
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -4952,7 +5107,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         // DEBUGGING TIP:
         // By executing an 'input' callback and returning true at this point, we can debug the
         // result of various _patch* calls and ensure the result is the same as hitting Backspace.
-        //_callback('input');
+        //_callbackInput();
         //return true;
     }
     const existingList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL'])
@@ -5094,7 +5249,7 @@ const _doListEnter = function(undoable=true, oldUndoerData) {
         undoer.push(undoerData);
         _restoreSelection();
     }
-    _callback('input');
+    _callbackInput();
     //_consoleLog("* Done _doListEnter")
     return newElement;      // To preventDefault() on Enter
 };
@@ -5372,7 +5527,7 @@ const _undoListEnter = function(undoerData) {
         _backupUndoerRange(undoerData);
     };
     _backupSelection();
-    _callback('input');
+    _callbackInput();
     //_consoleLog("* Done _undoListEnter")
 };
 
@@ -5587,7 +5742,7 @@ const _doListIndent = function(undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         }
-        _callback('input');
+        _callbackInput();
     };
 };
 
@@ -5706,7 +5861,7 @@ const _doListOutdent = function(undoable=true) {
         };
         undoer.push(undoerData);
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -5832,7 +5987,7 @@ const _splitList = function(listItemElement, newListType) {
         if (postList.children.length > 0) {
             insertionPoint = postList;
         } else {
-            insertionPoint = oldList.nextSibling ?? MU.editor.lastChild;
+            insertionPoint = oldList.nextSibling ?? (_findContentEditable(oldList) ?? MU.editor).lastChild;
         };
         let child;
         const firstChild = listItemElement.firstChild;
@@ -6077,7 +6232,7 @@ const _multiDent = function(dentType, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection()
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -6205,7 +6360,7 @@ const _undoRedoMultiDent = function(dentType, undoerData) {
     undoerData.data.oldDentableTypes = oldDentableTypes;
     undoerData.data.oldIndices = oldIndices;
     undoerData.range = document.getSelection().getRangeAt(0);
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -6335,7 +6490,7 @@ const _increaseQuoteLevel = function(undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         }
-        _callback('input');
+        _callbackInput();
         return selNode;
     };
     return null;
@@ -6369,7 +6524,7 @@ const _decreaseQuoteLevel = function(node, undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         }
-        _callback('input');
+        _callbackInput();
         return node;
     };
     return null;
@@ -6509,7 +6664,7 @@ const _doBlockquoteEnter = function(undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
     return trailingNode;
 };
 
@@ -6558,7 +6713,7 @@ const _undoBlockquoteEnter = function(undoerData) {
         _joinElements(leadingNode, trailingNode, 'BLOCKQUOTE');
     };
     _backupUndoerRange(undoerData);
-    _callback('input');
+    _callbackInput();
 };
 
 const _redoBlockquoteEnter = function(undoerData) {
@@ -6642,6 +6797,7 @@ MU.endModalInput = function() {
 const _backupSelection = function() {
     const rangeProxy = _rangeProxy();
     MU.currentSelection = rangeProxy;
+    MU.currentDivID = _selectedID;
     if (!rangeProxy) {
         const error = MUError.BackupNullRange;
         error.setInfo('activeElement.id: ' + document.activeElement.id + ', getSelection().rangeCount: ' + document.getSelection().rangeCount);
@@ -6654,6 +6810,7 @@ const _backupSelection = function() {
  * Restore the selection to the range held in MU.currentSelection
  */
 const _restoreSelection = function() {
+    _selectedID = MU.currentDivID;
     _restoreRange(MU.currentSelection);
 };
 
@@ -6666,6 +6823,9 @@ const _textString = function(node, title="") {
     }
 }
 
+/**
+ * Return the "innerHTML" of a fragment, with an optional title at the front
+ */
 const _fragmentString = function(fragment, title="") {
     if (!fragment) return title + "null"
     let div = document.createElement('div');
@@ -6865,7 +7025,7 @@ const _cleanUpSpans = function() {
         if (styleParent) {
             const spansRemoved = _cleanUpSpansWithin(styleParent);
             if (spansRemoved > 0) {
-                _callback('input');
+                _callbackInput();
             };
         };
     };
@@ -6936,10 +7096,10 @@ const _cleanUpAttributes = function(attribute) {
     if (startNode) {
         const attributesRemoved = _cleanUpAttributesWithin(attribute, startNode);
         if (attributesRemoved > 0) {
-            _callback('input');
+            _callbackInput();
         } else if ((startNode === MU.editor) && (startNode.childNodes.length === 0)) {
             _initializeRange();
-            _callback('input');
+            _callbackInput();
         };
     };
 };
@@ -7205,11 +7365,29 @@ MU.getSelectionState = function() {
  */
 const _getSelectionState = function() {
     const state = {};
-    if (!document.getSelection() || (document.getSelection().rangeCount == 0)) {
+    const selection = document.getSelection();
+    if (!selection || (selection.rangeCount == 0)) {
         state['valid'] = false;
         return state;
     }
-    state['valid'] = true;
+    // When we have multiple contentEditable elements within editor, we need to
+    // make sure we selected something that isContentEditable. If we didn't
+    // then just return state, which will be invalid but have the enclosing div ID.
+    // Note: _callbackInput() uses a cached value of the *contentEditable* div ID
+    // because it is called at every keystroke and change, whereas here we take
+    // the time to find the enclosing div ID from the selection so we are sure it
+    // absolutely reflects the selection state at the time of the call regardless
+    // of whether it is contentEditable or not.
+    var divID = _findContentEditableID(selection.focusNode);
+    if (divID) {
+        state['divid'] = divID;
+        state['valid'] = true;
+    } else {
+        divID = _findDivID(selection.focusNode);
+        state['divid'] = divID;
+        state['valid'] = false;
+        return state;
+    };
     // Selected text
     state['selection'] = _getSelectionText();
     // The selrect tells us where the selection can be found
@@ -7616,7 +7794,7 @@ MU.insertLink = function(url, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     }
-    _callback('input');
+    _callbackInput();
     _callback('selectionChange')
 };
 
@@ -7652,7 +7830,7 @@ MU.deleteLink = function(undoable=true) {
                 undoer.push(undoerData);
                 _restoreSelection();
             }
-            _callback('input');
+            _callbackInput();
         }
     }
 }
@@ -7740,7 +7918,7 @@ MU.insertImage = function(src, alt, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
     return img;
 };
 
@@ -7776,12 +7954,12 @@ MU.modifyImage = function(src, alt, scale, undoable=true) {
                 img.setAttribute('height', height);
             };
         };
-        _callback('input');
+        _callbackInput();
         _callback('selectionChange');
     } else {
         const newImg = document.createElement('img');
         newImg.setAttribute('alt', alt);
-        _setSrc(newImg, src);   // Will make newImg selected and call input/selectionChange
+        _setSrc(newImg, src, _selectedID);   // Will make newImg selected and call input/selectionChange
     };
     //TODO: Make modifyImage properly undoable again
 };
@@ -7797,17 +7975,18 @@ MU.cutImage = function() {
 /**
  * Set up load events 1) to call back to tell the Swift side the image
  * loaded, and to select the image once it's loaded. Do the same on error
- * to handle the case of "broken images". Then set src.
+ * to handle the case of "broken images". Then set src. Pass-along the divId
+ * the image was placed in.
  */
-const _setSrc = function(img, src) {
+const _setSrc = function(img, src, divId) {
     img.addEventListener('load', function() {
-        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (divId ?? '') }));
     });
     img.addEventListener('load', function() {
         _makeSelected(img);
     });
     img.addEventListener('error', function() {
-       _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src }));
+       _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (divId ?? '') }));
     });
     img.addEventListener('load', function() {
         _makeSelected(img);
@@ -7850,7 +8029,7 @@ const _insertImageAtSelection = function(src, alt, dimensions) {
     } else {
         range.insertNode(img);
     };
-    _setSrc(img, src)   // Initiate load/error callback and prepping of image
+    _setSrc(img, src, _selectedID)   // Initiate load/error callback and prepping of image
     return img;
 };
 
@@ -7870,7 +8049,7 @@ const _selectFollowingInsertImage = function(img, direction) {
     if ((direction !== 'AFTER') && (direction !== 'BEFORE')) {
         resizableImage.select(img);
         _hideCaret()
-        _callback('input');
+        _callbackInput();
         _callback('selectionChange');
     } else {
         _selectFollowingInsert(img, direction);
@@ -7971,7 +8150,7 @@ const _prepImage = function(img) {
     img.addEventListener('focusin', _focusInImage);         // Allow resizing when focused
     // Only notify the Swift side if we modified the HTML
     if (changedHTML) {
-        _callback('input') // Because we changed the html
+        _callbackInput() // Because we changed the html
     } else {
         _callback('updateHeight')
     }
@@ -7988,7 +8167,7 @@ const _focusInImage = function(ev) {
     const img = ev.currentTarget;
     resizableImage.select(img);
     _hideCaret();
-    _callback('input')
+    _callbackInput()
 };
 
 /*
@@ -8016,9 +8195,9 @@ const _deleteSelectedResizableImage = function(direction, undoable=true) {
         _restoreSelection();
     }
     _showCaret();
-    _callback('input');
+    _callbackInput();
     _callback('selectionChange');
-    _callback(JSON.stringify({'messageType' : 'deletedImage', 'src' : src }))
+    _callback(JSON.stringify({'messageType' : 'deletedImage', 'src' : src, 'divId' : (_selectedID ?? '') }))
 };
 
 /**
@@ -8067,7 +8246,7 @@ const _undoInsertImage = function(undoerData) {
         resizableImage.deleteImage()
         undoerData.range = document.getSelection().getRangeAt(0);
         _showCaret();
-        _callback('input');
+        _callbackInput();
         _callback('selectionChange');
     };
 };
@@ -8124,7 +8303,7 @@ const _undoRedoResizeImage = function(undoerData) {
     resizableImage.startDimensions = oldDimensions;         // Resets the image size
     undoerData.data.startDimensions = startDimensions;      // Change undoerData for next undo/redo
     _callback('selectionChange');
-    _callback('input');
+    _callbackInput();
 };
 
 /********************************************************************************
@@ -8181,7 +8360,7 @@ MU.insertTable = function(rows, cols, undoable=true) {
         const undoerData = _undoerData('insertTable', {row: 0, col: 0, inHeader: false, outerHTML: table.outerHTML, startRange: startRange});
         undoer.push(undoerData);
     }
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8203,7 +8382,7 @@ MU.deleteTable = function(undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         };
-        _callback('input');
+        _callbackInput();
     };
 };
 
@@ -8277,7 +8456,7 @@ MU.addRow = function(direction, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     }
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8350,7 +8529,7 @@ MU.addCol = function(direction, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8394,7 +8573,7 @@ MU.addHeader = function(colspan=true, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8456,7 +8635,7 @@ MU.deleteRow = function(undoable=true) {
             _restoreSelection();
         };
     }
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8499,7 +8678,7 @@ MU.deleteCol = function(undoable=true) {
             undoer.push(undoerData);
             _restoreSelection();
         };
-        _callback('input');
+        _callbackInput();
         return;
     }
     // newCol should be non-null if we got here; iow, we will be deleting a column and leaving
@@ -8532,7 +8711,7 @@ MU.deleteCol = function(undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     };
-    _callback('input');
+    _callbackInput();
 };
 
 /**
@@ -8551,7 +8730,7 @@ MU.borderTable = function(border, undoable=true) {
         undoer.push(undoerData);
         _restoreSelection();
     }
-    _callback('input');
+    _callbackInput();
     _callback('selectionChange')
 };
 
@@ -8884,7 +9063,7 @@ const _redoInsertTable = function(undoerData) {
         // We need the new table that now exists after targetNode
         table = _getFirstChildWithNameWithin(targetNode.nextSibling, 'TABLE');
     }
-    _callback('input');
+    _callbackInput();
     // Restore the selection to leave it at the beginning of the proper row/col
     // it was at when originally deleted. Then reset the undoerData range to hold
     // onto the new range.
@@ -9851,6 +10030,27 @@ const _allChildElementsWithType = function(element, nodeType, existingElements=[
     };
     return existingElements;
 };
+
+/**
+ * Return whether node is a div
+ */
+const _isDiv = function(node) {
+    return node && (node.nodeName === 'DIV');
+};
+
+/**
+ * Return whether node is a fragment
+ */
+const _isFragment = function(node) {
+    return node && (node.nodeName === '#document-fragment');
+}
+
+/**
+ * Return whether node is a button
+ */
+const _isButton = function(node) {
+    return node && (node.nodeName === 'BUTTON');
+}
 
 /**
  * Return whether node is a textNode or not
@@ -11087,6 +11287,46 @@ const _firstTextNodeChild = function(element) {
     };
     return null;
 };
+
+const _findContentEditableID = function(node) {
+    return _findContentEditable(node)?.id;
+}
+
+/**
+ * Search parents until we find one that has contentEditable set, and return its ID.
+ */
+const _findContentEditable = function(node) {
+    var element = node;
+    if (!_isElementNode(node)) {
+        element = node?.parentElement;
+    };
+    if (!element || !element.isContentEditable) { return null };
+    while (element) {
+        if (element.getAttribute('contenteditable') === "true") {
+            return element;
+        }
+        element = element.parentElement;
+    }
+    return null;
+};
+
+/**
+ * Return the id of the div that node resides in, whether it's contentEditable or not
+ */
+const _findDivID = function(node) {
+    var nextNode = node;
+    while (nextNode) {
+        if (_isDiv(nextNode)) {
+            return nextNode.id;
+        }
+        nextNode = nextNode.parentElement;
+    }
+    return null;
+};
+
+/**
+ * Search parents until we find a div and return its id
+ */
 
 /**
  * Recursively search parent elements to find the first one included in matchNames

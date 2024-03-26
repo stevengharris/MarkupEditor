@@ -45,8 +45,10 @@ let package = Package(
     ]
 )
 
-for target in package.targets {
-  var settings = target.swiftSettings ?? []
-  settings.append(.enableExperimentalFeature("StrictConcurrency"))
-  target.swiftSettings = settings
-}
+/** Seems to cause problems, but will leave here in case it can be enabled
+ for target in package.targets {
+    var settings = target.swiftSettings ?? []
+    settings.append(.enableExperimentalFeature("StrictConcurrency"))
+    target.swiftSettings = settings
+ }
+ */
