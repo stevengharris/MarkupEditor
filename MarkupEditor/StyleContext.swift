@@ -28,7 +28,7 @@ public class StyleContext: @unchecked Sendable, ObservableObject, Identifiable, 
         return lhs.tag == rhs.tag
     }
     
-    public static func with(tag: String) -> StyleContext {
+    @MainActor public static func with(tag: String) -> StyleContext {
         if let styleContext = AllCases.first(where: { $0.tag == tag }) {
             return styleContext
         } else {
