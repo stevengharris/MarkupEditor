@@ -13,7 +13,6 @@ import SwiftUI
 /// These RoundedRect buttons show text and outline in activeColor (.accentColor by default), with the
 /// backgroundColor of UIColor.systemBackground. When active, the text and background switch.
 public struct ToolbarImageButton<Content: View>: View {
-    private var toolbarStyle: ToolbarStyle = MarkupEditor.toolbarStyle
     private let image: Content
     private let systemName: String?
     private let action: ()->Void
@@ -24,7 +23,7 @@ public struct ToolbarImageButton<Content: View>: View {
     public var body: some View {
         Button(action: action, label: {
             label()
-                .frame(width: toolbarStyle.buttonHeight(), height: toolbarStyle.buttonHeight())
+                .frame(width: MarkupEditor.toolbarStyle.buttonHeight(), height: MarkupEditor.toolbarStyle.buttonHeight())
         })
         .onHover { over in onHover?(over) }
         // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
@@ -71,7 +70,6 @@ extension ToolbarImageButton where Content == EmptyView {
 }
 
 public struct ToolbarTextButton: View {
-    var toolbarStyle: ToolbarStyle = MarkupEditor.toolbarStyle
     let title: String
     let action: ()->Void
     let width: CGFloat?
@@ -81,7 +79,7 @@ public struct ToolbarTextButton: View {
     public var body: some View {
         Button(action: action, label: {
             Text(title)
-                .frame(width: width, height: toolbarStyle.buttonHeight())
+                .frame(width: width, height: MarkupEditor.toolbarStyle.buttonHeight())
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(

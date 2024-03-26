@@ -30,7 +30,7 @@ import OSLog
 /// is received by this MarkupCoordinator, it notifies the MarkupDelegate, which might want to take some other
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
-    private let selectionState: SelectionState = MarkupEditor.selectionState
+    @MainActor private let selectionState: SelectionState = MarkupEditor.selectionState
     weak public var webView: MarkupWKWebView!
     public var markupDelegate: MarkupDelegate?
     

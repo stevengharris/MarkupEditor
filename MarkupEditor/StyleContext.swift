@@ -9,7 +9,7 @@
 import UIKit
 
 /// HTML tags treated as styles in the StyleToolbar. The names are displayed to the user, but the html trucks in tags
-public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
+public class StyleContext: @unchecked Sendable, ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
 
     public static let Undefined = StyleContext(tag: "Undefined", name: "Style", fontSize: P.fontSize)
     public static let Multiple = StyleContext(tag: "Multiple", name: "Multiple", fontSize: P.fontSize)
