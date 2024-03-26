@@ -9,7 +9,7 @@
 import Foundation
 
 /// Tracks list types in the StyleToolbar.
-public class ListContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
+public class ListContext: @unchecked Sendable, ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
     
     public static func == (lhs: ListContext, rhs: ListContext) -> Bool {
         return lhs.tag == rhs.tag

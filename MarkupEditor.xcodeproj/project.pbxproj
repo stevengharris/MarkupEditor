@@ -96,7 +96,7 @@
 		AAB411232AD0695F0072C765 /* SearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB411222AD0695F0072C765 /* SearchBar.swift */; };
 		AAB411262AD069F80072C765 /* SearchableContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB411252AD069F80072C765 /* SearchableContentView.swift */; };
 		AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABAF162264C36FA00DC02C6 /* TableSizer.swift */; };
-		AABBAD4C2AA6382C00ADDA55 /* OSLogger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBAD4B2AA6382C00ADDA55 /* OSLogger+Extensions.swift */; };
+		AABBAD4C2AA6382C00ADDA55 /* Logger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBAD4B2AA6382C00ADDA55 /* Logger+Extensions.swift */; };
 		AAD26E86264463A300908777 /* DemoContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E85264463A300908777 /* DemoContentView.swift */; };
 		AAD4559C2800CE3300270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
 		AAD4559D2800CE3300270E4C /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -268,7 +268,7 @@
 		AAB411222AD0695F0072C765 /* SearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBar.swift; sourceTree = "<group>"; };
 		AAB411252AD069F80072C765 /* SearchableContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableContentView.swift; sourceTree = "<group>"; };
 		AABAF162264C36FA00DC02C6 /* TableSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSizer.swift; sourceTree = "<group>"; };
-		AABBAD4B2AA6382C00ADDA55 /* OSLogger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLogger+Extensions.swift"; sourceTree = "<group>"; };
+		AABBAD4B2AA6382C00ADDA55 /* Logger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logger+Extensions.swift"; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* DemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
 		AAFADF41261524AE0024F2DC /* BasicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BasicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -331,7 +331,7 @@
 				AA652ABB260EA194000674B7 /* String+Extensions.swift */,
 				AAA1B0962889D2F000303721 /* View+Extensions.swift */,
 				AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */,
-				AABBAD4B2AA6382C00ADDA55 /* OSLogger+Extensions.swift */,
+				AABBAD4B2AA6382C00ADDA55 /* Logger+Extensions.swift */,
 			);
 			name = Extensions;
 			sourceTree = "<group>";
@@ -869,7 +869,7 @@
 				AA7B24E62B59A83B003C607A /* MarkupWKWebView+DivExtensions.swift in Sources */,
 				AA7B24E22B59A628003C607A /* HtmlDiv.swift in Sources */,
 				AABAF163264C36FA00DC02C6 /* TableSizer.swift in Sources */,
-				AABBAD4C2AA6382C00ADDA55 /* OSLogger+Extensions.swift in Sources */,
+				AABBAD4C2AA6382C00ADDA55 /* Logger+Extensions.swift in Sources */,
 				AA408B2A2616685B00CAE8B9 /* FormatContext.swift in Sources */,
 				AA0DDC6C28AEF1B50081B869 /* MarkupEditorUIView.swift in Sources */,
 				AA806A3A2652ED49008F60E2 /* Icons.swift in Sources */,
@@ -1296,7 +1296,6 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1329,7 +1328,6 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1359,7 +1357,6 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
@@ -1389,7 +1386,6 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};

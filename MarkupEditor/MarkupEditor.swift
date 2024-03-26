@@ -110,6 +110,11 @@ public struct MarkupEditor {
             }
         }
     }
+    
+    @MainActor
+    public static func userInterfaceIdiom(is idiom: UIUserInterfaceIdiom) -> Bool {
+        UIDevice.current.userInterfaceIdiom == idiom
+    }
 
 }
 

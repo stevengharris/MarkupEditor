@@ -30,7 +30,6 @@ import OSLog
 /// is received by this MarkupCoordinator, it notifies the MarkupDelegate, which might want to take some other
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
-    @MainActor private let selectionState: SelectionState = MarkupEditor.selectionState
     weak public var webView: MarkupWKWebView!
     public var markupDelegate: MarkupDelegate?
     
@@ -125,7 +124,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
                     //Logger.coordinator.debug("* selectionChange")
-                    self.selectionState.reset(from: selectionState)
+                    MarkupEditor.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
             //} else {
@@ -255,7 +254,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
     }
     
-    public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    @MainActor public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == WKNavigationType.linkActivated {
             webView.load(navigationAction.request)
             decisionHandler(.cancel)

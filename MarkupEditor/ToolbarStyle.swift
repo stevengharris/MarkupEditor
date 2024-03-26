@@ -7,7 +7,8 @@
 
 import UIKit
 
-public class ToolbarStyle: ObservableObject {
+@MainActor
+public class ToolbarStyle: @unchecked Sendable, ObservableObject {
     
     static let compact = ToolbarStyle(.compact)
     static let labeled = ToolbarStyle(.labeled)
