@@ -8,6 +8,7 @@
 
 import SwiftUI
 
+@MainActor
 struct ForcePopoverModifier<PopoverContent>: ViewModifier where PopoverContent: View {
     
     let isPresented: Binding<Bool>

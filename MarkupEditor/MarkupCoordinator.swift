@@ -30,7 +30,6 @@ import OSLog
 /// is received by this MarkupCoordinator, it notifies the MarkupDelegate, which might want to take some other
 /// action as the focus changes, such as updating the selectedWebView.
 public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
-    private let selectionState: SelectionState = MarkupEditor.selectionState
     weak public var webView: MarkupWKWebView!
     public var markupDelegate: MarkupDelegate?
     
@@ -52,11 +51,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
     }
     
-    private func loadInitialHtml() {
-        // Let the webView handle loading its own html
-        webView.loadInitialHtml()
-    }
-    
     /// Take action based on the message body received from JavaScript via the userContentController.
     /// Messages with arguments were encoded using JSON.
     @MainActor
@@ -69,8 +63,24 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             Logger.coordinator.error("message.webView was not a MarkupWKWebView")
             return
         }
+        // Given it occurs with every change, treat "input" separately up front
+        if messageBody.hasPrefix("input") {
+            // We encode divId within the input message. Generally it will be "editor".
+            let index = messageBody.index(messageBody.startIndex, offsetBy: 5)
+            let divId = String(messageBody[index...])
+            if divId.isEmpty || divId == "editor" {
+                markupDelegate?.markupInput(webView)
+                updateHeight()
+            } else if !divId.isEmpty {
+                markupDelegate?.markupInput(webView, divId: divId)
+            } else {
+                Logger.coordinator.error("Error: The div id could not be decoded for input.")
+            }
+            return
+        }
         switch messageBody {
-        case "ready":            
+        case "ready":
+            //Logger.coordinator.debug("ready")
             // When the root files are properly loaded, we can load user-supplied css and js.
             // Afterward, the "loadedUserFiles" callback will be invoked. Without the separate
             // callback to "loadedUserFiles", we can end up with the functions defined by user
@@ -83,9 +93,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             webView.setTopLevelAttributes() {
                 webView.loadInitialHtml()
             }
-        case "input":
-            markupDelegate?.markupInput(webView)
-            updateHeight()
         case "updateHeight":
             updateHeight()
         case "blur":
@@ -117,7 +124,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             if webView.hasFocus {
                 webView.getSelectionState() { selectionState in
                     //Logger.coordinator.debug("* selectionChange")
-                    self.selectionState.reset(from: selectionState)
+                    MarkupEditor.selectionState.reset(from: selectionState)
                     self.markupDelegate?.markupSelectionChanged(webView)
                 }
             //} else {
@@ -197,19 +204,57 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 Logger.coordinator.error("Src was missing or malformed")
                 return
             }
-            markupDelegate?.markupImageAdded(url: url)
+            if let divId = messageData["divId"] as? String {
+                // Even if divid is identified, if it's empty or the editor element, then
+                // use the old call without divid to maintain compatibility with earlier versions
+                // that did not support multi-contenteditable divs.
+                if divId.isEmpty || divId == "editor" {
+                    markupDelegate?.markupImageAdded(url: url)
+                    updateHeight()
+                } else if !divId.isEmpty {
+                    markupDelegate?.markupImageAdded(webView, url: url, divId: divId)
+                } else {
+                    Logger.coordinator.error("Error: The div id for the image could not be decoded.")
+                }
+            } else {
+                markupDelegate?.markupImageAdded(url: url)
+            }
         case "deletedImage":
             guard let src = messageData["src"] as? String, let url = URL(string: src) else {
                 Logger.coordinator.error("Src was missing or malformed")
                 return
             }
-            markupDelegate?.markupImageDeleted(url: url)
+            if let divId = messageData["divId"] as? String {
+                // Even if divid is identified, if it's empty or the editor element, then
+                // use the old call without divid to maintain compatibility with earlier versions
+                // that did not support multi-contenteditable divs.
+                if divId.isEmpty || divId == "editor" {
+                    markupDelegate?.markupImageDeleted(url: url)
+                    updateHeight()
+                } else if !divId.isEmpty {
+                    markupDelegate?.markupImageDeleted(webView, url: url, divId: divId)
+                } else {
+                    Logger.coordinator.error("Error: The div id for the image could not be decoded.")
+                }
+            } else {
+                markupDelegate?.markupImageDeleted(url: url)
+            }
+        case "buttonClicked":
+            guard
+                let id = messageData["id"] as? String,
+                let rectDict = messageData["rect"] as? [String : CGFloat],
+                let rect = webView.rectFromDict(rectDict)
+            else {
+                Logger.coordinator.error("Button id or rect was missing")
+                return
+            }
+            markupDelegate?.markupButtonClicked(webView, id: id, rect: rect)
         default:
             Logger.coordinator.error("Unknown message of type \(messageType): \(messageData).")
         }
     }
     
-    public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    @MainActor public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == WKNavigationType.linkActivated {
             webView.load(navigationAction.request)
             decisionHandler(.cancel)

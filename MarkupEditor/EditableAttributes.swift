@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct EditableAttributes: OptionSet {
+public struct EditableAttributes: @unchecked Sendable, OptionSet {
     public let rawValue: Int
     
     public static let contenteditable = EditableAttributes(rawValue: 1 << 0)

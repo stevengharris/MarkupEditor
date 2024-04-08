@@ -9,8 +9,7 @@
 import UIKit
 
 /// HTML tags treated as styles in the StyleToolbar. The names are displayed to the user, but the html trucks in tags
-public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
-
+public class StyleContext: @unchecked Sendable, ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
     public static let Undefined = StyleContext(tag: "Undefined", name: "Style", fontSize: P.fontSize)
     public static let Multiple = StyleContext(tag: "Multiple", name: "Multiple", fontSize: P.fontSize)
     public static let P = StyleContext(tag: "P", name: "Normal", fontSize: 14)
@@ -28,7 +27,7 @@ public class StyleContext: ObservableObject, Identifiable, Hashable, Equatable, 
         return lhs.tag == rhs.tag
     }
     
-    public static func with(tag: String) -> StyleContext {
+    @MainActor public static func with(tag: String) -> StyleContext {
         if let styleContext = AllCases.first(where: { $0.tag == tag }) {
             return styleContext
         } else {

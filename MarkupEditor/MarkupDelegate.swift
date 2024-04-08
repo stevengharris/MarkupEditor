@@ -17,8 +17,11 @@ import OSLog
 @MainActor
 public protocol MarkupDelegate {
     
-    /// Called whenever input is received in the view (e.g., typing).
+    /// Called whenever input is received in the contenteditable editor element in the view  (e.g., typing).
     func markupInput(_ view: MarkupWKWebView)
+    
+    /// Called whenever input is received in a contenteditable element other than "editor" in the view  (e.g., typing).
+    func markupInput(_ view: MarkupWKWebView, divId: String)
     
     /// Called when the inner height of the text being displayed changes.
     /// Can be used to update the UI.
@@ -29,6 +32,11 @@ public protocol MarkupDelegate {
     
     /// Called when the MarkupWKWebView stops editing or loses focus.
     func markupLostFocus(_ view: MarkupWKWebView)
+    
+    /// Called before the initial HTML is loaded, allowing you to perform any pre-load activity.
+    ///
+    /// When this call is made, the root files, userCSS, and userScripts have been loaded already.
+    func markupWillLoad(_ view: MarkupWKWebView)
     
     /// Called when the MarkupWKWebView has become ready to receive input.
     /// More concretely, is called when the internal WKWebView loads for the first time, and contentHtml is set.
@@ -71,9 +79,17 @@ public protocol MarkupDelegate {
     /// src parameter in the document.
     func markupImageAdded(url: URL)
     
+    /// A image/resource was added at the url. The url is derived from the image/resource
+    /// src parameter in the document that is in the identified divId ("editor" by default).
+    func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String)
+    
     /// An image/resource was removed in the document. This image/resource has the url
     /// specified, as derived from its src parameter in the document.
     func markupImageDeleted(url: URL)
+    
+    /// An image/resource was removed in the document. This image/resource has the url
+    /// specified, as derived from its src parameter in the document, that is in the identified divId ("editor" by default).
+    func markupImageDeleted(_ view: MarkupWKWebView?, url: URL, divId: String)
     
     /// A local image has been identified to add to the view.
     func markupImageToAdd(_ view: MarkupWKWebView, url: URL)
@@ -114,13 +130,22 @@ public protocol MarkupDelegate {
     /// See the default implementation for details. 
     func markupShowTablePopover(_ view: MarkupWKWebView)
     
+    /// An HtmlButton that was added to the view was clicked.
+    /// The button's id and its rectangle position is returned.
+    func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect)
+    
 }
 
 extension MarkupDelegate {
     public func markupInput(_ view: MarkupWKWebView) {}
+    public func markupInput(_ view: MarkupWKWebView, divId: String) {}
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
+    
+    /// The MarkupWKWebView has loaded the JavaScript and CSS, but the editor html has
+    /// not been loaded.
+    public func markupWillLoad(_ view: MarkupWKWebView) {}
     
     /// The MarkupWKWebView has loaded the JavaScript and any html contents.
     ///
@@ -204,7 +229,14 @@ extension MarkupDelegate {
     /// You might, for example, want to copy the image to somewhere, since the url passed-in
     /// will be a location in the cache.
     public func markupImageAdded(url: URL) {}
-    
+
+    /// Take action after an image had been added in `divId` of `view`, if needed; default is to do nothing.
+    ///
+    /// This method is only called when using contentEditable divs other than the `editor` div.
+    ///
+    /// You might, for example, want to copy the image to somewhere, since the url passed-in
+    /// will be a location in the cache, which can be found from `view.baseUrl`.
+    public func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String) {}
     
     /// Take action after an image had been deleted, if needed; default is to do nothing.
     ///
@@ -217,6 +249,20 @@ extension MarkupDelegate {
     /// 
     /// Note FWIW that by default, the image will remain in the cache. This is important to support undo!
     public func markupImageDeleted(url: URL) {}
+    
+    /// Take action after an image had been deleted in `divId` of `view`, if needed; default is to do nothing.
+    ///
+    /// This method is only called when using contentEditable divs other than the `editor` div.
+    /// 
+    /// You might, for example, want to remove a copy of the image that you put somewhere. If so, you
+    /// will need to use the same name (a UUID by default) so it's easy to find, or you will need to maintain
+    /// a map between the url used by the MarkupEditor and the local copy you save.
+    ///
+    /// The notification arrives regardless of whether the url represents a local image or a remote one. Your code
+    /// will need to sort out the difference.
+    ///
+    /// Note FWIW that by default, the image will remain in the cache. This is important to support undo!
+    public func markupImageDeleted(_ view: MarkupWKWebView?, url: URL, divId: String) {}
     
     /// Take action needed to add the local image to the document being edited.
     ///
@@ -283,6 +329,10 @@ extension MarkupDelegate {
     /// lead to the InsertToolbar.
     public func markupShowTablePopover(_ view: MarkupWKWebView) {
         view.showTablePopover()
+    }
+    
+    public func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
+        Logger.webview.warning("You should handle markupButtonClicked in your MarkupDelegate.")
     }
     
 }

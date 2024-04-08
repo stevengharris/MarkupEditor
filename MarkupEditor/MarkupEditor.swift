@@ -20,6 +20,11 @@ public struct MarkupEditor {
         get { observedFirstResponder.id }
         set { observedFirstResponder.id = newValue }
     }
+    public static var topLevelAttributes: [String : String] = [
+        "contenteditable" : "true",
+        "spellcheck" : "false",
+        "autocorrect" : "true"
+    ]
     public static let markupMenu = MarkupMenu()
     public static let toolbarContents = ToolbarContents.shared
     public static let toolbarStyle = ToolbarStyle()
@@ -104,6 +109,11 @@ public struct MarkupEditor {
                 return .top
             }
         }
+    }
+    
+    @MainActor
+    public static func userInterfaceIdiom(is idiom: UIUserInterfaceIdiom) -> Bool {
+        UIDevice.current.userInterfaceIdiom == idiom
     }
 
 }
