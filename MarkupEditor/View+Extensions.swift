@@ -9,7 +9,7 @@ import SwiftUI
 
 extension View {
     
-    public func forcePopover<Content>(
+    @MainActor public func forcePopover<Content>(
         isPresented: Binding<Bool>,
         at rect: CGRect? = nil,
         arrowEdge: Edge? = nil,

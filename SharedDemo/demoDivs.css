@@ -1,0 +1,62 @@
+/********************************************************************************
+ * Styling for DIVs and BUTTONs with specific classes identified.
+ */
+
+.title {
+    text-align: center;
+    font-size: 2.0em;
+    margin: 4px 0;
+    padding: 2px 4px;
+    align-items: center;
+}
+
+.section {
+    background-color: lightgray;
+    margin: 4px 0;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    font-size: 1.2rem;
+    overflow: clip;
+    justify-content: space-between;
+    @media (prefers-color-scheme: dark) {
+        background-color: darkgray;
+    }
+}
+
+/* Normally, clip the logEntry if lines extend beyond bounds */
+.content {
+    overflow: clip;
+    padding: 2px 4px;
+}
+
+/* Show anything outside of the "normal" bounds when the content has focus,
+ * so we can scroll to see code as an example
+ */
+.content:focus {
+    outline: none;
+    overflow: visible;
+}
+
+.markupbutton {
+    background-color: transparent;
+    white-space: nowrap;
+    border: none;
+    font-size: 1.2rem;
+    width: 1.2rem;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+}
+
+.markupbuttongroup {
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: space-between;
+    @media (prefers-color-scheme: dark) {
+        background-color: darkgray;
+    }
+}

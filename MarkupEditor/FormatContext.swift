@@ -9,7 +9,7 @@
 import Foundation
 
 /// HTML tags treated as formats in the FormatToolbar.
-public class FormatContext: ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
+public class FormatContext: @unchecked Sendable, ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {
     
     public static func == (lhs: FormatContext, rhs: FormatContext) -> Bool {
         return lhs.tag == rhs.tag

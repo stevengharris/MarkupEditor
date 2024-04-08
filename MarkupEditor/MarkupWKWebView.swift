@@ -52,9 +52,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var baseUrl: URL { cacheUrl() }      // The working directory for this WKWebView, where markup.html etc are loaded-from
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
+    /// User scripts that are injected at the end of document.
     public var userScripts: [String]? {
         didSet {
-            if let userScripts = userScripts {
+            if let userScripts {
+                configuration.userContentController.removeAllUserScripts()
                 for script in userScripts {
                     let wkUserScript = WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
                     configuration.userContentController.addUserScript(wkUserScript)
@@ -205,17 +207,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func setSelection() {
         guard hasFocus else { return }
         getSelectionState { selectionState in
-            if selectionState.valid {
+            if selectionState.isValid {
                 self.selectionState.reset(from: selectionState)             // cache it here
                 MarkupEditor.selectionState.reset(from: selectionState)     // and set globally
             } else {    // Should not happen
                 self.resetSelection {
                     self.getSelectionState { newSelectionState in
-                        if newSelectionState.valid {
+                        if newSelectionState.isValid {
                             self.selectionState.reset(from: newSelectionState)         // cache it here
                             MarkupEditor.selectionState.reset(from: newSelectionState) // and set globally
                         } else {
-                            Logger.webview.error(" Could not reset selectionState")
+                            // This can be a normal case when selecting outside of an editable area,
+                            // so log info if needed. Theoretically, the editor should keep you from
+                            // selecting outside of a selectable area, but there are initial conditions
+                            // where this occurs and will result in a disabled MarkupToolbar, which will
+                            // be what you want. In this case, why annoy yourself over and over with the info?
+                            // Logger.webview.info(" Could not reset selectionState")
                         }
                     }
                 }
@@ -247,11 +254,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     /// Return the bundle that is appropriate for the packaging.
+    ///
+    /// If you use the framework as a dependency, the bundle can be identified from
+    /// the place where MarkupWKWebView is found. If you use the Swift package as a
+    /// dependency, it does some BundleFinder hocus pocus behind the scenes to allow
+    /// Bundle to respond to module, where we can find markup.html etc that are
+    /// part of the package.
     func bundle() -> Bundle {
-        // If you use the framework as a dependency, the bundle can be identified from
-        // the place where MarkupWKWebView is found. If you use the Swift package as a
-        // dependency, it does some BundleFinder hocus pocus behind the scenes to allow
-        // Bundle to respond to module.
         #if SWIFT_PACKAGE
         return Bundle.module
         #else
@@ -353,9 +362,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try? FileManager.default.removeItem(atPath: cacheUrl().path)
     }
     
+    /// Return the URL for an "id" subdirectory below the app's cache directory
+    private func cacheUrl() -> URL {
+        let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        return cacheUrls[0].appendingPathComponent(id)
+    }
+    
     /// Set the EditableAttributes for the editor element.
     public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
-        guard
+        guard 
             let attributes = markupConfiguration?.topLevelAttributes,
             !attributes.isEmpty,
             let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
@@ -367,12 +382,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.setTopLevelAttributes('\(jsonString)')") { result, error in
             handler?()
         }
-    }
-    
-    /// Return the URL for an "id" subdirectory below the app's cache directory
-    private func cacheUrl() -> URL {
-        let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-        return cacheUrls[0].appendingPathComponent(id)
     }
     
     /// Invoke `loadUserFiles` with the `userScriptFile` and `userCssFile` regardless of whether either is
@@ -396,6 +405,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
         setPlaceholder {
+            self.markupDelegate?.markupWillLoad(self)
             self.setHtml(self.html ?? "") {
                 //Logger.webview.debug("isReady: \(self.id)")
                 self.isReady = true
@@ -525,7 +535,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        guard selectionState.valid else { return false }
+        guard selectionState.isValid else { return false }
         switch action {
         case #selector(getter: undoManager):
             return true
@@ -705,10 +715,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return the HTML contained in this MarkupWKWebView.
     ///
     /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
-    public func getHtml(pretty: Bool = true, clean: Bool = true, _ handler: ((String?)->Void)?) {
+    public func getHtml(pretty: Bool = true, clean: Bool = true, divID: String? = nil, _ handler: ((String?)->Void)?) {
+        // By default, we get "pretty" and "clean" HTML.
         //  Pretty HTML is formatted to be readable.
         //  Clean HTML has divs, spans, and empty text nodes removed.
-        evaluateJavaScript("MU.getHTML('\(pretty)', '\(clean)')") { result, error in
+        let argString = divID == nil ? "'\(pretty)', '\(clean)'" : "'\(pretty)', '\(clean)', '\(divID!)'"
+        evaluateJavaScript("MU.getHTML(\(argString))") { result, error in
             handler?(result as? String)
         }
     }
@@ -716,8 +728,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Return unformatted but clean HTML contained in this MarkupWKWebView.
     ///
     /// The HTML is functionally equivalent to `getHtml()` but is compressed.
-    public func getRawHtml(_ handler: ((String?)->Void)?) {
-        getHtml(pretty: false, handler)
+    public func getRawHtml(divID: String? = nil, _ handler: ((String?)->Void)?) {
+        getHtml(pretty: false, divID: divID, handler)
     }
     
     public func emptyDocument(handler: (()->Void)? = nil) {
@@ -1244,6 +1256,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         // Validity (i.e., document.getSelection().rangeCount > 0
         selectionState.valid = stateDictionary["valid"] as? Bool ?? false
+        // The contenteditable div ID or the enclosing DIV id if not contenteditable
+        selectionState.divid = stateDictionary["divid"] as? String
         // Selected text
         if let selectedText = stateDictionary["selection"] as? String {
             selectionState.selection = selectedText.isEmpty ? nil : selectedText
@@ -1300,7 +1314,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         return selectionState
     }
     
-    private func rectFromDict(_ rectDict: [String : CGFloat]?) -> CGRect? {
+    public func rectFromDict(_ rectDict: [String : CGFloat]?) -> CGRect? {
         guard let rectDict = rectDict else { return nil }
         guard
             let x = rectDict["x"],
