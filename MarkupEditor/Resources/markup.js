@@ -252,6 +252,7 @@ class Searcher {
         this._foundIndices = [];        // index arrays below editor for each startContainer of foundRanges
         this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges
         this._isActive = false;         // whether Enter gets captured for search
+        this._outlineRect = null;       // the rect outlining the selection
     };
     
     /**
@@ -271,8 +272,10 @@ class Searcher {
         text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
         // Rebuild the index if forced or if the search string changed
         if (this._forceIndexing || (text !== this._searchString)) {
+            this._createOutlineRect();
             this._searchString = text;
             this._buildIndex();
+            this._highlightRanges();
         };
         if (this._foundRanges.length === 0) {
             this._isActive = false;
@@ -317,13 +320,16 @@ class Searcher {
      */
     deactivate() {
         this._isActive = false;
+        MU.editor.classList.remove('searching');
     }
     
     /**
-     * Stop searchForNext from being executed on Enter. Force reindexing for next search.
+     * Stop searchForward()/searchBackward() from being executed on Enter. Force reindexing for next search.
      */
     cancel() {
         this.deactivate()
+        CSS.highlights?.clear();
+        this._destroyOutlineRect();
         this._resetIndex();
         this._resetSelection;
     };
@@ -331,14 +337,28 @@ class Searcher {
     /**
      * Invoke the previous search again in the same direction
      */
-    searchForNext() {
+    searchForward() {
+        this._searchInDirection('forward');
+    };
+    
+    searchBackward() {
+        this._searchInDirection('backward');
+    }
+    
+    _searchInDirection(direction) {
         if (this._searchString && (this._searchString.length > 0)) {
-            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, this._direction);
-            this.selectRange(this._foundRanges[this._foundRangeIndex]);
-            _callback("searched")
+            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
+            const foundRange = this._foundRanges[this._foundRangeIndex];
+            this.selectRange(foundRange);
+            _callback('searched')
         };
     };
     
+    /**
+     * Select the range and backup/update the selection. This will also scroll the view as needed.
+     * Draw an outline around the range afterward, so it is more easily seen compared to the
+     * rest of the foundRanges from the search.
+     */
     selectRange(range) {
         if (range) {
             const sel = document.getSelection();
@@ -346,7 +366,25 @@ class Searcher {
             sel.addRange(range);
             _backupSelection();
             _callback('selectionChange');
+            this.outlineRange(range);
         };
+    };
+    
+    /**
+     * Draw a line around the range, so we can tell which one is selected more easily.
+     * Re-use the _outlineRect if it exists or create a new one if not.
+     */
+    outlineRange(range) {
+        const div = this._outlineRect;
+        if (!div) {
+            _consoleLog("Error: No outlineRect");
+            return;
+        };
+        const rangeRect = range.getBoundingClientRect();
+        div.style.left = (rangeRect.left + window.scrollX).toString() + 'px';
+        div.style.top = (rangeRect.top + window.scrollY).toString() + 'px';
+        div.style.width = (rangeRect.width).toString() + 'px';
+        div.style.height = (rangeRect.height).toString() + 'px';
     };
     
     /**
@@ -414,6 +452,39 @@ class Searcher {
         };
         this._forceIndexing = false;
         this._foundRangeIndex = null;     // Forces search from beginning
+    };
+    
+    /**
+     * If the CSS Custom Highlight API is supported, then highlight all the ranges
+     * in foundRanges.
+     *
+     * Note: Supported as of Safari 17.2, but this doesn't mean the version of
+     * WebKit running on your O/S supports it (e.g., Monterey).
+     * Ref: https://webkit.org/blog/14787/webkit-features-in-safari-17-2/
+     */
+    _highlightRanges() {
+        MU.editor.classList.toggle('searching');
+        if (!CSS.highlights) { return };
+        if (this._foundRanges.length === 0) {
+            CSS.highlights.clear();
+        } else {
+            const searchResultsHighlight = new Highlight(...this._foundRanges);
+            CSS.highlights.set("search-results", searchResultsHighlight);
+        }
+    };
+    
+    _createOutlineRect() {
+        if (this._outlineRect) { return };
+        const div = document.createElement('div');
+        div.setAttribute('class', 'seloutline');
+        MU.editor.appendChild(div);
+        this._outlineRect = div;
+    };
+    
+    _destroyOutlineRect() {
+        if (!this._outlineRect) { return };
+        this._outlineRect.parentNode.removeChild(this._outlineRect)
+        this._outlineRect = null;
     };
     
     /*
@@ -550,13 +621,13 @@ const searcher = new Searcher();
  * When text is empty, search is canceled.
  *
  * CAUTION: Search must be cancelled once started, or Enter will be intercepted
- * to mean searcher.searchForNext()
+ * to mean searcher.searchForward()/searchBackward()
  */
 MU.searchFor = function(text, direction, activate) {
-    const searchOnEnter = activate === "true";
+    const searchOnEnter = activate === 'true';
     const range = searcher.searchFor(text, direction, searchOnEnter);
     searcher.selectRange(range);
-    _callback("searched")
+    _callback('searched')
 };
 
 MU.deactivateSearch = function() {
@@ -1681,7 +1752,7 @@ const unmuteChanges = function() { _muteChanges = false };
  * Mute selectionChange notifications when mouse is down.
  *
  * Cancel the searcher, so Enter is no longer intercepted to invoke
- * searchForNext().
+ * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('mousedown', function() {
     searcher.cancel()
@@ -1692,7 +1763,7 @@ MU.editor.addEventListener('mousedown', function() {
  * Mute selectionChange notifications when touch starts.
  *
  * Cancel the searcher, so Enter is no longer intercepted to invoke
- * searchForNext().
+ * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('touchstart', function() {
     searcher.cancel()
@@ -1940,7 +2011,11 @@ MU.editor.addEventListener('keydown', function(ev) {
             if (!selNode) { return };
             if (searcher.isActive) {
                 ev.preventDefault();
-                searcher.searchForNext();
+                if (_keyModified('Shift', 'Enter')) {
+                    searcher.searchBackward();
+                } else {
+                    searcher.searchForward();
+                }
                 return;
             };
             const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL']);
@@ -2014,6 +2089,9 @@ MU.editor.addEventListener('keydown', function(ev) {
                 _deleteSelectedResizableImage('BEFORE');
             };
             break;
+        case 'Shift':
+            // To support Shift+Enter while searching...
+            return;
     };
     // Always cancel search if we fall thru
     searcher.cancel()
