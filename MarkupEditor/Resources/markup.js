@@ -252,7 +252,7 @@ class Searcher {
         this._foundIndices = [];        // index arrays below editor for each startContainer of foundRanges
         this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges
         this._isActive = false;         // whether Enter gets captured for search
-        this._outlineRect = null;       // the rect outlining the selection
+        this._outlineDiv = null;        // the overlay div outlining the selection
     };
     
     /**
@@ -272,7 +272,7 @@ class Searcher {
         text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
         // Rebuild the index if forced or if the search string changed
         if (this._forceIndexing || (text !== this._searchString)) {
-            this._createOutlineRect();
+            this._createOutlineDiv();
             this._searchString = text;
             this._buildIndex();
             this._highlightRanges();
@@ -320,7 +320,7 @@ class Searcher {
      */
     deactivate() {
         this._isActive = false;
-        MU.editor.classList.remove('searching');
+        document.body.classList.remove('searching');
     }
     
     /**
@@ -329,7 +329,7 @@ class Searcher {
     cancel() {
         this.deactivate()
         CSS.highlights?.clear();
-        this._destroyOutlineRect();
+        this._destroyOutlineDiv();
         this._resetIndex();
         this._resetSelection;
     };
@@ -371,16 +371,32 @@ class Searcher {
     };
     
     /**
-     * Draw a line around the range, so we can tell which one is selected more easily.
-     * Re-use the _outlineRect if it exists or create a new one if not.
+     * Draw an outline around the range, so we can tell which one is selected more easily.
      */
     outlineRange(range) {
-        const div = this._outlineRect;
+        const div = this._outlineDiv;
         if (!div) {
-            _consoleLog("Error: No outlineRect");
+            _consoleLog('Error: No outlineDiv');
             return;
         };
-        const rangeRect = range.getBoundingClientRect();
+        
+        // It so happens that when a range is in the middle of a text node, but sits at
+        // the leading edge of a wrapped paragraph, there are two client rects. One sits
+        // at the end of the line above, and the other sits at the beginning of the selection
+        // in the line. Using getBoundingClientRect() produces a rectangle that spans both lines
+        // across their full width. To avoid this problem, use the 2nd client rect if there is
+        // more than one. By my testing, the selections generally are fine, including ones at
+        // the end of a wrapped line. It's only when the selection is at the beginning of a line
+        // that was wrapped from above.
+        const rectList = range.getClientRects();
+        var rangeRect;
+        if (rectList.length > 1) {
+            rangeRect = rectList[1];
+        } else {
+            rangeRect = rectList[0];
+        }
+        
+        // Now assign the styles offset by the window scrollX/Y
         div.style.left = (rangeRect.left + window.scrollX).toString() + 'px';
         div.style.top = (rangeRect.top + window.scrollY).toString() + 'px';
         div.style.width = (rangeRect.width).toString() + 'px';
@@ -456,35 +472,44 @@ class Searcher {
     
     /**
      * If the CSS Custom Highlight API is supported, then highlight all the ranges
-     * in foundRanges.
+     * in foundRanges. We also draw an outline around the range, so even if the
+     * CSS Custom Highlight API isn't working, you can see what is being searched-for.
      *
      * Note: Supported as of Safari 17.2, but this doesn't mean the version of
      * WebKit running on your O/S supports it (e.g., Monterey).
      * Ref: https://webkit.org/blog/14787/webkit-features-in-safari-17-2/
      */
     _highlightRanges() {
-        MU.editor.classList.toggle('searching');
+        document.body.classList.toggle('searching');
         if (!CSS.highlights) { return };
         if (this._foundRanges.length === 0) {
             CSS.highlights.clear();
         } else {
             const searchResultsHighlight = new Highlight(...this._foundRanges);
-            CSS.highlights.set("search-results", searchResultsHighlight);
+            CSS.highlights.set('search-results', searchResultsHighlight);
         }
     };
     
-    _createOutlineRect() {
-        if (this._outlineRect) { return };
+    /*
+     * Create a div in body that is overlayed on the body.
+     *
+     * Set the class to seloutline so that the CSS can style an outline.
+     */
+    _createOutlineDiv() {
+        if (this._outlineDiv) { return };
         const div = document.createElement('div');
         div.setAttribute('class', 'seloutline');
-        MU.editor.appendChild(div);
-        this._outlineRect = div;
+        document.body.appendChild(div);
+        this._outlineDiv = div;
     };
     
-    _destroyOutlineRect() {
-        if (!this._outlineRect) { return };
-        this._outlineRect.parentNode.removeChild(this._outlineRect)
-        this._outlineRect = null;
+    /*
+     * Destroy the outlineDiv, because we are no longer in "active" search mode.
+     */
+    _destroyOutlineDiv() {
+        if (!this._outlineDiv) { return };
+        this._outlineDiv.parentNode.removeChild(this._outlineDiv)
+        this._outlineDiv = null;
     };
     
     /*
@@ -1723,6 +1748,20 @@ const _backupUndoerRange = function(undoerData) {
 //MARK: Event Listeners
 
 /**
+ * Cancel searching for any click within the body.
+ */
+document.body.addEventListener('mousedown', function() {
+    searcher.cancel()
+});
+
+/**
+ * Cancel searching for any touch within the body.
+ */
+document.body.addEventListener('touchstart', function() {
+    searcher.cancel()
+});
+
+/**
  * The selectionChange callback is expensive on the Swift side, because it
  * tells us we need to getSelectionState to update the toolbar. This is okay
  * when we're clicking-around a document, but we need to mute the callback
@@ -1755,7 +1794,6 @@ const unmuteChanges = function() { _muteChanges = false };
  * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('mousedown', function() {
-    searcher.cancel()
     muteChanges();
 });
 
@@ -1766,7 +1804,6 @@ MU.editor.addEventListener('mousedown', function() {
  * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('touchstart', function() {
-    searcher.cancel()
     muteChanges();
 });
 

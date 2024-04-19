@@ -165,11 +165,11 @@ img {
 }
 
 /* Provide a slightly darkened or lightened overlay while search is active */
-#editor.searching {
+.searching {
     background-color: rgba(0, 0, 0, 0.10);
 }
 @media (prefers-color-scheme: dark) {
-    #editor.searching {
+    .searching {
         background-color: rgba(255, 255, 255, 0.10);
     }
 }
@@ -194,7 +194,6 @@ img {
     position: absolute;
     outline: 1px black solid;
     outline-offset: 1px;
-    color: white;
     z-index: 2;
 }
 @media (prefers-color-scheme: dark) {
@@ -202,7 +201,6 @@ img {
         position: absolute;
         outline: 1px white solid;
         outline-offset: 1px;
-        color: black;
         z-index: 2;
     }
 }
