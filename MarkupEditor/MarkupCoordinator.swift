@@ -138,7 +138,11 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //Logger.coordinator.debug("undoSet")
             markupDelegate?.markupUndoSet(webView)
         case "searched":
-            webView.makeSelectionVisible()
+            webView.makeSelectionVisible()  // Scroll to what we found and selected
+        case "activateSearch":
+            markupDelegate?.markupActivateSearch(webView)
+        case "deactivateSearch":
+            markupDelegate?.markupDeactivateSearch(webView)
         default:
             // Try to decode a complex JSON stringified message
             if let data = messageBody.data(using: .utf8) {

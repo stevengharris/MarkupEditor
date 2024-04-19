@@ -251,7 +251,7 @@ class Searcher {
         this._foundRanges = [];         // ranges that contain searchString
         this._foundIndices = [];        // index arrays below editor for each startContainer of foundRanges
         this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges
-        this._isActive = false;         // whether Enter gets captured for search
+        this._searching = 'searching';  // the CSS class for the overlay div, presence means we are in "search mode"
         this._outlineDiv = null;        // the overlay div outlining the selection
     };
     
@@ -278,12 +278,12 @@ class Searcher {
             this._highlightRanges();
         };
         if (this._foundRanges.length === 0) {
-            this._isActive = false;
+            this.deactivate();
             return null;
         }
         this._direction = direction;
-        this._isActive = searchOnEnter;         // Only intercept Enter if searchOnEnter is explicitly passed as true
-        if (this._foundRangeIndex !== null) {   // Can't just check on (this._foundRangeIndex), eh JavaScript
+        if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
+        if (this._foundRangeIndex !== null) {       // Can't just check on (this._foundRangeIndex), eh JavaScript
             // Move the foundRangeIndex in the right direction, wrapping around
             this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
         } else {
@@ -312,15 +312,23 @@ class Searcher {
      * Return whether search is active, and Enter should be interpreted as a search request
      */
     get isActive() {
-        return this._isActive;
+        return document.body.classList.contains(this._searching);
     };
+    
+    /**
+     * Activate search mode where Enter is being intercepted
+     */
+    _activate() {
+        document.body.classList.toggle(this._searching);
+        _callback('activateSearch');
+    }
     
     /**
      * Deactivate search mode where Enter is being intercepted
      */
     deactivate() {
-        this._isActive = false;
-        document.body.classList.remove('searching');
+        document.body.classList.remove(this._searching);
+        _callback('deactivateSearch');
     }
     
     /**
@@ -335,16 +343,22 @@ class Searcher {
     };
     
     /**
-     * Invoke the previous search again in the same direction
+     * Search forward (might be from Enter when isActive).
      */
     searchForward() {
         this._searchInDirection('forward');
     };
     
+    /*
+     * Search backward (might be from Shift+Enter when isActive).
+     */
     searchBackward() {
         this._searchInDirection('backward');
     }
     
+    /*
+     * Search in the specified direction.
+     */
     _searchInDirection(direction) {
         if (this._searchString && (this._searchString.length > 0)) {
             this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
@@ -480,7 +494,6 @@ class Searcher {
      * Ref: https://webkit.org/blog/14787/webkit-features-in-safari-17-2/
      */
     _highlightRanges() {
-        document.body.classList.toggle('searching');
         if (!CSS.highlights) { return };
         if (this._foundRanges.length === 0) {
             CSS.highlights.clear();

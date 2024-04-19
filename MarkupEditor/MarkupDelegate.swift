@@ -134,6 +134,14 @@ public protocol MarkupDelegate {
     /// The button's id and its rectangle position is returned.
     func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect)
     
+    /// The `view` has activated "search mode" where Enter/Shift+Enter is interpreted as searchForward/searchBackward.
+    /// The toolbar really should be disabled, because no editing should take place in search mode.
+    func markupActivateSearch(_ view: MarkupWKWebView)
+    
+    /// The `view` has deactivated "search mode" where Enter/Shift+Enter is interpreted as searchForward/searchBackward.
+    /// The toolbar really should be re-enabled.
+    func markupDeactivateSearch(_ view: MarkupWKWebView)
+    
 }
 
 extension MarkupDelegate {
@@ -333,6 +341,18 @@ extension MarkupDelegate {
     
     public func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
         Logger.webview.warning("You should handle markupButtonClicked in your MarkupDelegate.")
+    }
+    
+    /// The `view` has activated "search mode" where Enter/Shift+Enter is interpreted as searchForward/searchBackward.
+    /// The toolbar really should be disabled, because no editing should take place in search mode.
+    public func markupActivateSearch(_ view: MarkupWKWebView) {
+        MarkupEditor.searchActive.value = true
+    }
+    
+    /// The `view` has deactivated "search mode" where Enter/Shift+Enter is interpreted as searchForward/searchBackward.
+    /// The toolbar really should be re-enabled.
+    public func markupDeactivateSearch(_ view: MarkupWKWebView) {
+        MarkupEditor.searchActive.value = false
     }
     
 }

@@ -45,6 +45,7 @@ public struct MarkupEditor {
         set { observedWebView.selectedWebView = newValue }
     }
     public static let selectionState = SelectionState()
+    public static let searchActive = SearchActive()
     public static let selectImage = SelectImage()
     public static let showInsertPopover = ShowInsertPopover()
     public static let supportedImageTypes: [UTType] = [.image, .movie]
@@ -138,6 +139,17 @@ public class ObservedWebView: ObservableObject, Identifiable {
 /// The observable object containing the Bool that tells us whether the DocumentPicker should be
 /// shown to select a local image.
 public class SelectImage: ObservableObject {
+    @Published public var value: Bool
+    
+    public init(_ value: Bool = false) {
+        self.value = value
+    }
+}
+
+/// The observable object containing the Bool that tells us whether the "search mode" is active,
+/// where Enter/Shift+Enter are intepreted as searchForward/searchBackward. If so, then generally 
+/// the MarkupToolbar should be disabled.
+public class SearchActive: ObservableObject {
     @Published public var value: Bool
     
     public init(_ value: Bool = false) {
