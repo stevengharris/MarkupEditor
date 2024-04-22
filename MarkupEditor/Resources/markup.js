@@ -319,7 +319,7 @@ class Searcher {
      * Activate search mode where Enter is being intercepted
      */
     _activate() {
-        document.body.classList.toggle(this._searching);
+        document.body.classList.add(this._searching);
         _callback('activateSearch');
     }
     
