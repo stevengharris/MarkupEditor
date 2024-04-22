@@ -437,6 +437,11 @@ class Searcher {
     /**
      * Use XPath to build an array of ranges in _foundRanges.
      *
+     * Note we only search within elements inside of a contenteditable div. This is
+     * because the "search mode" of intercepting Enter to move to the next node doesn't
+     * work for non-contenteditable areas. There might be cases where a someone wants to
+     * search non-contenteditable areas, too, but we are not supporting that here for now.
+     *
      * While we identify the foundRanges, we also track the childNodeIndices for the text nodes the
      * ranges are in. This gives us a relatively easy way to tell, given the selection, which range
      * comes before or after the selection point.
@@ -445,11 +450,12 @@ class Searcher {
         this._foundRanges = [];
         this._foundIndices = [];
         let xPathExpression;
+        let onlyContentEditable = " and ancestor::*[@contenteditable]"
         if (!this._caseSensitive) {// Just remove all the special characters from the text to translate to lowercase
             let translateText = this._xPathTranslateString(this._searchString);
-            xPathExpression = "*[contains(translate(., '" + translateText.toUpperCase() + "', '" + translateText.toLowerCase() + "'), " + this._xPathSearchString(this._searchString.toLowerCase()) + ")]";
+            xPathExpression = "//*[contains(translate(., '" + translateText.toUpperCase() + "', '" + translateText.toLowerCase() + "'), " + this._xPathSearchString(this._searchString.toLowerCase()) + ")" + onlyContentEditable + "]";
         } else {
-            xPathExpression = "*[contains(., " + this._xPathSearchString(this._searchString) + ")]";
+            xPathExpression = "//*[contains(., " + this._xPathSearchString(this._searchString) + ")" + onlyContentEditable + "]";
         }
         const contextNodes = document.evaluate(xPathExpression, editor, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
         let contextNode = contextNodes.iterateNext();
