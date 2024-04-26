@@ -395,9 +395,8 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
-#### Version 0.7.1 (Beta 5)
+#### Version 0.7.2 (Beta 6)
 
-* Support multiple editable areas in a single document (https://github.com/stevengharris/MarkupEditor/pull/195). There is a very small SwiftUI-only demo (see DivsContentView in the SwiftUIDemo) of the capability, but the feature is as-yet undocumented. See the [discussion](https://github.com/stevengharris/MarkupEditor/discussions/178) for some more detail.
 * Search improvements, including:
   * When in search mode, interpret Enter as "search forward" and Shift+Enter as "search backward".
   * Outline the selection while in search mode with a border, so it's clearer where you are in the document.
@@ -405,6 +404,11 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
   * Highlight all strings matching the search string, so you can see where Enter and Shift+Enter will move next. Note that highlighting, which depends on the CSS custom highlight API (ref: https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API) only works in Safari 17.2 or later, which won't be available in older runtimes still supported by the MarkupEditor.
   * Add MarkupDelegate callbacks `markupActivateSearch` and `markupDeactivateSearch`, default behavior for which is to toggle `MarkupEditor.searchActive` state so the MarkupToolbar can be disabled/enabled while in search mode.
   * Limit search to contenteditable divs (generally there is only one, `MU.editor`).
+  
+#### Version 0.7.1 (Beta 5)
+
+* Support multiple editable areas in a single document (https://github.com/stevengharris/MarkupEditor/pull/195). There is a very small SwiftUI-only demo (see DivsContentView in the SwiftUIDemo) of the capability, but the feature is as-yet undocumented. See the [discussion](https://github.com/stevengharris/MarkupEditor/discussions/178) for some more detail.
+* Allow users to select which list types to support (https://github.com/stevengharris/MarkupEditor/pull/197). Thanks [Thomas Mengelatte](https://github.com/ThomasMengelatte).
 
 #### Version 0.7.0 (Beta 4)
 
