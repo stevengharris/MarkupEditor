@@ -3327,7 +3327,9 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
         _selectedID = ev.target.id;
     });
     div.addEventListener('blur', function(ev) {
-        _selectedID = null;
+        if (!_muteFocusBlur) {
+            _selectedID = null;
+        };
     });
     var contenteditable;
     if (jsonAttributes) {
