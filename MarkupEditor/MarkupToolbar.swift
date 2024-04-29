@@ -23,6 +23,7 @@ public struct MarkupToolbar: View {
     private let withKeyboardButton: Bool
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState = MarkupEditor.selectionState
+    @ObservedObject private var searchActive = MarkupEditor.searchActive
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
     
@@ -58,7 +59,7 @@ public struct MarkupToolbar: View {
                     }
                     .environmentObject(toolbarStyle)
                     .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                    .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid)
+                    .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid || searchActive.value)
                 }
                 .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
                 if withKeyboardButton {

@@ -251,7 +251,8 @@ class Searcher {
         this._foundRanges = [];         // ranges that contain searchString
         this._foundIndices = [];        // index arrays below editor for each startContainer of foundRanges
         this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges
-        this._isActive = false;         // whether Enter gets captured for search
+        this._searching = 'searching';  // the CSS class for the overlay div, presence means we are in "search mode"
+        this._outlineDiv = null;        // the overlay div outlining the selection
     };
     
     /**
@@ -271,16 +272,18 @@ class Searcher {
         text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
         // Rebuild the index if forced or if the search string changed
         if (this._forceIndexing || (text !== this._searchString)) {
+            this._createOutlineDiv();
             this._searchString = text;
             this._buildIndex();
+            this._highlightRanges();
         };
         if (this._foundRanges.length === 0) {
-            this._isActive = false;
+            this.deactivate();
             return null;
         }
         this._direction = direction;
-        this._isActive = searchOnEnter;         // Only intercept Enter if searchOnEnter is explicitly passed as true
-        if (this._foundRangeIndex !== null) {   // Can't just check on (this._foundRangeIndex), eh JavaScript
+        if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
+        if (this._foundRangeIndex !== null) {       // Can't just check on (this._foundRangeIndex), eh JavaScript
             // Move the foundRangeIndex in the right direction, wrapping around
             this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
         } else {
@@ -309,36 +312,67 @@ class Searcher {
      * Return whether search is active, and Enter should be interpreted as a search request
      */
     get isActive() {
-        return this._isActive;
+        return document.body.classList.contains(this._searching);
     };
+    
+    /**
+     * Activate search mode where Enter is being intercepted
+     */
+    _activate() {
+        document.body.classList.add(this._searching);
+        _callback('activateSearch');
+    }
     
     /**
      * Deactivate search mode where Enter is being intercepted
      */
     deactivate() {
-        this._isActive = false;
+        document.body.classList.remove(this._searching);
+        _callback('deactivateSearch');
     }
     
     /**
-     * Stop searchForNext from being executed on Enter. Force reindexing for next search.
+     * Stop searchForward()/searchBackward() from being executed on Enter. Force reindexing for next search.
      */
     cancel() {
         this.deactivate()
+        CSS.highlights?.clear();
+        this._destroyOutlineDiv();
         this._resetIndex();
         this._resetSelection;
     };
     
     /**
-     * Invoke the previous search again in the same direction
+     * Search forward (might be from Enter when isActive).
      */
-    searchForNext() {
+    searchForward() {
+        this._searchInDirection('forward');
+    };
+    
+    /*
+     * Search backward (might be from Shift+Enter when isActive).
+     */
+    searchBackward() {
+        this._searchInDirection('backward');
+    }
+    
+    /*
+     * Search in the specified direction.
+     */
+    _searchInDirection(direction) {
         if (this._searchString && (this._searchString.length > 0)) {
-            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, this._direction);
-            this.selectRange(this._foundRanges[this._foundRangeIndex]);
-            _callback("searched")
+            this._foundRangeIndex = this._nextIndex(this._foundRangeIndex, direction);
+            const foundRange = this._foundRanges[this._foundRangeIndex];
+            this.selectRange(foundRange);
+            _callback('searched')
         };
     };
     
+    /**
+     * Select the range and backup/update the selection. This will also scroll the view as needed.
+     * Draw an outline around the range afterward, so it is more easily seen compared to the
+     * rest of the foundRanges from the search.
+     */
     selectRange(range) {
         if (range) {
             const sel = document.getSelection();
@@ -346,7 +380,41 @@ class Searcher {
             sel.addRange(range);
             _backupSelection();
             _callback('selectionChange');
+            this.outlineRange(range);
         };
+    };
+    
+    /**
+     * Draw an outline around the range, so we can tell which one is selected more easily.
+     */
+    outlineRange(range) {
+        const div = this._outlineDiv;
+        if (!div) {
+            _consoleLog('Error: No outlineDiv');
+            return;
+        };
+        
+        // It so happens that when a range is in the middle of a text node, but sits at
+        // the leading edge of a wrapped paragraph, there are two client rects. One sits
+        // at the end of the line above, and the other sits at the beginning of the selection
+        // in the line. Using getBoundingClientRect() produces a rectangle that spans both lines
+        // across their full width. To avoid this problem, use the 2nd client rect if there is
+        // more than one. By my testing, the selections generally are fine, including ones at
+        // the end of a wrapped line. It's only when the selection is at the beginning of a line
+        // that was wrapped from above.
+        const rectList = range.getClientRects();
+        var rangeRect;
+        if (rectList.length > 1) {
+            rangeRect = rectList[1];
+        } else {
+            rangeRect = rectList[0];
+        }
+        
+        // Now assign the styles offset by the window scrollX/Y
+        div.style.left = (rangeRect.left + window.scrollX).toString() + 'px';
+        div.style.top = (rangeRect.top + window.scrollY).toString() + 'px';
+        div.style.width = (rangeRect.width).toString() + 'px';
+        div.style.height = (rangeRect.height).toString() + 'px';
     };
     
     /**
@@ -369,6 +437,11 @@ class Searcher {
     /**
      * Use XPath to build an array of ranges in _foundRanges.
      *
+     * Note we only search within elements inside of a contenteditable div. This is
+     * because the "search mode" of intercepting Enter to move to the next node doesn't
+     * work for non-contenteditable areas. There might be cases where a someone wants to
+     * search non-contenteditable areas, too, but we are not supporting that here for now.
+     *
      * While we identify the foundRanges, we also track the childNodeIndices for the text nodes the
      * ranges are in. This gives us a relatively easy way to tell, given the selection, which range
      * comes before or after the selection point.
@@ -377,11 +450,12 @@ class Searcher {
         this._foundRanges = [];
         this._foundIndices = [];
         let xPathExpression;
+        let onlyContentEditable = " and ancestor::*[@contenteditable]"
         if (!this._caseSensitive) {// Just remove all the special characters from the text to translate to lowercase
             let translateText = this._xPathTranslateString(this._searchString);
-            xPathExpression = "*[contains(translate(., '" + translateText.toUpperCase() + "', '" + translateText.toLowerCase() + "'), " + this._xPathSearchString(this._searchString.toLowerCase()) + ")]";
+            xPathExpression = "//*[contains(translate(., '" + translateText.toUpperCase() + "', '" + translateText.toLowerCase() + "'), " + this._xPathSearchString(this._searchString.toLowerCase()) + ")" + onlyContentEditable + "]";
         } else {
-            xPathExpression = "*[contains(., " + this._xPathSearchString(this._searchString) + ")]";
+            xPathExpression = "//*[contains(., " + this._xPathSearchString(this._searchString) + ")" + onlyContentEditable + "]";
         }
         const contextNodes = document.evaluate(xPathExpression, editor, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
         let contextNode = contextNodes.iterateNext();
@@ -414,6 +488,47 @@ class Searcher {
         };
         this._forceIndexing = false;
         this._foundRangeIndex = null;     // Forces search from beginning
+    };
+    
+    /**
+     * If the CSS Custom Highlight API is supported, then highlight all the ranges
+     * in foundRanges. We also draw an outline around the range, so even if the
+     * CSS Custom Highlight API isn't working, you can see what is being searched-for.
+     *
+     * Note: Supported as of Safari 17.2, but this doesn't mean the version of
+     * WebKit running on your O/S supports it (e.g., Monterey).
+     * Ref: https://webkit.org/blog/14787/webkit-features-in-safari-17-2/
+     */
+    _highlightRanges() {
+        if (!CSS.highlights) { return };
+        if (this._foundRanges.length === 0) {
+            CSS.highlights.clear();
+        } else {
+            const searchResultsHighlight = new Highlight(...this._foundRanges);
+            CSS.highlights.set('search-results', searchResultsHighlight);
+        }
+    };
+    
+    /*
+     * Create a div in body that is overlayed on the body.
+     *
+     * Set the class to seloutline so that the CSS can style an outline.
+     */
+    _createOutlineDiv() {
+        if (this._outlineDiv) { return };
+        const div = document.createElement('div');
+        div.setAttribute('class', 'seloutline');
+        document.body.appendChild(div);
+        this._outlineDiv = div;
+    };
+    
+    /*
+     * Destroy the outlineDiv, because we are no longer in "active" search mode.
+     */
+    _destroyOutlineDiv() {
+        if (!this._outlineDiv) { return };
+        this._outlineDiv.parentNode.removeChild(this._outlineDiv)
+        this._outlineDiv = null;
     };
     
     /*
@@ -550,13 +665,13 @@ const searcher = new Searcher();
  * When text is empty, search is canceled.
  *
  * CAUTION: Search must be cancelled once started, or Enter will be intercepted
- * to mean searcher.searchForNext()
+ * to mean searcher.searchForward()/searchBackward()
  */
 MU.searchFor = function(text, direction, activate) {
-    const searchOnEnter = activate === "true";
+    const searchOnEnter = activate === 'true';
     const range = searcher.searchFor(text, direction, searchOnEnter);
     searcher.selectRange(range);
-    _callback("searched")
+    _callback('searched')
 };
 
 MU.deactivateSearch = function() {
@@ -1652,6 +1767,20 @@ const _backupUndoerRange = function(undoerData) {
 //MARK: Event Listeners
 
 /**
+ * Cancel searching for any click within the body.
+ */
+document.body.addEventListener('mousedown', function() {
+    searcher.cancel()
+});
+
+/**
+ * Cancel searching for any touch within the body.
+ */
+document.body.addEventListener('touchstart', function() {
+    searcher.cancel()
+});
+
+/**
  * The selectionChange callback is expensive on the Swift side, because it
  * tells us we need to getSelectionState to update the toolbar. This is okay
  * when we're clicking-around a document, but we need to mute the callback
@@ -1681,10 +1810,9 @@ const unmuteChanges = function() { _muteChanges = false };
  * Mute selectionChange notifications when mouse is down.
  *
  * Cancel the searcher, so Enter is no longer intercepted to invoke
- * searchForNext().
+ * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('mousedown', function() {
-    searcher.cancel()
     muteChanges();
 });
 
@@ -1692,10 +1820,9 @@ MU.editor.addEventListener('mousedown', function() {
  * Mute selectionChange notifications when touch starts.
  *
  * Cancel the searcher, so Enter is no longer intercepted to invoke
- * searchForNext().
+ * searchForward()/searchBackward().
  */
 MU.editor.addEventListener('touchstart', function() {
-    searcher.cancel()
     muteChanges();
 });
 
@@ -1940,7 +2067,11 @@ MU.editor.addEventListener('keydown', function(ev) {
             if (!selNode) { return };
             if (searcher.isActive) {
                 ev.preventDefault();
-                searcher.searchForNext();
+                if (_keyModified('Shift', 'Enter')) {
+                    searcher.searchBackward();
+                } else {
+                    searcher.searchForward();
+                }
                 return;
             };
             const inList = _findFirstParentElementInNodeNames(selNode, ['UL', 'OL']);
@@ -2014,6 +2145,9 @@ MU.editor.addEventListener('keydown', function(ev) {
                 _deleteSelectedResizableImage('BEFORE');
             };
             break;
+        case 'Shift':
+            // To support Shift+Enter while searching...
+            return;
     };
     // Always cancel search if we fall thru
     searcher.cancel()
@@ -3193,7 +3327,9 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
         _selectedID = ev.target.id;
     });
     div.addEventListener('blur', function(ev) {
-        _selectedID = null;
+        if (!_muteFocusBlur) {
+            _selectedID = null;
+        };
     });
     var contenteditable;
     if (jsonAttributes) {

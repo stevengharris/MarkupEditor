@@ -28,7 +28,6 @@ struct SearchBar: View {
             ToolbarImageButton(systemName: "arrowtriangle.backward.fill") {
                 direction = .backward
                 search()
-                MarkupEditor.selectedWebView?.deactivateSearch()    // Suppress Enter doing next search
             }
             .contentShape(Rectangle())
             .disabled(searchString.isEmpty)
@@ -66,7 +65,6 @@ struct SearchBar: View {
             ToolbarImageButton(systemName: "arrowtriangle.forward.fill") {
                 direction = .forward
                 search()
-                MarkupEditor.selectedWebView?.deactivateSearch()    // Suppress Enter doing next search
             }
             .contentShape(Rectangle())
             .disabled(searchString.isEmpty)
