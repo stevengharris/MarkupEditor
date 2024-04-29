@@ -404,6 +404,7 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
   * Highlight all strings matching the search string, so you can see where Enter and Shift+Enter will move next. Note that highlighting, which depends on the CSS custom highlight API (ref: https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API) only works in Safari 17.2 or later, which won't be available in older runtimes still supported by the MarkupEditor.
   * Add MarkupDelegate callbacks `markupActivateSearch` and `markupDeactivateSearch`, default behavior for which is to toggle `MarkupEditor.searchActive` state so the MarkupToolbar can be disabled/enabled while in search mode.
   * Limit search to contenteditable divs (generally there is only one, `MU.editor`).
+* When using multiple contenteditable DIVs, gate blur event from resetting `selectedID` by `muteFocusBlur`.
   
 #### Version 0.7.1 (Beta 5)
 
