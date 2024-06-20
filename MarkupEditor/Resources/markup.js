@@ -2391,13 +2391,16 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const newElement = _fragmentFrom(html)
     const anchorIsElement = _isElementNode(anchorNode);
     const firstChildIsElement = newElement.firstChild && (_isElementNode(newElement.firstChild));
-    const firstChildIsFormat = newElement.firstChild && (_isFormatElement(newElement.firstChild));
+    const firstChildIsStyle = newElement.firstChild && (_isParagraphStyleElement(newElement.firstChild));
     const anchorIsEmpty = _isEmpty(anchorNode);
     let pasteRange = selRange.cloneRange();
     let newSelRange, rootName, replacedEmpty;
-    // If the anchorNode is text, and the fragment's first child is not a format node, then we will
-    // replace the fragment's first child with its contents.
-    if (_isTextNode(anchorNode) && !firstChildIsFormat) {
+    // If the anchorNode is text, and the fragment's first child is a paragraph syle element, then we want
+    // to modify the fragment's contents to contain the contents of the first child. Copy/paste of a word of text
+    // in a paragraph comes into this method as <P>word</P>, but we can't insert a <P> inside of the top-level
+    // element the text anchorNode is in, and we don't want to break the existing paragraph. The contents of
+    // the fragment ends up being inserted into the containing paragraph using the same style.
+    if (_isTextNode(anchorNode) && firstChildIsStyle) {
         const newFirstChild = _fragmentFrom(newElement.firstChild.innerHTML);
         newElement.firstChild.replaceWith(newFirstChild);
     };
@@ -10211,6 +10214,13 @@ const _isPreElement = function(node) {
  */
 const _isStyleElement = function(node) {
     return _isElementNode(node) && _styleTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether node is one of the _paragraphStyleTags
+ */
+const _isParagraphStyleElement = function(node) {
+    return _paragraphStyleTags.includes(node.nodeName);
 };
 
 /**
