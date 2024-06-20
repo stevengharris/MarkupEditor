@@ -28,11 +28,11 @@ public struct EditableAttributes: @unchecked Sendable, OptionSet {
     /// NOTE: Currently spellcheck="true" produces a bad behavior wherein a word is selected and then the selection
     /// changes to the end of the paragraph. This may have to do with some underlying mechanics for presenting
     /// suggestions, but for now we will set to "false" by default.
-    public var options: [String : String] {
-        var options: [String : String] = [:]
-        options["contenteditable"] = "\(contains(.contenteditable))"
-        options["spellcheck"] = "\(contains(.spellcheck))"
-        options["autocorrect"] = contains(.autocorrect) ? "on" : "off"
+    public var options: [String : Bool] {
+        var options: [String : Bool] = [:]
+        options["contenteditable"] = contains(.contenteditable)
+        options["spellcheck"] = contains(.spellcheck)
+        options["autocorrect"] = contains(.autocorrect)
         return options
     }
 }
