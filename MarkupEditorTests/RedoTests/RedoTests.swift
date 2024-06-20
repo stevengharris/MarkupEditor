@@ -2859,6 +2859,37 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 endOffset: 0,
                 pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table in text of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st"
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table in formatted text of a paragraph",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st"
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
         ]
         for test in htmlTests {
             test.printDescription()
