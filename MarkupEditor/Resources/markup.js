@@ -2705,22 +2705,45 @@ const _insertHTML = function(fragment) {
         newSelRange = document.getSelection().getRangeAt(0);
     } else {
         if (_isEmpty(trailingText)) {
-            const startContainer = trailingText.previousSibling ?? trailingText.parentNode;
-            let offset;
-            if (_isTextNode(startContainer)) {
-                offset = startContainer.textContent.length;
-            } else {
-                offset = startContainer.childNodes.length;
+            // When trailingText is empty, we need to reset selection properly and remove it.
+            // Ideally, we put selection at the end of trailingText's previousSibling, but when
+            // that is nil, we should put it at the end of trailingText's parentNode. But what
+            // about when that is also empty except for the empty trailingText?
+            let startContainer, offset;
+            const firstSelectableLocationBefore = _firstSelectableLocationBefore(trailingText);
+            if (firstSelectableLocationBefore) {
+                startContainer = firstSelectableLocationBefore.container;
+                offset = firstSelectableLocationBefore.offset;
+            } else { // A backup plan
+                const firstSelectableLocationAfter = _firstSelectableLocationAfter(trailingText);
+                if (firstSelectableLocationAfter) {
+                    startContainer = firstSelectableLocationAfter.container;
+                    offset = firstSelectableLocationAfter.offset;
+                } else {
+                    //TODO: Nothing selectable in the document!? What to do?
+                    _consoleLog("WTF")
+                };
             };
             newSelRange.setStart(startContainer, offset);
             newSelRange.setEnd(startContainer, offset);
             insertedRange.setEnd(startContainer, offset);
-            trailingText.parentNode.removeChild(trailingText);
+            if (_isEmpty(trailingText.parentNode)) {
+                trailingText.parentNode.parentNode.removeChild(trailingText.parentNode);
+            } else {
+                trailingText.parentNode.removeChild(trailingText);
+            };
         } else {
+            if (_isEmpty(anchorNode)) {
+                if (_isEmpty(anchorNode.parentNode)) {
+                    anchorNode.parentNode.parentNode.removeChild(anchorNode.parentNode);
+                } else {
+                    anchorNode.parentNode.removeChild(anchorNode);
+                };
+            }
             newSelRange.setStart(trailingText, 0);
             newSelRange.setEnd(trailingText, 0);
-        }
-    }
+        };
+    };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
@@ -2993,7 +3016,7 @@ const _deleteRange = function(range, rootName) {
     } else if (trailingWasDeleted) {
         trailingNode.parentNode.removeChild(trailingNode);
     };
-    if (rootName && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
+    if (rootName && _isTextNode(leadingNode) && _isTextNode(trailingNode) && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
         _joinTextNodes(leadingNode, trailingNode, rootName);
     } else {
         const newRange = document.createRange();
@@ -9437,7 +9460,15 @@ const _isEmpty = function(element) {
     }
     return empty;
 };
-        
+
+const _isEmptyParagraph = function(element) {
+    return _isEmpty(element) && _isParagraphStyleElement(element) && _isBRElement(element.firstChild);
+};
+
+const _isEmptyTD = function(element) {
+    return _isEmpty(element) && (element.nodeName === 'TD');
+};
+
 /**
  * Return true if MU.editor is truly empty.
  *
@@ -11430,6 +11461,136 @@ const _firstTextNodeChild = function(element) {
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             return _firstTextNodeChild(node);
         }
+    };
+    return null;
+};
+
+const _firstSelectableLocationBefore = function(node) {
+    var prevSib = node.previousSibling ?? node.parentNode;
+    while (prevSib) {
+        const lastSelectableLocation = _lastSelectableLocation(prevSib);
+        if (lastSelectableLocation) {
+            return lastSelectableLocation;
+        } else {
+            prevSib = prevSib.previousSibling ?? prevSib.parentNode;
+        };
+    };
+    return null;
+};
+
+const _firstSelectableLocationAfter = function(node) {
+    var nextSib = node.nextSibling ?? node.parentNode.nextSibling;
+    while (nextSib) {
+        const firstSelectableLocation = _firstSelectableLocation(nextSib);
+        if (firstSelectableLocation) {
+            return firstSelectableLocation;
+        } else {
+            nextSib = nextSib.nextSibling ?? nextSib.parentNode.nextSibling;
+        };
+    };
+    return null;
+};
+
+/**
+ * Return a container and offset that is the first location within node that we can set selection to.
+ */
+const _firstSelectableLocation = function(node) {
+    if (_isTextNode(node) && !(_isEmpty(node))) {
+        return {container: node, offset: 0};
+    };
+    const firstSelectableNode = _firstSelectableNode(node);
+    if (firstSelectableNode) {
+        return {container: firstSelectableNode, offset: 0};
+    } else {
+        return null;
+    };
+};
+
+/**
+ * Return the first child within element that is selectable using depth-first traversal.
+ *
+ * @param   {HTML Element}      element     The element in which we are looking for a selectable child.
+ *
+ * For example, when element is:
+ *
+ *  <table>
+ *      <tbody>
+ *          <tr>
+ *              <td><p>Row 1, Col 1</p></td><td><p>Row 1, Col 2</p></td>
+ *              <td><p>Row 2, Col 1</p></td><td><p>Row 2, Col 2</p></td>
+ *          </tr>
+ *      </tbody>
+ *  </table>
+ *
+ * _firstSelectableNode(element) will return the "Row 1, Col 1" text node.
+ */
+const _firstSelectableNode = function(element) {
+    const childNodes = element.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        let node = childNodes[i];
+        if (_isTextNode(node) && !(_isEmpty(node))) {
+            return node;
+        } else if (_isElementNode(node)) {
+            if (_isEmptyParagraph(node) || _isEmptyTD(node) || _isImageElement(node)) {
+                return node;
+            } else {
+                return _firstSelectableNode(node);
+            };
+        };
+    };
+    return null;
+};
+
+/**
+ * Return a container and offset that is the last location within node that we can set selection to.
+ */
+const _lastSelectableLocation = function(node) {
+    if (_isTextNode(node) && !(_isEmpty(node))) {
+        return {container: node, offset: node.length};
+    };
+    const lastSelectableNode = _lastSelectableNode(node);
+    if (lastSelectableNode) {
+        if (_isTextNode(lastSelectableNode)) {
+            return {container: lastSelectableNode, offset: lastSelectableNode.length};
+        } else {
+            return {container: lastSelectableNode, offset: lastSelectableNode.childNodes.length};
+        }
+    } else {
+        return null;
+    };
+};
+
+/**
+ * Return the last child within element that is selectable using depth-first traversal.
+ *
+ * @param   {HTML Element}      element     The element in which we are looking for a selectable child.
+ *
+ * For example, when element is:
+ *
+ *  <table>
+ *      <tbody>
+ *          <tr>
+ *              <td><p>Row 1, Col 1</p></td><td><p>Row 1, Col 2</p></td>
+ *              <td><p>Row 2, Col 1</p></td><td><p>Row 2, Col 2</p></td>
+ *          </tr>
+ *      </tbody>
+ *  </table>
+ *
+ * _lastSelectableNode(element) will return the "Row 2, Col 2" text node.
+ */
+const _lastSelectableNode = function(element) {
+    const childNodes = element.childNodes;
+    for (let i = childNodes.length - 1; i >= 0; i--) {
+        let node = childNodes[i];
+        if (_isTextNode(node) && !(_isEmpty(node))) {
+            return node;
+        } else if (_isElementNode(node)) {
+            if (_isEmptyParagraph(node) || _isEmptyTD(node) || _isImageElement(node)) {
+                return node;
+            } else {
+                return _lastSelectableNode(node);
+            };
+        };
     };
     return null;
 };
