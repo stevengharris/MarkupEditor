@@ -2571,6 +2571,7 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endOffset: 32,
                 pasteString: "<p>Hello <b>bold</b> world</p>"
             ),
+             */
             HtmlTest(
                 description: "P in P - Paste simple paragraph at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
@@ -2647,7 +2648,6 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endOffset: 0,
                 pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
             ),
-            */
             HtmlTest(
                 description: "TABLE in P - Paste a table at end of a paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
