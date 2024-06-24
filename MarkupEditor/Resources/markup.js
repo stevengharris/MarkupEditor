@@ -2596,6 +2596,10 @@ const _insertHTML = function(fragment) {
             // Fragment becomes anchorNode's nextSibling, selection set to end
             selRange.insertNode(fragment);
             _stripZeroWidthChars(anchorNode.parentNode);
+            _removeEmptyTextNodes(selRange);
+            sel = document.getSelection();
+            selRange = sel.getRangeAt(0);
+            anchorNode = sel.anchorNode;
             insertedRange.setStart(firstFragChild, 0);
             if (_isTextNode(lastFragChild)) {
                 newSelRange.setStart(lastFragChild, lastFragChild.textContent.length);
@@ -2741,11 +2745,8 @@ const _insertHTML = function(fragment) {
             };
         } else {
             if (_isEmpty(anchorNode)) {
-                if (_isEmpty(anchorNode.parentNode)) {
-                    anchorNode.parentNode.parentNode.removeChild(anchorNode.parentNode);
-                } else {
-                    anchorNode.parentNode.removeChild(anchorNode);
-                };
+                const nodeToDelete = (_isEmpty(anchorNode.parentNode)) ? anchorNode.parentNode : anchorNode;
+                nodeToDelete.parentNode.removeChild(nodeToDelete);
             }
             newSelRange.setStart(trailingText, 0);
             newSelRange.setEnd(trailingText, 0);
@@ -2849,8 +2850,11 @@ const _undoPasteHTML = function(undoerData) {
                 if (_isEmptyPlaceholder(topLevelNode)) {
                     topLevelNode.replaceWith(newEmptyElement);
                 } else {
-                    const beforeTarget = topLevelNode.nextSibling;
-                    topLevelNode.parentNode.insertBefore(newEmptyElement, beforeTarget);
+                    if (topLevelNode.nextSibling) { // We are at the end of the document
+                        topLevelNode.parentNode.insertBefore(newEmptyElement, topLevelNode);
+                    } else {
+                        topLevelNode.parentNode.insertBefore(newEmptyElement, null);
+                    };
                 };
                 newRange.setStart(newEmptyElement, 0);
                 newRange.setEnd(newEmptyElement, 0);
@@ -2932,9 +2936,6 @@ const _deleteRange = function(range, rootName) {
     let startOffset = range.startOffset;
     let endOffset = range.endOffset;
     range.deleteContents();
-    let leadingWasDeleted = false;
-    let trailingWasDeleted = false;
-    let leadingDeletedIndex, trailingDeletedIndex;
     let startContainer = leadingNode;
     let endContainer = trailingNode;
     // When we do deleteContents, the range contains empty text nodes so that
@@ -2942,33 +2943,46 @@ const _deleteRange = function(range, rootName) {
     // we need to put it back in place in the nearest non-empty text node.
     // Note that a deleted style node will be replaced later based on replacedEmpty
     // being present in undoerData.
-    if (_isEmpty(leadingNode) && (leadingNode !== MU.editor)) {    // It was deleted
-        const startLocation = _firstSelectableLocationAfter(leadingNode) ?? _firstSelectableLocationBefore(leadingNode);
+    const leadingWasDeleted = (_isEmpty(leadingNode) && (leadingNode !== MU.editor));
+    const trailingWasDeleted = (_isEmpty(trailingNode) && (leadingNode !== trailingNode) && (trailingNode !== MU.editor));
+    let startLocation, endLocation;
+    if (leadingWasDeleted && trailingWasDeleted) {
+        if (leadingNode.previousSibling) {
+            startLocation = _firstSelectableLocationBefore(leadingNode) ?? _firstSelectableLocationAfter(trailingNode);
+        } else if (trailingNode.nextSibling) {
+            startLocation = _firstSelectableLocationAfter(trailingNode) ?? _firstSelectableLocationBefore(leadingNode);
+        };
+        startContainer = startLocation.container;
+        startOffset = startLocation.offset;
+        endContainer = startContainer;
+        endOffset = startOffset;
+    } else if (leadingWasDeleted) {
+        startLocation = _firstSelectableLocationAfter(leadingNode) ?? _firstSelectableLocationBefore(leadingNode);
         if (startLocation) {
             startContainer = startLocation.container;
             startOffset = startLocation.offset;
         } else {    // A backup plan
             startContainer = MU.editor;
             startOffset = 0;
-        }
-        leadingWasDeleted = true;
-    };
-    if (_isEmpty(trailingNode) && (leadingNode !== trailingNode) && (trailingNode !== MU.editor)) {
-        const endLocation = _firstSelectableLocationBefore(trailingNode) ?? _firstSelectableLocationAfter(trailingNode);
+        };
+        if (leadingNode === trailingNode) { // Because trailingWasDelete is never executed if true
+            endContainer = startContainer;
+            endOffset = startOffset;
+        };
+    } else if (trailingWasDeleted) {
+        //WAS:
+        endLocation = _firstSelectableLocationBefore(trailingNode) ?? _firstSelectableLocationAfter(trailingNode);
+        //NOW:
+        //endLocation = _firstSelectableLocationAfter(trailingNode) ?? _firstSelectableLocationBefore(trailingNode);
         if (endLocation) {
             endContainer = endLocation.container;
             endOffset = endLocation.offset;
         } else {    // A backup plan
-            startContainer = MU.editor;
-            startOffset = 0;
-        }
-        trailingWasDeleted = true;
+            endContainer = MU.editor;
+            endOffset = 0;
+        };
     } else {
         endOffset = 0;  // Because we deleted up to the original endOffset
-    };
-    if (leadingNode && trailingNode && (leadingNode === trailingNode)) {
-        endContainer = startContainer;
-        endOffset = startOffset;
     };
     // We have as many empty text nodes as once existed in the range we deleted, and the
     // trailingNode may not be the same or even the nextSibling of leadingNode.
@@ -2977,6 +2991,8 @@ const _deleteRange = function(range, rootName) {
     const sharedParent = leadingNode && trailingNode && (leadingNode.parentNode === trailingNode.parentNode);
     if (leadingWasDeleted && trailingWasDeleted) {
         if (leadingNode === trailingNode) {
+            endContainer = startContainer;
+            endOffset = startOffset;
             leadingNode.parentNode.removeChild(leadingNode);
         } else {
             if (sharedParent) {
@@ -3002,7 +3018,13 @@ const _deleteRange = function(range, rootName) {
         const topLevelNode = _topLevelElementContaining(trailingNode);
         if (topLevelNode && _isEmpty(topLevelNode)) {
             // We are left with an empty top-level node (like a table or p), so delete it.
-            _deleteAndResetSelection(topLevelNode, 'BEFORE');
+            // If it's a table, then we treat it specially, because the selection was inside
+            // of the table and should be left before it.
+            if (_isTableElement(topLevelNode)) {
+                _deleteAndResetSelection(topLevelNode, 'BEFORE');
+            } else {
+                _deleteAndResetSelection(topLevelNode, 'AFTER');
+            };
             return; // Our work is done and selection is set properly.
         } else {
             trailingNode.parentNode.removeChild(trailingNode);
@@ -5107,7 +5129,15 @@ const _minimizedRange = function() {
  *      endContainer: <TextElement>, content: \"item\"
  *      endOffset: 4
  * when "item" is selected in <p>Bulleted <i>item</i> 1</p>.
- * We want to set it to be the textElement only.
+ * we want to set it to be the textElement only.
+ *
+ * Also when selRange is:
+ *      startContainer: <P>, content: \"Bulleted \"
+ *      startOffset: 0
+ *      endContainer: <TextElement>, content: \"Bulleted \"
+ *      endOffset: 0
+ * when "|Bulleted" is selected in <p>Bulleted <i>item</i> 1</p>,
+ * we want to set it to the textElement only.
  */
 const _minimizedRangeFrom = function(selRange) {
     const anchor = selRange.startContainer;
@@ -5116,11 +5146,11 @@ const _minimizedRangeFrom = function(selRange) {
     const focusOffset = selRange.endOffset;
     const endsAtLength = selRange.collapsed && _isElementNode(focus) && (focusOffset === focus.childNodes.length);
     const beginsAtZero = selRange.collapsed && _isElementNode(anchor) && (anchorOffset === 0);
+    const range = document.createRange();
     if (anchor === focus) {
         if (endsAtLength) {
             const lastChild = focus.lastChild;
             if (!lastChild) { return selRange };
-            const range = document.createRange();
             if (_isTextNode(lastChild)) {
                 range.setStart(lastChild, lastChild.textContent.length);
                 range.setEnd(lastChild, lastChild.textContent.length);
@@ -5132,7 +5162,6 @@ const _minimizedRangeFrom = function(selRange) {
         } else if (beginsAtZero) {
             const firstChild = anchor.firstChild;
             if (!firstChild) { return selRange };
-            const range = document.createRange();
             range.setStart(firstChild, 0);
             range.setEnd(firstChild, 0);
             return range;
@@ -5140,17 +5169,24 @@ const _minimizedRangeFrom = function(selRange) {
             return selRange;
         }
     }
-    if (!_isTextNode(anchor) || !_isTextNode(focus)) { return selRange };
-    const moveAnchorToFocusStart = (anchor.nextSibling === focus.parentNode) && (anchorOffset === anchor.length);
-    const moveFocusToAnchorEnd = (focus.previousSibling === anchor.parentNode) && (focusOffset === 0);
-    if (!moveAnchorToFocusStart && !moveFocusToAnchorEnd) { return selRange };
-    const range = document.createRange();
-    if (moveAnchorToFocusStart) {
-        range.setStart(focus, 0);
-        range.setEnd(focus, focusOffset);
+    if (_isTextNode(anchor) && _isTextNode(focus)) {
+        const moveAnchorToFocusStart = (anchor.nextSibling === focus.parentNode) && (anchorOffset === anchor.length);
+        const moveFocusToAnchorEnd = (focus.previousSibling === anchor.parentNode) && (focusOffset === 0);
+        if (!moveAnchorToFocusStart && !moveFocusToAnchorEnd) { return selRange };
+        if (moveAnchorToFocusStart) {
+            range.setStart(focus, 0);
+            range.setEnd(focus, focusOffset);
+        } else {
+            range.setStart(anchor, anchorOffset);
+            range.setEnd(anchor, anchor.length);
+        }
+    } else if (_isTextNode(focus)) {    // Anchor is an element that might point to focus
+        const anchorNode = (anchor.childNodes.length > 0) && anchor.childNodes[anchorOffset];
+        if ((anchorNode.childNodes.length > 0) && (anchorNode.childNodes[0] === focus)) {
+            range.setStart(focus, 0);
+        };
     } else {
-        range.setStart(anchor, anchorOffset);
-        range.setEnd(anchor, anchor.length);
+        return selRange;
     }
     return range;
 };
@@ -10312,6 +10348,13 @@ const _isImageElement = function(node) {
  */
 const _isBRElement = function(node) {
     return node && (node.nodeName === 'BR');
+};
+
+/**
+ * Return whether node is a TABLE element
+ */
+const _isTableElement = function(node) {
+    return node && (node.nodeName === 'TABLE');
 };
 
 /**

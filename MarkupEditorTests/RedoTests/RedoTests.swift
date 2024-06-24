@@ -2871,6 +2871,26 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
             ),
             HtmlTest(
+                description: "TABLE in P - Paste a table at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"p\">This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table at end of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
                 description: "TABLE in P - Paste a table in text of a paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
                 endHtml: "<p id=\"p\">This is ju</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>st a simple paragraph.</p>",
@@ -2889,6 +2909,17 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 endId: "b",
                 endOffset: 2,
                 pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a table",
+                startHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"blank\"><br></p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>Hello world</p>",
+                undoHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
             ),
         ]
         for test in htmlTests {

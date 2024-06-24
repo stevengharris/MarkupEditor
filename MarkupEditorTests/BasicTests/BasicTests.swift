@@ -2966,6 +2966,16 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 endOffset: 2,
                 pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
             ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a table",
+                startHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"blank\"><br></p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>Hello world</p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
         ]
         for test in htmlTests {
             test.printDescription()

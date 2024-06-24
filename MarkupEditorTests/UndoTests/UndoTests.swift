@@ -2450,7 +2450,6 @@ class UndoTests: XCTestCase, MarkupDelegate {
 
     func testUndoPasteHtml() throws {
         let htmlTests: [HtmlTest] = [
-            /*
             HtmlTest(
                 description: "P in P - Paste simple text at insertion point in a word",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
@@ -2571,7 +2570,6 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endOffset: 32,
                 pasteString: "<p>Hello <b>bold</b> world</p>"
             ),
-             */
             HtmlTest(
                 description: "P in P - Paste simple paragraph at a blank paragraph",
                 startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
@@ -2677,6 +2675,17 @@ class UndoTests: XCTestCase, MarkupDelegate {
                 endId: "b",
                 endOffset: 2,
                 pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a table",
+                startHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"blank\"><br></p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>Hello world</p>",
+                undoHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
             ),
         ]
         for test in htmlTests {
