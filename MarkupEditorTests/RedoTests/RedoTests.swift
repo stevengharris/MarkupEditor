@@ -2859,6 +2859,195 @@ class RedoTests: XCTestCase, MarkupDelegate {
                 endOffset: 0,
                 pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
+            // Tables
+            HtmlTest(
+                description: "TABLE in P - Paste a table at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"p\">This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table at end of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table in text of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st"
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "TABLE in P - Paste a table in formatted text of a paragraph",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st"
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a table",
+                startHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p id=\"blank\"><br></p>",
+                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>Hello world</p>",
+                undoHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            // Lists
+            HtmlTest(
+                description: "OL in P - Paste a list at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
+            ),
+            HtmlTest(
+                description: "OL in P - Paste a list at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p id=\"p\">This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
+            ),
+            HtmlTest(
+                description: "OL in P - Paste a list at end of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
+            ),
+            HtmlTest(
+                description: "OL in P - Paste a list in text of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st"
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
+            ),
+            HtmlTest(
+                description: "OL in P - Paste a list in formatted text of a paragraph",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st"
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a list",
+                startHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p id=\"blank\"><br></p>",
+                endHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>Hello world</p>",
+                undoHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
+            // Blockquotes
+            HtmlTest(
+                description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at a blank paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p><p id=\"blank\"><br></p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>",
+                undoHtml: "<p id=\"p\">This is just a simple paragraph.</p><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
+            ),
+            HtmlTest(
+                description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at beginning of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p id=\"p\">This is just a simple paragraph.</p>",
+                startId: "p",     // Select "|This"
+                startOffset: 0,
+                endId: "p",
+                endOffset: 0,
+                pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
+            ),
+            HtmlTest(
+                description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at end of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is just a simple paragraph.</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>",
+                startId: "p",     // Select "paragraph.|"
+                startOffset: 32,
+                endId: "p",
+                endOffset: 32,
+                pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
+            ),
+            HtmlTest(
+                description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE in text of a paragraph",
+                startHtml: "<p id=\"p\">This is just a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is ju</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>st a simple paragraph.</p>",
+                startId: "p",     // Select "ju|st"
+                startOffset: 10,
+                endId: "p",
+                endOffset: 10,
+                pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
+            ),
+            HtmlTest(
+                description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE in formatted text of a paragraph",
+                startHtml: "<p id=\"p\">This is <b id=\"b\">just</b> a simple paragraph.</p>",
+                endHtml: "<p id=\"p\">This is <b id=\"b\">ju</b></p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p><b>st</b> a simple paragraph.</p>",
+                startId: "b",     // Select "ju|st"
+                startOffset: 2,
+                endId: "b",
+                endOffset: 2,
+                pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
+            ),
+            HtmlTest(
+                description: "P in P - Paste a simple paragraph at a blank line after a BLOCKQUOTE",
+                startHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p id=\"blank\"><br></p>",
+                endHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>Hello world</p>",
+                undoHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p><br></p>",
+                startId: "blank",     // Select "|<br>"
+                startOffset: 0,
+                endId: "blank",
+                endOffset: 0,
+                pasteString: "<p>Hello world</p>"
+            ),
         ]
         for test in htmlTests {
             test.printDescription()

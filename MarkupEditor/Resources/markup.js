@@ -403,7 +403,7 @@ class Searcher {
         // the end of a wrapped line. It's only when the selection is at the beginning of a line
         // that was wrapped from above.
         const rectList = range.getClientRects();
-        var rangeRect;
+        let rangeRect;
         if (rectList.length > 1) {
             rangeRect = rectList[1];
         } else {
@@ -2391,13 +2391,16 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
     const newElement = _fragmentFrom(html)
     const anchorIsElement = _isElementNode(anchorNode);
     const firstChildIsElement = newElement.firstChild && (_isElementNode(newElement.firstChild));
-    const firstChildIsFormat = newElement.firstChild && (_isFormatElement(newElement.firstChild));
+    const firstChildIsStyle = newElement.firstChild && (_isParagraphStyleElement(newElement.firstChild));
     const anchorIsEmpty = _isEmpty(anchorNode);
     let pasteRange = selRange.cloneRange();
     let newSelRange, rootName, replacedEmpty;
-    // If the anchorNode is text, and the fragment's first child is not a format node, then we will
-    // replace the fragment's first child with its contents.
-    if (_isTextNode(anchorNode) && !firstChildIsFormat) {
+    // If the anchorNode is text, and the fragment's first child is a paragraph syle element, then we want
+    // to modify the fragment's contents to contain the contents of the first child. Copy/paste of a word of text
+    // in a paragraph comes into this method as <P>word</P>, but we can't insert a <P> inside of the top-level
+    // element the text anchorNode is in, and we don't want to break the existing paragraph. The contents of
+    // the fragment ends up being inserted into the containing paragraph using the same style.
+    if (_isTextNode(anchorNode) && firstChildIsStyle) {
         const newFirstChild = _fragmentFrom(newElement.firstChild.innerHTML);
         newElement.firstChild.replaceWith(newFirstChild);
     };
@@ -2421,14 +2424,21 @@ const _pasteHTML = function(html, oldUndoerData, undoable=true) {
             nextSib = newElement.firstChild;
         };
         newSelRange = document.createRange();
-        if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
-            offset = lastChild.textContent.length;
-        } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
-            offset = lastChild.childNodes.length;
-        };
-        newSelRange.setStart(lastChild, offset);
-        newSelRange.setEnd(lastChild, offset);
-        pasteRange.setEnd(lastChild, offset);
+        const lastSelectableLocation = _lastSelectableLocation(lastChild);
+        if (lastSelectableLocation) {
+            newSelRange.setStart(lastSelectableLocation.container, lastSelectableLocation.offset);
+            newSelRange.setEnd(lastSelectableLocation.container, lastSelectableLocation.offset);
+            pasteRange.setEnd(lastSelectableLocation.container, lastSelectableLocation.offset);
+        } else {    // A backup plan
+            if (lastChild && (lastChild.nodeType === Node.TEXT_NODE)) {
+                offset = lastChild.textContent.length;
+            } else if (lastChild && (lastChild.nodeType === Node.ELEMENT_NODE)) {
+                offset = lastChild.childNodes.length;
+            };
+            newSelRange.setStart(lastChild, offset);
+            newSelRange.setEnd(lastChild, offset);
+            pasteRange.setEnd(lastChild, offset);
+        }
         rootName = null;
     } else {
         const insertResults = _insertHTML(newElement);
@@ -2586,6 +2596,10 @@ const _insertHTML = function(fragment) {
             // Fragment becomes anchorNode's nextSibling, selection set to end
             selRange.insertNode(fragment);
             _stripZeroWidthChars(anchorNode.parentNode);
+            _removeEmptyTextNodes(selRange);
+            sel = document.getSelection();
+            selRange = sel.getRangeAt(0);
+            anchorNode = sel.anchorNode;
             insertedRange.setStart(firstFragChild, 0);
             if (_isTextNode(lastFragChild)) {
                 newSelRange.setStart(lastFragChild, lastFragChild.textContent.length);
@@ -2702,22 +2716,42 @@ const _insertHTML = function(fragment) {
         newSelRange = document.getSelection().getRangeAt(0);
     } else {
         if (_isEmpty(trailingText)) {
-            const startContainer = trailingText.previousSibling ?? trailingText.parentNode;
-            let offset;
-            if (_isTextNode(startContainer)) {
-                offset = startContainer.textContent.length;
-            } else {
-                offset = startContainer.childNodes.length;
+            // When trailingText is empty, we need to reset selection properly and remove it.
+            // Ideally, we put selection at the end of trailingText's previousSibling, but when
+            // that is nil, we should put it at the end of trailingText's parentNode. But what
+            // about when that is also empty except for the empty trailingText?
+            let startContainer, offset;
+            const firstSelectableLocationBefore = _firstSelectableLocationBefore(trailingText);
+            if (firstSelectableLocationBefore) {
+                startContainer = firstSelectableLocationBefore.container;
+                offset = firstSelectableLocationBefore.offset;
+            } else { // A backup plan
+                const firstSelectableLocationAfter = _firstSelectableLocationAfter(trailingText);
+                if (firstSelectableLocationAfter) {
+                    startContainer = firstSelectableLocationAfter.container;
+                    offset = firstSelectableLocationAfter.offset;
+                } else {
+                    //TODO: Nothing selectable in the document!? What to do?
+                    _consoleLog("WTF")
+                };
             };
             newSelRange.setStart(startContainer, offset);
             newSelRange.setEnd(startContainer, offset);
             insertedRange.setEnd(startContainer, offset);
-            trailingText.parentNode.removeChild(trailingText);
+            if (_isEmpty(trailingText.parentNode)) {
+                trailingText.parentNode.parentNode.removeChild(trailingText.parentNode);
+            } else {
+                trailingText.parentNode.removeChild(trailingText);
+            };
         } else {
+            if (_isEmpty(anchorNode)) {
+                const nodeToDelete = (_isEmpty(anchorNode.parentNode)) ? anchorNode.parentNode : anchorNode;
+                nodeToDelete.parentNode.removeChild(nodeToDelete);
+            }
             newSelRange.setStart(trailingText, 0);
             newSelRange.setEnd(trailingText, 0);
-        }
-    }
+        };
+    };
     sel.removeAllRanges();
     sel.addRange(newSelRange);
     //_consoleLog("* Done _insertHTML")
@@ -2797,6 +2831,10 @@ const _undoPasteHTML = function(undoerData) {
     const sel = document.getSelection();
     let newRange = _minimizedRangeFrom(sel.getRangeAt(0));
     if (replacedEmpty) {
+        // We need to re-insert an empty paragraph after the current selection.
+        // The selection is probably at the end of a text node, so we need to
+        // find the selection's top-level node and place it in that node's parent
+        // after that node.
         const newEmptyElement = document.createElement(replacedEmpty);
         const br = document.createElement('br');
         newEmptyElement.appendChild(br);
@@ -2807,10 +2845,17 @@ const _undoPasteHTML = function(undoerData) {
             newRange.setStart(newEmptyElement, 0);
             newRange.setEnd(newEmptyElement, 0);
         } else {
-            const beforeTarget = (_isTextNode(startContainer)) ? startContainer.nextSibling : startNode;
             const topLevelNode = _findFirstParentElementInNodeNames(startNode, _topLevelTags);
             if (topLevelNode) {
-                topLevelNode.parentNode.insertBefore(newEmptyElement, beforeTarget);
+                if (_isEmptyPlaceholder(topLevelNode)) {
+                    topLevelNode.replaceWith(newEmptyElement);
+                } else {
+                    if (topLevelNode.nextSibling) {
+                        topLevelNode.parentNode.insertBefore(newEmptyElement, topLevelNode);
+                    } else { // We are at the end of the document
+                        _findContentEditable(topLevelNode).insertBefore(newEmptyElement, null);
+                    };
+                };
                 newRange.setStart(newEmptyElement, 0);
                 newRange.setEnd(newEmptyElement, 0);
             };
@@ -2891,9 +2936,6 @@ const _deleteRange = function(range, rootName) {
     let startOffset = range.startOffset;
     let endOffset = range.endOffset;
     range.deleteContents();
-    let leadingWasDeleted = false;
-    let trailingWasDeleted = false;
-    let leadingDeletedIndex, trailingDeletedIndex;
     let startContainer = leadingNode;
     let endContainer = trailingNode;
     // When we do deleteContents, the range contains empty text nodes so that
@@ -2901,63 +2943,43 @@ const _deleteRange = function(range, rootName) {
     // we need to put it back in place in the nearest non-empty text node.
     // Note that a deleted style node will be replaced later based on replacedEmpty
     // being present in undoerData.
-    if (_isEmpty(leadingNode) && (leadingNode !== MU.editor)) {    // It was deleted
-        startContainer = _firstNonEmptyNextSibling(leadingNode);
-        if (startContainer) {
-            startOffset = 0;
-        } else {
-            startContainer = _firstNonEmptyPreviousSibling(leadingNode);
-            if (startContainer) {
-                if (_isTextNode(startContainer)) {
-                    startOffset = startContainer.length;
-                } else {
-                    startOffset = _childNodeIndex(startContainer);
-                };
-            } else {
-                startContainer = leadingNode.parentNode;
-                const leadingNodeIndex = _childNodeIndex(leadingNode);
-                // We are going to delete the leadingNode and set the startOffset
-                // to the node following if possible; else the one before.
-                if (leadingNode.nextSibling) {
-                    startOffset = leadingNodeIndex; // This will be the nextSibling after deleting leadingNode
-                } else {
-                    startOffset = Math.max(0, leadingNodeIndex - 1);
-                };
-            };
-        }
-        leadingWasDeleted = true;
-    };
-    if (_isEmpty(trailingNode) && (leadingNode !== trailingNode) && (trailingNode !== MU.editor)) {
-        endContainer = _firstNonEmptyNextSibling(trailingNode);
-        if (endContainer) {
-            endOffset = 0;
-        } else {
-            endContainer = _firstNonEmptyPreviousSibling(trailingNode);
-            if (endContainer) {
-                if (_isTextNode(endContainer)) {
-                    endOffset = endContainer.length;
-                } else {
-                    endOffset = _childNodeIndex(endContainer);
-                };
-            } else {
-                endContainer = trailingNode.parentNode;
-                const trailingNodeIndex = _childNodeIndex(trailingNode);
-                // We are going to delete the trailingNode and set the endOffset
-                // to the node following if possible; else the one before.
-                if (trailingNode.nextSibling) {
-                    endOffset = trailingNodeIndex; // This will be the nextSibling after deleting trailingNode
-                } else {
-                    endOffset = Math.max(0, trailingNodeIndex - 1);
-                };
-            };
+    const leadingWasDeleted = (_isEmpty(leadingNode) && (leadingNode !== MU.editor));
+    const trailingWasDeleted = (_isEmpty(trailingNode) && (leadingNode !== trailingNode) && (trailingNode !== MU.editor));
+    let startLocation, endLocation;
+    if (leadingWasDeleted && trailingWasDeleted) {
+        if (leadingNode.previousSibling) {
+            startLocation = _firstSelectableLocationBefore(leadingNode) ?? _firstSelectableLocationAfter(trailingNode);
+        } else if (trailingNode.nextSibling) {
+            startLocation = _firstSelectableLocationAfter(trailingNode) ?? _firstSelectableLocationBefore(leadingNode);
         };
-        trailingWasDeleted = true;
-    } else {
-        endOffset = 0;  // Because we deleted up to the original endOffset
-    };
-    if (leadingNode && trailingNode && (leadingNode === trailingNode)) {
+        startContainer = startLocation.container;
+        startOffset = startLocation.offset;
         endContainer = startContainer;
         endOffset = startOffset;
+    } else if (leadingWasDeleted) {
+        startLocation = _firstSelectableLocationAfter(leadingNode) ?? _firstSelectableLocationBefore(leadingNode);
+        if (startLocation) {
+            startContainer = startLocation.container;
+            startOffset = startLocation.offset;
+        } else {    // A backup plan
+            startContainer = MU.editor;
+            startOffset = 0;
+        };
+        if (leadingNode === trailingNode) { // Because trailingWasDelete is never executed if true
+            endContainer = startContainer;
+            endOffset = startOffset;
+        };
+    } else if (trailingWasDeleted) {
+        endLocation = _firstSelectableLocationBefore(trailingNode) ?? _firstSelectableLocationAfter(trailingNode);
+        if (endLocation) {
+            endContainer = endLocation.container;
+            endOffset = endLocation.offset;
+        } else {    // A backup plan
+            endContainer = MU.editor;
+            endOffset = 0;
+        };
+    } else {
+        endOffset = 0;  // Because we deleted up to the original endOffset
     };
     // We have as many empty text nodes as once existed in the range we deleted, and the
     // trailingNode may not be the same or even the nextSibling of leadingNode.
@@ -2966,6 +2988,8 @@ const _deleteRange = function(range, rootName) {
     const sharedParent = leadingNode && trailingNode && (leadingNode.parentNode === trailingNode.parentNode);
     if (leadingWasDeleted && trailingWasDeleted) {
         if (leadingNode === trailingNode) {
+            endContainer = startContainer;
+            endOffset = startOffset;
             leadingNode.parentNode.removeChild(leadingNode);
         } else {
             if (sharedParent) {
@@ -2988,9 +3012,22 @@ const _deleteRange = function(range, rootName) {
     } else if (leadingWasDeleted) {
         leadingNode.parentNode.removeChild(leadingNode);
     } else if (trailingWasDeleted) {
-        trailingNode.parentNode.removeChild(trailingNode);
+        const topLevelNode = _topLevelElementContaining(trailingNode);
+        if (topLevelNode && _isEmpty(topLevelNode)) {
+            // We are left with an empty top-level node (like a table or p), so delete it.
+            // If it's a table, list, or blockquote, then we treat it specially, because
+            // the selection was inside of the topLevelElement and should be left before it.
+            if (_isTableElement(topLevelNode) || _isListElement(topLevelNode) || _isBlockquoteElement(topLevelNode)) {
+                _deleteAndResetSelection(topLevelNode, 'BEFORE');
+            } else {
+                _deleteAndResetSelection(topLevelNode, 'AFTER');
+            };
+            return; // Our work is done and selection is set properly.
+        } else {
+            trailingNode.parentNode.removeChild(trailingNode);
+        };
     };
-    if (rootName && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
+    if (rootName && _isTextNode(leadingNode) && _isTextNode(trailingNode) && (leadingNode !== trailingNode) && !leadingWasDeleted && !trailingWasDeleted) {
         _joinTextNodes(leadingNode, trailingNode, rootName);
     } else {
         const newRange = document.createRange();
@@ -3001,6 +3038,22 @@ const _deleteRange = function(range, rootName) {
         sel.removeAllRanges();
         sel.addRange(minimizedRange);
     };
+};
+
+const _topLevelElementContaining = function(node) {
+    let child = node;
+    while (child) {
+        if (child.parentNode === MU.editor) {
+            if (_isTopLevelElement(child)) {
+                return child;
+            } else {
+                return null;
+            };
+        } else {
+            child = child.parentNode;
+        };
+    };
+    return null;
 };
 
 const _firstNonEmptyNextSibling = function(node) {
@@ -3331,7 +3384,7 @@ MU.addDiv = function(id, parentId, cssClass, jsonAttributes, htmlContents) {
             _selectedID = null;
         };
     });
-    var contenteditable;
+    let contenteditable;
     if (jsonAttributes) {
         const editableAttributes = JSON.parse(jsonAttributes);
         if (editableAttributes) {
@@ -5073,7 +5126,15 @@ const _minimizedRange = function() {
  *      endContainer: <TextElement>, content: \"item\"
  *      endOffset: 4
  * when "item" is selected in <p>Bulleted <i>item</i> 1</p>.
- * We want to set it to be the textElement only.
+ * we want to set it to be the textElement only.
+ *
+ * Also when selRange is:
+ *      startContainer: <P>, content: \"Bulleted \"
+ *      startOffset: 0
+ *      endContainer: <TextElement>, content: \"Bulleted \"
+ *      endOffset: 0
+ * when "|Bulleted" is selected in <p>Bulleted <i>item</i> 1</p>,
+ * we want to set it to the textElement only.
  */
 const _minimizedRangeFrom = function(selRange) {
     const anchor = selRange.startContainer;
@@ -5082,11 +5143,11 @@ const _minimizedRangeFrom = function(selRange) {
     const focusOffset = selRange.endOffset;
     const endsAtLength = selRange.collapsed && _isElementNode(focus) && (focusOffset === focus.childNodes.length);
     const beginsAtZero = selRange.collapsed && _isElementNode(anchor) && (anchorOffset === 0);
+    const range = document.createRange();
     if (anchor === focus) {
         if (endsAtLength) {
             const lastChild = focus.lastChild;
             if (!lastChild) { return selRange };
-            const range = document.createRange();
             if (_isTextNode(lastChild)) {
                 range.setStart(lastChild, lastChild.textContent.length);
                 range.setEnd(lastChild, lastChild.textContent.length);
@@ -5098,7 +5159,6 @@ const _minimizedRangeFrom = function(selRange) {
         } else if (beginsAtZero) {
             const firstChild = anchor.firstChild;
             if (!firstChild) { return selRange };
-            const range = document.createRange();
             range.setStart(firstChild, 0);
             range.setEnd(firstChild, 0);
             return range;
@@ -5106,17 +5166,24 @@ const _minimizedRangeFrom = function(selRange) {
             return selRange;
         }
     }
-    if (!_isTextNode(anchor) || !_isTextNode(focus)) { return selRange };
-    const moveAnchorToFocusStart = (anchor.nextSibling === focus.parentNode) && (anchorOffset === anchor.length);
-    const moveFocusToAnchorEnd = (focus.previousSibling === anchor.parentNode) && (focusOffset === 0);
-    if (!moveAnchorToFocusStart && !moveFocusToAnchorEnd) { return selRange };
-    const range = document.createRange();
-    if (moveAnchorToFocusStart) {
-        range.setStart(focus, 0);
-        range.setEnd(focus, focusOffset);
+    if (_isTextNode(anchor) && _isTextNode(focus)) {
+        const moveAnchorToFocusStart = (anchor.nextSibling === focus.parentNode) && (anchorOffset === anchor.length);
+        const moveFocusToAnchorEnd = (focus.previousSibling === anchor.parentNode) && (focusOffset === 0);
+        if (!moveAnchorToFocusStart && !moveFocusToAnchorEnd) { return selRange };
+        if (moveAnchorToFocusStart) {
+            range.setStart(focus, 0);
+            range.setEnd(focus, focusOffset);
+        } else {
+            range.setStart(anchor, anchorOffset);
+            range.setEnd(anchor, anchor.length);
+        }
+    } else if (_isTextNode(focus)) {    // Anchor is an element that might point to focus
+        const anchorNode = (anchor.childNodes.length > 0) && anchor.childNodes[anchorOffset];
+        if ((anchorNode.childNodes.length > 0) && (anchorNode.childNodes[0] === focus)) {
+            range.setStart(focus, 0);
+        };
     } else {
-        range.setStart(anchor, anchorOffset);
-        range.setEnd(anchor, anchor.length);
+        return selRange;
     }
     return range;
 };
@@ -7476,8 +7543,7 @@ const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);            
 
 const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
 
-//TODO: Include BLOCKQUOTE?
-const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));          // Allowed top-level tags within editor
+const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));    // Allowed top-level tags w/in editor
 
 const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
@@ -7514,7 +7580,7 @@ const _getSelectionState = function() {
     // the time to find the enclosing div ID from the selection so we are sure it
     // absolutely reflects the selection state at the time of the call regardless
     // of whether it is contentEditable or not.
-    var divID = _findContentEditableID(selection.focusNode);
+    let divID = _findContentEditableID(selection.focusNode);
     if (divID) {
         state['divid'] = divID;
         state['valid'] = true;
@@ -9434,7 +9500,23 @@ const _isEmpty = function(element) {
     }
     return empty;
 };
-        
+
+const _isEmptyParagraph = function(element) {
+    return _isEmpty(element) && _isParagraphStyleElement(element) && _isBRElement(element.firstChild);
+};
+
+const _isEmptyPlaceholder = function(element) {
+    return _isParagraphStyleElement(element) && (element.childNodes.length == 1) && _isNonPrintingCharacter(element.firstChild);
+};
+
+const _isNonPrintingCharacter = function(element) {
+    return _isTextNode(element) && (element.textContent === '\u200B')
+}
+
+const _isEmptyTD = function(element) {
+    return _isEmpty(element) && (element.nodeName === 'TD');
+};
+
 /**
  * Return true if MU.editor is truly empty.
  *
@@ -10214,6 +10296,22 @@ const _isStyleElement = function(node) {
 };
 
 /**
+ * Return whether node is an allowable top-level node in MarkupEditor.
+ *
+ * These are nodes that are allowed children in a contentEditable area.
+ */
+const _isTopLevelElement = function(node) {
+    return node && _topLevelTags.includes(node.nodeName);
+};
+
+/**
+ * Return whether node is one of the _paragraphStyleTags
+ */
+const _isParagraphStyleElement = function(node) {
+    return _paragraphStyleTags.includes(node.nodeName);
+};
+
+/**
  * Return whether node is a format element; i.e., its nodeName is in _formatTags
  */
 const _isFormatElement = function(node) {
@@ -10246,6 +10344,13 @@ const _isImageElement = function(node) {
  */
 const _isBRElement = function(node) {
     return node && (node.nodeName === 'BR');
+};
+
+/**
+ * Return whether node is a TABLE element
+ */
+const _isTableElement = function(node) {
+    return node && (node.nodeName === 'TABLE');
 };
 
 /**
@@ -11424,6 +11529,136 @@ const _firstTextNodeChild = function(element) {
     return null;
 };
 
+const _firstSelectableLocationBefore = function(node) {
+    let prevSib = node.previousSibling ?? node.parentNode;
+    while (prevSib) {
+        const lastSelectableLocation = _lastSelectableLocation(prevSib);
+        if (lastSelectableLocation) {
+            return lastSelectableLocation;
+        } else {
+            prevSib = prevSib.previousSibling ?? prevSib.parentNode;
+        };
+    };
+    return null;
+};
+
+const _firstSelectableLocationAfter = function(node) {
+    let nextSib = node.nextSibling ?? node.parentNode.nextSibling;
+    while (nextSib) {
+        const firstSelectableLocation = _firstSelectableLocation(nextSib);
+        if (firstSelectableLocation) {
+            return firstSelectableLocation;
+        } else {
+            nextSib = nextSib.nextSibling ?? nextSib.parentNode.nextSibling;
+        };
+    };
+    return null;
+};
+
+/**
+ * Return a container and offset that is the first location within node that we can set selection to.
+ */
+const _firstSelectableLocation = function(node) {
+    if (_isTextNode(node) && !(_isEmpty(node))) {
+        return {container: node, offset: 0};
+    };
+    const firstSelectableNode = _firstSelectableNode(node);
+    if (firstSelectableNode) {
+        return {container: firstSelectableNode, offset: 0};
+    } else {
+        return null;
+    };
+};
+
+/**
+ * Return the first child within element that is selectable using depth-first traversal.
+ *
+ * @param   {HTML Element}      element     The element in which we are looking for a selectable child.
+ *
+ * For example, when element is:
+ *
+ *  <table>
+ *      <tbody>
+ *          <tr>
+ *              <td><p>Row 1, Col 1</p></td><td><p>Row 1, Col 2</p></td>
+ *              <td><p>Row 2, Col 1</p></td><td><p>Row 2, Col 2</p></td>
+ *          </tr>
+ *      </tbody>
+ *  </table>
+ *
+ * _firstSelectableNode(element) will return the "Row 1, Col 1" text node.
+ */
+const _firstSelectableNode = function(element) {
+    const childNodes = element.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        let node = childNodes[i];
+        if (_isTextNode(node) && !(_isEmpty(node))) {
+            return node;
+        } else if (_isElementNode(node)) {
+            if (_isEmptyParagraph(node) || _isEmptyTD(node) || _isImageElement(node)) {
+                return node;
+            } else {
+                return _firstSelectableNode(node);
+            };
+        };
+    };
+    return null;
+};
+
+/**
+ * Return a container and offset that is the last location within node that we can set selection to.
+ */
+const _lastSelectableLocation = function(node) {
+    if (_isTextNode(node) && !(_isEmpty(node))) {
+        return {container: node, offset: node.length};
+    };
+    const lastSelectableNode = _lastSelectableNode(node);
+    if (lastSelectableNode) {
+        if (_isTextNode(lastSelectableNode)) {
+            return {container: lastSelectableNode, offset: lastSelectableNode.length};
+        } else {
+            return {container: lastSelectableNode, offset: lastSelectableNode.childNodes.length};
+        }
+    } else {
+        return null;
+    };
+};
+
+/**
+ * Return the last child within element that is selectable using depth-first traversal.
+ *
+ * @param   {HTML Element}      element     The element in which we are looking for a selectable child.
+ *
+ * For example, when element is:
+ *
+ *  <table>
+ *      <tbody>
+ *          <tr>
+ *              <td><p>Row 1, Col 1</p></td><td><p>Row 1, Col 2</p></td>
+ *              <td><p>Row 2, Col 1</p></td><td><p>Row 2, Col 2</p></td>
+ *          </tr>
+ *      </tbody>
+ *  </table>
+ *
+ * _lastSelectableNode(element) will return the "Row 2, Col 2" text node.
+ */
+const _lastSelectableNode = function(element) {
+    const childNodes = element.childNodes;
+    for (let i = childNodes.length - 1; i >= 0; i--) {
+        let node = childNodes[i];
+        if (_isTextNode(node) && !(_isEmpty(node))) {
+            return node;
+        } else if (_isElementNode(node)) {
+            if (_isEmptyParagraph(node) || _isEmptyTD(node) || _isImageElement(node)) {
+                return node;
+            } else {
+                return _lastSelectableNode(node);
+            };
+        };
+    };
+    return null;
+};
+
 const _findContentEditableID = function(node) {
     return _findContentEditable(node)?.id;
 }
@@ -11432,7 +11667,7 @@ const _findContentEditableID = function(node) {
  * Search parents until we find one that has contentEditable set, and return its ID.
  */
 const _findContentEditable = function(node) {
-    var element = node;
+    let element = node;
     if (!_isElementNode(node)) {
         element = node?.parentElement;
     };
@@ -11450,7 +11685,7 @@ const _findContentEditable = function(node) {
  * Return the id of the div that node resides in, whether it's contentEditable or not
  */
 const _findDivID = function(node) {
-    var nextNode = node;
+    let nextNode = node;
     while (nextNode) {
         if (_isDiv(nextNode)) {
             return nextNode.id;

@@ -24,6 +24,10 @@ public struct EditableAttributes: @unchecked Sendable, OptionSet {
     /// Return a dictionary of the options that are set in this EditableAttributes instance.
     ///
     /// We use this to get JSON from, so populate the dictionary with booleans for all values.
+    ///
+    /// NOTE: Currently spellcheck="true" produces a bad behavior wherein a word is selected and then the selection
+    /// changes to the end of the paragraph. This may have to do with some underlying mechanics for presenting
+    /// suggestions, but for now we will set to "false" by default.
     public var options: [String : Bool] {
         var options: [String : Bool] = [:]
         options["contenteditable"] = contains(.contenteditable)
