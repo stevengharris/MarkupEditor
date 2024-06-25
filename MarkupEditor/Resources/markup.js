@@ -1865,7 +1865,7 @@ MU.editor.addEventListener('touchcancel', function() {
  */
 document.addEventListener('selectionchange', function(ev) {
     if (_muteChanges) {
-        ev.preventDefault;
+        ev.preventDefault();
 //        _consoleLog(' (muted selectionchange)')
     } else {
 //        _consoleLog('selectionchange')
