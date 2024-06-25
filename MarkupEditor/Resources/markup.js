@@ -2850,10 +2850,10 @@ const _undoPasteHTML = function(undoerData) {
                 if (_isEmptyPlaceholder(topLevelNode)) {
                     topLevelNode.replaceWith(newEmptyElement);
                 } else {
-                    if (topLevelNode.nextSibling) { // We are at the end of the document
+                    if (topLevelNode.nextSibling) {
                         topLevelNode.parentNode.insertBefore(newEmptyElement, topLevelNode);
-                    } else {
-                        topLevelNode.parentNode.insertBefore(newEmptyElement, null);
+                    } else { // We are at the end of the document
+                        _findContentEditable(topLevelNode).insertBefore(newEmptyElement, null);
                     };
                 };
                 newRange.setStart(newEmptyElement, 0);
@@ -2970,10 +2970,7 @@ const _deleteRange = function(range, rootName) {
             endOffset = startOffset;
         };
     } else if (trailingWasDeleted) {
-        //WAS:
         endLocation = _firstSelectableLocationBefore(trailingNode) ?? _firstSelectableLocationAfter(trailingNode);
-        //NOW:
-        //endLocation = _firstSelectableLocationAfter(trailingNode) ?? _firstSelectableLocationBefore(trailingNode);
         if (endLocation) {
             endContainer = endLocation.container;
             endOffset = endLocation.offset;
@@ -3018,9 +3015,9 @@ const _deleteRange = function(range, rootName) {
         const topLevelNode = _topLevelElementContaining(trailingNode);
         if (topLevelNode && _isEmpty(topLevelNode)) {
             // We are left with an empty top-level node (like a table or p), so delete it.
-            // If it's a table, then we treat it specially, because the selection was inside
-            // of the table and should be left before it.
-            if (_isTableElement(topLevelNode)) {
+            // If it's a table, list, or blockquote, then we treat it specially, because
+            // the selection was inside of the topLevelElement and should be left before it.
+            if (_isTableElement(topLevelNode) || _isListElement(topLevelNode) || _isBlockquoteElement(topLevelNode)) {
                 _deleteAndResetSelection(topLevelNode, 'BEFORE');
             } else {
                 _deleteAndResetSelection(topLevelNode, 'AFTER');
@@ -7546,8 +7543,7 @@ const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);            
 
 const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
 
-//TODO: Include BLOCKQUOTE?
-const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));          // Allowed top-level tags within editor
+const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));    // Allowed top-level tags w/in editor
 
 const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
