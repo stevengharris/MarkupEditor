@@ -284,11 +284,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         guard
             let rootHtml = url(forResource: "markup", withExtension: "html"),
             let rootCss = url(forResource: "markup", withExtension: "css"),
-            let rootJs = url(forResource: "markup", withExtension: "js") else {
-            assertionFailure("Could not find markup.html, css, and js for this bundle.")
+            let rootJs = url(forResource: "markup", withExtension: "js"),
+            let mirrorCss = url(forResource: "mirror", withExtension: "css") else {
+            assertionFailure("Could not find markup.html, css, and js and mirror.css for this bundle.")
             return
         }
-        var srcUrls = [rootHtml, rootCss, rootJs]
+        var srcUrls = [rootHtml, rootCss, rootJs, mirrorCss]
         // If specified, the userCSS comes from the app's main bundle, not something MarkupEditor provides
         if let userCssFile, let userCss = url(forResource: userCssFile, withExtension: nil) {
             srcUrls.append(userCss)
