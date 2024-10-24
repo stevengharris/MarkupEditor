@@ -25,6 +25,7 @@ let package = Package(
             name: "MarkupEditor",
             dependencies: [],
             path: "MarkupEditor",
+            exclude: ["rollup"],
             resources: [.process("Resources")]),
         .target(
             name: "SharedTest",

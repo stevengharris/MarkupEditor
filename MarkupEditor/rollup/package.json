@@ -1,0 +1,31 @@
+{
+  "name": "rollup-markupmirror",
+  "version": "1.0.0",
+  "main": "dist/markupmirror.cjs.js",
+  "module": "dist/markupmirror.esm.js",
+  "browser": "dist/markupmirror.umd.js",
+  "dependencies": {
+    "ms": "^2.0.0",
+    "prosemirror-example-setup": "^1.2.3",
+    "prosemirror-model": "^1.23.0",
+    "prosemirror-schema-basic": "^1.2.3",
+    "prosemirror-schema-list": "^1.4.1",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-view": "^1.34.3"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.1",
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "rollup": "^1.29.0"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "postbuild": "cp dist/markupmirror.umd.js ../MarkupEditor/Resources/mirror.js",
+    "dev": "rollup -c -w",
+    "test": "node test/test.js",
+    "pretest": "npm run build"
+  },
+  "files": [
+    "dist"
+  ]
+}

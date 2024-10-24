@@ -2,3 +2,5 @@
 .build/
 .swiftpm/xcode/
 xcuserdata/
+**/node_modules/
+**/dist/
