@@ -1,287 +1,337 @@
-body {
-    font-family: -apple-system;
-    font: -apple-system-body;
-    caret-color: red;   /* Helps with debugging since should not appear */
+.ProseMirror {
+  position: relative;
 }
 
-#editor {
-    caret-color: blue;
-    cursor: auto;
-    /* The overflow and margin are set primarily to deal gracefully with
-     * selecting resizable images that are at the edge of the screen.
-     */
-    overflow: visible;
-    margin: 2px;
-    /* MU.padBottom() sets this value in px based on fullHeight */
-    --padBottom: 0;
-    padding-block: 0 var(--padBottom);
+.ProseMirror {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
 }
 
-#editor:focus {
-    outline: none !important;
+.ProseMirror pre {
+  white-space: pre-wrap;
 }
 
-a {
-    text-decoration: none;
-}
-@media (prefers-color-scheme: dark) {
-    a {
-        color: #4183c4;
-    }
+.ProseMirror li {
+  position: relative;
 }
 
-a:hover {
-    text-decoration: underline;
+.ProseMirror-hideselection *::selection { background: transparent; }
+.ProseMirror-hideselection *::-moz-selection { background: transparent; }
+.ProseMirror-hideselection { caret-color: transparent; }
+
+/* See https://github.com/ProseMirror/prosemirror/issues/1421#issuecomment-1759320191 */
+.ProseMirror [draggable][contenteditable=false] { user-select: text }
+
+.ProseMirror-selectednode {
+  outline: 2px solid #8cf;
 }
 
-p {
-    font-size: 1.0em;
+/* Make sure li selections wrap around markers */
+
+li.ProseMirror-selectednode {
+  outline: none;
 }
 
-p, ul, ol, dl, table, pre {
-    margin: 0 0 15px;
-}
-
-ul, ol {
-    padding-left: 30px;
-}
-
-h1 {
-    font-size: 2.5em;
-}
-
-h2 {
-    font-size: 2.0em;
-}
-
-h3 {
-    font-size: 1.5em;
-}
-
-h4 {
-    font-size: 1.2em;
-}
-
-h5 {
-    font-size: 1.0em;
-}
-
-h6 {
-    font-size: .83em;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    font-weight: bold;
-    margin: 0 0 10px 0;
-}
-
-h1 + p, h2 + p, h3 + p {
-    margin-top: 10px;
-}
-
-table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    width: 100%;
-}
-
-table th, table td {
-    padding: 4px;
-}
-
-table th {
-    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */
-}
-
-/* Make the styling compact inside of a table */
-table p, table h1, table h2, table h3, table h4, table h5, table h6 {
-    margin: 0;
-}
-
-/* Table bordering options */
-.bordered-table-none {
-    border: none;
-}
-
-.bordered-table-outer, .bordered-table-header, .bordered-table-cell {
-    border: 1px solid #DDD;
-}
-
-.bordered-table-header th {   /* border th not thead to refresh properly */
-    border: 1px solid #DDD;
-}
-
-.bordered-table-cell th, .bordered-table-cell td {
-    border: 1px solid #DDD;
-}
-
-/* Default table bordering is same as .bordered-table-cell but is only used when not specified */
-table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {
-    border: 1px solid #DDD;
-}
-
-table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {
-    border: 1px solid #DDD;
-}
-
-table:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {
-    border: 1px solid #DDD;
-}
-
-li p {
-    margin: 0px 0;
-}
-
-blockquote {
-    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */
-}
-
-code {
-    display: block;
-    background-color: #F8F8F8;
-    border-radius: 3px;
-    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-    white-space: pre;
-}
-@media (prefers-color-scheme: dark) {
-    code {
-        background-color: #808080;
-    }
-}
-
-p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
-    display: inline;
-}
-
-.resize-container {
-    position: relative;
-    display: inline-block;
-    margin: 0 auto;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-/* Provide a slightly darkened or lightened overlay while search is active */
-.searching {
-    background-color: rgba(0, 0, 0, 0.10);
-}
-@media (prefers-color-scheme: dark) {
-    .searching {
-        background-color: rgba(255, 255, 255, 0.10);
-    }
-}
-
-/* Search results are in yellow-on-black or vice versa */
-::highlight(search-results) {
-    background-color: yellow;
-    color: black;
-}
-@media (prefers-color-scheme: dark) {
-    ::highlight(search-results) {
-        background: yellow;
-        color: black;
-    }
-}
-
-/* Since ::selection doesn't seem to work properly, overlay an outline around
- * the selection to show the selected search result, as driven by Javascript from
- * the search-results.
- */
-.seloutline {
-    position: absolute;
-    outline: 1px black solid;
-    outline-offset: 1px;
-    z-index: 2;
-}
-@media (prefers-color-scheme: dark) {
-    .seloutline {
-        position: absolute;
-        outline: 1px white solid;
-        outline-offset: 1px;
-        z-index: 2;
-    }
-}
-
-.resize-container img {
-    display: block;
-    outline: 1px black dashed;
-    outline-offset: 4px;
-    outline-width: 1px;
-}
-@media (prefers-color-scheme: dark) {
-    .resize-container img {
-        outline: 1px white dashed;
-    }
-}
-
-.resize-handle-nw,
-.resize-handle-ne,
-.resize-handle-sw,
-.resize-handle-se {
-    position: absolute;
-    display: block;
-    width: 6px;
-    height: 6px;
-    outline: 1px black solid;
-    background: white;
-    z-index: 999;
-}
-@media (prefers-color-scheme: dark) {
-    .resize-handle-nw,
-    .resize-handle-ne,
-    .resize-handle-sw,
-    .resize-handle-se {
-        outline: 1px white solid;
-        background: black;
-    }
-}
-
-/* A transparent child for each resize-handle that expands the clickable area */
-.resize-handle-nw:after,
-.resize-handle-ne:after,
-.resize-handle-sw:after,
-.resize-handle-se:after {
+li.ProseMirror-selectednode:after {
   content: "";
   position: absolute;
-  left: -5px;
-  top: -5px;
-  width: 16px;
-  height: 16px;
+  left: -32px;
+  right: -2px; top: -2px; bottom: -2px;
+  border: 2px solid #8cf;
+  pointer-events: none;
 }
 
-/* The *-resize cursors do not work, at least in MacCatalyst.
- * Still specifying them below. They default to a pointer instead
- */
-.resize-handle-nw {
-    cursor: nw-resize;
-    top: -8px;
-    left: -8px;
+/* Protect against generic img rules */
+
+img.ProseMirror-separator {
+  display: inline !important;
+  border: none !important;
+  margin: 0 !important;
+}
+.ProseMirror-textblock-dropdown {
+  min-width: 3em;
 }
 
-.resize-handle-ne {
-    cursor: ne-resize;
-    top: -8px;
-    right: -8px;
+.ProseMirror-menu {
+  margin: 0 -4px;
+  line-height: 1;
 }
 
-.resize-handle-sw {
-    cursor: sw-resize;
-    bottom: -8px;
-    left: -8px;
+.ProseMirror-tooltip .ProseMirror-menu {
+  width: -webkit-fit-content;
+  width: fit-content;
+  white-space: pre;
 }
 
-.resize-handle-se {
-    cursor: se-resize;
-    bottom: -8px;
-    right: -8px;
+.ProseMirror-menuitem {
+  margin-right: 3px;
+  display: inline-block;
 }
 
-.placeholder[placeholder]:after {
-    content: attr(placeholder);
-    position: absolute;
-    top: 8px;
-    color: #ccc;
+.ProseMirror-menuseparator {
+  border-right: 1px solid #ddd;
+  margin-right: 3px;
 }
+
+.ProseMirror-menu-dropdown, .ProseMirror-menu-dropdown-menu {
+  font-size: 90%;
+  white-space: nowrap;
+}
+
+.ProseMirror-menu-dropdown {
+  vertical-align: 1px;
+  cursor: pointer;
+  position: relative;
+  padding-right: 15px;
+}
+
+.ProseMirror-menu-dropdown-wrap {
+  padding: 1px 0 1px 4px;
+  display: inline-block;
+  position: relative;
+}
+
+.ProseMirror-menu-dropdown:after {
+  content: "";
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: .6;
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 2px);
+}
+
+.ProseMirror-menu-dropdown-menu, .ProseMirror-menu-submenu {
+  position: absolute;
+  background: white;
+  color: #666;
+  border: 1px solid #aaa;
+  padding: 2px;
+}
+
+.ProseMirror-menu-dropdown-menu {
+  z-index: 15;
+  min-width: 6em;
+}
+
+.ProseMirror-menu-dropdown-item {
+  cursor: pointer;
+  padding: 2px 8px 2px 4px;
+}
+
+.ProseMirror-menu-dropdown-item:hover {
+  background: #f2f2f2;
+}
+
+.ProseMirror-menu-submenu-wrap {
+  position: relative;
+  margin-right: -4px;
+}
+
+.ProseMirror-menu-submenu-label:after {
+  content: "";
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 4px solid currentColor;
+  opacity: .6;
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 4px);
+}
+
+.ProseMirror-menu-submenu {
+  display: none;
+  min-width: 4em;
+  left: 100%;
+  top: -3px;
+}
+
+.ProseMirror-menu-active {
+  background: #eee;
+  border-radius: 4px;
+}
+
+.ProseMirror-menu-disabled {
+  opacity: .3;
+}
+
+.ProseMirror-menu-submenu-wrap:hover .ProseMirror-menu-submenu, .ProseMirror-menu-submenu-wrap-active .ProseMirror-menu-submenu {
+  display: block;
+}
+
+.ProseMirror-menubar {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  position: relative;
+  min-height: 1em;
+  color: #666;
+  padding: 1px 6px;
+  top: 0; left: 0; right: 0;
+  border-bottom: 1px solid silver;
+  background: white;
+  z-index: 10;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.ProseMirror-icon {
+  display: inline-block;
+  line-height: .8;
+  vertical-align: -2px; /* Compensate for padding */
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.ProseMirror-menu-disabled.ProseMirror-icon {
+  cursor: default;
+}
+
+.ProseMirror-icon svg {
+  fill: currentColor;
+  height: 1em;
+}
+
+.ProseMirror-icon span {
+  vertical-align: text-top;
+}
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ProseMirror-gapcursor:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid black;
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+/* Add space around the hr to make clicking it easier */
+
+.ProseMirror-example-setup-style hr {
+  padding: 2px 10px;
+  border: none;
+  margin: 1em 0;
+}
+
+.ProseMirror-example-setup-style hr:after {
+  content: "";
+  display: block;
+  height: 1px;
+  background-color: silver;
+  line-height: 2px;
+}
+
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 30px;
+}
+
+.ProseMirror blockquote {
+  padding-left: 1em;
+  border-left: 3px solid #eee;
+  margin-left: 0; margin-right: 0;
+}
+
+.ProseMirror-example-setup-style img {
+  cursor: default;
+}
+
+.ProseMirror-prompt {
+  background: white;
+  padding: 5px 10px 5px 15px;
+  border: 1px solid silver;
+  position: fixed;
+  border-radius: 3px;
+  z-index: 11;
+  box-shadow: -.5px 2px 5px rgba(0, 0, 0, .2);
+}
+
+.ProseMirror-prompt h5 {
+  margin: 0;
+  font-weight: normal;
+  font-size: 100%;
+  color: #444;
+}
+
+.ProseMirror-prompt input[type="text"],
+.ProseMirror-prompt textarea {
+  background: #eee;
+  border: none;
+  outline: none;
+}
+
+.ProseMirror-prompt input[type="text"] {
+  padding: 0 4px;
+}
+
+.ProseMirror-prompt-close {
+  position: absolute;
+  left: 2px; top: 1px;
+  color: #666;
+  border: none; background: transparent; padding: 0;
+}
+
+.ProseMirror-prompt-close:after {
+  content: "âœ•";
+  font-size: 12px;
+}
+
+.ProseMirror-invalid {
+  background: #ffc;
+  border: 1px solid #cc7;
+  border-radius: 4px;
+  padding: 5px 10px;
+  position: absolute;
+  min-width: 10em;
+}
+
+.ProseMirror-prompt-buttons {
+  margin-top: 5px;
+  display: none;
+}
+#editor, .editor {
+  background: white;
+  color: black;
+  background-clip: padding-box;
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  padding: 5px 0;
+  margin-bottom: 23px;
+}
+
+.ProseMirror p:first-child,
+.ProseMirror h1:first-child,
+.ProseMirror h2:first-child,
+.ProseMirror h3:first-child,
+.ProseMirror h4:first-child,
+.ProseMirror h5:first-child,
+.ProseMirror h6:first-child {
+  margin-top: 10px;
+}
+
+.ProseMirror {
+  padding: 4px 8px 4px 14px;
+  line-height: 1.2;
+  outline: none;
+}
+
+.ProseMirror p { margin-bottom: 1em }
