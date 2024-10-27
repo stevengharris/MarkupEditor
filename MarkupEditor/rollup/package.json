@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "postbuild": "cp dist/markupmirror.umd.js ../MarkupEditor/Resources/mirror.js",
+    "postbuild": "cp -f dist/markupmirror.umd.js ../Resources/markup.js",
     "dev": "rollup -c -w",
     "test": "node test/test.js",
     "pretest": "npm run build"

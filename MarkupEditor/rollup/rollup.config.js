@@ -8,7 +8,8 @@ export default [
 		input: 'src/main.js',
 		output: {
 			file: pkg.browser,
-			format: 'umd'
+			format: 'umd',
+            name: 'MU'  // so we can call MU.<exported function> from Swift
 		},
 		plugins: [
 			resolve(), // so Rollup can find `ms`
