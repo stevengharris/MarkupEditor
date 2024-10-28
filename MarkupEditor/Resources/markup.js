@@ -12492,184 +12492,180 @@
           throw new RangeError("Plugins passed directly to the view must not have a state component");
   }
 
-  const pDOM = ["p", 0], blockquoteDOM = ["blockquote", 0], hrDOM = ["hr"], preDOM = ["pre", ["code", 0]], brDOM = ["br"];
-  /**
-  [Specs](https://prosemirror.net/docs/ref/#model.NodeSpec) for the nodes defined in this schema.
-  */
-  const nodes = {
-      /**
-      NodeSpec The top level document node.
-      */
-      doc: {
-          content: "block+"
-      },
-      /**
-      A plain paragraph textblock. Represented in the DOM
-      as a `<p>` element.
-      */
-      paragraph: {
-          content: "inline*",
-          group: "block",
-          parseDOM: [{ tag: "p" }],
-          toDOM() { return pDOM; }
-      },
-      /**
-      A blockquote (`<blockquote>`) wrapping one or more blocks.
-      */
-      blockquote: {
-          content: "block+",
-          group: "block",
-          defining: true,
-          parseDOM: [{ tag: "blockquote" }],
-          toDOM() { return blockquoteDOM; }
-      },
-      /**
-      A horizontal rule (`<hr>`).
-      */
-      horizontal_rule: {
-          group: "block",
-          parseDOM: [{ tag: "hr" }],
-          toDOM() { return hrDOM; }
-      },
-      /**
-      A heading textblock, with a `level` attribute that
-      should hold the number 1 to 6. Parsed and serialized as `<h1>` to
-      `<h6>` elements.
-      */
-      heading: {
-          attrs: { level: { default: 1, validate: "number" } },
-          content: "inline*",
-          group: "block",
-          defining: true,
-          parseDOM: [{ tag: "h1", attrs: { level: 1 } },
-              { tag: "h2", attrs: { level: 2 } },
-              { tag: "h3", attrs: { level: 3 } },
-              { tag: "h4", attrs: { level: 4 } },
-              { tag: "h5", attrs: { level: 5 } },
-              { tag: "h6", attrs: { level: 6 } }],
-          toDOM(node) { return ["h" + node.attrs.level, 0]; }
-      },
-      /**
-      A code listing. Disallows marks or non-text inline
-      nodes by default. Represented as a `<pre>` element with a
-      `<code>` element inside of it.
-      */
-      code_block: {
-          content: "text*",
-          marks: "",
-          group: "block",
-          code: true,
-          defining: true,
-          parseDOM: [{ tag: "pre", preserveWhitespace: "full" }],
-          toDOM() { return preDOM; }
-      },
-      /**
-      The text node.
-      */
-      text: {
-          group: "inline"
-      },
-      /**
-      An inline image (`<img>`) node. Supports `src`,
-      `alt`, and `href` attributes. The latter two default to the empty
-      string.
-      */
-      image: {
-          inline: true,
-          attrs: {
-              src: { validate: "string" },
-              alt: { default: null, validate: "string|null" },
-              title: { default: null, validate: "string|null" }
-          },
-          group: "inline",
-          draggable: true,
-          parseDOM: [{ tag: "img[src]", getAttrs(dom) {
-                      return {
-                          src: dom.getAttribute("src"),
-                          title: dom.getAttribute("title"),
-                          alt: dom.getAttribute("alt")
-                      };
-                  } }],
-          toDOM(node) { let { src, alt, title } = node.attrs; return ["img", { src, alt, title }]; }
-      },
-      /**
-      A hard line break, represented in the DOM as `<br>`.
-      */
-      hard_break: {
-          inline: true,
-          group: "inline",
-          selectable: false,
-          parseDOM: [{ tag: "br" }],
-          toDOM() { return brDOM; }
-      }
-  };
-  const emDOM = ["em", 0], strongDOM = ["strong", 0], codeDOM = ["code", 0];
-  /**
-  [Specs](https://prosemirror.net/docs/ref/#model.MarkSpec) for the marks in the schema.
-  */
-  const marks = {
-      /**
-      A link. Has `href` and `title` attributes. `title`
-      defaults to the empty string. Rendered and parsed as an `<a>`
-      element.
-      */
-      link: {
-          attrs: {
-              href: { validate: "string" },
-              title: { default: null, validate: "string|null" }
-          },
-          inclusive: false,
-          parseDOM: [{ tag: "a[href]", getAttrs(dom) {
-                      return { href: dom.getAttribute("href"), title: dom.getAttribute("title") };
-                  } }],
-          toDOM(node) { let { href, title } = node.attrs; return ["a", { href, title }, 0]; }
-      },
-      /**
-      An emphasis mark. Rendered as an `<em>` element. Has parse rules
-      that also match `<i>` and `font-style: italic`.
-      */
-      em: {
-          parseDOM: [
-              { tag: "i" }, { tag: "em" },
-              { style: "font-style=italic" },
-              { style: "font-style=normal", clearMark: m => m.type.name == "em" }
-          ],
-          toDOM() { return emDOM; }
-      },
-      /**
-      A strong mark. Rendered as `<strong>`, parse rules also match
-      `<b>` and `font-weight: bold`.
-      */
-      strong: {
-          parseDOM: [
-              { tag: "strong" },
-              // This works around a Google Docs misbehavior where
-              // pasted content will be inexplicably wrapped in `<b>`
-              // tags with a font-weight normal.
-              { tag: "b", getAttrs: (node) => node.style.fontWeight != "normal" && null },
-              { style: "font-weight=400", clearMark: m => m.type.name == "strong" },
-              { style: "font-weight", getAttrs: (value) => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null },
-          ],
-          toDOM() { return strongDOM; }
-      },
-      /**
-      Code font mark. Represented as a `<code>` element.
-      */
-      code: {
-          parseDOM: [{ tag: "code" }],
-          toDOM() { return codeDOM; }
-      }
-  };
-  /**
-  This schema roughly corresponds to the document schema used by
-  [CommonMark](http://commonmark.org/), minus the list elements,
-  which are defined in the [`prosemirror-schema-list`](https://prosemirror.net/docs/ref/#schema-list)
-  module.
+  const pDOM = ["p", 0], 
+        blockquoteDOM = ["blockquote", 0], 
+        hrDOM = ["hr"],
+        preDOM = ["pre", ["code", 0]], 
+        brDOM = ["br"];
 
-  To reuse elements from this schema, extend or read from its
-  `spec.nodes` and `spec.marks` [properties](https://prosemirror.net/docs/ref/#model.Schema.spec).
-  */
-  const schema = new Schema({ nodes, marks });
+  // :: Object
+  // [Specs](#model.NodeSpec) for the nodes defined in this schema.
+  const nodes = {
+    // :: NodeSpec The top level document node.
+    doc: {
+      content: "block+"
+    },
+
+    // :: NodeSpec A plain paragraph textblock. Represented in the DOM
+    // as a `<p>` element.
+    paragraph: {
+      content: "inline*",
+      group: "block",
+      parseDOM: [{tag: "p"}],
+      toDOM() { return pDOM }
+    },
+
+    // :: NodeSpec A blockquote (`<blockquote>`) wrapping one or more blocks.
+    blockquote: {
+      content: "block+",
+      group: "block",
+      defining: true,
+      parseDOM: [{tag: "blockquote"}],
+      toDOM() { return blockquoteDOM }
+    },
+
+    // :: NodeSpec A horizontal rule (`<hr>`).
+    horizontal_rule: {
+      group: "block",
+      parseDOM: [{tag: "hr"}],
+      toDOM() { return hrDOM }
+    },
+
+    // :: NodeSpec A heading textblock, with a `level` attribute that
+    // should hold the number 1 to 6. Parsed and serialized as `<h1>` to
+    // `<h6>` elements.
+    heading: {
+      attrs: {level: {default: 1}},
+      content: "inline*",
+      group: "block",
+      defining: true,
+      parseDOM: [{tag: "h1", attrs: {level: 1}},
+                 {tag: "h2", attrs: {level: 2}},
+                 {tag: "h3", attrs: {level: 3}},
+                 {tag: "h4", attrs: {level: 4}},
+                 {tag: "h5", attrs: {level: 5}},
+                 {tag: "h6", attrs: {level: 6}}],
+      toDOM(node) { return ["h" + node.attrs.level, 0] }
+    },
+
+    // :: NodeSpec A code listing. Disallows marks or non-text inline
+    // nodes by default. Represented as a `<pre>` element with a
+    // `<code>` element inside of it.
+    code_block: {
+      content: "text*",
+      marks: "",
+      group: "block",
+      code: true,
+      defining: true,
+      parseDOM: [{tag: "pre", preserveWhitespace: "full"}],
+      toDOM() { return preDOM }
+    },
+
+    // :: NodeSpec The text node.
+    text: {
+      group: "inline"
+    },
+
+    // :: NodeSpec An inline image (`<img>`) node. Supports `src`,
+    // `alt`, and `href` attributes. The latter two default to the empty
+    // string.
+    image: {
+      inline: true,
+      attrs: {
+        src: {},
+        alt: {default: null},
+        title: {default: null}
+      },
+      group: "inline",
+      draggable: true,
+      parseDOM: [{tag: "img[src]", getAttrs(dom) {
+        return {
+          src: dom.getAttribute("src"),
+          title: dom.getAttribute("title"),
+          alt: dom.getAttribute("alt")
+        }
+      }}],
+      toDOM(node) { let {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
+    },
+
+    // :: NodeSpec A hard line break, represented in the DOM as `<br>`.
+    hard_break: {
+      inline: true,
+      group: "inline",
+      selectable: false,
+      parseDOM: [{tag: "br"}],
+      toDOM() { return brDOM }
+    }
+  };
+
+  const emDOM = ["em", 0], 
+        strongDOM = ["strong", 0], 
+        codeDOM = ["code", 0],
+        strikeDOM = ["s", 0],
+        uDOM = ["u", 0];
+
+  // :: Object [Specs](#model.MarkSpec) for the marks in the schema.
+  const marks = {
+    // :: MarkSpec A link. Has `href` and `title` attributes. `title`
+    // defaults to the empty string. Rendered and parsed as an `<a>`
+    // element.
+    link: {
+      attrs: {
+        href: {},
+        title: {default: null}
+      },
+      inclusive: false,
+      parseDOM: [{tag: "a[href]", getAttrs(dom) {
+        return {href: dom.getAttribute("href"), title: dom.getAttribute("title")}
+      }}],
+      toDOM(node) { let {href, title} = node.attrs; return ["a", {href, title}, 0] }
+    },
+
+    // :: MarkSpec An emphasis mark. Rendered as an `<em>` element.
+    // Has parse rules that also match `<i>` and `font-style: italic`.
+    em: {
+      parseDOM: [{tag: "i"}, {tag: "em"}, {style: "font-style=italic"}],
+      toDOM() { return emDOM }
+    },
+
+    s: {
+      parseDOM: [{tag: "s"}, {tag: "del"}, {style: "text-decoration=line-through"}],
+      toDOM() { return strikeDOM }
+    },
+
+    u: {
+      parseDOM: [{tag: "u"}, {style: "text-decoration=underline"}],
+      toDOM() { return uDOM }
+    },
+
+    // :: MarkSpec A strong mark. Rendered as `<strong>`, parse rules
+    // also match `<b>` and `font-weight: bold`.
+    strong: {
+      parseDOM: [{tag: "strong"},
+                 // This works around a Google Docs misbehavior where
+                 // pasted content will be inexplicably wrapped in `<b>`
+                 // tags with a font-weight normal.
+                 {tag: "b", getAttrs: node => node.style.fontWeight != "normal" && null},
+                 {style: "font-weight", getAttrs: value => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null}],
+      toDOM() { return strongDOM }
+    },
+
+    // :: MarkSpec Code font mark. Represented as a `<code>` element.
+    code: {
+      parseDOM: [{tag: "code"}],
+      toDOM() { return codeDOM }
+    }
+  };
+
+  // :: Schema
+  // This schema roughly corresponds to the document schema used by
+  // [CommonMark](http://commonmark.org/), minus the list elements,
+  // which are defined in the [`prosemirror-schema-list`](#schema-list)
+  // module.
+  //
+  // To reuse elements from this schema, extend or read from its
+  // `spec.nodes` and `spec.marks` [properties](#model.Schema.spec).
+  const schema = new Schema({nodes, marks});
 
   const olDOM = ["ol", 0], ulDOM = ["ul", 0], liDOM = ["li", 0];
   /**
@@ -14870,623 +14866,1138 @@
       return DecorationSet.create(state.doc, [Decoration.widget(state.selection.head, node, { key: "gapcursor" })]);
   }
 
-  function crelt() {
-    var elt = arguments[0];
-    if (typeof elt == "string") elt = document.createElement(elt);
-    var i = 1, next = arguments[1];
-    if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
-      for (var name in next) if (Object.prototype.hasOwnProperty.call(next, name)) {
-        var value = next[name];
-        if (typeof value == "string") elt.setAttribute(name, value);
-        else if (value != null) elt[name] = value;
-      }
-      i++;
-    }
-    for (; i < arguments.length; i++) add$1(elt, arguments[i]);
-    return elt
+  function createCommonjsModule(fn, module) {
+  	return module = { exports: {} }, fn(module, module.exports), module.exports;
   }
 
-  function add$1(elt, child) {
-    if (typeof child == "string") {
-      elt.appendChild(document.createTextNode(child));
-    } else if (child == null) ; else if (child.nodeType != null) {
-      elt.appendChild(child);
-    } else if (Array.isArray(child)) {
-      for (var i = 0; i < child.length; i++) add$1(elt, child[i]);
-    } else {
-      throw new RangeError("Unsupported child node: " + child)
-    }
-  }
+  var crel = createCommonjsModule(function (module, exports) {
+
+  /* Copyright (C) 2012 Kory Nunn
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  NOTE:
+  This code is formatted for run-speed and to assist compilers.
+  This might make it harder to read at times, but the code's intention should be transparent. */
+
+  // IIFE our function
+  (function (exporter) {
+      // Define our function and its properties
+      // These strings are used multiple times, so this makes things smaller once compiled
+      var func = 'function',
+          isNodeString = 'isNode',
+          // Helper functions used throughout the script
+          isType = function (object, type) { return typeof object === type; },
+          // Recursively appends children to given element. As a text node if not already an element
+          appendChild = function (element, child) {
+              if (child !== null) {
+                  if (Array.isArray(child)) { // Support (deeply) nested child elements
+                      child.map(function (subChild) { return appendChild(element, subChild); });
+                  } else {
+                      if (!crel[isNodeString](child)) {
+                          child = document.createTextNode(child);
+                      }
+                      element.appendChild(child);
+                  }
+              }
+          };
+      //
+      function crel (element, settings) {
+          // Define all used variables / shortcuts here, to make things smaller once compiled
+          var args = arguments, // Note: assigned to a variable to assist compilers.
+              index = 1,
+              key,
+              attribute;
+          // If first argument is an element, use it as is, otherwise treat it as a tagname
+          element = crel.isElement(element) ? element : document.createElement(element);
+          // Check if second argument is a settings object
+          if (isType(settings, 'object') && !crel[isNodeString](settings) && !Array.isArray(settings)) {
+              // Don't treat settings as a child
+              index++;
+              // Go through settings / attributes object, if it exists
+              for (key in settings) {
+                  // Store the attribute into a variable, before we potentially modify the key
+                  attribute = settings[key];
+                  // Get mapped key / function, if one exists
+                  key = crel.attrMap[key] || key;
+                  // Note: We want to prioritise mapping over properties
+                  if (isType(key, func)) {
+                      key(element, attribute);
+                  } else if (isType(attribute, func)) { // ex. onClick property
+                      element[key] = attribute;
+                  } else {
+                      // Set the element attribute
+                      element.setAttribute(key, attribute);
+                  }
+              }
+          }
+          // Loop through all arguments, if any, and append them to our element if they're not `null`
+          for (; index < args.length; index++) {
+              appendChild(element, args[index]);
+          }
+
+          return element;
+      }
+
+      // Used for mapping attribute keys to supported versions in bad browsers, or to custom functionality
+      crel.attrMap = {};
+      crel.isElement = function (object) { return object instanceof Element; };
+      crel[isNodeString] = function (node) { return node instanceof Node; };
+      // Expose proxy interface
+      if (typeof Proxy != "undefined") {
+          crel.proxy = new Proxy(crel, {
+              get: function (target, key) {
+                  !(key in crel) && (crel[key] = crel.bind(null, key));
+                  return crel[key];
+              }
+          });
+      }
+      // Export crel
+      exporter(crel, func);
+  })(function (product, func) {
+      {
+          // Export for Browserify / CommonJS format
+          module.exports = product;
+      }
+  });
+  });
 
   const SVG = "http://www.w3.org/2000/svg";
   const XLINK = "http://www.w3.org/1999/xlink";
-  const prefix$2 = "ProseMirror-icon";
+
+  const prefix = "ProseMirror-icon";
+
   function hashPath(path) {
-      let hash = 0;
-      for (let i = 0; i < path.length; i++)
-          hash = (((hash << 5) - hash) + path.charCodeAt(i)) | 0;
-      return hash;
+    let hash = 0;
+    for (let i = 0; i < path.length; i++)
+      hash = (((hash << 5) - hash) + path.charCodeAt(i)) | 0;
+    return hash
   }
-  function getIcon(root, icon) {
-      let doc = (root.nodeType == 9 ? root : root.ownerDocument) || document;
-      let node = doc.createElement("div");
-      node.className = prefix$2;
-      if (icon.path) {
-          let { path, width, height } = icon;
-          let name = "pm-icon-" + hashPath(path).toString(16);
-          if (!doc.getElementById(name))
-              buildSVG(root, name, icon);
-          let svg = node.appendChild(doc.createElementNS(SVG, "svg"));
-          svg.style.width = (width / height) + "em";
-          let use = svg.appendChild(doc.createElementNS(SVG, "use"));
-          use.setAttributeNS(XLINK, "href", /([^#]*)/.exec(doc.location.toString())[1] + "#" + name);
-      }
-      else if (icon.dom) {
-          node.appendChild(icon.dom.cloneNode(true));
-      }
-      else {
-          let { text, css } = icon;
-          node.appendChild(doc.createElement("span")).textContent = text || '';
-          if (css)
-              node.firstChild.style.cssText = css;
-      }
-      return node;
+
+  function getIcon(icon) {
+    let node = document.createElement("div");
+    node.className = prefix;
+    if (icon.path) {
+      let name = "pm-icon-" + hashPath(icon.path).toString(16);
+      if (!document.getElementById(name)) buildSVG(name, icon);
+      let svg = node.appendChild(document.createElementNS(SVG, "svg"));
+      svg.style.width = (icon.width / icon.height) + "em";
+      let use = svg.appendChild(document.createElementNS(SVG, "use"));
+      use.setAttributeNS(XLINK, "href", /([^#]*)/.exec(document.location)[1] + "#" + name);
+    } else if (icon.dom) {
+      node.appendChild(icon.dom.cloneNode(true));
+    } else {
+      node.appendChild(document.createElement("span")).textContent = icon.text || '';
+      if (icon.css) node.firstChild.style.cssText = icon.css;
+    }
+    return node
   }
-  function buildSVG(root, name, data) {
-      let [doc, top] = root.nodeType == 9 ? [root, root.body] : [root.ownerDocument || document, root];
-      let collection = doc.getElementById(prefix$2 + "-collection");
-      if (!collection) {
-          collection = doc.createElementNS(SVG, "svg");
-          collection.id = prefix$2 + "-collection";
-          collection.style.display = "none";
-          top.insertBefore(collection, top.firstChild);
-      }
-      let sym = doc.createElementNS(SVG, "symbol");
-      sym.id = name;
-      sym.setAttribute("viewBox", "0 0 " + data.width + " " + data.height);
-      let path = sym.appendChild(doc.createElementNS(SVG, "path"));
-      path.setAttribute("d", data.path);
-      collection.appendChild(sym);
+
+  function buildSVG(name, data) {
+    let collection = document.getElementById(prefix + "-collection");
+    if (!collection) {
+      collection = document.createElementNS(SVG, "svg");
+      collection.id = prefix + "-collection";
+      collection.style.display = "none";
+      document.body.insertBefore(collection, document.body.firstChild);
+    }
+    let sym = document.createElementNS(SVG, "symbol");
+    sym.id = name;
+    sym.setAttribute("viewBox", "0 0 " + data.width + " " + data.height);
+    let path = sym.appendChild(document.createElementNS(SVG, "path"));
+    path.setAttribute("d", data.path);
+    collection.appendChild(sym);
   }
 
   const prefix$1 = "ProseMirror-menu";
-  /**
-  An icon or label that, when clicked, executes a command.
-  */
+
+  // ::- An icon or label that, when clicked, executes a command.
   class MenuItem {
-      /**
-      Create a menu item.
-      */
-      constructor(
-      /**
-      The spec used to create this item.
-      */
-      spec) {
-          this.spec = spec;
+    // :: (MenuItemSpec)
+    constructor(spec) {
+      // :: MenuItemSpec
+      // The spec used to create the menu item.
+      this.spec = spec;
+    }
+
+    // :: (EditorView) → {dom: dom.Node, update: (EditorState) → bool}
+    // Renders the icon according to its [display
+    // spec](#menu.MenuItemSpec.display), and adds an event handler which
+    // executes the command when the representation is clicked.
+    render(view) {
+      let spec = this.spec;
+      let dom = spec.render ? spec.render(view)
+          : spec.icon ? getIcon(spec.icon)
+          : spec.label ? crel("div", null, translate(view, spec.label))
+          : null;
+      if (!dom) throw new RangeError("MenuItem without icon or label property")
+      if (spec.title) {
+        const title = (typeof spec.title === "function" ? spec.title(view.state) : spec.title);
+        dom.setAttribute("title", translate(view, title));
       }
-      /**
-      Renders the icon according to its [display
-      spec](https://prosemirror.net/docs/ref/#menu.MenuItemSpec.display), and adds an event handler which
-      executes the command when the representation is clicked.
-      */
-      render(view) {
-          let spec = this.spec;
-          let dom = spec.render ? spec.render(view)
-              : spec.icon ? getIcon(view.root, spec.icon)
-                  : spec.label ? crelt("div", null, translate(view, spec.label))
-                      : null;
-          if (!dom)
-              throw new RangeError("MenuItem without icon or label property");
-          if (spec.title) {
-              const title = (typeof spec.title === "function" ? spec.title(view.state) : spec.title);
-              dom.setAttribute("title", translate(view, title));
-          }
-          if (spec.class)
-              dom.classList.add(spec.class);
-          if (spec.css)
-              dom.style.cssText += spec.css;
-          dom.addEventListener("mousedown", e => {
-              e.preventDefault();
-              if (!dom.classList.contains(prefix$1 + "-disabled"))
-                  spec.run(view.state, view.dispatch, view, e);
-          });
-          function update(state) {
-              if (spec.select) {
-                  let selected = spec.select(state);
-                  dom.style.display = selected ? "" : "none";
-                  if (!selected)
-                      return false;
-              }
-              let enabled = true;
-              if (spec.enable) {
-                  enabled = spec.enable(state) || false;
-                  setClass(dom, prefix$1 + "-disabled", !enabled);
-              }
-              if (spec.active) {
-                  let active = enabled && spec.active(state) || false;
-                  setClass(dom, prefix$1 + "-active", active);
-              }
-              return true;
-          }
-          return { dom, update };
-      }
-  }
-  function translate(view, text) {
-      return view._props.translate ? view._props.translate(text) : text;
-  }
-  let lastMenuEvent = { time: 0, node: null };
-  function markMenuEvent(e) {
-      lastMenuEvent.time = Date.now();
-      lastMenuEvent.node = e.target;
-  }
-  function isMenuEvent(wrapper) {
-      return Date.now() - 100 < lastMenuEvent.time &&
-          lastMenuEvent.node && wrapper.contains(lastMenuEvent.node);
-  }
-  /**
-  A drop-down menu, displayed as a label with a downwards-pointing
-  triangle to the right of it.
-  */
-  class Dropdown {
-      /**
-      Create a dropdown wrapping the elements.
-      */
-      constructor(content, 
-      /**
-      @internal
-      */
-      options = {}) {
-          this.options = options;
-          this.options = options || {};
-          this.content = Array.isArray(content) ? content : [content];
-      }
-      /**
-      Render the dropdown menu and sub-items.
-      */
-      render(view) {
-          let content = renderDropdownItems(this.content, view);
-          let win = view.dom.ownerDocument.defaultView || window;
-          let label = crelt("div", { class: prefix$1 + "-dropdown " + (this.options.class || ""),
-              style: this.options.css }, translate(view, this.options.label || ""));
-          if (this.options.title)
-              label.setAttribute("title", translate(view, this.options.title));
-          let wrap = crelt("div", { class: prefix$1 + "-dropdown-wrap" }, label);
-          let open = null;
-          let listeningOnClose = null;
-          let close = () => {
-              if (open && open.close()) {
-                  open = null;
-                  win.removeEventListener("mousedown", listeningOnClose);
-              }
-          };
-          label.addEventListener("mousedown", e => {
-              e.preventDefault();
-              markMenuEvent(e);
-              if (open) {
-                  close();
-              }
-              else {
-                  open = this.expand(wrap, content.dom);
-                  win.addEventListener("mousedown", listeningOnClose = () => {
-                      if (!isMenuEvent(wrap))
-                          close();
-                  });
-              }
-          });
-          function update(state) {
-              let inner = content.update(state);
-              wrap.style.display = inner ? "" : "none";
-              return inner;
-          }
-          return { dom: wrap, update };
-      }
-      /**
-      @internal
-      */
-      expand(dom, items) {
-          let menuDOM = crelt("div", { class: prefix$1 + "-dropdown-menu " + (this.options.class || "") }, items);
-          let done = false;
-          function close() {
-              if (done)
-                  return false;
-              done = true;
-              dom.removeChild(menuDOM);
-              return true;
-          }
-          dom.appendChild(menuDOM);
-          return { close, node: menuDOM };
-      }
-  }
-  function renderDropdownItems(items, view) {
-      let rendered = [], updates = [];
-      for (let i = 0; i < items.length; i++) {
-          let { dom, update } = items[i].render(view);
-          rendered.push(crelt("div", { class: prefix$1 + "-dropdown-item" }, dom));
-          updates.push(update);
-      }
-      return { dom: rendered, update: combineUpdates(updates, rendered) };
-  }
-  function combineUpdates(updates, nodes) {
-      return (state) => {
-          let something = false;
-          for (let i = 0; i < updates.length; i++) {
-              let up = updates[i](state);
-              nodes[i].style.display = up ? "" : "none";
-              if (up)
-                  something = true;
-          }
-          return something;
-      };
-  }
-  /**
-  Represents a submenu wrapping a group of elements that start
-  hidden and expand to the right when hovered over or tapped.
-  */
-  class DropdownSubmenu {
-      /**
-      Creates a submenu for the given group of menu elements. The
-      following options are recognized:
-      */
-      constructor(content, 
-      /**
-      @internal
-      */
-      options = {}) {
-          this.options = options;
-          this.content = Array.isArray(content) ? content : [content];
-      }
-      /**
-      Renders the submenu.
-      */
-      render(view) {
-          let items = renderDropdownItems(this.content, view);
-          let win = view.dom.ownerDocument.defaultView || window;
-          let label = crelt("div", { class: prefix$1 + "-submenu-label" }, translate(view, this.options.label || ""));
-          let wrap = crelt("div", { class: prefix$1 + "-submenu-wrap" }, label, crelt("div", { class: prefix$1 + "-submenu" }, items.dom));
-          let listeningOnClose = null;
-          label.addEventListener("mousedown", e => {
-              e.preventDefault();
-              markMenuEvent(e);
-              setClass(wrap, prefix$1 + "-submenu-wrap-active", false);
-              if (!listeningOnClose)
-                  win.addEventListener("mousedown", listeningOnClose = () => {
-                      if (!isMenuEvent(wrap)) {
-                          wrap.classList.remove(prefix$1 + "-submenu-wrap-active");
-                          win.removeEventListener("mousedown", listeningOnClose);
-                          listeningOnClose = null;
-                      }
-                  });
-          });
-          function update(state) {
-              let inner = items.update(state);
-              wrap.style.display = inner ? "" : "none";
-              return inner;
-          }
-          return { dom: wrap, update };
-      }
-  }
-  /**
-  Render the given, possibly nested, array of menu elements into a
-  document fragment, placing separators between them (and ensuring no
-  superfluous separators appear when some of the groups turn out to
-  be empty).
-  */
-  function renderGrouped(view, content) {
-      let result = document.createDocumentFragment();
-      let updates = [], separators = [];
-      for (let i = 0; i < content.length; i++) {
-          let items = content[i], localUpdates = [], localNodes = [];
-          for (let j = 0; j < items.length; j++) {
-              let { dom, update } = items[j].render(view);
-              let span = crelt("span", { class: prefix$1 + "item" }, dom);
-              result.appendChild(span);
-              localNodes.push(span);
-              localUpdates.push(update);
-          }
-          if (localUpdates.length) {
-              updates.push(combineUpdates(localUpdates, localNodes));
-              if (i < content.length - 1)
-                  separators.push(result.appendChild(separator()));
-          }
-      }
+      if (spec.class) dom.classList.add(spec.class);
+      if (spec.css) dom.style.cssText += spec.css;
+
+      dom.addEventListener("mousedown", e => {
+        e.preventDefault();
+        if (!dom.classList.contains(prefix$1 + "-disabled"))
+          spec.run(view.state, view.dispatch, view, e);
+      });
+
       function update(state) {
-          let something = false, needSep = false;
-          for (let i = 0; i < updates.length; i++) {
-              let hasContent = updates[i](state);
-              if (i)
-                  separators[i - 1].style.display = needSep && hasContent ? "" : "none";
-              needSep = hasContent;
-              if (hasContent)
-                  something = true;
-          }
-          return something;
+        if (spec.select) {
+          let selected = spec.select(state);
+          dom.style.display = selected ? "" : "none";
+          if (!selected) return false
+        }
+        let enabled = true;
+        if (spec.enable) {
+          enabled = spec.enable(state) || false;
+          setClass(dom, prefix$1 + "-disabled", !enabled);
+        }
+        if (spec.active) {
+          let active = enabled && spec.active(state) || false;
+          setClass(dom, prefix$1 + "-active", active);
+        }
+        return true
       }
-      return { dom: result, update };
-  }
-  function separator() {
-      return crelt("span", { class: prefix$1 + "separator" });
-  }
-  /**
-  A set of basic editor-related icons. Contains the properties
-  `join`, `lift`, `selectParentNode`, `undo`, `redo`, `strong`, `em`,
-  `code`, `link`, `bulletList`, `orderedList`, and `blockquote`, each
-  holding an object that can be used as the `icon` option to
-  `MenuItem`.
-  */
-  const icons = {
-      join: {
-          width: 800, height: 900,
-          path: "M0 75h800v125h-800z M0 825h800v-125h-800z M250 400h100v-100h100v100h100v100h-100v100h-100v-100h-100z"
-      },
-      lift: {
-          width: 1024, height: 1024,
-          path: "M219 310v329q0 7-5 12t-12 5q-8 0-13-5l-164-164q-5-5-5-13t5-13l164-164q5-5 13-5 7 0 12 5t5 12zM1024 749v109q0 7-5 12t-12 5h-987q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h987q7 0 12 5t5 12zM1024 530v109q0 7-5 12t-12 5h-621q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h621q7 0 12 5t5 12zM1024 310v109q0 7-5 12t-12 5h-621q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h621q7 0 12 5t5 12zM1024 91v109q0 7-5 12t-12 5h-987q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h987q7 0 12 5t5 12z"
-      },
-      selectParentNode: { text: "\u2b1a", css: "font-weight: bold" },
-      undo: {
-          width: 1024, height: 1024,
-          path: "M761 1024c113-206 132-520-313-509v253l-384-384 384-384v248c534-13 594 472 313 775z"
-      },
-      redo: {
-          width: 1024, height: 1024,
-          path: "M576 248v-248l384 384-384 384v-253c-446-10-427 303-313 509-280-303-221-789 313-775z"
-      },
-      strong: {
-          width: 805, height: 1024,
-          path: "M317 869q42 18 80 18 214 0 214-191 0-65-23-102-15-25-35-42t-38-26-46-14-48-6-54-1q-41 0-57 5 0 30-0 90t-0 90q0 4-0 38t-0 55 2 47 6 38zM309 442q24 4 62 4 46 0 81-7t62-25 42-51 14-81q0-40-16-70t-45-46-61-24-70-8q-28 0-74 7 0 28 2 86t2 86q0 15-0 45t-0 45q0 26 0 39zM0 950l1-53q8-2 48-9t60-15q4-6 7-15t4-19 3-18 1-21 0-19v-37q0-561-12-585-2-4-12-8t-25-6-28-4-27-2-17-1l-2-47q56-1 194-6t213-5q13 0 39 0t38 0q40 0 78 7t73 24 61 40 42 59 16 78q0 29-9 54t-22 41-36 32-41 25-48 22q88 20 146 76t58 141q0 57-20 102t-53 74-78 48-93 27-100 8q-25 0-75-1t-75-1q-60 0-175 6t-132 6z"
-      },
-      em: {
-          width: 585, height: 1024,
-          path: "M0 949l9-48q3-1 46-12t63-21q16-20 23-57 0-4 35-165t65-310 29-169v-14q-13-7-31-10t-39-4-33-3l10-58q18 1 68 3t85 4 68 1q27 0 56-1t69-4 56-3q-2 22-10 50-17 5-58 16t-62 19q-4 10-8 24t-5 22-4 26-3 24q-15 84-50 239t-44 203q-1 5-7 33t-11 51-9 47-3 32l0 10q9 2 105 17-1 25-9 56-6 0-18 0t-18 0q-16 0-49-5t-49-5q-78-1-117-1-29 0-81 5t-69 6z"
-      },
-      code: {
-          width: 896, height: 1024,
-          path: "M608 192l-96 96 224 224-224 224 96 96 288-320-288-320zM288 192l-288 320 288 320 96-96-224-224 224-224-96-96z"
-      },
-      link: {
-          width: 951, height: 1024,
-          path: "M832 694q0-22-16-38l-118-118q-16-16-38-16-24 0-41 18 1 1 10 10t12 12 8 10 7 14 2 15q0 22-16 38t-38 16q-8 0-15-2t-14-7-10-8-12-12-10-10q-18 17-18 41 0 22 16 38l117 118q15 15 38 15 22 0 38-14l84-83q16-16 16-38zM430 292q0-22-16-38l-117-118q-16-16-38-16-22 0-38 15l-84 83q-16 16-16 38 0 22 16 38l118 118q15 15 38 15 24 0 41-17-1-1-10-10t-12-12-8-10-7-14-2-15q0-22 16-38t38-16q8 0 15 2t14 7 10 8 12 12 10 10q18-17 18-41zM941 694q0 68-48 116l-84 83q-47 47-116 47-69 0-116-48l-117-118q-47-47-47-116 0-70 50-119l-50-50q-49 50-118 50-68 0-116-48l-118-118q-48-48-48-116t48-116l84-83q47-47 116-47 69 0 116 48l117 118q47 47 47 116 0 70-50 119l50 50q49-50 118-50 68 0 116 48l118 118q48 48 48 116z"
-      },
-      bulletList: {
-          width: 768, height: 896,
-          path: "M0 512h128v-128h-128v128zM0 256h128v-128h-128v128zM0 768h128v-128h-128v128zM256 512h512v-128h-512v128zM256 256h512v-128h-512v128zM256 768h512v-128h-512v128z"
-      },
-      orderedList: {
-          width: 768, height: 896,
-          path: "M320 512h448v-128h-448v128zM320 768h448v-128h-448v128zM320 128v128h448v-128h-448zM79 384h78v-256h-36l-85 23v50l43-2v185zM189 590c0-36-12-78-96-78-33 0-64 6-83 16l1 66c21-10 42-15 67-15s32 11 32 28c0 26-30 58-110 112v50h192v-67l-91 2c49-30 87-66 87-113l1-1z"
-      },
-      blockquote: {
-          width: 640, height: 896,
-          path: "M0 448v256h256v-256h-128c0 0 0-128 128-128v-128c0 0-256 0-256 256zM640 320v-128c0 0-256 0-256 256v256h256v-256h-128c0 0 0-128 128-128z"
-      }
-  };
-  /**
-  Menu item for the `joinUp` command.
-  */
-  const joinUpItem = new MenuItem({
-      title: "Join with above block",
-      run: joinUp,
-      select: state => joinUp(state),
-      icon: icons.join
-  });
-  /**
-  Menu item for the `lift` command.
-  */
-  const liftItem = new MenuItem({
-      title: "Lift out of enclosing block",
-      run: lift$1,
-      select: state => lift$1(state),
-      icon: icons.lift
-  });
-  /**
-  Menu item for the `selectParentNode` command.
-  */
-  const selectParentNodeItem = new MenuItem({
-      title: "Select parent node",
-      run: selectParentNode,
-      select: state => selectParentNode(state),
-      icon: icons.selectParentNode
-  });
-  /**
-  Menu item for the `undo` command.
-  */
-  let undoItem = new MenuItem({
-      title: "Undo last change",
-      run: undo,
-      enable: state => undo(state),
-      icon: icons.undo
-  });
-  /**
-  Menu item for the `redo` command.
-  */
-  let redoItem = new MenuItem({
-      title: "Redo last undone change",
-      run: redo,
-      enable: state => redo(state),
-      icon: icons.redo
-  });
-  /**
-  Build a menu item for wrapping the selection in a given node type.
-  Adds `run` and `select` properties to the ones present in
-  `options`. `options.attrs` may be an object that provides
-  attributes for the wrapping node.
-  */
-  function wrapItem(nodeType, options) {
-      let passedOptions = {
-          run(state, dispatch) {
-              return wrapIn(nodeType, options.attrs)(state, dispatch);
-          },
-          select(state) {
-              return wrapIn(nodeType, options.attrs)(state);
-          }
-      };
-      for (let prop in options)
-          passedOptions[prop] = options[prop];
-      return new MenuItem(passedOptions);
-  }
-  /**
-  Build a menu item for changing the type of the textblock around the
-  selection to the given type. Provides `run`, `active`, and `select`
-  properties. Others must be given in `options`. `options.attrs` may
-  be an object to provide the attributes for the textblock node.
-  */
-  function blockTypeItem(nodeType, options) {
-      let command = setBlockType$1(nodeType, options.attrs);
-      let passedOptions = {
-          run: command,
-          enable(state) { return command(state); },
-          active(state) {
-              let { $from, to, node } = state.selection;
-              if (node)
-                  return node.hasMarkup(nodeType, options.attrs);
-              return to <= $from.end() && $from.parent.hasMarkup(nodeType, options.attrs);
-          }
-      };
-      for (let prop in options)
-          passedOptions[prop] = options[prop];
-      return new MenuItem(passedOptions);
-  }
-  // Work around classList.toggle being broken in IE11
-  function setClass(dom, cls, on) {
-      if (on)
-          dom.classList.add(cls);
-      else
-          dom.classList.remove(cls);
+
+      return {dom, update}
+    }
   }
 
-  const prefix = "ProseMirror-menubar";
-  function isIOS() {
-      if (typeof navigator == "undefined")
-          return false;
-      let agent = navigator.userAgent;
-      return !/Edge\/\d/.test(agent) && /AppleWebKit/.test(agent) && /Mobile\/\w+/.test(agent);
+  function translate(view, text) {
+    return view._props.translate ? view._props.translate(text) : text
   }
-  /**
-  A plugin that will place a menu bar above the editor. Note that
-  this involves wrapping the editor in an additional `<div>`.
-  */
-  function menuBar(options) {
-      return new Plugin({
-          view(editorView) { return new MenuBarView(editorView, options); }
+
+  // MenuItemSpec:: interface
+  // The configuration object passed to the `MenuItem` constructor.
+  //
+  //   run:: (EditorState, (Transaction), EditorView, dom.Event)
+  //   The function to execute when the menu item is activated.
+  //
+  //   select:: ?(EditorState) → bool
+  //   Optional function that is used to determine whether the item is
+  //   appropriate at the moment. Deselected items will be hidden.
+  //
+  //   enable:: ?(EditorState) → bool
+  //   Function that is used to determine if the item is enabled. If
+  //   given and returning false, the item will be given a disabled
+  //   styling.
+  //
+  //   active:: ?(EditorState) → bool
+  //   A predicate function to determine whether the item is 'active' (for
+  //   example, the item for toggling the strong mark might be active then
+  //   the cursor is in strong text).
+  //
+  //   render:: ?(EditorView) → dom.Node
+  //   A function that renders the item. You must provide either this,
+  //   [`icon`](#menu.MenuItemSpec.icon), or [`label`](#MenuItemSpec.label).
+  //
+  //   icon:: ?Object
+  //   Describes an icon to show for this item. The object may specify
+  //   an SVG icon, in which case its `path` property should be an [SVG
+  //   path
+  //   spec](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d),
+  //   and `width` and `height` should provide the viewbox in which that
+  //   path exists. Alternatively, it may have a `text` property
+  //   specifying a string of text that makes up the icon, with an
+  //   optional `css` property giving additional CSS styling for the
+  //   text. _Or_ it may contain `dom` property containing a DOM node.
+  //
+  //   label:: ?string
+  //   Makes the item show up as a text label. Mostly useful for items
+  //   wrapped in a [drop-down](#menu.Dropdown) or similar menu. The object
+  //   should have a `label` property providing the text to display.
+  //
+  //   title:: ?union<string, (EditorState) → string>
+  //   Defines DOM title (mouseover) text for the item.
+  //
+  //   class:: ?string
+  //   Optionally adds a CSS class to the item's DOM representation.
+  //
+  //   css:: ?string
+  //   Optionally adds a string of inline CSS to the item's DOM
+  //   representation.
+
+  let lastMenuEvent = {time: 0, node: null};
+  function markMenuEvent(e) {
+    lastMenuEvent.time = Date.now();
+    lastMenuEvent.node = e.target;
+  }
+  function isMenuEvent(wrapper) {
+    return Date.now() - 100 < lastMenuEvent.time &&
+      lastMenuEvent.node && wrapper.contains(lastMenuEvent.node)
+  }
+
+  // ::- A drop-down menu, displayed as a label with a downwards-pointing
+  // triangle to the right of it.
+  class Dropdown {
+    // :: ([MenuElement], ?Object)
+    // Create a dropdown wrapping the elements. Options may include
+    // the following properties:
+    //
+    // **`label`**`: string`
+    //   : The label to show on the drop-down control.
+    //
+    // **`title`**`: string`
+    //   : Sets the
+    //     [`title`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/title)
+    //     attribute given to the menu control.
+    //
+    // **`class`**`: string`
+    //   : When given, adds an extra CSS class to the menu control.
+    //
+    // **`css`**`: string`
+    //   : When given, adds an extra set of CSS styles to the menu control.
+    constructor(content, options) {
+      this.options = options || {};
+      this.content = Array.isArray(content) ? content : [content];
+    }
+
+    // :: (EditorView) → {dom: dom.Node, update: (EditorState)}
+    // Render the dropdown menu and sub-items.
+    render(view) {
+      let content = renderDropdownItems(this.content, view);
+
+      let label = crel("div", {class: prefix$1 + "-dropdown " + (this.options.class || ""),
+                               style: this.options.css},
+                       translate(view, this.options.label));
+      if (this.options.title) label.setAttribute("title", translate(view, this.options.title));
+      let wrap = crel("div", {class: prefix$1 + "-dropdown-wrap"}, label);
+      let open = null, listeningOnClose = null;
+      let close = () => {
+        if (open && open.close()) {
+          open = null;
+          window.removeEventListener("mousedown", listeningOnClose);
+        }
+      };
+      label.addEventListener("mousedown", e => {
+        e.preventDefault();
+        markMenuEvent(e);
+        if (open) {
+          close();
+        } else {
+          open = this.expand(wrap, content.dom);
+          window.addEventListener("mousedown", listeningOnClose = () => {
+            if (!isMenuEvent(wrap)) close();
+          });
+        }
       });
+
+      function update(state) {
+        let inner = content.update(state);
+        wrap.style.display = inner ? "" : "none";
+        return inner
+      }
+
+      return {dom: wrap, update}
+    }
+
+    expand(dom, items) {
+      let menuDOM = crel("div", {class: prefix$1 + "-dropdown-menu " + (this.options.class || "")}, items);
+
+      let done = false;
+      function close() {
+        if (done) return
+        done = true;
+        dom.removeChild(menuDOM);
+        return true
+      }
+      dom.appendChild(menuDOM);
+      return {close, node: menuDOM}
+    }
   }
+
+  function renderDropdownItems(items, view) {
+    let rendered = [], updates = [];
+    for (let i = 0; i < items.length; i++) {
+      let {dom, update} = items[i].render(view);
+      rendered.push(crel("div", {class: prefix$1 + "-dropdown-item"}, dom));
+      updates.push(update);
+    }
+    return {dom: rendered, update: combineUpdates(updates, rendered)}
+  }
+
+  function combineUpdates(updates, nodes) {
+    return state => {
+      let something = false;
+      for (let i = 0; i < updates.length; i++) {
+        let up = updates[i](state);
+        nodes[i].style.display = up ? "" : "none";
+        if (up) something = true;
+      }
+      return something
+    }
+  }
+
+  // ::- Represents a submenu wrapping a group of elements that start
+  // hidden and expand to the right when hovered over or tapped.
+  class DropdownSubmenu {
+    // :: ([MenuElement], ?Object)
+    // Creates a submenu for the given group of menu elements. The
+    // following options are recognized:
+    //
+    // **`label`**`: string`
+    //   : The label to show on the submenu.
+    constructor(content, options) {
+      this.options = options || {};
+      this.content = Array.isArray(content) ? content : [content];
+    }
+
+    // :: (EditorView) → {dom: dom.Node, update: (EditorState) → bool}
+    // Renders the submenu.
+    render(view) {
+      let items = renderDropdownItems(this.content, view);
+
+      let label = crel("div", {class: prefix$1 + "-submenu-label"}, translate(view, this.options.label));
+      let wrap = crel("div", {class: prefix$1 + "-submenu-wrap"}, label,
+                     crel("div", {class: prefix$1 + "-submenu"}, items.dom));
+      let listeningOnClose = null;
+      label.addEventListener("mousedown", e => {
+        e.preventDefault();
+        markMenuEvent(e);
+        setClass(wrap, prefix$1 + "-submenu-wrap-active");
+        if (!listeningOnClose)
+          window.addEventListener("mousedown", listeningOnClose = () => {
+            if (!isMenuEvent(wrap)) {
+              wrap.classList.remove(prefix$1 + "-submenu-wrap-active");
+              window.removeEventListener("mousedown", listeningOnClose);
+              listeningOnClose = null;
+            }
+          });
+      });
+
+      function update(state) {
+        let inner = items.update(state);
+        wrap.style.display = inner ? "" : "none";
+        return inner
+      }
+      return {dom: wrap, update}
+    }
+  }
+
+  // :: (EditorView, [union<MenuElement, [MenuElement]>]) → {dom: ?dom.DocumentFragment, update: (EditorState) → bool}
+  // Render the given, possibly nested, array of menu elements into a
+  // document fragment, placing separators between them (and ensuring no
+  // superfluous separators appear when some of the groups turn out to
+  // be empty).
+  function renderGrouped(view, content) {
+    let result = document.createDocumentFragment();
+    let updates = [], separators = [];
+    for (let i = 0; i < content.length; i++) {
+      let items = content[i], localUpdates = [], localNodes = [];
+      for (let j = 0; j < items.length; j++) {
+        let {dom, update} = items[j].render(view);
+        let span = crel("span", {class: prefix$1 + "item"}, dom);
+        result.appendChild(span);
+        localNodes.push(span);
+        localUpdates.push(update);
+      }
+      if (localUpdates.length) {
+        updates.push(combineUpdates(localUpdates, localNodes));
+        if (i < content.length - 1)
+          separators.push(result.appendChild(separator()));
+      }
+    }
+
+    function update(state) {
+      let something = false, needSep = false;
+      for (let i = 0; i < updates.length; i++) {
+        let hasContent = updates[i](state);
+        if (i) separators[i - 1].style.display = needSep && hasContent ? "" : "none";
+        needSep = hasContent;
+        if (hasContent) something = true;
+      }
+      return something
+    }
+    return {dom: result, update}
+  }
+
+  function separator() {
+    return crel("span", {class: prefix$1 + "separator"})
+  }
+
+  // :: Object
+  // A set of basic editor-related icons. Contains the properties
+  // `join`, `lift`, `selectParentNode`, `undo`, `redo`, `strong`, `em`,
+  // `code`, `link`, `bulletList`, `orderedList`, and `blockquote`, each
+  // holding an object that can be used as the `icon` option to
+  // `MenuItem`.
+  const icons = {
+    join: {
+      width: 800, height: 900,
+      path: "M0 75h800v125h-800z M0 825h800v-125h-800z M250 400h100v-100h100v100h100v100h-100v100h-100v-100h-100z"
+    },
+    lift: {
+      width: 1024, height: 1024,
+      path: "M219 310v329q0 7-5 12t-12 5q-8 0-13-5l-164-164q-5-5-5-13t5-13l164-164q5-5 13-5 7 0 12 5t5 12zM1024 749v109q0 7-5 12t-12 5h-987q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h987q7 0 12 5t5 12zM1024 530v109q0 7-5 12t-12 5h-621q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h621q7 0 12 5t5 12zM1024 310v109q0 7-5 12t-12 5h-621q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h621q7 0 12 5t5 12zM1024 91v109q0 7-5 12t-12 5h-987q-7 0-12-5t-5-12v-109q0-7 5-12t12-5h987q7 0 12 5t5 12z"
+    },
+    selectParentNode: {text: "\u2b1a", css: "font-weight: bold"},
+    undo: {
+      width: 1024, height: 1024,
+      path: "M761 1024c113-206 132-520-313-509v253l-384-384 384-384v248c534-13 594 472 313 775z"
+    },
+    redo: {
+      width: 1024, height: 1024,
+      path: "M576 248v-248l384 384-384 384v-253c-446-10-427 303-313 509-280-303-221-789 313-775z"
+    },
+    strong: {
+      width: 805, height: 1024,
+      path: "M317 869q42 18 80 18 214 0 214-191 0-65-23-102-15-25-35-42t-38-26-46-14-48-6-54-1q-41 0-57 5 0 30-0 90t-0 90q0 4-0 38t-0 55 2 47 6 38zM309 442q24 4 62 4 46 0 81-7t62-25 42-51 14-81q0-40-16-70t-45-46-61-24-70-8q-28 0-74 7 0 28 2 86t2 86q0 15-0 45t-0 45q0 26 0 39zM0 950l1-53q8-2 48-9t60-15q4-6 7-15t4-19 3-18 1-21 0-19v-37q0-561-12-585-2-4-12-8t-25-6-28-4-27-2-17-1l-2-47q56-1 194-6t213-5q13 0 39 0t38 0q40 0 78 7t73 24 61 40 42 59 16 78q0 29-9 54t-22 41-36 32-41 25-48 22q88 20 146 76t58 141q0 57-20 102t-53 74-78 48-93 27-100 8q-25 0-75-1t-75-1q-60 0-175 6t-132 6z"
+    },
+    em: {
+      width: 585, height: 1024,
+      path: "M0 949l9-48q3-1 46-12t63-21q16-20 23-57 0-4 35-165t65-310 29-169v-14q-13-7-31-10t-39-4-33-3l10-58q18 1 68 3t85 4 68 1q27 0 56-1t69-4 56-3q-2 22-10 50-17 5-58 16t-62 19q-4 10-8 24t-5 22-4 26-3 24q-15 84-50 239t-44 203q-1 5-7 33t-11 51-9 47-3 32l0 10q9 2 105 17-1 25-9 56-6 0-18 0t-18 0q-16 0-49-5t-49-5q-78-1-117-1-29 0-81 5t-69 6z"
+    },
+    u: {
+      width: 24, height: 24,
+      path: "M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z"
+    },
+    s: {
+      width: 24, height: 24,
+      path: "M6.85,7.08C6.85,4.37,9.45,3,12.24,3c1.64,0,3,0.49,3.9,1.28c0.77,0.65,1.46,1.73,1.46,3.24h-3.01 c0-0.31-0.05-0.59-0.15-0.85c-0.29-0.86-1.2-1.28-2.25-1.28c-1.86,0-2.34,1.02-2.34,1.7c0,0.48,0.25,0.88,0.74,1.21 C10.97,8.55,11.36,8.78,12,9H7.39C7.18,8.66,6.85,8.11,6.85,7.08z M21,12v-2H3v2h9.62c1.15,0.45,1.96,0.75,1.96,1.97 c0,1-0.81,1.67-2.28,1.67c-1.54,0-2.93-0.54-2.93-2.51H6.4c0,0.55,0.08,1.13,0.24,1.58c0.81,2.29,3.29,3.3,5.67,3.3 c2.27,0,5.3-0.89,5.3-4.05c0-0.3-0.01-1.16-0.48-1.94H21V12z"
+    },
+    code: {
+      width: 896, height: 1024,
+      path: "M608 192l-96 96 224 224-224 224 96 96 288-320-288-320zM288 192l-288 320 288 320 96-96-224-224 224-224-96-96z"
+    },
+    link: {
+      width: 951, height: 1024,
+      path: "M832 694q0-22-16-38l-118-118q-16-16-38-16-24 0-41 18 1 1 10 10t12 12 8 10 7 14 2 15q0 22-16 38t-38 16q-8 0-15-2t-14-7-10-8-12-12-10-10q-18 17-18 41 0 22 16 38l117 118q15 15 38 15 22 0 38-14l84-83q16-16 16-38zM430 292q0-22-16-38l-117-118q-16-16-38-16-22 0-38 15l-84 83q-16 16-16 38 0 22 16 38l118 118q15 15 38 15 24 0 41-17-1-1-10-10t-12-12-8-10-7-14-2-15q0-22 16-38t38-16q8 0 15 2t14 7 10 8 12 12 10 10q18-17 18-41zM941 694q0 68-48 116l-84 83q-47 47-116 47-69 0-116-48l-117-118q-47-47-47-116 0-70 50-119l-50-50q-49 50-118 50-68 0-116-48l-118-118q-48-48-48-116t48-116l84-83q47-47 116-47 69 0 116 48l117 118q47 47 47 116 0 70-50 119l50 50q49-50 118-50 68 0 116 48l118 118q48 48 48 116z"
+    },
+    bulletList: {
+      width: 768, height: 896,
+      path: "M0 512h128v-128h-128v128zM0 256h128v-128h-128v128zM0 768h128v-128h-128v128zM256 512h512v-128h-512v128zM256 256h512v-128h-512v128zM256 768h512v-128h-512v128z"
+    },
+    orderedList: {
+      width: 768, height: 896,
+      path: "M320 512h448v-128h-448v128zM320 768h448v-128h-448v128zM320 128v128h448v-128h-448zM79 384h78v-256h-36l-85 23v50l43-2v185zM189 590c0-36-12-78-96-78-33 0-64 6-83 16l1 66c21-10 42-15 67-15s32 11 32 28c0 26-30 58-110 112v50h192v-67l-91 2c49-30 87-66 87-113l1-1z"
+    },
+    blockquote: {
+      width: 640, height: 896,
+      path: "M0 448v256h256v-256h-128c0 0 0-128 128-128v-128c0 0-256 0-256 256zM640 320v-128c0 0-256 0-256 256v256h256v-256h-128c0 0 0-128 128-128z"
+    }
+  };
+
+  // :: MenuItem
+  // Menu item for the `joinUp` command.
+  const joinUpItem = new MenuItem({
+    title: "Join with above block",
+    run: joinUp,
+    select: state => joinUp(state),
+    icon: icons.join
+  });
+
+  // :: MenuItem
+  // Menu item for the `lift` command.
+  const liftItem = new MenuItem({
+    title: "Lift out of enclosing block",
+    run: lift$1,
+    select: state => lift$1(state),
+    icon: icons.lift
+  });
+
+  // :: MenuItem
+  // Menu item for the `selectParentNode` command.
+  const selectParentNodeItem = new MenuItem({
+    title: "Select parent node",
+    run: selectParentNode,
+    select: state => selectParentNode(state),
+    icon: icons.selectParentNode
+  });
+
+  // :: MenuItem
+  // Menu item for the `undo` command.
+  let undoItem = new MenuItem({
+    title: "Undo last change",
+    run: undo,
+    enable: state => undo(state),
+    icon: icons.undo
+  });
+
+  // :: MenuItem
+  // Menu item for the `redo` command.
+  let redoItem = new MenuItem({
+    title: "Redo last undone change",
+    run: redo,
+    enable: state => redo(state),
+    icon: icons.redo
+  });
+
+  // :: (NodeType, Object) → MenuItem
+  // Build a menu item for wrapping the selection in a given node type.
+  // Adds `run` and `select` properties to the ones present in
+  // `options`. `options.attrs` may be an object or a function.
+  function wrapItem(nodeType, options) {
+    let passedOptions = {
+      run(state, dispatch) {
+        // FIXME if (options.attrs instanceof Function) options.attrs(state, attrs => wrapIn(nodeType, attrs)(state))
+        return wrapIn(nodeType, options.attrs)(state, dispatch)
+      },
+      select(state) {
+        return wrapIn(nodeType, options.attrs instanceof Function ? null : options.attrs)(state)
+      }
+    };
+    for (let prop in options) passedOptions[prop] = options[prop];
+    return new MenuItem(passedOptions)
+  }
+
+  // :: (NodeType, Object) → MenuItem
+  // Build a menu item for changing the type of the textblock around the
+  // selection to the given type. Provides `run`, `active`, and `select`
+  // properties. Others must be given in `options`. `options.attrs` may
+  // be an object to provide the attributes for the textblock node.
+  function blockTypeItem(nodeType, options) {
+    let command = setBlockType$1(nodeType, options.attrs);
+    let passedOptions = {
+      run: command,
+      enable(state) { return command(state) },
+      active(state) {
+        let {$from, to, node} = state.selection;
+        if (node) return node.hasMarkup(nodeType, options.attrs)
+        return to <= $from.end() && $from.parent.hasMarkup(nodeType, options.attrs)
+      }
+    };
+    for (let prop in options) passedOptions[prop] = options[prop];
+    return new MenuItem(passedOptions)
+  }
+
+  // Work around classList.toggle being broken in IE11
+  function setClass(dom, cls, on) {
+    if (on) dom.classList.add(cls);
+    else dom.classList.remove(cls);
+  }
+
+  const prefix$2 = "ProseMirror-menubar";
+
+  function isIOS() {
+    if (typeof navigator == "undefined") return false
+    let agent = navigator.userAgent;
+    return !/Edge\/\d/.test(agent) && /AppleWebKit/.test(agent) && /Mobile\/\w+/.test(agent)
+  }
+
+  // :: (Object) → Plugin
+  // A plugin that will place a menu bar above the editor. Note that
+  // this involves wrapping the editor in an additional `<div>`.
+  //
+  //   options::-
+  //   Supports the following options:
+  //
+  //     content:: [[MenuElement]]
+  //     Provides the content of the menu, as a nested array to be
+  //     passed to `renderGrouped`.
+  //
+  //     floating:: ?bool
+  //     Determines whether the menu floats, i.e. whether it sticks to
+  //     the top of the viewport when the editor is partially scrolled
+  //     out of view.
+  function menuBar(options) {
+    return new Plugin({
+      view(editorView) { return new MenuBarView(editorView, options) }
+    })
+  }
+
   class MenuBarView {
-      constructor(editorView, options) {
-          this.editorView = editorView;
-          this.options = options;
-          this.spacer = null;
+    constructor(editorView, options) {
+      this.editorView = editorView;
+      this.options = options;
+
+      this.wrapper = crel("div", {class: prefix$2 + "-wrapper"});
+      this.menu = this.wrapper.appendChild(crel("div", {class: prefix$2}));
+      this.menu.className = prefix$2;
+      this.spacer = null;
+
+      editorView.dom.parentNode.replaceChild(this.wrapper, editorView.dom);
+      this.wrapper.appendChild(editorView.dom);
+
+      this.maxHeight = 0;
+      this.widthForMaxHeight = 0;
+      this.floating = false;
+
+      let {dom, update} = renderGrouped(this.editorView, this.options.content);
+      this.contentUpdate = update;
+      this.menu.appendChild(dom);
+      this.update();
+
+      if (options.floating && !isIOS()) {
+        this.updateFloat();
+        let potentialScrollers = getAllWrapping(this.wrapper);
+        this.scrollFunc = (e) => {
+          let root = this.editorView.root;
+          if (!(root.body || root).contains(this.wrapper)) {
+              potentialScrollers.forEach(el => el.removeEventListener("scroll", this.scrollFunc));
+          } else {
+              this.updateFloat(e.target.getBoundingClientRect && e.target);
+          }
+        };
+        potentialScrollers.forEach(el => el.addEventListener('scroll', this.scrollFunc));
+      }
+    }
+
+    update() {
+      this.contentUpdate(this.editorView.state);
+
+      if (this.floating) {
+        this.updateScrollCursor();
+      } else {
+        if (this.menu.offsetWidth != this.widthForMaxHeight) {
+          this.widthForMaxHeight = this.menu.offsetWidth;
           this.maxHeight = 0;
-          this.widthForMaxHeight = 0;
+        }
+        if (this.menu.offsetHeight > this.maxHeight) {
+          this.maxHeight = this.menu.offsetHeight;
+          this.menu.style.minHeight = this.maxHeight + "px";
+        }
+      }
+    }
+
+    updateScrollCursor() {
+      let selection = this.editorView.root.getSelection();
+      if (!selection.focusNode) return
+      let rects = selection.getRangeAt(0).getClientRects();
+      let selRect = rects[selectionIsInverted(selection) ? 0 : rects.length - 1];
+      if (!selRect) return
+      let menuRect = this.menu.getBoundingClientRect();
+      if (selRect.top < menuRect.bottom && selRect.bottom > menuRect.top) {
+        let scrollable = findWrappingScrollable(this.wrapper);
+        if (scrollable) scrollable.scrollTop -= (menuRect.bottom - selRect.top);
+      }
+    }
+
+    updateFloat(scrollAncestor) {
+      let parent = this.wrapper, editorRect = parent.getBoundingClientRect(),
+          top = scrollAncestor ? Math.max(0, scrollAncestor.getBoundingClientRect().top) : 0;
+
+      if (this.floating) {
+        if (editorRect.top >= top || editorRect.bottom < this.menu.offsetHeight + 10) {
           this.floating = false;
-          this.scrollHandler = null;
-          this.wrapper = crelt("div", { class: prefix + "-wrapper" });
-          this.menu = this.wrapper.appendChild(crelt("div", { class: prefix }));
-          this.menu.className = prefix;
-          if (editorView.dom.parentNode)
-              editorView.dom.parentNode.replaceChild(this.wrapper, editorView.dom);
-          this.wrapper.appendChild(editorView.dom);
-          let { dom, update } = renderGrouped(this.editorView, this.options.content);
-          this.contentUpdate = update;
-          this.menu.appendChild(dom);
-          this.update();
-          if (options.floating && !isIOS()) {
-              this.updateFloat();
-              let potentialScrollers = getAllWrapping(this.wrapper);
-              this.scrollHandler = (e) => {
-                  let root = this.editorView.root;
-                  if (!(root.body || root).contains(this.wrapper))
-                      potentialScrollers.forEach(el => el.removeEventListener("scroll", this.scrollHandler));
-                  else
-                      this.updateFloat(e.target.getBoundingClientRect ? e.target : undefined);
-              };
-              potentialScrollers.forEach(el => el.addEventListener('scroll', this.scrollHandler));
-          }
-      }
-      update() {
-          this.contentUpdate(this.editorView.state);
-          if (this.floating) {
-              this.updateScrollCursor();
-          }
-          else {
-              if (this.menu.offsetWidth != this.widthForMaxHeight) {
-                  this.widthForMaxHeight = this.menu.offsetWidth;
-                  this.maxHeight = 0;
-              }
-              if (this.menu.offsetHeight > this.maxHeight) {
-                  this.maxHeight = this.menu.offsetHeight;
-                  this.menu.style.minHeight = this.maxHeight + "px";
-              }
-          }
-      }
-      updateScrollCursor() {
-          let selection = this.editorView.root.getSelection();
-          if (!selection.focusNode)
-              return;
-          let rects = selection.getRangeAt(0).getClientRects();
-          let selRect = rects[selectionIsInverted(selection) ? 0 : rects.length - 1];
-          if (!selRect)
-              return;
+          this.menu.style.position = this.menu.style.left = this.menu.style.top = this.menu.style.width = "";
+          this.menu.style.display = "";
+          this.spacer.parentNode.removeChild(this.spacer);
+          this.spacer = null;
+        } else {
+          let border = (parent.offsetWidth - parent.clientWidth) / 2;
+          this.menu.style.left = (editorRect.left + border) + "px";
+          this.menu.style.display = (editorRect.top > window.innerHeight ? "none" : "");
+          if (scrollAncestor) this.menu.style.top = top + "px";
+        }
+      } else {
+        if (editorRect.top < top && editorRect.bottom >= this.menu.offsetHeight + 10) {
+          this.floating = true;
           let menuRect = this.menu.getBoundingClientRect();
-          if (selRect.top < menuRect.bottom && selRect.bottom > menuRect.top) {
-              let scrollable = findWrappingScrollable(this.wrapper);
-              if (scrollable)
-                  scrollable.scrollTop -= (menuRect.bottom - selRect.top);
-          }
+          this.menu.style.left = menuRect.left + "px";
+          this.menu.style.width = menuRect.width + "px";
+          if (scrollAncestor) this.menu.style.top = top + "px";
+          this.menu.style.position = "fixed";
+          this.spacer = crel("div", {class: prefix$2 + "-spacer", style: `height: ${menuRect.height}px`});
+          parent.insertBefore(this.spacer, this.menu);
+        }
       }
-      updateFloat(scrollAncestor) {
-          let parent = this.wrapper, editorRect = parent.getBoundingClientRect(), top = scrollAncestor ? Math.max(0, scrollAncestor.getBoundingClientRect().top) : 0;
-          if (this.floating) {
-              if (editorRect.top >= top || editorRect.bottom < this.menu.offsetHeight + 10) {
-                  this.floating = false;
-                  this.menu.style.position = this.menu.style.left = this.menu.style.top = this.menu.style.width = "";
-                  this.menu.style.display = "";
-                  this.spacer.parentNode.removeChild(this.spacer);
-                  this.spacer = null;
-              }
-              else {
-                  let border = (parent.offsetWidth - parent.clientWidth) / 2;
-                  this.menu.style.left = (editorRect.left + border) + "px";
-                  this.menu.style.display = editorRect.top > (this.editorView.dom.ownerDocument.defaultView || window).innerHeight
-                      ? "none" : "";
-                  if (scrollAncestor)
-                      this.menu.style.top = top + "px";
-              }
-          }
-          else {
-              if (editorRect.top < top && editorRect.bottom >= this.menu.offsetHeight + 10) {
-                  this.floating = true;
-                  let menuRect = this.menu.getBoundingClientRect();
-                  this.menu.style.left = menuRect.left + "px";
-                  this.menu.style.width = menuRect.width + "px";
-                  if (scrollAncestor)
-                      this.menu.style.top = top + "px";
-                  this.menu.style.position = "fixed";
-                  this.spacer = crelt("div", { class: prefix + "-spacer", style: `height: ${menuRect.height}px` });
-                  parent.insertBefore(this.spacer, this.menu);
-              }
-          }
-      }
-      destroy() {
-          if (this.wrapper.parentNode)
-              this.wrapper.parentNode.replaceChild(this.editorView.dom, this.wrapper);
-      }
+    }
+
+    destroy() {
+      if (this.wrapper.parentNode)
+        this.wrapper.parentNode.replaceChild(this.editorView.dom, this.wrapper);
+    }
   }
+
   // Not precise, but close enough
   function selectionIsInverted(selection) {
-      if (selection.anchorNode == selection.focusNode)
-          return selection.anchorOffset > selection.focusOffset;
-      return selection.anchorNode.compareDocumentPosition(selection.focusNode) == Node.DOCUMENT_POSITION_FOLLOWING;
+    if (selection.anchorNode == selection.focusNode) return selection.anchorOffset > selection.focusOffset
+    return selection.anchorNode.compareDocumentPosition(selection.focusNode) == Node.DOCUMENT_POSITION_FOLLOWING
   }
+
   function findWrappingScrollable(node) {
-      for (let cur = node.parentNode; cur; cur = cur.parentNode)
-          if (cur.scrollHeight > cur.clientHeight)
-              return cur;
+    for (let cur = node.parentNode; cur; cur = cur.parentNode)
+      if (cur.scrollHeight > cur.clientHeight) return cur
   }
+
   function getAllWrapping(node) {
-      let res = [node.ownerDocument.defaultView || window];
+      let res = [window];
       for (let cur = node.parentNode; cur; cur = cur.parentNode)
           res.push(cur);
-      return res;
+      return res
+  }
+
+  const prefix$3 = "ProseMirror-prompt";
+
+  function openPrompt(options) {
+    let wrapper = document.body.appendChild(document.createElement("div"));
+    wrapper.className = prefix$3;
+
+    let mouseOutside = e => { if (!wrapper.contains(e.target)) close(); };
+    setTimeout(() => window.addEventListener("mousedown", mouseOutside), 50);
+    let close = () => {
+      window.removeEventListener("mousedown", mouseOutside);
+      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+    };
+
+    let domFields = [];
+    for (let name in options.fields) domFields.push(options.fields[name].render());
+
+    let submitButton = document.createElement("button");
+    submitButton.type = "submit";
+    submitButton.className = prefix$3 + "-submit";
+    submitButton.textContent = "OK";
+    let cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = prefix$3 + "-cancel";
+    cancelButton.textContent = "Cancel";
+    cancelButton.addEventListener("click", close);
+
+    let form = wrapper.appendChild(document.createElement("form"));
+    if (options.title) form.appendChild(document.createElement("h5")).textContent = options.title;
+    domFields.forEach(field => {
+      form.appendChild(document.createElement("div")).appendChild(field);
+    });
+    let buttons = form.appendChild(document.createElement("div"));
+    buttons.className = prefix$3 + "-buttons";
+    buttons.appendChild(submitButton);
+    buttons.appendChild(document.createTextNode(" "));
+    buttons.appendChild(cancelButton);
+
+    let box = wrapper.getBoundingClientRect();
+    wrapper.style.top = ((window.innerHeight - box.height) / 2) + "px";
+    wrapper.style.left = ((window.innerWidth - box.width) / 2) + "px";
+
+    let submit = () => {
+      let params = getValues(options.fields, domFields);
+      if (params) {
+        close();
+        options.callback(params);
+      }
+    };
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      submit();
+    });
+
+    form.addEventListener("keydown", e => {
+      if (e.keyCode == 27) {
+        e.preventDefault();
+        close();
+      } else if (e.keyCode == 13 && !(e.ctrlKey || e.metaKey || e.shiftKey)) {
+        e.preventDefault();
+        submit();
+      } else if (e.keyCode == 9) {
+        window.setTimeout(() => {
+          if (!wrapper.contains(document.activeElement)) close();
+        }, 500);
+      }
+    });
+
+    let input = form.elements[0];
+    if (input) input.focus();
+  }
+
+  function getValues(fields, domFields) {
+    let result = Object.create(null), i = 0;
+    for (let name in fields) {
+      let field = fields[name], dom = domFields[i++];
+      let value = field.read(dom), bad = field.validate(value);
+      if (bad) {
+        reportInvalid(dom, bad);
+        return null
+      }
+      result[name] = field.clean(value);
+    }
+    return result
+  }
+
+  function reportInvalid(dom, message) {
+    // FIXME this is awful and needs a lot more work
+    let parent = dom.parentNode;
+    let msg = parent.appendChild(document.createElement("div"));
+    msg.style.left = (dom.offsetLeft + dom.offsetWidth + 2) + "px";
+    msg.style.top = (dom.offsetTop - 5) + "px";
+    msg.className = "ProseMirror-invalid";
+    msg.textContent = message;
+    setTimeout(() => parent.removeChild(msg), 1500);
+  }
+
+  // ::- The type of field that `FieldPrompt` expects to be passed to it.
+  class Field {
+    // :: (Object)
+    // Create a field with the given options. Options support by all
+    // field types are:
+    //
+    // **`value`**`: ?any`
+    //   : The starting value for the field.
+    //
+    // **`label`**`: string`
+    //   : The label for the field.
+    //
+    // **`required`**`: ?bool`
+    //   : Whether the field is required.
+    //
+    // **`validate`**`: ?(any) → ?string`
+    //   : A function to validate the given value. Should return an
+    //     error message if it is not valid.
+    constructor(options) { this.options = options; }
+
+    // render:: (state: EditorState, props: Object) → dom.Node
+    // Render the field to the DOM. Should be implemented by all subclasses.
+
+    // :: (dom.Node) → any
+    // Read the field's value from its DOM node.
+    read(dom) { return dom.value }
+
+    // :: (any) → ?string
+    // A field-type-specific validation function.
+    validateType(_value) {}
+
+    validate(value) {
+      if (!value && this.options.required)
+        return "Required field"
+      return this.validateType(value) || (this.options.validate && this.options.validate(value))
+    }
+
+    clean(value) {
+      return this.options.clean ? this.options.clean(value) : value
+    }
+  }
+
+  // ::- A field class for single-line text fields.
+  class TextField extends Field {
+    render() {
+      let input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = this.options.label;
+      input.value = this.options.value || "";
+      input.autocomplete = "off";
+      return input
+    }
+  }
+
+  // Helpers to create specific types of items
+
+  function canInsert(state, nodeType) {
+    let $from = state.selection.$from;
+    for (let d = $from.depth; d >= 0; d--) {
+      let index = $from.index(d);
+      if ($from.node(d).canReplaceWith(index, index, nodeType)) return true
+    }
+    return false
+  }
+
+  function insertImageItem(nodeType) {
+    return new MenuItem({
+      title: "Insert image",
+      label: "Image",
+      enable(state) { return canInsert(state, nodeType) },
+      run(state, _, view) {
+        let {from, to} = state.selection, attrs = null;
+        if (state.selection instanceof NodeSelection && state.selection.node.type == nodeType)
+          attrs = state.selection.node.attrs;
+        openPrompt({
+          title: "Insert image",
+          fields: {
+            src: new TextField({label: "Location", required: true, value: attrs && attrs.src}),
+            title: new TextField({label: "Title", value: attrs && attrs.title}),
+            alt: new TextField({label: "Description",
+                                value: attrs ? attrs.alt : state.doc.textBetween(from, to, " ")})
+          },
+          callback(attrs) {
+            view.dispatch(view.state.tr.replaceSelectionWith(nodeType.createAndFill(attrs)));
+            view.focus();
+          }
+        });
+      }
+    })
+  }
+
+  function cmdItem(cmd, options) {
+    let passedOptions = {
+      label: options.title,
+      run: cmd
+    };
+    for (let prop in options) passedOptions[prop] = options[prop];
+    if ((!options.enable || options.enable === true) && !options.select)
+      passedOptions[options.enable ? "enable" : "select"] = state => cmd(state);
+
+    return new MenuItem(passedOptions)
+  }
+
+  function markActive(state, type) {
+    let {from, $from, to, empty} = state.selection;
+    if (empty) return type.isInSet(state.storedMarks || $from.marks())
+    else return state.doc.rangeHasMark(from, to, type)
+  }
+
+  function markItem(markType, options) {
+    let passedOptions = {
+      active(state) { return markActive(state, markType) },
+      enable: true
+    };
+    for (let prop in options) passedOptions[prop] = options[prop];
+    return cmdItem(toggleMark(markType), passedOptions)
+  }
+
+  function linkItem(markType) {
+    return new MenuItem({
+      title: "Add or remove link",
+      icon: icons.link,
+      active(state) { return markActive(state, markType) },
+      enable(state) { return !state.selection.empty },
+      run(state, dispatch, view) {
+        if (markActive(state, markType)) {
+          toggleMark(markType)(state, dispatch);
+          return true
+        }
+        openPrompt({
+          title: "Create a link",
+          fields: {
+            href: new TextField({
+              label: "Link target",
+              required: true
+            }),
+            title: new TextField({label: "Title"})
+          },
+          callback(attrs) {
+            toggleMark(markType, attrs)(view.state, view.dispatch);
+            view.focus();
+          }
+        });
+      }
+    })
+  }
+
+  function wrapListItem(nodeType, options) {
+    return cmdItem(wrapInList(nodeType, options.attrs), options)
+  }
+
+  // :: (Schema) → Object
+  // Given a schema, look for default mark and node types in it and
+  // return an object with relevant menu items relating to those marks:
+  //
+  // **`toggleStrong`**`: MenuItem`
+  //   : A menu item to toggle the [strong mark](#schema-basic.StrongMark).
+  //
+  // **`toggleEm`**`: MenuItem`
+  //   : A menu item to toggle the [emphasis mark](#schema-basic.EmMark).
+  //
+  // **`toggleCode`**`: MenuItem`
+  //   : A menu item to toggle the [code font mark](#schema-basic.CodeMark).
+  //
+  // **`toggleLink`**`: MenuItem`
+  //   : A menu item to toggle the [link mark](#schema-basic.LinkMark).
+  //
+  // **`insertImage`**`: MenuItem`
+  //   : A menu item to insert an [image](#schema-basic.Image).
+  //
+  // **`wrapBulletList`**`: MenuItem`
+  //   : A menu item to wrap the selection in a [bullet list](#schema-list.BulletList).
+  //
+  // **`wrapOrderedList`**`: MenuItem`
+  //   : A menu item to wrap the selection in an [ordered list](#schema-list.OrderedList).
+  //
+  // **`wrapBlockQuote`**`: MenuItem`
+  //   : A menu item to wrap the selection in a [block quote](#schema-basic.BlockQuote).
+  //
+  // **`makeParagraph`**`: MenuItem`
+  //   : A menu item to set the current textblock to be a normal
+  //     [paragraph](#schema-basic.Paragraph).
+  //
+  // **`makeCodeBlock`**`: MenuItem`
+  //   : A menu item to set the current textblock to be a
+  //     [code block](#schema-basic.CodeBlock).
+  //
+  // **`makeHead[N]`**`: MenuItem`
+  //   : Where _N_ is 1 to 6. Menu items to set the current textblock to
+  //     be a [heading](#schema-basic.Heading) of level _N_.
+  //
+  // **`insertHorizontalRule`**`: MenuItem`
+  //   : A menu item to insert a horizontal rule.
+  //
+  // The return value also contains some prefabricated menu elements and
+  // menus, that you can use instead of composing your own menu from
+  // scratch:
+  //
+  // **`insertMenu`**`: Dropdown`
+  //   : A dropdown containing the `insertImage` and
+  //     `insertHorizontalRule` items.
+  //
+  // **`typeMenu`**`: Dropdown`
+  //   : A dropdown containing the items for making the current
+  //     textblock a paragraph, code block, or heading.
+  //
+  // **`fullMenu`**`: [[MenuElement]]`
+  //   : An array of arrays of menu elements for use as the full menu
+  //     for, for example the [menu bar](https://github.com/prosemirror/prosemirror-menu#user-content-menubar).
+  function buildMenuItems(schema) {
+    let r = {}, type;
+    if (type = schema.marks.strong)
+      r.toggleStrong = markItem(type, {title: "Toggle strong style", icon: icons.strong});
+    if (type = schema.marks.em)
+      r.toggleEm = markItem(type, {title: "Toggle emphasis", icon: icons.em});
+    if (type = schema.marks.u)
+      r.toggleU = markItem(type, {title: "Toggle underline", icon: icons.u});
+    if (type = schema.marks.s)
+      r.toggleS = markItem(type, {title: "Toggle strikethrough", icon: icons.s});
+    if (type = schema.marks.code)
+      r.toggleCode = markItem(type, {title: "Toggle code font", icon: icons.code});
+    if (type = schema.marks.link)
+      r.toggleLink = linkItem(type);
+
+    if (type = schema.nodes.image)
+      r.insertImage = insertImageItem(type);
+    if (type = schema.nodes.bullet_list)
+      r.wrapBulletList = wrapListItem(type, {
+        title: "Wrap in bullet list",
+        icon: icons.bulletList
+      });
+    if (type = schema.nodes.ordered_list)
+      r.wrapOrderedList = wrapListItem(type, {
+        title: "Wrap in ordered list",
+        icon: icons.orderedList
+      });
+    if (type = schema.nodes.blockquote)
+      r.wrapBlockQuote = wrapItem(type, {
+        title: "Wrap in block quote",
+        icon: icons.blockquote
+      });
+    if (type = schema.nodes.paragraph)
+      r.makeParagraph = blockTypeItem(type, {
+        title: "Change to paragraph",
+        label: "Plain"
+      });
+    if (type = schema.nodes.code_block)
+      r.makeCodeBlock = blockTypeItem(type, {
+        title: "Change to code block",
+        label: "Code"
+      });
+    if (type = schema.nodes.heading)
+      for (let i = 1; i <= 10; i++)
+        r["makeHead" + i] = blockTypeItem(type, {
+          title: "Change to heading " + i,
+          label: "Level " + i,
+          attrs: {level: i}
+        });
+    if (type = schema.nodes.horizontal_rule) {
+      let hr = type;
+      r.insertHorizontalRule = new MenuItem({
+        title: "Insert horizontal rule",
+        label: "Horizontal rule",
+        enable(state) { return canInsert(state, hr) },
+        run(state, dispatch) { dispatch(state.tr.replaceSelectionWith(hr.create())); }
+      });
+    }
+
+    let cut = arr => arr.filter(x => x);
+    r.insertMenu = new Dropdown(cut([r.insertImage, r.insertHorizontalRule]), {label: "Insert"});
+    r.typeMenu = new Dropdown(cut([r.makeParagraph, r.makeCodeBlock, r.makeHead1 && new DropdownSubmenu(cut([
+      r.makeHead1, r.makeHead2, r.makeHead3, r.makeHead4, r.makeHead5, r.makeHead6
+    ]), {label: "Heading"})]), {label: "Type..."});
+
+    r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleU, r.toggleS, r.toggleCode, r.toggleLink])];
+    r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, r.wrapBlockQuote, joinUpItem,
+                        liftItem, selectParentNodeItem])];
+    r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu]], [[undoItem, redoItem]], r.blockMenu);
+
+    return r
   }
 
   /**
@@ -15710,514 +16221,222 @@
       });
   }
 
-  const prefix$3 = "ProseMirror-prompt";
-  function openPrompt(options) {
-      let wrapper = document.body.appendChild(document.createElement("div"));
-      wrapper.className = prefix$3;
-      let mouseOutside = (e) => { if (!wrapper.contains(e.target))
-          close(); };
-      setTimeout(() => window.addEventListener("mousedown", mouseOutside), 50);
-      let close = () => {
-          window.removeEventListener("mousedown", mouseOutside);
-          if (wrapper.parentNode)
-              wrapper.parentNode.removeChild(wrapper);
-      };
-      let domFields = [];
-      for (let name in options.fields)
-          domFields.push(options.fields[name].render());
-      let submitButton = document.createElement("button");
-      submitButton.type = "submit";
-      submitButton.className = prefix$3 + "-submit";
-      submitButton.textContent = "OK";
-      let cancelButton = document.createElement("button");
-      cancelButton.type = "button";
-      cancelButton.className = prefix$3 + "-cancel";
-      cancelButton.textContent = "Cancel";
-      cancelButton.addEventListener("click", close);
-      let form = wrapper.appendChild(document.createElement("form"));
-      if (options.title)
-          form.appendChild(document.createElement("h5")).textContent = options.title;
-      domFields.forEach(field => {
-          form.appendChild(document.createElement("div")).appendChild(field);
-      });
-      let buttons = form.appendChild(document.createElement("div"));
-      buttons.className = prefix$3 + "-buttons";
-      buttons.appendChild(submitButton);
-      buttons.appendChild(document.createTextNode(" "));
-      buttons.appendChild(cancelButton);
-      let box = wrapper.getBoundingClientRect();
-      wrapper.style.top = ((window.innerHeight - box.height) / 2) + "px";
-      wrapper.style.left = ((window.innerWidth - box.width) / 2) + "px";
-      let submit = () => {
-          let params = getValues(options.fields, domFields);
-          if (params) {
-              close();
-              options.callback(params);
-          }
-      };
-      form.addEventListener("submit", e => {
-          e.preventDefault();
-          submit();
-      });
-      form.addEventListener("keydown", e => {
-          if (e.keyCode == 27) {
-              e.preventDefault();
-              close();
-          }
-          else if (e.keyCode == 13 && !(e.ctrlKey || e.metaKey || e.shiftKey)) {
-              e.preventDefault();
-              submit();
-          }
-          else if (e.keyCode == 9) {
-              window.setTimeout(() => {
-                  if (!wrapper.contains(document.activeElement))
-                      close();
-              }, 500);
-          }
-      });
-      let input = form.elements[0];
-      if (input)
-          input.focus();
-  }
-  function getValues(fields, domFields) {
-      let result = Object.create(null), i = 0;
-      for (let name in fields) {
-          let field = fields[name], dom = domFields[i++];
-          let value = field.read(dom), bad = field.validate(value);
-          if (bad) {
-              reportInvalid(dom, bad);
-              return null;
-          }
-          result[name] = field.clean(value);
-      }
-      return result;
-  }
-  function reportInvalid(dom, message) {
-      // FIXME this is awful and needs a lot more work
-      let parent = dom.parentNode;
-      let msg = parent.appendChild(document.createElement("div"));
-      msg.style.left = (dom.offsetLeft + dom.offsetWidth + 2) + "px";
-      msg.style.top = (dom.offsetTop - 5) + "px";
-      msg.className = "ProseMirror-invalid";
-      msg.textContent = message;
-      setTimeout(() => parent.removeChild(msg), 1500);
-  }
-  /**
-  The type of field that `openPrompt` expects to be passed to it.
-  */
-  class Field {
-      /**
-      Create a field with the given options. Options support by all
-      field types are:
-      */
-      constructor(
-      /**
-      @internal
-      */
-      options) {
-          this.options = options;
-      }
-      /**
-      Read the field's value from its DOM node.
-      */
-      read(dom) { return dom.value; }
-      /**
-      A field-type-specific validation function.
-      */
-      validateType(value) { return null; }
-      /**
-      @internal
-      */
-      validate(value) {
-          if (!value && this.options.required)
-              return "Required field";
-          return this.validateType(value) || (this.options.validate ? this.options.validate(value) : null);
-      }
-      clean(value) {
-          return this.options.clean ? this.options.clean(value) : value;
-      }
-  }
-  /**
-  A field class for single-line text fields.
-  */
-  class TextField extends Field {
-      render() {
-          let input = document.createElement("input");
-          input.type = "text";
-          input.placeholder = this.options.label;
-          input.value = this.options.value || "";
-          input.autocomplete = "off";
-          return input;
-      }
-  }
+  const mac$4 = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false;
 
-  // Helpers to create specific types of items
-  function canInsert(state, nodeType) {
-      let $from = state.selection.$from;
-      for (let d = $from.depth; d >= 0; d--) {
-          let index = $from.index(d);
-          if ($from.node(d).canReplaceWith(index, index, nodeType))
-              return true;
-      }
-      return false;
-  }
-  function insertImageItem(nodeType) {
-      return new MenuItem({
-          title: "Insert image",
-          label: "Image",
-          enable(state) { return canInsert(state, nodeType); },
-          run(state, _, view) {
-              let { from, to } = state.selection, attrs = null;
-              if (state.selection instanceof NodeSelection && state.selection.node.type == nodeType)
-                  attrs = state.selection.node.attrs;
-              openPrompt({
-                  title: "Insert image",
-                  fields: {
-                      src: new TextField({ label: "Location", required: true, value: attrs && attrs.src }),
-                      title: new TextField({ label: "Title", value: attrs && attrs.title }),
-                      alt: new TextField({ label: "Description",
-                          value: attrs ? attrs.alt : state.doc.textBetween(from, to, " ") })
-                  },
-                  callback(attrs) {
-                      view.dispatch(view.state.tr.replaceSelectionWith(nodeType.createAndFill(attrs)));
-                      view.focus();
-                  }
-              });
-          }
-      });
-  }
-  function cmdItem(cmd, options) {
-      let passedOptions = {
-          label: options.title,
-          run: cmd
-      };
-      for (let prop in options)
-          passedOptions[prop] = options[prop];
-      if (!options.enable && !options.select)
-          passedOptions[options.enable ? "enable" : "select"] = state => cmd(state);
-      return new MenuItem(passedOptions);
-  }
-  function markActive(state, type) {
-      let { from, $from, to, empty } = state.selection;
-      if (empty)
-          return !!type.isInSet(state.storedMarks || $from.marks());
-      else
-          return state.doc.rangeHasMark(from, to, type);
-  }
-  function markItem(markType, options) {
-      let passedOptions = {
-          active(state) { return markActive(state, markType); }
-      };
-      for (let prop in options)
-          passedOptions[prop] = options[prop];
-      return cmdItem(toggleMark(markType), passedOptions);
-  }
-  function linkItem(markType) {
-      return new MenuItem({
-          title: "Add or remove link",
-          icon: icons.link,
-          active(state) { return markActive(state, markType); },
-          enable(state) { return !state.selection.empty; },
-          run(state, dispatch, view) {
-              if (markActive(state, markType)) {
-                  toggleMark(markType)(state, dispatch);
-                  return true;
-              }
-              openPrompt({
-                  title: "Create a link",
-                  fields: {
-                      href: new TextField({
-                          label: "Link target",
-                          required: true
-                      }),
-                      title: new TextField({ label: "Title" })
-                  },
-                  callback(attrs) {
-                      toggleMark(markType, attrs)(view.state, view.dispatch);
-                      view.focus();
-                  }
-              });
-          }
-      });
-  }
-  function wrapListItem(nodeType, options) {
-      return cmdItem(wrapInList(nodeType, options.attrs), options);
-  }
-  /**
-  Given a schema, look for default mark and node types in it and
-  return an object with relevant menu items relating to those marks.
-  */
-  function buildMenuItems(schema) {
-      let r = {};
-      let mark;
-      if (mark = schema.marks.strong)
-          r.toggleStrong = markItem(mark, { title: "Toggle strong style", icon: icons.strong });
-      if (mark = schema.marks.em)
-          r.toggleEm = markItem(mark, { title: "Toggle emphasis", icon: icons.em });
-      if (mark = schema.marks.code)
-          r.toggleCode = markItem(mark, { title: "Toggle code font", icon: icons.code });
-      if (mark = schema.marks.link)
-          r.toggleLink = linkItem(mark);
-      let node;
-      if (node = schema.nodes.image)
-          r.insertImage = insertImageItem(node);
-      if (node = schema.nodes.bullet_list)
-          r.wrapBulletList = wrapListItem(node, {
-              title: "Wrap in bullet list",
-              icon: icons.bulletList
-          });
-      if (node = schema.nodes.ordered_list)
-          r.wrapOrderedList = wrapListItem(node, {
-              title: "Wrap in ordered list",
-              icon: icons.orderedList
-          });
-      if (node = schema.nodes.blockquote)
-          r.wrapBlockQuote = wrapItem(node, {
-              title: "Wrap in block quote",
-              icon: icons.blockquote
-          });
-      if (node = schema.nodes.paragraph)
-          r.makeParagraph = blockTypeItem(node, {
-              title: "Change to paragraph",
-              label: "Plain"
-          });
-      if (node = schema.nodes.code_block)
-          r.makeCodeBlock = blockTypeItem(node, {
-              title: "Change to code block",
-              label: "Code"
-          });
-      if (node = schema.nodes.heading)
-          for (let i = 1; i <= 10; i++)
-              r["makeHead" + i] = blockTypeItem(node, {
-                  title: "Change to heading " + i,
-                  label: "Level " + i,
-                  attrs: { level: i }
-              });
-      if (node = schema.nodes.horizontal_rule) {
-          let hr = node;
-          r.insertHorizontalRule = new MenuItem({
-              title: "Insert horizontal rule",
-              label: "Horizontal rule",
-              enable(state) { return canInsert(state, hr); },
-              run(state, dispatch) { dispatch(state.tr.replaceSelectionWith(hr.create())); }
-          });
-      }
-      let cut = (arr) => arr.filter(x => x);
-      r.insertMenu = new Dropdown(cut([r.insertImage, r.insertHorizontalRule]), { label: "Insert" });
-      r.typeMenu = new Dropdown(cut([r.makeParagraph, r.makeCodeBlock, r.makeHead1 && new DropdownSubmenu(cut([
-              r.makeHead1, r.makeHead2, r.makeHead3, r.makeHead4, r.makeHead5, r.makeHead6
-          ]), { label: "Heading" })]), { label: "Type..." });
-      r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleCode, r.toggleLink])];
-      r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, r.wrapBlockQuote, joinUpItem,
-              liftItem, selectParentNodeItem])];
-      r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu]], [[undoItem, redoItem]], r.blockMenu);
-      return r;
-  }
-
-  const mac$4 = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : false;
-  /**
-  Inspect the given schema looking for marks and nodes from the
-  basic schema, and if found, add key bindings related to them.
-  This will add:
-
-  * **Mod-b** for toggling [strong](https://prosemirror.net/docs/ref/#schema-basic.StrongMark)
-  * **Mod-i** for toggling [emphasis](https://prosemirror.net/docs/ref/#schema-basic.EmMark)
-  * **Mod-`** for toggling [code font](https://prosemirror.net/docs/ref/#schema-basic.CodeMark)
-  * **Ctrl-Shift-0** for making the current textblock a paragraph
-  * **Ctrl-Shift-1** to **Ctrl-Shift-Digit6** for making the current
-    textblock a heading of the corresponding level
-  * **Ctrl-Shift-Backslash** to make the current textblock a code block
-  * **Ctrl-Shift-8** to wrap the selection in an ordered list
-  * **Ctrl-Shift-9** to wrap the selection in a bullet list
-  * **Ctrl->** to wrap the selection in a block quote
-  * **Enter** to split a non-empty textblock in a list item while at
-    the same time splitting the list item
-  * **Mod-Enter** to insert a hard break
-  * **Mod-_** to insert a horizontal rule
-  * **Backspace** to undo an input rule
-  * **Alt-ArrowUp** to `joinUp`
-  * **Alt-ArrowDown** to `joinDown`
-  * **Mod-BracketLeft** to `lift`
-  * **Escape** to `selectParentNode`
-
-  You can suppress or map these bindings by passing a `mapKeys`
-  argument, which maps key names (say `"Mod-B"` to either `false`, to
-  remove the binding, or a new key name string.
-  */
+  // :: (Schema, ?Object) → Object
+  // Inspect the given schema looking for marks and nodes from the
+  // basic schema, and if found, add key bindings related to them.
+  // This will add:
+  //
+  // * **Mod-b** for toggling [strong](#schema-basic.StrongMark)
+  // * **Mod-i** for toggling [emphasis](#schema-basic.EmMark)
+  // * **Mod-`** for toggling [code font](#schema-basic.CodeMark)
+  // * **Ctrl-Shift-0** for making the current textblock a paragraph
+  // * **Ctrl-Shift-1** to **Ctrl-Shift-Digit6** for making the current
+  //   textblock a heading of the corresponding level
+  // * **Ctrl-Shift-Backslash** to make the current textblock a code block
+  // * **Ctrl-Shift-8** to wrap the selection in an ordered list
+  // * **Ctrl-Shift-9** to wrap the selection in a bullet list
+  // * **Ctrl->** to wrap the selection in a block quote
+  // * **Enter** to split a non-empty textblock in a list item while at
+  //   the same time splitting the list item
+  // * **Mod-Enter** to insert a hard break
+  // * **Mod-_** to insert a horizontal rule
+  // * **Backspace** to undo an input rule
+  // * **Alt-ArrowUp** to `joinUp`
+  // * **Alt-ArrowDown** to `joinDown`
+  // * **Mod-BracketLeft** to `lift`
+  // * **Escape** to `selectParentNode`
+  //
+  // You can suppress or map these bindings by passing a `mapKeys`
+  // argument, which maps key names (say `"Mod-B"` to either `false`, to
+  // remove the binding, or a new key name string.
   function buildKeymap(schema, mapKeys) {
-      let keys = {}, type;
-      function bind(key, cmd) {
-          if (mapKeys) {
-              let mapped = mapKeys[key];
-              if (mapped === false)
-                  return;
-              if (mapped)
-                  key = mapped;
-          }
-          keys[key] = cmd;
+    let keys = {}, type;
+    function bind(key, cmd) {
+      if (mapKeys) {
+        let mapped = mapKeys[key];
+        if (mapped === false) return
+        if (mapped) key = mapped;
       }
-      bind("Mod-z", undo);
-      bind("Shift-Mod-z", redo);
-      bind("Backspace", undoInputRule);
-      if (!mac$4)
-          bind("Mod-y", redo);
-      bind("Alt-ArrowUp", joinUp);
-      bind("Alt-ArrowDown", joinDown);
-      bind("Mod-BracketLeft", lift$1);
-      bind("Escape", selectParentNode);
-      if (type = schema.marks.strong) {
-          bind("Mod-b", toggleMark(type));
-          bind("Mod-B", toggleMark(type));
-      }
-      if (type = schema.marks.em) {
-          bind("Mod-i", toggleMark(type));
-          bind("Mod-I", toggleMark(type));
-      }
-      if (type = schema.marks.code)
-          bind("Mod-`", toggleMark(type));
-      if (type = schema.nodes.bullet_list)
-          bind("Shift-Ctrl-8", wrapInList(type));
-      if (type = schema.nodes.ordered_list)
-          bind("Shift-Ctrl-9", wrapInList(type));
-      if (type = schema.nodes.blockquote)
-          bind("Ctrl->", wrapIn(type));
-      if (type = schema.nodes.hard_break) {
-          let br = type, cmd = chainCommands(exitCode, (state, dispatch) => {
-              if (dispatch)
-                  dispatch(state.tr.replaceSelectionWith(br.create()).scrollIntoView());
-              return true;
-          });
-          bind("Mod-Enter", cmd);
-          bind("Shift-Enter", cmd);
-          if (mac$4)
-              bind("Ctrl-Enter", cmd);
-      }
-      if (type = schema.nodes.list_item) {
-          bind("Enter", splitListItem(type));
-          bind("Mod-[", liftListItem(type));
-          bind("Mod-]", sinkListItem(type));
-      }
-      if (type = schema.nodes.paragraph)
-          bind("Shift-Ctrl-0", setBlockType$1(type));
-      if (type = schema.nodes.code_block)
-          bind("Shift-Ctrl-\\", setBlockType$1(type));
-      if (type = schema.nodes.heading)
-          for (let i = 1; i <= 6; i++)
-              bind("Shift-Ctrl-" + i, setBlockType$1(type, { level: i }));
-      if (type = schema.nodes.horizontal_rule) {
-          let hr = type;
-          bind("Mod-_", (state, dispatch) => {
-              if (dispatch)
-                  dispatch(state.tr.replaceSelectionWith(hr.create()).scrollIntoView());
-              return true;
-          });
-      }
-      return keys;
+      keys[key] = cmd;
+    }
+
+
+    bind("Mod-z", undo);
+    bind("Shift-Mod-z", redo);
+    bind("Backspace", undoInputRule);
+    if (!mac$4) bind("Mod-y", redo);
+
+    bind("Alt-ArrowUp", joinUp);
+    bind("Alt-ArrowDown", joinDown);
+    bind("Mod-BracketLeft", lift$1);
+    bind("Escape", selectParentNode);
+
+    if (type = schema.marks.strong) {
+      bind("Mod-b", toggleMark(type));
+      bind("Mod-B", toggleMark(type));
+    }
+    if (type = schema.marks.em) {
+      bind("Mod-i", toggleMark(type));
+      bind("Mod-I", toggleMark(type));
+    }
+    if (type = schema.marks.s) {
+      bind("Alt-Shift-s", toggleMark(type));
+      bind("Alt-Shift-S", toggleMark(type));
+    }
+    if (type = schema.marks.u) {
+      bind("Alt-Shift-u", toggleMark(type));
+      bind("Alt-Shift-U", toggleMark(type));
+    }
+    if (type = schema.marks.code)
+      bind("Mod-`", toggleMark(type));
+
+    if (type = schema.nodes.bullet_list)
+      bind("Shift-Ctrl-8", wrapInList(type));
+    if (type = schema.nodes.ordered_list)
+      bind("Shift-Ctrl-9", wrapInList(type));
+    if (type = schema.nodes.blockquote)
+      bind("Ctrl->", wrapIn(type));
+    if (type = schema.nodes.hard_break) {
+      let br = type, cmd = chainCommands(exitCode, (state, dispatch) => {
+        dispatch(state.tr.replaceSelectionWith(br.create()).scrollIntoView());
+        return true
+      });
+      bind("Mod-Enter", cmd);
+      bind("Shift-Enter", cmd);
+      if (mac$4) bind("Ctrl-Enter", cmd);
+    }
+    if (type = schema.nodes.list_item) {
+      bind("Enter", splitListItem(type));
+      bind("Mod-[", liftListItem(type));
+      bind("Mod-]", sinkListItem(type));
+    }
+    if (type = schema.nodes.paragraph)
+      bind("Shift-Ctrl-0", setBlockType$1(type));
+    if (type = schema.nodes.code_block)
+      bind("Shift-Ctrl-\\", setBlockType$1(type));
+    if (type = schema.nodes.heading)
+      for (let i = 1; i <= 6; i++) bind("Shift-Ctrl-" + i, setBlockType$1(type, {level: i}));
+    if (type = schema.nodes.horizontal_rule) {
+      let hr = type;
+      bind("Mod-_", (state, dispatch) => {
+        dispatch(state.tr.replaceSelectionWith(hr.create()).scrollIntoView());
+        return true
+      });
+    }
+
+    return keys
   }
 
-  /**
-  Given a blockquote node type, returns an input rule that turns `"> "`
-  at the start of a textblock into a blockquote.
-  */
+  // : (NodeType) → InputRule
+  // Given a blockquote node type, returns an input rule that turns `"> "`
+  // at the start of a textblock into a blockquote.
   function blockQuoteRule(nodeType) {
-      return wrappingInputRule(/^\s*>\s$/, nodeType);
+    return wrappingInputRule(/^\s*>\s$/, nodeType)
   }
-  /**
-  Given a list node type, returns an input rule that turns a number
-  followed by a dot at the start of a textblock into an ordered list.
-  */
+
+  // : (NodeType) → InputRule
+  // Given a list node type, returns an input rule that turns a number
+  // followed by a dot at the start of a textblock into an ordered list.
   function orderedListRule(nodeType) {
-      return wrappingInputRule(/^(\d+)\.\s$/, nodeType, match => ({ order: +match[1] }), (match, node) => node.childCount + node.attrs.order == +match[1]);
+    return wrappingInputRule(/^(\d+)\.\s$/, nodeType, match => ({order: +match[1]}),
+                             (match, node) => node.childCount + node.attrs.order == +match[1])
   }
-  /**
-  Given a list node type, returns an input rule that turns a bullet
-  (dash, plush, or asterisk) at the start of a textblock into a
-  bullet list.
-  */
+
+  // : (NodeType) → InputRule
+  // Given a list node type, returns an input rule that turns a bullet
+  // (dash, plush, or asterisk) at the start of a textblock into a
+  // bullet list.
   function bulletListRule(nodeType) {
-      return wrappingInputRule(/^\s*([-+*])\s$/, nodeType);
+    return wrappingInputRule(/^\s*([-+*])\s$/, nodeType)
   }
-  /**
-  Given a code block node type, returns an input rule that turns a
-  textblock starting with three backticks into a code block.
-  */
+
+  // : (NodeType) → InputRule
+  // Given a code block node type, returns an input rule that turns a
+  // textblock starting with three backticks into a code block.
   function codeBlockRule(nodeType) {
-      return textblockTypeInputRule(/^```$/, nodeType);
+    return textblockTypeInputRule(/^```$/, nodeType)
   }
-  /**
-  Given a node type and a maximum level, creates an input rule that
-  turns up to that number of `#` characters followed by a space at
-  the start of a textblock into a heading whose level corresponds to
-  the number of `#` signs.
-  */
+
+  // : (NodeType, number) → InputRule
+  // Given a node type and a maximum level, creates an input rule that
+  // turns up to that number of `#` characters followed by a space at
+  // the start of a textblock into a heading whose level corresponds to
+  // the number of `#` signs.
   function headingRule(nodeType, maxLevel) {
-      return textblockTypeInputRule(new RegExp("^(#{1," + maxLevel + "})\\s$"), nodeType, match => ({ level: match[1].length }));
+    return textblockTypeInputRule(new RegExp("^(#{1," + maxLevel + "})\\s$"),
+                                  nodeType, match => ({level: match[1].length}))
   }
-  /**
-  A set of input rules for creating the basic block quotes, lists,
-  code blocks, and heading.
-  */
+
+  // : (Schema) → Plugin
+  // A set of input rules for creating the basic block quotes, lists,
+  // code blocks, and heading.
   function buildInputRules(schema) {
-      let rules = smartQuotes.concat(ellipsis, emDash), type;
-      if (type = schema.nodes.blockquote)
-          rules.push(blockQuoteRule(type));
-      if (type = schema.nodes.ordered_list)
-          rules.push(orderedListRule(type));
-      if (type = schema.nodes.bullet_list)
-          rules.push(bulletListRule(type));
-      if (type = schema.nodes.code_block)
-          rules.push(codeBlockRule(type));
-      if (type = schema.nodes.heading)
-          rules.push(headingRule(type, 6));
-      return inputRules({ rules });
+    let rules = smartQuotes.concat(ellipsis, emDash), type;
+    if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
+    if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
+    if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
+    if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
+    if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
+    return inputRules({rules})
   }
 
-  /**
-  Create an array of plugins pre-configured for the given schema.
-  The resulting array will include the following plugins:
+  // !! This module exports helper functions for deriving a set of basic
+  // menu items, input rules, or key bindings from a schema. These
+  // values need to know about the schema for two reasons—they need
+  // access to specific instances of node and mark types, and they need
+  // to know which of the node and mark types that they know about are
+  // actually present in the schema.
+  //
+  // The `exampleSetup` plugin ties these together into a plugin that
+  // will automatically enable this basic functionality in an editor.
 
-   * Input rules for smart quotes and creating the block types in the
-     schema using markdown conventions (say `"> "` to create a
-     blockquote)
+  // :: (Object) → [Plugin]
+  // A convenience plugin that bundles together a simple menu with basic
+  // key bindings, input rules, and styling for the example schema.
+  // Probably only useful for quickly setting up a passable
+  // editor—you'll need more control over your settings in most
+  // real-world situations.
+  //
+  //   options::- The following options are recognized:
+  //
+  //     schema:: Schema
+  //     The schema to generate key bindings and menu items for.
+  //
+  //     mapKeys:: ?Object
+  //     Can be used to [adjust](#example-setup.buildKeymap) the key bindings created.
+  //
+  //     menuBar:: ?bool
+  //     Set to false to disable the menu bar.
+  //
+  //     history:: ?bool
+  //     Set to false to disable the history plugin.
+  //
+  //     floatingMenu:: ?bool
+  //     Set to false to make the menu bar non-floating.
+  //
+  //     menuContent:: [[MenuItem]]
+  //     Can be used to override the menu content.
+  function markupSetup(options) {
+    let plugins = [
+      buildInputRules(options.schema),
+      keymap(buildKeymap(options.schema, options.mapKeys)),
+      keymap(baseKeymap),
+      dropCursor(),
+      gapCursor()
+    ];
+    if (options.menuBar !== false)
+      plugins.push(menuBar({floating: options.floatingMenu !== false,
+                            content: options.menuContent || buildMenuItems(options.schema).fullMenu}));
+    if (options.history !== false)
+      plugins.push(history());
 
-   * A keymap that defines keys to create and manipulate the nodes in the
-     schema
-
-   * A keymap binding the default keys provided by the
-     prosemirror-commands module
-
-   * The undo history plugin
-
-   * The drop cursor plugin
-
-   * The gap cursor plugin
-
-   * A custom plugin that adds a `menuContent` prop for the
-     prosemirror-menu wrapper, and a CSS class that enables the
-     additional styling defined in `style/style.css` in this package
-
-  Probably only useful for quickly setting up a passable
-  editor—you'll need more control over your settings in most
-  real-world situations.
-  */
-  function exampleSetup(options) {
-      let plugins = [
-          buildInputRules(options.schema),
-          keymap(buildKeymap(options.schema, options.mapKeys)),
-          keymap(baseKeymap),
-          dropCursor(),
-          gapCursor()
-      ];
-      if (options.menuBar !== false)
-          plugins.push(menuBar({ floating: options.floatingMenu !== false,
-              content: options.menuContent || buildMenuItems(options.schema).fullMenu }));
-      if (options.history !== false)
-          plugins.push(history());
-      return plugins.concat(new Plugin({
-          props: {
-              attributes: { class: "ProseMirror-example-setup-style" }
-          }
-      }));
+    return plugins.concat(new Plugin({
+      props: {
+        attributes: {class: "ProseMirror-example-setup-style"}
+      }
+    }))
   }
 
   /*
@@ -16336,7 +16555,6 @@
    * since this ends up driving the loading process further.
    */
   function loadUserFiles(scriptFile, cssFile) {
-      console.log("loadUserFiles...");
       if (scriptFile) {
           if (cssFile) {
               _loadUserScriptFile(scriptFile, function() { _loadUserCSSFile(cssFile); });
@@ -16384,7 +16602,6 @@
    * Called to load user CSS before loading html if userCSSFile has been defined for this MarkupWKWebView
    */
   function _loadUserCSSFile(file) {
-      _consoleLog('loadUserCSSFile...');
       let head = document.getElementsByTagName('head')[0];
       let link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -16392,7 +16609,6 @@
       link.addEventListener('load', function() { _loadedUserFiles(); });
       link.href = file;
       head.appendChild(link);
-      _consoleLog('loadUserCSSFile done.');
   }
   /**
    * The 'ready' callback lets Swift know the editor and this js is properly loaded.
@@ -17492,16 +17708,6 @@
   function _isLinkNode(node) {
       return node && (node.nodeName === 'A');
   }
-  /**
-   * Callback into Swift to show a string in the Xcode console, like console.log()
-   */
-  function _consoleLog(string) {
-      let messageDict = {
-          'messageType' : 'log',
-          'log' : string
-      };
-      _callback(JSON.stringify(messageDict));
-  }
 
   // Mix the nodes from prosemirror-schema-list into the basic schema to
   // create a schema with list support.
@@ -17513,7 +17719,7 @@
   window.view = new EditorView(document.querySelector("#editor"), {
     state: EditorState.create({
       doc: DOMParser.fromSchema(mySchema).parse(document.querySelector("#content")),
-      plugins: exampleSetup({schema: mySchema})
+      plugins: markupSetup({schema: mySchema})
     })
   });
 

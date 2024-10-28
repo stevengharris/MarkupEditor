@@ -5,6 +5,7 @@
   "module": "dist/markupmirror.esm.js",
   "browser": "dist/markupmirror.umd.js",
   "dependencies": {
+    "crel": "^4.2.1",
     "ms": "^2.0.0",
     "prosemirror-example-setup": "^1.2.3",
     "prosemirror-model": "^1.23.0",

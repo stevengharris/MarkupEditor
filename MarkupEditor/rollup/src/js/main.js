@@ -1,9 +1,9 @@
 import {EditorState} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {Schema, DOMParser} from "prosemirror-model"
-import {schema} from "prosemirror-schema-basic"
+import {schema} from "./schema/markup.js"
 import {addListNodes} from "prosemirror-schema-list"
-import {exampleSetup} from "prosemirror-example-setup"
+import {markupSetup} from "./setup/markup.js"
 
 import {
   setTopLevelAttributes,
@@ -133,6 +133,6 @@ const mySchema = new Schema({
 window.view = new EditorView(document.querySelector("#editor"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(document.querySelector("#content")),
-    plugins: exampleSetup({schema: mySchema})
+    plugins: markupSetup({schema: mySchema})
   })
 })

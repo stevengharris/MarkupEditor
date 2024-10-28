@@ -5,7 +5,7 @@ import pkg from './package.json';
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/main.js',
+		input: 'src/js/main.js',
 		output: {
 			file: pkg.browser,
 			format: 'umd',
@@ -24,7 +24,7 @@ export default [
 	// an array for the `output` option, where we can specify
 	// `file` and `format` for each target)
 	{
-		input: 'src/main.js',
+		input: 'src/js/main.js',
 		external: ['ms'],
 		output: [
 			{ file: pkg.main, format: 'cjs' },
