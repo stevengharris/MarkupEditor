@@ -15935,10 +15935,10 @@
       r.toggleEm = markItem(type, {title: "Toggle emphasis", icon: icons.em});
     if (type = schema.marks.u)
       r.toggleU = markItem(type, {title: "Toggle underline", icon: icons.u});
-    if (type = schema.marks.s)
-      r.toggleS = markItem(type, {title: "Toggle strikethrough", icon: icons.s});
     if (type = schema.marks.code)
       r.toggleCode = markItem(type, {title: "Toggle code font", icon: icons.code});
+    if (type = schema.marks.s)
+      r.toggleS = markItem(type, {title: "Toggle strikethrough", icon: icons.s});
     if (type = schema.marks.link)
       r.toggleLink = linkItem(type);
 
@@ -15992,7 +15992,7 @@
       r.makeHead1, r.makeHead2, r.makeHead3, r.makeHead4, r.makeHead5, r.makeHead6
     ]), {label: "Heading"})]), {label: "Type..."});
 
-    r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleU, r.toggleS, r.toggleCode, r.toggleLink])];
+    r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleU, r.toggleCode, r.toggleS, r.toggleLink])];
     r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, r.wrapBlockQuote, joinUpItem,
                         liftItem, selectParentNodeItem])];
     r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu]], [[undoItem, redoItem]], r.blockMenu);
@@ -16285,12 +16285,12 @@
       bind("Alt-Shift-s", toggleMark(type));
       bind("Alt-Shift-S", toggleMark(type));
     }
+    if (type = schema.marks.code)
+      bind("Mod-`", toggleMark(type));
     if (type = schema.marks.u) {
       bind("Alt-Shift-u", toggleMark(type));
       bind("Alt-Shift-U", toggleMark(type));
     }
-    if (type = schema.marks.code)
-      bind("Mod-`", toggleMark(type));
 
     if (type = schema.nodes.bullet_list)
       bind("Shift-Ctrl-8", wrapInList(type));
@@ -16466,11 +16466,6 @@
   const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM']; // Tags that are self-closing
 
   /**
-   * _selectedID is the id of the contentEditable DIV containing the currently selected element.
-   */
-  let _selectedID;
-
-  /**
    * MUError captures internal errors and makes it easy to communicate them to the
    * Swift side.
    *
@@ -16580,13 +16575,14 @@
       window.webkit.messageHandlers.markup.postMessage(message);
   }
   function _callbackInput() {
-      window.webkit.messageHandlers.markup.postMessage('input' + (_selectedID ));
+      // I'd like to use nullish coalescing on _selectedID, but rollup's tree-shaking
+      // actively removes it, at least until I do something with it.
+      let source = '';
+      window.webkit.messageHandlers.markup.postMessage('input' + source);
   }
-
   function _loadedUserFiles() {
       _callback('loadedUserFiles');
   }
-
   /**
    * Called to load user script before loading html.
    */
@@ -16935,14 +16931,18 @@
    */
   function setHTML(contents, select=true) {
       const state = window.view.state;
+      const doc = state.doc;
+      const tr = state.tr;
       let div = document.createElement('div');
       div.innerHTML = contents;
-      const { doc, tr } = view.state;
-      const selection = TextSelection.create(doc, 0, doc.content.size);
-      const transaction = tr
+      const node = DOMParser.fromSchema(state.schema).parse(div, { preserveWhiteSpace: true });
+      const selection = new AllSelection(doc);
+      let transaction = tr
           .setSelection(selection)
-          .replaceSelectionWith(DOMParser.fromSchema(state.schema).parse(div, { preserveWhiteSpace: true }), false);
-      let mkmk = view.state.apply(transaction);
+          .replaceSelectionWith(node, false)
+          .setSelection(TextSelection.near(tr.doc.resolve(0)))
+          .scrollIntoView();
+      let mkmk = state.apply(transaction);
       view.updateState(mkmk);
       /*
       document.getElementById("setbutton").addEventListener("click", function(){
@@ -17068,17 +17068,54 @@
   //MARK: Formatting
 
   function toggleBold() {
+      _toggleFormat('B');
   }
   function toggleItalic() {
+      _toggleFormat('I');
   }
   function toggleUnderline() {
+      _toggleFormat('U');
   }
   function toggleStrike() {
+      _toggleFormat('DEL');
+  }
+  function toggleCode() {
+      _toggleFormat('CODE');
   }
   function toggleSubscript() {
+      _toggleFormat('SUB');
   }
   function toggleSuperscript() {
+      _toggleFormat('SUP');
   }
+  /**
+   * Turn the format tag off and on for selection.
+   * Called directly on undo/redo so that nothing new is pushed onto the undo stack
+   *
+   * type must be called using uppercase
+   */
+  function _toggleFormat(type) {
+      const state = window.view.state;
+      let toggle;
+      switch (type) {
+          case "B":
+              toggle = toggleMark(state.schema.marks.strong);
+              break;
+          case "I":
+              toggle = toggleMark(state.schema.marks.em);
+              break;
+          case "U":
+              toggle = toggleMark(state.schema.marks.u);
+              break;
+          case "CODE":
+              toggle = toggleMark(state.schema.marks.code);
+              break;
+          case "DEL":
+              toggle = toggleMark(state.schema.marks.s);
+              break;
+      }    if (toggle) {
+          toggle(state, window.view.dispatch);
+      }}
   /********************************************************************************
    * Styling
    * 1. Styles (P, H1-H6) are applied to blocks
@@ -17414,6 +17451,14 @@
   function getSelectionState() {
       return JSON.stringify({});
   }
+  /**
+   * Report a change coming from dispatchTransaction against the ProseMirror state 
+   * to the Swift side.
+   */
+  function stateChanged() {
+      _callbackInput();
+  }
+
   /********************************************************************************
    * Testing support
    */
@@ -17720,7 +17765,13 @@
     state: EditorState.create({
       doc: DOMParser.fromSchema(mySchema).parse(document.querySelector("#content")),
       plugins: markupSetup({schema: mySchema})
-    })
+    }),
+    dispatchTransaction(transaction) {
+      let newState = view.state.apply(transaction);
+      view.updateState(newState);
+      stateChanged();
+    }
+
   });
 
   exports.addButton = addButton;
@@ -17765,6 +17816,7 @@
   exports.setRange = setRange;
   exports.setTopLevelAttributes = setTopLevelAttributes;
   exports.startModalInput = startModalInput;
+  exports.stateChanged = stateChanged;
   exports.testBlockquoteEnter = testBlockquoteEnter;
   exports.testExtractContents = testExtractContents;
   exports.testListEnter = testListEnter;
@@ -17773,6 +17825,7 @@
   exports.testRedo = testRedo;
   exports.testUndo = testUndo;
   exports.toggleBold = toggleBold;
+  exports.toggleCode = toggleCode;
   exports.toggleItalic = toggleItalic;
   exports.toggleListItem = toggleListItem;
   exports.toggleStrike = toggleStrike;

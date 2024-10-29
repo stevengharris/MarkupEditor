@@ -68,12 +68,12 @@ export function buildKeymap(schema, mapKeys) {
     bind("Alt-Shift-s", toggleMark(type))
     bind("Alt-Shift-S", toggleMark(type))
   }
+  if (type = schema.marks.code)
+    bind("Mod-`", toggleMark(type))
   if (type = schema.marks.u) {
     bind("Alt-Shift-u", toggleMark(type))
     bind("Alt-Shift-U", toggleMark(type))
   }
-  if (type = schema.marks.code)
-    bind("Mod-`", toggleMark(type))
 
   if (type = schema.nodes.bullet_list)
     bind("Shift-Ctrl-8", wrapInList(type))

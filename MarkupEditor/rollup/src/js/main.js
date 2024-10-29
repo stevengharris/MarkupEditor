@@ -30,6 +30,7 @@ import {
   toggleBold,
   toggleItalic,
   toggleUnderline,
+  toggleCode,
   toggleStrike,
   toggleSubscript,
   toggleSuperscript,
@@ -41,6 +42,7 @@ import {
   endModalInput,
   cleanUpHTML,
   getSelectionState,
+  stateChanged,
   setRange,
   testUndo,
   testRedo,
@@ -89,6 +91,7 @@ export {
   toggleBold,
   toggleItalic,
   toggleUnderline,
+  toggleCode,
   toggleStrike,
   toggleSubscript,
   toggleSuperscript,
@@ -100,6 +103,7 @@ export {
   endModalInput,
   cleanUpHTML,
   getSelectionState,
+  stateChanged,
   setRange,
   testUndo,
   testRedo,
@@ -134,5 +138,11 @@ window.view = new EditorView(document.querySelector("#editor"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(document.querySelector("#content")),
     plugins: markupSetup({schema: mySchema})
-  })
+  }),
+  dispatchTransaction(transaction) {
+    let newState = view.state.apply(transaction)
+    view.updateState(newState)
+    stateChanged()
+  }
+
 })
