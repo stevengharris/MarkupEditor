@@ -16819,33 +16819,6 @@
    * @return {string} The HTML for the editor element
    */
   function getHTML(pretty="true", clean="true", divID) {
-      /*
-      const prettyHTML = pretty === "true";
-      const cleanHTML = clean === "true";
-      const div = (divID) ? document.getElementById(divID) : MU.editor;
-      if (!div) {
-          MUError.NoDiv.callback();
-          return "";
-      }
-      let editor, text;
-      if (cleanHTML) {
-          const template = document.createElement('template');
-          template.innerHTML = div.innerHTML;
-          editor = template.content;
-          _cleanUpDivsWithin(editor);
-          _cleanUpSpansWithin(editor);
-          _cleanUpEmptyTextNodes(editor);
-      } else {
-          editor = div;
-      };
-      if (prettyHTML) {
-          text = _allPrettyHTML(editor);
-      } else {
-          text = MU.editor.innerHTML;
-          //text = _isFragment(editor) ? _fragmentString(editor) : editor.innerHTML;
-      };
-      return text;
-      */
       const state = window.view.state;
       const fragment = DOMSerializer.fromSchema(state.schema).serializeFragment(state.doc.content);
   	if (pretty) {
@@ -16944,55 +16917,6 @@
           .scrollIntoView();
       let mkmk = state.apply(transaction);
       view.updateState(mkmk);
-      /*
-      document.getElementById("setbutton").addEventListener("click", function(){
-        let newcontent = myt.value;
-        const newdiv = document.createElement('div');
-        newdiv.innerHTML = newcontent;
-        const { doc, tr } = view.state;
-        console.log(view.state.doc.content.size);
-        const selection = TextSelection.create(doc, 0, doc.content.size);
-        const transaction = tr
-          .setSelection(selection)
-          .replaceSelectionWith(DOMParser.fromSchema(mySchema).parse(newdiv, { preserveWhiteSpace: true }), false);
-        let mkmk = view.state.apply(transaction);
-        view.updateState(mkmk);
-        console.log(view.state.doc.content.size);
-      }); 
-      */
-     /*
-         // Note for history:
-      // Originally this method used a div tempWrapper and just assigned contents to its innerHTML.
-      // In doing so, the image.onload method would fire, but I could never get an event listener to
-      // fire for the image. I fixed this by using a template, which presumably preserves the actual
-      // image element so that image that I assign the event listener to is preserved.
-      const template = document.createElement('template');
-      // When contents is empty, replace it with valid minimal HTML for a properly behaved
-      // MarkupEditor document. A lot of the editing functions in MarkupEditor depend on content
-      // being held in "style" elements. Without them, things will display properly, but the behavior
-      // is going to be unpredictable. The intervention on contents here is similar to what happens in
-      // MU.emptyDocument, but doing it here avoids having selection change.
-      if ((contents.trim().length === 0) && (MU.editor.isContentEditable)) {
-          contents = '<p><br></p>';
-      };
-      template.innerHTML = contents;
-      const element = template.content;
-      _cleanUpEmptyTextNodes(element);
-      _prepImages(element);
-      MU.editor.innerHTML = '';   // Clean it out!
-      MU.editor.appendChild(element);
-      // By default, we initialize range to point to the first element. In cases where you are
-      // using multiple MarkupWKWebViews, you may want to explicitly prevent the range from
-      // being initialized and the first element being selected by passing select=false. Otherwise,
-      // each of your views will receive a multiple selectionChange events after they load,
-      // which in turn will propagate calls to the MarkupDelegate about that change, and potentially
-      // update the MarkupToolbar when all you wanted to do was to load the content and deal
-      // with selection later.
-      if (select) {
-          _initializeRange();                                         // Causes a selectionChange event
-      };
-      _updatePlaceholder()
-      */
   }
   /**
    * Placeholder

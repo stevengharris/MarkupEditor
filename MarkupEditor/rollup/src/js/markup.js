@@ -5,7 +5,7 @@
  */
 
 import {AllSelection, TextSelection} from "prosemirror-state"
-import {DOMParser, DOMSerializer, ResolvedPos} from "prosemirror-model"
+import {DOMParser, DOMSerializer} from "prosemirror-model"
 import {toggleMark} from "prosemirror-commands"
 
 const minImageSize = 20;

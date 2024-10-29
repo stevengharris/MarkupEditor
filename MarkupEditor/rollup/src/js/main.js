@@ -1,9 +1,9 @@
 import {EditorState} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {Schema, DOMParser} from "prosemirror-model"
-import {schema} from "./schema/markup.js"
+import {schema} from "./schema/index.js"
 import {addListNodes} from "prosemirror-schema-list"
-import {markupSetup} from "./setup/markup.js"
+import {markupSetup} from "./setup/index.js"
 
 import {
   setTopLevelAttributes,
