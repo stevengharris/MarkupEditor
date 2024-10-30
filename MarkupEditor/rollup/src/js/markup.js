@@ -1083,8 +1083,133 @@ function _patchNewlines(node) {
  * @return {String}      The stringified dictionary of selectionState.
  */
 export function getSelectionState() {
-    return JSON.stringify({});
+    const state = _getSelectionState();
+    return JSON.stringify(state);
 };
+
+/**
+ * Populate a dictionary of properties about the current selection and return it.
+ *
+ * @return {String: String}     The dictionary of properties describing the selection
+ */
+const _getSelectionState = function() {
+    const state = {};
+    const selection = window.view.state.selection;
+    const schema = window.view.state.schema;
+    //if (selection.empty) {
+    //    state['valid'] = false;
+    //    return state;
+    //}
+    // Not doing anything about multiple divs yet...
+    // When we have multiple contentEditable elements within editor, we need to
+    // make sure we selected something that isContentEditable. If we didn't
+    // then just return state, which will be invalid but have the enclosing div ID.
+    // Note: _callbackInput() uses a cached value of the *contentEditable* div ID
+    // because it is called at every keystroke and change, whereas here we take
+    // the time to find the enclosing div ID from the selection so we are sure it
+    // absolutely reflects the selection state at the time of the call regardless
+    // of whether it is contentEditable or not.
+    //let divID = _findContentEditableID(selection.focusNode);
+    //if (divID) {
+    //    state['divid'] = divID;
+    //    state['valid'] = true;
+    //} else {
+    //    divID = _findDivID(selection.focusNode);
+    //    state['divid'] = divID;
+    //    state['valid'] = false;
+    //    return state;
+    //};
+    // Selected text
+    state['selection'] = selection.text;    // Wrong
+    // The selrect tells us where the selection can be found
+    const selrect = _selrect();
+    const selrectDict = {
+        'x' : selrect.left,
+        'y' : selrect.top,
+        'width' : selrect.right - selrect.left,
+        'height' : selrect.bottom - selrect.top
+    };
+    state['selrect'] = selrectDict;
+    // Link
+    //const linkAttributes = _getLinkAttributesAtSelection();
+    //state['href'] = linkAttributes['href'];
+    //state['link'] = linkAttributes['link'];
+    // Image
+    //const imageAttributes = _getImageAttributes();
+    //state['src'] = imageAttributes['src'];
+    //state['alt'] = imageAttributes['alt'];
+    //state['width'] = imageAttributes['width'];
+    //state['height'] = imageAttributes['height'];
+    //state['scale'] = imageAttributes['scale'];
+    //// Table
+    //const tableAttributes = _getTableAttributesAtSelection();
+    //state['table'] = tableAttributes['table'];
+    //state['thead'] = tableAttributes['thead'];
+    //state['tbody'] = tableAttributes['tbody'];
+    //state['header'] = tableAttributes['header'];
+    //state['colspan'] = tableAttributes['colspan'];
+    //state['rows'] = tableAttributes['rows'];
+    //state['cols'] = tableAttributes['cols'];
+    //state['row'] = tableAttributes['row'];
+    //state['col'] = tableAttributes['col'];
+    //state['border'] = tableAttributes['border']
+    //// Style
+    //state['style'] = _getParagraphStyle();
+    //state['list'] = _selectionListType();
+    //if (state['list']) {
+    //    // If we are in a list, then we might or might not be in a list item
+    //    state['li'] = _firstSelectionTagMatching(['LI']).length > 0;
+    //} else {
+    //    // But if we're not in a list, we deny we are in a list item
+    //    state['li'] = false;
+    //}
+    //state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
+    // Format
+    const markTypes = _getMarkTypes();
+    state['bold'] = markTypes.has(schema.marks.strong);
+    state['italic'] = markTypes.has(schema.marks.em);
+    state['underline'] = markTypes.has(schema.marks.u);
+    state['strike'] = markTypes.has(schema.marks.s);
+    state['sub'] = markTypes.has(schema.marks.sub);
+    state['sup'] = markTypes.has(schema.marks.sup);
+    state['code'] = markTypes.has(schema.marks.code);
+    // DEBUGGING
+    //const focusNode = document.getSelection().focusNode;
+    //if (focusNode) {
+    //    state['focusNodeType'] = focusNode.nodeType;
+    //}
+    //const focusOffset = document.getSelection().focusOffset;
+    //if (focusOffset) {
+    //    state['focusOffset'] = focusOffset;
+    //}
+    return state;
+};
+
+function _selrect() {
+    return view.coordsAtPos(view.state.tr.selection.$from.pos);
+};
+
+function _getMarkTypes() {
+    const doc = view.state.doc;
+    const selection = view.state.selection;
+    const markTypes = new Set();
+    if (!selection.empty) {
+        doc.nodesBetween(selection.from, selection.to, node => {
+            if (node.isText) {
+                const nodeMarks = node.marks;
+                nodeMarks.forEach(mark => markTypes.add(mark.type));
+                return false;
+            } else {
+                return true;
+            };
+        });
+    } else {
+        const anchor = selection.$anchor;
+        const anchorMarks = anchor.parent.child(anchor.index()).marks;
+        anchorMarks.forEach(mark => markTypes.add(mark.type));
+    }
+    return markTypes;
+}
 
 /**
  * Report a change coming from dispatchTransaction against the ProseMirror state 

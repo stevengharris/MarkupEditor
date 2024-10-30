@@ -1,4 +1,4 @@
-import {EditorState} from "prosemirror-state"
+import {EditorState, TextSelection} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {Schema, DOMParser} from "prosemirror-model"
 import {schema} from "./schema/index.js"
@@ -142,7 +142,6 @@ window.view = new EditorView(document.querySelector("#editor"), {
   dispatchTransaction(transaction) {
     let newState = view.state.apply(transaction)
     view.updateState(newState)
-    stateChanged()
+    stateChanged()    // For every transaction, let the Swift side know the state changed
   }
-
 })
