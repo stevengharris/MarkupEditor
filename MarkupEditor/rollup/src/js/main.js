@@ -4,6 +4,7 @@ import {Schema, DOMParser} from "prosemirror-model"
 import {schema} from "./schema/index.js"
 import {addListNodes} from "prosemirror-schema-list"
 import {markupSetup} from "./setup/index.js"
+import {tableNodes} from "prosemirror-tables"
 
 import {
   setTopLevelAttributes,
@@ -129,10 +130,29 @@ export {
   borderTable,
 }
 
-// Mix the nodes from prosemirror-schema-list into the basic schema to
-// create a schema with list support.
+// Mix the nodes from prosemirror-schema-list and prosemirror-tables into the basic schema
+// to create a schema with list and table support.
 const mySchema = new Schema({
-  nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
+  nodes: 
+    addListNodes(schema.spec.nodes, "paragraph block*", "block").append(
+      tableNodes({
+        tableGroup: 'block',
+        cellContent: 'block+',
+        cellAttributes: {
+          background: {
+            default: null,
+            getFromDOM(dom) {
+              return dom.style.backgroundColor || null;
+            },
+            setDOMAttr(value, attrs) {
+              if (value)
+                attrs.style = (attrs.style || '') + `background-color: ${value};`;
+            },
+          },
+        },
+      }
+    ),
+  ),
   marks: schema.spec.marks
 })
 
