@@ -4,10 +4,10 @@
  That file contains the combined ProseMirror code along with markup.js.
  */
 
-import {AllSelection, TextSelection} from "prosemirror-state"
-import {DOMParser, DOMSerializer} from "prosemirror-model"
-import {Transform} from "prosemirror-transform"
-import {toggleMark} from "prosemirror-commands"
+import {AllSelection, TextSelection} from 'prosemirror-state'
+import {DOMParser, DOMSerializer, NodeType} from 'prosemirror-model'
+import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
+import {wrapInList, liftListItem} from 'prosemirror-schema-list'
 
 const minImageSize = 20;
 
@@ -91,7 +91,7 @@ class MUError {
     static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
     static InvalidSplitElement = new MUError('InvalidSplitElement', 'Node passed to _splitElement must be an ELEMENT_NODE.');
     static InvalidSplitElementRoot = new MUError('InvalidSplitElementRoot', 'Root name passed to _splitElement was not a parent of element.');
-    static NoDiv = new MUError('NoDiv', "A div could not be found to return HTML from.");
+    static NoDiv = new MUError('NoDiv', 'A div could not be found to return HTML from.');
     static NoEndContainerInRange = new MUError('NoEndContainerInRange', 'Range endContainer not found in _nodesWithNamesInRange');
     static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
     static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
@@ -433,13 +433,13 @@ export function emptyDocument() {
  *
  * @return {string} The HTML for the editor element
  */
-export function getHTML(pretty="true", clean="true", divID) {
+export function getHTML(pretty='true', clean='true', divID) {
     const state = window.view.state;
     const fragment = DOMSerializer.fromSchema(state.schema).serializeFragment(state.doc.content);
 	if (pretty) {
         return _allPrettyHTML(fragment)
     } else {
-        const div = document.createElement("div");
+        const div = document.createElement('div');
         div.appendChild(fragment);
         return div.innerHTML
     }
@@ -667,19 +667,19 @@ function _toggleFormat(type) {
     const state = window.view.state;
     let toggle;
     switch (type) {
-        case "B":
+        case 'B':
             toggle = toggleMark(state.schema.marks.strong);
             break;
-        case "I":
+        case 'I':
             toggle = toggleMark(state.schema.marks.em);
             break;
-        case "U":
+        case 'U':
             toggle = toggleMark(state.schema.marks.u);
             break;
-        case "CODE":
+        case 'CODE':
             toggle = toggleMark(state.schema.marks.code);
             break;
-        case "DEL":
+        case 'DEL':
             toggle = toggleMark(state.schema.marks.s);
             break;
     };  
@@ -721,25 +721,25 @@ function _nodeFor(paragraphStyle) {
     const nodeTypes = view.state.schema.nodes;
     let node;
     switch (paragraphStyle) {
-        case "P":
+        case 'P':
             node = nodeTypes.paragraph.create();
             break;
-        case "H1":
+        case 'H1':
             node = nodeTypes.heading.create({level: 1})
             break;
-        case "H2":
+        case 'H2':
             node = nodeTypes.heading.create({level: 2})
             break;
-        case "H3":
+        case 'H3':
             node = nodeTypes.heading.create({level: 3})
             break;
-        case "H4":
+        case 'H4':
             node = nodeTypes.heading.create({level: 4})
             break;
-        case "H5":
+        case 'H5':
             node = nodeTypes.heading.create({level: 5})
             break;
-        case "H6":
+        case 'H6':
             node = nodeTypes.heading.create({level: 6})
             break;
     };
@@ -777,10 +777,102 @@ function _setParagraphStyle(protonode) {
  * for different cases of selections.
  * If the selection is in a list type that is different than newListTyle,
  * we need to create a new list and make the selection appear in it.
- *
+ * @deprecated
  * @param {String}  newListType     The kind of list we want the list item to be in if we are turning it on or changing it.
  */
-export function toggleListItem(newListType, restoreContainingList=false) {
+export function toggleListItem(newListType) {
+    if (_getListType() === newListType) {
+        _outdentListItems()
+    } else {
+        _setListType(newListType);
+    }
+};
+
+/**
+ * Set the list style at the selection to the `listType`.
+ * @param {String}  listType    The list type { 'UL' | 'OL' } we want to set.
+ */
+function _setListType(listType) {
+    const nodeType = _nodeTypeFor(listType);
+    if (nodeType !== null) {
+        const command = wrapInList(nodeType);
+        command(view.state, (transaction) => {
+            const newState = view.state.apply(transaction);
+            view.updateState(newState);
+            stateChanged();
+        });
+    };
+};
+
+/**
+ * Outdent all the list items in the selection.
+ */
+function _outdentListItems() {
+    const selection = view.state.selection;
+    const nodeTypes = view.state.schema.nodes;
+    let newState;
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.type === nodeTypes.list_item) {   
+            const command = liftListItem(node.type);
+            command(view.state, (transaction) => {
+                newState = view.state.apply(transaction);
+            });
+        };
+        return true;        // Lists can nest, so we need to recurse
+    });
+    view.updateState(newState);
+    stateChanged();
+};
+
+/**
+ * Return the type of list the selection is in, else null.
+ * @return { 'UL' | 'OL' | null }
+ */
+function _getListType() {
+    const selection = view.state.selection;
+    const ulType = view.state.schema.nodes.bullet_list;
+    const olType = view.state.schema.nodes.ordered_list;
+    const nodeTypes = [];
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.isBlock) {
+            if ((node.type === ulType) || (node.type === olType)) { 
+                nodeTypes.push(node.type)
+            }
+            return true;  // Lists can nest, so we need to recurse
+        }
+        return false; 
+    });
+    return (nodeTypes.length > 0) ? _listTypeFor(nodeTypes[nodeTypes.length - 1]) : null;
+};
+
+/**
+ * Return the NodeType corresponding to `listType`, else null.
+ * @param {"UL" | "OL" | String} listType The Swift-side String corresponding to the NodeType
+ * @returns {NodeType | null}
+ */
+function _nodeTypeFor(listType) {
+    if (listType === 'UL') {
+        return view.state.schema.nodes.bullet_list;
+    } else if (listType === 'OL') {
+        return view.state.schema.nodes.ordered_list;
+    } else {
+        return null;
+    };
+};
+
+/**
+ * Return the String corresponding to `nodeType`, else null.
+ * @param {NodeType} nodeType The NodeType corresponding to the Swift-side String
+ * @returns {'UL' | 'OL' | null}
+ */
+function _listTypeFor(nodeType) {
+    if (nodeType === view.state.schema.nodes.bullet_list) {
+        return 'UL';
+    } else if (nodeType === view.state.schema.nodes.ordered_list) {
+        return 'OL';
+    } else {
+        return null;
+    }
 };
 
 /********************************************************************************
@@ -797,6 +889,21 @@ export function toggleListItem(newListType, restoreContainingList=false) {
  *
  */
 export function indent() {
+    const selection = view.state.selection;
+    const nodeTypes = view.state.schema.nodes;
+    let newState;
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.isBlock) {   
+            const command = wrapIn(nodeTypes.blockquote);
+            command(view.state, (transaction) => {
+                newState = view.state.apply(transaction);
+            });
+            return true;
+        };
+        return false;
+    });
+    view.updateState(newState);
+    stateChanged();
 };
 
 /**
@@ -807,8 +914,26 @@ export function indent() {
  * Else, do nothing.
  *
  */
+//TODO: Do the right thing for lists
 export function outdent() {
+    const selection = view.state.selection;
+    let newState;
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.type === view.state.schema.nodes.blockquote) {   
+            lift(view.state, (transaction) => {
+                newState = view.state.apply(transaction);
+            });
+        };
+        return true;
+    });
+    view.updateState(newState);
+    stateChanged();
 };
+
+/********************************************************************************
+ * Deal with modal input from the Swift side
+ */
+//MARK: Modal Input
 
 /**
  * Called before beginning a modal popover on the Swift side, to enable the selection
@@ -1217,14 +1342,8 @@ const _getSelectionState = function() {
     //state['border'] = tableAttributes['border']
     //// Style
     state['style'] = _getParagraphStyle();
-    //state['list'] = _selectionListType();
-    //if (state['list']) {
-    //    // If we are in a list, then we might or might not be in a list item
-    //    state['li'] = _firstSelectionTagMatching(['LI']).length > 0;
-    //} else {
-    //    // But if we're not in a list, we deny we are in a list item
-    //    state['li'] = false;
-    //}
+    state['list'] = _getListType();
+    state['li'] = state['list'] !== null;   // We are always in a li by definition for ProseMirror, right?
     //state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
     // Format
     const markTypes = _getMarkTypes();
@@ -1276,28 +1395,18 @@ function _getMarkTypes() {
 /**
  * Return the paragraph style at the selection.
  *
- * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
+ * @return {String}   {Tag name | 'Multiple'} that represents the selected paragraph style on the Swift side.
  */
 function _getParagraphStyle() {
     const selection = view.state.selection;
     const nodeTypes = new Set();
-    let style;
-    if (!selection.empty) {
-        if (selection.$anchor.parent === selection.$head.parent) {
-            style = _paragraphStyleFor(selection.$anchor.parent);
-        } else {
-            view.state.doc.nodesBetween(selection.from, selection.to, node => {
-                if (node.isBlock) { 
-                    nodeTypes.add(node.type)
-                };
-                return false;   // We only need top-level nodes
-            });
-            style = (nodeTypes.size <= 1) ? _paragraphStyleFor(selection.$anchor.parent) : 'Multiple';
-        }
-    } else {
-        style = _paragraphStyleFor(selection.$anchor.parent);
-    }
-    return style;
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.isBlock) { 
+            nodeTypes.add(node.type)
+        };
+        return false;   // We only need top-level nodes
+    });
+    return (nodeTypes.size <= 1) ? _paragraphStyleFor(selection.$anchor.parent) : 'Multiple';
 };
 
 /**
