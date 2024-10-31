@@ -6,6 +6,7 @@
 
 import {AllSelection, TextSelection} from "prosemirror-state"
 import {DOMParser, DOMSerializer} from "prosemirror-model"
+import {Transform} from "prosemirror-transform"
 import {toggleMark} from "prosemirror-commands"
 
 const minImageSize = 20;
@@ -528,17 +529,17 @@ export function setHTML(contents, select=true) {
     const state = window.view.state;
     const doc = state.doc;
     const tr = state.tr;
-    let div = document.createElement('div');
+    const div = document.createElement('div');
     div.innerHTML = contents;
     const node = DOMParser.fromSchema(state.schema).parse(div, { preserveWhiteSpace: true });
     const selection = new AllSelection(doc);
-    let transaction = tr
+    const transaction = tr
         .setSelection(selection)
         .replaceSelectionWith(node, false)
         .setSelection(TextSelection.near(tr.doc.resolve(0)))
         .scrollIntoView()
-    let mkmk = state.apply(transaction);
-    view.updateState(mkmk);
+    const newState = state.apply(transaction);
+    view.updateState(newState);
 };
 
 /**
@@ -703,7 +704,67 @@ function _toggleFormat(type) {
  * @param {String}  newStyle    One of the styles P or H1-H6 to replace oldStyle with.
  */
 export function replaceStyle(oldStyle, newStyle) {
+    const node = _nodeFor(newStyle);
+    _setParagraphStyle(node);
 };
+
+function _nodeFor(paragraphStyle) {
+    const schema = view.state.schema;
+    let nodeType, node;
+    switch (paragraphStyle) {
+        case "P":
+            nodeType = schema.nodes.paragraph;
+            node = nodeType.create();
+            break;
+        case "H1":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 1})
+            break;
+        case "H2":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 2})
+            break;
+        case "H3":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 3})
+            break;
+        case "H4":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 4})
+            break;
+        case "H5":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 5})
+            break;
+        case "H6":
+            nodeType = schema.nodes.heading;
+            node = nodeType.create({level: 6})
+            break;
+    }
+    return node;
+}
+
+/**
+ * Return the paragraph style at the selection.
+ *
+ * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
+ */
+function _setParagraphStyle(protonode) {
+    const doc = view.state.doc;
+    const selection = view.state.selection;
+    const tr = view.state.tr;
+    let transaction;
+    doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        if (node.isBlock) { 
+            transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
+        };
+        return false;   // We only need top-level nodes
+    });
+    const newState = view.state.apply(transaction);
+    view.updateState(newState);
+    stateChanged();
+};
+
 
 /********************************************************************************
  * Lists
@@ -1154,7 +1215,7 @@ const _getSelectionState = function() {
     //state['col'] = tableAttributes['col'];
     //state['border'] = tableAttributes['border']
     //// Style
-    //state['style'] = _getParagraphStyle();
+    state['style'] = _getParagraphStyle();
     //state['list'] = _selectionListType();
     //if (state['list']) {
     //    // If we are in a list, then we might or might not be in a list item
@@ -1209,7 +1270,52 @@ function _getMarkTypes() {
         anchorMarks.forEach(mark => markTypes.add(mark.type));
     }
     return markTypes;
-}
+};
+
+/**
+ * Return the paragraph style at the selection.
+ *
+ * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
+ */
+function _getParagraphStyle() {
+    const selection = view.state.selection;
+    const nodeTypes = new Set();
+    let style;
+    if (!selection.empty) {
+        if (selection.$anchor.parent === selection.$head.parent) {
+            style = _paragraphStyleFor(selection.$anchor.parent);
+        } else {
+            view.state.doc.nodesBetween(selection.from, selection.to, node => {
+                if (node.isBlock) { 
+                    nodeTypes.add(node.type)
+                };
+                return false;   // We only need top-level nodes
+            });
+            style = (nodeTypes.size <= 1) ? _paragraphStyleFor(selection.$anchor.parent) : 'Multiple';
+        }
+    } else {
+        style = _paragraphStyleFor(selection.$anchor.parent);
+    }
+    return style;
+};
+
+/**
+ * 
+ * @param {Node} node The node we want the Swift-side paragraph style for
+ * @returns {String}    { "P" | "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | null }
+ */
+function _paragraphStyleFor(node) {
+    var style;
+    switch (node.type.name) {
+        case 'paragraph':
+            style = "P";
+            break;
+        case 'heading':
+            style = "H" + node.attrs.level;
+            break;
+    };
+    return style;
+};
 
 /**
  * Report a change coming from dispatchTransaction against the ProseMirror state 
