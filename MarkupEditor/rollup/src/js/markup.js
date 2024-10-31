@@ -696,58 +696,59 @@ function _toggleFormat(type) {
  */
 //MARK: Styling
 
+
+/**
+ * Set the paragraph style at the selection to `style` 
+ * @param {String}  style    One of the styles P or H1-H6 to set the selection to.
+ */
+export function setStyle(style) {
+    const node = _nodeFor(style);
+    _setParagraphStyle(node);
+};
+
 /**
  * Find/verify the oldStyle for the selection and replace it with newStyle.
  * Replacement for execCommand(formatBlock).
- *
+ * @deprecated Use setStyle
  * @param {String}  oldStyle    One of the styles P or H1-H6 that exists at selection.
  * @param {String}  newStyle    One of the styles P or H1-H6 to replace oldStyle with.
  */
 export function replaceStyle(oldStyle, newStyle) {
-    const node = _nodeFor(newStyle);
-    _setParagraphStyle(node);
+    setStyle(newStyle);
 };
 
 function _nodeFor(paragraphStyle) {
-    const schema = view.state.schema;
-    let nodeType, node;
+    const nodeTypes = view.state.schema.nodes;
+    let node;
     switch (paragraphStyle) {
         case "P":
-            nodeType = schema.nodes.paragraph;
-            node = nodeType.create();
+            node = nodeTypes.paragraph.create();
             break;
         case "H1":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 1})
+            node = nodeTypes.heading.create({level: 1})
             break;
         case "H2":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 2})
+            node = nodeTypes.heading.create({level: 2})
             break;
         case "H3":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 3})
+            node = nodeTypes.heading.create({level: 3})
             break;
         case "H4":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 4})
+            node = nodeTypes.heading.create({level: 4})
             break;
         case "H5":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 5})
+            node = nodeTypes.heading.create({level: 5})
             break;
         case "H6":
-            nodeType = schema.nodes.heading;
-            node = nodeType.create({level: 6})
+            node = nodeTypes.heading.create({level: 6})
             break;
-    }
+    };
     return node;
-}
+};
 
 /**
- * Return the paragraph style at the selection.
- *
- * @return {String}         Tag name that represents the selected paragraph style on the Swift side.
+ * Set the paragraph style at the selection based on the settings of protonode.
+ * @param {Node}  protonode    A Node with the attributes and type we want to set.
  */
 function _setParagraphStyle(protonode) {
     const doc = view.state.doc;
