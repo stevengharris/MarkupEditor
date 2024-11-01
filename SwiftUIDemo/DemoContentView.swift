@@ -97,7 +97,11 @@ extension DemoContentView: MarkupDelegate {
     
     func markupInput(_ view: MarkupWKWebView) {
         // This is way too heavyweight, but it suits the purposes of the demo
-        setRawText()
+        view.getSelectionState() { selectionState in
+            //Logger.coordinator.debug("* selectionChange")
+            MarkupEditor.selectionState.reset(from: selectionState)
+            setRawText()
+        }
     }
     
     /// Callback received after a local image has been added to the document.
