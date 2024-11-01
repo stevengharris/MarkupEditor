@@ -1283,10 +1283,7 @@ const _getSelectionState = function() {
     const state = {};
     const selection = window.view.state.selection;
     const schema = window.view.state.schema;
-    //if (selection.empty) {
-    //    state['valid'] = false;
-    //    return state;
-    //}
+    state['valid'] = true;
     // Not doing anything about multiple divs yet...
     // When we have multiple contentEditable elements within editor, we need to
     // make sure we selected something that isContentEditable. If we didn't
@@ -1374,21 +1371,15 @@ function _getMarkTypes() {
     const doc = view.state.doc;
     const selection = view.state.selection;
     const markTypes = new Set();
-    if (!selection.empty) {
-        doc.nodesBetween(selection.from, selection.to, node => {
-            if (node.isText) {
-                const nodeMarks = node.marks;
-                nodeMarks.forEach(mark => markTypes.add(mark.type));
-                return false;
-            } else {
-                return true;
-            };
-        });
-    } else {
-        const anchor = selection.$anchor;
-        const anchorMarks = anchor.parent.child(anchor.index()).marks;
-        anchorMarks.forEach(mark => markTypes.add(mark.type));
-    }
+    doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.isText) {
+            const nodeMarks = node.marks;
+            nodeMarks.forEach(mark => markTypes.add(mark.type));
+            return false;
+        } else {
+            return true;
+        };
+    });
     return markTypes;
 };
 

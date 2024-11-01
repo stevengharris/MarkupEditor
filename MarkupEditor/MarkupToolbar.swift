@@ -59,7 +59,7 @@ public struct MarkupToolbar: View {
                     }
                     .environmentObject(toolbarStyle)
                     .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                    .disabled(false)
+                    .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid || searchActive.value)
                 }
                 .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
                 if withKeyboardButton {
