@@ -18204,6 +18204,7 @@
    * Else, do nothing.
    *
    */
+  //TODO: Do the right thing for lists
   function outdent() {
       const selection = view.state.selection;
       let newState;
@@ -18217,6 +18218,11 @@
       view.updateState(newState);
       stateChanged();
   }
+  /********************************************************************************
+   * Deal with modal input from the Swift side
+   */
+  //MARK: Modal Input
+
   /**
    * Called before beginning a modal popover on the Swift side, to enable the selection
    * to be restored by endModalInput
