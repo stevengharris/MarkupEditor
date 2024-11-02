@@ -18117,8 +18117,10 @@
               });
           }        return true;        // Lists can nest, so we need to recurse
       });
-      view.updateState(newState);
-      stateChanged();
+      if (newState) {
+          view.updateState(newState);
+          stateChanged();
+      }
   }
   /**
    * Return the type of list the selection is in, else null.
@@ -18126,12 +18128,12 @@
    */
   function _getListType() {
       const selection = view.state.selection;
-      const ulType = view.state.schema.nodes.bullet_list;
-      const olType = view.state.schema.nodes.ordered_list;
+      const ul = view.state.schema.nodes.bullet_list;
+      const ol = view.state.schema.nodes.ordered_list;
       const nodeTypes = [];
       view.state.doc.nodesBetween(selection.from, selection.to, node => {
           if (node.isBlock) {
-              if ((node.type === ulType) || (node.type === olType)) { 
+              if ((node.type === ul) || (node.type === ol)) { 
                   nodeTypes.push(node.type);
               }
               return true;  // Lists can nest, so we need to recurse
@@ -18193,8 +18195,10 @@
               return true;
           }        return false;
       });
-      view.updateState(newState);
-      stateChanged();
+      if (newState) {
+          view.updateState(newState);
+          stateChanged();
+      }
   }
   /**
    * Do a context-sensitive outdent.
@@ -18207,16 +18211,21 @@
   //TODO: Do the right thing for lists
   function outdent() {
       const selection = view.state.selection;
+      const blockquote = view.state.schema.nodes.blockquote;
+      const ul = view.state.schema.nodes.bullet_list;
+      const ol = view.state.schema.nodes.ordered_list;
       let newState;
       view.state.doc.nodesBetween(selection.from, selection.to, node => {
-          if (node.type === view.state.schema.nodes.blockquote) {   
+          if ((node.type === blockquote) || (node.type == ul) || (node.type == ol)) {   
               lift$1(view.state, (transaction) => {
                   newState = view.state.apply(transaction);
               });
           }        return true;
       });
-      view.updateState(newState);
-      stateChanged();
+      if (newState) {
+          view.updateState(newState);
+          stateChanged();
+      }
   }
   /********************************************************************************
    * Deal with modal input from the Swift side
