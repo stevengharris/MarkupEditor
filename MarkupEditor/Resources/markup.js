@@ -17872,6 +17872,7 @@
           .scrollIntoView();
       const newState = state.apply(transaction);
       view.updateState(newState);
+      if (select) view.focus();
   }
   /**
    * Placeholder
@@ -18610,7 +18611,16 @@
           return doc.cut(selection.from, selection.to).content.textBetween(0, size)
       }}
   function _getSelectionRect() {
-      return view.coordsAtPos(view.state.tr.selection.$from.pos);
+      const selection = view.state.selection;
+      const fromCoords = view.coordsAtPos(selection.from);
+      if (selection.empty) return fromCoords;
+      // TODO: If selection spans lines, then left should be zero and right should be view width
+      const toCoords = view.coordsAtPos(selection.to);
+      const top = Math.min(fromCoords.top, toCoords.top);
+      const bottom = Math.max(fromCoords.bottom, toCoords.bottom);
+      const left = Math.min(fromCoords.left, toCoords.left);
+      const right = Math.max(fromCoords.right, toCoords.right);
+      return { top: top, bottom: bottom, left: left, right: right };
   }
   function _getMarkTypes() {
       const doc = view.state.doc;
