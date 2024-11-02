@@ -18518,8 +18518,8 @@
    */
   const _getSelectionState = function() {
       const state = {};
-      const selection = window.view.state.selection;
-      const schema = window.view.state.schema;
+      const selection = view.state.selection;
+      const schema = view.state.schema;
       state['valid'] = true;
       // Not doing anything about multiple divs yet...
       // When we have multiple contentEditable elements within editor, we need to
@@ -18541,9 +18541,9 @@
       //    return state;
       //};
       // Selected text
-      state['selection'] = selection.text;    // Wrong
+      state['selection'] = _getSelectionText();
       // The selrect tells us where the selection can be found
-      const selrect = _selrect();
+      const selrect = _getSelectionRect();
       const selrectDict = {
           'x' : selrect.left,
           'y' : selrect.top,
@@ -18600,7 +18600,16 @@
       return state;
   };
 
-  function _selrect() {
+  function _getSelectionText() {
+      const doc = view.state.doc;
+      const selection = view.state.selection;
+      if (selection.empty) {
+          return "";
+      } else {
+          const size = selection.to - selection.from + 1;
+          return doc.cut(selection.from, selection.to).content.textBetween(0, size)
+      }}
+  function _getSelectionRect() {
       return view.coordsAtPos(view.state.tr.selection.$from.pos);
   }
   function _getMarkTypes() {
