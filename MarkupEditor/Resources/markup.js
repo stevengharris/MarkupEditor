@@ -17994,7 +17994,7 @@
               toggle = toggleMark(state.schema.marks.s);
               break;
       }    if (toggle) {
-          toggle(state, window.view.dispatch);
+          toggle(state, view.dispatch);
       }}
   /********************************************************************************
    * Styling
@@ -18519,8 +18519,6 @@
    */
   const _getSelectionState = function() {
       const state = {};
-      const selection = view.state.selection;
-      const schema = view.state.schema;
       state['valid'] = true;
       // Not doing anything about multiple divs yet...
       // When we have multiple contentEditable elements within editor, we need to
@@ -18553,9 +18551,9 @@
       };
       state['selrect'] = selrectDict;
       // Link
-      //const linkAttributes = _getLinkAttributesAtSelection();
-      //state['href'] = linkAttributes['href'];
-      //state['link'] = linkAttributes['link'];
+      const linkAttributes = _getLinkAttributes();
+      state['href'] = linkAttributes['href'];
+      state['link'] = linkAttributes['link'];
       // Image
       //const imageAttributes = _getImageAttributes();
       //state['src'] = imageAttributes['src'];
@@ -18579,9 +18577,10 @@
       state['style'] = _getParagraphStyle();
       state['list'] = _getListType();
       state['li'] = state['list'] !== null;   // We are always in a li by definition for ProseMirror, right?
-      //state['quote'] = _firstSelectionTagMatching(['BLOCKQUOTE']).length > 0;
+      state['quote'] = _getIndented();
       // Format
       const markTypes = _getMarkTypes();
+      const schema = view.state.schema;
       state['bold'] = markTypes.has(schema.marks.strong);
       state['italic'] = markTypes.has(schema.marks.em);
       state['underline'] = markTypes.has(schema.marks.u);
@@ -18627,14 +18626,23 @@
       const selection = view.state.selection;
       const markTypes = new Set();
       doc.nodesBetween(selection.from, selection.to, node => {
-          if (node.isText) {
-              const nodeMarks = node.marks;
-              nodeMarks.forEach(mark => markTypes.add(mark.type));
-              return false;
-          } else {
-              return true;
-          }    });
+          node.marks.forEach(mark => markTypes.add(mark.type));
+      });
       return markTypes;
+  }
+  function _getLinkAttributes() {
+      const doc = view.state.doc;
+      const selection = view.state.selection;
+      const selectedNodes = [];
+      doc.nodesBetween(selection.from, selection.to, node => {
+          if (node.isText) selectedNodes.push(node);
+      });
+      const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
+      if (selectedNode) {
+          const linkMarks = selectedNode.marks.filter(mark => mark.type === view.state.schema.marks.link);
+          if (linkMarks.length === 1) {
+              return {href: linkMarks[0].attrs.href, link: selectedNode.text};
+          }    }    return {};
   }
   /**
    * Return the paragraph style at the selection.
@@ -18666,6 +18674,21 @@
               style = "H" + node.attrs.level;
               break;
       }    return style;
+  }
+  /**
+   * Return whether the selection is indented.
+   *
+   * @return {Boolean}   Whether the selection is in a blockquote.
+   */
+  function _getIndented() {
+      const selection = view.state.selection;
+      let indented = false;
+      view.state.doc.nodesBetween(selection.from, selection.to, node => {
+          if (node.type == view.state.schema.nodes.blockquote) { 
+              indented = true;
+          }        return false;   // We only need top-level nodes
+      });
+      return indented;
   }
   /**
    * Report a change coming from dispatchTransaction against the ProseMirror state 
@@ -18765,12 +18788,54 @@
    * @param {String}  url             The url/href to use for the link
    */
   function insertLink(url) {
-  }
+      const linkMark = view.state.schema.marks.link.create({ href: url });
+      const toggle = toggleMark(linkMark.type, linkMark.attrs);
+      if (toggle) {
+          toggle(view.state, view.dispatch);
+          stateChanged();
+      }}
   /**
-   * Remove the link at the selection.
+   * Remove the link at the selection, maintaining the same selection.
+   * 
+   * The selection can be at any point within the link or contain the full link, but cannot include 
+   * areas outside of the link.
    */
   function deleteLink() {
-  }
+      const linkType = view.state.schema.marks.link;
+      const selection = view.state.selection;
+
+      // Make sure the selection is in a single text node with a linkType Mark
+      const nodePos = [];
+      view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+          if (node.isText) {
+              nodePos.push({node: node, pos: pos});
+              return false;
+          }        return true;
+      });
+      if (nodePos.length !== 1) return;
+      const selectedNode = nodePos[0].node;
+      const selectedPos = nodePos[0].pos;
+      const linkMarks = selectedNode && selectedNode.marks.filter(mark => mark.type === linkType);
+      if (linkMarks.length !== 1) return;
+
+      // Select the entire text of selectedNode
+      const anchor = selectedPos;
+      const head = anchor + selectedNode.nodeSize;
+      const linkSelection = TextSelection.create(view.state.doc, anchor, head);
+      const transaction = view.state.tr.setSelection(linkSelection);
+      let state = view.state.apply(transaction);
+
+      // Then toggle the link off and reset the selection
+      const toggle = toggleMark(linkType);
+      if (toggle) {
+          toggle(state, (tr) => {
+              state = state.apply(tr);   // Toggle the link off
+              const textSelection = TextSelection.create(state.doc, selection.from, selection.to);
+              tr.setSelection(textSelection);
+              view.dispatch(tr);
+              stateChanged();
+          });
+      }}
   /********************************************************************************
    * Images
    */
