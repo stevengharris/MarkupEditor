@@ -1327,12 +1327,12 @@ const _getSelectionState = function() {
     state['href'] = linkAttributes['href'];
     state['link'] = linkAttributes['link'];
     // Image
-    //const imageAttributes = _getImageAttributes();
-    //state['src'] = imageAttributes['src'];
-    //state['alt'] = imageAttributes['alt'];
-    //state['width'] = imageAttributes['width'];
-    //state['height'] = imageAttributes['height'];
-    //state['scale'] = imageAttributes['scale'];
+    const imageAttributes = _getImageAttributes();
+    state['src'] = imageAttributes['src'];
+    state['alt'] = imageAttributes['alt'];
+    state['width'] = imageAttributes['width'];
+    state['height'] = imageAttributes['height'];
+    state['scale'] = imageAttributes['scale'];
     //// Table
     //const tableAttributes = _getTableAttributesAtSelection();
     //state['table'] = tableAttributes['table'];
@@ -1372,6 +1372,10 @@ const _getSelectionState = function() {
     return state;
 };
 
+/**
+ * Return the text at the selection.
+ * @returns {String} The text that is selected.
+ */
 function _getSelectionText() {
     const doc = view.state.doc;
     const selection = view.state.selection;
@@ -1383,6 +1387,10 @@ function _getSelectionText() {
     };
 };
 
+/**
+ * Return the rectangle that encloses the selection.
+ * @returns {Object} The selection rectangle's top, bottom, left, right.
+ */
 function _getSelectionRect() {
     const selection = view.state.selection;
     const fromCoords = view.coordsAtPos(selection.from);
@@ -1393,24 +1401,30 @@ function _getSelectionRect() {
     const bottom = Math.max(fromCoords.bottom, toCoords.bottom);
     const left = Math.min(fromCoords.left, toCoords.left);
     const right = Math.max(fromCoords.right, toCoords.right);
-    return { top: top, bottom: bottom, left: left, right: right };
+    return {top: top, bottom: bottom, left: left, right: right};
 };
 
+/**
+ * Return the MarkTypes that exist at the selection.
+ * @returns {Set<MarkType>}   The set of MarkTypes at the selection.
+ */
 function _getMarkTypes() {
-    const doc = view.state.doc;
     const selection = view.state.selection;
     const markTypes = new Set();
-    doc.nodesBetween(selection.from, selection.to, node => {
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
         node.marks.forEach(mark => markTypes.add(mark.type));
     });
     return markTypes;
 };
 
+/**
+ * Return the link attributes at the selection.
+ * @returns {Object}   An Object whose properties are <a> attributes (like href, link) at the selection.
+ */
 function _getLinkAttributes() {
-    const doc = view.state.doc;
     const selection = view.state.selection;
     const selectedNodes = [];
-    doc.nodesBetween(selection.from, selection.to, node => {
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
         if (node.isText) selectedNodes.push(node);
     });
     const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
@@ -1421,6 +1435,24 @@ function _getLinkAttributes() {
         };
     };
     return {};
+};
+
+/**
+ * Return the image attributes at the selection
+ * @returns {Object}   An Object whose properties are <img> attributes (like src, alt, width, height, scale) at the selection.
+ */
+function _getImageAttributes() {
+    const selection = view.state.selection;
+    const selectedNodes = [];
+    view.state.doc.nodesBetween(selection.from, selection.to, node => {
+        if (node.type === view.state.schema.nodes.image) {
+            selectedNodes.push(node);
+            return false;
+        };
+        return true;
+    });
+    const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
+    return selectedNode ? selectedNode.attrs : {};
 };
 
 /**

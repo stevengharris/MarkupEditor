@@ -82,18 +82,25 @@ export const nodes = {
     attrs: {
       src: {},
       alt: {default: null},
-      title: {default: null}
+      width: {default: null},
+      height: {default: null},
+      scale: {default: null}
     },
     group: "inline",
     draggable: true,
     parseDOM: [{tag: "img[src]", getAttrs(dom) {
+      const width = dom.getAttribute("width") && parseInt(dom.getAttribute("width"));
+      const height = dom.getAttribute("height") && parseInt(dom.getAttribute("height"));
+      const scale = (width && dom.naturalWidth) ? 100 * width / dom.naturalWidth : null;
       return {
         src: dom.getAttribute("src"),
-        title: dom.getAttribute("title"),
-        alt: dom.getAttribute("alt")
+        alt: dom.getAttribute("alt"),
+        width: width,
+        height: height,
+        scale: scale
       }
     }}],
-    toDOM(node) { let {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
+    toDOM(node) { let {src, alt, width, height, scale} = node.attrs; return ["img", {src, alt, width, height, scale}] }
   },
 
   // :: NodeSpec A hard line break, represented in the DOM as `<br>`.

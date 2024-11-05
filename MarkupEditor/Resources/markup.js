@@ -12574,18 +12574,25 @@
       attrs: {
         src: {},
         alt: {default: null},
-        title: {default: null}
+        width: {default: null},
+        height: {default: null},
+        scale: {default: null}
       },
       group: "inline",
       draggable: true,
       parseDOM: [{tag: "img[src]", getAttrs(dom) {
+        const width = dom.getAttribute("width") && parseInt(dom.getAttribute("width"));
+        const height = dom.getAttribute("height") && parseInt(dom.getAttribute("height"));
+        const scale = (width && dom.naturalWidth) ? 100 * width / dom.naturalWidth : null;
         return {
           src: dom.getAttribute("src"),
-          title: dom.getAttribute("title"),
-          alt: dom.getAttribute("alt")
+          alt: dom.getAttribute("alt"),
+          width: width,
+          height: height,
+          scale: scale
         }
       }}],
-      toDOM(node) { let {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
+      toDOM(node) { let {src, alt, width, height, scale} = node.attrs; return ["img", {src, alt, width, height, scale}] }
     },
 
     // :: NodeSpec A hard line break, represented in the DOM as `<br>`.
@@ -18555,12 +18562,12 @@
       state['href'] = linkAttributes['href'];
       state['link'] = linkAttributes['link'];
       // Image
-      //const imageAttributes = _getImageAttributes();
-      //state['src'] = imageAttributes['src'];
-      //state['alt'] = imageAttributes['alt'];
-      //state['width'] = imageAttributes['width'];
-      //state['height'] = imageAttributes['height'];
-      //state['scale'] = imageAttributes['scale'];
+      const imageAttributes = _getImageAttributes();
+      state['src'] = imageAttributes['src'];
+      state['alt'] = imageAttributes['alt'];
+      state['width'] = imageAttributes['width'];
+      state['height'] = imageAttributes['height'];
+      state['scale'] = imageAttributes['scale'];
       //// Table
       //const tableAttributes = _getTableAttributesAtSelection();
       //state['table'] = tableAttributes['table'];
@@ -18600,6 +18607,10 @@
       return state;
   };
 
+  /**
+   * Return the text at the selection.
+   * @returns {String} The text that is selected.
+   */
   function _getSelectionText() {
       const doc = view.state.doc;
       const selection = view.state.selection;
@@ -18609,6 +18620,10 @@
           const size = selection.to - selection.from + 1;
           return doc.cut(selection.from, selection.to).content.textBetween(0, size)
       }}
+  /**
+   * Return the rectangle that encloses the selection.
+   * @returns {Object} The selection rectangle's top, bottom, left, right.
+   */
   function _getSelectionRect() {
       const selection = view.state.selection;
       const fromCoords = view.coordsAtPos(selection.from);
@@ -18619,22 +18634,28 @@
       const bottom = Math.max(fromCoords.bottom, toCoords.bottom);
       const left = Math.min(fromCoords.left, toCoords.left);
       const right = Math.max(fromCoords.right, toCoords.right);
-      return { top: top, bottom: bottom, left: left, right: right };
+      return {top: top, bottom: bottom, left: left, right: right};
   }
+  /**
+   * Return the MarkTypes that exist at the selection.
+   * @returns {Set<MarkType>}   The set of MarkTypes at the selection.
+   */
   function _getMarkTypes() {
-      const doc = view.state.doc;
       const selection = view.state.selection;
       const markTypes = new Set();
-      doc.nodesBetween(selection.from, selection.to, node => {
+      view.state.doc.nodesBetween(selection.from, selection.to, node => {
           node.marks.forEach(mark => markTypes.add(mark.type));
       });
       return markTypes;
   }
+  /**
+   * Return the link attributes at the selection.
+   * @returns {Object}   An Object whose properties are <a> attributes (like href, link) at the selection.
+   */
   function _getLinkAttributes() {
-      const doc = view.state.doc;
       const selection = view.state.selection;
       const selectedNodes = [];
-      doc.nodesBetween(selection.from, selection.to, node => {
+      view.state.doc.nodesBetween(selection.from, selection.to, node => {
           if (node.isText) selectedNodes.push(node);
       });
       const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
@@ -18643,6 +18664,22 @@
           if (linkMarks.length === 1) {
               return {href: linkMarks[0].attrs.href, link: selectedNode.text};
           }    }    return {};
+  }
+  /**
+   * Return the image attributes at the selection
+   * @returns {Object}   An Object whose properties are <img> attributes (like src, alt, width, height, scale) at the selection.
+   */
+  function _getImageAttributes() {
+      const selection = view.state.selection;
+      const selectedNodes = [];
+      view.state.doc.nodesBetween(selection.from, selection.to, node => {
+          if (node.type === view.state.schema.nodes.image) {
+              selectedNodes.push(node);
+              return false;
+          }        return true;
+      });
+      const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
+      return selectedNode ? selectedNode.attrs : {};
   }
   /**
    * Return the paragraph style at the selection.
