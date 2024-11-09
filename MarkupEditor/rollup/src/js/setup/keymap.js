@@ -3,6 +3,7 @@ import {wrapIn, setBlockType, chainCommands, toggleMark, exitCode,
 import {wrapInList, splitListItem, liftListItem, sinkListItem} from "prosemirror-schema-list"
 import {undo, redo} from "prosemirror-history"
 import {undoInputRule} from "prosemirror-inputrules"
+import {goToNextCell} from 'prosemirror-tables';
 
 const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false
 
@@ -107,6 +108,10 @@ export function buildKeymap(schema, mapKeys) {
       dispatch(state.tr.replaceSelectionWith(hr.create()).scrollIntoView())
       return true
     })
+  }
+  if (type = schema.nodes.table) {
+    bind('Tab', goToNextCell(1))
+    bind('Shift-Tab', goToNextCell(-1))
   }
 
   return keys

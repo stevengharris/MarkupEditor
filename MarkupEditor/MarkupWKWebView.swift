@@ -1015,7 +1015,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func deleteRow(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.deleteRow()") { result, error in handler?() }
+        evaluateJavaScript("MU.deleteTableArea('ROW')") { result, error in handler?() }
     }
     
     public func addCol(_ direction: TableDirection, handler: (()->Void)? = nil) {
@@ -1028,7 +1028,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func deleteCol(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.deleteCol()") { result, error in handler?() }
+        evaluateJavaScript("MU.deleteTableArea('COL')") { result, error in handler?() }
     }
     
     public func addHeader(colspan: Bool = true, handler: (()->Void)? = nil) {
@@ -1036,7 +1036,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func deleteTable(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.deleteTable()") { result, error in handler?() }
+        evaluateJavaScript("MU.deleteTableArea('TABLE')") { result, error in handler?() }
     }
     
     public func borderTable(_ border: TableBorder, handler: (()->Void)? = nil) {

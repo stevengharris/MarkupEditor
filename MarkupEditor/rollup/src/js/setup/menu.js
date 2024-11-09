@@ -3,6 +3,19 @@ import {wrapItem, blockTypeItem, Dropdown, DropdownSubmenu, joinUpItem, liftItem
 import {NodeSelection} from "prosemirror-state"
 import {toggleMark} from "prosemirror-commands"
 import {wrapInList} from "prosemirror-schema-list"
+import {
+  addColumnAfter,
+  addColumnBefore,
+  deleteColumn,
+  addRowAfter,
+  addRowBefore,
+  deleteRow,
+  mergeCells,
+  splitCell,
+  toggleHeaderRow,
+  deleteTable,
+} from 'prosemirror-tables'
+
 import {TextField, openPrompt} from "./prompt"
 
 // Helpers to create specific types of items
@@ -100,6 +113,15 @@ function linkItem(markType) {
 
 function wrapListItem(nodeType, options) {
   return cmdItem(wrapInList(nodeType, options.attrs), options)
+}
+
+function tableItem(title, command) {
+  return new MenuItem({
+    title: title,
+    label: title,
+    enable() { return true },  // TODO: Fix
+    run(state, dispatch) { command(state, dispatch) }
+  })
 }
 
 // :: (Schema) → Object
@@ -218,17 +240,40 @@ export function buildMenuItems(schema) {
       run(state, dispatch) { dispatch(state.tr.replaceSelectionWith(hr.create())) }
     })
   }
+  if (type = schema.nodes.table) {
+    r.addColumnBefore = tableItem('Insert column before', addColumnBefore)
+    r.addColumnAfter = tableItem('Insert column after', addColumnAfter)
+    r.deleteColumn = tableItem('Delete column', deleteColumn)
+    r.addRowBefore = tableItem('Insert row before', addRowBefore)
+    r.addRowAfter = tableItem('Insert row after', addRowAfter)
+    r.deleteRow = tableItem('Delete row', deleteRow)
+    r.deleteTable = tableItem('Delete table', deleteTable)
+    r.mergeCells = tableItem('Merge cells', mergeCells)
+    r.splitCell = tableItem('Split cell', splitCell)
+    r.toggleHeaderRow = tableItem('Toggle header row', toggleHeaderRow)
+  }
 
   let cut = arr => arr.filter(x => x)
   r.insertMenu = new Dropdown(cut([r.insertImage, r.insertHorizontalRule]), {label: "Insert"})
   r.typeMenu = new Dropdown(cut([r.makeParagraph, r.makeCodeBlock, r.makeHead1 && new DropdownSubmenu(cut([
     r.makeHead1, r.makeHead2, r.makeHead3, r.makeHead4, r.makeHead5, r.makeHead6
   ]), {label: "Heading"})]), {label: "Type..."})
+  r.tableMenu = new Dropdown(cut([
+    r.addColumnBefore, 
+    r.addColumnAfter, 
+    r.deleteColumn, 
+    r.addRowBefore, 
+    r.addRowAfter, 
+    r.deleteRow, 
+    r.deleteTable, 
+    r.mergeCells, 
+    r.splitCell, 
+    r.toggleHeaderRow]), { label: 'Table' });
 
   r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleU, r.toggleCode, r.toggleS, r.toggleLink])]
   r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, r.wrapBlockQuote, joinUpItem,
                       liftItem, selectParentNodeItem])]
-  r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu]], [[undoItem, redoItem]], r.blockMenu)
+  r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu, r.tableMenu]], [[undoItem, redoItem]], r.blockMenu)
 
   return r
 }

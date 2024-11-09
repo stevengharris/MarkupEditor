@@ -62,9 +62,7 @@ import {
   addRow,
   addCol,
   addHeader,
-  deleteTable,
-  deleteRow,
-  deleteCol,
+  deleteTableArea,
   borderTable,
 } from "./markup.js"
 
@@ -124,9 +122,7 @@ export {
   addRow,
   addCol,
   addHeader,
-  deleteTable,
-  deleteRow,
-  deleteCol,
+  deleteTableArea,
   borderTable,
 }
 

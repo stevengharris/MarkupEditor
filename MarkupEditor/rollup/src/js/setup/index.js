@@ -4,8 +4,9 @@ import {baseKeymap} from "prosemirror-commands"
 import {Plugin} from "prosemirror-state"
 import {dropCursor} from "prosemirror-dropcursor"
 import {gapCursor} from "prosemirror-gapcursor"
-import {menuBar} from "../menu/menubar"
+import {tableEditing} from 'prosemirror-tables'
 
+import {menuBar} from "../menu/menubar"
 import {buildMenuItems} from "./menu"
 import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
@@ -62,6 +63,7 @@ export function markupSetup(options) {
   if (options.history !== false)
     plugins.push(history())
 
+  plugins.push(tableEditing(false));
   return plugins.concat(new Plugin({
     props: {
       attributes: {class: "ProseMirror-example-setup-style"}

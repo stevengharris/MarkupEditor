@@ -8,6 +8,17 @@ import {AllSelection, TextSelection, NodeSelection} from 'prosemirror-state'
 import {DOMParser, DOMSerializer, NodeType} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
 import {wrapInList, liftListItem} from 'prosemirror-schema-list'
+import {
+    addRowBefore, 
+    addRowAfter, 
+    addColumnBefore, 
+    addColumnAfter, 
+    deleteRow, 
+    deleteColumn, 
+    deleteTable, 
+    CellSelection, 
+    mergeCells,
+} from 'prosemirror-tables'
 
 const minImageSize = 20;
 
@@ -584,6 +595,7 @@ export function padBottom(fullHeight) {
  * Focus immediately, leaving range alone
  */
 export function focus() {
+    view.focus()
 };
 
 /**
@@ -1334,17 +1346,15 @@ const _getSelectionState = function() {
     state['height'] = imageAttributes['height'];
     state['scale'] = imageAttributes['scale'];
     //// Table
-    //const tableAttributes = _getTableAttributesAtSelection();
-    //state['table'] = tableAttributes['table'];
-    //state['thead'] = tableAttributes['thead'];
-    //state['tbody'] = tableAttributes['tbody'];
-    //state['header'] = tableAttributes['header'];
-    //state['colspan'] = tableAttributes['colspan'];
-    //state['rows'] = tableAttributes['rows'];
-    //state['cols'] = tableAttributes['cols'];
-    //state['row'] = tableAttributes['row'];
-    //state['col'] = tableAttributes['col'];
-    //state['border'] = tableAttributes['border']
+    const tableAttributes = _getTableAttributes();
+    state['table'] = tableAttributes.table;
+    state['header'] = tableAttributes.header;
+    state['colspan'] = tableAttributes.colspan;
+    state['rows'] = tableAttributes.rows;
+    state['cols'] = tableAttributes.cols;
+    state['row'] = tableAttributes.row;
+    state['col'] = tableAttributes.col;
+    state['border'] = tableAttributes.border
     //// Style
     state['style'] = _getParagraphStyle();
     state['list'] = _getListType();
@@ -1454,6 +1464,71 @@ function _getImageAttributes() {
     const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
     return selectedNode ? selectedNode.attrs : {};
 };
+
+/**
+ * If the selection is inside a table, populate attributes with the information
+ * about the table and what is selected in it.
+ * 
+ * In the MarkupEditor, if there is a header, it is always colspanned across the number 
+ * of columns, and normal rows are never colspanned.
+ *
+ * @returns {Object}   An object with properties populated that are consumable in Swift.
+ */
+function _getTableAttributes() {
+    const selection = view.state.selection;
+    const nodeTypes = view.state.schema.nodes;
+    const attributes = {};
+    view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        let $pos = view.state.doc.resolve(pos);
+        switch (node.type) {
+            case nodeTypes.table:
+                attributes.table = true;
+                attributes.tableStart = pos;
+                attributes.tableEnd = pos + node.nodeSize;
+                // Determine the shape of the table. Altho the selection is within a table, 
+                // the node.type switching above won't include a table_header unless the 
+                // selection is within the header itself. For this reason, we need to look 
+                // for the table_header by looking at nodesBetween tableStart and tableEnd.
+                attributes.rows = node.childCount;
+                attributes.cols = 0;
+                view.state.doc.nodesBetween(attributes.tableStart, attributes.tableEnd, (node) => {
+                    switch (node.type) {
+                        case nodeTypes.table_header:
+                            attributes.colspan = node.attrs.colspan;
+                            if (attributes.colspan) {
+                                attributes.cols = Math.max(attributes.cols, attributes.colspan);
+                            } else {
+                                attributes.cols = Math.max(attributes.cols, node.childCount);
+                            };
+                            return false;
+                        case nodeTypes.table_row:
+                            attributes.cols = Math.max(attributes.cols, node.childCount);
+                            return true;
+                    };
+                    return true;
+                });
+                // And its border settings
+                attributes.border = _getBorder(node);
+                return true;
+            case nodeTypes.table_header:
+                attributes.thead = true;                        // We selected the header
+                attributes.tbody = false;
+                attributes.row = $pos.index();
+                attributes.col = 0;                             // Headers are always colspanned, so col=0
+                return true;
+            case nodeTypes.table_row:
+                attributes.row = $pos.index();
+                return true;
+            case nodeTypes.table_cell:
+                attributes.tbody = true;                        // We selected the body
+                attributes.thead = false;
+                attributes.col = $pos.index();    // We selected a body cell
+                return false;
+        };
+        return true;
+    });
+   return attributes;
+}
 
 /**
  * Return the paragraph style at the selection.
@@ -1745,23 +1820,11 @@ function _prepImage(img) {
 
 /**
  * Insert an empty table with the specified number of rows and cols.
- * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupSelection so that range can be restored prior
- * to the insert* operation.
- * We leave the selection in the first cell of the first row.
- * The operation will cause a selectionChange event.
  *
  * @param   {Int}                 rows        The number of rows in the table to be created.
  * @param   {Int}                 cols        The number of columns in the table to be created.
- * @return  {HTML Table Element}              The table element that was created, used for undo/redo.
  */
 export function insertTable(rows, cols) {
-};
-
-/**
- * Delete the entire table at the selection.
- */
-export function deleteTable() {
 };
 
 /**
@@ -1771,41 +1834,189 @@ export function deleteTable() {
  * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
  */
 export function addRow(direction) {
+    if (_tableSelected()) {
+        if (direction === 'BEFORE') {
+            addRowBefore(view.state, view.dispatch);
+        } else {
+            addRowAfter(view.state, view.dispatch);
+        };
+        view.focus();
+        stateChanged();
+    };
 };
 
 /**
  * Add a column before or after the current selection, whether it's in the header or body.
+ * 
+ * In MarkupEditor, the header is always colspanned fully, so we need to merge the headers if adding 
+ * a column in created a new element in the header row.
  *
  * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new column goes relative to the selection.
  */
 export function addCol(direction) {
+    if (_tableSelected()) {
+        if (direction === 'BEFORE') {
+            addColumnBefore(view.state, view.dispatch);
+        } else {
+            addColumnAfter(view.state, view.dispatch);
+        };
+        _mergeHeaders();
+        view.focus();
+        stateChanged();
+    };
 };
 
 /**
  * Add a header to the table at the selection.
  *
- * @param {Boolean} colspan     Whether the header should span all columns of the table or not.
+ * @param {boolean} colspan     Whether the header should span all columns of the table or not.
  */
 export function addHeader(colspan=true) {
 };
 
 /**
+ * Delete the area at the table selection, either the row, col, or the entire table.
+ * @param {'ROW' | 'COL' | 'TABLE'} area The area of the table to be deleted.
+ */
+export function deleteTableArea(area) {
+    if (!_tableSelected()) return;
+    switch (area) {
+        case 'ROW':
+            _deleteRow();
+            break;
+        case 'COL':
+            _deleteCol()
+            break;
+        case 'TABLE':
+            _deleteTable();
+            break;
+    };
+};
+
+/**
  * Delete the row at the selection point in the table.
  */
-export function deleteRow() {
+function _deleteRow() {
+    deleteRow(view.state, view.dispatch);
+    view.focus();
+    stateChanged();
 };
 
 /**
  * Delete the column at the selection point in the table.
  */
-export function deleteCol() {
+function _deleteCol() {
+    deleteColumn(view.state, view.dispatch);
+    view.focus();
+    stateChanged();
 };
+
+function _deleteTable() {
+    deleteTable(view.state, view.dispatch);
+    view.focus();
+    stateChanged();
+}
 
 /**
  * Set the class of the table to style it using CSS.
  * The default draws a border around everything.
  */
 export function borderTable(border) {
+    if (_tableSelected()) {
+        _setBorder(border);
+    }
+};
+
+/**
+ * Return whether the selection is within a table.
+ * @returns {boolean} True if the selection is within a table
+ */
+function _tableSelected() {
+    return _getTableAttributes().table;
+};
+
+/**
+ * Merge any extra headers created after inserting a column.
+ * 
+ * When inserting at the left or right column of a table, the addColumnBefore and 
+ * addColumnAfter also insert a new cell/td within the header row. Since in 
+ * the MarkupEditor, the row is always colspanned across all columns, we need to 
+ * merge the cells together when this happens. The operations that insert internal 
+ * columns don't cause the header row to have a new cell.
+ */
+function _mergeHeaders() {
+    const selection = view.state.selection;
+    const tableAttributes = _getTableAttributes();
+    const headers = [];
+    view.state.doc.nodesBetween(tableAttributes.tableStart, tableAttributes.tableEnd, (node, pos) => {
+        switch (node.type) {
+            case view.state.schema.nodes.table_header:
+                headers.push(pos)
+                return false;
+        };
+        return true;
+    });
+    if (headers.length > 1) {
+        const firstHeaderPos = headers[0];
+        const lastHeaderPos = headers[headers.length - 1];
+        const delta = lastHeaderPos - firstHeaderPos;
+        const rowSelection = CellSelection.create(view.state.doc, firstHeaderPos, lastHeaderPos);
+        const transaction = view.state.tr.setSelection(rowSelection);
+        let state = view.state.apply(transaction);
+        mergeCells(state, (tr) => {
+            state = state.apply(tr);   // Merge the cells in the header row
+            // And then reselect what was selected before
+            const textSelection = TextSelection.create(state.doc, selection.from - delta, selection.to - delta);
+            tr.setSelection(textSelection);
+            view.dispatch(tr);
+        });
+    };
+};
+
+function _setBorder(border) {
+    //TODO: Fix
+    /*
+    switch (border) {
+        case 'outer':
+            table.setAttribute('class', 'bordered-table-outer');
+            break;
+        case 'header':
+            table.setAttribute('class', 'bordered-table-header');
+            break;
+        case 'cell':
+            table.setAttribute('class', 'bordered-table-cell');
+            break;
+        case 'none':
+            table.setAttribute('class', 'bordered-table-none');
+            break;
+        default:
+            table.removeAttribute('class');
+            break;
+    };
+    */
+};
+
+function _getBorder(tableNode) {
+    const borderClass = 'bordered-table-cell'; // TODO: Hardcoded for now
+    let border;
+    switch (borderClass) {
+        case 'bordered-table-outer':
+            border = 'outer';
+            break;
+        case 'bordered-table-header':
+            border = 'header';
+            break;
+        case 'bordered-table-cell':
+            border = 'cell';
+            break;
+        case 'bordered-table-none':
+            border = 'none';
+            break;
+        default:
+            border = 'cell';
+            break;
+    };
+    return border;
 };
 
 /********************************************************************************
