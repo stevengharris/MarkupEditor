@@ -20073,7 +20073,33 @@
    * @param   {Int}                 cols        The number of columns in the table to be created.
    */
   function insertTable(rows, cols) {
-  }
+      let state = view.state;
+      // Create a table with a single empty cell
+      const paragraph = state.schema.node('paragraph');
+      const cell = state.schema.nodes.table_cell.create(null, paragraph);
+      const row = state.schema.nodes.table_row.create(null, cell);
+      const table = state.schema.nodes.table.createChecked(null, row);
+      if (!table) return;     // Something went wrong, like we tried to insert it at a disallowed spot
+      // Replace the existing selection range and track the transaction
+      const transaction = state.tr.replaceRangeWith(state.selection.from, state.selection.to, table);
+      // Locate the parargraph position in the transaction's doc
+      let pPos;
+      transaction.doc.nodesBetween(state.selection.from, state.selection.from + table.nodeSize, (node, pos) => {
+          if (node.type == paragraph.type) {
+              pPos = pos;
+              return false;
+          }        return true;
+      });
+      // Set the selection in the empty cell, apply it to the state and dispatch to the view
+      transaction.setSelection(new TextSelection(transaction.doc.resolve(pPos)));
+      state = state.apply(transaction);
+      view.dispatch(transaction);
+      // The selection is in the one empty cell, so add new rows/columns in the view
+      for (let j = 0; j < rows - 1; j++) {
+          addRowAfter(view.state, view.dispatch);
+      }    for (let i = 0; i < cols - 1; i++) {
+          addColumnAfter(view.state, view.dispatch);
+      }}
   /**
    * Add a row before or after the current selection, whether it's in the header or body.
    * For rows, AFTER = below; otherwise above.
