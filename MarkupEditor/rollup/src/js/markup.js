@@ -18,6 +18,7 @@ import {
     deleteTable, 
     CellSelection, 
     mergeCells,
+    toggleHeaderRow,
 } from 'prosemirror-tables'
 
 const minImageSize = 20;
@@ -1348,6 +1349,8 @@ const _getSelectionState = function() {
     //// Table
     const tableAttributes = _getTableAttributes();
     state['table'] = tableAttributes.table;
+    state['thead'] = tableAttributes.thead;
+    state['tbody'] = tableAttributes.tbody;
     state['header'] = tableAttributes.header;
     state['colspan'] = tableAttributes.colspan;
     state['rows'] = tableAttributes.rows;
@@ -1483,17 +1486,18 @@ function _getTableAttributes() {
         switch (node.type) {
             case nodeTypes.table:
                 attributes.table = true;
-                attributes.tableStart = pos;
-                attributes.tableEnd = pos + node.nodeSize;
+                attributes.from = pos;
+                attributes.to = pos + node.nodeSize;
                 // Determine the shape of the table. Altho the selection is within a table, 
                 // the node.type switching above won't include a table_header unless the 
                 // selection is within the header itself. For this reason, we need to look 
-                // for the table_header by looking at nodesBetween tableStart and tableEnd.
+                // for the table_header by looking at nodesBetween from and to.
                 attributes.rows = node.childCount;
                 attributes.cols = 0;
-                view.state.doc.nodesBetween(attributes.tableStart, attributes.tableEnd, (node) => {
+                view.state.doc.nodesBetween(attributes.from, attributes.to, (node) => {
                     switch (node.type) {
                         case nodeTypes.table_header:
+                            attributes.header = true;
                             attributes.colspan = node.attrs.colspan;
                             if (attributes.colspan) {
                                 attributes.cols = Math.max(attributes.cols, attributes.colspan);
@@ -1513,16 +1517,16 @@ function _getTableAttributes() {
             case nodeTypes.table_header:
                 attributes.thead = true;                        // We selected the header
                 attributes.tbody = false;
-                attributes.row = $pos.index();
-                attributes.col = 0;                             // Headers are always colspanned, so col=0
+                attributes.row = $pos.index() + 1;              // The row will be 1 by definition
+                attributes.col = 1;                             // Headers are always colspanned, so col=1
                 return true;
             case nodeTypes.table_row:
-                attributes.row = $pos.index();
+                attributes.row = $pos.index() + 1;              // We are in some row, but could be the header row
                 return true;
             case nodeTypes.table_cell:
                 attributes.tbody = true;                        // We selected the body
                 attributes.thead = false;
-                attributes.col = $pos.index();    // We selected a body cell
+                attributes.col = $pos.index() + 1;              // We selected a body cell
                 return false;
         };
         return true;
@@ -1826,18 +1830,20 @@ function _prepImage(img) {
  */
 export function insertTable(rows, cols) {
     let state = view.state;
+    const selection = state.selection;
+    const nodeTypes = state.schema.nodes;
     // Create a table with a single empty cell
     const paragraph = state.schema.node('paragraph');
-    const cell = state.schema.nodes.table_cell.create(null, paragraph);
-    const row = state.schema.nodes.table_row.create(null, cell);
-    const table = state.schema.nodes.table.createChecked(null, row);
+    const cell = nodeTypes.table_cell.create(null, paragraph);
+    const row = nodeTypes.table_row.create(null, cell);
+    const table = nodeTypes.table.createChecked(null, row);
     if (!table) return;     // Something went wrong, like we tried to insert it at a disallowed spot
     // Replace the existing selection range and track the transaction
-    const transaction = state.tr.replaceRangeWith(state.selection.from, state.selection.to, table);
-    // Locate the parargraph position in the transaction's doc
+    const transaction = state.tr.replaceRangeWith(selection.from, selection.to, table);
+    // Locate the paragraph position in the transaction's doc
     let pPos;
-    transaction.doc.nodesBetween(state.selection.from, state.selection.from + table.nodeSize, (node, pos) => {
-        if (node.type == paragraph.type) {
+    transaction.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
+        if (node.type === paragraph.type) {
             pPos = pos;
             return false;
         };
@@ -1845,7 +1851,7 @@ export function insertTable(rows, cols) {
     });
     // Set the selection in the empty cell, apply it to the state and dispatch to the view
     transaction.setSelection(new TextSelection(transaction.doc.resolve(pPos)));
-    state = state.apply(transaction);
+    state.apply(transaction);
     view.dispatch(transaction);
     // The selection is in the one empty cell, so add new rows/columns in the view
     for (let j = 0; j < rows - 1; j++) {
@@ -1863,15 +1869,14 @@ export function insertTable(rows, cols) {
  * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
  */
 export function addRow(direction) {
-    if (_tableSelected()) {
-        if (direction === 'BEFORE') {
-            addRowBefore(view.state, view.dispatch);
-        } else {
-            addRowAfter(view.state, view.dispatch);
-        };
-        view.focus();
-        stateChanged();
+    if (!_tableSelected()) return;
+    if (direction === 'BEFORE') {
+        addRowBefore(view.state, view.dispatch);
+    } else {
+        addRowAfter(view.state, view.dispatch);
     };
+    view.focus();
+    stateChanged();
 };
 
 /**
@@ -1883,16 +1888,15 @@ export function addRow(direction) {
  * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new column goes relative to the selection.
  */
 export function addCol(direction) {
-    if (_tableSelected()) {
-        if (direction === 'BEFORE') {
-            addColumnBefore(view.state, view.dispatch);
-        } else {
-            addColumnAfter(view.state, view.dispatch);
-        };
-        _mergeHeaders();
-        view.focus();
-        stateChanged();
+    if (!_tableSelected()) return;
+    if (direction === 'BEFORE') {
+        addColumnBefore(view.state, view.dispatch);
+    } else {
+        addColumnAfter(view.state, view.dispatch);
     };
+    _mergeHeaders();
+    view.focus();
+    stateChanged();
 };
 
 /**
@@ -1901,6 +1905,18 @@ export function addCol(direction) {
  * @param {boolean} colspan     Whether the header should span all columns of the table or not.
  */
 export function addHeader(colspan=true) {
+    const tableAttributes = _getTableAttributes();
+    if (!tableAttributes.table || tableAttributes.header) return;   // We're not in a table or we are but it has a header already
+    _selectInFirstCell();
+    addRowBefore(view.state, view.dispatch);
+    _selectInFirstCell();
+    toggleHeaderRow(view.state, view.dispatch);
+    if (colspan) {
+        _mergeHeaders();
+        _selectInFirstCell();
+    };
+    view.focus();
+    stateChanged();
 };
 
 /**
@@ -1911,40 +1927,18 @@ export function deleteTableArea(area) {
     if (!_tableSelected()) return;
     switch (area) {
         case 'ROW':
-            _deleteRow();
+            deleteRow(view.state, view.dispatch);
             break;
         case 'COL':
-            _deleteCol()
+            deleteColumn(view.state, view.dispatch);
             break;
         case 'TABLE':
-            _deleteTable();
+            deleteTable(view.state, view.dispatch);
             break;
     };
-};
-
-/**
- * Delete the row at the selection point in the table.
- */
-function _deleteRow() {
-    deleteRow(view.state, view.dispatch);
     view.focus();
     stateChanged();
 };
-
-/**
- * Delete the column at the selection point in the table.
- */
-function _deleteCol() {
-    deleteColumn(view.state, view.dispatch);
-    view.focus();
-    stateChanged();
-};
-
-function _deleteTable() {
-    deleteTable(view.state, view.dispatch);
-    view.focus();
-    stateChanged();
-}
 
 /**
  * Set the class of the table to style it using CSS.
@@ -1965,6 +1959,39 @@ function _tableSelected() {
 };
 
 /**
+ * Set the selection to the first text in the first paragraph of the table or 
+ * do nothing if we can't.
+ */
+function _selectInFirstCell() {
+    const tableAttributes = _getTableAttributes();
+    if (!tableAttributes.table) return;
+    const nodeTypes = view.state.schema.nodes; 
+    // Find the position of the first paragraph in the table
+    let pPos;
+    view.state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+        if ((!pPos) && (node.type === nodeTypes.paragraph)) {
+            pPos = pos;
+            return false;
+        }
+        return true;
+    });
+    if (!pPos) return;
+    // Set the selection in the first paragraph in the first cell
+    const $pos = view.state.doc.resolve(pPos);
+    // When the first cell is an empty colspanned header, the $pos resolves to a table_cell,
+    // so we need to use NodeSelection in that case.
+    let selection;
+    if ($pos.node().type === nodeTypes.table_cell) {
+        selection = new NodeSelection($pos);
+    } else {
+        selection = new TextSelection($pos);
+    };
+    const transaction = view.state.tr.setSelection(selection);
+    view.state.apply(transaction);
+    view.dispatch(transaction);
+};
+
+/**
  * Merge any extra headers created after inserting a column.
  * 
  * When inserting at the left or right column of a table, the addColumnBefore and 
@@ -1977,7 +2004,7 @@ function _mergeHeaders() {
     const selection = view.state.selection;
     const tableAttributes = _getTableAttributes();
     const headers = [];
-    view.state.doc.nodesBetween(tableAttributes.tableStart, tableAttributes.tableEnd, (node, pos) => {
+    view.state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
         switch (node.type) {
             case view.state.schema.nodes.table_header:
                 headers.push(pos)
