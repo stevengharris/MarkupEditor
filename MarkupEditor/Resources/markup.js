@@ -19785,7 +19785,7 @@
                       }                    return true;
                   });
                   // And its border settings
-                  attributes.border = _getBorder();
+                  attributes.border = _getBorder(node);
                   return true;
               case nodeTypes.table_header:
                   attributes.thead = true;                        // We selected the header
@@ -20180,7 +20180,9 @@
    * The default draws a border around everything.
    */
   function borderTable(border) {
-      if (_tableSelected()) ;
+      if (_tableSelected()) {
+          _setBorder(border);
+      }
   }
   /**
    * Return whether the selection is within a table.
@@ -20190,7 +20192,7 @@
       return _getTableAttributes().table;
   }
   /**
-   * Set the selection to the first text in the first paragraph of the table or 
+   * Set the selection to the first cell of the table or 
    * do nothing if we can't.
    */
   function _selectInFirstCell() {
@@ -20255,10 +20257,42 @@
               view.dispatch(tr);
           });
       }}
-  function _getBorder(tableNode) {
-      const borderClass = 'bordered-table-cell'; // TODO: Hardcoded for now
+  function _setBorder(border) {
+      const selection = view.state.selection;
+      let table, tPos;
+      view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+          if (node.type === view.state.schema.nodes.table) {
+              table = node;
+              tPos = pos;
+              return false;
+          }        return true;
+      });
+      if (!table) return;
+      switch (border) {
+          case 'outer':
+              table.attrs.class = 'bordered-table-outer';
+              break;
+          case 'header':
+              table.attrs.class = 'bordered-table-header';
+              break;
+          case 'cell':
+              table.attrs.class = 'bordered-table-cell';
+              break;
+          case 'none':
+              table.attrs.class = 'bordered-table-none';
+              break;
+          default:
+              table.attrs.class = 'bordered-table-cell';
+              break;
+      }    const transaction = view.state.tr.setNodeMarkup(tPos, table.type, table.attrs);
+      const newState = view.state.apply(transaction);
+      view.updateState(newState);
+      view.focus();
+      stateChanged();
+  }
+  function _getBorder(table) {
       let border;
-      switch (borderClass) {
+      switch (table.attrs.class) {
           case 'bordered-table-outer':
               border = 'outer';
               break;
@@ -20347,36 +20381,55 @@
       return node && (node.nodeName === 'A');
   }
 
-  // Mix the nodes from prosemirror-schema-list and prosemirror-tables into the basic schema
-  // to create a schema with list and table support.
-  const mySchema = new Schema({
-    nodes: 
-      addListNodes(schema.spec.nodes, "paragraph block*", "block").append(
-        tableNodes({
-          tableGroup: 'block',
-          cellContent: 'block+',
-          cellAttributes: {
-            background: {
-              default: null,
-              getFromDOM(dom) {
-                return dom.style.backgroundColor || null;
-              },
-              setDOMAttr(value, attrs) {
-                if (value)
-                  attrs.style = (attrs.style || '') + `background-color: ${value};`;
-              },
-            },
-          },
-        }
-      ),
-    ),
+  // Mix the nodes from prosemirror-schema-list into the basic schema to create a schema with list support.
+  let muNodes = addListNodes(schema.spec.nodes, 'paragraph block*', 'block');
+  // Get the object defining table nodes from prosemirror-tables
+  let tNodes = tableNodes({
+    tableGroup: 'block',
+    cellContent: 'block+',
+    cellAttributes: {
+      background: {
+        default: null,
+        getFromDOM(dom) {
+          return dom.style.backgroundColor || null;
+        },
+        setDOMAttr(value, attrs) {
+          if (value)
+            attrs.style = (attrs.style || '') + `background-color: ${value};`;
+        },
+      },
+    }
+  });
+  /* At this point, tNodes.table is:
+  table: {
+      content: 'table_row+',
+      tableRole: 'table',
+      isolating: true,
+      group: options.tableGroup,
+      parseDOM: [{ tag: 'table' }],
+      toDOM() {
+        return ['table', ['tbody', 0]];
+      },
+    },
+  but we need to support the class definition to support bordering
+  */
+  tNodes.table.attrs = {class: {default: null}};
+  tNodes.table.parseDOM = [{tag: 'table', getAttrs(dom) {
+    return {class: dom.getAttribute('class')}
+  }}];
+  tNodes.table.toDOM = (node)=> { let tClass = node.attrs; return ['table', tClass, 0] };
+  // Now append the modified tNodes to muNodes and create the schema
+  muNodes = muNodes.append(tNodes);
+
+  const muSchema = new Schema({
+    nodes: muNodes,
     marks: schema.spec.marks
   });
 
   window.view = new EditorView(document.querySelector("#editor"), {
     state: EditorState.create({
-      doc: DOMParser.fromSchema(mySchema).parse(document.querySelector("#content")),
-      plugins: markupSetup({schema: mySchema})
+      doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#content")),
+      plugins: markupSetup({schema: muSchema})
     }),
     dispatchTransaction(transaction) {
       let newState = view.state.apply(transaction);

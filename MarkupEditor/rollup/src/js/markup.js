@@ -1959,7 +1959,7 @@ function _tableSelected() {
 };
 
 /**
- * Set the selection to the first text in the first paragraph of the table or 
+ * Set the selection to the first cell of the table or 
  * do nothing if we can't.
  */
 function _selectInFirstCell() {
@@ -2029,33 +2029,53 @@ function _mergeHeaders() {
     };
 };
 
+/**
+ * Set the border around and within the cell.
+ * @param {'outer' | 'header' | 'cell' | 'none'} border Set the class of the table to correspond to Swift-side notion of border, so css displays it properly.
+ */
 function _setBorder(border) {
-    //TODO: Fix
-    /*
+    const selection = view.state.selection;
+    let table, tPos;
+    view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        if (node.type === view.state.schema.nodes.table) {
+            table = node;
+            tPos = pos;
+            return false;
+        };
+        return true;
+    });
+    if (!table) return;
     switch (border) {
         case 'outer':
-            table.setAttribute('class', 'bordered-table-outer');
+            table.attrs.class = 'bordered-table-outer';
             break;
         case 'header':
-            table.setAttribute('class', 'bordered-table-header');
+            table.attrs.class = 'bordered-table-header';
             break;
         case 'cell':
-            table.setAttribute('class', 'bordered-table-cell');
+            table.attrs.class = 'bordered-table-cell';
             break;
         case 'none':
-            table.setAttribute('class', 'bordered-table-none');
+            table.attrs.class = 'bordered-table-none';
             break;
         default:
-            table.removeAttribute('class');
+            table.attrs.class = 'bordered-table-cell';
             break;
     };
-    */
+    const transaction = view.state.tr.setNodeMarkup(tPos, table.type, table.attrs);
+    const newState = view.state.apply(transaction);
+    view.updateState(newState);
+    view.focus();
+    stateChanged();
 };
 
-function _getBorder(tableNode) {
-    const borderClass = 'bordered-table-cell'; // TODO: Hardcoded for now
+/**
+ * Get the border around and within the cell.
+ * @returns {'outer' | 'header' | 'cell' | 'none'} The type of table border known on the Swift side
+ */
+function _getBorder(table) {
     let border;
-    switch (borderClass) {
+    switch (table.attrs.class) {
         case 'bordered-table-outer':
             border = 'outer';
             break;
