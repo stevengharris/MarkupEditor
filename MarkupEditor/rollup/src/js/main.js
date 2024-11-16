@@ -1,10 +1,8 @@
-import {EditorState} from "prosemirror-state"
-import {EditorView} from "prosemirror-view"
-import {Schema, DOMParser} from "prosemirror-model"
+import {EditorState, Plugin} from "prosemirror-state"
+import {EditorView, Decoration, DecorationSet} from "prosemirror-view"
+import {Schema, DOMParser, DOMSerializer} from "prosemirror-model"
 import {schema} from "./schema/index.js"
-import {addListNodes} from "prosemirror-schema-list"
 import {markupSetup} from "./setup/index.js"
-import {tableNodes} from "prosemirror-tables"
 
 import {
   setTopLevelAttributes,
@@ -126,48 +124,11 @@ export {
   borderTable,
 }
 
-// Mix the nodes from prosemirror-schema-list into the basic schema to create a schema with list support.
-let muNodes = addListNodes(schema.spec.nodes, 'paragraph block*', 'block');
-// Get the object defining table nodes from prosemirror-tables
-let tNodes = tableNodes({
-  tableGroup: 'block',
-  cellContent: 'block+',
-  cellAttributes: {
-    background: {
-      default: null,
-      getFromDOM(dom) {
-        return dom.style.backgroundColor || null;
-      },
-      setDOMAttr(value, attrs) {
-        if (value)
-          attrs.style = (attrs.style || '') + `background-color: ${value};`;
-      },
-    },
-  }
-});
-/* At this point, tNodes.table is:
-table: {
-    content: 'table_row+',
-    tableRole: 'table',
-    isolating: true,
-    group: options.tableGroup,
-    parseDOM: [{ tag: 'table' }],
-    toDOM() {
-      return ['table', ['tbody', 0]];
-    },
-  },
-but we need to support the class definition to support bordering
-*/
-tNodes.table.attrs = {class: {default: null}};
-tNodes.table.parseDOM = [{tag: 'table', getAttrs(dom) {
-  return {class: dom.getAttribute('class')}
-}}]
-tNodes.table.toDOM = (node)=> { let tClass = node.attrs; return ['table', tClass, 0] };
-// Now append the modified tNodes to muNodes and create the schema
-muNodes = muNodes.append(tNodes);
+// Mix the nodes from prosemirror-schema-list into the MarkupEditor schema to create a schema with list support.
+//let muNodes = addListNodes(schema.spec.nodes, 'paragraph block*', 'block');
 
 const muSchema = new Schema({
-  nodes: muNodes,
+  nodes: schema.spec.nodes,
   marks: schema.spec.marks
 })
 
@@ -176,9 +137,64 @@ window.view = new EditorView(document.querySelector("#editor"), {
     doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#content")),
     plugins: markupSetup({schema: muSchema})
   }),
+  nodeViews: {
+    image(node, view, getPos) { return new ImageView(node, view, getPos) },
+    //table(node, view, getPos) { return new TableView(node, view, getPos) }
+  },
+  //handleClick() {
+  //  console.log("handleClick")
+  //  stateChanged();
+  //},
+  //handleTextInput(view, from, to, text) {
+  //  console.log("handleClick: " + text)
+  //  stateChanged();
+  //  return false; // All the default behavior should occur
+  //},
   dispatchTransaction(transaction) {
     let newState = view.state.apply(transaction)
     view.updateState(newState)
     stateChanged()    // For every transaction, let the Swift side know the state changed
   }
 })
+
+class ImageView {
+  constructor(node, view, getPos) {
+    this.dom = document.createElement("img")
+    this.dom.src = node.attrs.src
+    this.dom.alt = node.attrs.alt
+    this.dom.addEventListener("click", e => {
+      e.preventDefault()
+      let alt = prompt("New alt text:", "")
+      if (alt) view.dispatch(view.state.tr.setNodeMarkup(getPos(), null, {
+        src: node.attrs.src,
+        alt
+      }))
+    })
+  }
+
+  stopEvent() { return true }
+}
+
+class TableView {
+
+  constructor(node, view, getPos) {
+    this.node = node;
+    this.dom = document.createElement("table")
+    if(node.attrs.class){
+      this.dom.setAttribute("class", node.attrs.class);
+    }
+    const fragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(node.content);
+    const div = document.createElement('div');
+    const tbody = document.createElement('tbody');
+    tbody.appendChild(fragment);
+    div.appendChild(tbody);
+    this.dom.innerHTML = div.innerHTML;
+    // The contentDOM sets the area that is selectable and editable in ProseMirror.
+    this.contentDOM = this.dom.querySelector("tbody");
+  }
+
+  update(node, decorations) {
+    return node.type === view.state.schema.nodes.table
+  }
+
+}

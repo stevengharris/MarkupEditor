@@ -699,6 +699,7 @@ function _toggleFormat(type) {
     };  
     if (toggle) {
         toggle(state, view.dispatch);
+        stateChanged()
     };
 };
 
@@ -2035,14 +2036,15 @@ function _mergeHeaders() {
  */
 function _setBorder(border) {
     const selection = view.state.selection;
-    let table, tPos;
+    let table, fromPos, toPos;
     view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
         if (node.type === view.state.schema.nodes.table) {
             table = node;
-            tPos = pos;
+            fromPos = pos;
+            toPos = pos + node.nodeSize;
             return false;
         };
-        return true;
+        return false;
     });
     if (!table) return;
     switch (border) {
@@ -2062,11 +2064,11 @@ function _setBorder(border) {
             table.attrs.class = 'bordered-table-cell';
             break;
     };
-    const transaction = view.state.tr.setNodeMarkup(tPos, table.type, table.attrs);
-    const newState = view.state.apply(transaction);
-    view.updateState(newState);
+    const transaction = view.state.tr
+        .setNodeMarkup(fromPos, table.type, table.attrs)
+        .setMeta("bordered-table", {border: border, fromPos: fromPos, toPos: toPos})
+    view.dispatch(transaction);
     view.focus();
-    stateChanged();
 };
 
 /**

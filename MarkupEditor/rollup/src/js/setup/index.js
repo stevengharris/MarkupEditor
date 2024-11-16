@@ -4,7 +4,7 @@ import {baseKeymap} from "prosemirror-commands"
 import {Plugin} from "prosemirror-state"
 import {dropCursor} from "prosemirror-dropcursor"
 import {gapCursor} from "prosemirror-gapcursor"
-import {tableEditing} from 'prosemirror-tables'
+import {Decoration, DecorationSet} from "prosemirror-view"
 
 import {menuBar} from "../menu/menubar"
 import {buildMenuItems} from "./menu"
@@ -12,6 +12,35 @@ import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
 
 export {buildMenuItems, buildKeymap, buildInputRules}
+
+/**
+ * The MarkupEditor plugin, aka `muPlugin`, handles decorations that add CSS styling 
+ * we want to see reflected in the view. The node `attrs` for styling are, as needed, 
+ * also produced in the `toDOM` definition in the schema, but they do not seem 
+ * to reliably affect the view when changed during editing.
+ */
+const muPlugin = new Plugin({
+  state: {
+    init(_, {doc}) {
+      return DecorationSet.create(doc, [])
+    },
+    apply(tr, set) {
+      if (tr.getMeta("bordered-table")) {
+        const {border, fromPos, toPos} = tr.getMeta("bordered-table")
+        return DecorationSet.create(tr.doc, [
+          Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
+        ])
+      } else {
+         // map "other" changes so our decoration "stays put" 
+         // (e.g. user is typing so decoration's pos must change)
+        return set.map(tr.mapping, tr.doc)
+      }
+    }
+  },
+  props: {
+    decorations(state) { return muPlugin.getState(state) }
+  }
+})
 
 // !! This module exports helper functions for deriving a set of basic
 // menu items, input rules, or key bindings from a schema. These
@@ -63,7 +92,9 @@ export function markupSetup(options) {
   if (options.history !== false)
     plugins.push(history())
 
-  plugins.push(tableEditing(false));
+  // Add the MarkupEditor plugin
+  plugins.push(muPlugin);
+
   return plugins.concat(new Plugin({
     props: {
       attributes: {class: "ProseMirror-example-setup-style"}

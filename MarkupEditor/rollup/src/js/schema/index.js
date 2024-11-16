@@ -1,4 +1,7 @@
 import {Schema} from "prosemirror-model"
+import {tableNodes} from "prosemirror-tables"
+import {addListNodes} from "prosemirror-schema-list"
+import {default as OrderedMap} from "orderedmap"
 
 const pDOM = ["p", 0], 
       blockquoteDOM = ["blockquote", 0], 
@@ -6,9 +9,7 @@ const pDOM = ["p", 0],
       preDOM = ["pre", ["code", 0]], 
       brDOM = ["br"]
 
-// :: Object
-// [Specs](#model.NodeSpec) for the nodes defined in this schema.
-export const nodes = {
+let baseNodes = OrderedMap.from({
   // :: NodeSpec The top level document node.
   doc: {
     content: "block+"
@@ -111,7 +112,38 @@ export const nodes = {
     parseDOM: [{tag: "br"}],
     toDOM() { return brDOM }
   }
-}
+})
+
+// Mix the nodes from prosemirror-schema-list into the baseNodes to create a schema with list support.
+baseNodes = addListNodes(baseNodes, 'paragraph block*', 'block');
+
+// Create table nodes that support bordering
+const tNodes = tableNodes({
+  tableGroup: 'block',
+  cellContent: 'block+',
+  cellAttributes: {
+    background: {
+      default: null,
+      getFromDOM(dom) {
+        return dom.style.backgroundColor || null;
+      },
+      setDOMAttr(value, attrs) {
+        if (value)
+          attrs.style = (attrs.style || '') + `background-color: ${value};`;
+      },
+    },
+  }
+});
+tNodes.table.attrs = {class: {default: 'bordered-table-cell'}};
+tNodes.table.parseDOM = [{tag: 'table', getAttrs(dom) {
+  return {class: dom.getAttribute('class')}
+}}];
+tNodes.table.toDOM = (node) => { let tClass = node.attrs; return ['table', tClass, 0] };
+
+// Append the modified tableNodes and export the resulting nodes
+// :: Object
+// [Specs](#model.NodeSpec) for the nodes defined in this schema.
+export const nodes = baseNodes.append(tNodes);
 
 const emDOM = ["em", 0], 
       strongDOM = ["strong", 0], 
