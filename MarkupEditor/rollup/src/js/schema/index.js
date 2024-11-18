@@ -88,7 +88,6 @@ let baseNodes = OrderedMap.from({
       scale: {default: null}
     },
     group: "inline",
-    draggable: true,
     parseDOM: [{
       tag: "img[src]", 
       getAttrs(dom) {
@@ -106,41 +105,6 @@ let baseNodes = OrderedMap.from({
     }],
     toDOM(node) { let {src, alt, width, height, scale} = node.attrs; return ["img", {src, alt, width, height, scale}] }
   },
-
-  //resizableImage: {
-  //  inline: true,
-  //  attrs: {
-  //    src: {},
-  //    alt: {default: null},
-  //    width: {default: null},
-  //    height: {default: null},
-  //    scale: {default: null}
-  //  },
-  //  group: "inline",
-  //  draggable: true,
-  //  parseDOM: [{
-  //    priority: 51, // must be higher than the default image spec
-  //    tag: "img[src]", 
-  //    getAttrs(dom) {
-  //      const width = dom.getAttribute("width") && parseInt(dom.getAttribute("width"));
-  //      const height = dom.getAttribute("height") && parseInt(dom.getAttribute("height"));
-  //      const scale = (width && dom.naturalWidth) ? 100 * width / dom.naturalWidth : null;
-  //      return {
-  //        src: dom.getAttribute("src"),
-  //        alt: dom.getAttribute("alt"),
-  //        width: width,
-  //        height: height,
-  //        scale: scale
-  //      }
-  //    }
-  //  }],
-  //  toDOM(node) { let {src, alt, width, height, scale} = node.attrs; return ["img", {src, alt, width, height, scale}] }
-    // TODO if we don't define toDom, something weird happens: dragging the image will not move it but clone it. Why?
-    //toDOM(node) {
-    //  const attrs = {style: `width: ${node.attrs.width}`}
-    //  return ["img", { ...node.attrs, ...attrs }] 
-    //}
-  //},
 
   // :: NodeSpec A hard line break, represented in the DOM as `<br>`.
   hard_break: {

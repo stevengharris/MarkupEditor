@@ -25,17 +25,23 @@ export class ImageView {
     constructor(node, view, getPos) {    
       const outer = document.createElement("span")
       outer.style.position = "relative"
-      outer.style.width = node.attrs.width
-      //outer.style.border = "1px solid blue"
       outer.style.display = "inline-block"
-      //outer.style.paddingRight = "0.25em"
       outer.style.lineHeight = "0"; // necessary so the bottom right arrow is aligned nicely
       
       const img = document.createElement("img")
       img.setAttribute("src", node.attrs.src)
       img.style.width = "100%"
-      //img.style.border = "1px solid red"
-      
+      // If the img node has no width attr, get it from naturalWidth after loading.
+      // Note that outer.style.width is the same, but a CSS style is a string+px.
+      if (node.attrs.width) {
+        outer.style.width = `${node.attrs.width}px`
+      } else {
+        img.onload = function(e) {
+            node.attrs.width = e.target.naturalWidth
+            outer.style.width = `${node.attrs.width}px`
+        }
+      }
+
       const handle = document.createElement("span")
       handle.style.position = "absolute"
       handle.style.bottom = "0px"
@@ -51,22 +57,16 @@ export class ImageView {
       handle.onmousedown = function(e){
         e.preventDefault()
         
+        const selection = view.state.selection;
         const startX = e.pageX;
-        const startY = e.pageY;
-        
-        const fontSize = parseFloat(getComputedStyle(outer).fontSize);
-        
-        const minWidth = node.attrs.width ?? "20em"
-        const startWidth = parseFloat(minWidth.match(/(.+)em/)[1])
+        const startWidth = node.attrs.width ?? 20;
               
         const onMouseMove = (e) => {
           const currentX = e.pageX;
-          const currentY = e.pageY;
-          
           const diffInPx = currentX - startX
-          const diffInEm = diffInPx / fontSize
-                  
-          outer.style.width = `${startWidth + diffInEm}em`
+        
+          node.attrs.width = startWidth + diffInPx
+          outer.style.width = `${node.attrs.width}px`
         }
         
         const onMouseUp = (e) => {        
@@ -74,9 +74,9 @@ export class ImageView {
           
           document.removeEventListener("mousemove", onMouseMove)
           document.removeEventListener("mouseup", onMouseUp)
-                  
-          const transaction = view.state.tr.setNodeMarkup(getPos(), null, {src: node.attrs.src, width: outer.style.width} ).setSelection(view.state.selection);
-                
+        
+          const transaction = view.state.tr.setNodeMarkup(getPos(), null, {src: node.attrs.src, width: node.attrs.width})
+          transaction.setSelection(new NodeSelection(transaction.doc.resolve(getPos())))
           view.dispatch(transaction)
           stateChanged()
         }
@@ -1544,7 +1544,7 @@ function _getImageAttributes() {
     const selection = view.state.selection;
     const selectedNodes = [];
     view.state.doc.nodesBetween(selection.from, selection.to, node => {
-        if ((node.type === view.state.schema.nodes.image) || ((node.type === view.state.schema.nodes.resizableImage)))  {
+        if (node.type === view.state.schema.nodes.image)  {
             selectedNodes.push(node);
             return false;
         };
