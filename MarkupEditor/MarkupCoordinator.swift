@@ -115,7 +115,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             // Use markupDelegate.markupTookFocus to reset selectedWebView if needed, since
             // it will have logic specific to the application.
             markupDelegate?.markupTookFocus(webView)
-        case "selectionChange":
+        case "selectionChanged":
             // If this webView does not have focus, we ignore selectionChange.
             // So, for example, if we select some other view or a TextField becomes first responder, we
             // don't want to modify selectionState. There may be other implications, such a programmatically
