@@ -17935,6 +17935,9 @@
    That file contains the combined ProseMirror code along with markup.js.
    */
 
+  // The view used to support resizable images, as installed in main.js.
+  // Many thanks to this thread: https://discuss.prosemirror.net/t/image-resize/1489
+  // and the accompanying Glitch project https://glitch.com/edit/#!/toothsome-shoemaker
   class ImageView {
       constructor(node, view, getPos) {    
         const outer = document.createElement("span");
@@ -17968,13 +17971,14 @@
         handle.style.display = "none";
         handle.style.cursor = "nwse-resize";
         
+        // Establish the startWidth for the span containing the img
         handle.onmousedown = function(e){
           e.preventDefault();
           
-          const selection = view.state.selection;
           const startX = e.pageX;
           const startWidth = node.attrs.width ?? 20;
-                
+          
+          // While mouse is down, track movement and update width    
           const onMouseMove = (e) => {
             const currentX = e.pageX;
             const diffInPx = currentX - startX;
@@ -17983,6 +17987,7 @@
             outer.style.width = `${node.attrs.width}px`;
           };
           
+          // Modify the state when mouse comes up, reset selection
           const onMouseUp = (e) => {        
             e.preventDefault();
             
@@ -19505,17 +19510,24 @@
    * Insert a link to url. When the selection is collapsed, the url is inserted
    * at the selection point as a link.
    *
-   * When done, re-select the range and back it up.
+   * When done, leave the link selected.
    *
    * @param {String}  url             The url/href to use for the link
    */
   function insertLink(url) {
+      const selection = view.state.selection;
       const linkMark = view.state.schema.marks.link.create({ href: url });
-      const toggle = toggleMark(linkMark.type, linkMark.attrs);
-      if (toggle) {
-          toggle(view.state, view.dispatch);
-          stateChanged();
-      }}
+      if (selection.empty) {
+          const textNode = view.state.schema.text(url).mark([linkMark]);
+          const transaction = view.state.tr.replaceSelectionWith(textNode, false);
+          const linkSelection = TextSelection.create(transaction.doc, selection.from, selection.from + textNode.nodeSize);
+          transaction.setSelection(linkSelection);
+          view.dispatch(transaction);
+      } else {
+          const toggle = toggleMark(linkMark.type, linkMark.attrs);
+          if (toggle) toggle(state, view.dispatch);
+      }    stateChanged();
+  }
   /**
    * Remove the link at the selection, maintaining the same selection.
    * 
