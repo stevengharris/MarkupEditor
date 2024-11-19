@@ -1856,19 +1856,17 @@ export function deleteLink() {
 //MARK: Images
 
 /**
- * Insert the image at src with alt text, signaling updateHeight when done loading.
- * All insert operations that involve user interaction outside of JavaScript
- * need to be preceded by backupSelection so that selection can be restored prior
- * to the insert* operation.
+ * Insert the image at src with alt text, signaling state changed when done loading.
  * We leave the selection after the inserted image.
- * The operation will cause a selectionChange event.
  *
  * @param {String}              src         The url of the image.
  * @param {String}              alt         The alt text describing the image.
- * @return {HTML Image Element}             The image element that was created, used for undo/redo.
  */
 export function insertImage(src, alt) {
-    return null;
+    const imageNode = view.state.schema.nodes.image.create({src: src, alt: alt})
+    const transaction = view.state.tr.replaceSelectionWith(imageNode, false);
+    view.dispatch(transaction);
+    stateChanged();
 };
 
 /**
