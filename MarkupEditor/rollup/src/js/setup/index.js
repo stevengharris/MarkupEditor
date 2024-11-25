@@ -38,7 +38,7 @@ const muPlugin = new Plugin({
     }
   },
   props: {
-    decorations(state) { return muPlugin.getState(state) }
+    decorations: (state) => { return muPlugin.getState(state) },
   }
 })
 

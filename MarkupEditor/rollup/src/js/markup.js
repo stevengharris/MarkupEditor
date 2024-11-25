@@ -5,7 +5,7 @@
  */
 
 import {AllSelection, TextSelection, NodeSelection} from 'prosemirror-state'
-import {DOMParser, DOMSerializer, NodeType} from 'prosemirror-model'
+import {DOMParser, DOMSerializer, Fragment, NodeType, Slice} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
 import {wrapInList, liftListItem} from 'prosemirror-schema-list'
 import {
@@ -20,6 +20,71 @@ import {
     mergeCells,
     toggleHeaderRow,
 } from 'prosemirror-tables'
+
+export class DivView {
+    constructor(node, view, getPos) {
+        this.node = node;
+        const div = document.createElement('div');
+        div.setAttribute('id', node.attrs.id);
+        div.setAttribute('parentId', node.attrs.parentId);
+        div.setAttribute('class', node.attrs.cssClass);
+        div.setAttribute('editable', node.attrs.editable.toString());
+        div.innerHTML = node.attrs.htmlContents;
+        div.addEventListener('click', (ev) => {
+            _selectedID = node.attrs.id
+            selectionChanged()
+        })
+        // The div never sees an 'input' event. This is done using 
+        // handleTextInput on the EditorView.
+        //
+        //div.addEventListener('input', (ev) => {
+        //    stateChanged()
+        //})
+        //
+        this.dom = div;
+        this.contentDOM = div;
+    }
+
+    // stopEvent is called, but it doesn't seem to stop anything
+    stopEvent(ev) {
+        const stop = (!this.node.attrs.editable);
+        console.log("stopEvent " + stop)
+        if (stop) ev.preventDefault();
+        return stop
+    }
+
+    // I never see ignoreMutation being called
+    //ignoreMutation() {
+    //    console.log("ignoreMutation " + !this.node.attrs.editable)
+    //    return !this.node.attrs.editable
+    //}
+
+}
+
+export class ButtonView {
+    constructor(node, view, getPos) {
+        const button = document.createElement('button');
+        button.setAttribute('id', node.attrs.id);
+        button.setAttribute('parentId', node.attrs.parentId);
+        button.setAttribute('class', node.attrs.cssClass);
+        button.setAttribute('type', 'button');
+        button.innerHTML = node.attrs.label;
+        button.addEventListener('click', () => {
+            const id = node.attrs.id;
+            const rect = view.coordsAtPos(getPos())
+            _callback(
+                JSON.stringify({
+                    'messageType' : 'buttonClicked',
+                    'id' : id,
+                  
+                    'rect' : {x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top}
+                })
+            )
+        });
+        this.dom = button;
+        this.contentDom = button;
+    }
+}
 
 // The view used to support resizable images, as installed in main.js.
 // Many thanks to this thread: https://discuss.prosemirror.net/t/image-resize/1489
@@ -701,12 +766,91 @@ export function resetSelection() {
  * Return a string indicating what happened if there was a problem; else nil.
  */
 export function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
+    //TODO: set cssClass properly
+    console.log("addDiv(" + id +  ", " + parentId + ", " + cssClass + ", " + jsonAttributes + ", " + htmlContents + ")")
+    const divNodeType = view.state.schema.nodes.div;
+    const div = document.createElement('div');
+    div.innerHTML = htmlContents ?? "";
+    const divSlice = DOMParser.fromSchema(view.state.schema).parseSlice(div, { preserveWhiteSpace: true });
+    const editableAttributes = (jsonAttributes && JSON.parse(jsonAttributes)) ?? {};
+    const editable = editableAttributes.contenteditable === true;
+    const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents}, divSlice.content);
+    const transaction = view.state.tr;
+    if (parentId && (parentId !== 'editor')) {
+        // Find the div that is the parent of the one we are adding
+        let parentNode, parentPos;
+        const from = TextSelection.atStart(view.state.doc).from;
+        const to = TextSelection.atEnd(view.state.doc).to;
+        view.state.doc.nodesBetween(from, to, (node, pos) => {
+            if (node.type === divNodeType) {
+                if (node.attrs.id && (node.attrs.id === parentId)) {
+                    parentNode = node;
+                    parentPos = pos;
+                    return false;
+                };
+                return true;    // Look deeper in the div
+            }
+            // Only iterate over top-level nodes and drill in if the div node has the parentId
+            return false;
+        });
+        if (parentNode) {
+            // Insert the div inside of its parent as a new child of the existing div
+            const divPos = parentPos + parentNode.nodeSize - 1;
+            transaction.insert(divPos, divNode)
+        }
+    } else {
+        // Insert before the current selection, leaving the selection alone
+        // An empty doc consists of <p></p>, and the selection stays in that paragraph, so looped calls to 
+        // addDiv will add onto the end of the document, leaving an empty paragraph as the final node.
+        const divPos = view.state.selection.from - 1;
+        transaction.insert(divPos, divNode)
+    };
+    view.dispatch(transaction);
+    stateChanged();
 };
 
 export function removeDiv(id) {
 };
 
 export function addButton(id, parentId, cssClass, label) {
+    //TODO: set cssClass properly
+    console.log("addButton(" + id +  ", " + parentId + ", " + cssClass + ", " + label + ")")
+    const divNodeType = view.state.schema.nodes.div;
+    const buttonNodeType = view.state.schema.nodes.button;
+    const button = document.createElement('button');
+    button.setAttribute('id', id);
+    button.setAttribute('parentId', parentId);
+    button.setAttribute('class', cssClass);
+    button.setAttribute('type', 'button');
+    button.appendChild(document.createTextNode(label));
+    const buttonSlice = DOMParser.fromSchema(view.state.schema).parseSlice(button);
+    const buttonNode = buttonNodeType.create({id, parentId, cssClass, label}, buttonSlice.content);
+    const transaction = view.state.tr;
+    if (parentId && (parentId !== 'editor')) {
+        // Find the div that is the parent of the button we are adding
+        let parentNode, parentPos;
+        const from = TextSelection.atStart(view.state.doc).from;
+        const to = TextSelection.atEnd(view.state.doc).to;
+        view.state.doc.nodesBetween(from, to, (node, pos) => {
+            if (node.type === divNodeType) {
+                if (node.attrs.id && (node.attrs.id === parentId)) {
+                    parentNode = node;
+                    parentPos = pos;
+                    return false;
+                };
+                return true;    // Look deeper in the div
+            }
+            // Only iterate over top-level nodes and drill in if the div node has the parentId
+            return false;
+        });
+        if (parentNode) {   // Will always be a buttonGroup div that might be empty
+            // Insert the div inside of its parent as a new child of the existing div
+            const buttonPos = parentPos + parentNode.nodeSize - 1;
+            transaction.insert(buttonPos, buttonNode)
+            view.dispatch(transaction);
+            stateChanged();
+        }
+    }
 };
 
 export function removeButton(id) {
@@ -1395,26 +1539,19 @@ export function getSelectionState() {
  */
 const _getSelectionState = function() {
     const state = {};
-    state['valid'] = true;
-    // Not doing anything about multiple divs yet...
     // When we have multiple contentEditable elements within editor, we need to
-    // make sure we selected something that isContentEditable. If we didn't
+    // make sure we selected something that is editable. If we didn't
     // then just return state, which will be invalid but have the enclosing div ID.
-    // Note: _callbackInput() uses a cached value of the *contentEditable* div ID
+    // Note: _callbackInput() uses a cached value of the *editable* div ID
     // because it is called at every keystroke and change, whereas here we take
     // the time to find the enclosing div ID from the selection so we are sure it
     // absolutely reflects the selection state at the time of the call regardless
-    // of whether it is contentEditable or not.
-    //let divID = _findContentEditableID(selection.focusNode);
-    //if (divID) {
-    //    state['divid'] = divID;
-    //    state['valid'] = true;
-    //} else {
-    //    divID = _findDivID(selection.focusNode);
-    //    state['divid'] = divID;
-    //    state['valid'] = false;
-    //    return state;
-    //};
+    // of whether it is editable or not.
+    const contentEditable = _getContentEditable();
+    state['divid'] = contentEditable.id;            // Will be 'editor' or a div ID
+    state['valid'] = contentEditable.editable;      // Valid means the selection is in something editable
+    if (!contentEditable.editable) return state;    // No need to do more with state if it's not editable
+
     // Selected text
     state['selection'] = _getSelectionText();
     // The selrect tells us where the selection can be found
@@ -1477,17 +1614,38 @@ const _getSelectionState = function() {
 };
 
 /**
+ * Return the id and editable state of the selection.
+ * @returns {Object} The id and editable state that is selected.
+ */
+function _getContentEditable() {
+    const anchor = view.state.selection.$anchor;
+    const sharedDepth = anchor.sharedDepth(view.state.selection.to);
+    // We can walk up the tree starting at anchor, looking for a div with its 
+    // editable attribute set to true. If we hit the root doc without finding 
+    // any div, then we are in a fully editable doc and will return 'editor'.
+    // If we hit any div marked editable, then we will return its id and whether
+    // it is editable or null if not.
+    for (let depth = sharedDepth; depth > 0; depth--) {
+        const node = view.state.doc.resolve(anchor.before(depth)).node();
+        if (node.type === view.state.schema.nodes.div) {
+            return {id: node.attrs.id, editable: node.attrs.editable ?? false}
+        }
+    }
+    return {id: 'editor', editable: true}
+}
+
+/**
  * Return the text at the selection.
  * @returns {String} The text that is selected.
  */
 function _getSelectionText() {
     const doc = view.state.doc;
     const selection = view.state.selection;
-    if (selection.empty) {
-        return "";
+    if (selection.isText) {
+        return selection.text;
     } else {
-        const size = selection.to - selection.from + 1;
-        return doc.cut(selection.from, selection.to).content.textBetween(0, size)
+        const cut = doc.cut(selection.from, selection.to);
+        return cut.text ?? ""
     };
 };
 
@@ -1800,7 +1958,7 @@ export function insertLink(url) {
         view.dispatch(transaction);
     } else {
         const toggle = toggleMark(linkMark.type, linkMark.attrs);
-        if (toggle) toggle(state, view.dispatch);
+        if (toggle) toggle(view.state, view.dispatch);
     };
     stateChanged();
 };

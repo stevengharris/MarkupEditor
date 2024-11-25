@@ -35,4 +35,13 @@ public struct EditableAttributes: @unchecked Sendable, OptionSet {
         options["autocorrect"] = contains(.autocorrect)
         return options
     }
+    
+    /// Return a JSON string of `options` or null if there is an issue
+    public var json: String? {
+        if let jsonData = try? JSONSerialization.data(withJSONObject: options) {
+            return String(data: jsonData, encoding: .utf8)
+        } else {
+            return nil
+        }
+    }
 }

@@ -6,6 +6,8 @@ import {markupSetup} from "./setup/index.js"
 
 import {
   ImageView,
+  DivView,
+  ButtonView,
   setTopLevelAttributes,
   loadUserFiles,
   searchFor,
@@ -136,10 +138,9 @@ window.view = new EditorView(document.querySelector("#editor"), {
     plugins: markupSetup({schema: muSchema})
   }),
   nodeViews: {
-    image(node, view, getPos) {return new ImageView(node, view, getPos)}
-  },
-  handleClick() {
-    selectionChanged();
+    image(node, view, getPos) { return new ImageView(node, view, getPos) },
+    div(node, view, getPos) { return new DivView(node, view, getPos) },
+    button(node, view, getPos) { return new ButtonView(node, view, getPos) }
   },
   handleTextInput(view, from, to, text) {
     stateChanged();

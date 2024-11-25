@@ -57,11 +57,11 @@ struct DivsContentView: View {
     /// Create the DivStructure that holds the array of HtmlDivs in the document we are editing.
     private func initDivStructure() {
         divStructure.add(
-            TitleDiv(contents: "Multi-Div Editing")
+            TitleDiv(contents: "<p>Multi-Div Editing</p>")
         )
         divStructure.add(
             SectionDiv(
-                contents: "Multiple Editable Areas"
+                contents: "<p>Multiple Editable Areas</p>"
             )
         )
         divStructure.add(
@@ -71,7 +71,7 @@ struct DivsContentView: View {
         divStructure.add(
             SectionDiv(
                 focusId: "HtmlDiv",
-                contents: "HtmlDiv",
+                contents: "<p>HtmlDiv</p>",
                 buttons: [
                     // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
                     // See https://feedbackassistant.apple.com/feedback/13537558.
@@ -90,7 +90,7 @@ struct DivsContentView: View {
         divStructure.add(
             SectionDiv(
                 focusId: "Buttons",
-                contents: "Buttons",
+                contents: "<p>Buttons</p>",
                 buttons: [
                     // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
                     // See https://feedbackassistant.apple.com/feedback/13537558.
@@ -219,7 +219,10 @@ extension DivsContentView: MarkupDelegate {
         }
     }
     
-    func markupInput(_ view: MarkupWKWebView) {
+    func markupInput(_ view: MarkupWKWebView, divId: String) {
+        if let div = divStructure.div(forDivId: divId) {
+            print("Input from div \(div.id).")
+        }
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
     }

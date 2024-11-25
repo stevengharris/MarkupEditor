@@ -113,7 +113,74 @@ let baseNodes = OrderedMap.from({
     selectable: false,
     parseDOM: [{tag: "br"}],
     toDOM() { return brDOM }
+  },
+
+  // TODO: Exclude divs that don't conform to MarkupEditor expectations by using a rule
+  // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
+  // https://prosemirror.net/docs/ref/#inputrules
+  div: {
+    content: "block*",
+    group: "block",
+    attrs: {
+      id: {default: null},
+      parentId: {default: 'editor'},
+      cssClass: {default: null},
+      editable: {default: true},
+      htmlContents: {default: ""}
+    },
+    parseDOM: [{
+      tag: "div",
+      getAttrs(dom) {
+        const id = dom.getAttribute("id");
+        const parentId = dom.getAttribute("parentId");
+        const cssClass = dom.getAttribute("class");
+        const editable = dom.getAttribute("editable") == "true";
+        return {
+          id: id,
+          parentId: parentId,
+          cssClass: cssClass,
+          editable: editable,
+          htmlContents: dom.innerHTML ?? ""
+        }
+      }
+    }],
+    toDOM(node) { 
+      // Note we don't push editable to the actual DOM element
+      let {id, parentId, cssClass, editable} = node.attrs; 
+      return ["div", {id: id, parentId: parentId, class: cssClass, editable: editable.toString()}, 0] 
+    }
+  },
+
+  button: {
+    content: "text*",
+    group: "block",
+    //selectable: true,
+    attrs: {
+      id: {default: null},
+      parentId: {default: null},
+      cssClass: {default: null},
+      label: {default: ""}
+    },
+    parseDOM: [{
+      tag: "button",
+      getAttrs(dom) {
+        const id = dom.getAttribute("id");
+        const parentId = dom.getAttribute("parentId");
+        const cssClass = dom.getAttribute("class");
+        return {
+          id: id,
+          parentId: parentId,
+          cssClass: cssClass,
+          label: dom.innerHTML ?? ""
+        }
+      }
+    }],
+    toDOM(node) { 
+      let {id, parentId, cssClass} = node.attrs;
+      return ["button", {id: id, parentId: parentId, class: cssClass}, 0] 
+    }
   }
+
 })
 
 // Mix the nodes from prosemirror-schema-list into the baseNodes to create a schema with list support.
@@ -158,6 +225,7 @@ export const marks = {
   // :: MarkSpec A link. Has `href` and `title` attributes. `title`
   // defaults to the empty string. Rendered and parsed as an `<a>`
   // element.
+  // TODO: Eliminate title?
   link: {
     attrs: {
       href: {},

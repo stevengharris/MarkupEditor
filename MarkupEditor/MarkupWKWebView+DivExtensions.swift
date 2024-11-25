@@ -126,14 +126,10 @@ extension MarkupWKWebView {
         let id = div.id
         let parentId = div.parentId
         let cssClass = div.cssClass
-        let attributes = div.attributes
-        var jsonAttributes: String?
-        if !attributes.isEmpty, let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options) {
-            jsonAttributes = String(data: jsonData, encoding: .utf8)
-        }
+        let attributes = div.attributes.json ?? "{}"
         let htmlContents = div.htmlContents.escaped
         let buttonGroup = div.buttonGroup
-        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(jsonAttributes ?? "null")', '\(htmlContents)')") { result, error in
+        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(htmlContents)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
@@ -165,7 +161,8 @@ extension MarkupWKWebView {
         let id = buttonGroup.id
         let parentId = buttonGroup.parentId
         let cssClass = buttonGroup.cssClass
-        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)')") { result, error in
+        let attributes = buttonGroup.attributes.json ?? "{}"
+        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(attributes)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButtonGroup: \(error)")
             } else if let result {
@@ -191,7 +188,7 @@ extension MarkupWKWebView {
     }
 
     /// Add a `button` into a parent HtmlButtonGroup div with id `parentId`.
-private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
+    private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
         let id = button.id
         let cssClass = button.cssClass
         let label = button.label.escaped
