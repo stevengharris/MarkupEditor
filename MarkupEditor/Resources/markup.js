@@ -18014,7 +18014,8 @@
           div.innerHTML = node.attrs.htmlContents;
           div.addEventListener('click', (ev) => {
               _selectedID = node.attrs.id;
-              selectionChanged();
+              _clicked();
+              _selectionChanged();
           });
           // The div never sees an 'input' event. This is done using 
           // handleTextInput on the EditorView.
@@ -18028,12 +18029,12 @@
       }
 
       // stopEvent is called, but it doesn't seem to stop anything
-      stopEvent(ev) {
-          const stop = (!this.node.attrs.editable);
-          console.log("stopEvent " + stop);
-          if (stop) ev.preventDefault();
-          return stop
-      }
+      //stopEvent(ev) {
+      //    const stop = (!this.node.attrs.editable);
+      //    console.log("stopEvent " + stop)
+      //    if (stop) ev.preventDefault();
+      //    return stop
+      //}
 
       // I never see ignoreMutation being called
       //ignoreMutation() {
@@ -18058,7 +18059,6 @@
                   JSON.stringify({
                       'messageType' : 'buttonClicked',
                       'id' : id,
-                    
                       'rect' : {x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top}
                   })
               );
@@ -18148,13 +18148,13 @@
       selectNode() {
         this.img.classList.add("ProseMirror-selectednode");
         this.handle.style.display = "";
-        selectionChanged();
+        _selectionChanged();
       }
     
       deselectNode() {
         this.img.classList.remove("ProseMirror-selectednode");
         this.handle.style.display = "none";
-        selectionChanged();
+        _selectionChanged();
       }
   }
 
@@ -18690,8 +18690,6 @@
    * Return a string indicating what happened if there was a problem; else nil.
    */
   function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
-      //TODO: set cssClass properly
-      console.log("addDiv(" + id +  ", " + parentId + ", " + cssClass + ", " + jsonAttributes + ", " + htmlContents + ")");
       const divNodeType = view.state.schema.nodes.div;
       const div = document.createElement('div');
       div.innerHTML = htmlContents ?? "";
@@ -18702,40 +18700,33 @@
       const transaction = view.state.tr;
       if (parentId && (parentId !== 'editor')) {
           // Find the div that is the parent of the one we are adding
-          let parentNode, parentPos;
-          const from = TextSelection.atStart(view.state.doc).from;
-          const to = TextSelection.atEnd(view.state.doc).to;
-          view.state.doc.nodesBetween(from, to, (node, pos) => {
-              if (node.type === divNodeType) {
-                  if (node.attrs.id && (node.attrs.id === parentId)) {
-                      parentNode = node;
-                      parentPos = pos;
-                      return false;
-                  }                return true;    // Look deeper in the div
-              }
-              // Only iterate over top-level nodes and drill in if the div node has the parentId
-              return false;
-          });
-          if (parentNode) {
+          const {node, pos} = _getNode(parentId);
+          if (node) {
               // Insert the div inside of its parent as a new child of the existing div
-              const divPos = parentPos + parentNode.nodeSize - 1;
+              const divPos = pos + node.nodeSize - 1;
               transaction.insert(divPos, divNode);
           }
       } else {
           // Insert before the current selection, leaving the selection alone
           // An empty doc consists of <p></p>, and the selection stays in that paragraph, so looped calls to 
           // addDiv will add onto the end of the document, leaving an empty paragraph as the final node.
-          const divPos = view.state.selection.from - 1;
+          const divPos = transaction.selection.from - 1;
           transaction.insert(divPos, divNode);
       }    view.dispatch(transaction);
-      stateChanged();
   }
   function removeDiv(id) {
-  }
+      const {node, pos} = _getNode(id);
+      if (view.state.schema.nodes.div === node?.type) {
+          const selection = view.state.selection;
+          const nodeSelection = new NodeSelection(view.state.doc.resolve(pos));
+          const transaction = view.state.tr
+              .setSelection(nodeSelection)
+              .deleteSelection();
+          const newSelection = TextSelection.create(transaction.doc, selection.from, selection.to);
+          transaction.setSelection(newSelection);
+          view.dispatch(transaction);
+      }}
   function addButton(id, parentId, cssClass, label) {
-      //TODO: set cssClass properly
-      console.log("addButton(" + id +  ", " + parentId + ", " + cssClass + ", " + label + ")");
-      const divNodeType = view.state.schema.nodes.div;
       const buttonNodeType = view.state.schema.nodes.button;
       const button = document.createElement('button');
       button.setAttribute('id', id);
@@ -18748,37 +18739,64 @@
       const transaction = view.state.tr;
       if (parentId && (parentId !== 'editor')) {
           // Find the div that is the parent of the button we are adding
-          let parentNode, parentPos;
-          const from = TextSelection.atStart(view.state.doc).from;
-          const to = TextSelection.atEnd(view.state.doc).to;
-          view.state.doc.nodesBetween(from, to, (node, pos) => {
-              if (node.type === divNodeType) {
-                  if (node.attrs.id && (node.attrs.id === parentId)) {
-                      parentNode = node;
-                      parentPos = pos;
-                      return false;
-                  }                return true;    // Look deeper in the div
-              }
-              // Only iterate over top-level nodes and drill in if the div node has the parentId
-              return false;
-          });
-          if (parentNode) {   // Will always be a buttonGroup div that might be empty
+          const {node, pos} = _getNode(parentId);
+          if (node) {   // Will always be a buttonGroup div that might be empty
               // Insert the div inside of its parent as a new child of the existing div
-              const buttonPos = parentPos + parentNode.nodeSize - 1;
-              transaction.insert(buttonPos, buttonNode);
+              const divPos = pos + node.nodeSize - 1;
+              transaction.insert(divPos, buttonNode);
               view.dispatch(transaction);
-              stateChanged();
           }
       }
   }
   function removeButton(id) {
-  }
+      const {node, pos} = _getNode(id);
+      if (view.state.schema.nodes.button === node?.type) {
+          const nodeSelection = new NodeSelection(view.state.doc.resolve(pos));
+          const transaction = view.state.tr
+              .setSelection(nodeSelection)
+              .deleteSelection();
+          view.dispatch(transaction);
+      }}
+
+  function focusOn(id) {
+      const {pos} = _getNode(id);
+      if (pos) {
+          const nodeSelection = new TextSelection(view.state.doc.resolve(pos));
+          const transaction = view.state.tr.setSelection(nodeSelection).scrollIntoView();
+          view.dispatch(transaction);
+      }}
   function scrollIntoView(id) {
   }
   /**
    * Remove all divs in the document
    */
   function removeAllDivs() {
+  }
+
+  /**
+   * Return the node and position of a node with note.attrs of `id`
+   * across the view.state.doc from position `from` to position `to`. 
+   * If `from` or `to` are unspecified, they default to the beginning 
+   * and end of view.state.doc.
+   * @param {string} id           The attrs.id of the node we are looking for.
+   * @param {number} from         The position in the document to search from.
+   * @param {number} to           The position in the document to search to.
+   * @returns {Object}            The node and position that matched the search.
+   */
+  function _getNode(id, from, to) {
+      const fromPos = from ?? TextSelection.atStart(view.state.doc).from;
+      const toPos = to ?? TextSelection.atEnd(view.state.doc).to;
+      let foundNode, foundPos;
+      view.state.doc.nodesBetween(fromPos, toPos, (node, pos) => {
+          if (node.attrs.id === id) {
+              foundNode = node;
+              foundPos = pos;
+              return false;
+          }
+          // Only iterate over top-level nodes and drill in if a block
+          return (!foundNode) && node.isBlock;
+      });
+      return {node: foundNode, pos: foundPos};
   }
 
 
@@ -19643,8 +19661,15 @@
   /**
    * Report a selection change to the Swift side.
    */
-  function selectionChanged() {
+  function _selectionChanged() {
       _callback('selectionChanged');
+  }
+
+  /**
+   * Report a click to the Swift side.
+   */
+  function _clicked() {
+      _callback('clicked');
   }
 
   /**
@@ -20226,6 +20251,7 @@
   exports.emptyDocument = emptyDocument;
   exports.endModalInput = endModalInput;
   exports.focus = focus;
+  exports.focusOn = focusOn;
   exports.getHTML = getHTML;
   exports.getHeight = getHeight;
   exports.getSelectionState = getSelectionState;

@@ -130,8 +130,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //} else {
             //    Logger.coordinator.debug("* ignored selection change")
             }
-        case "click":
-            //Logger.coordinator.debug("click")
+        case "clicked":
+            //Logger.coordinator.debug("clicked")
             webView.becomeFirstResponder()
             markupDelegate?.markupClicked(webView)
         case "undoSet":
