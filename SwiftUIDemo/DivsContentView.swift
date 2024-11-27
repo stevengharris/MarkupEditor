@@ -149,15 +149,19 @@ struct DivsContentView: View {
         }
     }
     
-    private func addButtons(focusId: String?, view: MarkupWKWebView) {
+    private func addButtons(focusId: String?, view: MarkupWKWebView, handler: (() -> Void)? = nil) {
         if let buttonGroup = buttonGroup(forFocusId: focusId), buttonGroup.isDynamic {
-            view.addButtonGroup(buttonGroup)
+            view.addButtonGroup(buttonGroup, handler: handler)
+        } else {
+            handler?()
         }
     }
     
-    private func removeButtons(focusId: String?, view: MarkupWKWebView) {
+    private func removeButtons(focusId: String?, view: MarkupWKWebView, handler: (() -> Void)? = nil) {
         if let buttonGroup = buttonGroup(forFocusId: focusId), buttonGroup.isDynamic {
-            view.removeButtonGroup(buttonGroup)
+            view.removeButtonGroup(buttonGroup, handler: handler)
+        } else {
+            handler?()
         }
     }
     
@@ -189,16 +193,19 @@ extension DivsContentView: MarkupDelegate {
             if let divId = state.divid, let div = divStructure.div(forDivId: divId) {
                 if let focusId = div.focusId {  // We selected a div that indicates another div to focus on
                     if focusId != oldFocusId {
-                        removeButtons(focusId: oldFocusId, view: view)
-                        addButtons(focusId: focusId, view: view)
-                        view.focus(on: focusId)
-                        selectedDivID = focusId
+                        removeButtons(focusId: oldFocusId, view: view) {
+                            addButtons(focusId: focusId, view: view) {
+                                view.focus(on: focusId)
+                                selectedDivID = focusId
+                            }
+                        }
                     }   // Else do nothing
                 } else if state.isValid { // We selected a ContentDiv, so it will be focused already
                     if divId != oldFocusId {
-                        removeButtons(focusId: oldFocusId, view: view)
-                        selectedDivID = divId
-                        addButtons(focusId: divId, view: view)
+                        removeButtons(focusId: oldFocusId, view: view) {
+                            selectedDivID = divId
+                            addButtons(focusId: divId, view: view)
+                        }
                     }   // Else do nothing
                 } else {
                     removeButtons(focusId: oldFocusId, view: view)

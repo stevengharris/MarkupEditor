@@ -18017,30 +18017,11 @@
               _clicked();
               _selectionChanged();
           });
-          // The div never sees an 'input' event. This is done using 
+          // Note: The div never sees an 'input' event. This is done using 
           // handleTextInput on the EditorView.
-          //
-          //div.addEventListener('input', (ev) => {
-          //    stateChanged()
-          //})
-          //
           this.dom = div;
           this.contentDOM = div;
       }
-
-      // stopEvent is called, but it doesn't seem to stop anything
-      //stopEvent(ev) {
-      //    const stop = (!this.node.attrs.editable);
-      //    console.log("stopEvent " + stop)
-      //    if (stop) ev.preventDefault();
-      //    return stop
-      //}
-
-      // I never see ignoreMutation being called
-      //ignoreMutation() {
-      //    console.log("ignoreMutation " + !this.node.attrs.editable)
-      //    return !this.node.attrs.editable
-      //}
 
   }
 
@@ -18686,8 +18667,6 @@
   }
   /**
    * Add a div with id to parentId.
-   *
-   * Return a string indicating what happened if there was a problem; else nil.
    */
   function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
       const divNodeType = view.state.schema.nodes.div;
@@ -18705,15 +18684,23 @@
               // Insert the div inside of its parent as a new child of the existing div
               const divPos = pos + node.nodeSize - 1;
               transaction.insert(divPos, divNode);
+              view.dispatch(transaction);
           }
       } else {
           // Insert before the current selection, leaving the selection alone
           // An empty doc consists of <p></p>, and the selection stays in that paragraph, so looped calls to 
           // addDiv will add onto the end of the document, leaving an empty paragraph as the final node.
-          const divPos = transaction.selection.from - 1;
-          transaction.insert(divPos, divNode);
-      }    view.dispatch(transaction);
-  }
+          const nodeSelection = NodeSelection.atEnd(transaction.doc);
+          const node = nodeSelection.$anchor.node();
+          if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
+              // Replace the last empty paragraph with divNode
+              nodeSelection.replaceWith(transaction, divNode);
+          } else {
+              // Otherwise, append this div to the end of the document
+              transaction.insert(transaction.doc.content.size, divNode);
+          }
+          view.dispatch(transaction);
+      }}
   function removeDiv(id) {
       const {node, pos} = _getNode(id);
       if (view.state.schema.nodes.div === node?.type) {
@@ -18759,12 +18746,13 @@
       }}
 
   function focusOn(id) {
-      const {pos} = _getNode(id);
-      if (pos) {
-          const nodeSelection = new TextSelection(view.state.doc.resolve(pos));
-          const transaction = view.state.tr.setSelection(nodeSelection).scrollIntoView();
-          view.dispatch(transaction);
-      }}
+      //const {pos} = _getNode(id);
+      //if (pos) {
+      //    const nodeSelection = new TextSelection(view.state.doc.resolve(pos));
+      //    const transaction = view.state.tr.setSelection(nodeSelection).scrollIntoView();
+      //    view.dispatch(transaction);
+      //};
+  }
   function scrollIntoView(id) {
   }
   /**
