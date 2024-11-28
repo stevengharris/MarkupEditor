@@ -18505,7 +18505,7 @@
   function emptyDocument() {
   }
   /**
-   * Get the contents of the editor element.
+   * Get the contents of the div with id `divID` or of the full doc.
    *
    * If pretty, then the text will be nicely formatted for reading.
    * If clean, the spans and empty text nodes will be removed first.
@@ -18515,20 +18515,33 @@
    * represent the resizing handles and box around the selected image.
    * However, this content of the DOM is only for visualization within the
    * MarkupEditor and should not be included with the HTML contents. It is
-   * left here as an option in case it's needed for debugging.
+   * available here with clean !== true as an option in case it's needed 
+   * for debugging.
    *
-   * @return {string} The HTML for the editor element
+   * @return {string} The HTML for the div with id `divID` or of the full doc.
    */
   function getHTML(pretty='true', clean='true', divID) {
-      const state = window.view.state;
-      const fragment = DOMSerializer.fromSchema(state.schema).serializeFragment(state.doc.content);
-  	if (pretty) {
-          return _allPrettyHTML(fragment)
+      const prettyHTML = pretty === 'true';
+      const cleanHTML = clean === 'true';
+      const divNode = (divID) ? _getNode(divID)?.node : view.state.doc;
+      if (!divNode) return ""
+      const fragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
+      let editor, text;
+      if (cleanHTML) {
+          const template = document.createElement('template');
+          template.innerHTML = fragment.innerHTML;
+          editor = template.content;
+          _cleanUpDivsWithin(editor);
+          _cleanUpSpansWithin(editor);
+      } else {
+          editor = fragment;
+      }	if (prettyHTML) {
+          text = _allPrettyHTML(fragment);
       } else {
           const div = document.createElement('div');
           div.appendChild(fragment);
-          return div.innerHTML
-      }
+          text = div.innerHTML;
+      }    return text;
   }
   /**
    * Return a pretty version of editor contents.
