@@ -18503,6 +18503,8 @@
    * Clean out the document and replace it with an empty paragraph
    */
   function emptyDocument() {
+      _selectedID = null;
+      setHTML('<p></p>');
   }
   /**
    * Get the contents of the div with id `divID` or of the full doc.

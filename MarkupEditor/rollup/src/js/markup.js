@@ -564,6 +564,8 @@ function _fragmentFrom(html) {
  * Clean out the document and replace it with an empty paragraph
  */
 export function emptyDocument() {
+    _selectedID = null;
+    setHTML('<p></p>');
 };
 
 /**

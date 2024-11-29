@@ -250,6 +250,7 @@ extension DivsContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {
+            selectedDivID = nil
             setRawText()
         }
     }
