@@ -9,13 +9,21 @@ import Foundation
 
 /// MarkupDivStructure is a class that holds the divs and buttongroups used by the MarkupEditor.
 public class MarkupDivStructure {
-    public var divs: [HtmlDivHolder] = []
-    private var divsById: [String : HtmlDivHolder] = [:]
-    private var buttonsById: [String : HtmlButton] = [:]
-    private var focusIdsByDivId: [String : String] = [:]
-    private var buttonGroupIdsByFocusId: [String : String] = [:]
+    public var divs: [HtmlDivHolder]
+    /// The `divCount` will include buttonGroups, which are implicitly created when buttons are part of a div
+    public var divCount: Int { divsById.count }
+    private var divsById: [String : HtmlDivHolder]
+    private var buttonsById: [String : HtmlButton]
+    private var focusIdsByDivId: [String : String]
+    private var buttonGroupIdsByFocusId: [String : String]
     
-    public init() {}
+    public init() {
+        divs = []
+        divsById = [:]
+        buttonsById = [:]
+        focusIdsByDivId = [:]
+        buttonGroupIdsByFocusId = [:]
+    }
     
     public func reset() {
         divs = []
