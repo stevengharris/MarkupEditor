@@ -12,14 +12,27 @@ extension MarkupWKWebView {
     /// Add all the divs in `divStructure` into this view along with their resources which must be uniquely named.
     ///
     /// This method invokes many async JavaScript methods to add the `divStructure` divs, without waiting for any response.
+    /// However, the handler is only called after all divs, including buttongroups, are added.
     public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
-        for div in divStructure.divs {
+        let divs = divStructure.divs
+        guard divs.count > 0 else {
+            // It makes no sense to load a divStructure with no divs, but who am I to judge?
+            handler?()
+            return
+        }
+        var addedCount = 0
+        for index in divs.indices {
+            let div = divs[index]
             if let resourcesUrl = div.resourcesUrl {
                 copyResources(from: resourcesUrl)
             }
-            addDiv(div)
+            addDiv(div) { added in
+                addedCount += added
+                if addedCount == divStructure.divCount {
+                    handler?()
+                }
+            }
         }
-        handler?()
     }
     
     /// Unload all divs in the `divStructure`.
@@ -121,8 +134,10 @@ extension MarkupWKWebView {
         }
     }
     
-    /// Add the `div` into the view, including its buttons if they are not dynamically created.
-    public func addDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
+    /// Add the `div` into the view, including its buttons if they are not dynamically created. Pass the number of
+    /// divs actually added in the handler. We do this because we only want to invoke the caller's handler when all
+    /// divs have been added, and the buttonGroup div is added implicitly if it exists.
+    public func addDiv(_ div: HtmlDivHolder, handler: ((Int)->Void)? = nil) {
         let id = div.id
         let parentId = div.parentId
         let cssClass = div.cssClass
@@ -133,12 +148,14 @@ extension MarkupWKWebView {
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
-            if let buttonGroup, !buttonGroup.isDynamic {
+            // When we have a non-empty button that is not dynamic (i.e., will always be present), then
+            // add it in at div creation time. Dynamic button groups are added and removed as needed later.
+            if let buttonGroup, !buttonGroup.buttons.isEmpty, !buttonGroup.isDynamic {
                 self.addButtonGroup(buttonGroup) {
-                    handler?()
+                    handler?(2)
                 }
             } else {
-                handler?()
+                handler?(buttonGroup == nil ? 1 : 2)
             }
         }
     }
@@ -157,6 +174,7 @@ extension MarkupWKWebView {
     ///
     /// A button group is a div containing buttons, so they can be positioned as a group.
     /// Button groups always reside in some parent, typically non-contenteditable header with a focusId of the contentEditable div.
+    /// Execute the handler only once, after adding all buttons.
     public func addButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         let id = buttonGroup.id
         let parentId = buttonGroup.parentId
@@ -165,15 +183,24 @@ extension MarkupWKWebView {
         evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(attributes)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButtonGroup: \(error)")
+                handler?()
             } else if let result {
                 Logger.webview.warning("\(result as? String ?? "nil")")
+                handler?()
             } else {
-                // We are going to be running handler before all the buttons are added, but we don't care
-                for button in buttonGroup.buttons {
-                    self.addButton(button, in: id)
+                let buttons = buttonGroup.buttons
+                if buttons.count == 0 {
+                    handler?()
+                } else {
+                    for index in buttons.indices {
+                        self.addButton(buttons[index], in: id) {
+                            if index == buttons.count - 1 {
+                                handler?()
+                            }
+                        }
+                    }
                 }
             }
-            handler?()
         }
     }
     

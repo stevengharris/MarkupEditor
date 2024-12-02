@@ -17925,6 +17925,11 @@
           return DecorationSet.create(tr.doc, [
             Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
           ])
+        } else if (tr.getMeta("muDiv")) {
+          const {cssClass, fromPos, toPos} = tr.getMeta("muDiv");
+          return DecorationSet.create(tr.doc, [
+            Decoration.node(fromPos, toPos, {class: cssClass})
+          ])
         } else {
            // map "other" changes so our decoration "stays put" 
            // (e.g. user is typing so decoration's pos must change)
@@ -18012,10 +18017,10 @@
           div.setAttribute('class', node.attrs.cssClass);
           div.setAttribute('editable', node.attrs.editable.toString());
           div.innerHTML = node.attrs.htmlContents;
+          // Note that the click is reported using handleClick on the EditorView.
+          // Here we have access to the node id and can specialize for divs.
           div.addEventListener('click', (ev) => {
               _selectedID = node.attrs.id;
-              _clicked();
-              _selectionChanged();
           });
           // Note: The div never sees an 'input' event. This is done using 
           // handleTextInput on the EditorView.
@@ -18129,13 +18134,13 @@
       selectNode() {
         this.img.classList.add("ProseMirror-selectednode");
         this.handle.style.display = "";
-        _selectionChanged();
+        selectionChanged();
       }
     
       deselectNode() {
         this.img.classList.remove("ProseMirror-selectednode");
         this.handle.style.display = "none";
-        _selectionChanged();
+        selectionChanged();
       }
   }
 
@@ -18527,21 +18532,16 @@
       const cleanHTML = clean === 'true';
       const divNode = (divID) ? _getNode(divID)?.node : view.state.doc;
       if (!divNode) return ""
-      const fragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
-      let editor, text;
+      const editor = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
+      let text;
       if (cleanHTML) {
-          const template = document.createElement('template');
-          template.innerHTML = fragment.innerHTML;
-          editor = template.content;
           _cleanUpDivsWithin(editor);
           _cleanUpSpansWithin(editor);
-      } else {
-          editor = fragment;
       }	if (prettyHTML) {
-          text = _allPrettyHTML(fragment);
+          text = _allPrettyHTML(editor);
       } else {
           const div = document.createElement('div');
-          div.appendChild(fragment);
+          div.appendChild(editor);
           text = div.innerHTML;
       }    return text;
   }
@@ -18614,9 +18614,9 @@
   };
 
   /**
-   * Set the contents of the editor element
+   * Set the contents of the editor
    *
-   * @param {String} contents The HTML for the editor element
+   * @param {String} contents The HTML for the editor
    */
   function setHTML(contents, select=true) {
       const state = window.view.state;
@@ -18699,20 +18699,24 @@
               // Insert the div inside of its parent as a new child of the existing div
               const divPos = pos + node.nodeSize - 1;
               transaction.insert(divPos, divNode);
+              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
               view.dispatch(transaction);
           }
       } else {
-          // Insert before the current selection, leaving the selection alone
-          // An empty doc consists of <p></p>, and the selection stays in that paragraph, so looped calls to 
-          // addDiv will add onto the end of the document, leaving an empty paragraph as the final node.
+          // Add the div to the end of the document, replacing the empty paragraph node 
+          // at that position if it exists (e.g., when the doc is empty)
           const nodeSelection = NodeSelection.atEnd(transaction.doc);
           const node = nodeSelection.$anchor.node();
           if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
               // Replace the last empty paragraph with divNode
+              const divPos = nodeSelection.from;
               nodeSelection.replaceWith(transaction, divNode);
+              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
           } else {
               // Otherwise, append this div to the end of the document
-              transaction.insert(transaction.doc.content.size, divNode);
+              const divPos = transaction.doc.content.size;
+              transaction.insert(divPos, divNode);
+              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
           }
           view.dispatch(transaction);
       }}
@@ -18924,9 +18928,11 @@
       const tr = view.state.tr;
       let transaction;
       doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-          if (node.isBlock) { 
+          if (node.type === view.state.schema.nodes.div) { 
+              return true;
+          } else if (node.isBlock) { 
               transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
-          }        return false;   // We only need top-level nodes
+          }        return false;   // We only need top-level nodes within doc
       });
       const newState = view.state.apply(transaction);
       view.updateState(newState);
@@ -19664,14 +19670,14 @@
   /**
    * Report a selection change to the Swift side.
    */
-  function _selectionChanged() {
+  function selectionChanged() {
       _callback('selectionChanged');
   }
 
   /**
    * Report a click to the Swift side.
    */
-  function _clicked() {
+  function clicked() {
       _callback('clicked');
   }
 
@@ -20225,7 +20231,9 @@
 
   window.view = new EditorView(document.querySelector("#editor"), {
     state: EditorState.create({
-      doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#content")),
+      // For the MarkupEditor, we can just use the editor element. 
+      // There is mo need to use a separate content element.
+      doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({schema: muSchema})
     }),
     nodeViews: {
@@ -20237,6 +20245,11 @@
       stateChanged();
       return false; // All the default behavior should occur
     },
+    handleClick(view, pos, ev) {
+      selectionChanged();
+      clicked();
+      return false;
+    }
   });
 
   exports.addButton = addButton;

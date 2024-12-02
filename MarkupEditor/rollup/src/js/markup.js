@@ -5,7 +5,7 @@
  */
 
 import {AllSelection, TextSelection, NodeSelection} from 'prosemirror-state'
-import {DOMParser, DOMSerializer, NodeType} from 'prosemirror-model'
+import {DOMParser, DOMSerializer} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
 import {wrapInList, liftListItem} from 'prosemirror-schema-list'
 import {
@@ -30,10 +30,10 @@ export class DivView {
         div.setAttribute('class', node.attrs.cssClass);
         div.setAttribute('editable', node.attrs.editable.toString());
         div.innerHTML = node.attrs.htmlContents;
+        // Note that the click is reported using handleClick on the EditorView.
+        // Here we have access to the node id and can specialize for divs.
         div.addEventListener('click', (ev) => {
             _selectedID = node.attrs.id;
-            _clicked();
-            _selectionChanged()
         })
         // Note: The div never sees an 'input' event. This is done using 
         // handleTextInput on the EditorView.
@@ -147,13 +147,13 @@ export class ImageView {
     selectNode() {
       this.img.classList.add("ProseMirror-selectednode")
       this.handle.style.display = ""
-      _selectionChanged()
+      selectionChanged()
     }
   
     deselectNode() {
       this.img.classList.remove("ProseMirror-selectednode")
       this.handle.style.display = "none"
-      _selectionChanged()
+      selectionChanged()
     }
 }
 
@@ -589,22 +589,17 @@ export function getHTML(pretty='true', clean='true', divID) {
     const cleanHTML = clean === 'true';
     const divNode = (divID) ? _getNode(divID)?.node : view.state.doc;
     if (!divNode) return ""
-    const fragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
-    let editor, text;
+    const editor = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
+    let text;
     if (cleanHTML) {
-        const template = document.createElement('template');
-        template.innerHTML = fragment.innerHTML;
-        editor = template.content;
         _cleanUpDivsWithin(editor);
         _cleanUpSpansWithin(editor);
-    } else {
-        editor = fragment;
     };
 	if (prettyHTML) {
-        text = _allPrettyHTML(fragment);
+        text = _allPrettyHTML(editor);
     } else {
         const div = document.createElement('div');
-        div.appendChild(fragment);
+        div.appendChild(editor);
         text = div.innerHTML;
     };
     return text;
@@ -686,9 +681,9 @@ const _isInlined = function(node) {
 };
 
 /**
- * Set the contents of the editor element
+ * Set the contents of the editor
  *
- * @param {String} contents The HTML for the editor element
+ * @param {String} contents The HTML for the editor
  */
 export function setHTML(contents, select=true) {
     const state = window.view.state;
@@ -777,20 +772,24 @@ export function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
             // Insert the div inside of its parent as a new child of the existing div
             const divPos = pos + node.nodeSize - 1;
             transaction.insert(divPos, divNode)
+            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
             view.dispatch(transaction);
         }
     } else {
-        // Insert before the current selection, leaving the selection alone
-        // An empty doc consists of <p></p>, and the selection stays in that paragraph, so looped calls to 
-        // addDiv will add onto the end of the document, leaving an empty paragraph as the final node.
+        // Add the div to the end of the document, replacing the empty paragraph node 
+        // at that position if it exists (e.g., when the doc is empty)
         const nodeSelection = NodeSelection.atEnd(transaction.doc);
         const node = nodeSelection.$anchor.node();
         if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
             // Replace the last empty paragraph with divNode
+            const divPos = nodeSelection.from;
             nodeSelection.replaceWith(transaction, divNode);
+            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
         } else {
             // Otherwise, append this div to the end of the document
-            transaction.insert(transaction.doc.content.size, divNode);
+            const divPos = transaction.doc.content.size;
+            transaction.insert(divPos, divNode);
+            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
         }
         view.dispatch(transaction);
     };
@@ -1025,10 +1024,12 @@ function _setParagraphStyle(protonode) {
     const tr = view.state.tr;
     let transaction;
     doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-        if (node.isBlock) { 
+        if (node.type === view.state.schema.nodes.div) { 
+            return true;
+        } else if (node.isBlock) { 
             transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
         };
-        return false;   // We only need top-level nodes
+        return false;   // We only need top-level nodes within doc
     });
     const newState = view.state.apply(transaction);
     view.updateState(newState);
@@ -1858,14 +1859,14 @@ function _getIndented() {
 /**
  * Report a selection change to the Swift side.
  */
-function _selectionChanged() {
+export function selectionChanged() {
     _callback('selectionChanged')
 }
 
 /**
  * Report a click to the Swift side.
  */
-function _clicked() {
+export function clicked() {
     _callback('clicked')
 }
 
