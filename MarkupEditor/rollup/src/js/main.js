@@ -46,6 +46,8 @@ import {
   endModalInput,
   cleanUpHTML,
   getSelectionState,
+  selectionChanged,
+  clicked,
   stateChanged,
   setRange,
   testUndo,
@@ -135,7 +137,9 @@ const muSchema = new Schema({
 
 window.view = new EditorView(document.querySelector("#editor"), {
   state: EditorState.create({
-    doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#content")),
+    // For the MarkupEditor, we can just use the editor element. 
+    // There is mo need to use a separate content element.
+    doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
     plugins: markupSetup({schema: muSchema})
   }),
   nodeViews: {
@@ -147,4 +151,9 @@ window.view = new EditorView(document.querySelector("#editor"), {
     stateChanged();
     return false; // All the default behavior should occur
   },
+  handleClick(view, pos, ev) {
+    selectionChanged();
+    clicked();
+    return false;
+  }
 })
