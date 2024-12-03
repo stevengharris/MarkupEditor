@@ -99,14 +99,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             //Logger.coordinator.debug("* blur")
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
             markupDelegate?.markupLostFocus(webView)
-            // TODO: Determine whether to clean up HTML or perhaps leave that to a markupDelegate
-            // For now, we clean up the HTML when we lose focus
-            //webView.cleanUpHtml() { error in
-            //    if error != nil {
-            //        Logger.coordinator.error("Error cleaning up html: \(error!.localizedDescription)")
-            //    }
-            //    self.markupDelegate?.markupLostFocus(webView)
-            //}
         case "focus":
             //Logger.coordinator.debug("* focus")
             webView.hasFocus = true         // Track focus state so delegate can find it if needed

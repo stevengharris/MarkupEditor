@@ -18240,11 +18240,20 @@
   */
 
   /**
-   * Called to set attributes to the editor div, typically to make it contenteditable,
-   * but also to set spellcheck and autocorrect.
+   * Called to set attributes to the editor div, typically to ,
+   * set spellcheck and autocorrect. Note that contenteditable 
+   * should not be set for the editor element, even if it is 
+   * included in the jsonString attributes. The same attributes
+   * are used for contenteditable divs, and the attribute is 
+   * relevant in that case.
    */
   function setTopLevelAttributes(jsonString) {
-  }
+      const attributes = JSON.parse(jsonString);
+      const editor = document.getElementById('editor');
+      if (editor && attributes) {   
+         for (const [key, value] of Object.entries(attributes)) {
+          if (key !== 'contenteditable') editor.setAttribute(key, value);
+         }    }}
   /**
    * Called to load user script and CSS before loading html.
    *
@@ -19123,18 +19132,6 @@
    */
   //MARK: Clean Up
 
-  /**
-   * Due to the presence of "-webkit-text-size-adjust: 100%;" in css,
-   * WebKit may be inserting styling for elements many places, but particularly
-   * on deletion as it tries to maintain the proper appearance. However, even
-   * with that removed, we still end up with spans that try to enforce the
-   * previous "style" (for example, H1) font size. We also end up with styles
-   * imposed on format elements. All of these need to be removed, since we
-   * don't support arbitrary font size changes.
-   * Spans need to be removed and replaced with their innerHTML.
-   */
-  function cleanUpHTML() {
-  }
   function _cleanUpTypesWithin(names, node) {
       const ucNames = names.map((name) => name.toUpperCase());
       const childNodes = node.childNodes;
@@ -20259,7 +20256,6 @@
   exports.addRow = addRow$1;
   exports.borderTable = borderTable;
   exports.cancelSearch = cancelSearch;
-  exports.cleanUpHTML = cleanUpHTML;
   exports.cutImage = cutImage;
   exports.deactivateSearch = deactivateSearch;
   exports.deleteLink = deleteLink;
