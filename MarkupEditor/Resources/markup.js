@@ -18704,6 +18704,9 @@
    * Reset the selection to the beginning of the document
    */
   function resetSelection() {
+      const selection = TextSelection.atStart(view.state.doc);
+      const transaction = view.state.tr.setSelection(selection);
+      view.dispatch(transaction);
   }
   /**
    * Add a div with id to parentId.

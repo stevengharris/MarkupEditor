@@ -779,6 +779,9 @@ export function focus() {
  * Reset the selection to the beginning of the document
  */
 export function resetSelection() {
+    const selection = TextSelection.atStart(view.state.doc);
+    const transaction = view.state.tr.setSelection(selection);
+    view.dispatch(transaction);
 };
 
 /**
