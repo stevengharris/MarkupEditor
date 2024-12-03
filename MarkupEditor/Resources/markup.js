@@ -18704,10 +18704,35 @@
    * Reset the selection to the beginning of the document
    */
   function resetSelection() {
-      const selection = TextSelection.atStart(view.state.doc);
+      const {node, pos} = _firstEditableTextNode();
+      const doc = view.state.doc;
+      const selection = (node) ? new TextSelection(doc.resolve(pos)) : AllSelection(doc);
       const transaction = view.state.tr.setSelection(selection);
       view.dispatch(transaction);
   }
+  /**
+   * Return the node and position of the first editable text; i.e., 
+   * a text node inside of a contentEditable div.
+   */
+  function _firstEditableTextNode() {
+      const divNodeType = view.state.schema.nodes.div;
+      const fromPos = TextSelection.atStart(view.state.doc).from;
+      const toPos = TextSelection.atEnd(view.state.doc).to;
+      let nodePos = {};
+      let foundNode = false;
+      view.state.doc.nodesBetween(fromPos, toPos, (node, pos) => {
+          if ((node.type === divNodeType) && !foundNode) {
+              return node.attrs.editable;
+          } else if (node.isText && !foundNode) {
+              nodePos = {node: node, pos: pos};
+              foundNode = true;
+              return false;
+          } else {
+              return node.isBlock && !foundNode;
+          }    });
+      return nodePos;
+  }
+
   /**
    * Add a div with id to parentId.
    */
@@ -18793,13 +18818,12 @@
       }}
 
   function focusOn(id) {
-      //const {pos} = _getNode(id);
-      //if (pos) {
-      //    const nodeSelection = new TextSelection(view.state.doc.resolve(pos));
-      //    const transaction = view.state.tr.setSelection(nodeSelection).scrollIntoView();
-      //    view.dispatch(transaction);
-      //};
-  }
+      const {pos} = _getNode(id);
+      if (pos) {
+          const selection = new TextSelection(view.state.doc.resolve(pos));
+          const transaction = view.state.tr.setSelection(selection).scrollIntoView();
+          view.dispatch(transaction);
+      }}
   function scrollIntoView(id) {
   }
   /**
