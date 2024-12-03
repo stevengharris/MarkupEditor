@@ -784,12 +784,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func cleanUpHtml(handler: ((Error?)->Void)?) {
-        evaluateJavaScript("MU.cleanUpHTML()") { result, error in
-            handler?(error)
-        }
-    }
-    
     public func insertLink(_ href: String?, handler: (()->Void)? = nil) {
         if href == nil {
             evaluateJavaScript("MU.deleteLink()") { result, error in handler?() }

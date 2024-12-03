@@ -738,6 +738,16 @@ export function setPlaceholder(text) {
  * auto-sizing of a WKWebView based on its contents.
  */
 export function getHeight() {
+   const editor = document.getElementById('editor');
+   const paddingBlockStart = editor.style.getPropertyValue('padding-block-start');
+   const paddingBlockEnd = editor.style.getPropertyValue('padding-block-end');
+   editor.style['padding-block-start'] = '0px';
+   editor.style['padding-block-end'] = '0px';
+   const style = window.getComputedStyle(editor, null);
+   const height = parseInt(style.getPropertyValue('height'));
+   editor.style['padding-block-start'] = paddingBlockStart;
+   editor.style['padding-block-end'] = paddingBlockEnd;
+   return height;
 };
 
 /*
@@ -749,6 +759,13 @@ export function getHeight() {
  * of the screen.
  */
 export function padBottom(fullHeight) {
+    const editor = document.getElementById('editor');
+    const padHeight = fullHeight - getHeight();
+    if (padHeight > 0) {
+        editor.style.setProperty('--padBottom', padHeight+'px');
+    } else {
+        editor.style.setProperty('--padBottom', '0');
+    };
 };
 
 /**
