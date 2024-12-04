@@ -153,5 +153,15 @@ window.view = new EditorView(document.querySelector("#editor"), {
     selectionChanged();
     clicked();
     return false;
-  }
+  },
+  handleDoubleClick(view, pos, ev) {
+    selectionChanged();
+    clicked();
+    return false;
+  },
+  handleTripleClick(view, pos, ev) {
+    selectionChanged();
+    clicked();
+    return false;
+  },
 })

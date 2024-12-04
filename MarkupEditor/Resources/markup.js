@@ -19526,17 +19526,18 @@
 
   /**
    * Return the text at the selection.
-   * @returns {String} The text that is selected.
+   * @returns {String | null} The text that is selected.
    */
   function _getSelectionText() {
       const doc = view.state.doc;
       const selection = view.state.selection;
-      if (selection.isText) {
-          return selection.text;
-      } else {
-          const cut = doc.cut(selection.from, selection.to);
-          return cut.text ?? ""
-      }}
+      if (selection.empty) return null;
+      const fragment =  doc.cut(selection.from, selection.to).content;
+      const htmlFragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(fragment);
+      const div = document.createElement('div');
+      div.appendChild(htmlFragment);
+      return div.innerHTML;
+  }
   /**
    * Return the rectangle that encloses the selection.
    * @returns {Object} The selection rectangle's top, bottom, left, right.
@@ -20289,7 +20290,17 @@
       selectionChanged();
       clicked();
       return false;
-    }
+    },
+    handleDoubleClick(view, pos, ev) {
+      selectionChanged();
+      clicked();
+      return false;
+    },
+    handleTripleClick(view, pos, ev) {
+      selectionChanged();
+      clicked();
+      return false;
+    },
   });
 
   exports.addButton = addButton;
