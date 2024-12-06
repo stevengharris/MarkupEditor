@@ -14512,7 +14512,12 @@
     // TODO: Exclude divs that don't conform to MarkupEditor expectations by using a rule
     // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
     // https://prosemirror.net/docs/ref/#inputrules
+    //
     // Note: Changes to div here may need to be reflected in DivView found in markup.js.
+    //
+    // At some point, we may want to be able to set attributes like spellcheck
+    // at an individual div level, but for now these are not needed but are left 
+    // commented-out for future use.
     div: {
       content: "block*",
       group: "block",
@@ -14521,10 +14526,10 @@
         parentId: {default: 'editor'},
         cssClass: {default: null},
         editable: {default: true},
-        spellcheck: {default: false},
-        autocorrect: {default: 'on'},
-        autocapitalize: {default: 'off'},
-        writingsuggestions: {default: false},
+        //spellcheck: {default: false},
+        //autocorrect: {default: 'on'},
+        //autocapitalize: {default: 'off'},
+        //writingsuggestions: {default: false},
         htmlContents: {default: ""}
       },
       parseDOM: [{
@@ -14534,47 +14539,53 @@
           const parentId = dom.getAttribute("parentId");
           const cssClass = dom.getAttribute("class");
           const editable = dom.getAttribute("editable") == "true";
-          const spellcheck = dom.getAttribute("spellcheck") == "true";
-          const autocorrect = dom.getAttribute("autocorrect") == "on";
-          const autocapitalize = dom.getAttribute("autocapitalize") == "on";
-          const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
+          //const spellcheck = dom.getAttribute("spellcheck") == "true";
+          //const autocorrect = dom.getAttribute("autocorrect") == "on";
+          //const autocapitalize = dom.getAttribute("autocapitalize") == "on";
+          //const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
           return {
             id: id,
             parentId: parentId,
             cssClass: cssClass,
             editable: editable,
-            spellcheck: spellcheck,
-            autocorrect: autocorrect,
-            autocapitalize: autocapitalize,
-            writingsuggestions: writingsuggestions,
+            //spellcheck: spellcheck,
+            //autocorrect: autocorrect,
+            //autocapitalize: autocapitalize,
+            //writingsuggestions: writingsuggestions,
             htmlContents: dom.innerHTML ?? ""
           }
         }
       }],
-      toDOM(node) { 
-        // Note we don't push editable to the actual DOM element
-        let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
-        return [
-          "div", 
-          {
-            id: id, 
-            parentId: parentId, 
-            class: cssClass, 
-            editable: editable.toString(), 
-            spellcheck: spellcheck.toString(), 
-            autocorrect: autocorrect.toString(),
-            autocapitalize: autocapitalize.toString(),
-            writingsuggestions: writingsuggestions.toString()
-          }, 
-          0
-        ] 
+      // Note we only output a bare div with no attributes set, because these are only interesting to 
+      // the MarkupEditor and otherwise clutter the document HTML. For the MarkupEditor, we set the 
+      // top-level attributes of the editor div at initialization, and the other divs embedded in it 
+      // inherit the behavior set once at the top.
+      toDOM() { 
+        return ["div", {}, 0]
       }
+      //  The following is left commented out here in case it's helpful for debugging in future.
+      //toDOM(node) { 
+      //  let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
+      //  return [
+      //    "div", 
+      //    {
+      //      id: id, 
+      //      parentId: parentId, 
+      //      class: cssClass, 
+      //      editable: editable.toString(), 
+      //      spellcheck: spellcheck.toString(), 
+      //      autocorrect: autocorrect.toString(),
+      //      autocapitalize: autocapitalize.toString(),
+      //      writingsuggestions: writingsuggestions.toString()
+      //    }, 
+      //    0
+      //  ] 
+      //}
     },
 
     button: {
       content: "text*",
       group: "block",
-      //selectable: true,
       attrs: {
         id: {default: null},
         parentId: {default: null},
@@ -14595,9 +14606,8 @@
           }
         }
       }],
-      toDOM(node) { 
-        let {id, parentId, cssClass} = node.attrs;
-        return ["button", {id: id, parentId: parentId, class: cssClass}, 0] 
+      toDOM() { 
+        return ["button", {}, 0]
       }
     }
 
@@ -18062,17 +18072,11 @@
    */
 
   class DivView {
-      constructor(node, view, getPos) {
+      constructor(node) {
           this.node = node;
           const div = document.createElement('div');
           div.setAttribute('id', node.attrs.id);
-          div.setAttribute('parentId', node.attrs.parentId);
           div.setAttribute('class', node.attrs.cssClass);
-          div.setAttribute('editable', node.attrs.editable.toString());
-          div.setAttribute('spellcheck', node.attrs.spellcheck.toString());
-          div.setAttribute('autocorrect', node.attrs.autocorrect.toString());
-          div.setAttribute('autocapitalize', node.attrs.autocapitalize.toString());
-          div.setAttribute('writingsuggestions', node.attrs.writingsuggestions.toString());
           div.innerHTML = node.attrs.htmlContents;
           // Note that the click is reported using handleClick on the EditorView.
           // Here we have access to the node id and can specialize for divs.
@@ -18091,7 +18095,6 @@
       constructor(node, view, getPos) {
           const button = document.createElement('button');
           button.setAttribute('id', node.attrs.id);
-          button.setAttribute('parentId', node.attrs.parentId);
           button.setAttribute('class', node.attrs.cssClass);
           button.setAttribute('type', 'button');
           button.innerHTML = node.attrs.label;

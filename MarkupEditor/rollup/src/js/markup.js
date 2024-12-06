@@ -22,17 +22,11 @@ import {
 } from 'prosemirror-tables'
 
 export class DivView {
-    constructor(node, view, getPos) {
+    constructor(node) {
         this.node = node;
         const div = document.createElement('div');
         div.setAttribute('id', node.attrs.id);
-        div.setAttribute('parentId', node.attrs.parentId);
         div.setAttribute('class', node.attrs.cssClass);
-        div.setAttribute('editable', node.attrs.editable.toString());
-        div.setAttribute('spellcheck', node.attrs.spellcheck.toString());
-        div.setAttribute('autocorrect', node.attrs.autocorrect.toString());
-        div.setAttribute('autocapitalize', node.attrs.autocapitalize.toString());
-        div.setAttribute('writingsuggestions', node.attrs.writingsuggestions.toString());
         div.innerHTML = node.attrs.htmlContents;
         // Note that the click is reported using handleClick on the EditorView.
         // Here we have access to the node id and can specialize for divs.
@@ -51,7 +45,6 @@ export class ButtonView {
     constructor(node, view, getPos) {
         const button = document.createElement('button');
         button.setAttribute('id', node.attrs.id);
-        button.setAttribute('parentId', node.attrs.parentId);
         button.setAttribute('class', node.attrs.cssClass);
         button.setAttribute('type', 'button');
         button.innerHTML = node.attrs.label;
