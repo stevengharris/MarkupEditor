@@ -145,23 +145,14 @@ window.view = new EditorView(document.querySelector("#editor"), {
     div(node, view, getPos) { return new DivView(node, view, getPos) },
     button(node, view, getPos) { return new ButtonView(node, view, getPos) }
   },
-  handleTextInput(view, from, to, text) {
+  handleTextInput() {
     stateChanged();
     return false; // All the default behavior should occur
   },
-  handleClick(view, pos, ev) {
+  // Use createSelectionBetween to handle selection and click both
+  createSelectionBetween() {
     selectionChanged();
     clicked();
-    return false;
-  },
-  handleDoubleClick(view, pos, ev) {
-    selectionChanged();
-    clicked();
-    return false;
-  },
-  handleTripleClick(view, pos, ev) {
-    selectionChanged();
-    clicked();
-    return false;
-  },
+    return null; // All the default behavior should occur
+  }
 })

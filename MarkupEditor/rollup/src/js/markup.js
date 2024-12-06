@@ -29,6 +29,10 @@ export class DivView {
         div.setAttribute('parentId', node.attrs.parentId);
         div.setAttribute('class', node.attrs.cssClass);
         div.setAttribute('editable', node.attrs.editable.toString());
+        div.setAttribute('spellcheck', node.attrs.spellcheck.toString());
+        div.setAttribute('autocorrect', node.attrs.autocorrect.toString());
+        div.setAttribute('autocapitalize', node.attrs.autocapitalize.toString());
+        div.setAttribute('writingsuggestions', node.attrs.writingsuggestions.toString());
         div.innerHTML = node.attrs.htmlContents;
         // Note that the click is reported using handleClick on the EditorView.
         // Here we have access to the node id and can specialize for divs.
@@ -279,9 +283,9 @@ export function setTopLevelAttributes(jsonString) {
     const attributes = JSON.parse(jsonString);
     const editor = document.getElementById('editor');
     if (editor && attributes) {   
-       for (const [key, value] of Object.entries(attributes)) {
-        if (key !== 'contenteditable') editor.setAttribute(key, value);
-       };
+        for (const [key, value] of Object.entries(attributes)) {
+            if (key !== 'contenteditable') editor.setAttribute(key, value);
+        };
     };
 };
 
@@ -902,12 +906,12 @@ export function removeButton(id) {
 
 
 export function focusOn(id) {
-    const {pos} = _getNode(id);
-    if (pos) {
-        const selection = new TextSelection(view.state.doc.resolve(pos));
-        const transaction = view.state.tr.setSelection(selection).scrollIntoView();
-        view.dispatch(transaction);
-    };
+    //const {pos} = _getNode(id);
+    //if (pos) {
+    //    const selection = new TextSelection(view.state.doc.resolve(pos));
+    //    const transaction = view.state.tr.setSelection(selection).scrollIntoView();
+    //    view.dispatch(transaction);
+    //};
 };
 
 export function scrollIntoView(id) {
@@ -1708,10 +1712,15 @@ function _getSelectionText() {
     const selection = view.state.selection;
     if (selection.empty) return null;
     const fragment =  doc.cut(selection.from, selection.to).content;
-    const htmlFragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(fragment);
-    const div = document.createElement('div');
-    div.appendChild(htmlFragment);
-    return div.innerHTML;
+    let text = '';
+    fragment.nodesBetween(0, fragment.size, (node) => {
+        if (node.isText) {
+            text += node.text;
+            return false;
+        }
+        return true;
+    })
+    return (text.length === 0) ? null : text;
 };
 
 /**

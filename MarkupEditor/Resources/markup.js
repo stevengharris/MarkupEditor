@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory(global.MU = {}));
-}(this, (function (exports) { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.MU = {}));
+})(this, (function (exports) { 'use strict';
 
   // ::- Persistent data structure representing an ordered mapping from
   // strings to values, with some convenient update methods.
@@ -208,7 +208,7 @@
       */
       constructor(
       /**
-      @internal
+      The child nodes in this fragment.
       */
       content, size) {
           this.content = content;
@@ -854,7 +854,7 @@
       if (!sub.type.compatibleContent(main.type))
           throw new ReplaceError("Cannot join " + sub.type.name + " onto " + main.type.name);
   }
-  function joinable($before, $after, depth) {
+  function joinable$1($before, $after, depth) {
       let node = $before.node(depth);
       checkJoin(node, $after.node(depth));
       return node;
@@ -889,8 +889,8 @@
       return node.copy(content);
   }
   function replaceThreeWay($from, $start, $end, $to, depth) {
-      let openStart = $from.depth > depth && joinable($from, $start, depth + 1);
-      let openEnd = $to.depth > depth && joinable($end, $to, depth + 1);
+      let openStart = $from.depth > depth && joinable$1($from, $start, depth + 1);
+      let openEnd = $to.depth > depth && joinable$1($end, $to, depth + 1);
       let content = [];
       addRange(null, $from, depth, content);
       if (openStart && openEnd && $start.index(depth) == $end.index(depth)) {
@@ -911,7 +911,7 @@
       let content = [];
       addRange(null, $from, depth, content);
       if ($from.depth > depth) {
-          let type = joinable($from, $to, depth + 1);
+          let type = joinable$1($from, $to, depth + 1);
           addNode(close(type, replaceTwoWay($from, $to, depth + 1)), content);
       }
       addRange($to, null, depth, content);
@@ -1321,6 +1321,10 @@
           this.marks = marks;
           this.content = content || Fragment.empty;
       }
+      /**
+      The array of this node's child nodes.
+      */
+      get children() { return this.content.content; }
       /**
       The size of this node, as defined by the integer-based [indexing
       scheme](/docs/guide/#doc.indexing). For text nodes, this is the
@@ -2017,16 +2021,14 @@
           stream.err("Unexpected token '" + stream.next + "'");
       }
   }
-  /**
-  Construct an NFA from an expression as returned by the parser. The
-  NFA is represented as an array of states, which are themselves
-  arrays of edges, which are `{term, to}` objects. The first state is
-  the entry state and the last node is the success state.
-
-  Note that unlike typical NFAs, the edge ordering in this one is
-  significant, in that it is used to contruct filler content when
-  necessary.
-  */
+  // Construct an NFA from an expression as returned by the parser. The
+  // NFA is represented as an array of states, which are themselves
+  // arrays of edges, which are `{term, to}` objects. The first state is
+  // the entry state and the last node is the success state.
+  //
+  // Note that unlike typical NFAs, the edge ordering in this one is
+  // significant, in that it is used to contruct filler content when
+  // necessary.
   function nfa(expr) {
       let nfa = [[]];
       connect(compile(expr, 0), node());
@@ -2215,7 +2217,7 @@
   about the node type, such as its name and what kind of node it
   represents.
   */
-  class NodeType {
+  class NodeType$1 {
       /**
       @internal
       */
@@ -2418,7 +2420,7 @@
       */
       static compile(nodes, schema) {
           let result = Object.create(null);
-          nodes.forEach((name, spec) => result[name] = new NodeType(name, schema, spec));
+          nodes.forEach((name, spec) => result[name] = new NodeType$1(name, schema, spec));
           let topType = schema.spec.topNode || "doc";
           if (!result[topType])
               throw new RangeError("Schema is missing its top node type ('" + topType + "')");
@@ -2568,7 +2570,7 @@
               instanceSpec[prop] = spec[prop];
           instanceSpec.nodes = OrderedMap.from(spec.nodes),
               instanceSpec.marks = OrderedMap.from(spec.marks || {}),
-              this.nodes = NodeType.compile(this.spec.nodes, this);
+              this.nodes = NodeType$1.compile(this.spec.nodes, this);
           this.marks = MarkType.compile(this.spec.marks, this);
           let contentExprCache = Object.create(null);
           for (let prop in this.nodes) {
@@ -2607,7 +2609,7 @@
       node(type, attrs = null, content, marks) {
           if (typeof type == "string")
               type = this.nodeType(type);
-          else if (!(type instanceof NodeType))
+          else if (!(type instanceof NodeType$1))
               throw new RangeError("Invalid node type: " + type);
           else if (type.schema != this)
               throw new RangeError("Node type from different schema used (" + type.name + ")");
@@ -3395,7 +3397,7 @@
       */
       serializeFragment(fragment, options = {}, target) {
           if (!target)
-              target = doc(options).createDocumentFragment();
+              target = doc$1(options).createDocumentFragment();
           let top = target, active = [];
           fragment.forEach(node => {
               if (active.length || node.marks.length) {
@@ -3431,7 +3433,7 @@
       @internal
       */
       serializeNodeInner(node, options) {
-          let { dom, contentDOM } = renderSpec(doc(options), this.nodes[node.type.name](node), null, node.attrs);
+          let { dom, contentDOM } = renderSpec(doc$1(options), this.nodes[node.type.name](node), null, node.attrs);
           if (contentDOM) {
               if (node.isLeaf)
                   throw new RangeError("Content hole not allowed in a leaf node spec");
@@ -3462,7 +3464,7 @@
       */
       serializeMark(mark, inline, options = {}) {
           let toDOM = this.marks[mark.type.name];
-          return toDOM && renderSpec(doc(options), toDOM(mark, inline), null, mark.attrs);
+          return toDOM && renderSpec(doc$1(options), toDOM(mark, inline), null, mark.attrs);
       }
       static renderSpec(doc, structure, xmlNS = null, blockArraysIn) {
           return renderSpec(doc, structure, xmlNS, blockArraysIn);
@@ -3501,7 +3503,7 @@
       }
       return result;
   }
-  function doc(options) {
+  function doc$1(options) {
       return options.document || window.document;
   }
   const suspiciousAttributeCache = new WeakMap();
@@ -4579,7 +4581,7 @@
       }
       return null;
   }
-  function lift(tr, range, target) {
+  function lift$1(tr, range, target) {
       let { $from, $to, depth } = range;
       let gapStart = $from.before(depth + 1), gapEnd = $to.after(depth + 1);
       let start = gapStart, end = gapEnd;
@@ -4657,7 +4659,7 @@
       let start = range.start, end = range.end;
       tr.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true));
   }
-  function setBlockType(tr, from, to, type, attrs) {
+  function setBlockType$1(tr, from, to, type, attrs) {
       if (!type.isTextblock)
           throw new RangeError("Type given to setBlockType should be a textblock");
       let mapFrom = tr.steps.length;
@@ -4767,7 +4769,7 @@
   */
   function canJoin(doc, pos) {
       let $pos = doc.resolve(pos), index = $pos.index();
-      return joinable$1($pos.nodeBefore, $pos.nodeAfter) &&
+      return joinable($pos.nodeBefore, $pos.nodeAfter) &&
           $pos.parent.canReplace(index, index + 1);
   }
   function canAppendWithSubstitutedLinebreaks(a, b) {
@@ -4786,7 +4788,7 @@
       }
       return match.validEnd;
   }
-  function joinable$1(a, b) {
+  function joinable(a, b) {
       return !!(a && b && !a.isLeaf && canAppendWithSubstitutedLinebreaks(a, b));
   }
   /**
@@ -4811,7 +4813,7 @@
               before = $pos.node(d).maybeChild(index - 1);
               after = $pos.node(d + 1);
           }
-          if (before && !before.isTextblock && joinable$1(before, after) &&
+          if (before && !before.isTextblock && joinable(before, after) &&
               $pos.node(d).canReplace(index, index + 1))
               return pos;
           if (d == 0)
@@ -5618,7 +5620,7 @@
       sure the lift is valid.
       */
       lift(range, target) {
-          lift(this, range, target);
+          lift$1(this, range, target);
           return this;
       }
       /**
@@ -5643,7 +5645,7 @@
       the given node type with the given attributes.
       */
       setBlockType(from, to = from, type, attrs = null) {
-          setBlockType(this, from, to, type, attrs);
+          setBlockType$1(this, from, to, type, attrs);
           return this;
       }
       /**
@@ -6885,25 +6887,25 @@
   }
 
   const nav = typeof navigator != "undefined" ? navigator : null;
-  const doc$1 = typeof document != "undefined" ? document : null;
+  const doc = typeof document != "undefined" ? document : null;
   const agent = (nav && nav.userAgent) || "";
   const ie_edge = /Edge\/(\d+)/.exec(agent);
   const ie_upto10 = /MSIE \d/.exec(agent);
   const ie_11up = /Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(agent);
-  const ie = !!(ie_upto10 || ie_11up || ie_edge);
+  const ie$1 = !!(ie_upto10 || ie_11up || ie_edge);
   const ie_version = ie_upto10 ? document.documentMode : ie_11up ? +ie_11up[1] : ie_edge ? +ie_edge[1] : 0;
-  const gecko = !ie && /gecko\/(\d+)/i.test(agent);
+  const gecko = !ie$1 && /gecko\/(\d+)/i.test(agent);
   gecko && +(/Firefox\/(\d+)/.exec(agent) || [0, 0])[1];
-  const _chrome = !ie && /Chrome\/(\d+)/.exec(agent);
+  const _chrome = !ie$1 && /Chrome\/(\d+)/.exec(agent);
   const chrome = !!_chrome;
   const chrome_version = _chrome ? +_chrome[1] : 0;
-  const safari = !ie && !!nav && /Apple Computer/.test(nav.vendor);
+  const safari = !ie$1 && !!nav && /Apple Computer/.test(nav.vendor);
   // Is true for both iOS and iPadOS for convenience
   const ios = safari && (/Mobile\/\w+/.test(agent) || !!nav && nav.maxTouchPoints > 2);
-  const mac = ios || (nav ? /Mac/.test(nav.platform) : false);
+  const mac$4 = ios || (nav ? /Mac/.test(nav.platform) : false);
   const windows = nav ? /Win/.test(nav.platform) : false;
   const android = /Android \d/.test(agent);
-  const webkit = !!doc$1 && "webkitFontSmoothing" in doc$1.documentElement.style;
+  const webkit = !!doc && "webkitFontSmoothing" in doc.documentElement.style;
   const webkit_version = webkit ? +(/\bAppleWebKit\/(\d+)/.exec(navigator.userAgent) || [0, 0])[1] : 0;
 
   function windowRect(doc) {
@@ -7726,18 +7728,19 @@
       // custom things with the selection. Note that this falls apart when
       // a selection starts in such a node and ends in another, in which
       // case we just use whatever domFromPos produces as a best effort.
-      setSelection(anchor, head, root, force = false) {
+      setSelection(anchor, head, view, force = false) {
           // If the selection falls entirely in a child, give it to that child
           let from = Math.min(anchor, head), to = Math.max(anchor, head);
           for (let i = 0, offset = 0; i < this.children.length; i++) {
               let child = this.children[i], end = offset + child.size;
               if (from > offset && to < end)
-                  return child.setSelection(anchor - offset - child.border, head - offset - child.border, root, force);
+                  return child.setSelection(anchor - offset - child.border, head - offset - child.border, view, force);
               offset = end;
           }
           let anchorDOM = this.domFromPos(anchor, anchor ? -1 : 1);
           let headDOM = head == anchor ? anchorDOM : this.domFromPos(head, head ? -1 : 1);
-          let domSel = root.getSelection();
+          let domSel = view.root.getSelection();
+          let selRange = view.domSelectionRange();
           let brKludge = false;
           // On Firefox, using Selection.collapse to put the cursor after a
           // BR node for some reason doesn't always work (#1073). On Safari,
@@ -7768,14 +7771,14 @@
           }
           // Firefox can act strangely when the selection is in front of an
           // uneditable node. See #1163 and https://bugzilla.mozilla.org/show_bug.cgi?id=1709536
-          if (gecko && domSel.focusNode && domSel.focusNode != headDOM.node && domSel.focusNode.nodeType == 1) {
-              let after = domSel.focusNode.childNodes[domSel.focusOffset];
+          if (gecko && selRange.focusNode && selRange.focusNode != headDOM.node && selRange.focusNode.nodeType == 1) {
+              let after = selRange.focusNode.childNodes[selRange.focusOffset];
               if (after && after.contentEditable == "false")
                   force = true;
           }
           if (!(force || brKludge && safari) &&
-              isEquivalentPosition(anchorDOM.node, anchorDOM.offset, domSel.anchorNode, domSel.anchorOffset) &&
-              isEquivalentPosition(headDOM.node, headDOM.offset, domSel.focusNode, domSel.focusOffset))
+              isEquivalentPosition(anchorDOM.node, anchorDOM.offset, selRange.anchorNode, selRange.anchorOffset) &&
+              isEquivalentPosition(headDOM.node, headDOM.offset, selRange.focusNode, selRange.focusOffset))
               return;
           // Selection.extend can be used to create an 'inverted' selection
           // (one where the focus is before the anchor), but not all
@@ -7922,16 +7925,17 @@
   // some cases they will be split more often than would appear
   // necessary.
   class MarkViewDesc extends ViewDesc {
-      constructor(parent, mark, dom, contentDOM) {
+      constructor(parent, mark, dom, contentDOM, spec) {
           super(parent, [], dom, contentDOM);
           this.mark = mark;
+          this.spec = spec;
       }
       static create(parent, mark, inline, view) {
           let custom = view.nodeViews[mark.type.name];
           let spec = custom && custom(mark, view, inline);
           if (!spec || !spec.dom)
               spec = DOMSerializer.renderSpec(document, mark.type.spec.toDOM(mark, inline), null, mark.attrs);
-          return new MarkViewDesc(parent, mark, spec.dom, spec.contentDOM || spec.dom);
+          return new MarkViewDesc(parent, mark, spec.dom, spec.contentDOM || spec.dom, spec);
       }
       parseRule() {
           if ((this.dirty & NODE_DIRTY) || this.mark.type.spec.reparseInView)
@@ -7962,6 +7966,14 @@
               nodes[i].parent = copy;
           copy.children = nodes;
           return copy;
+      }
+      ignoreMutation(mutation) {
+          return this.spec.ignoreMutation ? this.spec.ignoreMutation(mutation) : super.ignoreMutation(mutation);
+      }
+      destroy() {
+          if (this.spec.destroy)
+              this.spec.destroy();
+          super.destroy();
       }
   }
   // Node view descs are the main, most common type of view desc, and
@@ -8282,7 +8294,7 @@
       update(node, outerDeco, innerDeco, view) {
           if (this.dirty == NODE_DIRTY)
               return false;
-          if (this.spec.update) {
+          if (this.spec.update && (this.node.type == node.type || this.spec.multiType)) {
               let result = this.spec.update(node, outerDeco, innerDeco);
               if (result)
                   this.updateInner(node, outerDeco, innerDeco, view);
@@ -8301,9 +8313,9 @@
       deselectNode() {
           this.spec.deselectNode ? this.spec.deselectNode() : super.deselectNode();
       }
-      setSelection(anchor, head, root, force) {
-          this.spec.setSelection ? this.spec.setSelection(anchor, head, root)
-              : super.setSelection(anchor, head, root, force);
+      setSelection(anchor, head, view, force) {
+          this.spec.setSelection ? this.spec.setSelection(anchor, head, view.root)
+              : super.setSelection(anchor, head, view, force);
       }
       destroy() {
           if (this.spec.destroy)
@@ -8963,7 +8975,7 @@
               if (!sel.empty && !sel.$from.parent.inlineContent)
                   resetEditableTo = temporarilyEditableNear(view, sel.to);
           }
-          view.docView.setSelection(anchor, head, view.root, force);
+          view.docView.setSelection(anchor, head, view, force);
           if (brokenSelectBetweenUneditable) {
               if (resetEditableFrom)
                   resetEditable(resetEditableFrom);
@@ -9047,7 +9059,7 @@
       // resize handles and a selection that considers the absolutely
       // positioned wrapper, rather than the root editable node, the
       // focused element.
-      if (!img && !view.state.selection.visible && ie && ie_version <= 11) {
+      if (!img && !view.state.selection.visible && ie$1 && ie_version <= 11) {
           node.disabled = true;
           node.disabled = false;
       }
@@ -9133,7 +9145,7 @@
                   return apply(view, next);
               return false;
           }
-          else if (!(mac && mods.indexOf("m") > -1)) {
+          else if (!(mac$4 && mods.indexOf("m") > -1)) {
               let $head = sel.$head, node = $head.textOffset ? null : dir < 0 ? $head.nodeBefore : $head.nodeAfter, desc;
               if (!node || node.isText)
                   return false;
@@ -9374,7 +9386,7 @@
       let sel = view.state.selection;
       if (sel instanceof TextSelection && !sel.empty || mods.indexOf("s") > -1)
           return false;
-      if (mac && mods.indexOf("m") > -1)
+      if (mac$4 && mods.indexOf("m") > -1)
           return false;
       let { $from, $to } = sel;
       if (!$from.parent.inlineContent || view.endOfTextblock(dir < 0 ? "up" : "down")) {
@@ -9453,30 +9465,30 @@
   }
   function captureKeyDown(view, event) {
       let code = event.keyCode, mods = getMods(event);
-      if (code == 8 || (mac && code == 72 && mods == "c")) { // Backspace, Ctrl-h on Mac
+      if (code == 8 || (mac$4 && code == 72 && mods == "c")) { // Backspace, Ctrl-h on Mac
           return stopNativeHorizontalDelete(view, -1) || skipIgnoredNodes(view, -1);
       }
-      else if ((code == 46 && !event.shiftKey) || (mac && code == 68 && mods == "c")) { // Delete, Ctrl-d on Mac
+      else if ((code == 46 && !event.shiftKey) || (mac$4 && code == 68 && mods == "c")) { // Delete, Ctrl-d on Mac
           return stopNativeHorizontalDelete(view, 1) || skipIgnoredNodes(view, 1);
       }
       else if (code == 13 || code == 27) { // Enter, Esc
           return true;
       }
-      else if (code == 37 || (mac && code == 66 && mods == "c")) { // Left arrow, Ctrl-b on Mac
+      else if (code == 37 || (mac$4 && code == 66 && mods == "c")) { // Left arrow, Ctrl-b on Mac
           let dir = code == 37 ? (findDirection(view, view.state.selection.from) == "ltr" ? -1 : 1) : -1;
           return selectHorizontally(view, dir, mods) || skipIgnoredNodes(view, dir);
       }
-      else if (code == 39 || (mac && code == 70 && mods == "c")) { // Right arrow, Ctrl-f on Mac
+      else if (code == 39 || (mac$4 && code == 70 && mods == "c")) { // Right arrow, Ctrl-f on Mac
           let dir = code == 39 ? (findDirection(view, view.state.selection.from) == "ltr" ? 1 : -1) : 1;
           return selectHorizontally(view, dir, mods) || skipIgnoredNodes(view, dir);
       }
-      else if (code == 38 || (mac && code == 80 && mods == "c")) { // Up arrow, Ctrl-p on Mac
+      else if (code == 38 || (mac$4 && code == 80 && mods == "c")) { // Up arrow, Ctrl-p on Mac
           return selectVertically(view, -1, mods) || skipIgnoredNodes(view, -1);
       }
-      else if (code == 40 || (mac && code == 78 && mods == "c")) { // Down arrow, Ctrl-n on Mac
+      else if (code == 40 || (mac$4 && code == 78 && mods == "c")) { // Down arrow, Ctrl-n on Mac
           return safariDownArrowBug(view) || selectVertically(view, 1, mods) || skipIgnoredNodes(view, 1);
       }
-      else if (mods == (mac ? "m" : "c") &&
+      else if (mods == (mac$4 ? "m" : "c") &&
           (code == 66 || code == 73 || code == 89 || code == 90)) { // Mod-[biyz]
           return true;
       }
@@ -9683,6 +9695,7 @@
   function detachedDoc() {
       return _detachedDoc || (_detachedDoc = document.implementation.createHTMLDocument("title"));
   }
+  let _policy = null;
   function maybeWrapTrusted(html) {
       let trustedTypes = window.trustedTypes;
       if (!trustedTypes)
@@ -9690,7 +9703,9 @@
       // With the require-trusted-types-for CSP, Chrome will block
       // innerHTML, even on a detached document. This wraps the string in
       // a way that makes the browser allow us to use its parser again.
-      return trustedTypes.createPolicy("detachedDocument", { createHTML: (s) => s }).createHTML(html);
+      if (!_policy)
+          _policy = trustedTypes.createPolicy("ProseMirrorClipboard", { createHTML: (s) => s });
+      return _policy.createHTML(html);
   }
   function readHTML(html) {
       let metas = /^(\s*<meta [^>]*>)*/.exec(html);
@@ -9841,9 +9856,7 @@
       // and handling them eagerly tends to corrupt the input.
       if (android && chrome && event.keyCode == 13)
           return;
-      if (view.domObserver.selectionChanged(view.domSelectionRange()))
-          view.domObserver.flush();
-      else if (event.keyCode != 229)
+      if (event.keyCode != 229)
           view.domObserver.forceFlush();
       // On iOS, if we preventDefault enter key presses, the virtual
       // keyboard gets confused. So the hack here is to set a flag that
@@ -9873,7 +9886,7 @@
   editHandlers.keypress = (view, _event) => {
       let event = _event;
       if (inOrNearComposition(view, event) || !event.charCode ||
-          event.ctrlKey && !event.altKey || mac && event.metaKey)
+          event.ctrlKey && !event.altKey || mac$4 && event.metaKey)
           return;
       if (view.someProp("handleKeyPress", f => f(view, event))) {
           event.preventDefault();
@@ -9990,7 +10003,7 @@
   function forceDOMFlush(view) {
       return endComposition(view);
   }
-  const selectNodeModifier = mac ? "metaKey" : "ctrlKey";
+  const selectNodeModifier = mac$4 ? "metaKey" : "ctrlKey";
   handlers.mousedown = (view, _event) => {
       let event = _event;
       view.input.shiftKey = event.shiftKey;
@@ -10295,7 +10308,7 @@
   // This is very crude, but unfortunately both these browsers _pretend_
   // that they have a clipboard API—all the objects and methods are
   // there, they just don't work, and they are hard to test.
-  const brokenClipboardAPI = (ie && ie_version < 15) ||
+  const brokenClipboardAPI = (ie$1 && ie_version < 15) ||
       (ios && webkit_version < 604);
   handlers.copy = editHandlers.cut = (view, _event) => {
       let event = _event;
@@ -10382,7 +10395,7 @@
           this.node = node;
       }
   }
-  const dragCopyModifier = mac ? "altKey" : "ctrlKey";
+  const dragCopyModifier = mac$4 ? "altKey" : "ctrlKey";
   handlers.dragstart = (view, _event) => {
       let event = _event;
       let mouseDown = view.input.mouseDown;
@@ -10584,7 +10597,7 @@
       static is(span) { return span.type instanceof InlineType; }
       destroy() { }
   }
-  class NodeType$1 {
+  class NodeType {
       constructor(attrs, spec) {
           this.attrs = attrs;
           this.spec = spec || noSpec;
@@ -10604,7 +10617,7 @@
       }
       eq(other) {
           return this == other ||
-              (other instanceof NodeType$1 && compareObjs(this.attrs, other.attrs) &&
+              (other instanceof NodeType && compareObjs(this.attrs, other.attrs) &&
                   compareObjs(this.spec, other.spec));
       }
       destroy() { }
@@ -10678,7 +10691,7 @@
       node, will receive the given attributes.
       */
       static node(from, to, attrs, spec) {
-          return new Decoration(from, to, new NodeType$1(attrs, spec));
+          return new Decoration(from, to, new NodeType(attrs, spec));
       }
       /**
       The spec provided when creating this decoration. Can be useful
@@ -11222,7 +11235,7 @@
       subtree: true
   };
   // IE11 has very broken mutation observers, so we also listen to DOMCharacterDataModified
-  const useCharData = ie && ie_version <= 11;
+  const useCharData = ie$1 && ie_version <= 11;
   class SelectionState {
       constructor() {
           this.anchorNode = null;
@@ -11263,7 +11276,7 @@
                   // text node after a BR node) call the observer callback
                   // before actually updating the DOM, which will cause
                   // ProseMirror to miss the change (see #930)
-                  if (ie && ie_version <= 11 && mutations.some(m => m.type == "childList" && m.removedNodes.length ||
+                  if (ie$1 && ie_version <= 11 && mutations.some(m => m.type == "childList" && m.removedNodes.length ||
                       m.type == "characterData" && m.oldValue.length > m.target.nodeValue.length))
                       this.flushSoon();
                   else
@@ -11329,7 +11342,7 @@
           // Deletions on IE11 fire their events in the wrong order, giving
           // us a selection change event before the DOM changes are
           // reported.
-          if (ie && ie_version <= 11 && !this.view.state.selection.empty) {
+          if (ie$1 && ie_version <= 11 && !this.view.state.selection.empty) {
               let sel = this.view.domSelectionRange();
               // Selection.isCollapsed isn't reliable on IE
               if (sel.focusNode && isEquivalentPosition(sel.focusNode, sel.focusOffset, sel.anchorNode, sel.anchorOffset))
@@ -11366,9 +11379,6 @@
                   this.queue.push(mut);
           return this.queue;
       }
-      selectionChanged(sel) {
-          return !this.suppressingSelectionUpdates && !this.currentSelection.eq(sel) && hasFocusAndSelection(this.view) && !this.ignoreSelectionChange(sel);
-      }
       flush() {
           let { view } = this;
           if (!view.docView || this.flushingSoon > -1)
@@ -11376,7 +11386,8 @@
           let mutations = this.pendingRecords();
           if (mutations.length)
               this.queue = [];
-          let sel = view.domSelectionRange(), newSel = this.selectionChanged(sel);
+          let sel = view.domSelectionRange();
+          let newSel = !this.suppressingSelectionUpdates && !this.currentSelection.eq(sel) && hasFocusAndSelection(view) && !this.ignoreSelectionChange(sel);
           let from = -1, to = -1, typeOver = false, added = [];
           if (view.editable) {
               for (let i = 0; i < mutations.length; i++) {
@@ -11455,7 +11466,7 @@
               if (desc.contentDOM && desc.contentDOM != desc.dom && !desc.contentDOM.contains(mut.target))
                   return { from: desc.posBefore, to: desc.posAfter };
               let prev = mut.previousSibling, next = mut.nextSibling;
-              if (ie && ie_version <= 11 && mut.addedNodes.length) {
+              if (ie$1 && ie_version <= 11 && mut.addedNodes.length) {
                   // IE11 gives us incorrect next/prev siblings for some
                   // insertions, so if there are added nodes, recompute those
                   for (let i = 0; i < mut.addedNodes.length; i++) {
@@ -11710,7 +11721,7 @@
       // IE11 will insert a non-breaking space _ahead_ of the space after
       // the cursor space when adding a space before another space. When
       // that happened, adjust the change to cover the space instead.
-      if (ie && ie_version <= 11 && change.endB == change.start + 1 &&
+      if (ie$1 && ie_version <= 11 && change.endB == change.start + 1 &&
           change.endA == change.start && change.start > parse.from &&
           parse.doc.textBetween(change.start - parse.from - 1, change.start - parse.from + 1) == " \u00a0") {
           change.start--;
@@ -11768,7 +11779,7 @@
           if ($from.pos == $to.pos) { // Deletion
               // IE11 sometimes weirdly moves the DOM selection around after
               // backspacing out the first element in a textblock
-              if (ie && ie_version <= 11 && $from.parentOffset == 0) {
+              if (ie$1 && ie_version <= 11 && $from.parentOffset == 0) {
                   view.domObserver.suppressSelectionUpdates();
                   setTimeout(() => selectionToDOM(view), 20);
               }
@@ -11804,7 +11815,7 @@
           if (sel && !(chrome && android && view.composing && sel.empty &&
               (change.start != change.endB || view.input.lastAndroidDelete < Date.now() - 100) &&
               (sel.head == chFrom || sel.head == tr.mapping.map(chTo) - 1) ||
-              ie && sel.empty && sel.head == chFrom))
+              ie$1 && sel.empty && sel.head == chFrom))
               tr.setSelection(sel);
       }
       if (storedMarks)
@@ -12088,7 +12099,7 @@
               // state where the thing the user sees differs from the
               // selection reported by the Selection object (#710, #973,
               // #1011, #1013, #1035).
-              let forceSelUpdate = updateDoc && (ie || chrome) && !this.composing &&
+              let forceSelUpdate = updateDoc && (ie$1 || chrome) && !this.composing &&
                   !prev.selection.empty && !state.selection.empty && selectionContextChanged(prev.selection, state.selection);
               if (updateDoc) {
                   // If the node that the selection points into is written to,
@@ -12215,7 +12226,7 @@
           // Work around IE not handling focus correctly if resize handles are shown.
           // If the cursor is inside an element with resize handles, activeElement
           // will be that element instead of this.dom.
-          if (ie) {
+          if (ie$1) {
               // If activeElement is within this.dom, and there are no other elements
               // setting `contenteditable` to false in between, treat it as focused.
               let node = this.root.activeElement;
@@ -12574,8 +12585,8 @@
     222: "\""
   };
 
-  var mac$1 = typeof navigator != "undefined" && /Mac/.test(navigator.platform);
-  var ie$1 = typeof navigator != "undefined" && /MSIE \d|Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(navigator.userAgent);
+  var mac$3 = typeof navigator != "undefined" && /Mac/.test(navigator.platform);
+  var ie = typeof navigator != "undefined" && /MSIE \d|Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(navigator.userAgent);
 
   // Fill in the digit keys
   for (var i = 0; i < 10; i++) base[48 + i] = base[96 + i] = String(i);
@@ -12595,8 +12606,8 @@
   function keyName(event) {
     // On macOS, keys held with Shift and Cmd don't reflect the effect of Shift in `.key`.
     // On IE, shift effect is never included in `.key`.
-    var ignoreKey = mac$1 && event.metaKey && event.shiftKey && !event.ctrlKey && !event.altKey ||
-        ie$1 && event.shiftKey && event.key && event.key.length == 1 ||
+    var ignoreKey = mac$3 && event.metaKey && event.shiftKey && !event.ctrlKey && !event.altKey ||
+        ie && event.shiftKey && event.key && event.key.length == 1 ||
         event.key == "Unidentified";
     var name = (!ignoreKey && event.key) ||
       (event.shiftKey ? shift : base)[event.keyCode] ||
@@ -13116,7 +13127,7 @@
   }
 
   // src/util.ts
-  var tableEditingKey = new PluginKey("selectingCells");
+  new PluginKey("selectingCells");
   function cellAround($pos) {
     for (let d = $pos.depth - 1; d > 0; d--)
       if ($pos.node(d).type.spec.tableRole == "row")
@@ -13470,7 +13481,7 @@
         return Selection.near($headCell, 1);
     }
   };
-  var fixTablesKey = new PluginKey("fix-tables");
+  new PluginKey("fix-tables");
   function selectedRect(state) {
     const sel = state.selection;
     const $pos = selectionCell(state);
@@ -13576,7 +13587,7 @@
         return false;
     return true;
   }
-  function addRow(tr, { map, tableStart, table }, row) {
+  function addRow$1(tr, { map, tableStart, table }, row) {
     var _a;
     let rowPos = tableStart;
     for (let i = 0; i < row; i++)
@@ -13609,7 +13620,7 @@
       return false;
     if (dispatch) {
       const rect = selectedRect(state);
-      dispatch(addRow(state.tr, rect, rect.top));
+      dispatch(addRow$1(state.tr, rect, rect.top));
     }
     return true;
   }
@@ -13618,7 +13629,7 @@
       return false;
     if (dispatch) {
       const rect = selectedRect(state);
-      dispatch(addRow(state.tr, rect, rect.bottom));
+      dispatch(addRow$1(state.tr, rect, rect.bottom));
     }
     return true;
   }
@@ -13928,10 +13939,10 @@
   var toggleHeaderRow = toggleHeader("row", {
     useDeprecatedLogic: true
   });
-  var toggleHeaderColumn = toggleHeader("column", {
+  toggleHeader("column", {
     useDeprecatedLogic: true
   });
-  var toggleHeaderCell = toggleHeader("cell", {
+  toggleHeader("cell", {
     useDeprecatedLogic: true
   });
   function findNextCell($cell, dir) {
@@ -14013,11 +14024,11 @@
   }
 
   // src/input.ts
-  var handleKeyDown = keydownHandler({
-    ArrowLeft: arrow("horiz", -1),
-    ArrowRight: arrow("horiz", 1),
-    ArrowUp: arrow("vert", -1),
-    ArrowDown: arrow("vert", 1),
+  keydownHandler({
+    ArrowLeft: arrow$1("horiz", -1),
+    ArrowRight: arrow$1("horiz", 1),
+    ArrowUp: arrow$1("vert", -1),
+    ArrowDown: arrow$1("vert", 1),
     "Shift-ArrowLeft": shiftArrow("horiz", -1),
     "Shift-ArrowRight": shiftArrow("horiz", 1),
     "Shift-ArrowUp": shiftArrow("vert", -1),
@@ -14034,7 +14045,7 @@
       dispatch(state.tr.setSelection(selection).scrollIntoView());
     return true;
   }
-  function arrow(axis, dir) {
+  function arrow$1(axis, dir) {
     return (state, dispatch, view) => {
       if (!view)
         return false;
@@ -14113,7 +14124,7 @@
   }
 
   // src/columnresizing.ts
-  var columnResizingPluginKey = new PluginKey(
+  new PluginKey(
     "tableColumnResizing"
   );
 
@@ -14186,27 +14197,43 @@
   function wrapInList(listType, attrs = null) {
       return function (state, dispatch) {
           let { $from, $to } = state.selection;
-          let range = $from.blockRange($to), doJoin = false, outerRange = range;
+          let range = $from.blockRange($to);
           if (!range)
               return false;
-          // This is at the top of an existing list item
-          if (range.depth >= 2 && $from.node(range.depth - 1).type.compatibleContent(listType) && range.startIndex == 0) {
-              // Don't do anything if this is the top of the list
-              if ($from.index(range.depth - 1) == 0)
-                  return false;
-              let $insert = state.doc.resolve(range.start - 2);
-              outerRange = new NodeRange($insert, $insert, range.depth);
-              if (range.endIndex < range.parent.childCount)
-                  range = new NodeRange($from, state.doc.resolve($to.end(range.depth)), range.depth);
-              doJoin = true;
-          }
-          let wrap = findWrapping(outerRange, listType, attrs, range);
-          if (!wrap)
+          let tr = dispatch ? state.tr : null;
+          if (!wrapRangeInList(tr, range, listType, attrs))
               return false;
           if (dispatch)
-              dispatch(doWrapInList(state.tr, range, wrap, doJoin, listType).scrollIntoView());
+              dispatch(tr.scrollIntoView());
           return true;
       };
+  }
+  /**
+  Try to wrap the given node range in a list of the given type.
+  Return `true` when this is possible, `false` otherwise. When `tr`
+  is non-null, the wrapping is added to that transaction. When it is
+  `null`, the function only queries whether the wrapping is
+  possible.
+  */
+  function wrapRangeInList(tr, range, listType, attrs = null) {
+      let doJoin = false, outerRange = range, doc = range.$from.doc;
+      // This is at the top of an existing list item
+      if (range.depth >= 2 && range.$from.node(range.depth - 1).type.compatibleContent(listType) && range.startIndex == 0) {
+          // Don't do anything if this is the top of the list
+          if (range.$from.index(range.depth - 1) == 0)
+              return false;
+          let $insert = doc.resolve(range.start - 2);
+          outerRange = new NodeRange($insert, $insert, range.depth);
+          if (range.endIndex < range.parent.childCount)
+              range = new NodeRange(range.$from, doc.resolve(range.$to.end(range.depth)), range.depth);
+          doJoin = true;
+      }
+      let wrap = findWrapping(outerRange, listType, attrs, range);
+      if (!wrap)
+          return false;
+      if (tr)
+          doWrapInList(tr, range, wrap, doJoin, listType);
+      return true;
   }
   function doWrapInList(tr, range, wrappers, joinBefore, listType) {
       let content = Fragment.empty;
@@ -14485,6 +14512,7 @@
     // TODO: Exclude divs that don't conform to MarkupEditor expectations by using a rule
     // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
     // https://prosemirror.net/docs/ref/#inputrules
+    // Note: Changes to div here may need to be reflected in DivView found in markup.js.
     div: {
       content: "block*",
       group: "block",
@@ -14493,6 +14521,10 @@
         parentId: {default: 'editor'},
         cssClass: {default: null},
         editable: {default: true},
+        spellcheck: {default: false},
+        autocorrect: {default: 'on'},
+        autocapitalize: {default: 'off'},
+        writingsuggestions: {default: false},
         htmlContents: {default: ""}
       },
       parseDOM: [{
@@ -14502,19 +14534,40 @@
           const parentId = dom.getAttribute("parentId");
           const cssClass = dom.getAttribute("class");
           const editable = dom.getAttribute("editable") == "true";
+          const spellcheck = dom.getAttribute("spellcheck") == "true";
+          const autocorrect = dom.getAttribute("autocorrect") == "on";
+          const autocapitalize = dom.getAttribute("autocapitalize") == "on";
+          const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
           return {
             id: id,
             parentId: parentId,
             cssClass: cssClass,
             editable: editable,
+            spellcheck: spellcheck,
+            autocorrect: autocorrect,
+            autocapitalize: autocapitalize,
+            writingsuggestions: writingsuggestions,
             htmlContents: dom.innerHTML ?? ""
           }
         }
       }],
       toDOM(node) { 
         // Note we don't push editable to the actual DOM element
-        let {id, parentId, cssClass, editable} = node.attrs; 
-        return ["div", {id: id, parentId: parentId, class: cssClass, editable: editable.toString()}, 0] 
+        let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
+        return [
+          "div", 
+          {
+            id: id, 
+            parentId: parentId, 
+            class: cssClass, 
+            editable: editable.toString(), 
+            spellcheck: spellcheck.toString(), 
+            autocorrect: autocorrect.toString(),
+            autocapitalize: autocapitalize.toString(),
+            writingsuggestions: writingsuggestions.toString()
+          }, 
+          0
+        ] 
       }
     },
 
@@ -15514,7 +15567,7 @@
   Lift the selected block, or the closest ancestor block of the
   selection that can be lifted, out of its parent node.
   */
-  const lift$1 = (state, dispatch) => {
+  const lift = (state, dispatch) => {
       let { $from, $to } = state.selection;
       let range = $from.blockRange($to), target = range && liftTarget(range);
       if (target == null)
@@ -15800,7 +15853,7 @@
   Returns a command that tries to set the selected textblocks to the
   given node type with the given attributes.
   */
-  function setBlockType$1(nodeType, attrs = null) {
+  function setBlockType(nodeType, attrs = null) {
       return function (state, dispatch) {
           let applicable = false;
           for (let i = 0; i < state.selection.ranges.length && !applicable; i++) {
@@ -15981,7 +16034,7 @@
   };
   for (let key in pcBaseKeymap)
       macBaseKeymap[key] = pcBaseKeymap[key];
-  const mac$3 = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform)
+  const mac$1 = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform)
       // @ts-ignore
       : typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
   /**
@@ -15989,7 +16042,7 @@
   [`pcBasekeymap`](https://prosemirror.net/docs/ref/#commands.pcBaseKeymap) or
   [`macBaseKeymap`](https://prosemirror.net/docs/ref/#commands.macBaseKeymap).
   */
-  const baseKeymap = mac$3 ? macBaseKeymap : pcBaseKeymap;
+  const baseKeymap = mac$1 ? macBaseKeymap : pcBaseKeymap;
 
   /**
   Create a plugin that, when added to a ProseMirror instance,
@@ -16287,18 +16340,18 @@
                   return $anchor.pos == $head.pos && GapCursor.valid($head) ? new GapCursor($head) : null;
               },
               handleClick,
-              handleKeyDown: handleKeyDown$1,
+              handleKeyDown,
               handleDOMEvents: { beforeinput: beforeinput }
           }
       });
   }
-  const handleKeyDown$1 = keydownHandler({
-      "ArrowLeft": arrow$1("horiz", -1),
-      "ArrowRight": arrow$1("horiz", 1),
-      "ArrowUp": arrow$1("vert", -1),
-      "ArrowDown": arrow$1("vert", 1)
+  const handleKeyDown = keydownHandler({
+      "ArrowLeft": arrow("horiz", -1),
+      "ArrowRight": arrow("horiz", 1),
+      "ArrowUp": arrow("vert", -1),
+      "ArrowDown": arrow("vert", 1)
   });
-  function arrow$1(axis, dir) {
+  function arrow(axis, dir) {
       const dirStr = axis == "vert" ? (dir > 0 ? "down" : "up") : (dir > 0 ? "right" : "left");
       return function (state, dispatch, view) {
           let sel = state.selection;
@@ -16456,7 +16509,7 @@
   const SVG = "http://www.w3.org/2000/svg";
   const XLINK = "http://www.w3.org/1999/xlink";
 
-  const prefix = "ProseMirror-icon";
+  const prefix$3 = "ProseMirror-icon";
 
   function hashPath(path) {
     let hash = 0;
@@ -16467,7 +16520,7 @@
 
   function getIcon(icon) {
     let node = document.createElement("div");
-    node.className = prefix;
+    node.className = prefix$3;
     if (icon.path) {
       let name = "pm-icon-" + hashPath(icon.path).toString(16);
       if (!document.getElementById(name)) buildSVG(name, icon);
@@ -16485,10 +16538,10 @@
   }
 
   function buildSVG(name, data) {
-    let collection = document.getElementById(prefix + "-collection");
+    let collection = document.getElementById(prefix$3 + "-collection");
     if (!collection) {
       collection = document.createElementNS(SVG, "svg");
-      collection.id = prefix + "-collection";
+      collection.id = prefix$3 + "-collection";
       collection.style.display = "none";
       document.body.insertBefore(collection, document.body.firstChild);
     }
@@ -16500,7 +16553,7 @@
     collection.appendChild(sym);
   }
 
-  const prefix$1 = "ProseMirror-menu";
+  const prefix$2 = "ProseMirror-menu";
 
   // ::- An icon or label that, when clicked, executes a command.
   class MenuItem {
@@ -16531,7 +16584,7 @@
 
       dom.addEventListener("mousedown", e => {
         e.preventDefault();
-        if (!dom.classList.contains(prefix$1 + "-disabled"))
+        if (!dom.classList.contains(prefix$2 + "-disabled"))
           spec.run(view.state, view.dispatch, view, e);
       });
 
@@ -16544,11 +16597,11 @@
         let enabled = true;
         if (spec.enable) {
           enabled = spec.enable(state) || false;
-          setClass(dom, prefix$1 + "-disabled", !enabled);
+          setClass(dom, prefix$2 + "-disabled", !enabled);
         }
         if (spec.active) {
           let active = enabled && spec.active(state) || false;
-          setClass(dom, prefix$1 + "-active", active);
+          setClass(dom, prefix$2 + "-active", active);
         }
         return true
       }
@@ -16651,11 +16704,11 @@
     render(view) {
       let content = renderDropdownItems(this.content, view);
 
-      let label = crel("div", {class: prefix$1 + "-dropdown " + (this.options.class || ""),
+      let label = crel("div", {class: prefix$2 + "-dropdown " + (this.options.class || ""),
                                style: this.options.css},
                        translate(view, this.options.label));
       if (this.options.title) label.setAttribute("title", translate(view, this.options.title));
-      let wrap = crel("div", {class: prefix$1 + "-dropdown-wrap"}, label);
+      let wrap = crel("div", {class: prefix$2 + "-dropdown-wrap"}, label);
       let open = null, listeningOnClose = null;
       let close = () => {
         if (open && open.close()) {
@@ -16686,7 +16739,7 @@
     }
 
     expand(dom, items) {
-      let menuDOM = crel("div", {class: prefix$1 + "-dropdown-menu " + (this.options.class || "")}, items);
+      let menuDOM = crel("div", {class: prefix$2 + "-dropdown-menu " + (this.options.class || "")}, items);
 
       let done = false;
       function close() {
@@ -16704,7 +16757,7 @@
     let rendered = [], updates = [];
     for (let i = 0; i < items.length; i++) {
       let {dom, update} = items[i].render(view);
-      rendered.push(crel("div", {class: prefix$1 + "-dropdown-item"}, dom));
+      rendered.push(crel("div", {class: prefix$2 + "-dropdown-item"}, dom));
       updates.push(update);
     }
     return {dom: rendered, update: combineUpdates(updates, rendered)}
@@ -16741,18 +16794,18 @@
     render(view) {
       let items = renderDropdownItems(this.content, view);
 
-      let label = crel("div", {class: prefix$1 + "-submenu-label"}, translate(view, this.options.label));
-      let wrap = crel("div", {class: prefix$1 + "-submenu-wrap"}, label,
-                     crel("div", {class: prefix$1 + "-submenu"}, items.dom));
+      let label = crel("div", {class: prefix$2 + "-submenu-label"}, translate(view, this.options.label));
+      let wrap = crel("div", {class: prefix$2 + "-submenu-wrap"}, label,
+                     crel("div", {class: prefix$2 + "-submenu"}, items.dom));
       let listeningOnClose = null;
       label.addEventListener("mousedown", e => {
         e.preventDefault();
         markMenuEvent(e);
-        setClass(wrap, prefix$1 + "-submenu-wrap-active");
+        setClass(wrap, prefix$2 + "-submenu-wrap-active");
         if (!listeningOnClose)
           window.addEventListener("mousedown", listeningOnClose = () => {
             if (!isMenuEvent(wrap)) {
-              wrap.classList.remove(prefix$1 + "-submenu-wrap-active");
+              wrap.classList.remove(prefix$2 + "-submenu-wrap-active");
               window.removeEventListener("mousedown", listeningOnClose);
               listeningOnClose = null;
             }
@@ -16780,7 +16833,7 @@
       let items = content[i], localUpdates = [], localNodes = [];
       for (let j = 0; j < items.length; j++) {
         let {dom, update} = items[j].render(view);
-        let span = crel("span", {class: prefix$1 + "item"}, dom);
+        let span = crel("span", {class: prefix$2 + "item"}, dom);
         result.appendChild(span);
         localNodes.push(span);
         localUpdates.push(update);
@@ -16806,7 +16859,7 @@
   }
 
   function separator() {
-    return crel("span", {class: prefix$1 + "separator"})
+    return crel("span", {class: prefix$2 + "separator"})
   }
 
   // :: Object
@@ -16884,8 +16937,8 @@
   // Menu item for the `lift` command.
   const liftItem = new MenuItem({
     title: "Lift out of enclosing block",
-    run: lift$1,
-    select: state => lift$1(state),
+    run: lift,
+    select: state => lift(state),
     icon: icons.lift
   });
 
@@ -16940,7 +16993,7 @@
   // properties. Others must be given in `options`. `options.attrs` may
   // be an object to provide the attributes for the textblock node.
   function blockTypeItem(nodeType, options) {
-    let command = setBlockType$1(nodeType, options.attrs);
+    let command = setBlockType(nodeType, options.attrs);
     let passedOptions = {
       run: command,
       enable(state) { return command(state) },
@@ -16960,7 +17013,7 @@
     else dom.classList.remove(cls);
   }
 
-  const prefix$2 = "ProseMirror-menubar";
+  const prefix$1 = "ProseMirror-menubar";
 
   function isIOS() {
     if (typeof navigator == "undefined") return false
@@ -16994,9 +17047,9 @@
       this.editorView = editorView;
       this.options = options;
 
-      this.wrapper = crel("div", {class: prefix$2 + "-wrapper"});
-      this.menu = this.wrapper.appendChild(crel("div", {class: prefix$2}));
-      this.menu.className = prefix$2;
+      this.wrapper = crel("div", {class: prefix$1 + "-wrapper"});
+      this.menu = this.wrapper.appendChild(crel("div", {class: prefix$1}));
+      this.menu.className = prefix$1;
       this.spacer = null;
 
       editorView.dom.parentNode.replaceChild(this.wrapper, editorView.dom);
@@ -17081,7 +17134,7 @@
           this.menu.style.width = menuRect.width + "px";
           if (scrollAncestor) this.menu.style.top = top + "px";
           this.menu.style.position = "fixed";
-          this.spacer = crel("div", {class: prefix$2 + "-spacer", style: `height: ${menuRect.height}px`});
+          this.spacer = crel("div", {class: prefix$1 + "-spacer", style: `height: ${menuRect.height}px`});
           parent.insertBefore(this.spacer, this.menu);
         }
       }
@@ -17111,11 +17164,11 @@
       return res
   }
 
-  const prefix$3 = "ProseMirror-prompt";
+  const prefix = "ProseMirror-prompt";
 
   function openPrompt(options) {
     let wrapper = document.body.appendChild(document.createElement("div"));
-    wrapper.className = prefix$3;
+    wrapper.className = prefix;
 
     let mouseOutside = e => { if (!wrapper.contains(e.target)) close(); };
     setTimeout(() => window.addEventListener("mousedown", mouseOutside), 50);
@@ -17129,11 +17182,11 @@
 
     let submitButton = document.createElement("button");
     submitButton.type = "submit";
-    submitButton.className = prefix$3 + "-submit";
+    submitButton.className = prefix + "-submit";
     submitButton.textContent = "OK";
     let cancelButton = document.createElement("button");
     cancelButton.type = "button";
-    cancelButton.className = prefix$3 + "-cancel";
+    cancelButton.className = prefix + "-cancel";
     cancelButton.textContent = "Cancel";
     cancelButton.addEventListener("click", close);
 
@@ -17143,7 +17196,7 @@
       form.appendChild(document.createElement("div")).appendChild(field);
     });
     let buttons = form.appendChild(document.createElement("div"));
-    buttons.className = prefix$3 + "-buttons";
+    buttons.className = prefix + "-buttons";
     buttons.appendChild(submitButton);
     buttons.appendChild(document.createTextNode(" "));
     buttons.appendChild(cancelButton);
@@ -17743,7 +17796,7 @@
       });
   }
 
-  const mac$4 = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false;
+  const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false;
 
   // :: (Schema, ?Object) → Object
   // Inspect the given schema looking for marks and nodes from the
@@ -17788,11 +17841,11 @@
     bind("Mod-z", undo);
     bind("Shift-Mod-z", redo);
     bind("Backspace", undoInputRule);
-    if (!mac$4) bind("Mod-y", redo);
+    if (!mac) bind("Mod-y", redo);
 
     bind("Alt-ArrowUp", joinUp);
     bind("Alt-ArrowDown", joinDown);
-    bind("Mod-BracketLeft", lift$1);
+    bind("Mod-BracketLeft", lift);
     bind("Escape", selectParentNode);
 
     if (type = schema.marks.strong) {
@@ -17827,7 +17880,7 @@
       });
       bind("Mod-Enter", cmd);
       bind("Shift-Enter", cmd);
-      if (mac$4) bind("Ctrl-Enter", cmd);
+      if (mac) bind("Ctrl-Enter", cmd);
     }
     if (type = schema.nodes.list_item) {
       bind("Enter", splitListItem(type));
@@ -17835,11 +17888,11 @@
       bind("Mod-]", sinkListItem(type));
     }
     if (type = schema.nodes.paragraph)
-      bind("Shift-Ctrl-0", setBlockType$1(type));
+      bind("Shift-Ctrl-0", setBlockType(type));
     if (type = schema.nodes.code_block)
-      bind("Shift-Ctrl-\\", setBlockType$1(type));
+      bind("Shift-Ctrl-\\", setBlockType(type));
     if (type = schema.nodes.heading)
-      for (let i = 1; i <= 6; i++) bind("Shift-Ctrl-" + i, setBlockType$1(type, {level: i}));
+      for (let i = 1; i <= 6; i++) bind("Shift-Ctrl-" + i, setBlockType(type, {level: i}));
     if (type = schema.nodes.horizontal_rule) {
       let hr = type;
       bind("Mod-_", (state, dispatch) => {
@@ -18016,6 +18069,10 @@
           div.setAttribute('parentId', node.attrs.parentId);
           div.setAttribute('class', node.attrs.cssClass);
           div.setAttribute('editable', node.attrs.editable.toString());
+          div.setAttribute('spellcheck', node.attrs.spellcheck.toString());
+          div.setAttribute('autocorrect', node.attrs.autocorrect.toString());
+          div.setAttribute('autocapitalize', node.attrs.autocapitalize.toString());
+          div.setAttribute('writingsuggestions', node.attrs.writingsuggestions.toString());
           div.innerHTML = node.attrs.htmlContents;
           // Note that the click is reported using handleClick on the EditorView.
           // Here we have access to the node id and can specialize for divs.
@@ -18251,9 +18308,9 @@
       const attributes = JSON.parse(jsonString);
       const editor = document.getElementById('editor');
       if (editor && attributes) {   
-         for (const [key, value] of Object.entries(attributes)) {
-          if (key !== 'contenteditable') editor.setAttribute(key, value);
-         }    }}
+          for (const [key, value] of Object.entries(attributes)) {
+              if (key !== 'contenteditable') editor.setAttribute(key, value);
+          }    }}
   /**
    * Called to load user script and CSS before loading html.
    *
@@ -18383,14 +18440,14 @@
    */
   function pasteText(html) {
       const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
-      const minimalHTML = _minimalHTML(fragment);         // Reduce to MarkupEditor-equivalent of "plain" text
+      _minimalHTML(fragment);         // Reduce to MarkupEditor-equivalent of "plain" text
   }
   /**
    * Do a custom paste operation of html.
    */
   function pasteHTML(html) {
       const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
-      const fragmentHTML = _fragmentHTML(fragment);        // Extract html again from cleaned up fragment
+      _fragmentHTML(fragment);        // Extract html again from cleaned up fragment
   }
   /**
    * Return the innerHTML string contained in fragment
@@ -18762,7 +18819,7 @@
           const node = nodeSelection.$anchor.node();
           if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
               // Replace the last empty paragraph with divNode
-              const divPos = nodeSelection.from;
+              nodeSelection.from;
               nodeSelection.replaceWith(transaction, divNode);
               //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
           } else {
@@ -18818,12 +18875,13 @@
       }}
 
   function focusOn(id) {
-      const {pos} = _getNode(id);
-      if (pos) {
-          const selection = new TextSelection(view.state.doc.resolve(pos));
-          const transaction = view.state.tr.setSelection(selection).scrollIntoView();
-          view.dispatch(transaction);
-      }}
+      //const {pos} = _getNode(id);
+      //if (pos) {
+      //    const selection = new TextSelection(view.state.doc.resolve(pos));
+      //    const transaction = view.state.tr.setSelection(selection).scrollIntoView();
+      //    view.dispatch(transaction);
+      //};
+  }
   function scrollIntoView(id) {
   }
   /**
@@ -19140,7 +19198,7 @@
       let newState;
       view.state.doc.nodesBetween(selection.from, selection.to, node => {
           if ((node.type === blockquote) || (node.type == ul) || (node.type == ol)) {   
-              lift$1(view.state, (transaction) => {
+              lift(view.state, (transaction) => {
                   newState = view.state.apply(transaction);
               });
           }        return true;
@@ -19189,7 +19247,7 @@
    * Put any direct childNodes of node that are in "standalone" BRs into paragraphs
    */
   function _cleanUpBRs(node) {
-      const childNodes = node.childNodes;
+      node.childNodes;
       let child = node.firstChild;
       while (child) {
           if (_isBRElement(child)) {
@@ -19208,7 +19266,7 @@
    * Patch up text nodes that have newlines
    */
   function _cleanUpNewlines(node) {
-      const childNodes = node.childNodes;
+      node.childNodes;
       let child = node.firstChild;
       while (child) {
           if (_isTextNode(child)) {
@@ -19533,10 +19591,15 @@
       const selection = view.state.selection;
       if (selection.empty) return null;
       const fragment =  doc.cut(selection.from, selection.to).content;
-      const htmlFragment = DOMSerializer.fromSchema(view.state.schema).serializeFragment(fragment);
-      const div = document.createElement('div');
-      div.appendChild(htmlFragment);
-      return div.innerHTML;
+      let text = '';
+      fragment.nodesBetween(0, fragment.size, (node) => {
+          if (node.isText) {
+              text += node.text;
+              return false;
+          }
+          return true;
+      });
+      return (text.length === 0) ? null : text;
   }
   /**
    * Return the rectangle that encloses the selection.
@@ -19986,7 +20049,7 @@
    *
    * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
    */
-  function addRow$1(direction) {
+  function addRow(direction) {
       if (!_tableSelected()) return;
       if (direction === 'BEFORE') {
           addRowBefore(view.state, view.dispatch);
@@ -20282,32 +20345,23 @@
       div(node, view, getPos) { return new DivView(node, view, getPos) },
       button(node, view, getPos) { return new ButtonView(node, view, getPos) }
     },
-    handleTextInput(view, from, to, text) {
+    handleTextInput() {
       stateChanged();
       return false; // All the default behavior should occur
     },
-    handleClick(view, pos, ev) {
+    // Use createSelectionBetween to handle selection and click both
+    createSelectionBetween() {
       selectionChanged();
       clicked();
-      return false;
-    },
-    handleDoubleClick(view, pos, ev) {
-      selectionChanged();
-      clicked();
-      return false;
-    },
-    handleTripleClick(view, pos, ev) {
-      selectionChanged();
-      clicked();
-      return false;
-    },
+      return null; // All the default behavior should occur
+    }
   });
 
   exports.addButton = addButton;
   exports.addCol = addCol;
   exports.addDiv = addDiv;
   exports.addHeader = addHeader;
-  exports.addRow = addRow$1;
+  exports.addRow = addRow;
   exports.borderTable = borderTable;
   exports.cancelSearch = cancelSearch;
   exports.cutImage = cutImage;
@@ -20362,4 +20416,4 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));

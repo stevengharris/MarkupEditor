@@ -118,6 +118,7 @@ let baseNodes = OrderedMap.from({
   // TODO: Exclude divs that don't conform to MarkupEditor expectations by using a rule
   // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
   // https://prosemirror.net/docs/ref/#inputrules
+  // Note: Changes to div here may need to be reflected in DivView found in markup.js.
   div: {
     content: "block*",
     group: "block",
@@ -126,6 +127,10 @@ let baseNodes = OrderedMap.from({
       parentId: {default: 'editor'},
       cssClass: {default: null},
       editable: {default: true},
+      spellcheck: {default: false},
+      autocorrect: {default: 'on'},
+      autocapitalize: {default: 'off'},
+      writingsuggestions: {default: false},
       htmlContents: {default: ""}
     },
     parseDOM: [{
@@ -135,19 +140,40 @@ let baseNodes = OrderedMap.from({
         const parentId = dom.getAttribute("parentId");
         const cssClass = dom.getAttribute("class");
         const editable = dom.getAttribute("editable") == "true";
+        const spellcheck = dom.getAttribute("spellcheck") == "true";
+        const autocorrect = dom.getAttribute("autocorrect") == "on";
+        const autocapitalize = dom.getAttribute("autocapitalize") == "on";
+        const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
         return {
           id: id,
           parentId: parentId,
           cssClass: cssClass,
           editable: editable,
+          spellcheck: spellcheck,
+          autocorrect: autocorrect,
+          autocapitalize: autocapitalize,
+          writingsuggestions: writingsuggestions,
           htmlContents: dom.innerHTML ?? ""
         }
       }
     }],
     toDOM(node) { 
       // Note we don't push editable to the actual DOM element
-      let {id, parentId, cssClass, editable} = node.attrs; 
-      return ["div", {id: id, parentId: parentId, class: cssClass, editable: editable.toString()}, 0] 
+      let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
+      return [
+        "div", 
+        {
+          id: id, 
+          parentId: parentId, 
+          class: cssClass, 
+          editable: editable.toString(), 
+          spellcheck: spellcheck.toString(), 
+          autocorrect: autocorrect.toString(),
+          autocapitalize: autocapitalize.toString(),
+          writingsuggestions: writingsuggestions.toString()
+        }, 
+        0
+      ] 
     }
   },
 

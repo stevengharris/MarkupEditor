@@ -48,7 +48,7 @@ struct DivsContentView: View {
     init() {
         /// Don't specify any top-level attributes for the editor div in this demo.
         markupConfiguration = MarkupWKWebViewConfiguration()
-        markupConfiguration.topLevelAttributes = EditableAttributes.empty
+        markupConfiguration.topLevelAttributes = EditableAttributes.standard
         markupConfiguration.userCssFile = "demoDivs.css"
         _demoHtml = State(initialValue: "")
         initDivStructure()
