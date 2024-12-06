@@ -203,8 +203,7 @@ let _selectedID = null;
  *
  * Alert is set to true when the user might want to know an error occurred. Because
  * this is generally the case, it's set to true by default and certain MUErrors that
- * are more informational in nature are set to false. For example, BackupNullRange
- * happens when the user clicks outside of text, etc, so is fairly normal.
+ * are more informational in nature are set to false.
  *
  * Note that there is at least one instance of the Swift side notifying its MarkupDelegate
  * of an error using this same approach, but originating on the Swift side. That happens
@@ -212,7 +211,6 @@ let _selectedID = null;
  * clipboard is handled on the Swift side.
  */
 //MARK: Error Reporting
-/*
 class MUError {
 
     constructor(name, message, info, alert=true) {
@@ -222,27 +220,7 @@ class MUError {
         this.alert = alert;
     };
     
-    static BackupNullRange = new MUError('BackupNullRange', 'Attempt to back up a null range.', null, false);
-    static RestoreNullRange = new MUError('RestoreNullRange', 'Attempt to restore a null range.', null, false);
-    static CantUndoListEnter = new MUError('CantUndoListEnter', 'Child node could not be found in childNodeIndices.');
-    static CantInsertHtml = new MUError('CantInsertHtml', 'Top-level element could not be found from selection point.');
-    static CantInsertInList = new MUError('CantInsertInList', 'Selection prior to insertList is not collapsed inside of a TEXT_NODE.');
-    static CantFindElement = new MUError('CantFindElement', 'The element id could not be found.', null, false);
-    static CantFindContainer = new MUError('CantFindContainer', 'The startContainer or endContainer for a range could not be found.', null, false);
-    static InvalidFillEmpty = new MUError('InvalidFillEmpty', 'The node was not an ELEMENT_NODE or was not empty.');
-    static InvalidJoinTextNodes = new MUError('InvalidJoinTextNodes', 'The text nodes to join did not conform to expectations.');
-    static InvalidJoinElements = new MUError('InvalidJoinElements', 'The elements to join did not conform to expectations.');
-    static InvalidSplitTextNode = new MUError('InvalidSplitTextNode', 'Node passed to _splitTextNode must be a TEXT_NODE.');
-    static InvalidSplitTextRoot = new MUError('InvalidSplitTextRoot', 'Root name passed to _splitTextNode was not a parent of textNode.');
-    static InvalidSplitElement = new MUError('InvalidSplitElement', 'Node passed to _splitElement must be an ELEMENT_NODE.');
-    static InvalidSplitElementRoot = new MUError('InvalidSplitElementRoot', 'Root name passed to _splitElement was not a parent of element.');
     static NoDiv = new MUError('NoDiv', 'A div could not be found to return HTML from.');
-    static NoEndContainerInRange = new MUError('NoEndContainerInRange', 'Range endContainer not found in _nodesWithNamesInRange');
-    static NoNewTag = new MUError('NoNewTag', 'No tag was specified to change the existing tag to.');
-    static NoSelection = new MUError('NoSelection', 'Selection has been lost or is invalid.');
-    static NotInList = new MUError('NotInList', 'Selection is not in a list or listItem.');
-    static PatchFormatNodeNotEmpty = new MUError('PatchFormatNodeNotEmpty', 'Neither the anchorNode nor focusNode is empty.');
-    static PatchFormatNodeNotSiblings = new MUError('PatchFormatNodeNotSiblings', 'The anchorNode and focusNode are not siblings.')
     
     setInfo(info) {
         this.info = info
@@ -262,7 +240,6 @@ class MUError {
         _callback(JSON.stringify(this.messageDict()));
     };
 };
-*/
 
 /**
  * Called to set attributes to the editor div, typically to ,
@@ -374,8 +351,8 @@ window.addEventListener('load', function() {
  * with the call stack and reproduction instructions if at all possible.
  */
 window.addEventListener('error', function(ev) {
-    //const muError = new MUError('Internal', 'Break at MUError(\'Internal\'... in Safari Web Inspector to debug.');
-    //muError.callback()
+    const muError = new MUError('Internal', 'Break at MUError(\'Internal\'... in Safari Web Inspector to debug.');
+    muError.callback()
 });
 
 /**
@@ -596,7 +573,10 @@ export function getHTML(pretty='true', clean='true', divID) {
     const prettyHTML = pretty === 'true';
     const cleanHTML = clean === 'true';
     const divNode = (divID) ? _getNode(divID)?.node : view.state.doc;
-    if (!divNode) return ""
+    if (!divNode) {
+        MUError.NoDiv.callback();
+        return "";
+    }
     const editor = DOMSerializer.fromSchema(view.state.schema).serializeFragment(divNode.content);
     let text;
     if (cleanHTML) {
