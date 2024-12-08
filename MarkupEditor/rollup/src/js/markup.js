@@ -2127,8 +2127,8 @@ function _prepImage(img) {
     // Only notify the Swift side if we modified the HTML
     if (changedHTML) {
         _callbackInput() // Because we changed the html
-    } else {
-        _callback('updateHeight')
+    //} else {
+    //    _callback('updateHeight')
     }
 };
 
