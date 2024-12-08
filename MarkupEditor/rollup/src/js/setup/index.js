@@ -100,9 +100,5 @@ export function markupSetup(options) {
   // Add the MarkupEditor plugin
   plugins.push(muPlugin);
 
-  return plugins.concat(new Plugin({
-    props: {
-      attributes: {class: "ProseMirror-example-setup-style"}
-    }
-  }))
+  return plugins;
 }
