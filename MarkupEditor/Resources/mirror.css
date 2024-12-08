@@ -9,10 +9,7 @@
   background: white;
   color: black;
   background-clip: padding-box;
-  border-radius: 4px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  padding: 5px 0;
-  margin-bottom: 23px;
+  margin: -4px -8px -4px -8px;     /* Set so that the .ProseMirror padding starts from edges */
 }
 @media (prefers-color-scheme: dark) {
   #editor, .editor {
@@ -23,15 +20,13 @@
 
 .ProseMirror {
   position: relative;
-  padding: 4px 8px 4px 14px;
+  padding: 4px 8px 4px 8px;
   line-height: 1.2;
   outline: none;
   word-wrap: break-word;
   white-space: pre-wrap;
   white-space: break-spaces;
   -webkit-font-variant-ligatures: none;
-  font-variant-ligatures: none;
-  font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
 }
 
 .ProseMirror pre {
@@ -304,6 +299,12 @@ img.ProseMirror-separator {
 }
 
 /*
+ 
+#editor, .editor {
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
 .ProseMirror-example-setup-style hr {
   padding: 2px 10px;
   border: none;

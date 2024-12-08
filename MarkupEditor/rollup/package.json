@@ -7,7 +7,6 @@
   "dependencies": {
     "crel": "^4.2.1",
     "ms": "^2.0.0",
-    "prosemirror-example-setup": "^1.2.3",
     "prosemirror-model": "^1.23.0",
     "prosemirror-schema-basic": "^1.2.3",
     "prosemirror-schema-list": "^1.4.1",

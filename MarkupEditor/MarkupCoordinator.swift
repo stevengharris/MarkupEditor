@@ -39,18 +39,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         super.init()
     }
     
-    /// The height changed on the JavaScript side, so update our local value held by the webView, and set the
-    /// bottom padding (https://developer.mozilla.org/en-US/docs/Web/CSS/padding-bottom)
-    /// height so that it fills the full height of webView.
-    @MainActor
-    private func updateHeight() {
-        webView.updateHeight() { height in
-            self.webView.padBottom() {
-                self.markupDelegate?.markup(self.webView, heightDidChange: height)
-            }
-        }
-    }
-    
     /// Take action based on the message body received from JavaScript via the userContentController.
     /// Messages with arguments were encoded using JSON.
     @MainActor
@@ -70,7 +58,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             let divId = String(messageBody[index...])
             if divId.isEmpty || divId == "editor" {
                 markupDelegate?.markupInput(webView)
-                updateHeight()
             } else if !divId.isEmpty {
                 markupDelegate?.markupInput(webView, divId: divId)
             } else {
@@ -94,7 +81,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 webView.loadInitialHtml()
             }
         case "updateHeight":
-            updateHeight()
+            webView.updateHeight()
         case "blur":
             //Logger.coordinator.debug("* blur")
             webView.hasFocus = false        // Track focus state so delegate can find it if needed
@@ -206,7 +193,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 // that did not support multi-contenteditable divs.
                 if divId.isEmpty || divId == "editor" {
                     markupDelegate?.markupImageAdded(url: url)
-                    updateHeight()
                 } else if !divId.isEmpty {
                     markupDelegate?.markupImageAdded(webView, url: url, divId: divId)
                 } else {
@@ -226,7 +212,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 // that did not support multi-contenteditable divs.
                 if divId.isEmpty || divId == "editor" {
                     markupDelegate?.markupImageDeleted(url: url)
-                    updateHeight()
                 } else if !divId.isEmpty {
                     markupDelegate?.markupImageDeleted(webView, url: url, divId: divId)
                 } else {

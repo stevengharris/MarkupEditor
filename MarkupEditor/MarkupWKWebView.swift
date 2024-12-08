@@ -43,7 +43,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var clientHeightPad: Int = 8                 // Value to adjust html clientHeight
     public private(set) var isReady: Bool = false       // Ready for editing
     public var hasFocus: Bool = false
-    private var editorHeight: Int = 0
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     private var html: String?
@@ -409,16 +408,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.markupDelegate?.markupWillLoad(self)
             self.setHtml(self.html ?? "") {
                 //Logger.webview.debug("isReady: \(self.id)")
-                self.isReady = true
-                if let delegate = self.markupDelegate {
-                    delegate.markupDidLoad(self) {
+                self.updateHeight() {
+                    self.isReady = true
+                    if let delegate = self.markupDelegate {
+                        delegate.markupDidLoad(self) {
+                            if self.selectAfterLoad {
+                                self.becomeFirstResponderIfReady()
+                            }
+                        }
+                    } else {
                         if self.selectAfterLoad {
                             self.becomeFirstResponderIfReady()
                         }
-                    }
-                } else {
-                    if self.selectAfterLoad {
-                        self.becomeFirstResponderIfReady()
                     }
                 }
             }
@@ -764,9 +765,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Set the CSS padding-block bottom so that the padding fills the frame height.
-    public func padBottom(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.padBottom('\(frame.height)')") { result, error in
+    /// Set the CSS padding-block bottom so that the padding fills the frame height. We do this based on markupConfiguration,
+    /// which is set to true for iOS, else false.
+    private func padBottom(handler: (()->Void)? = nil) {
+        evaluateJavaScript("MU.padBottom('\(frame.height - CGFloat(clientHeightPad))')") { result, error in
             if let error {
                 Logger.webview.error("Error: \(error)")
             }
@@ -774,12 +776,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Update the internal height tracking.
-    public func updateHeight(handler: ((Int)->Void)?) {
+    /// Update the padding on the client side.
+    public func updateHeight(handler: (()->Void)? = nil) {
         self.getHeight() { clientHeight in
-            if self.editorHeight != clientHeight {
-                self.editorHeight = clientHeight
-                handler?(clientHeight + self.clientHeightPad)
+            let paddedHeight = clientHeight + self.clientHeightPad
+            if self.markupConfiguration?.padBottom ?? false {
+                self.padBottom() {
+                    self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
+                    handler?()
+                }
+            } else {
+                self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
+                handler?()
             }
         }
     }

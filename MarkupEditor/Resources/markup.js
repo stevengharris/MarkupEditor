@@ -18058,11 +18058,7 @@
     // Add the MarkupEditor plugin
     plugins.push(muPlugin);
 
-    return plugins.concat(new Plugin({
-      props: {
-        attributes: {class: "ProseMirror-example-setup-style"}
-      }
-    }))
+    return plugins;
   }
 
   /*
@@ -19980,8 +19976,8 @@
       // Only notify the Swift side if we modified the HTML
       if (changedHTML) {
           _callbackInput(); // Because we changed the html
-      } else {
-          _callback('updateHeight');
+      //} else {
+      //    _callback('updateHeight')
       }
   }
   /********************************************************************************
@@ -20320,7 +20316,10 @@
       // For the MarkupEditor, we can just use the editor element. 
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
-      plugins: markupSetup({schema: muSchema})
+      plugins: markupSetup({
+        menuBar: false, 
+        schema: muSchema
+      })
     }),
     nodeViews: {
       image(node, view, getPos) { return new ImageView(node, view, getPos) },
