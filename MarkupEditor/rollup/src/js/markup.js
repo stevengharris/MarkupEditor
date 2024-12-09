@@ -387,36 +387,28 @@ export function cancelSearch() {
 //MARK: Paste
 
 /**
+ * Paste html at the selection, replacing the selection as-needed.
+ */
+export function pasteHTML(html) {
+    const node = _nodeFromHTML(html);
+    const transaction = view.state.tr.replaceSelectionWith(node, false)
+    view.dispatch(transaction);
+    stateChanged();
+};
+
+/**
  * Do a custom paste operation of "text only", which we will extract from the html
- * ourselves. The pasteboard text has newlines removed and we want something
- * prettier that behaves well in the MarkupEditor.
- *
+ * ourselves. First we get a node that conforms to the schema, which by definition 
+ * only includes elements in a form we recognize, no spans, styles, etc.
  * The trick here is that we want to use the same code to paste text as we do for
  * HTML, but we want to paste something that is the MarkupEditor-equivalent of
  * unformatted text.
  */
 export function pasteText(html) {
-    const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
-    const minimalHTML = _minimalHTML(fragment);         // Reduce to MarkupEditor-equivalent of "plain" text
-    _pasteHTML(minimalHTML);
-};
-
-/**
- * Do a custom paste operation of html.
- */
-export function pasteHTML(html) {
-    const fragment = _patchPasteHTML(html);             // Remove all the cruft first, leaving BRs
-    const fragmentHTML = _fragmentHTML(fragment)        // Extract html again from cleaned up fragment
-    _pasteHTML(fragmentHTML);
-};
-
-/**
- * Return the innerHTML string contained in fragment
- */
-function _fragmentHTML(fragment) {
-    const div = document.createElement('div');
-    div.appendChild(fragment);
-    return div.innerHTML;
+    const node = _nodeFromHTML(html);
+    const htmlFragment = _fragmentFromNode(node);
+    const minimalHTML = _minimalHTML(htmlFragment); // Reduce to MarkupEditor-equivalent of "plain" text
+    pasteHTML(minimalHTML);
 };
 
 /**
@@ -494,50 +486,6 @@ function _minimalLink(div) {
         elements = div.getElementsByTagName('A');
         element = (elements.length > 0) ? elements[0] : null;
     };
-};
-
-function _pasteHTML(html, oldUndoerData) {
-};
-
-/**
- * Patch html by removing all of the spans, etc, so that a template created from it
- * is "clean" by MarkupEditor standards.
- */
-function _patchPasteHTML(html) {
-    
-    // We need a document fragment from the html so we can use its dom for cleaning up.
-    const element = _fragmentFrom(html);
-    
-    // Sometimes (e.g., iOS Note) the fragment is an entire HTML document.
-    // In this case, we only want the body, but let's clean up these items
-    // that should be outside of it just in case something wacky is going on.
-    _cleanUpTypesWithin(['head', 'meta', 'title', 'style'], element);
-    const body = element.body ?? element;
-    
-    // Now do the extensive clean up required for the body
-    _cleanUpSpansWithin(body);
-    _cleanUpDivsWithin(body);
-    _cleanUpTypesWithin(['label', 'button'], body)
-    _cleanUpAttributesWithin('style', body);
-    _cleanUpAttributesWithin('class', body);
-    _cleanUpEmptyTextNodes(body);
-    _cleanUpPREs(body);
-    _cleanUpOrphanNodes(body);
-    _cleanUpBRs(body);
-    _cleanUpNewlines(body);
-    _cleanUpTabs(body);
-    _cleanUpAliases(body);
-    _prepImages(body);
-    return body;
-};
-
-/**
- * Return a document fragment element derived from the html.
- */
-function _fragmentFrom(html) {
-    const template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content;
 };
 
 /********************************************************************************
@@ -674,12 +622,10 @@ const _isInlined = function(node) {
  * @param {String} contents The HTML for the editor
  */
 export function setHTML(contents, select=true) {
-    const state = window.view.state;
+    const state = view.state;
     const doc = state.doc;
     const tr = state.tr;
-    const div = document.createElement('div');
-    div.innerHTML = contents;
-    const node = DOMParser.fromSchema(state.schema).parse(div, { preserveWhiteSpace: true });
+    const node = _nodeFromHTML(contents);
     const selection = new AllSelection(doc);
     const transaction = tr
         .setSelection(selection)
@@ -792,9 +738,7 @@ function _firstEditableTextNode() {
  */
 export function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
     const divNodeType = view.state.schema.nodes.div;
-    const div = document.createElement('div');
-    div.innerHTML = htmlContents ?? "";
-    const divSlice = DOMParser.fromSchema(view.state.schema).parseSlice(div, { preserveWhiteSpace: true });
+    const divSlice = _sliceFromHTML(htmlContents ?? '<p></p>');
     const editableAttributes = (jsonAttributes && JSON.parse(jsonAttributes)) ?? {};
     const editable = editableAttributes.contenteditable === true;
     const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents}, divSlice.content);
@@ -851,7 +795,7 @@ export function addButton(id, parentId, cssClass, label) {
     button.setAttribute('class', cssClass);
     button.setAttribute('type', 'button');
     button.appendChild(document.createTextNode(label));
-    const buttonSlice = DOMParser.fromSchema(view.state.schema).parseSlice(button);
+    const buttonSlice = _sliceFromElement(button);
     const buttonNode = buttonNodeType.create({id, parentId, cssClass, label}, buttonSlice.content);
     const transaction = view.state.tr;
     if (parentId && (parentId !== 'editor')) {
@@ -1268,6 +1212,11 @@ export function endModalInput() {
  */
 //MARK: Clean Up
 
+/**
+ * Remove all children with names in node.
+ * @param {[string]} names 
+ * @param {HTMLElement} node 
+ */
 function _cleanUpTypesWithin(names, node) {
     const ucNames = names.map((name) => name.toUpperCase());
     const childNodes = node.childNodes;
@@ -1275,125 +1224,10 @@ function _cleanUpTypesWithin(names, node) {
         const child = childNodes[i];
         if (ucNames.includes(child.nodeName)) {
             node.removeChild(child);
+            i--;    // Because we just removed one
         } else if (child.childNodes.length > 0) {
             _cleanUpTypesWithin(names, child);
         };
-    };
-};
-
-/**
- * Remove meta tags contained in node, typically a document fragment.
- */
-function _cleanUpMetas(node) {
-    const childNodes = node.childNodes;
-    for (let i=0; i < childNodes.length; i++) {
-        const child = childNodes[i];
-        if (child.nodeName === 'META') {
-            node.removeChild(child);
-        } else {
-            _cleanUpMetas(child);
-        }
-    };
-};
-
-/*
- * Put any direct childNodes of node that are in "standalone" BRs into paragraphs
- */
-function _cleanUpBRs(node) {
-    const childNodes = node.childNodes;
-    let child = node.firstChild;
-    while (child) {
-        if (_isBRElement(child)) {
-            const nextChild = child.nextSibling;
-            const nextNextChild = (nextChild) ? nextChild.nextSibling : null;
-            if ((!nextChild) || (nextChild && (!_isTextNode(nextChild) && !_isBRElement(nextChild)))) {
-                // This BR is not part of a text string, it's just sitting alone
-                const p = document.createElement('p');
-                p.appendChild(document.createElement('br'));
-                child.replaceWith(p);
-            };
-            child = nextNextChild;
-        } else {
-            child = child.nextSibling;
-        };
-    };
-};
-
-/**
- * Patch up text nodes that have newlines
- */
-function _cleanUpNewlines(node) {
-    const childNodes = node.childNodes;
-    let child = node.firstChild;
-    while (child) {
-        if (_isTextNode(child)) {
-            _patchNewlines(child);
-        } else {
-            _cleanUpNewlines(child);
-        };
-        child = child.nextSibling;
-    };
-};
-
-/**
- * Patch up text nodes that have tabs
- */
-function _cleanUpTabs(node) {
-    let child = node.firstChild;
-    while (child) {
-        let nextChild = child.nextSibling;
-        if (_isElementNode(child)) {
-            _cleanUpTabs(child);
-        } else if (_isTextNode(child)) {
-            const rawContent = child.textContent;
-            if (rawContent.includes('\t')) {
-                child.textContent = rawContent.replaceAll('\t', '\xA0\xA0\xA0\xA0'); // Four spaces for tabs, don't @ me
-            };
-        };
-        child = nextChild;
-    };
-};
-
-/*
- * Replace PREs with Ps if they contain a text node; else,
- * leave their contents in place without the PRE.
- */
-function _cleanUpPREs(node) {
-    const childNodes = node.childNodes;
-    for (let i=0; i < childNodes.length; i++) {
-        let child = childNodes[i];
-        if (_isPreElement(child)) {
-            const p = document.createElement('p');
-            const template = document.createElement('template');
-            template.innerHTML = child.innerHTML;
-            const newElement = template.content;
-            p.appendChild(newElement);
-            child.replaceWith(p);
-        } else if (_isElementNode(child)) {
-            _cleanUpPREs(child);
-        }
-    };
-};
-
-/**
- * Replace all elements with names we don't recognize with ones we do.
- *
- * These are currently <strong> -> <b> and <em> -> <i>.
- */
-function _cleanUpAliases(node) {
-    const _aliases = {'STRONG' : 'B', 'EM' : 'I'}
-    let childNodes = node.childNodes;
-    for (let i=0; i < childNodes.length; i++) {
-        _cleanUpAliases(childNodes[i]);
-    };
-    let alias = _aliases[node.nodeName];
-    if (alias) {
-        const aliasElement = document.createElement(alias);
-        const template = document.createElement('template');
-        template.innerHTML = node.innerHTML;
-        const newElement = template.content;
-        aliasElement.appendChild(newElement);
-        node.replaceWith(aliasElement);
     };
 };
 
@@ -1464,49 +1298,6 @@ function _cleanUpAttributesWithin(attribute, node) {
     return attributesRemoved;
 };
 
-/*
- * Do a depth-first traversal from node, removing all empty text nodes at the leaf nodes.
- */
-function _cleanUpEmptyTextNodes(node) {
-    let child = node.firstChild;
-    while (child) {
-        let nextChild = child.nextSibling;
-        if (_isElementNode(child)) {
-            _cleanUpEmptyTextNodes(child);
-        } else if (_isTextNode(child) && _isEmpty(child)) {
-            child.parentNode.removeChild(child);
-        };
-        child = nextChild;
-    };
-};
-
-/*
- * Traverse all immediate childnodes of node. If they are not part of _topLevelNodes,
- * then put the childNode in a <p> element and call it a day. During paste, we sometimes
- * receive <a> and text nodes that are not properly styled (by the MarkupEditor definition),
- * so we will put them in a "normal" paragraph so we don't lose them.
- */
-function _cleanUpOrphanNodes(node) {
-    const children = node.childNodes;
-    let child = children.isEmpty ? null : children[0];
-    while (child) {
-        let nextSib = child.nextSibling;
-        if (!_topLevelTags.includes(child.nodeName)) {
-            // Create a new <p> and put this non-top-level node in it
-            const newChild = document.createElement('p');
-            node.insertBefore(newChild, nextSib);
-            newChild.appendChild(child);
-            // Keep putting children in the same p until we hit a top-level tag
-            while (nextSib && !_topLevelTags.includes(nextSib.nodeName)) {
-                let nextNextSib = nextSib.nextSibling;
-                newChild.appendChild(nextSib);
-                nextSib = nextNextSib;
-            };
-        }
-        child = nextSib;
-    };
-};
-
 function _prepImages(node) {
     const images = node.querySelectorAll('img');
     for (let i = 0; i < images.length; i++) {
@@ -1514,46 +1305,6 @@ function _prepImages(node) {
         image.addEventListener('load', function() {_prepImage(image)});
         image.addEventListener('error', function() {_prepImage(image)});
     };
-};
-
-/**
- * Replace newlines with <br> in a text node; return trailingText if patched, else node
- */
-function _patchNewlines(node) {
-    if (node.nodeType !== Node.TEXT_NODE) {
-        return node;
-    };
-    const rawContent = node.textContent;
-    // Ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split
-    // If separator appears at the beginning (or end) of the string, it still
-    // has the effect of splitting, resulting in an empty (i.e. zero length) string
-    // appearing at the first (or last) position of the returned array.
-    const lines = rawContent.split('\n');
-    if (lines.length === 1) { return node };
-    const insertTarget = node.nextSibling;
-    let line, nextLine, p, textNode;
-    for (let i = 0; i < lines.length; i++) {
-        line = lines[i];
-        nextLine = (i < lines.length - 1) ? lines[i + 1]  : null;
-        if (((i === 0) || (i === lines.length - 1)) && (line.length === 0)) {
-            // If we have a newline at beginning or end but are in a formatTag, then
-            // do nothing; otherwise, insert an editable <p><br></p> line.
-            if (!_formatTags.includes(node.parentNode.nodeName)) {
-                p = document.createElement('p');
-                textNode = document.createElement('br');
-                p.appendChild(textNode);
-                node.parentNode.insertBefore(p, insertTarget);
-            };
-        } else {
-            textNode = document.createTextNode(_patchWhiteSpace(line, 'LEADING'));
-            node.parentNode.insertBefore(textNode, insertTarget);
-            if ((i < lines.length - 1) && (nextLine && (nextLine.length > 0))) {
-                node.parentNode.insertBefore(document.createElement('br'), insertTarget);
-            };
-        };
-    };
-    node.parentNode.removeChild(node);
-    return textNode;
 };
 
 /********************************************************************************
@@ -1961,29 +1712,26 @@ export function testExtractContents() {
 };
 
 /**
- * For testing purposes, execute _patchPasteHTML and return the resulting
- * html as a string. Testing in this way lets us do simple pasteHTML tests with
- * clean HTML and test the _patchPasteHTML functionality separately. The
- * purpose of _patchPasteHTML is to return "clean" HTML from arbitrary HTML
- * (typically) obtained from the paste buffer on the Swift side.
+ * For testing purposes, create a ProseMirror Node that conforms to the 
+ * MarkupEditor schema and return the resulting html as a string. 
+ * Testing in this way lets us do simple pasteHTML tests with
+ * clean HTML and test the effect of schema-conformance on HTML contents
+ * separately. The html passed here is (typically) obtained from the paste 
+ * buffer on the Swift side.
  */
 export function testPasteHTMLPreprocessing(html) {
-    const fragment = _patchPasteHTML(html);
-    const fragmentHTML = _fragmentHTML(fragment);
-    return fragmentHTML;
+    const node = _nodeFromHTML(html);
+    const fragment = _fragmentFromNode(node);
+    return _htmlFromFragment(fragment);
 };
 
 /**
- * For testing purposes, execute _patchPasteHTML followed by _minimalHTML
- * and return the resulting html as a string. Testing in this way lets us do
- * simple pasteText tests with clean HTML and test the preprocessing functionality
- * separately. The purpose of _patchPasteHTML is to return "clean" HTML from
- * arbitrary HTML (typically) obtained from the paste buffer on the Swift side,
- * which is then combined with _minimalHTML to get a MarkupEditor-equivalent of
- * unformatted text.
+ * Use the same approach as testPasteHTMLPreprocessing, but augment with 
+ * _minimalHTML to get a MarkupEditor-equivalent of unformatted text.
  */
 export function testPasteTextPreprocessing(html) {
-    const fragment = _patchPasteHTML(html);
+    const node = _nodeFromHTML(html);
+    const fragment = _fragmentFromNode(node);
     const minimalHTML = _minimalHTML(fragment);
     return minimalHTML;
 };
@@ -2127,8 +1875,6 @@ function _prepImage(img) {
     // Only notify the Swift side if we modified the HTML
     if (changedHTML) {
         _callbackInput() // Because we changed the html
-    //} else {
-    //    _callback('updateHeight')
     }
 };
 
@@ -2417,82 +2163,81 @@ function _getBorder(table) {
 //MARK: Common Private Functions
 
 /**
- * Return the depth of node in parents contained in nodeNames. If the node is
- * a top-level element, then depth===0.
+ * Return a ProseMirror Node derived from HTML text.
+ * 
+ * Since the schema for the MarkupEditor accepts div and buttons, clean them from the 
+ * html before deriving a Node. Cleaning up means retaining the div contents while removing
+ * the divs, and removing buttons.
+ * @param {string} html 
+ * @returns Node
  */
-function _depthWithin(node, nodeNames) {
-    let depth = 0;
-    let parentElement = _findFirstParentElementInNodeNames(node, nodeNames);
-    while (parentElement) {
-        depth++;
-        parentElement = _findFirstParentElementInNodeNames(parentElement.parentNode, nodeNames);
-    };
-    return depth;
+function _nodeFromHTML(html) {
+    const fragment = _fragmentFromHTML(html);
+    const body = fragment.body ?? fragment;
+    _cleanUpDivsWithin(body);
+    _cleanUpTypesWithin(['button'], body);
+    return _nodeFromElement(body);
 };
 
 /**
- * Return true if element and all of its children are empty or
- * if it is an empty text node.
- *
- * For example, <li><p></p></li> is empty, as is <li></li>, while
- * <li><p> <p></li> and <li> <li> will have text elements and are
- * therefore not empty.
+ * Return a ProseMirror Node derived from an HTMLElement.
+ * @param {HTMLElement} htmlElement 
+ * @returns Node
  */
-function _isEmpty(element) {
-    let empty;
-    if (_isTextNode(element)) {
-        let textContent = element.textContent;
-        // Text is empty if it's all whitespace and contains no nbsp
-        empty = (textContent.trim().length === 0) && (!textContent.includes('\u00A0'));
-    } else if (_isImageElement(element)) {
-        empty = false;
-    } else {
-        empty = true;
-        const childNodes = element.childNodes;
-        for (let i = 0; i < childNodes.length; i++) {
-            empty = _isEmpty(childNodes[i]);
-            if (!empty) { break };
-        };
-    }
-    return empty;
-};
-
-function _isEmptyParagraph(element) {
-    return _isEmpty(element) && _isParagraphStyleElement(element) && _isBRElement(element.firstChild);
-};
-
-function _isEmptyPlaceholder(element) {
-    return _isParagraphStyleElement(element) && (element.childNodes.length == 1) && _isNonPrintingCharacter(element.firstChild);
-};
-
-function _isNonPrintingCharacter(element) {
-    return _isTextNode(element) && (element.textContent === '\u200B')
-}
-
-function _isEmptyTD(element) {
-    return _isEmpty(element) && (element.nodeName === 'TD');
-};
-
-/**
- * Return whether node is a div
- */
-function _isDiv(node) {
-    return node && (node.nodeName === 'DIV');
-};
-
-/**
- * Return whether node is a fragment
- */
-function _isFragment(node) {
-    return node && (node.nodeName === '#document-fragment');
+function _nodeFromElement(htmlElement) {
+    return DOMParser.fromSchema(view.state.schema).parse(htmlElement, { preserveWhiteSpace: true });
 }
 
 /**
- * Return whether node is a button
+ * Return an HTML DocumentFragment derived from a ProseMirror node.
+ * @param {Node} node 
+ * @returns DocumentFragment
  */
-function _isButton(node) {
-    return node && (node.nodeName === 'BUTTON');
+function _fragmentFromNode(node) {
+    return DOMSerializer.fromSchema(view.state.schema).serializeFragment(node.content);
+};
+
+/**
+ * Return an HTML DocumentFragment derived from HTML text.
+ * @param {string} html 
+ * @returns DocumentFragment
+ */
+function _fragmentFromHTML(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content;
+};
+
+/**
+ * Return a ProseMirror Slice derived from HTML text.
+ * @param {string} html 
+ * @returns Slice
+ */
+function _sliceFromHTML(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html ?? "";
+    return _sliceFromElement(div);
+};
+
+/**
+ * Return a ProseMirror Slice derived from an HTMLElement.
+ * @param {HTMLElement} htmlElement 
+ * @returns Slice
+ */
+function _sliceFromElement(htmlElement) {
+    return DOMParser.fromSchema(view.state.schema).parseSlice(htmlElement, { preserveWhiteSpace: true });
 }
+
+/**
+ * Return the innerHTML string contained in a DocumentFragment.
+ * @param {DocumentFragment} fragment 
+ * @returns string
+ */
+function _htmlFromFragment(fragment) {
+    const div = document.createElement('div');
+    div.appendChild(fragment);
+    return div.innerHTML;
+};
 
 /**
  * Return whether node is a textNode or not
@@ -2508,90 +2253,11 @@ function _isElementNode(node) {
     return node && (node.nodeType === Node.ELEMENT_NODE);
 };
 
-function _isPreElement(node) {
-    return node && (node.nodeName === 'PRE');
-}
-
-/**
- * Return whether node is a style element; i.e., its nodeName is in _styleTags
- */
-function _isStyleElement(node) {
-    return _isElementNode(node) && _styleTags.includes(node.nodeName);
-};
-
-/**
- * Return whether node is an allowable top-level node in MarkupEditor.
- *
- * These are nodes that are allowed children in a contentEditable area.
- */
-function _isTopLevelElement(node) {
-    return node && _topLevelTags.includes(node.nodeName);
-};
-
-/**
- * Return whether node is one of the _paragraphStyleTags
- */
-function _isParagraphStyleElement(node) {
-    return _paragraphStyleTags.includes(node.nodeName);
-};
-
 /**
  * Return whether node is a format element; i.e., its nodeName is in _formatTags
  */
 function _isFormatElement(node) {
     return _isElementNode(node) && _formatTags.includes(node.nodeName);
-};
-
-/**
- * Return whether node is a list element (i.e., either UL or OL)
- */
-function _isListElement(node) {
-    return node && _listTags.includes(node.nodeName);
-};
-
-/**
- * Return whether a node is a list item element (LI)
- */
-function _isListItemElement(node) {
-    return node && (node.nodeName === 'LI');
-};
-
-/**
- * Return whether node is an image element
- */
-function _isImageElement(node) {
-    return node && (node.nodeName === 'IMG');
-};
-
-/**
- * Return whether node is a BR element
- */
-function _isBRElement(node) {
-    return node && (node.nodeName === 'BR');
-};
-
-/**
- * Return whether node is a TABLE element
- */
-function _isTableElement(node) {
-    return node && (node.nodeName === 'TABLE');
-};
-
-/**
- * Return whether node is an empty element with only a BR in it.
- *
- * This is the minimal selectable element, because we cannot set
- * selection inside of something like <p></p>, only <p><br></p>.
- */
-function _isEmptyElement(node) {
-    return _isElementNode(node) && (node.childNodes.length === 1) && _isBRElement(node.firstChild)
-};
-
-/**
- * Return whether node is a BLOCKQUOTE element
- */
-function _isBlockquoteElement(node) {
-    return node && (node.nodeName === 'BLOCKQUOTE')
 };
 
 /**
@@ -2606,16 +2272,6 @@ function _isVoidNode(node) {
  */
 function _isLinkNode(node) {
     return node && (node.nodeName === 'A');
-};
-
-/**
- * Return a boolean indicating if s is a white space
- *
- * @param   {String}      s     The string that might be white space
- * @return {Boolean}            Whether it's white space
- */
-function _isWhiteSpace(s) {
-    return /\s/g.test(s);
 };
 
 /**

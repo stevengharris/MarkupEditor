@@ -115,15 +115,19 @@ let baseNodes = OrderedMap.from({
     toDOM() { return brDOM }
   },
 
-  // TODO: Exclude divs that don't conform to MarkupEditor expectations by using a rule
-  // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
-  // https://prosemirror.net/docs/ref/#inputrules
+  // Notes: 
   //
-  // Note: Changes to div here may need to be reflected in DivView found in markup.js.
+  // 1. Changes to div here may need to be reflected in DivView found in markup.js.
   //
-  // At some point, we may want to be able to set attributes like spellcheck
+  // 2. At some point, we may want to be able to set attributes like spellcheck
   // at an individual div level, but for now these are not needed but are left 
   // commented-out for future use.
+  //
+  // 3. It might be possible to exclude divs that don't conform to MarkupEditor expectations 
+  // by using a rule. For now, deriving a Node from html always removes divs and buttons, so 
+  // the only way for them to get into the MarkupEditor is via addDiv and addButton.
+  // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
+  // https://prosemirror.net/docs/ref/#inputrules
   div: {
     content: "block*",
     group: "block",
