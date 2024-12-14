@@ -14530,10 +14530,10 @@
         parentId: {default: 'editor'},
         cssClass: {default: null},
         editable: {default: true},
-        //spellcheck: {default: false},
-        //autocorrect: {default: 'on'},
-        //autocapitalize: {default: 'off'},
-        //writingsuggestions: {default: false},
+        spellcheck: {default: false},
+        autocorrect: {default: 'on'},
+        autocapitalize: {default: 'off'},
+        writingsuggestions: {default: false},
         htmlContents: {default: ""}
       },
       parseDOM: [{
@@ -14543,48 +14543,34 @@
           const parentId = dom.getAttribute("parentId");
           const cssClass = dom.getAttribute("class");
           const editable = dom.getAttribute("editable") == "true";
-          //const spellcheck = dom.getAttribute("spellcheck") == "true";
-          //const autocorrect = dom.getAttribute("autocorrect") == "on";
-          //const autocapitalize = dom.getAttribute("autocapitalize") == "on";
-          //const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
+          const spellcheck = dom.getAttribute("spellcheck") == "true";
+          const autocorrect = dom.getAttribute("autocorrect") == "on";
+          const autocapitalize = dom.getAttribute("autocapitalize") == "on";
+          const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
           return {
             id: id,
             parentId: parentId,
             cssClass: cssClass,
             editable: editable,
-            //spellcheck: spellcheck,
-            //autocorrect: autocorrect,
-            //autocapitalize: autocapitalize,
-            //writingsuggestions: writingsuggestions,
+            spellcheck: spellcheck,
+            autocorrect: autocorrect,
+            autocapitalize: autocapitalize,
+            writingsuggestions: writingsuggestions,
             htmlContents: dom.innerHTML ?? ""
           }
         }
       }],
-      // Note we only output a bare div with no attributes set, because these are only interesting to 
-      // the MarkupEditor and otherwise clutter the document HTML. For the MarkupEditor, we set the 
-      // top-level attributes of the editor div at initialization, and the other divs embedded in it 
-      // inherit the behavior set once at the top.
-      toDOM() { 
-        return ["div", {}, 0]
+      // Notes:
+      // 1. We produce div HTML that includes the id and class. This is because for non-editable 
+      // divs, we have to find elements by id based on the HTML because we prevent ProseMirror from 
+      // handling selection and rendering, and we have to do it for ourselves in the DivView.
+      // 
+      // 2. For the MarkupEditor, we set the top-level attributes of the editor div at initialization, 
+      // and the other divs embedded in it inherit the behavior set once at the top.
+      toDOM(node) { 
+        let {id, cssClass} = node.attrs; 
+        return ["div", { id: id, class: cssClass }, 0] 
       }
-      //  The following is left commented out here in case it's helpful for debugging in future.
-      //toDOM(node) { 
-      //  let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
-      //  return [
-      //    "div", 
-      //    {
-      //      id: id, 
-      //      parentId: parentId, 
-      //      class: cssClass, 
-      //      editable: editable.toString(), 
-      //      spellcheck: spellcheck.toString(), 
-      //      autocorrect: autocorrect.toString(),
-      //      autocapitalize: autocapitalize.toString(),
-      //      writingsuggestions: writingsuggestions.toString()
-      //    }, 
-      //    0
-      //  ] 
-      //}
     },
 
     button: {
@@ -14610,8 +14596,9 @@
           }
         }
       }],
-      toDOM() { 
-        return ["button", {}, 0]
+      toDOM(node) { 
+        let {id, cssClass} = node.attrs; 
+        return ["button", { id: id, class: cssClass }, 0]
       }
     }
 
@@ -17992,11 +17979,6 @@
           return DecorationSet.create(tr.doc, [
             Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
           ])
-        } else if (tr.getMeta("muDiv")) {
-          const {cssClass, fromPos, toPos} = tr.getMeta("muDiv");
-          return DecorationSet.create(tr.doc, [
-            Decoration.node(fromPos, toPos, {class: cssClass})
-          ])
         } else {
            // map "other" changes so our decoration "stays put" 
            // (e.g. user is typing so decoration's pos must change)
@@ -18077,41 +18059,56 @@
           const div = document.createElement('div');
           div.setAttribute('id', node.attrs.id);
           div.setAttribute('class', node.attrs.cssClass);
-          div.innerHTML = node.attrs.htmlContents;
-          // Note that the click is reported using handleClick on the EditorView.
+          // Note that the click is reported using createSelectionBetween on the EditorView.
           // Here we have access to the node id and can specialize for divs.
+          // Because the contentDOM is not set for non-editable divs, the selection never gets 
+          // set in them, but will be set to the first selectable node after.
           div.addEventListener('click', (ev) => {
               _selectedID = node.attrs.id;
           });
-          // Note: The div never sees an 'input' event. This is done using 
-          // handleTextInput on the EditorView.
+          div.innerHTML = node.attrs.htmlContents;
           this.dom = div;
-          this.contentDOM = div;
+          if (node.attrs.editable) {
+              // For editable divs, set contentDom so ProseMirror handles all the rendering and interaction
+              this.contentDOM = div;
+          } else {
+              // For non-editable divs, we have to handle all the interaction, which only occurs for buttons.
+              // Note ProseMirror does not render children inside of non-editable divs. We deal with this by 
+              // supplying the entire content of the div in htmlContents, and when we need to change the div
+              // (for example, adding and removing a button group), we must then update the htmlContents 
+              // accordingly. This happens in addDiv and removeDiv.
+              const buttons = Array.from(div.getElementsByTagName('button'));
+              buttons.forEach( button => {
+                  button.addEventListener('click', (ev) => {
+                      // Report the button that was clicked and its location
+                      _callback(
+                          JSON.stringify({
+                              'messageType' : 'buttonClicked',
+                              'id' : button.id,
+                              'rect' : this._getButtonRect(button)
+                          })
+                      );
+                  });
+              });
+          }
       }
 
-  }
+      /**
+       * 
+       * @param {HTMLButton} button 
+       * @returns {Object} The button's (origin) x, y, width, and height.
+       */
+      _getButtonRect(button) {
+          const boundingRect = button.getBoundingClientRect();
+          const buttonRect = {
+              'x' : boundingRect.left,
+              'y' : boundingRect.top,
+              'width' : boundingRect.width,
+              'height' : boundingRect.height
+          };
+          return buttonRect;
+      };
 
-  class ButtonView {
-      constructor(node, view, getPos) {
-          const button = document.createElement('button');
-          button.setAttribute('id', node.attrs.id);
-          button.setAttribute('class', node.attrs.cssClass);
-          button.setAttribute('type', 'button');
-          button.innerHTML = node.attrs.label;
-          button.addEventListener('click', () => {
-              const id = node.attrs.id;
-              const rect = view.coordsAtPos(getPos());
-              _callback(
-                  JSON.stringify({
-                      'messageType' : 'buttonClicked',
-                      'id' : id,
-                      'rect' : {x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top}
-                  })
-              );
-          });
-          this.dom = button;
-          this.contentDom = button;
-      }
   }
 
   // The view used to support resizable images, as installed in main.js.
@@ -18203,6 +18200,12 @@
         selectionChanged();
       }
   }
+
+  /**
+   * Define various arrays of tags used to represent concepts on the Swift side and internally.
+   *
+   * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
+   */
 
   // Add STRONG and EM (leaving B and I) to support default ProseMirror output   
   const _formatTags = ['B', 'STRONG', 'I', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];       // All possible (nestable) formats
@@ -18686,7 +18689,7 @@
   function resetSelection() {
       const {node, pos} = _firstEditableTextNode();
       const doc = view.state.doc;
-      const selection = (node) ? new TextSelection(doc.resolve(pos)) : AllSelection(doc);
+      const selection = (node) ? new TextSelection(doc.resolve(pos)) : new AllSelection(doc);
       const transaction = view.state.tr.setSelection(selection);
       view.dispatch(transaction);
   }
@@ -18715,52 +18718,108 @@
 
   /**
    * Add a div with id to parentId.
+   * 
+   * Note that divs that contain a static button group are created in a single call that includes 
+   * the buttonGroupJSON. However, button groups can also be added and removed dynamically.
+   * In that case, a button group div is added to a parent div using this call, and the parent has to 
+   * already exist so that we can find it.
    */
-  function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
+  function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, htmlContents) {
       const divNodeType = view.state.schema.nodes.div;
-      const divSlice = _sliceFromHTML(htmlContents ?? '<p></p>');
-      const editableAttributes = (jsonAttributes && JSON.parse(jsonAttributes)) ?? {};
+      const editableAttributes = (attributesJSON && JSON.parse(attributesJSON)) ?? {};
       const editable = editableAttributes.contenteditable === true;
-      const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents}, divSlice.content);
+      const buttonGroupDiv = _buttonGroupDiv(buttonGroupJSON);
+      // When adding a button group div dynamically to an existing div, it will be 
+      // non-editable, the htmlContent will be null, and the div will contain only buttons
+      let div;
+      if (buttonGroupDiv && !htmlContents && !editable) {
+          div = buttonGroupDiv;
+      } else {
+          div = document.createElement('div');
+          div.innerHTML = htmlContents ?? '<p></p>';
+          if (buttonGroupDiv) div.appendChild(buttonGroupDiv);
+      }
+      const divSlice = _sliceFromHTML(div.innerHTML);
+      const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents: div.innerHTML}, divSlice.content);
       const transaction = view.state.tr;
       if (parentId && (parentId !== 'editor')) {
+          // This path is only executed when adding a dynamic button group
           // Find the div that is the parent of the one we are adding
-          const {node, pos} = _getNode(parentId);
+          const {node, pos} = _getNode(parentId, transaction.doc);
           if (node) {
               // Insert the div inside of its parent as a new child of the existing div
               const divPos = pos + node.nodeSize - 1;
               transaction.insert(divPos, divNode);
-              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
+              // Now we have to update the htmlContent markup of the parent
+              const $divPos = transaction.doc.resolve(divPos);
+              const parent = $divPos.node();
+              const htmlContents = _htmlFromFragment(_fragmentFromNode(parent));
+              transaction.setNodeAttribute(pos, "htmlContents", htmlContents);
               view.dispatch(transaction);
           }
       } else {
+          // This is the "normal" path when building a doc from the MarkupDivStructure.
           // Add the div to the end of the document, replacing the empty paragraph node 
           // at that position if it exists (e.g., when the doc is empty)
           const nodeSelection = NodeSelection.atEnd(transaction.doc);
           const node = nodeSelection.$anchor.node();
           if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
               // Replace the last empty paragraph with divNode
-              nodeSelection.from;
               nodeSelection.replaceWith(transaction, divNode);
-              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
           } else {
               // Otherwise, append this div to the end of the document
               const divPos = transaction.doc.content.size;
               transaction.insert(divPos, divNode);
-              //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
           }
           view.dispatch(transaction);
       }}
+  /**
+   * 
+   * @param {string} buttonGroupJSON A JSON string describing the button group
+   * @returns HTMLDivElement
+   */
+  function _buttonGroupDiv(buttonGroupJSON) {
+      if (buttonGroupJSON) {
+          const buttonGroup = JSON.parse(buttonGroupJSON);
+          if (buttonGroup) {
+              const buttonGroupDiv = document.createElement('div');
+              buttonGroupDiv.setAttribute('id', buttonGroup.id);
+              buttonGroupDiv.setAttribute('parentId', buttonGroup.parentId);
+              buttonGroupDiv.setAttribute('class', buttonGroup.cssClass);
+              buttonGroupDiv.setAttribute('editable', "false");   // Hardcode
+              buttonGroup.buttons.forEach( buttonAttributes => {
+                  let button = document.createElement('button');
+                  button.appendChild(document.createTextNode(buttonAttributes.label));
+                  button.setAttribute('label', buttonAttributes.label);
+                  button.setAttribute('type', 'button');
+                  button.setAttribute('id', buttonAttributes.id);
+                  button.setAttribute('class', buttonAttributes.cssClass);
+                  buttonGroupDiv.appendChild(button);
+              });
+              return buttonGroupDiv; 
+          }
+      }
+      return null;
+  }
   function removeDiv(id) {
+      const divNodeType = view.state.schema.nodes.div;
       const {node, pos} = _getNode(id);
-      if (view.state.schema.nodes.div === node?.type) {
+      if (divNodeType === node?.type) {
+          const $pos = view.state.doc.resolve(pos);
           const selection = view.state.selection;
-          const nodeSelection = new NodeSelection(view.state.doc.resolve(pos));
+          const nodeSelection = new NodeSelection($pos);
           const transaction = view.state.tr
               .setSelection(nodeSelection)
               .deleteSelection();
           const newSelection = TextSelection.create(transaction.doc, selection.from, selection.to);
           transaction.setSelection(newSelection);
+          const isButtonGroup = (node.attrs.editable == false) && (node.attrs.parentId !== 'editor') && ($pos.parent.type == divNodeType);
+          if (isButtonGroup) {
+              // Now we have to update the htmlContents markup of the parent
+              const parent = _getNode(node.attrs.parentId, transaction.doc);
+              const htmlContents = _htmlFromFragment(_fragmentFromNode(parent.node));
+              transaction.setNodeAttribute(parent.pos, "htmlContents", htmlContents);
+          }
           view.dispatch(transaction);
       }}
   function addButton(id, parentId, cssClass, label) {
@@ -18776,11 +18835,16 @@
       const transaction = view.state.tr;
       if (parentId && (parentId !== 'editor')) {
           // Find the div that is the parent of the button we are adding
-          const {node, pos} = _getNode(parentId);
+          const {node, pos} = _getNode(parentId, transaction.doc);
           if (node) {   // Will always be a buttonGroup div that might be empty
               // Insert the div inside of its parent as a new child of the existing div
               const divPos = pos + node.nodeSize - 1;
               transaction.insert(divPos, buttonNode);
+              // Now we have to update the htmlContent markup of the parent
+              const $divPos = transaction.doc.resolve(divPos);
+              const parent = $divPos.node();
+              const htmlContents = _htmlFromFragment(_fragmentFromNode(parent));
+              transaction.setNodeAttribute(pos, "htmlContents", htmlContents);
               view.dispatch(transaction);
           }
       }
@@ -18821,11 +18885,12 @@
    * @param {number} to           The position in the document to search to.
    * @returns {Object}            The node and position that matched the search.
    */
-  function _getNode(id, from, to) {
-      const fromPos = from ?? TextSelection.atStart(view.state.doc).from;
-      const toPos = to ?? TextSelection.atEnd(view.state.doc).to;
+  function _getNode(id, doc, from, to) {
+      const source = doc ?? view.state.doc;
+      const fromPos = from ?? TextSelection.atStart(source).from;
+      const toPos = to ?? TextSelection.atEnd(source).to;
       let foundNode, foundPos;
-      view.state.doc.nodesBetween(fromPos, toPos, (node, pos) => {
+      source.nodesBetween(fromPos, toPos, (node, pos) => {
           if (node.attrs.id === id) {
               foundNode = node;
               foundPos = pos;
@@ -20097,13 +20162,14 @@
     nodeViews: {
       image(node, view, getPos) { return new ImageView(node, view, getPos) },
       div(node, view, getPos) { return new DivView(node, view, getPos) },
-      button(node, view, getPos) { return new ButtonView(node, view, getPos) }
     },
     handleTextInput() {
       stateChanged();
       return false; // All the default behavior should occur
     },
-    // Use createSelectionBetween to handle selection and click both
+    // Use createSelectionBetween to handle selection and click both.
+    // Note that we handle button clicks in non-editable divs in DivView, since 
+    // they can't be selected.
     createSelectionBetween() {
       selectionChanged();
       clicked();

@@ -27,41 +27,56 @@ export class DivView {
         const div = document.createElement('div');
         div.setAttribute('id', node.attrs.id);
         div.setAttribute('class', node.attrs.cssClass);
-        div.innerHTML = node.attrs.htmlContents;
-        // Note that the click is reported using handleClick on the EditorView.
+        // Note that the click is reported using createSelectionBetween on the EditorView.
         // Here we have access to the node id and can specialize for divs.
+        // Because the contentDOM is not set for non-editable divs, the selection never gets 
+        // set in them, but will be set to the first selectable node after.
         div.addEventListener('click', (ev) => {
             _selectedID = node.attrs.id;
         })
-        // Note: The div never sees an 'input' event. This is done using 
-        // handleTextInput on the EditorView.
+        div.innerHTML = node.attrs.htmlContents;
         this.dom = div;
-        this.contentDOM = div;
-    }
-
-}
-
-export class ButtonView {
-    constructor(node, view, getPos) {
-        const button = document.createElement('button');
-        button.setAttribute('id', node.attrs.id);
-        button.setAttribute('class', node.attrs.cssClass);
-        button.setAttribute('type', 'button');
-        button.innerHTML = node.attrs.label;
-        button.addEventListener('click', () => {
-            const id = node.attrs.id;
-            const rect = view.coordsAtPos(getPos())
-            _callback(
-                JSON.stringify({
-                    'messageType' : 'buttonClicked',
-                    'id' : id,
-                    'rect' : {x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top}
+        if (node.attrs.editable) {
+            // For editable divs, set contentDom so ProseMirror handles all the rendering and interaction
+            this.contentDOM = div;
+        } else {
+            // For non-editable divs, we have to handle all the interaction, which only occurs for buttons.
+            // Note ProseMirror does not render children inside of non-editable divs. We deal with this by 
+            // supplying the entire content of the div in htmlContents, and when we need to change the div
+            // (for example, adding and removing a button group), we must then update the htmlContents 
+            // accordingly. This happens in addDiv and removeDiv.
+            const buttons = Array.from(div.getElementsByTagName('button'));
+            buttons.forEach( button => {
+                button.addEventListener('click', (ev) => {
+                    // Report the button that was clicked and its location
+                    _callback(
+                        JSON.stringify({
+                            'messageType' : 'buttonClicked',
+                            'id' : button.id,
+                            'rect' : this._getButtonRect(button)
+                        })
+                    )
                 })
-            )
-        });
-        this.dom = button;
-        this.contentDom = button;
+            })
+        }
     }
+
+    /**
+     * 
+     * @param {HTMLButton} button 
+     * @returns {Object} The button's (origin) x, y, width, and height.
+     */
+    _getButtonRect(button) {
+        const boundingRect = button.getBoundingClientRect();
+        const buttonRect = {
+            'x' : boundingRect.left,
+            'y' : boundingRect.top,
+            'width' : boundingRect.width,
+            'height' : boundingRect.height
+        };
+        return buttonRect;
+    };
+
 }
 
 // The view used to support resizable images, as installed in main.js.
@@ -156,36 +171,16 @@ export class ImageView {
 
 const minImageSize = 20;
 
-const DentType = {
-    Indent: 'Indent',
-    Outdent: 'Outdent'
-};
-
 /**
  * Define various arrays of tags used to represent concepts on the Swift side and internally.
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
  */
-const _paragraphStyleTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];                  // All paragraph styles
 
 // Add STRONG and EM (leaving B and I) to support default ProseMirror output   
 const _formatTags = ['B', 'STRONG', 'I', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];       // All possible (nestable) formats
 
-const _listTags = ['UL', 'OL'];                                                         // Types of lists
-
-const _tableTags = ['TABLE', 'THEAD', 'TBODY', 'TD', 'TR', 'TH'];                       // All tags associated with tables
-
-const _styleTags = _paragraphStyleTags.concat(_listTags.concat(['LI', 'BLOCKQUOTE']));  // Identify insert-before point in table/list
-
-const _listStyleTags = _paragraphStyleTags.concat(['BLOCKQUOTE']);                      // Possible containing blocks in a list
-
 const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];           // Convert to 'P' for pasteText
-
-const _monitorEnterTags = _listTags.concat(['TABLE', 'BLOCKQUOTE']);                    // Tags we monitor for Enter
-
-const _monitorIndentTags = _listTags.concat(['BLOCKQUOTE']);                            // Tags we monitor for Tab or Ctrl+]
-
-const _topLevelTags = _paragraphStyleTags.concat(_listTags.concat(['TABLE', 'BLOCKQUOTE']));    // Allowed top-level tags w/in editor
 
 const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
@@ -704,7 +699,7 @@ export function focus() {
 export function resetSelection() {
     const {node, pos} = _firstEditableTextNode();
     const doc = view.state.doc;
-    const selection = (node) ? new TextSelection(doc.resolve(pos)) : AllSelection(doc);
+    const selection = (node) ? new TextSelection(doc.resolve(pos)) : new AllSelection(doc);
     const transaction = view.state.tr.setSelection(selection);
     view.dispatch(transaction);
 };
@@ -735,54 +730,111 @@ function _firstEditableTextNode() {
 
 /**
  * Add a div with id to parentId.
+ * 
+ * Note that divs that contain a static button group are created in a single call that includes 
+ * the buttonGroupJSON. However, button groups can also be added and removed dynamically.
+ * In that case, a button group div is added to a parent div using this call, and the parent has to 
+ * already exist so that we can find it.
  */
-export function addDiv(id, parentId, cssClass, jsonAttributes, htmlContents) {
+export function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, htmlContents) {
     const divNodeType = view.state.schema.nodes.div;
-    const divSlice = _sliceFromHTML(htmlContents ?? '<p></p>');
-    const editableAttributes = (jsonAttributes && JSON.parse(jsonAttributes)) ?? {};
+    const editableAttributes = (attributesJSON && JSON.parse(attributesJSON)) ?? {};
     const editable = editableAttributes.contenteditable === true;
-    const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents}, divSlice.content);
+    const buttonGroupDiv = _buttonGroupDiv(buttonGroupJSON);
+    // When adding a button group div dynamically to an existing div, it will be 
+    // non-editable, the htmlContent will be null, and the div will contain only buttons
+    let div;
+    if (buttonGroupDiv && !htmlContents && !editable) {
+        div = buttonGroupDiv;
+    } else {
+        div = document.createElement('div');
+        div.innerHTML = htmlContents ?? '<p></p>';
+        if (buttonGroupDiv) div.appendChild(buttonGroupDiv);
+    }
+    const divSlice = _sliceFromHTML(div.innerHTML);
+    const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents: div.innerHTML}, divSlice.content);
     const transaction = view.state.tr;
     if (parentId && (parentId !== 'editor')) {
+        // This path is only executed when adding a dynamic button group
         // Find the div that is the parent of the one we are adding
-        const {node, pos} = _getNode(parentId)
+        const {node, pos} = _getNode(parentId, transaction.doc)
         if (node) {
             // Insert the div inside of its parent as a new child of the existing div
             const divPos = pos + node.nodeSize - 1;
             transaction.insert(divPos, divNode)
-            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
+            // Now we have to update the htmlContent markup of the parent
+            const $divPos = transaction.doc.resolve(divPos);
+            const parent = $divPos.node();
+            const htmlContents = _htmlFromFragment(_fragmentFromNode(parent));
+            transaction.setNodeAttribute(pos, "htmlContents", htmlContents);
             view.dispatch(transaction);
         }
     } else {
+        // This is the "normal" path when building a doc from the MarkupDivStructure.
         // Add the div to the end of the document, replacing the empty paragraph node 
         // at that position if it exists (e.g., when the doc is empty)
         const nodeSelection = NodeSelection.atEnd(transaction.doc);
         const node = nodeSelection.$anchor.node();
         if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
             // Replace the last empty paragraph with divNode
-            const divPos = nodeSelection.from;
             nodeSelection.replaceWith(transaction, divNode);
-            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
         } else {
             // Otherwise, append this div to the end of the document
             const divPos = transaction.doc.content.size;
             transaction.insert(divPos, divNode);
-            //transaction.setMeta("muDiv", {cssClass: cssClass, fromPos: divPos, toPos: divPos + divNode.nodeSize});
         }
         view.dispatch(transaction);
     };
 };
 
+/**
+ * 
+ * @param {string} buttonGroupJSON A JSON string describing the button group
+ * @returns HTMLDivElement
+ */
+function _buttonGroupDiv(buttonGroupJSON) {
+    if (buttonGroupJSON) {
+        const buttonGroup = JSON.parse(buttonGroupJSON);
+        if (buttonGroup) {
+            const buttonGroupDiv = document.createElement('div');
+            buttonGroupDiv.setAttribute('id', buttonGroup.id);
+            buttonGroupDiv.setAttribute('parentId', buttonGroup.parentId);
+            buttonGroupDiv.setAttribute('class', buttonGroup.cssClass);
+            buttonGroupDiv.setAttribute('editable', "false");   // Hardcode
+            buttonGroup.buttons.forEach( buttonAttributes => {
+                let button = document.createElement('button');
+                button.appendChild(document.createTextNode(buttonAttributes.label));
+                button.setAttribute('label', buttonAttributes.label)
+                button.setAttribute('type', 'button')
+                button.setAttribute('id', buttonAttributes.id);
+                button.setAttribute('class', buttonAttributes.cssClass);
+                buttonGroupDiv.appendChild(button);
+            })
+            return buttonGroupDiv; 
+        }
+    }
+    return null;
+};
+
 export function removeDiv(id) {
+    const divNodeType = view.state.schema.nodes.div;
     const {node, pos} = _getNode(id)
-    if (view.state.schema.nodes.div === node?.type) {
+    if (divNodeType === node?.type) {
+        const $pos = view.state.doc.resolve(pos);
         const selection = view.state.selection;
-        const nodeSelection = new NodeSelection(view.state.doc.resolve(pos));
+        const nodeSelection = new NodeSelection($pos);
         const transaction = view.state.tr
             .setSelection(nodeSelection)
             .deleteSelection();
         const newSelection = TextSelection.create(transaction.doc, selection.from, selection.to);
         transaction.setSelection(newSelection);
+        const isButtonGroup = (node.attrs.editable == false) && (node.attrs.parentId !== 'editor') && ($pos.parent.type == divNodeType);
+        if (isButtonGroup) {
+            // Now we have to update the htmlContents markup of the parent
+            const parent = _getNode(node.attrs.parentId, transaction.doc);
+            const htmlContents = _htmlFromFragment(_fragmentFromNode(parent.node));
+            transaction.setNodeAttribute(parent.pos, "htmlContents", htmlContents);
+        }
         view.dispatch(transaction);
     };
 };
@@ -800,11 +852,16 @@ export function addButton(id, parentId, cssClass, label) {
     const transaction = view.state.tr;
     if (parentId && (parentId !== 'editor')) {
         // Find the div that is the parent of the button we are adding
-        const {node, pos} = _getNode(parentId)
+        const {node, pos} = _getNode(parentId, transaction.doc)
         if (node) {   // Will always be a buttonGroup div that might be empty
             // Insert the div inside of its parent as a new child of the existing div
             const divPos = pos + node.nodeSize - 1;
             transaction.insert(divPos, buttonNode);
+            // Now we have to update the htmlContent markup of the parent
+            const $divPos = transaction.doc.resolve(divPos);
+            const parent = $divPos.node();
+            const htmlContents = _htmlFromFragment(_fragmentFromNode(parent));
+            transaction.setNodeAttribute(pos, "htmlContents", htmlContents);
             view.dispatch(transaction);
         }
     }
@@ -850,11 +907,12 @@ export function removeAllDivs() {
  * @param {number} to           The position in the document to search to.
  * @returns {Object}            The node and position that matched the search.
  */
-function _getNode(id, from, to) {
-    const fromPos = from ?? TextSelection.atStart(view.state.doc).from;
-    const toPos = to ?? TextSelection.atEnd(view.state.doc).to;
+function _getNode(id, doc, from, to) {
+    const source = doc ?? view.state.doc;
+    const fromPos = from ?? TextSelection.atStart(source).from;
+    const toPos = to ?? TextSelection.atEnd(source).to;
     let foundNode, foundPos;
-    view.state.doc.nodesBetween(fromPos, toPos, (node, pos) => {
+    source.nodesBetween(fromPos, toPos, (node, pos) => {
         if (node.attrs.id === id) {
             foundNode = node;
             foundPos = pos;
@@ -1276,35 +1334,6 @@ function _cleanUpSpansDivsWithin(node, type, removed) {
         };
     };
     return removed;
-};
-
-/**
- * Do a depth-first traversal from node, removing attributes starting at the leaf nodes.
- *
- * @return {Int}    The number of attributes removed
- */
-function _cleanUpAttributesWithin(attribute, node) {
-    let attributesRemoved = 0;
-    const children = node.children;
-    if (children.length > 0) {
-        for (let i=0; i<children.length; i++) {
-            attributesRemoved += _cleanUpAttributesWithin(attribute, children[i]);
-        };
-    };
-    if ((node.nodeType === Node.ELEMENT_NODE) && (node.hasAttribute(attribute))) {
-        attributesRemoved++;
-        node.removeAttribute(attribute);
-    };
-    return attributesRemoved;
-};
-
-function _prepImages(node) {
-    const images = node.querySelectorAll('img');
-    for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        image.addEventListener('load', function() {_prepImage(image)});
-        image.addEventListener('error', function() {_prepImage(image)});
-    };
 };
 
 /********************************************************************************

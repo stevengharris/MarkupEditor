@@ -136,10 +136,10 @@ let baseNodes = OrderedMap.from({
       parentId: {default: 'editor'},
       cssClass: {default: null},
       editable: {default: true},
-      //spellcheck: {default: false},
-      //autocorrect: {default: 'on'},
-      //autocapitalize: {default: 'off'},
-      //writingsuggestions: {default: false},
+      spellcheck: {default: false},
+      autocorrect: {default: 'on'},
+      autocapitalize: {default: 'off'},
+      writingsuggestions: {default: false},
       htmlContents: {default: ""}
     },
     parseDOM: [{
@@ -149,48 +149,34 @@ let baseNodes = OrderedMap.from({
         const parentId = dom.getAttribute("parentId");
         const cssClass = dom.getAttribute("class");
         const editable = dom.getAttribute("editable") == "true";
-        //const spellcheck = dom.getAttribute("spellcheck") == "true";
-        //const autocorrect = dom.getAttribute("autocorrect") == "on";
-        //const autocapitalize = dom.getAttribute("autocapitalize") == "on";
-        //const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
+        const spellcheck = dom.getAttribute("spellcheck") == "true";
+        const autocorrect = dom.getAttribute("autocorrect") == "on";
+        const autocapitalize = dom.getAttribute("autocapitalize") == "on";
+        const writingsuggestions = dom.getAttribute("writingsuggestions") == "true";
         return {
           id: id,
           parentId: parentId,
           cssClass: cssClass,
           editable: editable,
-          //spellcheck: spellcheck,
-          //autocorrect: autocorrect,
-          //autocapitalize: autocapitalize,
-          //writingsuggestions: writingsuggestions,
+          spellcheck: spellcheck,
+          autocorrect: autocorrect,
+          autocapitalize: autocapitalize,
+          writingsuggestions: writingsuggestions,
           htmlContents: dom.innerHTML ?? ""
         }
       }
     }],
-    // Note we only output a bare div with no attributes set, because these are only interesting to 
-    // the MarkupEditor and otherwise clutter the document HTML. For the MarkupEditor, we set the 
-    // top-level attributes of the editor div at initialization, and the other divs embedded in it 
-    // inherit the behavior set once at the top.
-    toDOM() { 
-      return ["div", {}, 0]
+    // Notes:
+    // 1. We produce div HTML that includes the id and class. This is because for non-editable 
+    // divs, we have to find elements by id based on the HTML because we prevent ProseMirror from 
+    // handling selection and rendering, and we have to do it for ourselves in the DivView.
+    // 
+    // 2. For the MarkupEditor, we set the top-level attributes of the editor div at initialization, 
+    // and the other divs embedded in it inherit the behavior set once at the top.
+    toDOM(node) { 
+      let {id, cssClass} = node.attrs; 
+      return ["div", { id: id, class: cssClass }, 0] 
     }
-    //  The following is left commented out here in case it's helpful for debugging in future.
-    //toDOM(node) { 
-    //  let {id, parentId, cssClass, editable, spellcheck, autocorrect, autocapitalize, writingsuggestions} = node.attrs; 
-    //  return [
-    //    "div", 
-    //    {
-    //      id: id, 
-    //      parentId: parentId, 
-    //      class: cssClass, 
-    //      editable: editable.toString(), 
-    //      spellcheck: spellcheck.toString(), 
-    //      autocorrect: autocorrect.toString(),
-    //      autocapitalize: autocapitalize.toString(),
-    //      writingsuggestions: writingsuggestions.toString()
-    //    }, 
-    //    0
-    //  ] 
-    //}
   },
 
   button: {
@@ -216,8 +202,9 @@ let baseNodes = OrderedMap.from({
         }
       }
     }],
-    toDOM() { 
-      return ["button", {}, 0]
+    toDOM(node) { 
+      let {id, cssClass} = node.attrs; 
+      return ["button", { id: id, class: cssClass }, 0]
     }
   }
 

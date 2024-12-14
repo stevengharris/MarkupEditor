@@ -30,11 +30,6 @@ const muPlugin = new Plugin({
         return DecorationSet.create(tr.doc, [
           Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
         ])
-      } else if (tr.getMeta("muDiv")) {
-        const {cssClass, fromPos, toPos} = tr.getMeta("muDiv")
-        return DecorationSet.create(tr.doc, [
-          Decoration.node(fromPos, toPos, {class: cssClass})
-        ])
       } else {
          // map "other" changes so our decoration "stays put" 
          // (e.g. user is typing so decoration's pos must change)
