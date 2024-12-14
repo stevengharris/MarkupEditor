@@ -19,10 +19,6 @@ public struct EditableAttributes: @unchecked Sendable, OptionSet {
     public static let standard: EditableAttributes = [.contenteditable, .autocorrect]
     public static let empty: EditableAttributes = []
     
-    public init(rawValue: Int) {
-        self.rawValue = rawValue
-    }
-    
     /// Return a dictionary of the options that are set in this EditableAttributes instance.
     ///
     /// We use this to get JSON from, so populate the dictionary with booleans for all values.
@@ -48,4 +44,9 @@ public struct EditableAttributes: @unchecked Sendable, OptionSet {
             return nil
         }
     }
+    
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+
 }

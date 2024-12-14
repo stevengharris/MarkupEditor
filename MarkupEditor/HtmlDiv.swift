@@ -20,9 +20,9 @@ public class HtmlDiv: CustomStringConvertible {
     public var htmlContents: String
     public var resourcesUrl: URL?
     public var buttonGroup: HtmlButtonGroup?
-    public var buttons: [HtmlButton] {
-        get { buttonGroup?.buttons ?? [] }
-        set { buttonGroup = HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue, dynamic: dynamic) }
+    public var buttons: [HtmlButton]? {
+        get { buttonGroup?.buttons }
+        set { buttonGroup = newValue == nil ? nil : HtmlButtonGroup(in: id, focusId: focusId, buttons: newValue!, dynamic: dynamic) }
     }
     private var dynamic: Bool
     public var description: String {
@@ -39,9 +39,7 @@ public class HtmlDiv: CustomStringConvertible {
         self.htmlContents = htmlContents
         self.resourcesUrl = resourcesUrl
         self.dynamic = dynamic
-        if let buttons {
-            self.buttons = buttons
-        }
+        self.buttons = buttons
     }
 }
 
