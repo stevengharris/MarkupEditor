@@ -19,12 +19,12 @@ struct TitleDiv: HtmlDivHolder {
 
 struct SectionDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
-    var buttons: [HtmlButton] {
+    var buttons: [HtmlButton]? {
         get { htmlDiv.buttons }
         set { htmlDiv.buttons = newValue }
     }
 
-    init(id: String = UUID().uuidString, focusId: String? = nil, contents: String, buttons: [HtmlButton] = [], dynamic: Bool = false) {
+    init(id: String = UUID().uuidString, focusId: String? = nil, contents: String, buttons: [HtmlButton]? = nil, dynamic: Bool = false) {
         htmlDiv = HtmlDiv(id: id, focusId: focusId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: contents, buttons: buttons, dynamic: dynamic)
     }
     
