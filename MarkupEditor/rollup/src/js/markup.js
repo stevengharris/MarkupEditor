@@ -880,12 +880,12 @@ export function removeButton(id) {
 
 
 export function focusOn(id) {
-    //const {pos} = _getNode(id);
-    //if (pos) {
-    //    const selection = new TextSelection(view.state.doc.resolve(pos));
-    //    const transaction = view.state.tr.setSelection(selection).scrollIntoView();
-    //    view.dispatch(transaction);
-    //};
+    const {node, pos} = _getNode(id);
+    if (node && (node.attrs.id !== _selectedID)) {
+        const selection = new TextSelection(view.state.doc.resolve(pos));
+        const transaction = view.state.tr.setSelection(selection).scrollIntoView();
+        view.dispatch(transaction);
+    };
 };
 
 export function scrollIntoView(id) {
@@ -895,7 +895,10 @@ export function scrollIntoView(id) {
  * Remove all divs in the document
  */
 export function removeAllDivs() {
-}
+    const allSelection = new AllSelection(view.state.doc);
+    const transaction = view.state.tr.delete(allSelection.from, allSelection.to);
+    view.dispatch(transaction);
+};
 
 /**
  * Return the node and position of a node with note.attrs of `id`
