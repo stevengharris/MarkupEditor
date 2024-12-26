@@ -8,15 +8,21 @@
 import Foundation
 import MarkupEditor
 
+/// A TitleDiv contains only uneditable text with a cssClass indicating it is a title.
+///
+/// The css is specified in demoDivs.css.
 struct TitleDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
     init(id: String = UUID().uuidString, contents: String) {
-        htmlDiv = HtmlDiv(id: id, cssClass: "title", attributes: EditableAttributes.empty, htmlContents: contents)
+        htmlDiv = HtmlDiv(id: id, cssClass: "title", attributes: EditableAttributes.empty, htmlContents: "<p>\(contents)</p>")
     }
     
 }
 
+/// A SectionDiv contains uneditable text on the left and possibly buttons on the right. The buttons can be a static part of the div or added dynamically later.
+///
+/// The css is specified in demoDivs.css.
 struct SectionDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     var buttons: [HtmlButton]? {
@@ -25,15 +31,18 @@ struct SectionDiv: HtmlDivHolder {
     }
 
     init(id: String = UUID().uuidString, focusId: String? = nil, contents: String, buttons: [HtmlButton]? = nil, dynamic: Bool = false) {
-        htmlDiv = HtmlDiv(id: id, focusId: focusId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: contents, buttons: buttons, dynamic: dynamic)
+        htmlDiv = HtmlDiv(id: id, focusId: focusId, cssClass: "section", attributes: EditableAttributes.empty, htmlContents: "<p>\(contents)</p>", buttons: buttons, dynamic: dynamic)
     }
     
 }
 
+/// A ContentDiv contains html that can be edited.
+///
+/// The css is specified in demoDivs.css.
 struct ContentDiv: HtmlDivHolder {
     var htmlDiv: HtmlDiv
     
-    init(id: String = UUID().uuidString, contents: String) {
-        htmlDiv = HtmlDiv(id: id, cssClass: "content", attributes: EditableAttributes.standard, htmlContents: contents.escaped)
+    init(id: String = UUID().uuidString, htmlContents: String) {
+        htmlDiv = HtmlDiv(id: id, cssClass: "content", attributes: EditableAttributes.standard, htmlContents: htmlContents)
     }
 }

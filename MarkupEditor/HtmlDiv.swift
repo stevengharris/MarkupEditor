@@ -36,7 +36,7 @@ public class HtmlDiv: CustomStringConvertible {
         self.focusId = focusId
         self.cssClass = cssClass
         self.attributes = attributes
-        self.htmlContents = htmlContents
+        self.htmlContents = htmlContents.escaped
         self.resourcesUrl = resourcesUrl
         self.dynamic = dynamic
         self.buttons = buttons

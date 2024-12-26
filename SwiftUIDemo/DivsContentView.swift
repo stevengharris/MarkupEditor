@@ -57,21 +57,21 @@ struct DivsContentView: View {
     /// Create the DivStructure that holds the array of HtmlDivs in the document we are editing.
     private func initDivStructure() {
         divStructure.add(
-            TitleDiv(contents: "<p>Multi-Div Editing</p>")
+            TitleDiv(contents: "Multi-Div Editing")
         )
         divStructure.add(
             SectionDiv(
-                contents: "<p>Multiple Editable Areas</p>"
+                contents: "Multiple Editable Areas"
             )
         )
         divStructure.add(
-            ContentDiv(contents: "<p>The document consists of several sections. Think of each section as representing a model object in your application. Each section has a header to delineate it. The header itself is not editable, but you can still select it. When you select the header or the content below it, the <code>markupClicked</code> callback is invoked. We can identify the id of the div that was clicked-in based on the <code>selectionState</code>. From the div id, we can use <code>divStructure</code> to identify the section, and based on the section, we can add buttons to the header that let us perform operations on that section or the model object it represents.</p>"
+            ContentDiv(htmlContents: "<p>The document consists of several sections. Think of each section as representing a model object in your application. Each section has a header to delineate it. The header itself is not editable, but you can still select it. When you select the header or the content below it, the <code>markupClicked</code> callback is invoked. We can identify the id of the div that was clicked-in based on the <code>selectionState</code>. From the div id, we can use <code>divStructure</code> to identify the section, and based on the section, we can add buttons to the header that let us perform operations on that section or the model object it represents.</p>"
             )
         )
         divStructure.add(
             SectionDiv(
                 focusId: "HtmlDiv",
-                contents: "<p>HtmlDiv</p>",
+                contents: "HtmlDiv",
                 buttons: [
                     // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
                     // See https://feedbackassistant.apple.com/feedback/13537558.
@@ -84,13 +84,13 @@ struct DivsContentView: View {
         divStructure.add(
             ContentDiv(
                 id: "HtmlDiv",
-                contents: "<p>An <code>HtmlDiv</code> is a Swift class that represents an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div\">HTML Content Division Element</a> or &lt;div&gt; that we insert into the document.</p><p>Every HtmlDiv needs a unique ID, since it will ultimately be placed in an HTML DOM as a &lt;div&gt; with that ID.</p><p>For each kind of HtmlDiv you are going to use, you should create a Swift class or struct that conforms to HtmlDivHolder. In this example, we use a single TitleDiv, and multiple pairs of SectionDiv and ContentDiv. Each one holds an HtmlDiv that specifies the ID and other properties of the div itself. Your HtmlDivHolder class/struct provides the behavior and state on the Swift side to make it simpler to instantiate and otherwise use in the context of your app. So, for example, to instantiate a TitleDiv, we simply have to pass a string. The TitleDiv itself creates the HtmlDiv with a cssClass of <code>title</code> that lets us control the styling of the title.</p><p>Besides its own <code>id</code>, an HtmlDiv can hold onto three other IDs:</p><ul><li><p><code>parentId</code>: The ID of the HtmlDiv that this HtmlDiv should be a child of.</p></li><li><p><code>targetId</code>: An ID that can be used to dereference a Swift object from this HtmlDiv.</p></li><li><p><code>focusId</code>: An ID that can be used to identify an HtmlDiv that should take focus when this HtmlDiv is clicked.</p></li></ul>"
+                htmlContents: "<p>An <code>HtmlDiv</code> is a Swift class that represents an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div\">HTML Content Division Element</a> or &lt;div&gt; that we insert into the document.</p><p>Every HtmlDiv needs a unique ID, since it will ultimately be placed in an HTML DOM as a &lt;div&gt; with that ID.</p><p>For each kind of HtmlDiv you are going to use, you should create a Swift class or struct that conforms to HtmlDivHolder. In this example, we use a single TitleDiv, and multiple pairs of SectionDiv and ContentDiv. Each one holds an HtmlDiv that specifies the ID and other properties of the div itself. Your HtmlDivHolder class/struct provides the behavior and state on the Swift side to make it simpler to instantiate and otherwise use in the context of your app. So, for example, to instantiate a TitleDiv, we simply have to pass a string. The TitleDiv itself creates the HtmlDiv with a cssClass of <code>title</code> that lets us control the styling of the title.</p><p>Besides its own <code>id</code>, an HtmlDiv can hold onto three other IDs:</p><ul><li><p><code>parentId</code>: The ID of the HtmlDiv that this HtmlDiv should be a child of.</p></li><li><p><code>targetId</code>: An ID that can be used to dereference a Swift object from this HtmlDiv.</p></li><li><p><code>focusId</code>: An ID that can be used to identify an HtmlDiv that should take focus when this HtmlDiv is clicked.</p></li></ul>"
             )
         )
         divStructure.add(
             SectionDiv(
                 focusId: "Buttons",
-                contents: "<p>Buttons</p>",
+                contents: "Buttons",
                 buttons: [
                     // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
                     // See https://feedbackassistant.apple.com/feedback/13537558.
@@ -104,7 +104,7 @@ struct DivsContentView: View {
         divStructure.add(
             ContentDiv(
                 id: "Buttons",
-                contents: "<p>A div like the SectionDiv defined in this demo can contain buttons, and those buttons can be always shown or dynamically added when the target gets focus.</p>")
+                htmlContents: "<p>A div like the SectionDiv defined in this demo can contain buttons, and those buttons can be always shown or dynamically added when the target gets focus.</p>")
         )
     }
     
@@ -165,6 +165,20 @@ struct DivsContentView: View {
         }
     }
     
+    private func resetDivs(handler: (()->Void)? = nil) {
+        guard let view = MarkupEditor.selectedWebView else {
+            handler?()
+            return
+        }
+        view.removeAllDivs() {
+            view.load(divStructure: divStructure) {
+                setRawText() {
+                    handler?()
+                }
+            }
+        }
+    }
+    
 }
 
 extension DivsContentView: MarkupDelegate {
@@ -172,9 +186,7 @@ extension DivsContentView: MarkupDelegate {
     /// The MarkupWKWebView is ready. Use the divStructure to add all the divs.
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.selectedWebView = view
-        view.load(divStructure: divStructure) {
-            setRawText(handler)
-        }
+        resetDivs(handler: handler)
     }
     
     /// The user clicked/touched in some div, whether it's contenteditable or not.
@@ -246,6 +258,8 @@ extension DivsContentView: MarkupDelegate {
 extension DivsContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
+        // For the DivsContentView, it's useful to add a new empty div so we can see how that works.
+        
         MarkupEditor.selectedWebView?.emptyDocument() {
             selectedDivID = nil
             setRawText()

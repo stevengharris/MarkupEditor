@@ -162,7 +162,7 @@ extension MarkupWKWebView {
         let parentId = div.parentId
         let cssClass = div.cssClass
         let attributes = div.attributes.json ?? "{}"
-        let htmlContents = div.htmlContents.escaped
+        let htmlContents = div.htmlContents
         var argString: String
         if let buttonGroup = div.buttonGroup?.json() {
             argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(buttonGroup)', '\(htmlContents)'"
@@ -232,7 +232,7 @@ extension MarkupWKWebView {
         let button = buttons[index]
         let id = button.id
         let cssClass = button.cssClass
-        let label = button.label.escaped
+        let label = button.label
         evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButton: \(error)")
