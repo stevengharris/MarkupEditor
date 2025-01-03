@@ -612,7 +612,9 @@ const _isInlined = function(node) {
 };
 
 /**
- * Set the contents of the editor
+ * Set the contents of the editor.
+ * 
+ * The exported placeholderText is set after setting the contents.
  *
  * @param {String} contents The HTML for the editor
  */
@@ -628,14 +630,34 @@ export function setHTML(contents, select=true) {
         .setSelection(TextSelection.near(tr.doc.resolve(0)))
         .scrollIntoView()
     const newState = state.apply(transaction);
+    placeholderText = _placeholderText;
     view.updateState(newState);
     if (select) view.focus();
 };
 
 /**
- * Placeholder
+ * Internal value of placeholder text
+ */
+let _placeholderText;           // Hold onto the placeholder text so we can defer setting it until setHTML.
+
+/**
+ * Externally visible value of placeholder text
+ */
+export let placeholderText;     // What we tell ProseMirror to display as a decoration, set after setHTML.
+
+/**
+ * Set the text to use as a placeholder when the document is empty.
+ * 
+ * This method does not affect an existing view being displayed. It only takes effect after the 
+ * HTML contents is set via setHTML. We want to set the value held in _placeholderText early and 
+ * hold onto it, but because we always start with a valid empty document before loading HTML contents, 
+ * we need to defer setting the exported value until later, which displays using a ProseMirror 
+ * plugin and decoration.
+ * 
+ * @param {string} text     The text to display as a placeholder when the document is empty.
  */
 export function setPlaceholder(text) {
+    _placeholderText = text;
 };
 
 /**

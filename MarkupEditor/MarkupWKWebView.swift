@@ -740,12 +740,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func setPlaceholder(handler: (()->Void)? = nil) {
-        guard let placeholder else {
+    public func setPlaceholder(text: String? = nil, _ handler: (()->Void)? = nil) {
+        guard let newPlaceholder = text ?? placeholder else {
             handler?()
             return
         }
-        evaluateJavaScript("MU.setPlaceholder('\(placeholder.escaped)')") { result, error in
+        evaluateJavaScript("MU.setPlaceholder('\(newPlaceholder.escaped)')") { result, error in
             handler?()
         }
     }

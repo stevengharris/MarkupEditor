@@ -1,7 +1,7 @@
 import {keymap} from "prosemirror-keymap"
 import {history} from "prosemirror-history"
 import {baseKeymap} from "prosemirror-commands"
-import {Plugin} from "prosemirror-state"
+import {AllSelection, Plugin} from "prosemirror-state"
 import {dropCursor} from "prosemirror-dropcursor"
 import {gapCursor} from "prosemirror-gapcursor"
 import {Decoration, DecorationSet} from "prosemirror-view"
@@ -11,7 +11,16 @@ import {buildMenuItems} from "./menu"
 import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
 
+import { placeholderText } from "../markup"
+
 export {buildMenuItems, buildKeymap, buildInputRules}
+
+// !! This module exports helper functions for deriving a set of basic
+// menu items, input rules, or key bindings from a schema. These
+// values need to know about the schema for two reasons—they need
+// access to specific instances of node and mark types, and they need
+// to know which of the node and mark types that they know about are
+// actually present in the schema.
 
 /**
  * The MarkupEditor plugin, aka `muPlugin`, handles decorations that add CSS styling 
@@ -42,15 +51,29 @@ const muPlugin = new Plugin({
   }
 })
 
-// !! This module exports helper functions for deriving a set of basic
-// menu items, input rules, or key bindings from a schema. These
-// values need to know about the schema for two reasons—they need
-// access to specific instances of node and mark types, and they need
-// to know which of the node and mark types that they know about are
-// actually present in the schema.
-//
-// The `exampleSetup` plugin ties these together into a plugin that
-// will automatically enable this basic functionality in an editor.
+/**
+ * A simple plugin to show placeholder text when the document is empty.
+ * 
+ * The placeholder text is imported from markup.js and is set there via setPlaceholder.
+ * 
+ * Adapted from https://discuss.prosemirror.net/t/how-to-input-like-placeholder-behavior/705/3
+ * 
+ * @returns {Plugin}
+ */
+const placeholderPlugin = new Plugin({
+  props: {
+    decorations(state) {
+      if (!placeholderText) return;   // No need to mess around if we have no placeholder
+      const doc = state.doc
+      if (doc.childCount == 1 && doc.firstChild.isTextblock && doc.firstChild.content.size == 0) {
+        const allSelection = new AllSelection(doc);
+        // The attributes are applied to the empty paragraph and styled based on editor.css
+        const decoration = Decoration.node(allSelection.from, allSelection.to, {class: 'placeholder', placeholder: placeholderText});
+        return DecorationSet.create(doc, [decoration])
+      }
+    }
+  }
+})
 
 // :: (Object) → [Plugin]
 // A convenience plugin that bundles together a simple menu with basic
@@ -84,7 +107,7 @@ export function markupSetup(options) {
     keymap(buildKeymap(options.schema, options.mapKeys)),
     keymap(baseKeymap),
     dropCursor(),
-    gapCursor()
+    gapCursor(),
   ]
   if (options.menuBar !== false)
     plugins.push(menuBar({floating: options.floatingMenu !== false,
@@ -94,6 +117,9 @@ export function markupSetup(options) {
 
   // Add the MarkupEditor plugin
   plugins.push(muPlugin);
+
+  // Add the plugin that handles placeholder display for an empty document
+  plugins.push(placeholderPlugin)
 
   return plugins;
 }

@@ -267,9 +267,8 @@ img {
     right: -8px;
 }
 
-.placeholder[placeholder]:after {
+.placeholder[placeholder]:before {
     content: attr(placeholder);
     position: absolute;
-    top: 8px;
     color: #ccc;
 }

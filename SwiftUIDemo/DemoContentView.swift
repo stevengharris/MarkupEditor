@@ -32,7 +32,7 @@ struct DemoContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            MarkupEditorView(markupDelegate: self, html: $demoHtml, id: "Document")
+            MarkupEditorView(markupDelegate: self, html: $demoHtml, placeholder: "Add document content...", id: "Document")
             if rawShowing {
                 VStack {
                     Divider()

@@ -17,6 +17,7 @@ import {
   emptyDocument,
   getHTML,
   setHTML,
+  placeholderText,
   setPlaceholder,
   getHeight,
   padBottom,
@@ -138,7 +139,7 @@ window.view = new EditorView(document.querySelector("#editor"), {
     // There is mo need to use a separate content element.
     doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
     plugins: markupSetup({
-      menuBar: false, 
+      menuBar: false,   // TODO: We need a way to make this configurable at setup time
       schema: muSchema
     })
   }),
