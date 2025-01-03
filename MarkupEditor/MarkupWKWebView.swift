@@ -563,12 +563,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    @available(*, deprecated, message: "No longer needed for modal input operations.")
     public func startModalInput(_ handler: (() -> Void)? = nil) {
         evaluateJavaScript("MU.startModalInput()") { result, error in
             handler?()
         }
     }
     
+    @available(*, deprecated, message: "No longer needed for modal input operations.")
     public func endModalInput(_ handler: (() -> Void)? = nil) {
         evaluateJavaScript("MU.endModalInput()") { result, error in
             handler?()
@@ -593,7 +595,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Show the default link popover using the LinkViewController.
     @objc public func showLinkPopover() {
         MarkupEditor.showInsertPopover.type = .link     // Does nothing by default
-        startModalInput()                               // Required to deal with focus properly for popovers
         let linkVC = LinkViewController()
         linkVC.modalPresentationStyle = .popover
         linkVC.preferredContentSize = CGSize(width: 300, height: 100 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
@@ -609,7 +610,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Show the default link popover using the ImageViewController.
     @objc public func showImagePopover() {
         MarkupEditor.showInsertPopover.type = .image    // Does nothing by default
-        startModalInput()                               // Required to deal with focus properly for popovers
         let imageVC = ImageViewController()
         imageVC.modalPresentationStyle = .popover
         imageVC.preferredContentSize = CGSize(width: 300, height: 140 + 2.0 * MarkupEditor.toolbarStyle.buttonHeight())
@@ -626,7 +626,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// which will in turn `forcePopover` of either the TableSizer or TableToolbar.
     @objc public func showTablePopover() {
         guard selectionState.canInsert else { return }
-        startModalInput()                               // Required to deal with focus properly for popovers
         MarkupEditor.showInsertPopover.type = .table    // Triggers default SwiftUI TableSizer or TableToolbar
     }
     
@@ -893,50 +892,44 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// and subsequent input of Enter in the MarkupWKWebView will search for the next occurrence of `text` in the `direction`
     /// specified until `deactivateSearch` or `cancelSearch` is called.
     public func search(for text: String, direction: FindDirection, activate: Bool = false, handler: (()->Void)? = nil) {
-        startModalInput() {
-            self.becomeFirstResponder()
-            // Remove the "smartquote" stuff that happens when inputting search into a TextField.
-            // On the Swift side, replace the search string characters with the proper equivalents
-            // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
-            // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
-            // replace with "\"" and "'" on the JavaScript side before doing a search.
-            let patchedText = text
-                .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
-                .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
-                .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
-                .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
-                .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
-                .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
-            self.evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\", \"\(activate)\")") { result, error in
-                if let error {
-                    Logger.webview.error("Error: \(error)")
-                }
-                handler?()
+        becomeFirstResponder()
+        // Remove the "smartquote" stuff that happens when inputting search into a TextField.
+        // On the Swift side, replace the search string characters with the proper equivalents
+        // for the MarkupEditor. To pass mixed apostrophes and quotes in the JavaScript call,
+        // replace all apostrophe/quote-like things with "&quot;"/"&apos;", which we will
+        // replace with "\"" and "'" on the JavaScript side before doing a search.
+        let patchedText = text
+            .replacingOccurrences(of: "\u{0027}", with: "&apos;")   // '
+            .replacingOccurrences(of: "\u{2018}", with: "&apos;")   // ‘
+            .replacingOccurrences(of: "\u{2019}", with: "&apos;")   // ‘
+            .replacingOccurrences(of: "\u{0022}", with: "&quot;")   // "
+            .replacingOccurrences(of: "\u{201C}", with: "&quot;")   // “
+            .replacingOccurrences(of: "\u{201D}", with: "&quot;")   // ”
+        evaluateJavaScript("MU.searchFor(\"\(patchedText)\", \"\(direction)\", \"\(activate)\")") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
             }
+            handler?()
         }
     }
     
     /// Stop intercepting Enter to invoke searchForNext().
     public func deactivateSearch(handler: (()->Void)? = nil) {
-        endModalInput() {
-            self.evaluateJavaScript("MU.deactivateSearch()") { result, error in
-                if let error {
-                    Logger.webview.error("Error: \(error)")
-                }
-                handler?()
+        evaluateJavaScript("MU.deactivateSearch()") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
             }
+            handler?()
         }
     }
     
     /// Cancel the search that is underway, so that Enter is no longer intercepted and indexes are cleared on the JavaScript side.
     public func cancelSearch(handler: (()->Void)? = nil) {
-        endModalInput() {
-            self.evaluateJavaScript("MU.cancelSearch()") { result, error in
-                if let error {
-                    Logger.webview.error("Error: \(error)")
-                }
-                handler?()
+        evaluateJavaScript("MU.cancelSearch()") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
             }
+            handler?()
         }
     }
     
@@ -1519,19 +1512,13 @@ extension MarkupWKWebView {
             return
         }
         let urlString = url.absoluteString
-        // StartModalInput saves the selection before inserting and is "normally"
-        // done before opening the LinkViewController or ImageViewController.
-        // However, since pasteUrl is invoked directly when using paste, without
-        // the intervening dialog, we need to do it here.
-        startModalInput {
-            if self.isImageUrl(url: url) {
-                self.insertImage(src: urlString, alt: nil) {
-                    handler?()
-                }
-            } else {
-                self.insertLink(urlString) {
-                    handler?()
-                }
+        if isImageUrl(url: url) {
+            insertImage(src: urlString, alt: nil) {
+                handler?()
+            }
+        } else {
+            insertLink(urlString) {
+                handler?()
             }
         }
     }

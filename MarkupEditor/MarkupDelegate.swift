@@ -312,8 +312,7 @@ extension MarkupDelegate {
     /// By default, the insert link popover is kicked off in the MarkupWKWebView using the LinkViewController.
     ///
     /// By overriding the `markupShowLinkPopover` method you can plug-in
-    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
-    /// so that focus is returned properly when done. See `showLinkPopover`  for an example.
+    /// your own application-specific view. See `showLinkPopover`  for an example.
     public func markupShowLinkPopover(_ view: MarkupWKWebView) {
         view.showLinkPopover()
     }
@@ -321,8 +320,7 @@ extension MarkupDelegate {
     /// By default, the insert image popover is kicked off in the MarkupWKWebView using the ImageViewController.
     ///
     /// By overriding the `markupShowImagePopover` method you can plug-in
-    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
-    /// so that focus is returned properly when done. See `showImagePopover` for an example.
+    /// your own application-specific view. See `showImagePopover` for an example.
     public func markupShowImagePopover(_ view: MarkupWKWebView) {
         view.showImagePopover()
     }
@@ -332,8 +330,7 @@ extension MarkupDelegate {
     /// `MarkupEditor.showInsertPopover.type` changes to `.table`.
     ///
     /// By overriding the `markupShowTablePopover` method you can plug-in
-    /// your own application-specific view. When doing so, be careful to `startModalInput` at the beginning
-    /// so that focus is returned properly when done. See`showTablePopover` for an example which will
+    /// your own application-specific view. See`showTablePopover` for an example which will
     /// lead to the InsertToolbar.
     public func markupShowTablePopover(_ view: MarkupWKWebView) {
         view.showTablePopover()

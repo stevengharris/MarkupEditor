@@ -301,10 +301,7 @@ class ImageViewController: UIViewController {
                 self.dismiss()
             }
         } else {
-            // Use endModalInput because insertImage was never called to restore selection
-            MarkupEditor.selectedWebView?.endModalInput {
-                self.dismiss()
-            }
+            dismiss()
         }
     }
     

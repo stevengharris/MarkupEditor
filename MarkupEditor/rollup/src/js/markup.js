@@ -1277,7 +1277,9 @@ export function outdent() {
 
 /**
  * Called before beginning a modal popover on the Swift side, to enable the selection
- * to be restored by endModalInput
+ * to be restored by endModalInput.
+ * 
+ * @deprecated No longer needed.
  */
 export function startModalInput() {
 }
@@ -1286,6 +1288,8 @@ export function startModalInput() {
  * Called typically after cancelling a modal popover on the Swift side, since
  * normally the result of using the popover is to modify the DOM and reset the
  * selection.
+ * 
+ * @deprecated No longer needed.
  */
 export function endModalInput() {
 }
