@@ -18803,10 +18803,8 @@
           const transaction = view.state.tr.setSelection(selection).scrollIntoView();
           view.dispatch(transaction);
       }}
-  function scrollIntoView(id) {
-  }
   /**
-   * Remove all divs in the document
+   * Remove all divs in the document.
    */
   function removeAllDivs() {
       const allSelection = new AllSelection(view.state.doc);
@@ -19139,7 +19137,9 @@
 
   /**
    * Called before beginning a modal popover on the Swift side, to enable the selection
-   * to be restored by endModalInput
+   * to be restored by endModalInput.
+   * 
+   * @deprecated No longer needed.
    */
   function startModalInput() {
   }
@@ -19148,6 +19148,8 @@
    * Called typically after cancelling a modal popover on the Swift side, since
    * normally the result of using the popover is to modify the DOM and reset the
    * selection.
+   * 
+   * @deprecated No longer needed.
    */
   function endModalInput() {
   }
@@ -20257,7 +20259,6 @@
   exports.removeDiv = removeDiv;
   exports.replaceStyle = replaceStyle;
   exports.resetSelection = resetSelection;
-  exports.scrollIntoView = scrollIntoView;
   exports.searchFor = searchFor;
   exports.setHTML = setHTML;
   exports.setPlaceholder = setPlaceholder;

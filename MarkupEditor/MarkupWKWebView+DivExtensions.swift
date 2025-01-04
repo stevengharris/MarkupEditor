@@ -262,7 +262,7 @@ extension MarkupWKWebView {
         }
     }
     
-    /// Focus on the element with `id`.
+    /// Scroll the element with `id` into the view and focus on it.
     ///
     /// Used to set the focus on a contenteditable div. After focusing, the selection state is reset.
     public func focus(on id: String?, handler: (()->Void)? = nil) {
@@ -279,20 +279,6 @@ extension MarkupWKWebView {
                 MarkupEditor.selectionState.reset(from: selectionState)
                 handler?()
             }
-        }
-    }
-    
-    /// Scroll the element with `id` into the view.
-    public func scrollIntoView(id: String?, handler: (()->Void)? = nil) {
-        guard let id else {
-            handler?()
-            return
-        }
-        evaluateJavaScript("MU.scrollIntoView('\(id)')") { result, error in
-            if let error {
-                Logger.webview.error("Error scrolling to element with id \(id): \(error)")
-            }
-            handler?()
         }
     }
     

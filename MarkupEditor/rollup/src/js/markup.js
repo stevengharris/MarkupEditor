@@ -910,11 +910,8 @@ export function focusOn(id) {
     };
 };
 
-export function scrollIntoView(id) {
-};
-
 /**
- * Remove all divs in the document
+ * Remove all divs in the document.
  */
 export function removeAllDivs() {
     const allSelection = new AllSelection(view.state.doc);
