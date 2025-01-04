@@ -18037,18 +18037,30 @@
         outer.style.lineHeight = "0"; // necessary so the bottom right arrow is aligned nicely
         
         const img = document.createElement("img");
-        img.setAttribute("src", node.attrs.src);
-        img.style.width = "100%";
+
         // If the img node has no width attr, get it from naturalWidth after loading.
         // Note that outer.style.width is the same, but a CSS style is a string+px.
         if (node.attrs.width) {
           outer.style.width = `${node.attrs.width}px`;
         } else {
-          img.onload = function(e) {
+          img.addEventListener('load', function(e) {
               node.attrs.width = e.target.naturalWidth;
               outer.style.width = `${node.attrs.width}px`;
-          };
+          });
         }
+        const src = node.attrs.src;
+
+        // Set up the listeners to notify the Swift side that the image loaded or encountered an error loading
+        // before setting src.
+        img.addEventListener('load', function() {
+          _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (_selectedID ?? '') }));
+        });
+        img.addEventListener('error', function() {
+          _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (_selectedID ?? '') }));
+        });
+
+        img.setAttribute("src", src);
+        img.style.width = "100%";
 
         const handle = document.createElement("span");
         handle.style.position = "absolute";

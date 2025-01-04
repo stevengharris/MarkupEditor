@@ -257,7 +257,10 @@ extension DivsContentView: MarkupDelegate {
         print("Image added from \(url.path)")
     }
 
-
+    /// Callback received after a local image has been added to a div in the document other than 'editor'.
+    func markupImageAdded(_ view: MarkupWKWebView?, url: URL, divId: String) {
+        print("Image added to div \(divId) from \(url.path)")
+    }
 }
 
 extension DivsContentView: FileToolbarDelegate {
