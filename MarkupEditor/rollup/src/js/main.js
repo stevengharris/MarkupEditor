@@ -5,8 +5,8 @@ import {schema} from "./schema/index.js"
 import {markupSetup} from "./setup/index.js"
 
 import {
-  ImageView,
   DivView,
+  ImageView,
   setTopLevelAttributes,
   loadUserFiles,
   searchFor,

@@ -21,6 +21,9 @@ import {
     toggleHeaderRow,
 } from 'prosemirror-tables'
 
+/**
+ * The NodeView to support divs, as installed in main.js.
+ */
 export class DivView {
     constructor(node) {
         this.node = node;
@@ -32,7 +35,7 @@ export class DivView {
         // Because the contentDOM is not set for non-editable divs, the selection never gets 
         // set in them, but will be set to the first selectable node after.
         div.addEventListener('click', (ev) => {
-            _selectedID = node.attrs.id;
+            selectedID = node.attrs.id;
         })
         div.innerHTML = node.attrs.htmlContents;
         this.dom = div;
@@ -47,7 +50,7 @@ export class DivView {
             // accordingly. This happens in addDiv and removeDiv.
             const buttons = Array.from(div.getElementsByTagName('button'));
             buttons.forEach( button => {
-                button.addEventListener('click', (ev) => {
+                button.addEventListener('click', () => {
                     // Report the button that was clicked and its location
                     _callback(
                         JSON.stringify({
@@ -62,7 +65,7 @@ export class DivView {
     }
 
     /**
-     * 
+     * Return the rectangle of the button in a form that can be digested on the Swift side.
      * @param {HTMLButton} button 
      * @returns {Object} The button's (origin) x, y, width, and height.
      */
@@ -79,109 +82,546 @@ export class DivView {
 
 }
 
-// The view used to support resizable images, as installed in main.js.
-// Many thanks to this thread: https://discuss.prosemirror.net/t/image-resize/1489
-// and the accompanying Glitch project https://glitch.com/edit/#!/toothsome-shoemaker
+/**
+ * The NodeView to support resizable images and Swift callbacks, as installed in main.js.
+ * 
+ * The ResizableImage instance holds onto the actual HTMLImageElement and deals with the styling,
+ * event listeners, and resizing work.
+ * 
+ * Many thanks to contributors to this thread: https://discuss.prosemirror.net/t/image-resize/1489
+ * and the accompanying Glitch project https://glitch.com/edit/#!/toothsome-shoemaker
+ */
 export class ImageView {
-    constructor(node, view, getPos) {    
-      const outer = document.createElement("span")
-      outer.style.position = "relative"
-      outer.style.display = "inline-block"
-      outer.style.lineHeight = "0"; // necessary so the bottom right arrow is aligned nicely
-      
-      const img = document.createElement("img")
-
-      // If the img node has no width attr, get it from naturalWidth after loading.
-      // Note that outer.style.width is the same, but a CSS style is a string+px.
-      if (node.attrs.width) {
-        outer.style.width = `${node.attrs.width}px`
-      } else {
-        img.addEventListener('load', function(e) {
-            node.attrs.width = e.target.naturalWidth
-            outer.style.width = `${node.attrs.width}px`
-        })
-      }
-      const src = node.attrs.src
-
-      // Set up the listeners to notify the Swift side that the image loaded or encountered an error loading
-      // before setting src.
-      img.addEventListener('load', function() {
-        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (_selectedID ?? '') }));
-      });
-      img.addEventListener('error', function() {
-        _callback(JSON.stringify({'messageType' : 'addedImage', 'src' : src, 'divId' : (_selectedID ?? '') }));
-      });
-
-      img.setAttribute("src", src)
-      img.style.width = "100%"
-
-      const handle = document.createElement("span")
-      handle.style.position = "absolute"
-      handle.style.bottom = "0px"
-      handle.style.right = "0px"
-      handle.style.width = "10px"
-      handle.style.height = "10px"
-      handle.style.border = "3px solid black"
-      handle.style.borderTop = "none"
-      handle.style.borderLeft = "none"
-      handle.style.display = "none"
-      handle.style.cursor = "nwse-resize"
-      
-      // Establish the startWidth for the span containing the img
-      handle.onmousedown = function(e){
-        e.preventDefault()
-        
-        const startX = e.pageX;
-        const startWidth = node.attrs.width ?? 20;
-        
-        // While mouse is down, track movement and update width    
-        const onMouseMove = (e) => {
-          const currentX = e.pageX;
-          const diffInPx = currentX - startX
-        
-          node.attrs.width = startWidth + diffInPx
-          outer.style.width = `${node.attrs.width}px`
-        }
-        
-        // Modify the state when mouse comes up, reset selection
-        const onMouseUp = (e) => {        
-          e.preventDefault()
-          
-          document.removeEventListener("mousemove", onMouseMove)
-          document.removeEventListener("mouseup", onMouseUp)
-        
-          const transaction = view.state.tr.setNodeMarkup(getPos(), null, {src: node.attrs.src, width: node.attrs.width})
-          transaction.setSelection(new NodeSelection(transaction.doc.resolve(getPos())))
-          view.dispatch(transaction)
-          stateChanged()
-        }
-        
-        document.addEventListener("mousemove", onMouseMove)
-        document.addEventListener("mouseup", onMouseUp)
-      }
-      
-      outer.appendChild(handle)
-      outer.appendChild(img)
-          
-      this.dom = outer
-      this.img = img
-      this.handle = handle
+    constructor(node, view, getPos) {
+        this.node = node;
+        this.resizableImage = new ResizableImage(node, getPos)
+        this.dom = this.resizableImage.imageContainer
     }
     
     selectNode() {
-      this.img.classList.add("ProseMirror-selectednode")
-      this.handle.style.display = ""
-      selectionChanged()
+        this.resizableImage.imageElement.classList.add("ProseMirror-selectednode")
+        this.resizableImage.select()
+        selectionChanged()
     }
   
     deselectNode() {
-      this.img.classList.remove("ProseMirror-selectednode")
-      this.handle.style.display = "none"
-      selectionChanged()
+        this.resizableImage.imageElement.classList.remove("ProseMirror-selectednode")
+        this.resizableImage.deselect()
+        selectionChanged()
     }
+
 }
 
-const minImageSize = 20;
+/**
+ * A ResizableImage tracks a specific image element, and the imageContainer it is
+ * contained in. The style of the container and its handles is handled in markup.css.
+ *
+ * As a resizing handle is dragged, the image size is adjusted. The underlying image
+ * is never actually resized or changed.
+ *
+ * The approach of setting spans in the HTML and styling them in CSS to show the selected
+ * ResizableImage, and dealing with mouseup/down/move was inspired by
+ * https://tympanus.net/codrops/2014/10/30/resizing-cropping-images-canvas/
+ */
+class ResizableImage {
+    
+    constructor(node, getPos) {
+        this._getPos = getPos;              // How to find node in view.state.doc
+        this._minImageSize = 20             // Large enough for visibility and for the handles to display properly
+        this._boundFunctions = new Map();   // Used to track functions used by event listeners so they can be removed later
+        this._imageElement = this.imageElementFrom(node);
+        this._imageContainer = this.containerFor(this.imageElement);
+        this._startDimensions = this.dimensionsFrom(this.imageElement);
+        this._startEvent = null;
+        this._startDx = -1;                 // Delta x between the two touches for pinching; -1 = not pinching
+        this._startDy = -1;                 // Delta y between the two touches for pinching; -1 = not pinching
+        this._touchCache = [];              // Touches that are active, max 2, min 0
+        this._touchStartCache = [];         // Touches at the start of a pinch gesture, max 2, min 0
+    }
+    
+    get imageElement() {
+        return this._imageElement;
+    };
+
+    get imageContainer() {
+        return this._imageContainer;
+    };
+    
+    /**
+     * The startDimensions are the width/height before resizing
+     */
+    get startDimensions() {
+        return this._startDimensions;
+    };
+    
+    /**
+     * Reset the start dimensions for the next resizing
+     */
+    set startDimensions(startDimensions) {
+        this._startDimensions = startDimensions;
+    };
+    
+    /*
+     * Return the width and height of the image element
+     */
+    get currentDimensions() {
+        const width = parseInt(this._imageElement.getAttribute('width'));
+        const height = parseInt(this._imageElement.getAttribute('height'));
+        return {width: width, height: height};
+    };
+
+    /**
+     * Dispatch a transaction to the view, using its metadata to pass the src
+     * of the image that just loaded. This method executes when the load 
+     * or error event is triggered for the image element. The image plugin 
+     * can hold state to avoid taking actions multiple times when the same 
+     * image loads.
+     * @param {string} src   The src attribute for the imageElement.
+     */
+    imageLoaded(src) {
+        const transaction = view.state.tr
+            .setMeta("imageLoaded", {'src': src})
+        view.dispatch(transaction);
+    };
+
+    /**
+     * Update the image size for the node in a transaction so that the resizing 
+     * can be undone.
+     * 
+     * Note that after the transaction is dispatched, the ImageView is recreated, 
+     * and `imageLoaded` gets called again.
+     */
+    imageResized() {
+        const pos = this._getPos();
+        const {width, height} = this.currentDimensions
+        const transaction = view.state.tr
+            .setNodeAttribute(pos, 'width', width)
+            .setNodeAttribute(pos, 'height', height)
+        transaction.setSelection(new NodeSelection(transaction.doc.resolve(pos)))
+        view.dispatch(transaction);
+    };
+
+    /**
+     * Return the HTML Image Element displayed in the ImageView
+     * @param {Node} node 
+     * @returns HTMLImageElement
+     */
+    imageElementFrom(node) {
+        const img = document.createElement('img');
+        const src = node.attrs.src
+
+        // If the img node does not have both width and height attr, get them from naturalWidth 
+        // after loading.
+        img.addEventListener('load', e => {
+            if (node.attrs.width && node.attrs.height) {
+                img.setAttribute('width', node.attrs.width)
+                img.setAttribute('height', node.attrs.height)
+            } else {
+                node.attrs.width = e.target.naturalWidth
+                img.setAttribute('width', e.target.naturalWidth)
+                node.attrs.height = e.target.naturalHeight
+                img.setAttribute('height', e.target.naturalHeight)
+            }
+            this.imageLoaded(src)
+        })
+
+        // Notify the Swift side of any errors
+        img.addEventListener('error', function () {
+            this.imageLoaded(src)
+        });
+        
+        img.setAttribute("src", src)
+
+        return img
+    }
+
+    /**
+     * Return the HTML Content Span element that contains the imageElement.
+     * 
+     * Note that the resizing handles, which are themselves spans, are inserted 
+     * before and after the imageElement at selection time, and removed at 
+     * deselect time.
+     * 
+     * @param {HTMLImageElement} imageElement 
+     * @returns HTML Content Span element
+     */
+    containerFor(imageElement) {
+        const imageContainer = document.createElement('span');
+        imageContainer.appendChild(imageElement);
+        return imageContainer
+    }
+
+    /**
+     * Save the JavaScript function resulting from fn.bind(this) in the _boundFunctions Map, 
+     * indexed by key.
+     * 
+     * We use trackFunction to create the function used in addEventListener, and then we can 
+     * removeEventListener using the function returned from untrackFunction.
+     * 
+     * @param {string}  key     The key used to look up the bound function later.
+     * @param {*}       fn      The JavaScript function to bind to this.
+     * @returns  The JavaScripr function resulting from fn.bind(this)
+     */
+    trackFunction(key, fn) {
+        const boundFn = fn.bind(this);
+        this._boundFunctions.set(key, boundFn);
+        return boundFn;
+    }
+
+    /**
+     * Return the bound function that was tracked by key.
+     * 
+     * @param {string} key The key used to look up the bound function.
+     * @returns A JavaScript function, typically one that was returned from .bind(this)
+     */
+    untrackFunction(key) {
+        const boundFn = this._boundFunctions.get(key);
+        this._boundFunctions.delete(key);
+        return boundFn;
+    }
+
+    /**
+     * Set the attributes for the imageContainer and populate the spans that show the 
+     * resizing handles. Add the mousedown event listener to initiate resizing.
+     */
+    select() {
+        this.imageContainer.setAttribute('class', 'resize-container');
+        this.imageContainer.setAttribute('tabindex', -1);
+        const nwHandle = document.createElement('span');
+        nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
+        this.imageContainer.insertBefore(nwHandle, this.imageElement);
+        const neHandle = document.createElement('span');
+        neHandle.setAttribute('class', 'resize-handle resize-handle-ne');
+        this.imageContainer.insertBefore(neHandle, this.imageElement);
+        const swHandle = document.createElement('span');
+        swHandle.setAttribute('class', 'resize-handle resize-handle-sw');
+        this.imageContainer.insertBefore(swHandle, null);
+        const seHandle = document.createElement('span');
+        seHandle.setAttribute('class', 'resize-handle resize-handle-se');
+        this.imageContainer.insertBefore(seHandle, null);
+        this.imageContainer.addEventListener('mousedown', this.trackFunction('mousedown', this.startResize));
+        this.addPinchGestureEvents();
+    }
+
+    /**
+     * Remove the attributes for the imageContainer and the spans that show the 
+     * resizing handles. Remove the mousedown event listener.
+     */
+    deselect() {
+        this.removePinchGestureEvents();
+        this.imageContainer.removeEventListener('mousedown', this.untrackFunction('mousedown'));
+        const handles = this.imageContainer.querySelectorAll('span');
+        handles.forEach((handle) => {this.imageContainer.removeChild(handle)});
+        this.imageContainer.removeAttribute('tabindex');
+        this.imageContainer.removeAttribute('class');
+    }
+
+    /**
+     * Return an object containing the width and height of imageElement as integers.
+     * @param {HTMLImageElement} imageElement 
+     * @returns An object with Int width and height.
+     */
+    dimensionsFrom(imageElement) {
+        const width = parseInt(imageElement.getAttribute('width'));
+        const height = parseInt(imageElement.getAttribute('height'));
+        return {width: width, height: height};
+    };
+    
+    /**
+     * Add touch event listeners to support pinch resizing.
+     *
+     * Listeners are added when the resizableImage is selected.
+     */
+    addPinchGestureEvents() {
+        document.addEventListener('touchstart', this.trackFunction('touchstart', this.handleTouchStart));
+        document.addEventListener('touchmove', this.trackFunction('touchmove', this.handleTouchMove));
+        document.addEventListener('touchend', this.trackFunction('touchend', this.handleTouchEnd));
+        document.addEventListener('touchcancel', this.trackFunction('touchcancel', this.handleTouchEnd));
+    };
+    
+    /**
+     * Remove event listeners supporting pinch resizing.
+     *
+     * Listeners are removed when the resizableImage is deselected.
+     */
+    removePinchGestureEvents() {
+        document.removeEventListener('touchstart', this.untrackFunction('touchstart'));
+        document.removeEventListener('touchmove', this.untrackFunction('touchmove'));
+        document.removeEventListener('touchend', this.untrackFunction('touchend'));
+        document.removeEventListener('touchcancel', this.untrackFunction('touchcancel'));
+    };
+
+    /**
+     * Start resize on a mousedown event.
+     * @param {Event} ev    The mousedown Event.
+     */
+    startResize(ev) {
+        ev.preventDefault();
+
+        //TODO: Avoid selecting text while resizing.
+        // Setting webkitUserSelect to 'none' used to help when the style could be applied to 
+        // the actual HTML document being edited, but it doesn't seem to work when applied to 
+        // view.dom. Leaving a record here for now.
+        // view.state.tr.style.webkitUserSelect = 'none';  // Prevent selection of text as mouse moves
+
+        // Use window to receive events even when cursor goes outside of the editor
+        window.addEventListener('mousemove', this.trackFunction('mousemove', this.resizing));
+        window.addEventListener('mouseup', this.trackFunction('mouseup', this.endResize));
+        this._startEvent = ev;
+        this._startDimensions = this.dimensionsFrom(this.imageElement);
+    };
+    
+    /**
+     * End resizing on a mouseup event.
+     * @param {Event} ev    The mouseup Event.
+     */
+    endResize(ev) {
+        ev.preventDefault();
+
+        //TODO: Restore selecting text when done resizing.
+        // Setting webkitUserSelect to 'text' used to help when the style could be applied to 
+        // the actual HTML document being edited, but it doesn't seem to work when applied to 
+        // view.dom. Leaving a record here for now.
+        //view.dom.style.webkitUserSelect = 'text';  // Restore selection of text now that we are done
+
+        window.removeEventListener('mousemove', this.untrackFunction('mousemove'));
+        window.removeEventListener('mouseup', this.untrackFunction('mouseup'));
+        this._startDimensions = this.currentDimensions;
+        this.imageResized();
+    };
+    
+    /**
+     * Continuously resize the imageElement as the mouse moves.
+     * @param {Event} ev    The mousemove Event.
+     */
+    resizing(ev) {
+        ev.preventDefault();
+        const ev0 = this._startEvent;
+        // FYI: x increases to the right, y increases down
+        const x = ev.clientX;
+        const y = ev.clientY;
+        const x0 = ev0.clientX;
+        const y0 = ev0.clientY;
+        const classList = ev0.target.classList;
+        let dx, dy;
+        if (classList.contains('resize-handle-nw')) {
+            dx = x0 - x;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-ne')) {
+            dx = x - x0;
+            dy = y0 - y;
+        } else if (classList.contains('resize-handle-sw')) {
+            dx = x0 - x;
+            dy = y - y0;
+        } else if (classList.contains('resize-handle-se')) {
+            dx = x - x0;
+            dy = y - y0;
+        } else {
+            // If not in a handle, treat movement like resize-handle-ne (upper right)
+            dx = x - x0;
+            dy = y0 - y;
+        }
+        const scaleH = Math.abs(dy) > Math.abs(dx);
+        const w0 = this._startDimensions.width;
+        const h0 = this._startDimensions.height;
+        const ratio = w0 / h0;
+        let width, height;
+        if (scaleH) {
+            height = Math.max(h0 + dy, this._minImageSize);
+            width = Math.floor(height * ratio);
+        } else {
+            width = Math.max(w0 + dx, this._minImageSize);
+            height = Math.floor(width / ratio);
+        };
+        this._imageElement.setAttribute('width', width);
+        this._imageElement.setAttribute('height', height);
+    };
+    
+    /**
+     * A touch started while the resizableImage was selected.
+     * Cache the touch to support 2-finger gestures only.
+     */
+    handleTouchStart(ev) {
+        ev.preventDefault();
+        if (this._touchCache.length < 2) {
+            const touch = ev.changedTouches.length > 0 ? ev.changedTouches[0] : null;
+            if (touch) {
+                this._touchCache.push(touch);
+                this._touchStartCache.push(touch);
+            };
+        };
+    };
+    
+    /**
+     * A touch moved while the resizableImage was selected.
+     *
+     * If this is a touch we are tracking already, then replace it in the touchCache.
+     *
+     * If we only have one finger down, the update the startCache for it, since we are
+     * moving a finger but haven't start pinching.
+     *
+     * Otherwise, we are pinching and need to resize.
+     */
+    handleTouchMove(ev) {
+        ev.preventDefault();
+        const touch = this.touchMatching(ev);
+        if (touch) {
+            // Replace the touch in the touchCache with this touch
+            this.replaceTouch(touch, this._touchCache)
+            if (this._touchCache.length < 2) {
+                // If we are only touching a single place, then replace it in the touchStartCache as it moves
+                this.replaceTouch(touch, this._touchStartCache);
+            } else {
+                // Otherwise, we are touching two places and are pinching
+                this.startPinch();   // A no-op if we have already started
+                this.pinch();
+            };
+        }
+    };
+    
+    /**
+     * A touch ended while the resizableImage was selected.
+     *
+     * Remove the touch from the caches, and end the pinch operation.
+     * We might still have a touch point down when one ends, but the pinch operation
+     * itself ends at that time.
+     */
+    handleTouchEnd(ev) {
+        const touch = this.touchMatching(ev);
+        if (touch) {
+            const touchIndex = this.indexOfTouch(touch, this._touchCache);
+            if (touchIndex !== null) {
+                this._touchCache.splice(touchIndex, 1);
+                this._touchStartCache.splice(touchIndex, 1);
+                this.endPinch();
+            };
+        };
+    };
+    
+    /**
+     * Return the touch in ev.changedTouches that matches what's in the touchCache, or null if it isn't there
+     */
+    touchMatching(ev) {
+        const changedTouches = ev.changedTouches;
+        const touchCache = this._touchCache;
+        for (let i = 0; i < touchCache.length; i++) {
+            for (let j = 0; j < changedTouches.length; j++) {
+                if (touchCache[i].identifier === changedTouches[j].identifier) {
+                    return changedTouches[j];
+                };
+            };
+        };
+        return null;
+    };
+    
+    /**
+     * Return the index into touchArray of touch based on identifier, or null if not found
+     *
+     * Note: Due to JavaScript idiocy, must always check return value against null, because
+     * indices of 1 and 0 are true and false, too. Fun!
+     */
+    indexOfTouch(touch, touchArray) {
+        for (let i = 0; i < touchArray.length; i++) {
+            if (touch.identifier === touchArray[i].identifier) {
+                return i;
+            };
+        };
+        return null;
+    };
+    
+    /**
+     * Replace the touch in touchArray if it has the same identifier, else do nothing
+     */
+    replaceTouch(touch, touchArray) {
+        const i = this.indexOfTouch(touch, touchArray);
+        if (i !== null) { touchArray[i] = touch }
+    };
+    
+    /**
+     * We received the touchmove event and need to initialize things for pinching.
+     *
+     * If the resizableImage._startDx is -1, then we need to initialize; otherwise,
+     * a call to startPinch is a no-op.
+     *
+     * The initialization captures a new startDx and startDy that track the distance
+     * between the two touch points when pinching starts. We also track the startDimensions,
+     * because scaling is done relative to it.
+     */
+    startPinch() {
+        if (this._startDx === -1) {
+            const touchStartCache = this._touchStartCache;
+            this._startDx = Math.abs(touchStartCache[0].pageX - touchStartCache[1].pageX);
+            this._startDy = Math.abs(touchStartCache[0].pageY - touchStartCache[1].pageY);
+            this._startDimensions = this.dimensionsFrom(this._imageElement);
+        };
+    };
+
+    /**
+     * Pinch the resizableImage based on the information in the touchCache and the startDx/startDy
+     * we captured when pinching started. The touchCache has the two touches that are active.
+     */
+    pinch() {
+        // Here currentDx and currentDx are the current distance between the two
+        // pointers, which have to be compared to the start distances to determine
+        // if we are zooming in or out
+        const touchCache = this._touchCache;
+        const x0 = touchCache[0].pageX
+        const y0 = touchCache[0].pageY
+        const x1 = touchCache[1].pageX
+        const y1 = touchCache[1].pageY
+        const currentDx = Math.abs(x1 - x0);
+        const currentDy = Math.abs(y1 - y0);
+        const dx = currentDx - this._startDx;
+        const dy = currentDy - this._startDy;
+        const scaleH = Math.abs(dy) > Math.abs(dx);
+        const w0 = this._startDimensions.width;
+        const h0 = this._startDimensions.height;
+        const ratio = w0 / h0;
+        let width, height;
+        if (scaleH) {
+            height = Math.max(h0 + dy, this._minImageSize);
+            width = Math.floor(height * ratio);
+        } else {
+            width = Math.max(w0 + dx, this._minImageSize);
+            height = Math.floor(width / ratio);
+        };
+        this._imageElement.setAttribute('width', width);
+        this._imageElement.setAttribute('height', height);
+    };
+    
+    /**
+     * The pinch operation has ended because we stopped touching one of the two touch points.
+     *
+     * If we are only touching one point, then endPinch is a no-op. For example, if the
+     * resizableImage is selected and you touch and release at a point, endPinch gets called
+     * but does nothing. Similarly for lifting the second touch point after releasing the first.
+     */
+    endPinch() {
+        if (this._touchCache.length === 1) {
+            this._startDx = -1;
+            this._startDy = -1;
+            this._startDimensions = this.currentDimensions;
+            this.imageResized();
+        };
+    };
+   
+    /**
+     * Callback to Swift with the resizableImage data that allows us to put an image
+     * in the clipboard without all the browser shenanigans.
+     */
+    copyToClipboard() {
+        const image = this._imageElement;
+        if (!image) { return };
+        const messageDict = {
+            'messageType' : 'copyImage',
+            'src' : image.src,
+            'alt' : image.alt,
+            'dimensions' : this._startDimensions
+        };
+        _callback(JSON.stringify(messageDict));
+    };
+    
+};
 
 /**
  * Define various arrays of tags used to represent concepts on the Swift side and internally.
@@ -197,9 +637,9 @@ const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];   
 const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM'] // Tags that are self-closing
 
 /**
- * _selectedID is the id of the contentEditable DIV containing the currently selected element.
+ * selectedID is the id of the contentEditable DIV containing the currently selected element.
  */
-let _selectedID = null;
+export let selectedID = null;
 
 /**
  * MUError captures internal errors and makes it easy to communicate them to the
@@ -302,11 +742,11 @@ function _callback(message) {
 };
 
 function _callbackInput() {
-    // I'd like to use nullish coalescing on _selectedID, but rollup's tree-shaking
+    // I'd like to use nullish coalescing on selectedID, but rollup's tree-shaking
     // actively removes it, at least until I do something with it.
     let source = '';
-    if (_selectedID !== null) {
-        source = _selectedID;
+    if (selectedID !== null) {
+        source = selectedID;
     };
     window.webkit.messageHandlers.markup.postMessage('input' + source);
 };
@@ -504,7 +944,7 @@ function _minimalLink(div) {
  * Clean out the document and replace it with an empty paragraph
  */
 export function emptyDocument() {
-    _selectedID = null;
+    selectedID = null;
     setHTML('<p></p>');
 };
 
@@ -915,7 +1355,7 @@ export function removeButton(id) {
 
 export function focusOn(id) {
     const {node, pos} = _getNode(id);
-    if (node && (node.attrs.id !== _selectedID)) {
+    if (node && (node.attrs.id !== selectedID)) {
         const selection = new TextSelection(view.state.doc.resolve(pos));
         const transaction = view.state.tr.setSelection(selection).scrollIntoView();
         view.dispatch(transaction);
@@ -1722,6 +2162,10 @@ export function stateChanged() {
     _callbackInput()
 }
 
+export function postMessage(message) {
+    _callback(JSON.stringify(message))
+}
+
 /********************************************************************************
  * Testing support
  */
@@ -1910,39 +2354,6 @@ export function modifyImage(src, alt, scale) {
 
 
 export function cutImage() {
-};
-
-/**
- * Callback invoked after the load or error event on an image
- *
- * The purpose of this method is to set attributes of every image to be
- * selectable and resizable and to have width and height preset.
- */
-function _prepImage(img) {
-    let changedHTML = false;
-    if (img.getAttribute('class') !== 'resize-image') {
-        img.setAttribute('class', 'resize-image');          // Make it resizable
-        changedHTML = true;
-    }
-    if (img.getAttribute('tabindex') !== "-1") {
-        img.setAttribute('tabindex', -1);                   // Make it selectable
-        changedHTML = true;
-    }
-    // Per https://www.youtube.com/watch?v=YM3KszYmn58, we always want dimensions
-    if (!img.getAttribute('width')) {
-        img.setAttribute('width', Math.max(img.naturalWidth ?? 0, minImageSize));
-        changedHTML = true;
-    };
-    if (!img.getAttribute('height')) {
-        img.setAttribute('height', Math.max(img.naturalHeight ?? 0, minImageSize));
-        changedHTML = true;
-    };
-    // For history, 'focusout' just never fires, either for image or the resizeContainer
-    img.addEventListener('focusin', _focusInImage);         // Allow resizing when focused
-    // Only notify the Swift side if we modified the HTML
-    if (changedHTML) {
-        _callbackInput() // Because we changed the html
-    }
 };
 
 /********************************************************************************
@@ -2263,6 +2674,15 @@ function _nodeFromElement(htmlElement) {
 function _fragmentFromNode(node) {
     return DOMSerializer.fromSchema(view.state.schema).serializeFragment(node.content);
 };
+
+/**
+ * Return a Node derived from the node type's toDOM method.
+ * @param {Node} node
+ * @returns HTMLElement
+ */
+function _elementFromNode(node) {
+    return node.type.spec.toDOM(node)
+}
 
 /**
  * Return an HTML DocumentFragment derived from HTML text.

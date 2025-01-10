@@ -11,7 +11,7 @@ import {buildMenuItems} from "./menu"
 import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
 
-import { placeholderText } from "../markup"
+import { placeholderText, postMessage, selectedID, stateChanged } from "../markup"
 
 export {buildMenuItems, buildKeymap, buildInputRules}
 
@@ -39,16 +39,59 @@ const muPlugin = new Plugin({
         return DecorationSet.create(tr.doc, [
           Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
         ])
-      } else {
-         // map "other" changes so our decoration "stays put" 
-         // (e.g. user is typing so decoration's pos must change)
+      } else if (set) {
+        // map "other" changes so our decoration "stays put" 
+        // (e.g. user is typing so decoration's pos must change)
         return set.map(tr.mapping, tr.doc)
       }
     }
   },
   props: {
-    decorations: (state) => { return muPlugin.getState(state) },
+    decorations: (state) => { return muPlugin.getState(state) }
   }
+})
+
+/**
+ * The imagePlugin handles the interaction with the Swift side that we need for images.
+ * Specifically, we want notification that an image was added at load time, but only once. 
+ * The loaded event can fire multiple times, both when the initial ImageView is created 
+ * as an img element is found, but also whenever the ImageView is recreated. This happens
+ * whenever we resize and image and dispatch a transaction to update its state.
+ * 
+ * We want a notification on the Swift side for the first image load, because when we insert 
+ * a new image, that new image is placed in cached storage but has not been saved for the doc.
+ * This is done using postMessage to send "addedImage", identifying the src. However, we don't 
+ * want to tell the Swift side we added an image every time we resize it. To deal with this 
+ * problem, we set "imageLoaded" metadata in the transaction that is dispatched on at load. The 
+ * first time, we update the Map held in the imagePlugin. When we resize, the image loads again 
+ * as the ImageView gets recreated, but in the plugin, we can check the Map to see if we already 
+ * loaded it once and avoid notifying the Swift side multiple times.
+ * 
+ * The Map is keyed by the src for the image. If the src is duplicated in the document, we only 
+ * get one "addedImage" notification.
+ */
+const imagePlugin = new Plugin({
+  state: {
+    init() {
+      return new Map()
+    },
+    apply(tr, srcMap) {
+      if (tr.getMeta("imageLoaded")) {
+        const src = tr.getMeta("imageLoaded").src
+        const srcIsLoaded = srcMap.get(src) == true
+        if (!srcIsLoaded) {
+          srcMap.set(src, true)
+          postMessage({ 'messageType': 'addedImage', 'src': src, 'divId': (selectedID ?? '') });
+        }
+        stateChanged()
+      }
+      return srcMap
+    }
+  },
+  props: {
+    attributes: (state) => { return imagePlugin.getState(state) }
+  }
+  
 })
 
 /**
@@ -120,6 +163,8 @@ export function markupSetup(options) {
 
   // Add the plugin that handles placeholder display for an empty document
   plugins.push(placeholderPlugin)
+
+  plugins.push(imagePlugin)
 
   return plugins;
 }
