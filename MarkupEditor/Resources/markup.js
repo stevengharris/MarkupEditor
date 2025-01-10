@@ -18041,7 +18041,7 @@
   class ImageView {
       constructor(node, view, getPos) {
           this.node = node;
-          this.resizableImage = new ResizableImage(node, getPos);
+          this.resizableImage = new ResizableImage(node, getPos());
           this.dom = this.resizableImage.imageContainer;
       }
       
@@ -18072,14 +18072,13 @@
    */
   class ResizableImage {
       
-      constructor(node, getPos) {
-          this._getPos = getPos;              // How to find node in view.state.doc
+      constructor(node, pos) {
+          this._pos = pos;                    // How to find node in view.state.doc
           this._minImageSize = 20;             // Large enough for visibility and for the handles to display properly
-          this._boundFunctions = new Map();   // Used to track functions used by event listeners so they can be removed later
           this._imageElement = this.imageElementFrom(node);
           this._imageContainer = this.containerFor(this.imageElement);
           this._startDimensions = this.dimensionsFrom(this.imageElement);
-          this._startEvent = null;
+          this._startEvent = null;            // The ev that was passed to startResize
           this._startDx = -1;                 // Delta x between the two touches for pinching; -1 = not pinching
           this._startDy = -1;                 // Delta y between the two touches for pinching; -1 = not pinching
           this._touchCache = [];              // Touches that are active, max 2, min 0
@@ -18139,12 +18138,12 @@
        * and `imageLoaded` gets called again.
        */
       imageResized() {
-          const pos = this._getPos();
           const {width, height} = this.currentDimensions;
           const transaction = view.state.tr
-              .setNodeAttribute(pos, 'width', width)
-              .setNodeAttribute(pos, 'height', height);
-          transaction.setSelection(new NodeSelection(transaction.doc.resolve(pos)));
+              .setNodeAttribute(this._pos, 'width', width)
+              .setNodeAttribute(this._pos, 'height', height);
+          // Reselect the node again, so it ends like it started - selected
+          transaction.setSelection(new NodeSelection(transaction.doc.resolve(this._pos)));
           view.dispatch(transaction);
       };
 
@@ -18199,41 +18198,11 @@
       }
 
       /**
-       * Save the JavaScript function resulting from fn.bind(this) in the _boundFunctions Map, 
-       * indexed by key.
-       * 
-       * We use trackFunction to create the function used in addEventListener, and then we can 
-       * removeEventListener using the function returned from untrackFunction.
-       * 
-       * @param {string}  key     The key used to look up the bound function later.
-       * @param {*}       fn      The JavaScript function to bind to this.
-       * @returns  The JavaScripr function resulting from fn.bind(this)
-       */
-      trackFunction(key, fn) {
-          const boundFn = fn.bind(this);
-          this._boundFunctions.set(key, boundFn);
-          return boundFn;
-      }
-
-      /**
-       * Return the bound function that was tracked by key.
-       * 
-       * @param {string} key The key used to look up the bound function.
-       * @returns A JavaScript function, typically one that was returned from .bind(this)
-       */
-      untrackFunction(key) {
-          const boundFn = this._boundFunctions.get(key);
-          this._boundFunctions.delete(key);
-          return boundFn;
-      }
-
-      /**
        * Set the attributes for the imageContainer and populate the spans that show the 
        * resizing handles. Add the mousedown event listener to initiate resizing.
        */
       select() {
           this.imageContainer.setAttribute('class', 'resize-container');
-          this.imageContainer.setAttribute('tabindex', -1);
           const nwHandle = document.createElement('span');
           nwHandle.setAttribute('class', 'resize-handle resize-handle-nw');
           this.imageContainer.insertBefore(nwHandle, this.imageElement);
@@ -18246,7 +18215,7 @@
           const seHandle = document.createElement('span');
           seHandle.setAttribute('class', 'resize-handle resize-handle-se');
           this.imageContainer.insertBefore(seHandle, null);
-          this.imageContainer.addEventListener('mousedown', this.trackFunction('mousedown', this.startResize));
+          this.imageContainer.addEventListener('mousedown', this.startResize = this.startResize.bind(this));
           this.addPinchGestureEvents();
       }
 
@@ -18256,10 +18225,9 @@
        */
       deselect() {
           this.removePinchGestureEvents();
-          this.imageContainer.removeEventListener('mousedown', this.untrackFunction('mousedown'));
+          this.imageContainer.removeEventListener('mousedown', this.startResize);
           const handles = this.imageContainer.querySelectorAll('span');
           handles.forEach((handle) => {this.imageContainer.removeChild(handle);});
-          this.imageContainer.removeAttribute('tabindex');
           this.imageContainer.removeAttribute('class');
       }
 
@@ -18280,10 +18248,10 @@
        * Listeners are added when the resizableImage is selected.
        */
       addPinchGestureEvents() {
-          document.addEventListener('touchstart', this.trackFunction('touchstart', this.handleTouchStart));
-          document.addEventListener('touchmove', this.trackFunction('touchmove', this.handleTouchMove));
-          document.addEventListener('touchend', this.trackFunction('touchend', this.handleTouchEnd));
-          document.addEventListener('touchcancel', this.trackFunction('touchcancel', this.handleTouchEnd));
+          document.addEventListener('touchstart', this.handleTouchStart = this.handleTouchStart.bind(this));
+          document.addEventListener('touchmove', this.handleTouchMove = this.handleTouchMove.bind(this));
+          document.addEventListener('touchend', this.handleTouchEnd = this.handleTouchEnd.bind(this));
+          document.addEventListener('touchcancel', this.handleTouchEnd = this.handleTouchEnd.bind(this));
       };
       
       /**
@@ -18292,10 +18260,10 @@
        * Listeners are removed when the resizableImage is deselected.
        */
       removePinchGestureEvents() {
-          document.removeEventListener('touchstart', this.untrackFunction('touchstart'));
-          document.removeEventListener('touchmove', this.untrackFunction('touchmove'));
-          document.removeEventListener('touchend', this.untrackFunction('touchend'));
-          document.removeEventListener('touchcancel', this.untrackFunction('touchcancel'));
+          document.removeEventListener('touchstart', this.handleTouchStart);
+          document.removeEventListener('touchmove', this.handleTouchMove);
+          document.removeEventListener('touchend', this.handleTouchEnd);
+          document.removeEventListener('touchcancel', this.handleTouchEnd);
       };
 
       /**
@@ -18304,6 +18272,9 @@
        */
       startResize(ev) {
           ev.preventDefault();
+          // The event can trigger on imageContainer and its contents, including spans and imageElement.
+          if (this._startEvent) return;   // We are already resizing
+          this._startEvent = ev;          // Track the event that kicked things off
 
           //TODO: Avoid selecting text while resizing.
           // Setting webkitUserSelect to 'none' used to help when the style could be applied to 
@@ -18311,10 +18282,9 @@
           // view.dom. Leaving a record here for now.
           // view.state.tr.style.webkitUserSelect = 'none';  // Prevent selection of text as mouse moves
 
-          // Use window to receive events even when cursor goes outside of the editor
-          window.addEventListener('mousemove', this.trackFunction('mousemove', this.resizing));
-          window.addEventListener('mouseup', this.trackFunction('mouseup', this.endResize));
-          this._startEvent = ev;
+          // Use document to receive events even when cursor goes outside of the imageContainer
+          document.addEventListener('mousemove', this.resizing = this.resizing.bind(this));
+          document.addEventListener('mouseup', this.endResize = this.endResize.bind(this));
           this._startDimensions = this.dimensionsFrom(this.imageElement);
       };
       
@@ -18324,6 +18294,7 @@
        */
       endResize(ev) {
           ev.preventDefault();
+          this._startEvent = null;
 
           //TODO: Restore selecting text when done resizing.
           // Setting webkitUserSelect to 'text' used to help when the style could be applied to 
@@ -18331,8 +18302,8 @@
           // view.dom. Leaving a record here for now.
           //view.dom.style.webkitUserSelect = 'text';  // Restore selection of text now that we are done
 
-          window.removeEventListener('mousemove', this.untrackFunction('mousemove'));
-          window.removeEventListener('mouseup', this.untrackFunction('mouseup'));
+          document.removeEventListener('mousemove', this.resizing);
+          document.removeEventListener('mouseup', this.endResize);
           this._startDimensions = this.currentDimensions;
           this.imageResized();
       };
@@ -19312,7 +19283,7 @@
    * type must be called using uppercase
    */
   function _toggleFormat(type) {
-      const state = window.view.state;
+      const state = view.state;
       let toggle;
       switch (type) {
           case 'B':
@@ -20145,7 +20116,7 @@
    */
   function insertImage(src, alt) {
       const imageNode = view.state.schema.nodes.image.create({src: src, alt: alt});
-      const transaction = view.state.tr.replaceSelectionWith(imageNode, false);
+      const transaction = view.state.tr.replaceSelectionWith(imageNode, true);
       view.dispatch(transaction);
       stateChanged();
   }
