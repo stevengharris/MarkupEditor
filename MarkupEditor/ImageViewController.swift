@@ -251,9 +251,9 @@ class ImageViewController: UIViewController {
         return arg.isEmpty ? nil : arg
     }
     
-    /// Save the image, but if argSrc is nil, then we need to use modifyImage to delete the image
+    /// Save a new image or modify the existing image
     private func saveImage(_ handler: (()->Void)? = nil) {
-        if let argSrc = argSrc {
+        if let argSrc = argSrc, argSrc != savedSrc {
             MarkupEditor.selectedWebView?.insertImage(src: argSrc, alt: argAlt, handler: handler)
         } else {
             MarkupEditor.selectedWebView?.modifyImage(src: argSrc, alt: argAlt, handler: handler)

@@ -1041,8 +1041,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK: Image editing
     
     public func modifyImage(src: String?, alt: String?, handler: (()->Void)?) {
-        // If src is nil, then no arguments are passed and the image will be removed
-        // Otherwise, the src and alt will be applied to the selected image
         var args = ""
         if let src = src {
             args += "'\(src)'"

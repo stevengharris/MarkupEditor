@@ -2313,14 +2313,28 @@ export function insertImage(src, alt) {
 
 /**
  * Modify the attributes of the image at selection.
- * Scale is a percentage like '80' where null means 100%.
- * Scale is always expressed relative to full scale.
  *
  * @param {String}              src         The url of the image.
  * @param {String}              alt         The alt text describing the image.
- * @param {Int}                 scale       The scale as a percentage of original's naturalWidth/Height.
  */
-export function modifyImage(src, alt, scale) {
+export function modifyImage(src, alt) {
+    const selection = view.state.selection
+    const imageNode = selection.node;
+    if (imageNode?.type !== view.state.schema.nodes.image) return;
+    let imagePos;
+    view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        if (node === imageNode) {
+            imagePos = pos;
+            return false;
+        }
+        return true;
+    })
+    if (imagePos) {
+        const transaction = view.state.tr
+            .setNodeAttribute(imagePos, 'src', src)
+            .setNodeAttribute(imagePos, 'alt', alt)
+        view.dispatch(transaction)
+    }
 };
 
 
