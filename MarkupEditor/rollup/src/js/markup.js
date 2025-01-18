@@ -26,7 +26,6 @@ import {
  */
 export class DivView {
     constructor(node) {
-        this.node = node;
         const div = document.createElement('div');
         div.setAttribute('id', node.attrs.id);
         div.setAttribute('class', node.attrs.cssClass);
@@ -34,20 +33,21 @@ export class DivView {
         // Here we have access to the node id and can specialize for divs.
         // Because the contentDOM is not set for non-editable divs, the selection never gets 
         // set in them, but will be set to the first selectable node after.
-        div.addEventListener('click', (ev) => {
+        div.addEventListener('click', () => {
             selectedID = node.attrs.id;
         })
-        div.innerHTML = node.attrs.htmlContents;
-        this.dom = div;
+        const htmlFragment = _fragmentFromNode(node);
         if (node.attrs.editable) {
-            // For editable divs, set contentDom so ProseMirror handles all the rendering and interaction
-            this.contentDOM = div;
+            div.innerHTML = _htmlFromFragment(htmlFragment)
+            this.dom = div
+            this.contentDOM = this.dom
         } else {
             // For non-editable divs, we have to handle all the interaction, which only occurs for buttons.
             // Note ProseMirror does not render children inside of non-editable divs. We deal with this by 
             // supplying the entire content of the div in htmlContents, and when we need to change the div
             // (for example, adding and removing a button group), we must then update the htmlContents 
             // accordingly. This happens in addDiv and removeDiv.
+            div.innerHTML = _htmlFromFragment(htmlFragment);
             const buttons = Array.from(div.getElementsByTagName('button'));
             buttons.forEach( button => {
                 button.addEventListener('click', () => {
@@ -61,6 +61,7 @@ export class DivView {
                     )
                 })
             })
+            this.dom = div;
         }
     }
 
@@ -1193,11 +1194,12 @@ export function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, 
         div = buttonGroupDiv;
     } else {
         div = document.createElement('div');
-        div.innerHTML = htmlContents ?? '<p></p>';
+        div.innerHTML = (htmlContents?.length > 0) ? htmlContents : '<p></p>';
         if (buttonGroupDiv) div.appendChild(buttonGroupDiv);
     }
     const divSlice = _sliceFromHTML(div.innerHTML);
-    const divNode = divNodeType.create({id, parentId, cssClass, editable, htmlContents: div.innerHTML}, divSlice.content);
+    const startedEmpty = (div.childNodes.length == 1) && (div.firstChild.nodeName == 'P') && (div.firstChild.textContent == "");
+    const divNode = divNodeType.create({id, parentId, cssClass, editable, startedEmpty}, divSlice.content);
     const transaction = view.state.tr;
     if (parentId && (parentId !== 'editor')) {
         // This path is only executed when adding a dynamic button group
@@ -1216,15 +1218,14 @@ export function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, 
         }
     } else {
         // This is the "normal" path when building a doc from the MarkupDivStructure.
-        // Add the div to the end of the document, replacing the empty paragraph node 
-        // at that position if it exists (e.g., when the doc is empty)
-        const nodeSelection = NodeSelection.atEnd(transaction.doc);
-        const node = nodeSelection.$anchor.node();
-        if ((node.type == view.state.schema.nodes.paragraph) && (node.childCount === 0)) {
-            // Replace the last empty paragraph with divNode
+        // If we are starting with an empty doc (i.e., <p><p>), then replace the single 
+        // empty paragraph with this div. Otherwise, just append this div to the end 
+        // of the doc.
+        const emptyDoc = (view.state.doc.childCount == 1) && (view.state.doc.textContent == "")
+        if (emptyDoc) {
+            const nodeSelection = NodeSelection.atEnd(transaction.doc);
             nodeSelection.replaceWith(transaction, divNode);
         } else {
-            // Otherwise, append this div to the end of the document
             const divPos = transaction.doc.content.size;
             transaction.insert(divPos, divNode);
         }
@@ -1261,6 +1262,10 @@ function _buttonGroupDiv(buttonGroupJSON) {
     return null;
 };
 
+/**
+ * Remove the div with the given id, and restore the selection to what it was before it is removed.
+ * @param {string} id   The id of the div to remove
+ */
 export function removeDiv(id) {
     const divNodeType = view.state.schema.nodes.div;
     const {node, pos} = _getNode(id)
@@ -1268,14 +1273,18 @@ export function removeDiv(id) {
         const $pos = view.state.doc.resolve(pos);
         const selection = view.state.selection;
         const nodeSelection = new NodeSelection($pos);
+        // Once we deleteSelection (i.e., remove te div node), then our selection has to be adjusted if it was 
+        // after the div we are removing.
+        const newFrom = (selection.from > nodeSelection.to) ? selection.from - node.nodeSize : selection.from;
+        const newTo = (selection.to > nodeSelection.to) ? selection.to - node.nodeSize : selection.to;
         const transaction = view.state.tr
             .setSelection(nodeSelection)
             .deleteSelection();
-        const newSelection = TextSelection.create(transaction.doc, selection.from, selection.to);
+        const newSelection = TextSelection.create(transaction.doc, newFrom, newTo);
         transaction.setSelection(newSelection);
         const isButtonGroup = (node.attrs.editable == false) && (node.attrs.parentId !== 'editor') && ($pos.parent.type == divNodeType);
         if (isButtonGroup) {
-            // Now we have to update the htmlContents markup of the parent
+            // Now we have to update the htmlContents attribute of the parent
             const parent = _getNode(node.attrs.parentId, transaction.doc);
             const htmlContents = _htmlFromFragment(_fragmentFromNode(parent.node));
             transaction.setNodeAttribute(parent.pos, "htmlContents", htmlContents);

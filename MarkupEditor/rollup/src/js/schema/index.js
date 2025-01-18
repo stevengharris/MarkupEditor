@@ -131,16 +131,17 @@ let baseNodes = OrderedMap.from({
   div: {
     content: "block*",
     group: "block",
+    selectable: false,
     attrs: {
       id: {default: null},
       parentId: {default: 'editor'},
       cssClass: {default: null},
       editable: {default: true},
+      htmlContents: {default: null},
       spellcheck: {default: false},
       autocorrect: {default: 'on'},
       autocapitalize: {default: 'off'},
       writingsuggestions: {default: false},
-      htmlContents: {default: ""}
     },
     parseDOM: [{
       tag: "div",

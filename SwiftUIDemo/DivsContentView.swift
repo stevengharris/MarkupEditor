@@ -106,6 +106,25 @@ struct DivsContentView: View {
                 id: "Buttons",
                 htmlContents: "<p>A div like the SectionDiv defined in this demo can contain buttons, and those buttons can be always shown or dynamically added when the target gets focus.</p>")
         )
+        divStructure.add(
+            SectionDiv(
+                focusId: "MoreButtons",
+                contents: "MoreButtons",
+                buttons: [
+                    // We should be able to use SFSymbols here (e.g., 􀈑 and 􀋭), but they went missing.
+                    // See https://feedbackassistant.apple.com/feedback/13537558.
+                    // For now, fill in with Emojis.
+                    HtmlButton(label: "🧐", targetId: "MoreButtons", action: { actionInfo in inspect(actionInfo) }),
+                    HtmlButton(label: "🗑️", targetId: "MoreButtons", action: { actionInfo in delete(actionInfo) }),
+                ],
+                dynamic: true
+            )
+        )
+        divStructure.add(
+            ContentDiv(
+                id: "MoreButtons",
+                htmlContents: "<p>Foo</p>")
+        )
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {

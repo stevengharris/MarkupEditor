@@ -164,6 +164,7 @@ export function markupSetup(options) {
   // Add the plugin that handles placeholder display for an empty document
   plugins.push(placeholderPlugin)
 
+  // Add the plugin to handle notifying the Swift side of images loading
   plugins.push(imagePlugin)
 
   return plugins;
