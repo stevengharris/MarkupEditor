@@ -4,6 +4,7 @@ import {wrapInList, splitListItem, liftListItem, sinkListItem} from "prosemirror
 import {undo, redo} from "prosemirror-history"
 import {undoInputRule} from "prosemirror-inputrules"
 import {goToNextCell} from 'prosemirror-tables';
+import { stateChanged } from "../markup";
 
 const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false
 
@@ -92,7 +93,13 @@ export function buildKeymap(schema, mapKeys) {
     if (mac) bind("Ctrl-Enter", cmd)
   }
   if (type = schema.nodes.list_item) {
-    bind("Enter", splitListItem(type))
+    // We need to know when Enter is pressed, so we can identify a change on the Swift side.
+    // In ProseMirror, empty paragraphs don't change the doc until they contain something, 
+    // so we don't get a notification until something is put in the paragraph. By chaining 
+    // the stateChanged with splitListItem that is bound to Enter here, it always executes, 
+    // but it splitListItem will also execute as will anything else beyond it in the chain 
+    // if splitListItem returns false (i.e., it doesn't really split the list).
+    bind("Enter", chainCommands(()=>{stateChanged(); return false}, splitListItem(type)))
     bind("Mod-[", liftListItem(type))
     bind("Mod-]", sinkListItem(type))
   }
