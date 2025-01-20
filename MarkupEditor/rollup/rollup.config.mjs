@@ -1,6 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import pkg from './package.json';
+import pkg from './package.json' with { type: "json" };
 
 export default [
 	// browser-friendly UMD build
@@ -23,12 +23,12 @@ export default [
 	// builds from a single configuration where possible, using
 	// an array for the `output` option, where we can specify
 	// `file` and `format` for each target)
-	{
-		input: 'src/js/main.js',
-		external: ['ms'],
-		output: [
-			{ file: pkg.main, format: 'cjs' },
-			{ file: pkg.module, format: 'es' }
-		]
-	}
+	//{
+	//	input: 'src/js/main.js',
+	//	external: ['ms'],
+	//	output: [
+	//		{ file: pkg.main, format: 'cjs' },
+	//		{ file: pkg.module, format: 'es' }
+	//	]
+	//}
 ];

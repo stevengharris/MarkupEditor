@@ -818,8 +818,6 @@
   function insertInto(content, dist, insert, parent) {
       let { index, offset } = content.findIndex(dist), child = content.maybeChild(index);
       if (offset == dist || child.isText) {
-          if (parent && !parent.canReplace(index, index, insert))
-              return null;
           return content.cut(0, dist).append(insert).append(content.cut(dist));
       }
       let inner = insertInto(child.content, dist - offset - 1, insert);
@@ -1294,7 +1292,7 @@
   **Do not** directly mutate the properties of a `Node` object. See
   [the guide](/docs/guide/#doc) for more information.
   */
-  class Node$1 {
+  let Node$1 = class Node {
       /**
       @internal
       */
@@ -1429,14 +1427,14 @@
       copy(content = null) {
           if (content == this.content)
               return this;
-          return new Node$1(this.type, this.attrs, content, this.marks);
+          return new Node(this.type, this.attrs, content, this.marks);
       }
       /**
       Create a copy of this node, with the given set of marks instead
       of the node's own marks.
       */
       mark(marks) {
-          return marks == this.marks ? this : new Node$1(this.type, this.attrs, this.content, marks);
+          return marks == this.marks ? this : new Node(this.type, this.attrs, this.content, marks);
       }
       /**
       Create a copy of this node with only the content between the
@@ -1681,7 +1679,7 @@
           node.type.checkAttrs(node.attrs);
           return node;
       }
-  }
+  };
   Node$1.prototype.text = undefined;
   class TextNode extends Node$1 {
       /**
@@ -2217,7 +2215,7 @@
   about the node type, such as its name and what kind of node it
   represents.
   */
-  class NodeType$1 {
+  let NodeType$1 = class NodeType {
       /**
       @internal
       */
@@ -2420,7 +2418,7 @@
       */
       static compile(nodes, schema) {
           let result = Object.create(null);
-          nodes.forEach((name, spec) => result[name] = new NodeType$1(name, schema, spec));
+          nodes.forEach((name, spec) => result[name] = new NodeType(name, schema, spec));
           let topType = schema.spec.topNode || "doc";
           if (!result[topType])
               throw new RangeError("Schema is missing its top node type ('" + topType + "')");
@@ -2430,7 +2428,7 @@
               throw new RangeError("The text node type should not have attributes");
           return result;
       }
-  }
+  };
   function validateType(typeName, attrName, type) {
       let types = type.split("|");
       return (value) => {
@@ -2851,7 +2849,7 @@
       if (preserveWhitespace != null)
           return (preserveWhitespace ? OPT_PRESERVE_WS : 0) |
               (preserveWhitespace === "full" ? OPT_PRESERVE_WS_FULL : 0);
-      return type && type.whitespace == "pre" ? OPT_PRESERVE_WS | OPT_PRESERVE_WS_FULL : base & ~OPT_OPEN_LEFT;
+      return type && type.whitespace == "pre" ? OPT_PRESERVE_WS | OPT_PRESERVE_WS_FULL : base & -5;
   }
   class NodeContext {
       constructor(type, attrs, marks, solid, match, options) {
@@ -2920,6 +2918,7 @@
           this.options = options;
           this.isOpen = isOpen;
           this.open = 0;
+          this.localPreserveWS = false;
           let topNode = options.topNode, topContext;
           let topOptions = wsOptionsFor(null, options.preserveWhitespace, 0) | (isOpen ? OPT_OPEN_LEFT : 0);
           if (topNode)
@@ -2946,11 +2945,12 @@
       }
       addTextNode(dom, marks) {
           let value = dom.nodeValue;
-          let top = this.top;
-          if (top.options & OPT_PRESERVE_WS_FULL ||
+          let top = this.top, preserveWS = (top.options & OPT_PRESERVE_WS_FULL) ? "full"
+              : this.localPreserveWS || (top.options & OPT_PRESERVE_WS) > 0;
+          if (preserveWS === "full" ||
               top.inlineContext(dom) ||
               /[^ \t\r\n\u000c]/.test(value)) {
-              if (!(top.options & OPT_PRESERVE_WS)) {
+              if (!preserveWS) {
                   value = value.replace(/[ \t\r\n\u000c]+/g, " ");
                   // If this starts with whitespace, and there is no node before it, or
                   // a hard break, or a text node that ends with whitespace, strip the
@@ -2964,7 +2964,7 @@
                           value = value.slice(1);
                   }
               }
-              else if (!(top.options & OPT_PRESERVE_WS_FULL)) {
+              else if (preserveWS !== "full") {
                   value = value.replace(/\r?\n|\r/g, " ");
               }
               else {
@@ -2981,12 +2981,15 @@
       // Try to find a handler for the given tag and use that to parse. If
       // none is found, the element's content nodes are added directly.
       addElement(dom, marks, matchAfter) {
+          let outerWS = this.localPreserveWS, top = this.top;
+          if (dom.tagName == "PRE" || /pre/.test(dom.style && dom.style.whiteSpace))
+              this.localPreserveWS = true;
           let name = dom.nodeName.toLowerCase(), ruleID;
           if (listTags.hasOwnProperty(name) && this.parser.normalizeLists)
               normalizeList(dom);
           let rule = (this.options.ruleFromNode && this.options.ruleFromNode(dom)) ||
               (ruleID = this.parser.matchTag(dom, this, matchAfter));
-          if (rule ? rule.ignore : ignoreTags.hasOwnProperty(name)) {
+          out: if (rule ? rule.ignore : ignoreTags.hasOwnProperty(name)) {
               this.findInside(dom);
               this.ignoreFallback(dom, marks);
           }
@@ -2995,7 +2998,7 @@
                   this.open = Math.max(0, this.open - 1);
               else if (rule && rule.skip.nodeType)
                   dom = rule.skip;
-              let sync, top = this.top, oldNeedsBlock = this.needsBlock;
+              let sync, oldNeedsBlock = this.needsBlock;
               if (blockTags.hasOwnProperty(name)) {
                   if (top.content.length && top.content[0].isInline && this.open) {
                       this.open--;
@@ -3007,7 +3010,7 @@
               }
               else if (!dom.firstChild) {
                   this.leafFallback(dom, marks);
-                  return;
+                  break out;
               }
               let innerMarks = rule && rule.skip ? marks : this.readStyles(dom, marks);
               if (innerMarks)
@@ -3021,6 +3024,7 @@
               if (innerMarks)
                   this.addElementByRule(dom, rule, innerMarks, rule.consuming === false ? ruleID : undefined);
           }
+          this.localPreserveWS = outerWS;
       }
       // Called for leaf DOM nodes that would otherwise be ignored
       leafFallback(dom, marks) {
@@ -3211,14 +3215,18 @@
       finish() {
           this.open = 0;
           this.closeExtra(this.isOpen);
-          return this.nodes[0].finish(this.isOpen || this.options.topOpen);
+          return this.nodes[0].finish(!!(this.isOpen || this.options.topOpen));
       }
       sync(to) {
-          for (let i = this.open; i >= 0; i--)
+          for (let i = this.open; i >= 0; i--) {
               if (this.nodes[i] == to) {
                   this.open = i;
                   return true;
               }
+              else if (this.localPreserveWS) {
+                  this.nodes[i].options |= OPT_PRESERVE_WS;
+              }
+          }
           return false;
       }
       get currentPos() {
@@ -6267,7 +6275,7 @@
               throw new RangeError("Selection passed to setSelection must point at the current document");
           this.curSelection = selection;
           this.curSelectionFor = this.steps.length;
-          this.updated = (this.updated | UPDATED_SEL) & ~UPDATED_MARKS;
+          this.updated = (this.updated | UPDATED_SEL) & -3;
           this.storedMarks = null;
           return this;
       }
@@ -6318,7 +6326,7 @@
       */
       addStep(step, doc) {
           super.addStep(step, doc);
-          this.updated = this.updated & ~UPDATED_MARKS;
+          this.updated = this.updated & -3;
           this.storedMarks = null;
       }
       /**
@@ -7128,11 +7136,12 @@
       for (let cur = node, sawBlock = false;;) {
           if (cur == view.dom)
               break;
-          let desc = view.docView.nearestDesc(cur, true);
+          let desc = view.docView.nearestDesc(cur, true), rect;
           if (!desc)
               return null;
-          if (desc.dom.nodeType == 1 && (desc.node.isBlock && desc.parent || !desc.contentDOM)) {
-              let rect = desc.dom.getBoundingClientRect();
+          if (desc.dom.nodeType == 1 && (desc.node.isBlock && desc.parent || !desc.contentDOM) &&
+              // Ignore elements with zero-size bounding rectangles
+              ((rect = desc.dom.getBoundingClientRect()).width || rect.height)) {
               if (desc.node.isBlock && desc.parent) {
                   // Only apply the horizontal test to the innermost block. Vertical for any parent.
                   if (!sawBlock && rect.left > coords.left || rect.top > coords.top)
@@ -9774,7 +9783,7 @@
           this.lastIOSEnterFallbackTimeout = -1;
           this.lastFocus = 0;
           this.lastTouch = 0;
-          this.lastAndroidDelete = 0;
+          this.lastChromeDelete = 0;
           this.composing = false;
           this.compositionNode = null;
           this.composingTimeout = -1;
@@ -9922,8 +9931,7 @@
       if (view.state.selection.eq(selection))
           return;
       let tr = view.state.tr.setSelection(selection);
-      if (origin == "pointer")
-          tr.setMeta("pointer", true);
+      tr.setMeta("pointer", true);
       view.dispatch(tr);
   }
   function selectClickedLeaf(view, inside) {
@@ -9931,7 +9939,7 @@
           return false;
       let $pos = view.state.doc.resolve(inside), node = $pos.nodeAfter;
       if (node && node.isAtom && NodeSelection.isSelectable(node)) {
-          updateSelection(view, new NodeSelection($pos), "pointer");
+          updateSelection(view, new NodeSelection($pos));
           return true;
       }
       return false;
@@ -9955,7 +9963,7 @@
           }
       }
       if (selectAt != null) {
-          updateSelection(view, NodeSelection.create(view.state.doc, selectAt), "pointer");
+          updateSelection(view, NodeSelection.create(view.state.doc, selectAt));
           return true;
       }
       else {
@@ -9982,7 +9990,7 @@
       let doc = view.state.doc;
       if (inside == -1) {
           if (doc.inlineContent) {
-              updateSelection(view, TextSelection.create(doc, 0, doc.content.size), "pointer");
+              updateSelection(view, TextSelection.create(doc, 0, doc.content.size));
               return true;
           }
           return false;
@@ -9992,9 +10000,9 @@
           let node = i > $pos.depth ? $pos.nodeAfter : $pos.node(i);
           let nodePos = $pos.before(i);
           if (node.inlineContent)
-              updateSelection(view, TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size), "pointer");
+              updateSelection(view, TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size));
           else if (NodeSelection.isSelectable(node))
-              updateSelection(view, NodeSelection.create(doc, nodePos), "pointer");
+              updateSelection(view, NodeSelection.create(doc, nodePos));
           else
               continue;
           return true;
@@ -10122,7 +10130,7 @@
                   // works around that.
                   (chrome && !this.view.state.selection.visible &&
                       Math.min(Math.abs(pos.pos - this.view.state.selection.from), Math.abs(pos.pos - this.view.state.selection.to)) <= 2))) {
-              updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)), "pointer");
+              updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)));
               event.preventDefault();
           }
           else {
@@ -11752,11 +11760,11 @@
               view.domObserver.suppressSelectionUpdates(); // #820
           return;
       }
-      // Chrome Android will occasionally, during composition, delete the
+      // Chrome will occasionally, during composition, delete the
       // entire composition and then immediately insert it again. This is
       // used to detect that situation.
-      if (chrome && android && change.endB == change.start)
-          view.input.lastAndroidDelete = Date.now();
+      if (chrome && change.endB == change.start)
+          view.input.lastChromeDelete = Date.now();
       // This tries to detect Android virtual keyboard
       // enter-and-pick-suggestion action. That sometimes (see issue
       // #1059) first fires a DOM mutation, before moving the selection to
@@ -11807,13 +11815,13 @@
           tr = view.state.tr.replace(chFrom, chTo, parse.doc.slice(change.start - parse.from, change.endB - parse.from));
       if (parse.sel) {
           let sel = resolveSelection(view, tr.doc, parse.sel);
-          // Chrome Android will sometimes, during composition, report the
+          // Chrome will sometimes, during composition, report the
           // selection in the wrong place. If it looks like that is
           // happening, don't update the selection.
           // Edge just doesn't move the cursor forward when you start typing
           // in an empty block or between br nodes.
-          if (sel && !(chrome && android && view.composing && sel.empty &&
-              (change.start != change.endB || view.input.lastAndroidDelete < Date.now() - 100) &&
+          if (sel && !(chrome && view.composing && sel.empty &&
+              (change.start != change.endB || view.input.lastChromeDelete < Date.now() - 100) &&
               (sel.head == chFrom || sel.head == tr.mapping.map(chTo) - 1) ||
               ie$1 && sel.empty && sel.head == chFrom))
               tr.setSelection(sel);
@@ -12133,7 +12141,7 @@
               this.domObserver.start();
           }
           this.updatePluginViews(prev);
-          if (((_a = this.dragging) === null || _a === void 0 ? void 0 : _a.node) && !prev.doc.eq(state.doc))
+          if (((_a = this.dragging) === null || _a === undefined ? undefined : _a.node) && !prev.doc.eq(state.doc))
               this.updateDraggedNode(this.dragging, prev);
           if (scroll == "reset") {
               this.dom.scrollTop = 0;
@@ -13583,7 +13591,7 @@
     var _a;
     const headerCell = tableNodeTypes(table.type.schema).header_cell;
     for (let col = 0; col < map.width; col++)
-      if (((_a = table.nodeAt(map.map[col + row * map.width])) == null ? void 0 : _a.type) != headerCell)
+      if (((_a = table.nodeAt(map.map[col + row * map.width])) == null ? undefined : _a.type) != headerCell)
         return false;
     return true;
   }
@@ -13606,8 +13614,8 @@
         });
         col += attrs.colspan - 1;
       } else {
-        const type = refRow == null ? tableNodeTypes(table.type.schema).cell : (_a = table.nodeAt(map.map[index + refRow * map.width])) == null ? void 0 : _a.type;
-        const node = type == null ? void 0 : type.createAndFill();
+        const type = refRow == null ? tableNodeTypes(table.type.schema).cell : (_a = table.nodeAt(map.map[index + refRow * map.width])) == null ? undefined : _a.type;
+        const node = type == null ? undefined : type.createAndFill();
         if (node)
           cells.push(node);
       }
@@ -13779,7 +13787,7 @@
         cellNode = cellWrapping(sel.$from);
         if (!cellNode)
           return false;
-        cellPos = (_a = cellAround(sel.$from)) == null ? void 0 : _a.pos;
+        cellPos = (_a = cellAround(sel.$from)) == null ? undefined : _a.pos;
       } else {
         if (sel.$anchorCell.pos != sel.$headCell.pos)
           return false;
@@ -13831,7 +13839,7 @@
           tr.setSelection(
             new CellSelection(
               tr.doc.resolve(sel.$anchorCell.pos),
-              lastCell ? tr.doc.resolve(lastCell) : void 0
+              lastCell ? tr.doc.resolve(lastCell) : undefined
             )
           );
         dispatch(tr);
@@ -14302,7 +14310,7 @@
           }
           let nextType = $to.pos == $from.end() ? grandParent.contentMatchAt(0).defaultType : null;
           let tr = state.tr.delete($from.pos, $to.pos);
-          let types = nextType ? [itemAttrs ? { type: itemType, attrs: itemAttrs } : null, { type: nextType }] : undefined;
+          let types = nextType ? [null, { type: nextType }] : undefined;
           if (!canSplit(tr.doc, $from.pos, 2, types))
               return false;
           if (dispatch)
@@ -14737,8 +14745,8 @@
   // :: (?number, ?number) → RopeSequence<T>
   // Create a rope repesenting a sub-sequence of this rope.
   RopeSequence.prototype.slice = function slice (from, to) {
-      if ( from === void 0 ) from = 0;
-      if ( to === void 0 ) to = this.length;
+      if ( from === undefined ) from = 0;
+      if ( to === undefined ) to = this.length;
 
     if (from >= to) { return RopeSequence.empty }
     return this.sliceInner(Math.max(0, from), Math.min(this.length, to))
@@ -14757,8 +14765,8 @@
   // indices and calling `get`, because it doesn't have to descend the
   // tree for every element.
   RopeSequence.prototype.forEach = function forEach (f, from, to) {
-      if ( from === void 0 ) from = 0;
-      if ( to === void 0 ) to = this.length;
+      if ( from === undefined ) from = 0;
+      if ( to === undefined ) to = this.length;
 
     if (from <= to)
       { this.forEachInner(f, from, to, 0); }
@@ -14770,8 +14778,8 @@
   // Map the given functions over the elements of the rope, producing
   // a flat array.
   RopeSequence.prototype.map = function map (f, from, to) {
-      if ( from === void 0 ) from = 0;
-      if ( to === void 0 ) to = this.length;
+      if ( from === undefined ) from = 0;
+      if ( to === undefined ) to = this.length;
 
     var result = [];
     this.forEach(function (elt, i) { return result.push(f(elt, i)); }, from, to);
@@ -14792,8 +14800,8 @@
       this.values = values;
     }
 
-    if ( RopeSequence ) Leaf.__proto__ = RopeSequence;
-    Leaf.prototype = Object.create( RopeSequence && RopeSequence.prototype );
+    Leaf.__proto__ = RopeSequence;
+    Leaf.prototype = Object.create( RopeSequence.prototype );
     Leaf.prototype.constructor = Leaf;
 
     var prototypeAccessors = { length: { configurable: true },depth: { configurable: true } };
@@ -14853,8 +14861,8 @@
       this.depth = Math.max(left.depth, right.depth) + 1;
     }
 
-    if ( RopeSequence ) Append.__proto__ = RopeSequence;
-    Append.prototype = Object.create( RopeSequence && RopeSequence.prototype );
+    Append.__proto__ = RopeSequence;
+    Append.prototype = Object.create( RopeSequence.prototype );
     Append.prototype.constructor = Append;
 
     Append.prototype.flatten = function flatten () {
@@ -15684,8 +15692,7 @@
                   atEnd = $from.end(d) == $from.pos + ($from.depth - d);
                   atStart = $from.start(d) == $from.pos - ($from.depth - d);
                   deflt = defaultBlockAt($from.node(d - 1).contentMatchAt($from.indexAfter(d - 1)));
-                  let splitType = splitNode && splitNode($to.parent, atEnd, $from);
-                  types.unshift(splitType || (atEnd && deflt ? { type: deflt } : null));
+                  types.unshift((atEnd && deflt ? { type: deflt } : null));
                   splitDepth = d;
                   break;
               }
@@ -15892,7 +15899,7 @@
           let { $from, $to } = ranges[i];
           let can = $from.depth == 0 ? doc.inlineContent && doc.type.allowsMarkType(type) : false;
           doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
-              if (can || !enterAtoms && node.isAtom && node.isInline && pos >= $from.pos && pos + node.nodeSize <= $to.pos)
+              if (can || false)
                   return false;
               can = node.inlineContent && node.type.allowsMarkType(type);
           });
@@ -15900,23 +15907,6 @@
               return true;
       }
       return false;
-  }
-  function removeInlineAtoms(ranges) {
-      let result = [];
-      for (let i = 0; i < ranges.length; i++) {
-          let { $from, $to } = ranges[i];
-          $from.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
-              if (node.isAtom && node.content.size && node.isInline && pos >= $from.pos && pos + node.nodeSize <= $to.pos) {
-                  if (pos + 1 > $from.pos)
-                      result.push(new SelectionRange($from, $from.doc.resolve(pos + 1)));
-                  $from = $from.doc.resolve(pos + 1 + node.content.size);
-                  return false;
-              }
-          });
-          if ($from.pos < $to.pos)
-              result.push(new SelectionRange($from, $to));
-      }
-      return result;
   }
   /**
   Create a command function that toggles the given mark with the
@@ -15928,11 +15918,9 @@
   document.
   */
   function toggleMark(markType, attrs = null, options) {
-      let removeWhenPresent = (options && options.removeWhenPresent) !== false;
-      let enterAtoms = (options && options.enterInlineAtoms) !== false;
       return function (state, dispatch) {
           let { empty, $cursor, ranges } = state.selection;
-          if ((empty && !$cursor) || !markApplies(state.doc, ranges, markType, enterAtoms))
+          if ((empty && !$cursor) || !markApplies(state.doc, ranges, markType))
               return false;
           if (dispatch) {
               if ($cursor) {
@@ -15943,22 +15931,8 @@
               }
               else {
                   let add, tr = state.tr;
-                  if (!enterAtoms)
-                      ranges = removeInlineAtoms(ranges);
-                  if (removeWhenPresent) {
+                  {
                       add = !ranges.some(r => state.doc.rangeHasMark(r.$from.pos, r.$to.pos, markType));
-                  }
-                  else {
-                      add = !ranges.every(r => {
-                          let missing = false;
-                          tr.doc.nodesBetween(r.$from.pos, r.$to.pos, (node, pos, parent) => {
-                              if (missing)
-                                  return false;
-                              missing = !markType.isInSet(node.marks) && !!parent && parent.type.allowsMarkType(markType) &&
-                                  !(node.isText && /^\s*$/.test(node.textBetween(Math.max(0, r.$from.pos - pos), Math.min(node.nodeSize, r.$to.pos - pos))));
-                          });
-                          return !missing;
-                      });
                   }
                   for (let i = 0; i < ranges.length; i++) {
                       let { $from, $to } = ranges[i];
@@ -16068,7 +16042,7 @@
           this.cursorPos = null;
           this.element = null;
           this.timeout = -1;
-          this.width = (_a = options.width) !== null && _a !== void 0 ? _a : 1;
+          this.width = (_a = options.width) !== null && _a !== undefined ? _a : 1;
           this.color = options.color === false ? undefined : (options.color || "black");
           this.class = options.class;
           this.handlers = ["dragover", "dragend", "drop", "dragleave"].map(name => {
@@ -17804,6 +17778,7 @@
    That file contains the combined ProseMirror code along with markup.js.
    */
 
+
   /**
    * The NodeView to support divs, as installed in main.js.
    */
@@ -19077,8 +19052,8 @@
    */
   function _getNode(id, doc, from, to) {
       const source = doc ?? view.state.doc;
-      const fromPos = from ?? TextSelection.atStart(source).from;
-      const toPos = to ?? TextSelection.atEnd(source).to;
+      const fromPos = TextSelection.atStart(source).from;
+      const toPos = TextSelection.atEnd(source).to;
       let foundNode, foundPos;
       source.nodesBetween(fromPos, toPos, (node, pos) => {
           if (node.attrs.id === id) {
@@ -19902,7 +19877,7 @@
           view.dispatch(transaction);
       } else {
           const toggle = toggleMark(linkMark.type, linkMark.attrs);
-          if (toggle) toggle(view.state, view.dispatch);
+          toggle(view.state, view.dispatch);
       }    stateChanged();
   }
   /**
@@ -19938,7 +19913,7 @@
 
       // Then toggle the link off and reset the selection
       const toggle = toggleMark(linkType);
-      if (toggle) {
+      {
           toggle(state, (tr) => {
               state = state.apply(tr);   // Toggle the link off
               const textSelection = TextSelection.create(state.doc, selection.from, selection.to);
@@ -20265,7 +20240,7 @@
   function _nodeFromHTML(html) {
       const fragment = _fragmentFromHTML(html);
       const body = fragment.body ?? fragment;
-      //_cleanUpDivsWithin(body);
+      _cleanUpDivsWithin(body);
       _cleanUpTypesWithin(['button'], body);
       return _nodeFromElement(body);
   }
@@ -20770,7 +20745,5 @@
   exports.toggleSubscript = toggleSubscript;
   exports.toggleSuperscript = toggleSuperscript;
   exports.toggleUnderline = toggleUnderline;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

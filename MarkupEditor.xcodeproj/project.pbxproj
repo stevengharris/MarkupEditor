@@ -198,8 +198,6 @@
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA40BA1E2CD54D5300264B1F /* mirror.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = mirror.css; sourceTree = "<group>"; };
-		AA40BA382CD572C100264B1F /* markupmirror.cjs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupmirror.cjs.js; sourceTree = "<group>"; };
-		AA40BA392CD572C100264B1F /* markupmirror.esm.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupmirror.esm.js; sourceTree = "<group>"; };
 		AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupmirror.umd.js; sourceTree = "<group>"; };
 		AA40BA3C2CD572C100264B1F /* acorn */ = {isa = PBXFileReference; lastKnownFileType = text; path = acorn; sourceTree = "<group>"; };
 		AA40BA3D2CD572C100264B1F /* resolve */ = {isa = PBXFileReference; lastKnownFileType = text; path = resolve; sourceTree = "<group>"; };
@@ -919,7 +917,6 @@
 		AA40BDD92CD572C100264B1F /* oldMarkup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = oldMarkup.js; sourceTree = "<group>"; };
 		AA40BDDD2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		AA40BDDE2CD572C100264B1F /* package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
-		AA40BDDF2CD572C100264B1F /* rollup.config.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = rollup.config.js; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
@@ -1124,8 +1121,6 @@
 		AA40BA3B2CD572C100264B1F /* dist */ = {
 			isa = PBXGroup;
 			children = (
-				AA40BA382CD572C100264B1F /* markupmirror.cjs.js */,
-				AA40BA392CD572C100264B1F /* markupmirror.esm.js */,
 				AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */,
 			);
 			path = dist;
@@ -3557,7 +3552,6 @@
 				AA40BDDC2CD572C100264B1F /* test */,
 				AA40BDDD2CD572C100264B1F /* package.json */,
 				AA40BDDE2CD572C100264B1F /* package-lock.json */,
-				AA40BDDF2CD572C100264B1F /* rollup.config.js */,
 			);
 			path = rollup;
 			sourceTree = "<group>";
