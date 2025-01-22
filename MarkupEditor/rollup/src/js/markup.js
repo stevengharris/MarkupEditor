@@ -2523,8 +2523,37 @@ export function modifyImage(src, alt) {
     }
 };
 
-
+/**
+ * Cut the selected image from the document.
+ * 
+ * Copy before deleting the image is done via a callback to the Swift side, which avoids
+ * potential CORS issues. Similarly, copying of an image (e.g., Ctrl-C) is all done of the 
+ * Swift side, not via JavaScript.
+ */
 export function cutImage() {
+    const selection = view.state.selection
+    const imageNode = selection.node;
+    if (imageNode?.type === view.state.schema.nodes.image) {
+        copyImage(imageNode);
+        const transaction = view.state.tr.deleteSelection();
+        view.dispatch(transaction);
+        stateChanged();
+    };
+};
+
+/**
+ * Call back to the Swift side with src, alt, and dimensions, to put the image into the clipboard.
+ * 
+ * @param {Node} node   A ProseMirror image node
+ */
+function copyImage(node) {
+    const messageDict = {
+        'messageType' : 'copyImage',
+        'src' : node.attrs.src,
+        'alt' : node.attrs.alt,
+        'dimensions' : {width: node.attrs.width, height: node.attrs.height}
+    };
+    _callback(JSON.stringify(messageDict));
 };
 
 /********************************************************************************
