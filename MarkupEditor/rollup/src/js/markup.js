@@ -1,5 +1,5 @@
 /*
- Edit only from within MarkupEditor/rollup/src. After running "npm rollup build",
+ Edit only from within MarkupEditor/rollup/src. After running "npm run build",
  the rollup/dist/markupmirror.umd.js is copied into MarkupEditor/Resources/markup.js.
  That file contains the combined ProseMirror code along with markup.js.
  */
@@ -20,6 +20,7 @@ import {
     mergeCells,
     toggleHeaderRow,
 } from 'prosemirror-tables'
+import { SearchQuery, setSearchState, findNext, findPrev, getMatchHighlights } from 'prosemirror-search'
 
 /**
  * The NodeView to support divs, as installed in main.js.
@@ -661,6 +662,178 @@ class MUError {
 };
 
 /**
+ * The Searcher class lets us find text ranges that match a search string within the editor element.
+ * 
+ * The searcher uses the ProseMirror search plugin https://github.com/proseMirror/prosemirror-search to create 
+ * and track ranges within the doc that match a given SearchQuery.
+ */
+class Searcher {
+    
+    constructor() {
+        this._searchString = null;      // what we are searching for
+        this._direction = 'forward';    // direction we are searching in
+        this._caseSensitive = false;    // whether the search is case sensitive
+        this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges\
+        this._searchQuery = null        // the SearchQuery we use
+        this._isActive = false;         // whether we are in "search mode", intercepting Enter/Shift-Enter
+    };
+    
+    /**
+     * Return the range in the direction relative to the selection point that matches text.
+     * 
+     * The text is passed from the Swift side with smartquote nonsense removed and '&quot;'
+     * instead of quotes and '&apos;' instead of apostrophes, so that we can search on text
+     * that includes them and pass them from Swift to JavaScript consistently.
+     */
+    searchFor(text, direction='forward', searchOnEnter=false) {
+        if (!text || (text.length === 0)) {
+            this.cancel()
+            return null;
+        }
+        text = text.replaceAll('&quot;', '"')       // Fix the hack for quotes in the call
+        text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
+    
+        // Rebuild the query if forced or if the search string changed
+        if (this._forceIndexing || (text !== this._searchString)) {
+            this._searchString = text;
+            this._isActive = searchOnEnter
+            this._buildQuery();
+        };
+
+        if (getMatchHighlights(view.state).children.length === 0) {
+            this.deactivate();
+            return null;
+        }
+        
+        this._direction = direction;
+        if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
+        this._searchInDirection(direction);
+    };
+    
+    /**
+     * Reset the query by forcing it to be recomputed at find time.
+     */
+    _resetQuery() {
+        this._forceIndexing = true;
+    };
+    
+    /**
+     * Return whether search is active, and Enter should be interpreted as a search request
+     */
+    get isActive() {
+        return this._isActive;
+    };
+    
+    /**
+     * Activate search mode where Enter is being intercepted
+     */
+    _activate() {
+        // TODO: Add "searching" to the doc classList
+        this._isActive = true;
+        _callback('activateSearch');
+    }
+    
+    /**
+     * Deactivate search mode where Enter is being intercepted
+     */
+    deactivate() {
+        // TODO: Remove "searching" from the doc classList
+        this._isActive = false;
+        this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
+        const transaction = setSearchState(view.state.tr, this._searchQuery);
+        view.dispatch(transaction);
+        _callback('deactivateSearch');
+    }
+    
+    /**
+     * Stop searchForward()/searchBackward() from being executed on Enter. Force reindexing for next search.
+     */
+    cancel() {
+        this.deactivate()
+        this._resetQuery();
+    };
+    
+    /**
+     * Search forward (might be from Enter when isActive).
+     */
+    searchForward() {
+        this._searchInDirection('forward');
+    };
+    
+    /*
+     * Search backward (might be from Shift+Enter when isActive).
+     */
+    searchBackward() {
+        this._searchInDirection('backward');
+    }
+    
+    /*
+     * Search in the specified direction.
+     */
+    _searchInDirection(direction) {
+        if (this._searchString && (this._searchString.length > 0)) {
+            if (direction == "forward") { findNext(view.state, view.dispatch) } else { findPrev(view.state, view.dispatch) }
+            _callback('searched')
+        };
+    };
+
+    /**
+     * Create a new SearchQuery and highlight all the matches in the document.
+     */
+    _buildQuery() {
+        this._searchQuery = new SearchQuery({search: this._searchString, caseSensitive: this._caseSensitive});
+        const transaction = setSearchState(view.state.tr, this._searchQuery);
+        view.dispatch(transaction);
+    }
+
+};
+
+/**
+ * The searcher is the singleton that handles finding ranges that
+ * contain a search string within editor.
+ */
+const searcher = new Searcher();
+export function searchIsActive() { return searcher.isActive }
+
+/**
+ * Handle pressing Enter.
+ * 
+ * Where Enter is bound in keymap.js, we chain `handleEnter` with `splitListItem`.
+ * 
+ * The logic for handling Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
+ * We only need to report stateChanged when not in search mode.
+ * 
+ * @returns bool    Value is false if subsequent commands (like splitListItem) should execute;
+ *                  else true if execution should stop here (like when search is active)
+ */
+export function handleEnter() {
+    if (searcher.isActive) {
+        searcher.searchForward();
+        return true;
+    }
+    stateChanged()
+    return false;
+}
+
+/**
+ * Handle pressing Shift-Enter.
+ * 
+ * The logic for handling Shift-Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
+ * We only need to report stateChanged when not in search mode.
+ * 
+ * @returns bool    Value is false if subsequent commands should execute;
+ *                  else true if execution should stop here (like when search is active)
+ */
+export function handleShiftEnter() {
+    if (searcher.isActive) {
+        searcher.searchBackward();
+        return true;
+    }
+    stateChanged()
+    return false;
+}
+
+/**
  * Called to set attributes to the editor div, typically to ,
  * set spellcheck and autocorrect. Note that contenteditable 
  * should not be set for the editor element, even if it is 
@@ -792,12 +965,17 @@ window.addEventListener('resize', function() {
 //MARK: Search
 
 export function searchFor(text, direction, activate) {
+    const searchOnEnter = activate === 'true';
+    searcher.searchFor(text, direction, searchOnEnter);
+    _callback('searched')
 };
 
 export function deactivateSearch() {
+    searcher.deactivate();
 };
 
 export function cancelSearch() {
+    searcher.cancel()
 }
 
 /********************************************************************************
@@ -2131,6 +2309,7 @@ export function selectionChanged() {
  * Report a click to the Swift side.
  */
 export function clicked() {
+    deactivateSearch()
     _callback('clicked')
 }
 
@@ -2139,6 +2318,7 @@ export function clicked() {
  * change might be from typing or formatting or styling, etc.
  */
 export function stateChanged() {
+    deactivateSearch()
     _callbackInput()
 }
 

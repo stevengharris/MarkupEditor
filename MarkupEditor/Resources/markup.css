@@ -155,41 +155,12 @@ img {
 /* Provide a slightly darkened or lightened overlay while search is active */
 .searching {
     background-color: rgba(0, 0, 0, 0.10);
+    /* background-color: red */
 }
 @media (prefers-color-scheme: dark) {
     .searching {
-        background-color: rgba(255, 255, 255, 0.10);
-    }
-}
-
-/* Search results are in yellow-on-black or vice versa */
-::highlight(search-results) {
-    background-color: yellow;
-    color: black;
-}
-@media (prefers-color-scheme: dark) {
-    ::highlight(search-results) {
-        background: yellow;
-        color: black;
-    }
-}
-
-/* Since ::selection doesn't seem to work properly, overlay an outline around
- * the selection to show the selected search result, as driven by Javascript from
- * the search-results.
- */
-.seloutline {
-    position: absolute;
-    outline: 1px black solid;
-    outline-offset: 1px;
-    z-index: 2;
-}
-@media (prefers-color-scheme: dark) {
-    .seloutline {
-        position: absolute;
-        outline: 1px white solid;
-        outline-offset: 1px;
-        z-index: 2;
+        background: rgba(255, 255, 255, 0.10);
+        /* background-color: yellow; */
     }
 }
 

@@ -3,6 +3,7 @@
  The adaptations mainly consisted of removing styling when it interfered with
  markup.css in some way. These changes were commented-out and moved to the end of
  this file. Top-level Prosemirror styling was brought to the top of the file.
+ Styling from search.css in prosemirror-search were added and modified.
  */
 
 #editor, .editor {
@@ -296,6 +297,36 @@ img.ProseMirror-separator {
 .ProseMirror-prompt-buttons {
   margin-top: 5px;
   display: none;
+}
+
+/* Classes set by prosemirror-search module */
+
+.ProseMirror-search-match {
+  background-color: yellow;
+  color: black;
+}
+@media (prefers-color-scheme: dark) {
+    .ProseMirror-search-match {
+        background-color: yellow;
+        color: black;
+    }
+}
+
+.ProseMirror-active-search-match {
+  background-color: yellow;
+  color: black;
+  outline: 1px black solid;
+  outline-offset: 1px;
+  z-index: 2;
+}
+@media (prefers-color-scheme: dark) {
+    .ProseMirror-active-search-match {
+        background-color: yellow;
+        color: black;
+        outline: 1px white solid;
+        outline-offset: 1px;
+        z-index: 2;
+    }
 }
 
 /*

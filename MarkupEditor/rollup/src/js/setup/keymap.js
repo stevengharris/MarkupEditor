@@ -4,7 +4,8 @@ import {wrapInList, splitListItem, liftListItem, sinkListItem} from "prosemirror
 import {undo, redo} from "prosemirror-history"
 import {undoInputRule} from "prosemirror-inputrules"
 import {goToNextCell} from 'prosemirror-tables';
-import { stateChanged } from "../markup";
+import { handleEnter, handleShiftEnter } from "../markup";
+import { findNext, findPrev } from "prosemirror-search";
 
 const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false
 
@@ -47,6 +48,8 @@ export function buildKeymap(schema, mapKeys) {
     keys[key] = cmd
   }
 
+  bind("Ctrl-f", findNext)
+  bind("Ctrl-Shift-f", findPrev)
 
   bind("Mod-z", undo)
   bind("Shift-Mod-z", redo)
@@ -99,10 +102,13 @@ export function buildKeymap(schema, mapKeys) {
     // the stateChanged with splitListItem that is bound to Enter here, it always executes, 
     // but it splitListItem will also execute as will anything else beyond it in the chain 
     // if splitListItem returns false (i.e., it doesn't really split the list).
-    bind("Enter", chainCommands(()=>{stateChanged(); return false}, splitListItem(type)))
+    bind("Enter", chainCommands(handleEnter, splitListItem(type)))
     bind("Mod-[", liftListItem(type))
     bind("Mod-]", sinkListItem(type))
   }
+  // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
+  bind("Shift-Enter", handleShiftEnter)
+  
   if (type = schema.nodes.paragraph)
     bind("Shift-Ctrl-0", setBlockType(type))
   if (type = schema.nodes.code_block)

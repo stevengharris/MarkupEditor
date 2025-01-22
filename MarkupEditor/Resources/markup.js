@@ -16385,6 +16385,393 @@
       return DecorationSet.create(state.doc, [Decoration.widget(state.selection.head, node, { key: "gapcursor" })]);
   }
 
+  class SearchQuery {
+      /**
+      Create a query object.
+      */
+      constructor(config) {
+          this.search = config.search;
+          this.caseSensitive = !!config.caseSensitive;
+          this.literal = !!config.literal;
+          this.regexp = !!config.regexp;
+          this.replace = config.replace || "";
+          this.valid = !!this.search && !(this.regexp && !validRegExp(this.search));
+          this.wholeWord = !!config.wholeWord;
+          this.filter = config.filter || null;
+          this.impl = !this.valid ? nullQuery : this.regexp ? new RegExpQuery(this) : new StringQuery(this);
+      }
+      /**
+      Compare this query to another query.
+      */
+      eq(other) {
+          return this.search == other.search && this.replace == other.replace &&
+              this.caseSensitive == other.caseSensitive && this.regexp == other.regexp &&
+              this.wholeWord == other.wholeWord;
+      }
+      /**
+      Find the next occurrence of this query in the given range.
+      */
+      findNext(state, from = 0, to = state.doc.content.size) {
+          for (;;) {
+              if (from >= to)
+                  return null;
+              let result = this.impl.findNext(state, from, to);
+              if (!result || this.checkResult(state, result))
+                  return result;
+              from = result.from + 1;
+          }
+      }
+      /**
+      Find the previous occurrence of this query in the given range.
+      Note that, if `to` is given, it should be _less_ than `from`.
+      */
+      findPrev(state, from = state.doc.content.size, to = 0) {
+          for (;;) {
+              if (from <= to)
+                  return null;
+              let result = this.impl.findPrev(state, from, to);
+              if (!result || this.checkResult(state, result))
+                  return result;
+              from = result.to - 1;
+          }
+      }
+      /**
+      @internal
+      */
+      checkResult(state, result) {
+          return (!this.wholeWord || checkWordBoundary(state, result.from) && checkWordBoundary(state, result.to)) &&
+              (!this.filter || this.filter(state, result));
+      }
+      /**
+      @internal
+      */
+      unquote(string) {
+          return this.literal ? string
+              : string.replace(/\\([nrt\\])/g, (_, ch) => ch == "n" ? "\n" : ch == "r" ? "\r" : ch == "t" ? "\t" : "\\");
+      }
+      /**
+      Get the ranges that should be replaced for this result. This can
+      return multiple ranges when `this.replace` contains
+      `$1`/`$&`-style placeholders, in which case the preserved
+      content is skipped by the replacements.
+      
+      Ranges are sorted by position, and `from`/`to` positions all
+      refer to positions in `state.doc`. When applying these, you'll
+      want to either apply them from back to front, or map these
+      positions through your transaction's current mapping.
+      */
+      getReplacements(state, result) {
+          let $from = state.doc.resolve(result.from);
+          let marks = $from.marksAcross(state.doc.resolve(result.to));
+          let ranges = [];
+          let frag = Fragment.empty, pos = result.from, { match } = result;
+          let groups = match ? getGroupIndices(match) : [[0, result.to - result.from]];
+          let replParts = parseReplacement(this.unquote(this.replace)), groupSpan;
+          for (let part of replParts) {
+              if (typeof part == "string") { // Replacement text
+                  frag = frag.addToEnd(state.schema.text(part, marks));
+              }
+              else if (groupSpan = groups[part.group]) {
+                  let level = $from.depth;
+                  while (level > 0 && $from.node(level).isInline)
+                      level--;
+                  let from = $from.start(level) + groupSpan[0], to = $from.start(level) + groupSpan[1];
+                  if (part.copy) { // Copied content
+                      frag = frag.append(state.doc.slice(from, to).content);
+                  }
+                  else { // Skipped content
+                      if (frag != Fragment.empty || from > pos) {
+                          ranges.push({ from: pos, to: from, insert: new Slice(frag, 0, 0) });
+                          frag = Fragment.empty;
+                      }
+                      pos = to;
+                  }
+              }
+          }
+          if (frag != Fragment.empty || pos < result.to)
+              ranges.push({ from: pos, to: result.to, insert: new Slice(frag, 0, 0) });
+          return ranges;
+      }
+  }
+  const nullQuery = new class {
+      findNext() { return null; }
+      findPrev() { return null; }
+  };
+  class StringQuery {
+      constructor(query) {
+          this.query = query;
+          let string = query.unquote(query.search);
+          if (!query.caseSensitive)
+              string = string.toLowerCase();
+          this.string = string;
+      }
+      findNext(state, from, to) {
+          return scanTextblocks(state.doc, from, to, (node, start) => {
+              let off = Math.max(from, start);
+              let content = textContent(node).slice(off - start, Math.min(node.content.size, to - start));
+              let index = (this.query.caseSensitive ? content : content.toLowerCase()).indexOf(this.string);
+              return index < 0 ? null : { from: off + index, to: off + index + this.string.length, match: null };
+          });
+      }
+      findPrev(state, from, to) {
+          return scanTextblocks(state.doc, from, to, (node, start) => {
+              let off = Math.max(start, to);
+              let content = textContent(node).slice(off - start, Math.min(node.content.size, from - start));
+              if (!this.query.caseSensitive)
+                  content = content.toLowerCase();
+              let index = content.lastIndexOf(this.string);
+              return index < 0 ? null : { from: off + index, to: off + index + this.string.length, match: null };
+          });
+      }
+  }
+  const baseFlags = "g" + (/x/.unicode == null ? "" : "u") + (/x/.hasIndices == null ? "" : "d");
+  class RegExpQuery {
+      constructor(query) {
+          this.query = query;
+          this.regexp = new RegExp(query.search, baseFlags + (query.caseSensitive ? "" : "i"));
+      }
+      findNext(state, from, to) {
+          return scanTextblocks(state.doc, from, to, (node, start) => {
+              let content = textContent(node).slice(0, Math.min(node.content.size, to - start));
+              this.regexp.lastIndex = from - start;
+              let match = this.regexp.exec(content);
+              return match ? { from: start + match.index, to: start + match.index + match[0].length, match } : null;
+          });
+      }
+      findPrev(state, from, to) {
+          return scanTextblocks(state.doc, from, to, (node, start) => {
+              let content = textContent(node).slice(0, Math.min(node.content.size, from - start));
+              let match;
+              for (let off = 0;;) {
+                  this.regexp.lastIndex = off;
+                  let next = this.regexp.exec(content);
+                  if (!next)
+                      break;
+                  match = next;
+                  off = next.index + 1;
+              }
+              return match ? { from: start + match.index, to: start + match.index + match[0].length, match } : null;
+          });
+      }
+  }
+  function getGroupIndices(match) {
+      if (match.indices)
+          return match.indices;
+      let result = [[0, match[0].length]];
+      for (let i = 1, pos = 0; i < match.length; i++) {
+          let found = match[i] ? match[0].indexOf(match[i], pos) : -1;
+          result.push(found < 0 ? undefined : [found, pos = found + match[i].length]);
+      }
+      return result;
+  }
+  function parseReplacement(text) {
+      let result = [], highestSeen = -1;
+      function add(text) {
+          let last = result.length - 1;
+          if (last > -1 && typeof result[last] == "string")
+              result[last] += text;
+          else
+              result.push(text);
+      }
+      while (text.length) {
+          let m = /\$([$&\d+])/.exec(text);
+          if (!m) {
+              add(text);
+              return result;
+          }
+          if (m.index > 0)
+              add(text.slice(0, m.index + (m[1] == "$" ? 1 : 0)));
+          if (m[1] != "$") {
+              let n = m[1] == "&" ? 0 : +m[1];
+              if (highestSeen >= n) {
+                  result.push({ group: n, copy: true });
+              }
+              else {
+                  highestSeen = n || 1000;
+                  result.push({ group: n, copy: false });
+              }
+          }
+          text = text.slice(m.index + m[0].length);
+      }
+      return result;
+  }
+  function validRegExp(source) {
+      try {
+          new RegExp(source, baseFlags);
+          return true;
+      }
+      catch (_a) {
+          return false;
+      }
+  }
+  const TextContentCache = new WeakMap();
+  function textContent(node) {
+      let cached = TextContentCache.get(node);
+      if (cached)
+          return cached;
+      let content = "";
+      for (let i = 0; i < node.childCount; i++) {
+          let child = node.child(i);
+          if (child.isText)
+              content += child.text;
+          else if (child.isLeaf)
+              content += "\ufffc";
+          else
+              content += " " + textContent(child) + " ";
+      }
+      TextContentCache.set(node, content);
+      return content;
+  }
+  function scanTextblocks(node, from, to, f, nodeStart = 0) {
+      if (node.inlineContent) {
+          return f(node, nodeStart);
+      }
+      else if (!node.isLeaf) {
+          if (from > to) {
+              for (let i = node.childCount - 1, pos = nodeStart + node.content.size; i >= 0 && pos > to; i--) {
+                  let child = node.child(i);
+                  pos -= child.nodeSize;
+                  if (pos < from) {
+                      let result = scanTextblocks(child, from, to, f, pos + 1);
+                      if (result != null)
+                          return result;
+                  }
+              }
+          }
+          else {
+              for (let i = 0, pos = nodeStart; i < node.childCount && pos < to; i++) {
+                  let child = node.child(i), start = pos;
+                  pos += child.nodeSize;
+                  if (pos > from) {
+                      let result = scanTextblocks(child, from, to, f, start + 1);
+                      if (result != null)
+                          return result;
+                  }
+              }
+          }
+      }
+      return null;
+  }
+  function checkWordBoundary(state, pos) {
+      let $pos = state.doc.resolve(pos);
+      let before = $pos.nodeBefore, after = $pos.nodeAfter;
+      if (!before || !after || !before.isText || !after.isText)
+          return true;
+      return !/\p{L}$/u.test(before.text) || !/^\p{L}/u.test(after.text);
+  }
+
+  class SearchState {
+      constructor(query, range, deco) {
+          this.query = query;
+          this.range = range;
+          this.deco = deco;
+      }
+  }
+  function buildMatchDeco(state, query, range) {
+      if (!query.valid)
+          return DecorationSet.empty;
+      let deco = [];
+      let sel = state.selection;
+      for (let pos = range ? range.from : 0, end = range ? range.to : state.doc.content.size;;) {
+          let next = query.findNext(state, pos, end);
+          if (!next)
+              break;
+          let cls = next.from == sel.from && next.to == sel.to ? "ProseMirror-active-search-match" : "ProseMirror-search-match";
+          deco.push(Decoration.inline(next.from, next.to, { class: cls }));
+          pos = next.to;
+      }
+      return DecorationSet.create(state.doc, deco);
+  }
+  const searchKey = new PluginKey("search");
+  /**
+  Returns a plugin that stores a current search query and searched
+  range, and highlights matches of the query.
+  */
+  function search(options = {}) {
+      return new Plugin({
+          key: searchKey,
+          state: {
+              init(_config, state) {
+                  let query = options.initialQuery || new SearchQuery({ search: "" });
+                  let range = options.initialRange || null;
+                  return new SearchState(query, range, buildMatchDeco(state, query, range));
+              },
+              apply(tr, search, _oldState, state) {
+                  let set = tr.getMeta(searchKey);
+                  if (set)
+                      return new SearchState(set.query, set.range, buildMatchDeco(state, set.query, set.range));
+                  if (tr.docChanged || tr.selectionSet) {
+                      let range = search.range;
+                      if (range) {
+                          let from = tr.mapping.map(range.from, 1);
+                          let to = tr.mapping.map(range.to, -1);
+                          range = from < to ? { from, to } : null;
+                      }
+                      search = new SearchState(search.query, range, buildMatchDeco(state, search.query, range));
+                  }
+                  return search;
+              }
+          },
+          props: {
+              decorations: state => searchKey.getState(state).deco
+          }
+      });
+  }
+  /**
+  Access the decoration set holding the currently highlighted search
+  matches in the document.
+  */
+  function getMatchHighlights(state) {
+      let search = searchKey.getState(state);
+      return search ? search.deco : DecorationSet.empty;
+  }
+  /**
+  Add metadata to a transaction that updates the active search query
+  and searched range, when dispatched.
+  */
+  function setSearchState(tr, query, range = null) {
+      return tr.setMeta(searchKey, { query, range });
+  }
+  function nextMatch(search, state, wrap, curFrom, curTo) {
+      let range = search.range || { from: 0, to: state.doc.content.size };
+      let next = search.query.findNext(state, Math.max(curTo, range.from), range.to);
+      if (!next && wrap)
+          next = search.query.findNext(state, range.from, Math.min(curFrom, range.to));
+      return next;
+  }
+  function prevMatch(search, state, wrap, curFrom, curTo) {
+      let range = search.range || { from: 0, to: state.doc.content.size };
+      let prev = search.query.findPrev(state, Math.min(curFrom, range.to), range.from);
+      if (!prev && wrap)
+          prev = search.query.findPrev(state, range.to, Math.max(curTo, range.from));
+      return prev;
+  }
+  function findCommand(wrap, dir) {
+      return (state, dispatch) => {
+          let search = searchKey.getState(state);
+          if (!search || !search.query.valid)
+              return false;
+          let { from, to } = state.selection;
+          let next = dir > 0 ? nextMatch(search, state, wrap, from, to) : prevMatch(search, state, wrap, from, to);
+          if (!next)
+              return false;
+          let selection = TextSelection.create(state.doc, next.from, next.to);
+          if (dispatch)
+              dispatch(state.tr.setSelection(selection).scrollIntoView());
+          return true;
+      };
+  }
+  /**
+  Find the next instance of the search query after the current
+  selection and move the selection to it.
+  */
+  const findNext = findCommand(true, 1);
+  /**
+  Find the previous instance of the search query and move the
+  selection to it.
+  */
+  const findPrev = findCommand(true, -1);
+
   function createCommonjsModule(fn, module) {
   	return module = { exports: {} }, fn(module, module.exports), module.exports;
   }
@@ -17773,7 +18160,7 @@
   }
 
   /*
-   Edit only from within MarkupEditor/rollup/src. After running "npm rollup build",
+   Edit only from within MarkupEditor/rollup/src. After running "npm run build",
    the rollup/dist/markupmirror.umd.js is copied into MarkupEditor/Resources/markup.js.
    That file contains the combined ProseMirror code along with markup.js.
    */
@@ -18402,6 +18789,174 @@
       };
   }
   /**
+   * The Searcher class lets us find text ranges that match a search string within the editor element.
+   * 
+   * The searcher uses the ProseMirror search plugin https://github.com/proseMirror/prosemirror-search to create 
+   * and track ranges within the doc that match a given SearchQuery.
+   */
+  class Searcher {
+      
+      constructor() {
+          this._searchString = null;      // what we are searching for
+          this._direction = 'forward';    // direction we are searching in
+          this._caseSensitive = false;    // whether the search is case sensitive
+          this._forceIndexing = true;     // true === rebuild foundRanges before use; false === use foundRanges\
+          this._searchQuery = null;        // the SearchQuery we use
+          this._isActive = false;         // whether we are in "search mode", intercepting Enter/Shift-Enter
+      };
+      
+      /**
+       * Return the range in the direction relative to the selection point that matches text.
+       * 
+       * The text is passed from the Swift side with smartquote nonsense removed and '&quot;'
+       * instead of quotes and '&apos;' instead of apostrophes, so that we can search on text
+       * that includes them and pass them from Swift to JavaScript consistently.
+       */
+      searchFor(text, direction='forward', searchOnEnter=false) {
+          if (!text || (text.length === 0)) {
+              this.cancel();
+              return null;
+          }
+          text = text.replaceAll('&quot;', '"');       // Fix the hack for quotes in the call
+          text = text.replaceAll('&apos;', "'");       // Fix the hack for apostrophes in the call
+      
+          // Rebuild the query if forced or if the search string changed
+          if (this._forceIndexing || (text !== this._searchString)) {
+              this._searchString = text;
+              this._isActive = searchOnEnter;
+              this._buildQuery();
+          }
+          if (getMatchHighlights(view.state).children.length === 0) {
+              this.deactivate();
+              return null;
+          }
+          
+          this._direction = direction;
+          if (searchOnEnter) { this._activate(); }        this._searchInDirection(direction);
+      };
+      
+      /**
+       * Reset the query by forcing it to be recomputed at find time.
+       */
+      _resetQuery() {
+          this._forceIndexing = true;
+      };
+      
+      /**
+       * Return whether search is active, and Enter should be interpreted as a search request
+       */
+      get isActive() {
+          return this._isActive;
+      };
+      
+      /**
+       * Activate search mode where Enter is being intercepted
+       */
+      _activate() {
+          // TODO: Add "searching" to the doc classList
+          this._isActive = true;
+          _callback('activateSearch');
+      }
+      
+      /**
+       * Deactivate search mode where Enter is being intercepted
+       */
+      deactivate() {
+          // TODO: Remove "searching" from the doc classList
+          this._isActive = false;
+          this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
+          const transaction = setSearchState(view.state.tr, this._searchQuery);
+          view.dispatch(transaction);
+          _callback('deactivateSearch');
+      }
+      
+      /**
+       * Stop searchForward()/searchBackward() from being executed on Enter. Force reindexing for next search.
+       */
+      cancel() {
+          this.deactivate();
+          this._resetQuery();
+      };
+      
+      /**
+       * Search forward (might be from Enter when isActive).
+       */
+      searchForward() {
+          this._searchInDirection('forward');
+      };
+      
+      /*
+       * Search backward (might be from Shift+Enter when isActive).
+       */
+      searchBackward() {
+          this._searchInDirection('backward');
+      }
+      
+      /*
+       * Search in the specified direction.
+       */
+      _searchInDirection(direction) {
+          if (this._searchString && (this._searchString.length > 0)) {
+              if (direction == "forward") { findNext(view.state, view.dispatch); } else { findPrev(view.state, view.dispatch); }
+              _callback('searched');
+          }    };
+
+      /**
+       * Create a new SearchQuery and highlight all the matches in the document.
+       */
+      _buildQuery() {
+          this._searchQuery = new SearchQuery({search: this._searchString, caseSensitive: this._caseSensitive});
+          const transaction = setSearchState(view.state.tr, this._searchQuery);
+          view.dispatch(transaction);
+      }
+
+  }
+  /**
+   * The searcher is the singleton that handles finding ranges that
+   * contain a search string within editor.
+   */
+  const searcher = new Searcher();
+  function searchIsActive() { return searcher.isActive }
+
+  /**
+   * Handle pressing Enter.
+   * 
+   * Where Enter is bound in keymap.js, we chain `handleEnter` with `splitListItem`.
+   * 
+   * The logic for handling Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
+   * We only need to report stateChanged when not in search mode.
+   * 
+   * @returns bool    Value is false if subsequent commands (like splitListItem) should execute;
+   *                  else true if execution should stop here (like when search is active)
+   */
+  function handleEnter() {
+      if (searcher.isActive) {
+          searcher.searchForward();
+          return true;
+      }
+      stateChanged();
+      return false;
+  }
+
+  /**
+   * Handle pressing Shift-Enter.
+   * 
+   * The logic for handling Shift-Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
+   * We only need to report stateChanged when not in search mode.
+   * 
+   * @returns bool    Value is false if subsequent commands should execute;
+   *                  else true if execution should stop here (like when search is active)
+   */
+  function handleShiftEnter() {
+      if (searcher.isActive) {
+          searcher.searchBackward();
+          return true;
+      }
+      stateChanged();
+      return false;
+  }
+
+  /**
    * Called to set attributes to the editor div, typically to ,
    * set spellcheck and autocorrect. Note that contenteditable 
    * should not be set for the editor element, even if it is 
@@ -18523,10 +19078,15 @@
   //MARK: Search
 
   function searchFor(text, direction, activate) {
+      const searchOnEnter = activate === 'true';
+      searcher.searchFor(text, direction, searchOnEnter);
+      _callback('searched');
   }
   function deactivateSearch() {
+      searcher.deactivate();
   }
   function cancelSearch() {
+      searcher.cancel();
   }
 
   /********************************************************************************
@@ -19765,6 +20325,7 @@
    * Report a click to the Swift side.
    */
   function clicked() {
+      deactivateSearch();
       _callback('clicked');
   }
 
@@ -19773,6 +20334,7 @@
    * change might be from typing or formatting or styling, etc.
    */
   function stateChanged() {
+      deactivateSearch();
       _callbackInput();
   }
 
@@ -20372,6 +20934,8 @@
       keys[key] = cmd;
     }
 
+    bind("Ctrl-f", findNext);
+    bind("Ctrl-Shift-f", findPrev);
 
     bind("Mod-z", undo);
     bind("Shift-Mod-z", redo);
@@ -20424,10 +20988,13 @@
       // the stateChanged with splitListItem that is bound to Enter here, it always executes, 
       // but it splitListItem will also execute as will anything else beyond it in the chain 
       // if splitListItem returns false (i.e., it doesn't really split the list).
-      bind("Enter", chainCommands(()=>{stateChanged(); return false}, splitListItem(type)));
+      bind("Enter", chainCommands(handleEnter, splitListItem(type)));
       bind("Mod-[", liftListItem(type));
       bind("Mod-]", sinkListItem(type));
     }
+    // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
+    bind("Shift-Enter", handleShiftEnter);
+    
     if (type = schema.nodes.paragraph)
       bind("Shift-Ctrl-0", setBlockType(type));
     if (type = schema.nodes.code_block)
@@ -20537,6 +21104,43 @@
       decorations: (state) => { return muPlugin.getState(state) }
     }
   });
+
+  const searchModePlugin  = new Plugin({
+    state: {
+      init(_, {doc}) {
+        return DecorationSet.create(doc, [])
+      },
+      apply(tr, set) {
+        if (tr.getMeta("search$")) {
+          if (searchIsActive()) {
+            // This only sets class=searching for the first node in doc, I am not sure why.
+            // TODO: Fix. I have some commented-out versions of things I tried that work even less well.
+            const nodeSelection = new NodeSelection(tr.doc.resolve(0));
+            const decoration = Decoration.node(nodeSelection.from, nodeSelection.to, {class: 'searching'});
+            //const decoration = Decoration.widget(0, selectingDOM);
+            //const allSelection = new AllSelection(tr.doc);
+            //const decoration = Decoration.node(allSelection.from, allSelection.to, {class: "searching"});
+            return DecorationSet.create(tr.doc, [decoration])
+          }
+        } else if (set) {
+          // map "other" changes so our decoration "stays put" 
+          // (e.g. user is typing so decoration's pos must change)
+          return set.map(tr.mapping, tr.doc)
+        }
+      }
+    },
+    props: {
+      decorations: (state) => { return searchModePlugin.getState(state) }
+    }
+  });
+
+  //function selectingDOM(view, getPos) {
+  //  const div = document.createElement('div');
+  //  div.setAttribute('width', '100%');
+  //  div.setAttribute('height', '100%');
+  //  div.setAttribute('class', 'searching');
+  //  return div
+  //}
 
   /**
    * The imagePlugin handles the interaction with the Swift side that we need for images.
@@ -20653,6 +21257,10 @@
 
     // Add the plugin to handle notifying the Swift side of images loading
     plugins.push(imagePlugin);
+
+    // Add the plugins that performs search, decorates matches, and indicates searchmode
+    plugins.push(search());
+    plugins.push(searchModePlugin);
 
     return plugins;
   }
