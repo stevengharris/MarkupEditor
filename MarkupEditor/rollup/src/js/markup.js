@@ -704,7 +704,7 @@ class Searcher {
             this.deactivate();
             return null;
         }
-        
+
         this._direction = direction;
         if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
         this._searchInDirection(direction);
@@ -967,7 +967,6 @@ window.addEventListener('resize', function() {
 export function searchFor(text, direction, activate) {
     const searchOnEnter = activate === 'true';
     searcher.searchFor(text, direction, searchOnEnter);
-    _callback('searched')
 };
 
 export function deactivateSearch() {
@@ -987,9 +986,7 @@ export function cancelSearch() {
  * Paste html at the selection, replacing the selection as-needed.
  */
 export function pasteHTML(html) {
-    const node = _nodeFromHTML(html);
-    const transaction = view.state.tr.replaceSelectionWith(node, false)
-    view.dispatch(transaction);
+    view.pasteHTML(html);
     stateChanged();
 };
 
