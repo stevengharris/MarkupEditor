@@ -15,14 +15,14 @@ public class FormatContext: @unchecked Sendable, ObservableObject, Identifiable,
         return lhs.tag == rhs.tag
     }
     
-    public static let B = FormatContext(tag: "B")
-    public static let I = FormatContext(tag: "I")
+    public static let STRONG = FormatContext(tag: "STRONG")
+    public static let EM = FormatContext(tag: "EM")
     public static let U = FormatContext(tag: "U")
-    public static let STRIKE = FormatContext(tag: "DEL")
+    public static let STRIKE = FormatContext(tag: "S")
     public static let SUB = FormatContext(tag: "SUB")
     public static let SUP = FormatContext(tag: "SUP")
     public static let CODE = FormatContext(tag: "CODE")
-    public static let AllCases = [B, I, U, STRIKE, SUB, SUP, CODE]
+    public static let AllCases = [STRONG, EM, U, STRIKE, SUB, SUP, CODE]
     
     public var id: String { tag }
     @Published public var tag: String

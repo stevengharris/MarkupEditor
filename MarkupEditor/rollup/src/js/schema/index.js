@@ -212,7 +212,7 @@ let baseNodes = OrderedMap.from({
 })
 
 // Mix the nodes from prosemirror-schema-list into the baseNodes to create a schema with list support.
-baseNodes = addListNodes(baseNodes, 'paragraph block*', 'block');
+baseNodes = addListNodes(baseNodes, '(paragraph | heading) block*', 'block');
 
 // Create table nodes that support bordering
 const tNodes = tableNodes({
@@ -246,7 +246,9 @@ const emDOM = ["em", 0],
       strongDOM = ["strong", 0], 
       codeDOM = ["code", 0],
       strikeDOM = ["s", 0],
-      uDOM = ["u", 0]
+      uDOM = ["u", 0],
+      subDOM = ["sub", 0],
+      supDOM = ["sup", 0]
 
 // :: Object [Specs](#model.MarkSpec) for the marks in the schema.
 export const marks = {
@@ -281,6 +283,16 @@ export const marks = {
   u: {
     parseDOM: [{tag: "u"}, {style: "text-decoration=underline"}],
     toDOM() { return uDOM }
+  },
+
+  sub: {
+    parseDOM: [{tag: "sub"}, {style: "vertical-align: sub"}],
+    toDOM() { return subDOM }
+  },
+
+  sup: {
+    parseDOM: [{tag: "sup"}, {style: "vertical-align: super"}],
+    toDOM() { return supDOM }
   },
 
   // :: MarkSpec A strong mark. Rendered as `<strong>`, parse rules

@@ -679,35 +679,39 @@ class Searcher {
     };
     
     /**
-     * Return the range in the direction relative to the selection point that matches text.
+     * Select and return the selection.from and selection.to in the direction that matches text.
      * 
      * The text is passed from the Swift side with smartquote nonsense removed and '&quot;'
      * instead of quotes and '&apos;' instead of apostrophes, so that we can search on text
      * that includes them and pass them from Swift to JavaScript consistently.
      */
     searchFor(text, direction='forward', searchOnEnter=false) {
+        let result = {};
         if (!text || (text.length === 0)) {
             this.cancel()
-            return null;
+            return result;
         }
         text = text.replaceAll('&quot;', '"')       // Fix the hack for quotes in the call
         text = text.replaceAll('&apos;', "'")       // Fix the hack for apostrophes in the call
-    
+
         // Rebuild the query if forced or if the search string changed
         if (this._forceIndexing || (text !== this._searchString)) {
             this._searchString = text;
             this._isActive = searchOnEnter
             this._buildQuery();
+            const transaction = setSearchState(view.state.tr, this._searchQuery);
+            view.dispatch(transaction);             // Show all the matches
         };
 
-        if (getMatchHighlights(view.state).children.length === 0) {
+        // Search for text and return the result containing from and to that was found
+        result = this._searchInDirection(direction);
+        if (!result.from) {
             this.deactivate();
-            return null;
+        } else {
+            this._direction = direction;
+            if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
         }
-
-        this._direction = direction;
-        if (searchOnEnter) { this._activate() };    // Only intercept Enter if searchOnEnter is explicitly passed as true
-        this._searchInDirection(direction);
+        return result;
     };
     
     /**
@@ -757,14 +761,14 @@ class Searcher {
      * Search forward (might be from Enter when isActive).
      */
     searchForward() {
-        this._searchInDirection('forward');
+        return this._searchInDirection('forward');
     };
     
     /*
      * Search backward (might be from Shift+Enter when isActive).
      */
     searchBackward() {
-        this._searchInDirection('backward');
+        return this._searchInDirection('backward');
     }
     
     /*
@@ -772,9 +776,11 @@ class Searcher {
      */
     _searchInDirection(direction) {
         if (this._searchString && (this._searchString.length > 0)) {
-            if (direction == "forward") { findNext(view.state, view.dispatch) } else { findPrev(view.state, view.dispatch) }
+            if (direction == "forward") { findNext(view.state, view.dispatch)} else { findPrev(view.state, view.dispatch)};
             _callback('searched')
+            return {from: view.state.selection.from, to: view.state.selection.to};
         };
+        return {}
     };
 
     /**
@@ -782,8 +788,6 @@ class Searcher {
      */
     _buildQuery() {
         this._searchQuery = new SearchQuery({search: this._searchString, caseSensitive: this._caseSensitive});
-        const transaction = setSearchState(view.state.tr, this._searchQuery);
-        view.dispatch(transaction);
     }
 
 };
@@ -1215,23 +1219,42 @@ const _isInlined = function(node) {
  * 
  * The exported placeholderText is set after setting the contents.
  *
- * @param {String} contents The HTML for the editor
+ * @param {string}  contents            The HTML for the editor
+ * @param {boolean} selectAfterLoad     Whether we should focus after load
+ * @param {string}  sel                 An embedded character in contents indicating selection point(s)
  */
-export function setHTML(contents, select=true) {
+export function setHTML(contents, selectAfterLoad=true, sel=null) {
     const state = view.state;
     const doc = state.doc;
     const tr = state.tr;
     const node = _nodeFromHTML(contents);
     const selection = new AllSelection(doc);
-    const transaction = tr
+    let transaction = tr
         .setSelection(selection)
-        .replaceSelectionWith(node, false)
-        .setSelection(TextSelection.near(tr.doc.resolve(0)))
-        .scrollIntoView()
-    const newState = state.apply(transaction);
+        .replaceSelectionWith(node, false);
+    view.dispatch(transaction)
+    if (sel) {
+        const selFrom = searcher.searchFor(sel).from;
+        if (selFrom) {  // Delete the 1st sel
+            view.dispatch(view.state.tr.deleteSelection());
+        };
+        let selTo = searcher.searchFor(sel).to;
+        if (selTo) {    // Delete the 2nd sel
+            view.dispatch(view.state.tr.deleteSelection());
+            selTo = selTo - sel.length;
+        } else {
+            selTo = selFrom;
+        }
+        const $from = view.state.doc.resolve(selFrom);
+        const $to = view.state.doc.resolve(selTo)
+        transaction = view.state.tr.setSelection(new TextSelection($from, $to));
+    } else {
+        transaction = view.state.tr.setSelection(TextSelection.near(view.state.tr.doc.resolve(0)))
+    }
+    transaction.scrollIntoView()
+    view.dispatch(transaction);
     placeholderText = _placeholderText;
-    view.updateState(newState);
-    if (select) view.focus();
+    if (selectAfterLoad) view.focus();
 };
 
 /**
@@ -1613,6 +1636,12 @@ function _toggleFormat(type) {
             break;
         case 'DEL':
             toggle = toggleMark(state.schema.marks.s);
+            break;
+        case 'SUB':
+            toggle = toggleMark(state.schema.marks.sub);
+            break;
+        case 'SUP':
+            toggle = toggleMark(state.schema.marks.sup);
             break;
     };  
     if (toggle) {
