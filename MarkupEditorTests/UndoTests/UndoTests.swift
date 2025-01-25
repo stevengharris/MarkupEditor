@@ -92,9 +92,9 @@ class UndoTests: XCTestCase, MarkupDelegate {
                         test.description = "Undo set format to \(format.description)"
                         test.printDescription()
                         switch format {
-                        case .B:
+                        case .STRONG:
                             self.webView.bold(handler: formatFollowUp)
-                        case .I:
+                        case .EM:
                             self.webView.italic(handler: formatFollowUp)
                         case .U:
                             self.webView.underline(handler: formatFollowUp)
@@ -145,9 +145,9 @@ class UndoTests: XCTestCase, MarkupDelegate {
                         test.description = "Undo unformat from \(format.description)"
                         test.printDescription()
                         switch format {
-                        case .B:
+                        case .STRONG:
                             self.webView.bold(handler: formatFollowUp)
-                        case .I:
+                        case .EM:
                             self.webView.italic(handler: formatFollowUp)
                         case .U:
                             self.webView.underline(handler: formatFollowUp)

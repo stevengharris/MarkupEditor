@@ -33,8 +33,16 @@ public extension String {
         return formattedString
     }
     
-    func styledHtml(adding style: StyleContext, withId: String? = nil) -> String {
-        return Self.startTagFor(style.tag, withId: withId) + self + Self.endTagFor(style.tag)
+    func styledHtml(adding style: StyleContext, startingAt start: Int? = nil, endingAt end: Int? = nil, sel: String? = nil) -> String {
+        guard let start, let end, let sel else {
+            return Self.startTagFor(style.tag) + self + Self.endTagFor(style.tag)
+        }
+        var withSel = self
+        let iStart = withSel.index(startIndex, offsetBy: start)
+        let iEnd = withSel.index(startIndex, offsetBy: end + sel.count)
+        withSel.insert(contentsOf: sel, at: iStart)
+        withSel.insert(contentsOf: sel, at: iEnd)
+        return Self.startTagFor(style.tag) + withSel + Self.endTagFor(style.tag)
     }
     
     func unformattedHtml(removing format: FormatContext) -> String? {

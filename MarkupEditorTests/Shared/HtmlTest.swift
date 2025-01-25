@@ -22,10 +22,10 @@ public struct HtmlTest {
     public var endChildNodeIndex: Int?
     public var pasteString: String?
     
-    public init(description: String? = nil, startHtml: String, endHtml: String, undoHtml: String? = nil, startId: String, startOffset: Int, endId: String, endOffset: Int, startChildNodeIndex: Int? = nil, endChildNodeIndex: Int? = nil, pasteString: String? = nil) {
+    public init(description: String? = nil, startHtml: String, endHtml: String? = nil, undoHtml: String? = nil, startId: String, startOffset: Int, endId: String, endOffset: Int, startChildNodeIndex: Int? = nil, endChildNodeIndex: Int? = nil, pasteString: String? = nil) {
         self.description = description
         self.startHtml = startHtml
-        self.endHtml = endHtml
+        self.endHtml = endHtml ?? startHtml
         self.undoHtml = undoHtml
         self.startId = startId
         self.startOffset = startOffset
@@ -36,7 +36,15 @@ public struct HtmlTest {
         self.pasteString = pasteString
     }
     
-    public static func forFormatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int) -> HtmlTest {
+    /// Return an HtmlTest that embeds markers for the selection point(s) in the `startHtml`. The selection to/from are identified using `sel`.
+    /// On the JavaScript side, these markers are removed and the corresponding selection is set. The actual HTML that is tested and returned
+    /// from the test will not contain the embedded `sel` markers, so endHtml and undoHtml, if set, should not embed such markers.
+    /// TODO: For now, the ids, offsets, and index value are set to zero, as they are no longer meaningful.
+    public static func withSelection(description: String? = nil, startHtml: String, endHtml: String? = nil, undoHtml: String? = nil, pasteString: String? = nil) -> HtmlTest {
+        return HtmlTest(description: description, startHtml: startHtml, endHtml: endHtml, startId: "", startOffset: 0, endId: "", endOffset: 0, pasteString: pasteString)
+    }
+    
+    public static func forFormatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int, sel: String? = nil) -> HtmlTest {
         // Return an HTMLTest appropriate for formatting a range from startOffset to endOffset in styled HTML
         // For example, to test bolding of the word "is" in the following: <p id: "p">This is a start.</p>, use:
         //      HtmlTest.forFormatting("This is a start.", style: .P, format: .B, startingAt: 5, endingAt: 7)
@@ -48,13 +56,13 @@ public struct HtmlTest {
         //  - endId : "p"
         //  - endOffset : 7
         let lcTag = style.tag.lowercased()
-        let styledWithId = rawString.styledHtml(adding: style, withId: lcTag)
+        let styledWithId = rawString.styledHtml(adding: style, startingAt: startOffset, endingAt: endOffset, sel: sel)
         let formattedOnly = rawString.formattedHtml(adding: format, startingAt: startOffset, endingAt: endOffset)
-        let styledAndFormatted = formattedOnly.styledHtml(adding: style, withId: lcTag)
+        let styledAndFormatted = formattedOnly.styledHtml(adding: style)
         return HtmlTest(startHtml: styledWithId, endHtml: styledAndFormatted, startId: lcTag, startOffset: startOffset, endId: lcTag, endOffset: endOffset)
     }
     
-    public static func forUnformatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int) -> HtmlTest {
+    public static func forUnformatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int, sel: String? = nil) -> HtmlTest {
         // Return an HTMLTest appropriate for unformatting a range from startOffset to endOffset in styled HTML
         // For example, to test unbolding of the word "is" in the following: <p>This <b id: "b">is</b> a start.</p>, use:
         //      HtmlTest.forUnformatting("This is a start.", style: .P, format: .B, startingAt: 5, endingAt: 7)
@@ -67,8 +75,8 @@ public struct HtmlTest {
         // - endOffset : 2
         let lcTag = format.tag.lowercased()
         let styledOnly = rawString.styledHtml(adding: style)
-        let formattedWithId = rawString.formattedHtml(adding: format, startingAt: startOffset, endingAt: endOffset, withId: lcTag)
-        let styledAndFormatted = formattedWithId.styledHtml(adding: style)
+        let formattedWithId = rawString.formattedHtml(adding: format, startingAt: startOffset, endingAt: endOffset)
+        let styledAndFormatted = formattedWithId.styledHtml(adding: style, startingAt: startOffset, endingAt: endOffset, sel: sel)
         return HtmlTest(startHtml: styledAndFormatted, endHtml: styledOnly, startId: lcTag, startOffset: 0, endId: lcTag, endOffset: endOffset - startOffset)
     }
     

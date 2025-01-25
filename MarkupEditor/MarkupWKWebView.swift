@@ -634,10 +634,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Set the html content for testing after a delay.
     ///
     /// The small delay seems to avoid intermitted problems when running many tests together.
-    public func setTestHtml(value: String, sel: String? = nil, handler: (() -> Void)? = nil) {
-        let selArg = sel == nil ? "null" : "'\(sel!)'"
+    public func setTestHtml(value: String, sel: String = "|", handler: (() -> Void)? = nil) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.evaluateJavaScript("MU.setHTML('\(value.escaped)', false, \(selArg))") { result, error in handler?() }
+            self.evaluateJavaScript("MU.setTestHTML('\(value.escaped)', '\(sel)')") { result, error in
+                handler?()
+            }
         }
     }
     
@@ -752,6 +753,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     public func setHtml(_ html: String, handler: (()->Void)? = nil) {
         self.html = html    // Our local record of what we set, used by setHtmlIfChanged
+        // FYI, we use the term selectAfterLoad here, but on the JavaScript side, it is focusAfterLoad.
         evaluateJavaScript("MU.setHTML('\(html.escaped)', \(selectAfterLoad))") { result, error in
             handler?()
         }

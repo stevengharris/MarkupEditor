@@ -19308,15 +19308,41 @@
   };
 
   /**
+   * Set the HTML `contents` and select the text identified by `sel`
+   * @param {*} contents  The HTML for the editor
+   * @param {*} sel       An embedded character in contents indicating selection point(s)
+   */
+  function setTestHTML(contents, sel) {
+      setHTML(contents, false);   // Do a normal setting of HTML
+      if (!sel) return;           // Don't do any selection if we don't know what marks it
+      const selFrom = searcher.searchFor(sel).from;
+      if (selFrom) {              // Delete the 1st sel
+          view.dispatch(view.state.tr.deleteSelection());
+      }    let selTo = searcher.searchFor(sel).to;
+      if (selTo) {                // Delete the 2nd sel
+          view.dispatch(view.state.tr.deleteSelection());
+          selTo = selTo - sel.length;
+      } else {
+          selTo = selFrom;
+      }
+      if (!selFrom) return;       // We tried to find sel, but could not
+
+      // Set the selection based on where we found the sel markers
+      const $from = view.state.doc.resolve(selFrom);
+      const $to = view.state.doc.resolve(selTo);
+      const transaction = view.state.tr.setSelection(new TextSelection($from, $to));
+      view.dispatch(transaction);
+  }
+
+  /**
    * Set the contents of the editor.
    * 
    * The exported placeholderText is set after setting the contents.
    *
    * @param {string}  contents            The HTML for the editor
    * @param {boolean} selectAfterLoad     Whether we should focus after load
-   * @param {string}  sel                 An embedded character in contents indicating selection point(s)
    */
-  function setHTML(contents, selectAfterLoad=true, sel=null) {
+  function setHTML(contents, focusAfterLoad=true) {
       const state = view.state;
       const doc = state.doc;
       const tr = state.tr;
@@ -19325,28 +19351,13 @@
       let transaction = tr
           .setSelection(selection)
           .replaceSelectionWith(node, false);
-      view.dispatch(transaction);
-      if (sel) {
-          const selFrom = searcher.searchFor(sel).from;
-          if (selFrom) {  // Delete the 1st sel
-              view.dispatch(view.state.tr.deleteSelection());
-          }        let selTo = searcher.searchFor(sel).to;
-          if (selTo) {    // Delete the 2nd sel
-              view.dispatch(view.state.tr.deleteSelection());
-              selTo = selTo - sel.length;
-          } else {
-              selTo = selFrom;
-          }
-          const $from = view.state.doc.resolve(selFrom);
-          const $to = view.state.doc.resolve(selTo);
-          transaction = view.state.tr.setSelection(new TextSelection($from, $to));
-      } else {
-          transaction = view.state.tr.setSelection(TextSelection.near(view.state.tr.doc.resolve(0)));
-      }
-      transaction.scrollIntoView();
+      const $pos = transaction.doc.resolve(0);
+      transaction
+          .setSelection(TextSelection.near($pos))
+          .scrollIntoView();
       view.dispatch(transaction);
       placeholderText = _placeholderText;
-      if (selectAfterLoad) view.focus();
+      if (focusAfterLoad) view.focus();
   }
   /**
    * Internal value of placeholder text
@@ -19779,15 +19790,18 @@
       doc.nodesBetween(selection.from, selection.to, (node, pos) => {
           if (node.type === view.state.schema.nodes.div) { 
               return true;
-          } else if (node.isBlock) { 
-              transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
+          } else if (node.isBlock) {
+              if (node.type.inlineContent) {
+                  transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
+              } else {    // Keep searching if in blockquote or other than p, h1-h6
+                  return true;
+              }
           }        return false;   // We only need top-level nodes within doc
       });
       const newState = view.state.apply(transaction);
       view.updateState(newState);
       stateChanged();
   }
-
   /********************************************************************************
    * Lists
    */
@@ -19928,7 +19942,6 @@
    * Else, do nothing.
    *
    */
-  //TODO: Do the right thing for lists
   function outdent() {
       const selection = view.state.selection;
       const blockquote = view.state.schema.nodes.blockquote;
@@ -19936,8 +19949,13 @@
       const ol = view.state.schema.nodes.ordered_list;
       let newState;
       view.state.doc.nodesBetween(selection.from, selection.to, node => {
-          if ((node.type === blockquote) || (node.type == ul) || (node.type == ol)) {   
+          if ((node.type == blockquote) || (node.type == ul) || (node.type == ol)) {   
               lift(view.state, (transaction) => {
+                  // Note that some selections will not outdent, even though they
+                  // contain outdentable items. For example, multiple blockquotes 
+                  // within a selection cannot be outdented. However, multiple 
+                  // blocks (e.g., p) can be outdented within a blockquote, because
+                  // the selection is identifying the paragraphs to be outdented.
                   newState = view.state.apply(transaction);
               });
           }        return true;
@@ -21391,6 +21409,7 @@
   exports.setPlaceholder = setPlaceholder;
   exports.setRange = setRange;
   exports.setStyle = setStyle;
+  exports.setTestHTML = setTestHTML;
   exports.setTopLevelAttributes = setTopLevelAttributes;
   exports.startModalInput = startModalInput;
   exports.testBlockquoteEnter = testBlockquoteEnter;
