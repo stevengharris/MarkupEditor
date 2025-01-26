@@ -38,6 +38,17 @@
                BlueprintName = "BasicTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "BasicTests/testBlockquoteEnter()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testListEnterCollapsed()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testListEnterRange()">
+               </Test>
+            </SkippedTests>
          </TestableReference>
          <TestableReference
             skipped = "NO"

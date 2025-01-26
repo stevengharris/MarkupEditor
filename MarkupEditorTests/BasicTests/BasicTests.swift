@@ -1134,135 +1134,77 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testBlockquoteEnter() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at beginning of simple paragraph in blockquote",
-                startHtml: "<blockquote><p>This is a simple paragraph</p></blockquote>",
-                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p>This is a simple paragraph</p></blockquote>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
+                startHtml: "<blockquote><p>|This is a simple paragraph</p></blockquote>",
+                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p>This is a simple paragraph</p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter in middle of simple paragraph in blockquote",
-                startHtml: "<blockquote><p>This is a simple paragraph</p></blockquote>",
-                endHtml: "<blockquote><p>This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote>",
-                startId: "p",
-                startOffset: 13,
-                endId: "p",
-                endOffset: 13
+                startHtml: "<blockquote><p>This is a sim|ple paragraph</p></blockquote>",
+                endHtml: "<blockquote><p>This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at end of simple paragraph in blockquote",
-                startHtml: "<blockquote><p>This is a simple paragraph</p></blockquote>",
-                endHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote>",
-                startId: "p",
-                startOffset: 26,
-                endId: "p",
-                endOffset: 26
+                startHtml: "<blockquote><p>This is a simple paragraph|</p></blockquote>",
+                endHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at beginning of simple paragraph in nested blockquotes",
-                startHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote></blockquote>",
-                endHtml: "<blockquote><blockquote><p><br></p></blockquote><blockquote><p>This is a simple paragraph</p></blockquote></blockquote>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
+                startHtml: "<blockquote><blockquote><p>|This is a simple paragraph</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p><br></p></blockquote><blockquote><p>This is a simple paragraph</p></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter in middle of simple paragraph in nested blockquotes",
-                startHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote></blockquote>",
-                endHtml: "<blockquote><blockquote><p>This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote></blockquote>",
-                startId: "p",
-                startOffset: 13,
-                endId: "p",
-                endOffset: 13
+                startHtml: "<blockquote><blockquote><p>This is a sim|ple paragraph</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p>This is a sim</p></blockquote><blockquote><p>ple paragraph</p></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at end of simple paragraph in nested blockquotes",
-                startHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote></blockquote>",
-                endHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote></blockquote>",
-                startId: "p",
-                startOffset: 26,
-                endId: "p",
-                endOffset: 26
+                startHtml: "<blockquote><blockquote><p>This is a simple paragraph|</p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at end of empty paragraph in nested blockquotes",
-                startHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote></blockquote>",
-                endHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote><blockquote><p><br></p></blockquote></blockquote>",
-                startId: "empty",
-                startOffset: 0,
-                endId: "empty",
-                endOffset: 0
+                startHtml: "<blockquote><blockquote><p>This is a simple paragraph|</p></blockquote><blockquote><p><br></p></blockquote></blockquote>",
+                endHtml: "<blockquote><blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote><blockquote><p><br></p></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Outdent on enter at end of empty paragraph in unnested blockquotes",
-                startHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p><br></p></blockquote>",
-                endHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><p><br></p>",
-                startId: "empty",
-                startOffset: 0,
-                endId: "empty",
-                endOffset: 0
+                startHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><blockquote><p>|</p></blockquote>",
+                endHtml: "<blockquote><p>This is a simple paragraph</p></blockquote><p><br></p>"
             ),
             // We don't wait for images to load or fail, so we specify the class, tabindex, width, and height on
             // input so we get the same thing back.
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter before image in blockquote",
-                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
+                startHtml: "<blockquote><p>|<img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p><br></p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter after image in blockquote",
-                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><br></p></blockquote>",
-                startId: "p",
-                startOffset: 1,
-                endId: "p",
-                endOffset: 1
+                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">|</p></blockquote>",
+                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><br></p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter between images in blockquote",
-                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                startId: "p",
-                startOffset: 1,
-                endId: "p",
-                endOffset: 1
+                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">|<img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter between text and image in blockquote",
-                startHtml: "<blockquote><p>Hello<img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                endHtml: "<blockquote><p>Hello</p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
-                startId: "p",
-                startOffset: 5,
-                endId: "p",
-                endOffset: 5,
-                startChildNodeIndex: 0,
-                endChildNodeIndex: 0
+                startHtml: "<blockquote><p>Hello|<img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>",
+                endHtml: "<blockquote><p>Hello</p></blockquote><blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter between image and text in blockquote",
-                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">Hello</p></blockquote>",
-                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p>Hello</p></blockquote>",
-                startId: "p",
-                startOffset: 1,
-                endId: "p",
-                endOffset: 1
+                startHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\">|Hello</p></blockquote>",
+                endHtml: "<blockquote><p><img src=\"steve.png\" alt=\"Local image\" class=\"resize-image\" tabindex=\"-1\" width=\"20\" height=\"20\"></p></blockquote><blockquote><p>Hello</p></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Enter at end of text in formatted element",
-                startHtml: "<blockquote><p><strong>Hello</strong></p></blockquote>",
-                endHtml: "<blockquote><p><strong>Hello</strong></p></blockquote><blockquote><p><strong><br></strong></p></blockquote>",
-                startId: "b",
-                startOffset: 5,
-                endId: "b",
-                endOffset: 5
+                startHtml: "<blockquote><p><strong>Hello|</strong></p></blockquote>",
+                endHtml: "<blockquote><p><strong>Hello</strong></p></blockquote><blockquote><p><strong><br></strong></p></blockquote>"
             ),
         ]
         for test in htmlTests {
@@ -1270,26 +1212,19 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let startHtml = test.startHtml
             let endHtml = test.endHtml
             let expectation = XCTestExpectation(description: "Enter being pressed inside of blockquotes")
-            // We set a handler for when 'undoSet' is received, which happens after the undo stack is all set after _doListEnter.
-             // Within that handler, we set a handler for when 'input' is received, which happens after the undo is complete.
-             // When the undo is done, the html should be what we started with.
-             webView.setTestHtml(value: startHtml) {
-                 self.webView.getRawHtml { contents in
-                      self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                     self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                         // Define the handler to execute after input is received (i.e., once the operation is
-                         // complete and has changed the html).
-                         self.addInputHandler {
-                             self.webView.getRawHtml { formatted in
-                                 self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                 expectation.fulfill()
-                             }
-                         }
-                         // Kick off the enter operation in the blockquote we selected
-                         self.webView.testBlockquoteEnter()
-                     }
-                 }
-             }
+            webView.setTestHtml(value: startHtml) {
+                self.webView.getRawHtml { contents in
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.addInputHandler {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
+                        }
+                    }
+                    // Kick off the enter operation in the blockquote we selected
+                    self.webView.testBlockquoteEnter()
+                }
+            }
             wait(for: [expectation], timeout: 30)
         }
     }
@@ -1300,14 +1235,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
         // below show the selection using "|" for clarity.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Make a paragraph into an ordered list",
-                    startHtml: "<p>Hello <strong>world</strong></p>",
-                    endHtml: "<ol><li><p>Hello <strong>world</strong></p></li></ol>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<p>He|llo <strong>world</strong></p>",
+                    endHtml: "<ol><li><p>Hello <strong>world</strong></p></li></ol>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1318,14 +1249,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Make a paragraph into an unordered list",
-                    startHtml: "<p>Hello <strong>world</strong></p>",
-                    endHtml: "<ul><li><p>Hello <strong>world</strong></p></li></ul>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<p>He|llo <strong>world</strong></p>",
+                    endHtml: "<ul><li><p>Hello <strong>world</strong></p></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1336,14 +1263,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove a list item from a single-element unordered list, thereby removing the list, too",
-                    startHtml: "<ul><li><p>Hello <strong>world</strong></p></li></ul>",
-                    endHtml: "<p>Hello <strong>world</strong></p>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo <strong>world</strong></p></li></ul>",
+                    endHtml: "<p>Hello <strong>world</strong></p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1354,14 +1277,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove a list item from a single-element ordered list, thereby removing the list, too",
-                    startHtml: "<ol><li><p>Hello <strong>world</strong></p></li></ol>",
-                    endHtml: "<p>Hello <strong>world</strong></p>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<ol><li><p>He|llo <strong>world</strong></p></li></ol>",
+                    endHtml: "<p>Hello <strong>world</strong></p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1372,14 +1291,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove a list item from a multi-element unordered list, leaving the list in place",
-                    startHtml: "<ul><li><p>Hello <strong>world1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
-                    endHtml: "<ul><p>Hello <strong>world1</strong></p><li><p>Hello <strong>world2</strong></p></li></ul>",
-                    startId: "b",
-                    startOffset: 2,
-                    endId: "b",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
+                    endHtml: "<p>Hello <strong>world1</strong></p><ul><li><p>Hello <strong>world2</strong></p></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1390,14 +1305,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Change one of the list items in a multi-element unordered list to an ordered list item",
-                    startHtml: "<ul><li><p>Hello <strong>world1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
-                    endHtml: "<ol><li><p>Hello <strong>world1</strong></p></li></ol><ul><li><p>Hello <strong>world2</strong></p></li></ul>",
-                    startId: "b",
-                    startOffset: 2,
-                    endId: "b",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
+                    endHtml: "<ol><li><p>Hello <strong>world1</strong></p></li></ol><ul><li><p>Hello <strong>world2</strong></p></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1408,14 +1319,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove UL <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    startHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    endHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+                    endHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1426,14 +1333,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Outdent <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    startHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    endHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "p",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+                    endHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1444,14 +1347,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Outdent <ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
-                    startHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    endHtml: "<ul><li><p>Hello paragraph</p></li><li><h5>Hello header in list</h5></li></ul>",
-                    startId: "h",
-                    startOffset: 2,
-                    endId: "h",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+                    endHtml: "<ul><li><p>Hello paragraph</p></li><li><h5>Hello header in list</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1469,14 +1368,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Mucking about with lists and selections in them")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
-                        action() {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    action() {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -1488,14 +1384,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
     func testMultiLists() throws {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "UL <p>He|llo world1</p><p>He|llo world2</p>",
-                    startHtml: "<p>Hello world1</p><p>Hello world2</p>",
-                    endHtml: "<ul><li><p>Hello world1</p></li><li><p>Hello world2</p></li></ul>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<p>He|llo world1</p><p>He|llo world2</p>",
+                    endHtml: "<ul><li><p>Hello world1</p></li><li><p>Hello world2</p></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1506,14 +1398,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove UL <ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
-                    startHtml: "<ul><li><p>Hello world1</p></li><li><p>Hello world2</p></li></ul>",
-                    endHtml: "<p>Hello world1</p><p>Hello world2</p>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+                    endHtml: "<p>Hello world1</p><p>Hello world2</p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1524,14 +1412,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "UL <p>He|llo world1</p><h5>He|llo world2</h5>",
-                    startHtml: "<p>Hello world1</p><h5>Hello world2</h5>",
-                    endHtml: "<ul><li><p>Hello world1</p></li><li><h5>Hello world2</h5></li></ul>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<p>He|llo world1</p><h5>He|llo world2</h5>",
+                    endHtml: "<ul><li><p>Hello world1</p></li><li><h5>Hello world2</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1542,14 +1426,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove UL <ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
-                    startHtml: "<ul><li><p>Hello world1</p></li><li><h5>Hello world2</h5></li></ul>",
-                    endHtml: "<p>Hello world1</p><h5>Hello world2</h5>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+                    endHtml: "<p>Hello world1</p><h5>Hello world2</h5>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1560,14 +1440,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
-                    startHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
-                    endHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "h",
-                    endOffset: 2
+                    startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    endHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1578,14 +1454,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
-                    startHtml: "<ul><li><p>Hello paragraph</p></li><ul><li><h5>Hello header in list</h5></li></ul></ul>",
-                    endHtml: "<p>Hello paragraph</p><h5>Hello header in list</h5>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "h",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+                    endHtml: "<p>Hello paragraph</p><h5>Hello header in list</h5>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1596,14 +1468,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
-                    startHtml: "<p>Hello paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
-                    endHtml: "<ol><li><p>Hello paragraph</p><ol><li><h5>Hello header in list</h5></li></ol></li></ol>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "h",
-                    endOffset: 2
+                    startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                    endHtml: "<ol><li><p>Hello paragraph</p><ol><li><h5>Hello header in list</h5></li></ol></li></ol>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1614,14 +1482,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove OL <ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
-                    startHtml: "<ol><li><p>Hello paragraph</p></li><ol><li><h5>Hello header in list</h5></li></ol></ol>",
-                    endHtml: "<p>Hello paragraph</p><h5>Hello header in list</h5>",
-                    startId: "p",
-                    startOffset: 2,
-                    endId: "h",
-                    endOffset: 2
+                    startHtml: "<ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
+                    endHtml: "<p>Hello paragraph</p><h5>Hello header in list</h5>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1632,14 +1496,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "UL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                    startHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ol><li>Ordered sublist.</li></ol></li></ul>",
-                    endHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li>Ordered sublist.</li></ul></li></ul>",
-                    startId: "h5",
-                    startOffset: 2,
-                    endId: "li",
-                    endOffset: 2
+                    startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    endHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li>Ordered sublist.</li></ul></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1650,15 +1510,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove UL <ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
-                    startHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
-                    endHtml: "<h5>Unordered <em>H5</em> list.</h5><p>Unordered sublist.</p>",
-                    undoHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
-                    startId: "h5",
-                    startOffset: 2,
-                    endId: "li",
-                    endOffset: 2
+                    startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul></li></ul>",
+                    endHtml: "<h5>Unordered <em>H5</em> list.</h5><p>Unordered sublist.</p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1669,14 +1524,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "OL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                    startHtml: "<ul><li><h5>Unordered <em>H5</em> list.</h5><ol><li>Ordered sublist.</li></ol></li></ul>",
-                    endHtml: "<ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li>Ordered sublist.</li></ol></li></ol>",
-                    startId: "h5",
-                    startOffset: 2,
-                    endId: "li",
-                    endOffset: 2
+                    startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
+                    endHtml: "<ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li>Ordered sublist.</li></ol></li></ol>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1687,15 +1538,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Remove OL <ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
-                    startHtml: "<ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
-                    endHtml: "<h5>Unordered <em>H5</em> list.</h5><p>Ordered sublist.</p>",
-                    undoHtml: "<ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
-                    startId: "h5",
-                    startOffset: 2,
-                    endId: "li",
-                    endOffset: 2
+                    startHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
+                    endHtml: "<h5>Unordered <em>H5</em> list.</h5><p>Ordered sublist.</p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1706,14 +1552,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "UL interleaved paragraphs and lists",
-                    startHtml: "<p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-                    endHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1724,14 +1566,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Unset all UL interleaved paragraphs and lists",
-                    startHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
-                    endHtml: "<p>Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p>Ordered list paragraph 1</p>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+                    endHtml: "<p>Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p>Ordered list paragraph 1</p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1742,14 +1580,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Set all OL lists and sublists",
-                    startHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
-                    endHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+                    endHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1760,14 +1594,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "OL interleaved paragraphs and lists",
-                    startHtml: "<p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-                    endHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+                    endHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1778,14 +1608,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Unset all OL interleaved paragraphs and lists",
-                    startHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
-                    endHtml: "<p>Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p>Ordered list paragraph 1</p>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+                    endHtml: "<p>Top-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>Top-level paragraph 2</p><p>Ordered list paragraph 1</p>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1796,14 +1622,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Set all UL lists and sublists",
-                    startHtml: "<ol><li><p>Top-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>Top-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
-                    endHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
-                    startId: "p1",
-                    startOffset: 2,
-                    endId: "p2",
-                    endOffset: 2
+                    startHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+                    endHtml: "<ul><li><p>Top-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>Top-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1821,14 +1643,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "List operations with selections spanning multiple elements")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset) { result in
-                        // Execute the action to unformat at the selection
-                        action() {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    action() {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -1838,23 +1657,13 @@ class BasicTests: XCTestCase, MarkupDelegate {
     }
     
     func testListEnterCollapsed() throws {
-        // The selection (startId, startOffset, endId, endOffset) is always identified
-        // using the innermost element id and the offset into it. Inline comments
-        // below show the selection using "|" for clarity.
-        //
-        // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
+        // TODO: Remove... The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter at end of h5",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5></li><li><h5><br></h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",
-                    startOffset: 3,
-                    endId: "h5",
-                    endOffset: 3,
-                    startChildNodeIndex: 2,
-                    endChildNodeIndex: 2
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.|</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5></li><li><h5><br></h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1865,14 +1674,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter at beginning of h5",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5><br></h5></li><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",
-                    startOffset: 0,
-                    endId: "h5",
-                    endOffset: 0
+                    startHtml: "<ul><li><h5>|Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5><br></h5></li><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1883,14 +1688,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter in \"Bul|leted item 1.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>leted&nbsp;<em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",
-                    startOffset: 3,
-                    endId: "h5",
-                    endOffset: 3
+                    startHtml: "<ul><li><h5>Bul|leted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>leted&nbsp;<em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1901,16 +1702,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter in \"Bulleted item 1|.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em>&nbsp;1</h5></li><li><h5>.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",
-                    startOffset: 2,
-                    endId: "h5",
-                    endOffset: 2,
-                    startChildNodeIndex: 2,
-                    endChildNodeIndex: 2
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1|.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em>&nbsp;1</h5></li><li><h5>.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1921,14 +1716,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter in italicized \"item\" in \"Bulleted it|em 1.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>em</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",
-                    startOffset: 2,
-                    endId: "i",
-                    endOffset: 2
+                    startHtml: "<ul><li><h5>Bulleted <em>it|em</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>em</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1939,14 +1730,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter at end of unstyled \"Numbered item 1.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li><p><br></p></li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol1",
-                    startOffset: 16,
-                    endId: "ol1",
-                    endOffset: 16
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.|</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li><p><br></p></li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1957,14 +1744,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter at beginning of unstyled \"Numbered item 1.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p><br></p></li><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol1",
-                    startOffset: 0,
-                    endId: "ol1",
-                    endOffset: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>|Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p><br></p></li><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1975,14 +1758,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Split unstyled \"Number|ed item 1.\"",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Number</li><li><p>ed item 1.</p></li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol1",
-                    startOffset: 6,
-                    endId: "ol1",
-                    endOffset: 6
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Number|ed item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Number</li><li><p>ed item 1.</p></li><li>Numbered item 2.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -1993,14 +1772,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Enter in empty list item at end of list.",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5><br></h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li></ul><h5><br></h5>",
-                    startId: "h52",
-                    startOffset: 0,
-                    endId: "h52",
-                    endOffset: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li><li><h5>|</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li>Numbered item 1.</li><li>Numbered item 2.</li></ol></li></ul><h5></h5>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2018,14 +1793,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Enter being pressed in a list with various collapsed selections")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        // Execute the action to press Enter at the selection
-                        action() {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    action() {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -2035,23 +1807,13 @@ class BasicTests: XCTestCase, MarkupDelegate {
     }
     
     func testListEnterRange() throws {
-        // The selection (startId, startOffset, endId, endOffset) is always identified
-        // using the innermost element id and the offset into it. Inline comments
-        // below show the selection using "|" for clarity.
-        //
-        // The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
+        // TODO: Remove... The startHtml includes styled items in the <ul> and unstyled items in the <ol>, and we test both.
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Word in single styled list item",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P&nbsp;</p></li><li><p>item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol1",     // Select "Numbered "
-                    startOffset: 2,
-                    endId: "ol1",
-                    endOffset: 11,
-                    startChildNodeIndex: 0,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered |item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P&nbsp;</p></li><li><p>item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2062,14 +1824,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Word in single unstyled list item",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered&nbsp;</li><li><p>6.</p></li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol6",     // Select "item "
-                    startOffset: 9,
-                    endId: "ol6",
-                    endOffset: 14
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered |item |6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered&nbsp;</li><li><p>6.</p></li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2080,14 +1838,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Part of a formatted item in a styled list item",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>i</em></h5></li><li><h5><em>m</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",     // Select "<em>i|te|m</em>" which is itself inside of an <h5>
-                    startOffset: 1,
-                    endId: "i",
-                    endOffset: 3
+                    startHtml: "<ul><li><h5>Bulleted <em>i|te|m</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>i</em></h5></li><li><h5><em>m</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2098,14 +1852,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "The entire formatted item in a styled list item (note the zero width chars in the result)",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>\u{200B}</em></h5></li><li><h5><em>\u{200B}</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",     // Select the entire "<em>item</em>" which is itself inside of an <h5>
-                    startOffset: 9,
-                    endId: "i",
-                    endOffset: 4
+                    startHtml: "<ul><li><h5>Bulleted <em>|item|</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>\u{200B}</em></h5></li><li><h5><em>\u{200B}</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2116,14 +1866,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Only the enclosed formatted item in a styled list item (note the zero width chars in the result)",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>\u{200B}</em></h5></li><li><h5><em>\u{200B}</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",     // Select only the text "item" inside of <em>item</em> which is itself inside of an <h5>
-                    startOffset: 0,
-                    endId: "i",
-                    endOffset: 4
+                    startHtml: "<ul><li><h5>Bulleted <em>|item|</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>\u{200B}</em></h5></li><li><h5><em>\u{200B}</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2134,16 +1880,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in one styled list item, end in another",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P&nbsp;</p></li><li><p>Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol1",     // Select "P |Numbered item 1."
-                    startOffset: 2,
-                    endId: "ol3",       // Select "P |Numbered item 3."
-                    endOffset: 2,
-                    startChildNodeIndex: 0,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P |Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P&nbsp;</p></li><li><p>Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2154,14 +1894,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection at start of one unstyled list item, end in another",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li><p><br></p></li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol6",     // Select "|Numbered item 6."
-                    startOffset: 0,
-                    endId: "ol8",       // Select "|Numbered item 8."
-                    endOffset: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>|Numbered item 6.</li><li>Numbered item 7.</li><li>|Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li><p><br></p></li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2172,16 +1908,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection at start of one styled list item, end in another",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p><br></p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol2",     // Select "|P Numbered item 2."
-                    startOffset: 0,
-                    endId: "ol4",       // Select "|P Numbered item 4."
-                    endOffset: 0,
-                    startChildNodeIndex: 0,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>|P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>|P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p><br></p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2192,15 +1922,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in a styled list item, end in an unstyled one",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Num</p></li><li><p>bered item 7.</p></li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "ol2",     // Select "P Num|bered item 2."
-                    startOffset: 5,
-                    endId: "ol7",       // Select "Num|bered item 7."
-                    endOffset: 3,
-                    startChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Num|bered item 1.</p></li><li><p>P Num|bered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Num|bered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Num</p></li><li><p>bered item 7.</p></li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2211,14 +1936,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in a bulleted list item, end in an ordered unformatted one",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>bered item 7.</h5><ol><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h5",     // Select "Bul|leted item 2."
-                    startOffset: 3,
-                    endId: "ol7",       // Select "Num|bered item 7."
-                    endOffset: 3
+                    startHtml: "<ul><li><h5>Bul|leted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Num|bered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bul|leted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>bered item 7.</h5><ol><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2229,15 +1950,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in a bulleted list item, end in an ordered formatted one",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>bered item 3.</h5><ol><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "h51",     // Select "Bul|leted item 2."
-                    startOffset: 3,
-                    endId: "ol3",       // Select "P Num|bered item 3."
-                    endOffset: 5,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bul|leted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Num|bered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bul|leted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bul</h5></li><li><h5>bered item 3.</h5><ol><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2248,15 +1964,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in a formatted item in a bulleted list item, end in an ordered formatted one",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>\u{200B}</em>bered item 3.</h5><ol><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",       // Select "<em>it!em</em>"
-                    startOffset: 2,
-                    endId: "ol3",       // Select "P Num|bered item 3."
-                    endOffset: 5,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>it|em</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Num|bered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>\u{200B}</em>bered item 3.</h5><ol><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2267,15 +1978,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 }
             ),
             (
-                HtmlTest(
+                HtmlTest.withSelection(
                     description: "Begin selection in a formatted item in a bulleted list item, end in an ordered unformatted one",
-                    startHtml: "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Numbered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>\u{200B}</em>bered item 7.</h5><ol><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
-                    startId: "i",       // Select "<em>it!em</em>"
-                    startOffset: 2,
-                    endId: "ol7",       // Select "Num|bered item 7."
-                    endOffset: 3,
-                    endChildNodeIndex: 0
+                    startHtml: "<ul><li><h5>Bulleted <em>it|em</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li>Numbered item 5.</li><li>Numbered item 6.</li><li>Num|bered item 7.</li><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+                    endHtml: "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>\u{200B}</em>bered item 7.</h5><ol><li>Numbered item 8.</li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>"
                 ),
                 { handler in
                     self.webView.getSelectionState() { state in
@@ -2293,14 +1999,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: test.description ?? "Enter being pressed in a list with various range selections")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        // Execute the action to press Enter at the selection
-                        action() {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    action() {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -2311,32 +2014,20 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testInsertTable() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
-                description: "Insert at beginning of a paragraph",
-                startHtml: "<p>This is a simple paragraph</p>",
-                endHtml: "<table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table><p>This is a simple paragraph</p>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
-            ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Insert in the middle of a paragraph",
-                startHtml: "<p>This is a simple paragraph</p>",
-                endHtml: "<p>This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
-                startId: "p",
-                startOffset: 13,
-                endId: "p",
-                endOffset: 13
+                startHtml: "<p>This is a sim|ple paragraph</p>",
+                endHtml: "<p>This is a sim</p><table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>ple paragraph</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Insert in the end of a paragraph",
-                startHtml: "<p>This is a simple paragraph</p>",
-                endHtml: "<p>This is a simple paragraph</p><table><tbody><tr><td><br></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>",
-                startId: "p",
-                startOffset: 26,
-                endId: "p",
-                endOffset: 26
+                startHtml: "<p>This is a simple paragraph|</p>",
+                endHtml: "<p>This is a simple paragraph</p><table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table>"
+            ),
+            HtmlTest.withSelection(
+                description: "Insert at beginning of a paragraph",
+                startHtml: "<p>|This is a simple paragraph</p>",
+                endHtml: "<table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is a simple paragraph</p>"
             ),
         ]
         for test in htmlTests {
@@ -2346,19 +2037,15 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Insert a table")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        // Define the handler to execute after input is received (i.e., once the operation is
-                        // complete and has changed the html).
-                        self.addInputHandler {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.addInputHandler {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
-                        // Kick off the insert table action
-                        self.webView.insertTable(rows: 2, cols: 2)
                     }
+                    // Kick off the insert table action
+                    self.webView.insertTable(rows: 2, cols: 2)
                 }
             }
             wait(for: [expectation], timeout: 30)

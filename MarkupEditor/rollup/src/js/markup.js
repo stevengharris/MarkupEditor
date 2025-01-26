@@ -1225,15 +1225,14 @@ export function setTestHTML(contents, sel) {
     const selFrom = searcher.searchFor(sel).from;
     if (selFrom) {              // Delete the 1st sel
         view.dispatch(view.state.tr.deleteSelection());
-    };
+    } else {
+        return;
+    }
     let selTo = searcher.searchFor(sel).to;
-    if (selTo) {                // Delete the 2nd sel
+    if (selTo != selFrom) {     // Delete the 2nd sel if there is one; if not, they are the same
         view.dispatch(view.state.tr.deleteSelection());
         selTo = selTo - sel.length;
-    } else {
-        selTo = selFrom;
     }
-    if (!selFrom) return;       // We tried to find sel, but could not
 
     // Set the selection based on where we found the sel markers
     const $from = view.state.doc.resolve(selFrom);
@@ -2615,37 +2614,39 @@ function copyImage(node) {
  * @param   {Int}                 cols        The number of columns in the table to be created.
  */
 export function insertTable(rows, cols) {
-    let state = view.state;
-    const selection = state.selection;
-    const nodeTypes = state.schema.nodes;
+    const selection = view.state.selection;
+    const nodeTypes = view.state.schema.nodes;
     // Create a table with a single empty cell
-    const paragraph = state.schema.node('paragraph');
+    const paragraph = view.state.schema.node('paragraph');
     const cell = nodeTypes.table_cell.create(null, paragraph);
     const row = nodeTypes.table_row.create(null, cell);
     const table = nodeTypes.table.createChecked(null, row);
     if (!table) return;     // Something went wrong, like we tried to insert it at a disallowed spot
     // Replace the existing selection range and track the transaction
-    const transaction = state.tr.replaceRangeWith(selection.from, selection.to, table);
+    let transaction = view.state.tr.replaceRangeWith(selection.from, selection.to, table);
+    let state = view.state.apply(transaction)
     // Locate the paragraph position in the transaction's doc
     let pPos;
-    transaction.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
-        if (node.type === paragraph.type) {
+    state.tr.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
+        if (node === paragraph) {
             pPos = pos;
             return false;
         };
         return true;
     });
     // Set the selection in the empty cell, apply it to the state and dispatch to the view
-    transaction.setSelection(new TextSelection(transaction.doc.resolve(pPos)));
-    state.apply(transaction);
-    view.dispatch(transaction);
+    const cellSelection = new TextSelection(state.tr.doc.resolve(pPos))
+    transaction = state.tr.setSelection(cellSelection);
+    state = state.apply(transaction);
     // The selection is in the one empty cell, so add new rows/columns in the view
     for (let j = 0; j < rows - 1; j++) {
-        addRowAfter(view.state, view.dispatch);
+        addRowAfter(state, (tr) => {state = state.apply(tr)});
     };
     for (let i = 0; i < cols - 1; i++) {
-        addColumnAfter(view.state, view.dispatch);
+        addColumnAfter(state, (tr) => {state = state.apply(tr)});
     };
+    view.updateState(state);
+    stateChanged()
 };
 
 /**

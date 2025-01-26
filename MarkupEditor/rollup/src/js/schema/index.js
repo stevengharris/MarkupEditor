@@ -232,9 +232,14 @@ const tNodes = tableNodes({
   }
 });
 tNodes.table.attrs = {class: {default: 'bordered-table-cell'}};
-tNodes.table.parseDOM = [{tag: 'table', getAttrs(dom) {
-  return {class: dom.getAttribute('class')}
-}}];
+// The class for table indicates the type of bordering so needs to be parsed and output as 
+// part of the table.
+tNodes.table.parseDOM = [{
+  tag: 'table', 
+  getAttrs(dom) {
+    return {class: dom.getAttribute('class')}
+  }
+}];
 tNodes.table.toDOM = (node) => { let tClass = node.attrs; return ['table', tClass, 0] };
 
 // Append the modified tableNodes and export the resulting nodes
