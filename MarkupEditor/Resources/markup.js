@@ -20620,35 +20620,38 @@
    * @param   {Int}                 cols        The number of columns in the table to be created.
    */
   function insertTable(rows, cols) {
+      if ((rows < 1) || (cols < 1)) return;
       const selection = view.state.selection;
       const nodeTypes = view.state.schema.nodes;
-      // Create a table with a single empty cell
-      const paragraph = view.state.schema.node('paragraph');
-      const cell = nodeTypes.table_cell.create(null, paragraph);
-      const row = nodeTypes.table_row.create(null, cell);
-      const table = nodeTypes.table.createChecked(null, row);
+      let firstP;
+      const table_rows = [];
+      for (let j = 0; j < rows; j++) {
+          const table_cells = [];
+          for (let i = 0; i < cols; i++) {
+              const paragraph = view.state.schema.node('paragraph');
+              if ((i == 0) && (j == 0)) firstP = paragraph;
+              table_cells.push(nodeTypes.table_cell.create(null, paragraph));
+          }
+          table_rows.push(nodeTypes.table_row.create(null, table_cells));
+      }
+      const table = nodeTypes.table.createChecked(null, table_rows);
       if (!table) return;     // Something went wrong, like we tried to insert it at a disallowed spot
       // Replace the existing selection range and track the transaction
       let transaction = view.state.tr.replaceRangeWith(selection.from, selection.to, table);
       let state = view.state.apply(transaction);
-      // Locate the paragraph position in the transaction's doc
+      // Locate the first paragraph position in the transaction's doc
       let pPos;
       state.tr.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
-          if (node === paragraph) {
+          if (node === firstP) {
               pPos = pos;
               return false;
           }        return true;
       });
-      // Set the selection in the empty cell, apply it to the state and dispatch to the view
+      // Set the selection in the first cell, apply it to the state and  the view
       const cellSelection = new TextSelection(state.tr.doc.resolve(pPos));
       transaction = state.tr.setSelection(cellSelection);
       state = state.apply(transaction);
-      // The selection is in the one empty cell, so add new rows/columns in the view
-      for (let j = 0; j < rows - 1; j++) {
-          addRowAfter(state, (tr) => {state = state.apply(tr);});
-      }    for (let i = 0; i < cols - 1; i++) {
-          addColumnAfter(state, (tr) => {state = state.apply(tr);});
-      }    view.updateState(state);
+      view.updateState(state);
       stateChanged();
   }
   /**

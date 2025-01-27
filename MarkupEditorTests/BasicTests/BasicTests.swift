@@ -2015,6 +2015,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
     func testInsertTable() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest.withSelection(
+                description: "Insert at beginning of a paragraph",
+                startHtml: "<p>|This is a simple paragraph</p>",
+                endHtml: "<table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is a simple paragraph</p>"
+            ),
+            HtmlTest.withSelection(
                 description: "Insert in the middle of a paragraph",
                 startHtml: "<p>This is a sim|ple paragraph</p>",
                 endHtml: "<p>This is a sim</p><table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>ple paragraph</p>"
@@ -2023,11 +2028,6 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 description: "Insert in the end of a paragraph",
                 startHtml: "<p>This is a simple paragraph|</p>",
                 endHtml: "<p>This is a simple paragraph</p><table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table>"
-            ),
-            HtmlTest.withSelection(
-                description: "Insert at beginning of a paragraph",
-                startHtml: "<p>|This is a simple paragraph</p>",
-                endHtml: "<table class=\"bordered-table-cell\"><tr><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is a simple paragraph</p>"
             ),
         ]
         for test in htmlTests {
