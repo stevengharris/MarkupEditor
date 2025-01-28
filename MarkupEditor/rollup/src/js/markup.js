@@ -2232,12 +2232,13 @@ function _getImageAttributes() {
  *
  * @returns {Object}   An object with properties populated that are consumable in Swift.
  */
-function _getTableAttributes() {
-    const selection = view.state.selection;
-    const nodeTypes = view.state.schema.nodes;
+function _getTableAttributes(state) {
+    const viewState = state ?? view.state;
+    const selection = viewState.selection;
+    const nodeTypes = viewState.schema.nodes;
     const attributes = {};
-    view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-        let $pos = view.state.doc.resolve(pos);
+    viewState.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        let $pos = viewState.doc.resolve(pos);
         switch (node.type) {
             case nodeTypes.table:
                 attributes.table = true;
@@ -2249,7 +2250,7 @@ function _getTableAttributes() {
                 // for the table_header by looking at nodesBetween from and to.
                 attributes.rows = node.childCount;
                 attributes.cols = 0;
-                view.state.doc.nodesBetween(attributes.from, attributes.to, (node) => {
+                viewState.doc.nodesBetween(attributes.from, attributes.to, (node) => {
                     switch (node.type) {
                         case nodeTypes.table_header:
                             attributes.header = true;
@@ -2677,12 +2678,22 @@ export function addRow(direction) {
  */
 export function addCol(direction) {
     if (!_tableSelected()) return;
+    let state = view.state;
+    const startSelection = new TextSelection(state.selection.$anchor, state.selection.$head)
+    let offset = 0;
     if (direction === 'BEFORE') {
-        addColumnBefore(view.state, view.dispatch);
+        addColumnBefore(state, (tr)=> {state = state.apply(tr)});
+        offset = 4  // An empty cell
     } else {
-        addColumnAfter(view.state, view.dispatch);
+        addColumnAfter(state, (tr)=> {state = state.apply(tr)});
     };
-    _mergeHeaders();
+    _mergeHeaders(state, (tr)=> {state = state.apply(tr)});
+    const $anchor = state.tr.doc.resolve(startSelection.from + offset);
+    const $head = state.tr.doc.resolve(startSelection.to + offset);
+    const selection = new TextSelection($anchor, $head);
+    const transaction = state.tr.setSelection(selection);
+    state = state.apply(transaction);
+    view.updateState(state);
     view.focus();
     stateChanged();
 };
@@ -2693,16 +2704,36 @@ export function addCol(direction) {
  * @param {boolean} colspan     Whether the header should span all columns of the table or not.
  */
 export function addHeader(colspan=true) {
-    const tableAttributes = _getTableAttributes();
+    let tableAttributes = _getTableAttributes();
     if (!tableAttributes.table || tableAttributes.header) return;   // We're not in a table or we are but it has a header already
-    _selectInFirstCell();
-    addRowBefore(view.state, view.dispatch);
-    _selectInFirstCell();
-    toggleHeaderRow(view.state, view.dispatch);
+    let state = view.state;
+    const nodeTypes = state.schema.nodes
+    const startSelection = new TextSelection(state.selection.$anchor, state.selection.$head)
+    _selectInFirstCell(state, (tr) => {state = state.apply(tr)});
+    addRowBefore(state, (tr) => {state = state.apply(tr)});
+    _selectInFirstCell(state, (tr) => {state = state.apply(tr)});
+    toggleHeaderRow(state, (tr) => {state = state.apply(tr)});
     if (colspan) {
-        _mergeHeaders();
-        _selectInFirstCell();
+       _mergeHeaders(state, (tr)=> {state = state.apply(tr)});
     };
+    // At this point, the state.selection is in the new header row we just added. By definition, 
+    // the header is placed before the original selection, so we can add its size to the 
+    // selection to restore the selection to where it was before.
+    tableAttributes = _getTableAttributes(state);
+    let headerSize;
+    state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node) => {
+        if (!headerSize && (node.type == nodeTypes.table_row)) {
+            headerSize = node.nodeSize;
+            return false;
+        }
+        return (node.type == nodeTypes.table);  // We only want to recurse over table
+    })
+    const $anchor = state.tr.doc.resolve(startSelection.from + headerSize);
+    const $head = state.tr.doc.resolve(startSelection.to + headerSize);
+    const selection = new TextSelection($anchor, $head);
+    const transaction = state.tr.setSelection(selection);
+    state = state.apply(transaction);
+    view.updateState(state);
     view.focus();
     stateChanged();
 };
@@ -2746,17 +2777,13 @@ function _tableSelected() {
     return _getTableAttributes().table;
 };
 
-/**
- * Set the selection to the first cell of the table or 
- * do nothing if we can't.
- */
-function _selectInFirstCell() {
-    const tableAttributes = _getTableAttributes();
+function _selectInFirstCell(state, dispatch) {
+    const tableAttributes = _getTableAttributes(state);
     if (!tableAttributes.table) return;
-    const nodeTypes = view.state.schema.nodes; 
+    const nodeTypes = state.schema.nodes; 
     // Find the position of the first paragraph in the table
     let pPos;
-    view.state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+    state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
         if ((!pPos) && (node.type === nodeTypes.paragraph)) {
             pPos = pos;
             return false;
@@ -2765,7 +2792,7 @@ function _selectInFirstCell() {
     });
     if (!pPos) return;
     // Set the selection in the first paragraph in the first cell
-    const $pos = view.state.doc.resolve(pPos);
+    const $pos = state.doc.resolve(pPos);
     // When the first cell is an empty colspanned header, the $pos resolves to a table_cell,
     // so we need to use NodeSelection in that case.
     let selection;
@@ -2774,13 +2801,15 @@ function _selectInFirstCell() {
     } else {
         selection = new TextSelection($pos);
     };
-    const transaction = view.state.tr.setSelection(selection);
-    view.state.apply(transaction);
-    view.dispatch(transaction);
+    const transaction = state.tr.setSelection(selection);
+    state.apply(transaction);
+    if (dispatch) {
+        dispatch(transaction);
+    }
 };
 
 /**
- * Merge any extra headers created after inserting a column.
+ * Merge any extra headers created after inserting a column or adding a header.
  * 
  * When inserting at the left or right column of a table, the addColumnBefore and 
  * addColumnAfter also insert a new cell/td within the header row. Since in 
@@ -2788,32 +2817,24 @@ function _selectInFirstCell() {
  * merge the cells together when this happens. The operations that insert internal 
  * columns don't cause the header row to have a new cell.
  */
-function _mergeHeaders() {
-    const selection = view.state.selection;
-    const tableAttributes = _getTableAttributes();
+function _mergeHeaders(state, dispatch) {
+    const nodeTypes = state.schema.nodes;
     const headers = [];
-    view.state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
-        switch (node.type) {
-            case view.state.schema.nodes.table_header:
-                headers.push(pos)
-                return false;
-        };
+    let tableAttributes = _getTableAttributes(state);
+    state.tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+        if (node.type == nodeTypes.table_header) {
+            headers.push(pos)
+            return false;
+        }
         return true;
     });
     if (headers.length > 1) {
         const firstHeaderPos = headers[0];
         const lastHeaderPos = headers[headers.length - 1];
-        const delta = lastHeaderPos - firstHeaderPos;
-        const rowSelection = CellSelection.create(view.state.doc, firstHeaderPos, lastHeaderPos);
-        const transaction = view.state.tr.setSelection(rowSelection);
-        let state = view.state.apply(transaction);
-        mergeCells(state, (tr) => {
-            state = state.apply(tr);   // Merge the cells in the header row
-            // And then reselect what was selected before
-            const textSelection = TextSelection.create(state.doc, selection.from - delta, selection.to - delta);
-            tr.setSelection(textSelection);
-            view.dispatch(tr);
-        });
+        const rowSelection = CellSelection.create(state.tr.doc, firstHeaderPos, lastHeaderPos);
+        let transaction = state.tr.setSelection(rowSelection);
+        const newState = state.apply(transaction);
+        mergeCells(newState, dispatch)
     };
 };
 

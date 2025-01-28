@@ -2054,14 +2054,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testTableActions() throws {
         let htmlTestAndActions: [(HtmlTest, ((@escaping ()->Void)->Void))] = [
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Delete row",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.deleteRow() {
@@ -2069,14 +2065,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Delete col",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.deleteCol() {
@@ -2084,14 +2076,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Delete table",
-                startHtml: "<p>Hello</p><table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>world</p>",
-                endHtml: "<p>Hello</p><p>world</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<p>Hello</p><table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>world</p>",
+                endHtml: "<p>Hello</p><p>world</p>"
             ),
              { handler in
                  self.webView.deleteTable() {
@@ -2099,14 +2087,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Add row above",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p></p></td><td><p></p></td></tr><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.addRow(.before) {
@@ -2114,14 +2098,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Add row below",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p><br></p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p></p></td><td><p></p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.addRow(.after) {
@@ -2129,14 +2109,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Add col before",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p><br></p></td><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p><br></p></td><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p></p></td><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p></p></td><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.addCol(.before) {
@@ -2144,14 +2120,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Add col after",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p><br></p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p><br></p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><td><p>Row 0, Col 0</p></td><td><p></p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p></p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.addCol(.after) {
@@ -2159,14 +2131,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Add header",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                endHtml: "<table><thead><tr><th colspan=\"2\"><p><br></p></th></tr></thead><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table><p>Hello</p>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+                endHtml: "<table><tr><th colspan=\"2\"><p></p></th></tr><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>"
             ),
              { handler in
                  self.webView.addHeader() {
@@ -2174,14 +2142,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Set cell border",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table class=\"bordered-table-cell\"><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+                endHtml: "<table class=\"bordered-table-cell\"><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>"
             ),
              { handler in
                  self.webView.borderTable(.cell) {
@@ -2189,14 +2153,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Set header border",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table class=\"bordered-table-header\"><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+                endHtml: "<table class=\"bordered-table-header\"><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>"
             ),
              { handler in
                  self.webView.borderTable(.header) {
@@ -2204,14 +2164,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Set outer border",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table class=\"bordered-table-outer\"><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+                endHtml: "<table class=\"bordered-table-outer\"><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>"
             ),
              { handler in
                  self.webView.borderTable(.outer) {
@@ -2219,14 +2175,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
                  }
              }
             ),
-            (HtmlTest(
+            (HtmlTest.withSelection(
                 description: "Set no border",
-                startHtml: "<table><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                endHtml: "<table class=\"bordered-table-none\"><tbody><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></tbody></table>",
-                startId: "00",
-                startOffset: 3,
-                endId: "00",
-                endOffset: 3
+                startHtml: "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+                endHtml: "<table class=\"bordered-table-none\"><tr><td><p>Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>"
             ),
              { handler in
                  self.webView.borderTable(.none) {
@@ -2242,13 +2194,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Perform actions on a table")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        action {
-                            self.webView.getRawHtml { formatted in
-                                self.assertEqualStrings(expected: endHtml, saw: formatted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    action {
+                        self.webView.getRawHtml { formatted in
+                            self.assertEqualStrings(expected: endHtml, saw: formatted)
+                            expectation.fulfill()
                         }
                     }
                 }
