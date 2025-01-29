@@ -18742,7 +18742,7 @@
   // Add STRONG and EM (leaving B and I) to support default ProseMirror output   
   const _formatTags = ['B', 'STRONG', 'I', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];       // All possible (nestable) formats
 
-  const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE'];           // Convert to 'P' for pasteText
+  const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE'];           // Convert to 'P' for pasteText
 
   const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM']; // Tags that are self-closing
 
@@ -18778,6 +18778,7 @@
       };
       
       static NoDiv = new MUError('NoDiv', 'A div could not be found to return HTML from.');
+      static Style = new MUError('Style', 'Unable to apply style at selection.')
       
       setInfo(info) {
           this.info = info;
@@ -19781,6 +19782,9 @@
           case 'H6':
               node = nodeTypes.heading.create({level: 6});
               break;
+          case 'PRE':
+              node = nodeTypes.code_block.create();
+              break;
       }    return node;
   }
   /**
@@ -19791,22 +19795,35 @@
       const doc = view.state.doc;
       const selection = view.state.selection;
       const tr = view.state.tr;
-      let transaction;
+      let transaction, error;
       doc.nodesBetween(selection.from, selection.to, (node, pos) => {
           if (node.type === view.state.schema.nodes.div) { 
               return true;
           } else if (node.isBlock) {
               if (node.type.inlineContent) {
-                  transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
+                  try {
+                      transaction = tr.setNodeMarkup(pos, protonode.type, protonode.attrs);
+                  } catch(e) {
+                      // We might hit multiple errors across the selection, but we will only return one MUError.Style
+                      error = MUError.Style;
+                      if ((e instanceof RangeError) && (protonode.type == view.state.schema.nodes.code_block)) {
+                          // This is so non-obvious when people encounter it, it needs some explanation
+                          error.info = ('Code style can only be applied to unformatted text.');
+                      }
+                  }
               } else {    // Keep searching if in blockquote or other than p, h1-h6
                   return true;
               }
           }        return false;   // We only need top-level nodes within doc
       });
-      const newState = view.state.apply(transaction);
-      view.updateState(newState);
-      stateChanged();
-  }
+      if (error) {
+          error.alert = true;
+          error.callback();
+      } else {
+          const newState = view.state.apply(transaction);
+          view.updateState(newState);
+          stateChanged();
+      }}
   /********************************************************************************
    * Lists
    */
@@ -20348,6 +20365,9 @@
               break;
           case 'heading':
               style = "H" + node.attrs.level;
+              break;
+          case 'code_block':
+              style = "PRE";
               break;
       }    return style;
   }
@@ -21381,7 +21401,7 @@
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: false,   // TODO: We need a way to make this configurable at setup time
+        menuBar: true,   // TODO: We need a way to make this configurable at setup time
         schema: muSchema
       })
     }),

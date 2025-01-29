@@ -730,6 +730,34 @@ class BasicTests: XCTestCase, MarkupDelegate {
                     }
                 }
             ),
+            (
+                HtmlTest.withSelection(
+                    description: "Replace p with code",
+                    startHtml: "<p>He|llo wor|ld</p>",
+                    endHtml: "<pre><code>Hello world</code></pre>"
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .PRE) {
+                            handler()
+                        }
+                    }
+                }
+            ),
+            (
+                HtmlTest.withSelection(
+                    description: "Fail to replace p containing formatted text with code",
+                    startHtml: "<p>He<strong>llo| wor</strong>ld</p>",
+                    endHtml: "<p>He<strong>llo wor</strong>ld</p>"
+                ),
+                { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .PRE) {
+                            handler()
+                        }
+                    }
+                }
+            ),
             ]
         for (test, action) in htmlTestAndActions {
             test.printDescription()
@@ -2216,23 +2244,15 @@ class BasicTests: XCTestCase, MarkupDelegate {
     /// can be done using "clean" strings.
     func testPasteHtmlPreprocessing() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean HTML should not change",
                 startHtml: "<h5>This is just a simple paragraph.</h5>",
-                endHtml: "<h5>This is just a simple paragraph.</h5>",
-                startId: "h5",
-                startOffset: 10,
-                endId: "h5",
-                endOffset: 10
+                endHtml: "<h5>This is just a simple paragraph.</h5>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up a simple copy buffer of h1 from the MarkupEditor",
                 startHtml: "<h1 style=\"font-size: 2.5em; font-weight: bold; margin: 0px 0px 10px; caret-color: rgb(0, 0, 255); color: rgba(0, 0, 0, 0.847); font-family: UICTFontTextStyleBody; font-style: normal; font-variant-caps: normal; letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: none; -webkit-text-stroke-width: 0px; text-decoration: none;\">Welcome to the MarkupEditor Demo</h1><br class=\"Apple-interchange-newline\">",
-                endHtml: "<h1>Welcome to the MarkupEditor Demo</h1><p><br></p>",
-                startId: "h1",
-                startOffset: 10,
-                endId: "h1",
-                endOffset: 10
+                endHtml: "<h1><strong>Welcome to the MarkupEditor Demo</strong></h1><p><br></p>"
             ),
             HtmlTest(
                 description: "Clean up text that includes HTML",
