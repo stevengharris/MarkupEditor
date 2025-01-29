@@ -41,7 +41,7 @@ public struct HtmlTest {
     /// from the test will not contain the embedded `sel` markers, so endHtml and undoHtml, if set, should not embed such markers.
     /// TODO: For now, the ids, offsets, and index value are set to zero, as they are no longer meaningful.
     public static func withSelection(description: String? = nil, startHtml: String, endHtml: String? = nil, undoHtml: String? = nil, pasteString: String? = nil) -> HtmlTest {
-        return HtmlTest(description: description, startHtml: startHtml, endHtml: endHtml, startId: "", startOffset: 0, endId: "", endOffset: 0, pasteString: pasteString)
+        return HtmlTest(description: description, startHtml: startHtml, endHtml: endHtml, undoHtml: undoHtml, startId: "", startOffset: 0, endId: "", endOffset: 0, pasteString: pasteString)
     }
     
     public static func forFormatting(_ rawString: String, style: StyleContext, format: FormatContext, startingAt startOffset: Int, endingAt endOffset: Int, sel: String? = nil) -> HtmlTest {

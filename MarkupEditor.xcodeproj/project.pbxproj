@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
+		AA0BE59F2D4AEA4300F0090E /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
@@ -36,7 +37,6 @@
 		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
 		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
-		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
 		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA408B192616683B00CAE8B9 /* MarkupEditor.h in Headers */ = {isa = PBXBuildFile; fileRef = AAFADF64261525B90024F2DC /* MarkupEditor.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -3983,7 +3983,7 @@
 			files = (
 				AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */,
 				AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */,
-				AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */,
+				AA0BE59F2D4AEA4300F0090E /* UndoTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

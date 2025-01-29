@@ -2254,60 +2254,45 @@ class BasicTests: XCTestCase, MarkupDelegate {
                 startHtml: "<h1 style=\"font-size: 2.5em; font-weight: bold; margin: 0px 0px 10px; caret-color: rgb(0, 0, 255); color: rgba(0, 0, 0, 0.847); font-family: UICTFontTextStyleBody; font-style: normal; font-variant-caps: normal; letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: none; -webkit-text-stroke-width: 0px; text-decoration: none;\">Welcome to the MarkupEditor Demo</h1><br class=\"Apple-interchange-newline\">",
                 endHtml: "<h1><strong>Welcome to the MarkupEditor Demo</strong></h1><p><br></p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up text that includes HTML",
                 startHtml: "<p>These are angle brackets: < and >.</p>",
-                endHtml: "<p>These are angle brackets: &lt; and &gt;.</p>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
+                endHtml: "<p>These are angle brackets: &lt; and &gt;.</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Copy/paste from VSCode",
                 startHtml: "<meta charset='utf-8'><div style=\"color: #d4d4d4;background-color: #1e1e1e;font-family: Menlo, Monaco, 'Courier New', monospace;font-weight: normal;font-size: 12px;line-height: 18px;white-space: pre;\"><div><span style=\"color: #d4d4d4;\">Hello </span><span style=\"color: #808080;\">&lt;</span><span style=\"color: #569cd6;\">b</span><span style=\"color: #808080;\">&gt;</span><span style=\"color: #d4d4d4;\">bold</span><span style=\"color: #808080;\">&lt;/</span><span style=\"color: #569cd6;\">b</span><span style=\"color: #808080;\">&gt;</span><span style=\"color: #d4d4d4;\"> world</span></div></div>",
-                endHtml: "<p>Hello &lt;b&gt;bold&lt;/b&gt; world</p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>Hello &lt;b&gt;bold&lt;/b&gt; world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 // From https://stackoverflow.com/a/50547246/8968411
                 description: "Clean up complex content from StackOverflow",
                 startHtml: "<meta charset=\"UTF-8\"><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">List of One Liners</strong></p><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\">Let\'s solve this problem for this array:</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\"><span class=\"hljs-keyword\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-keyword);\">var</span> array = [<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'A\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'C\'</span>];\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">1. Remove only the first:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">indexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">2. Remove only the last:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">lastIndexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">3. Remove all occurrences:</strong></p><pre class=\"lang-js s-code-block\" style=\"margin: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array = array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">filter</span>(<span class=\"hljs-function\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\"><span class=\"hljs-params\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\">v</span> =&gt;</span> v !== <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>); </code></pre>",
-                endHtml: "<p><strong>List of One Liners</strong></p><p>Let\'s solve this problem for this array:</p><p><code>var array = [\'A\', \'B\', \'C\'];</code></p><p><strong>1. Remove only the first:</strong>&nbsp;Use If you are sure that the item exist</p><p><code>array.splice(array.indexOf(\'B\'), 1);</code></p><p><strong>2. Remove only the last:</strong>&nbsp;Use If you are sure that the item exist</p><p><code>array.splice(array.lastIndexOf(\'B\'), 1);</code></p><p><strong>3. Remove all occurrences:</strong></p><p><code>array = array.filter(v =&gt; v !== \'B\'); </code></p>",
-                startId: "p", 
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml:
+                    """
+                    <p><strong>List of One Liners</strong></p><p>Let's solve this problem for this array:</p><pre><code>var array = ['A', 'B', 'C'];
+                    </code></pre><p><strong>1. Remove only the first:</strong>&nbsp;Use If you are sure that the item exist</p><pre><code>array.splice(array.indexOf('B'), 1);
+                    </code></pre><p><strong>2. Remove only the last:</strong>&nbsp;Use If you are sure that the item exist</p><pre><code>array.splice(array.lastIndexOf('B'), 1);
+                    </code></pre><p><strong>3. Remove all occurrences:</strong></p><pre><code>array = array.filter(v =&gt; v !== 'B'); </code></pre>
+                    """
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Simple multiline text from MacOS Notes",
                 startHtml: "This is a test<br><br>Of a note<br>But what is this?",
-                endHtml: "<p>This is a test<br><br>Of a note<br>But what is this?</p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>This is a test<br><br>Of a note<br>But what is this?</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Trailing <BR> in MacOS Notes",
                 startHtml: "This is a test<br>",
-                endHtml: "<p>This is a test<br></p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>This is a test<br></p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Rosetta Stone from iOS Notes",
                 startHtml: "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<meta http-equiv=\"Content-Style-Type\" content=\"text/css\">\n<title></title>\n<meta name=\"Generator\" content=\"Cocoa HTML Writer\">\n<style type=\"text/css\">\np.p1 {margin: 0.0px 0.0px 3.0px 0.0px; font: 28.0px \'.AppleSystemUIFont\'}\np.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'; min-height: 22.0px}\np.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\np.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.Apple Color Emoji UI\'}\np.p5 {margin: 9.0px 0.0px 8.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\nli.li3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\nspan.s1 {font-family: \'UICTFontTextStyleBody\'; font-weight: bold; font-style: normal; font-size: 28.00px}\nspan.s2 {font-family: \'UICTFontTextStyleBody\'; font-weight: normal; font-style: normal; font-size: 17.00px}\nspan.s3 {font-family: \'UICTFontTextStyleEmphasizedBody\'; font-weight: bold; font-style: normal; font-size: 17.00px}\nspan.s4 {font-family: \'UICTFontTextStyleItalicBody\'; font-weight: normal; font-style: italic; font-size: 17.00px}\nspan.s5 {font-family: \'UICTFontTextStyleBody\'; font-weight: normal; font-style: normal; font-size: 17.00px; text-decoration: underline}\nspan.s6 {font-family: \'UICTFontTextStyleEmphasizedItalicBody\'; font-weight: bold; font-style: italic; font-size: 17.00px; text-decoration: underline}\nspan.s7 {font-family: \'UICTFontTextStyleBody\'; font-weight: bold; font-style: normal; font-size: 17.00px}\nspan.s8 {font-family: \'.AppleColorEmojiUI\'; font-weight: normal; font-style: normal; font-size: 17.00px}\nspan.Apple-tab-span {white-space:pre}\ntable.t1 {border-collapse: collapse}\ntd.td1 {border-style: solid; border-width: 1.0px 1.0px 1.0px 1.0px; border-color: #aaaaaa #aaaaaa #aaaaaa #aaaaaa; padding: 1.0px 5.0px 1.0px 5.0px}\nol.ol1 {list-style-type: decimal}\nul.ul1 {list-style-type: circle}\nul.ul2 {list-style-type: \'✓  \'}\nul.ul3 {list-style-type: disc}\n</style>\n</head>\n<body>\n<p class=\"p1\"><span class=\"s1\">Notes Test for MarkupEditor</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\"><span class=\"Apple-tab-span\">\t</span>An indented paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p3\"><span class=\"s2\">With another immediately below.</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph with </span><span class=\"s3\">bold</span><span class=\"s2\">, </span><span class=\"s4\">italic</span><span class=\"s2\">, and </span><span class=\"s5\">underline</span><span class=\"s2\"> , and </span><span class=\"s6\">combo formatting</span><span class=\"s2\"> in it and a <a href=\"http://foo.com\">link</a>.</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ul class=\"ul1\">\n<li class=\"li3\"><span class=\"s2\">A checklist</span></li>\n</ul>\n<ul class=\"ul2\">\n<li class=\"li3\"><span class=\"s2\">With a checked item</span></li>\n</ul>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p1\"><span class=\"s1\">A Title</span></p>\n<p class=\"p3\"><span class=\"s7\">A Subtitle</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ol class=\"ol1\">\n<li class=\"li3\"><span class=\"s2\">A numbered list</span></li>\n<li class=\"li3\"><span class=\"s2\">With two items</span></li>\n<ol class=\"ol1\">\n<li class=\"li3\"><span class=\"s2\">One of which has a subitem</span></li>\n</ol>\n</ol>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ul class=\"ul3\">\n<li class=\"li3\"><span class=\"s2\">A bulleted list</span></li>\n<li class=\"li3\"><span class=\"s2\">With two items</span></li>\n<ul class=\"ul3\">\n<li class=\"li3\"><span class=\"s2\">One of which has a subitem</span></li>\n</ul>\n</ul>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<table cellspacing=\"0\" cellpadding=\"0\" class=\"t1\">\n<tbody>\n<tr>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">A table</span></p>\n</td>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">With two columns</span></p>\n</td>\n</tr>\n<tr>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">And two rows</span></p>\n</td>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p4\"><span class=\"s8\">😜</span></p>\n</td>\n</tr>\n</tbody>\n</table>\n<p class=\"p3\"><span class=\"s2\">And here is an image…</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p5\"><span class=\"s2\"><img src=\"file:///Pasted%20Graphic.png\" alt=\"Pasted Graphic.png\"></span></p>\n</body>\n</html>\n",
-                endHtml: "<p>Notes Test for MarkupEditor</p><p><br></p><p>A paragraph&nbsp;</p><p><br></p><p>&nbsp;&nbsp;&nbsp;&nbsp;An indented paragraph&nbsp;</p><p><br></p><p>A paragraph&nbsp;</p><p>With another immediately below.</p><p><br></p><p>A paragraph with bold, italic, and underline , and combo formatting in it and a <a href=\"http://foo.com\">link</a>.</p><p><br></p><ul><li>A checklist</li></ul><ul><li>With a checked item</li></ul><p><br></p><p>A Title</p><p>A Subtitle</p><p><br></p><ol><li>A numbered list</li><li>With two items</li><ol><li>One of which has a subitem</li></ol></ol><p><br></p><ul><li>A bulleted list</li><li>With two items</li><ul><li>One of which has a subitem</li></ul></ul><p><br></p><table cellspacing=\"0\" cellpadding=\"0\"><tbody><tr><td valign=\"top\"><p>A table</p></td><td valign=\"top\"><p>With two columns</p></td></tr><tr><td valign=\"top\"><p>And two rows</p></td><td valign=\"top\"><p>😜</p></td></tr></tbody></table><p>And here is an image…</p><p><br></p><p><img src=\"file:///Pasted%20Graphic.png\" alt=\"Pasted Graphic.png\"></p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml:
+                    """
+                    <p>Notes Test for MarkupEditor</p><p><br></p><p>A paragraph&nbsp;</p><p><br></p><p>An indented paragraph&nbsp;</p><p><br></p><p>A paragraph&nbsp;</p><p>With another immediately below.</p><p><br></p><p>A paragraph with bold, italic, and underline , and combo formatting in it and a <a href="http://foo.com">link</a>.</p><p><br></p><ul><li><p>A checklist</p></li></ul><ul><li><p>With a checked item</p></li></ul><p><br></p><p>A Title</p><p>A Subtitle</p><p><br></p><ol><li><p>A numbered list</p></li><li><p>With two items</p><ol><li><p>One of which has a subitem</p></li></ol></li></ol><p><br></p><ul><li><p>A bulleted list</p></li><li><p>With two items</p><ul><li><p>One of which has a subitem</p></li></ul></li></ul><p><br></p><table class="t1"><tr><td><p>A table</p></td><td><p>With two columns</p></td></tr><tr><td><p>And two rows</p></td><td><p>😜</p></td></tr></table><p>And here is an image…</p><p><br></p><p><img src="file:///Pasted%20Graphic.png" alt="Pasted Graphic.png"></p>
+                    """
             ),
         ]
         for test in htmlTests {
@@ -2325,357 +2310,217 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testPasteHtml() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple text at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded HTML at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello &lt;b&gt;bold&lt;/b&gt; worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello &lt;b&gt;bold&lt;/b&gt; world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded bold at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello <strong>bold</strong> worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello <strong>bold</strong> world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple text at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "Hello world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded italic at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello <em>bold</em> worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello <em>bold</em> world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "Hello <em>bold</em> world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello <strong>bold</strong> worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello <em>bold</em> worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello <em>bold</em> world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "<p>Hello <em>bold</em> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at beginning of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "<p>Hello worldThis is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at beginning of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "<p>Hello <strong>bold</strong> worldThis is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at end of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just a simple paragraph.|</p>",
                 endHtml: "<p>This is just a simple paragraph.Hello world</p>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at end of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just a simple paragraph.|</p>",
                 endHtml: "<p>This is just a simple paragraph.Hello <strong>bold</strong> world</p>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello <strong>bold</strong> world</p>",
-                startId: "blank",     // Select "|This"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "H5 in P - Paste simple h5 at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><h5>Hello world</h5>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h5>Hello world</h5>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "H5 in P - Paste h5 with children at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><h5>Hello <strong>bold</strong> world</h5>",
-                startId: "blank",     // Select "|This"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h5>Hello <strong>bold</strong> world</h5>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in Empty Document - Paste multiple paragraphs into an empty document",
-                startHtml: "<p><br></p>",
+                startHtml: "<p>|</p>",
                 endHtml: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>",
-                startId: "blank",     // Select "|"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
             // Tables
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "TABLE in P - Paste a table at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
-                endHtml: "<p>This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
-                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
+                endHtml: "<p>This is just a simple paragraph.</p><table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>",
+                pasteString: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "TABLE in P - Paste a table at beginning of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>This is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
-                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+                startHtml: "<p>|This is just a simple paragraph.</p>",
+                endHtml: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table><p>This is just a simple paragraph.</p>",
+                pasteString: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "TABLE in P - Paste a table at end of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is just a simple paragraph.</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
-                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+                startHtml: "<p>This is just a simple paragraph.|</p>",
+                endHtml: "<p>This is just a simple paragraph.</p><table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>",
+                pasteString: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "TABLE in P - Paste a table in text of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is ju</p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st"
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
-                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
+                endHtml: "<p>This is ju</p><table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table><p>st a simple paragraph.</p>",
+                pasteString: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "TABLE in P - Paste a table in formatted text of a paragraph",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>ju</strong></p><table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><strong>st</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st"
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
-                pasteString: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table>"
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong></p><table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table><p><strong>st</strong> a simple paragraph.</p>",
+                pasteString: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste a simple paragraph at a blank line after a table",
-                startHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p><br></p>",
-                endHtml: "<table><tbody><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></tbody></table><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
+                startHtml: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table><p>|</p>",
+                endHtml: "<table><tr><td><p>The table body</p></td><td><p>with two columns</p></td></tr></table><p>Hello world</p>",
                 pasteString: "<p>Hello world</p>"
             ),
             // Lists
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "OL in P - Paste a list at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "OL in P - Paste a list at beginning of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>This is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
+                startHtml: "<p>|This is just a simple paragraph.</p>",
+                endHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2This is just a simple paragraph.</p></li></ol>",
                 pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "OL in P - Paste a list at end of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is just a simple paragraph.</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
+                startHtml: "<p>This is just a simple paragraph.|</p>",
+                endHtml: "<p>This is just a simple paragraph.Item 1</p><ol><li><p>Item 2</p></li></ol>",
                 pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "OL in P - Paste a list in text of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is ju</p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st"
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
+                endHtml: "<p>This is juItem 1</p><ol><li><p>Item 2st a simple paragraph.</p></li></ol>",
                 pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "OL in P - Paste a list in formatted text of a paragraph",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>ju</strong></p><ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p><strong>st</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st"
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Item 1</p><ol><li><p>Item 2<strong>st</strong> a simple paragraph.</p></li></ol>",
                 pasteString: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste a simple paragraph at a blank line after a list",
-                startHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p><br></p>",
+                startHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>|</p>",
                 endHtml: "<ol><li><p>Item 1</p></li><li><p>Item 2</p></li></ol><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
             // Blockquotes
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at beginning of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>This is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
+                startHtml: "<p>|This is just a simple paragraph.</p>",
+                endHtml: "<blockquote><blockquote><h5>Double-indented.This is just a simple paragraph.</h5></blockquote></blockquote>",
                 pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE at end of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is just a simple paragraph.</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
+                startHtml: "<p>This is just a simple paragraph.|</p>",
+                endHtml: "<p>This is just a simple paragraph.Double-indented.</p>",
                 pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE in text of a paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is ju</p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st"
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
+                endHtml: "<p>This is juDouble-indented.st a simple paragraph.</p>",
                 pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "BLOCKQUOTE in P - Paste a BLOCKQUOTE in formatted text of a paragraph",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>ju</strong></p><blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p><strong>st</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st"
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Double-indented.<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste a simple paragraph at a blank line after a BLOCKQUOTE",
-                startHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p><br></p>",
+                startHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>|</p>",
                 endHtml: "<blockquote><blockquote><h5>Double-indented.</h5></blockquote></blockquote><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
         ]
@@ -2686,13 +2531,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Paste various html at various places")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.pasteHtml(test.pasteString) {
-                            self.webView.getRawHtml() { pasted in
-                                self.assertEqualStrings(expected: endHtml, saw: pasted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.pasteHtml(test.pasteString) {
+                        self.webView.getRawHtml() { pasted in
+                            self.assertEqualStrings(expected: endHtml, saw: pasted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -2711,86 +2554,59 @@ class BasicTests: XCTestCase, MarkupDelegate {
     /// style and format removal, along with link removal.
     func testPasteTextPreprocessing() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean HTML should not change",
                 startHtml: "<h5>This is just a simple paragraph.</h5>",
-                endHtml: "<p>This is just a simple paragraph.</p>",
-                startId: "h5",
-                startOffset: 10,
-                endId: "h5",
-                endOffset: 10
+                endHtml: "<p>This is just a simple paragraph.</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up a simple copy buffer of h1 from the MarkupEditor",
                 startHtml: "<h1 style=\"font-size: 2.5em; font-weight: bold; margin: 0px 0px 10px; caret-color: rgb(0, 0, 255); color: rgba(0, 0, 0, 0.847); font-family: UICTFontTextStyleBody; font-style: normal; font-variant-caps: normal; letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: none; -webkit-text-stroke-width: 0px; text-decoration: none;\">Welcome to the MarkupEditor Demo</h1><br class=\"Apple-interchange-newline\">",
-                endHtml: "<p>Welcome to the MarkupEditor Demo</p><p><br></p>",
-                startId: "h1",
-                startOffset: 10,
-                endId: "h1",
-                endOffset: 10
+                endHtml: "<p>Welcome to the MarkupEditor Demo</p><p><br></p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up text that includes HTML",
                 startHtml: "<p>These are angle brackets: < and >.</p>",
-                endHtml: "<p>These are angle brackets: &lt; and &gt;.</p>",
-                startId: "p",
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0
+                endHtml: "<p>These are angle brackets: &lt; and &gt;.</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Copy/paste from VSCode",
                 startHtml: "<meta charset='utf-8'><div style=\"color: #d4d4d4;background-color: #1e1e1e;font-family: Menlo, Monaco, 'Courier New', monospace;font-weight: normal;font-size: 12px;line-height: 18px;white-space: pre;\"><div><span style=\"color: #d4d4d4;\">Hello </span><span style=\"color: #808080;\">&lt;</span><span style=\"color: #569cd6;\">b</span><span style=\"color: #808080;\">&gt;</span><span style=\"color: #d4d4d4;\">bold</span><span style=\"color: #808080;\">&lt;/</span><span style=\"color: #569cd6;\">b</span><span style=\"color: #808080;\">&gt;</span><span style=\"color: #d4d4d4;\"> world</span></div></div>",
-                endHtml: "<p>Hello &lt;b&gt;bold&lt;/b&gt; world</p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>Hello &lt;b&gt;bold&lt;/b&gt; world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up complex content from StackOverflow",
                 startHtml: "<meta charset=\"UTF-8\"><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">List of One Liners</strong></p><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\">Let\'s solve this problem for this array:</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\"><span class=\"hljs-keyword\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-keyword);\">var</span> array = [<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'A\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>, <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'C\'</span>];\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">1. Remove only the first:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">indexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">2. Remove only the last:</strong><span class=\"Apple-converted-space\"> </span>Use If you are sure that the item exist</p><pre class=\"lang-js s-code-block\" style=\"margin-top: 0px; margin-right: 0px; margin-bottom: calc(var(--s-prose-spacing) + 0.4em); margin-left: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">splice</span>(array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">lastIndexOf</span>(<span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>), <span class=\"hljs-number\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-namespace);\">1</span>);\n</code></pre><p style=\"margin-top: 0px; margin-right: 0px; margin-bottom: var(--s-prose-spacing); margin-left: 0px; padding: 0px; border: 0px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI Adjusted&quot;, &quot;Segoe UI&quot;, &quot;Liberation Sans&quot;, sans-serif; font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit; clear: both; caret-color: rgb(35, 38, 41); color: rgb(35, 38, 41); letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><strong style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-size: 15px; vertical-align: baseline; box-sizing: inherit;\">3. Remove all occurrences:</strong></p><pre class=\"lang-js s-code-block\" style=\"margin: 0px; padding: 12px; border: 0px; font-family: var(--ff-mono); font-style: normal; font-variant-caps: normal; font-weight: 400; font-stretch: inherit; line-height: 1.30769231; font-size: 13px; vertical-align: baseline; box-sizing: inherit; width: auto; max-height: 600px; overflow: auto; background-color: var(--highlight-bg); border-radius: 5px; color: var(--highlight-color); word-wrap: normal; letter-spacing: normal; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; widows: auto; word-spacing: 0px; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;\"><code class=\"hljs language-javascript\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; background-color: transparent; white-space: inherit;\">array = array.<span class=\"hljs-title function_\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-literal);\">filter</span>(<span class=\"hljs-function\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\"><span class=\"hljs-params\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit;\">v</span> =&gt;</span> v !== <span class=\"hljs-string\" style=\"margin: 0px; padding: 0px; border: 0px; font-family: inherit; font-style: inherit; font-variant-caps: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-size: 13px; vertical-align: baseline; box-sizing: inherit; color: var(--highlight-variable);\">\'B\'</span>); </code></pre>",
-                endHtml: "<p>List of One Liners</p><p>Let\'s solve this problem for this array:</p><p>var array = [\'A\', \'B\', \'C\'];</p><p>1. Remove only the first:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.indexOf(\'B\'), 1);</p><p>2. Remove only the last:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.lastIndexOf(\'B\'), 1);</p><p>3. Remove all occurrences:</p><p>array = array.filter(v =&gt; v !== \'B\'); </p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml:
+                    """
+                    <p>List of One Liners</p><p>Let's solve this problem for this array:</p><p>var array = ['A', 'B', 'C'];
+                    </p><p>1. Remove only the first:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.indexOf('B'), 1);
+                    </p><p>2. Remove only the last:&nbsp;Use If you are sure that the item exist</p><p>array.splice(array.lastIndexOf('B'), 1);
+                    </p><p>3. Remove all occurrences:</p><p>array = array.filter(v =&gt; v !== 'B'); </p>
+                    """
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Clean up some text from Xcode",
                 startHtml: "const _pasteHTML = function(html, oldUndoerData, undoable=true) {\n    const redoing = !undoable && (oldUndoerData !== null);\n    let sel = document.getSelection();\n    let anchorNode = (sel) ? sel.anchorNode : null;\n    if (!anchorNode) {\n        MUError.NoSelection.callback();\n        return null;\n    };",
-                endHtml: "<p>const _pasteHTML = function(html, oldUndoerData, undoable=true) {<br>&nbsp;&nbsp;&nbsp;&nbsp;const redoing = !undoable &amp;&amp; (oldUndoerData !== null);<br>&nbsp;&nbsp;&nbsp;&nbsp;let sel = document.getSelection();<br>&nbsp;&nbsp;&nbsp;&nbsp;let anchorNode = (sel) ? sel.anchorNode : null;<br>&nbsp;&nbsp;&nbsp;&nbsp;if (!anchorNode) {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MUError.NoSelection.callback();<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return null;<br>&nbsp;&nbsp;&nbsp;&nbsp;};</p>",
-                startId: "h1",
-                startOffset: 10,
-                endId: "h1",
-                endOffset: 10
+                endHtml: "<p>const _pasteHTML = function(html, oldUndoerData, undoable=true) { const redoing = !undoable &amp;&amp; (oldUndoerData !== null); let sel = document.getSelection(); let anchorNode = (sel) ? sel.anchorNode : null; if (!anchorNode) { MUError.NoSelection.callback(); return null; };</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Simple multiline text from MacOS Notes",
                 startHtml: "This is a test<br><br>Of a note<br>But what is this?",
-                endHtml: "<p>This is a test<br><br>Of a note<br>But what is this?</p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>This is a test<br><br>Of a note<br>But what is this?</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Trailing <BR> in MacOS Notes",
                 startHtml: "This is a test<br>",
-                endHtml: "<p>This is a test<br></p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml: "<p>This is a test<br></p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Rosetta Stone from iOS Notes",
                 startHtml: "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<meta http-equiv=\"Content-Style-Type\" content=\"text/css\">\n<title></title>\n<meta name=\"Generator\" content=\"Cocoa HTML Writer\">\n<style type=\"text/css\">\np.p1 {margin: 0.0px 0.0px 3.0px 0.0px; font: 28.0px \'.AppleSystemUIFont\'}\np.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'; min-height: 22.0px}\np.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\np.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.Apple Color Emoji UI\'}\np.p5 {margin: 9.0px 0.0px 8.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\nli.li3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px \'.AppleSystemUIFont\'}\nspan.s1 {font-family: \'UICTFontTextStyleBody\'; font-weight: bold; font-style: normal; font-size: 28.00px}\nspan.s2 {font-family: \'UICTFontTextStyleBody\'; font-weight: normal; font-style: normal; font-size: 17.00px}\nspan.s3 {font-family: \'UICTFontTextStyleEmphasizedBody\'; font-weight: bold; font-style: normal; font-size: 17.00px}\nspan.s4 {font-family: \'UICTFontTextStyleItalicBody\'; font-weight: normal; font-style: italic; font-size: 17.00px}\nspan.s5 {font-family: \'UICTFontTextStyleBody\'; font-weight: normal; font-style: normal; font-size: 17.00px; text-decoration: underline}\nspan.s6 {font-family: \'UICTFontTextStyleEmphasizedItalicBody\'; font-weight: bold; font-style: italic; font-size: 17.00px; text-decoration: underline}\nspan.s7 {font-family: \'UICTFontTextStyleBody\'; font-weight: bold; font-style: normal; font-size: 17.00px}\nspan.s8 {font-family: \'.AppleColorEmojiUI\'; font-weight: normal; font-style: normal; font-size: 17.00px}\nspan.Apple-tab-span {white-space:pre}\ntable.t1 {border-collapse: collapse}\ntd.td1 {border-style: solid; border-width: 1.0px 1.0px 1.0px 1.0px; border-color: #aaaaaa #aaaaaa #aaaaaa #aaaaaa; padding: 1.0px 5.0px 1.0px 5.0px}\nol.ol1 {list-style-type: decimal}\nul.ul1 {list-style-type: circle}\nul.ul2 {list-style-type: \'✓  \'}\nul.ul3 {list-style-type: disc}\n</style>\n</head>\n<body>\n<p class=\"p1\"><span class=\"s1\">Notes Test for MarkupEditor</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\"><span class=\"Apple-tab-span\">\t</span>An indented paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph<span class=\"Apple-converted-space\"> </span></span></p>\n<p class=\"p3\"><span class=\"s2\">With another immediately below.</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p3\"><span class=\"s2\">A paragraph with </span><span class=\"s3\">bold</span><span class=\"s2\">, </span><span class=\"s4\">italic</span><span class=\"s2\">, and </span><span class=\"s5\">underline</span><span class=\"s2\"> , and </span><span class=\"s6\">combo formatting</span><span class=\"s2\"> in it and a <a href=\"http://foo.com\">link</a>.</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ul class=\"ul1\">\n<li class=\"li3\"><span class=\"s2\">A checklist</span></li>\n</ul>\n<ul class=\"ul2\">\n<li class=\"li3\"><span class=\"s2\">With a checked item</span></li>\n</ul>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p1\"><span class=\"s1\">A Title</span></p>\n<p class=\"p3\"><span class=\"s7\">A Subtitle</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ol class=\"ol1\">\n<li class=\"li3\"><span class=\"s2\">A numbered list</span></li>\n<li class=\"li3\"><span class=\"s2\">With two items</span></li>\n<ol class=\"ol1\">\n<li class=\"li3\"><span class=\"s2\">One of which has a subitem</span></li>\n</ol>\n</ol>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<ul class=\"ul3\">\n<li class=\"li3\"><span class=\"s2\">A bulleted list</span></li>\n<li class=\"li3\"><span class=\"s2\">With two items</span></li>\n<ul class=\"ul3\">\n<li class=\"li3\"><span class=\"s2\">One of which has a subitem</span></li>\n</ul>\n</ul>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<table cellspacing=\"0\" cellpadding=\"0\" class=\"t1\">\n<tbody>\n<tr>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">A table</span></p>\n</td>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">With two columns</span></p>\n</td>\n</tr>\n<tr>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p3\"><span class=\"s2\">And two rows</span></p>\n</td>\n<td valign=\"top\" class=\"td1\">\n<p class=\"p4\"><span class=\"s8\">😜</span></p>\n</td>\n</tr>\n</tbody>\n</table>\n<p class=\"p3\"><span class=\"s2\">And here is an image…</span></p>\n<p class=\"p2\"><span class=\"s2\"></span><br></p>\n<p class=\"p5\"><span class=\"s2\"><img src=\"file:///Pasted%20Graphic.png\" alt=\"Pasted Graphic.png\"></span></p>\n</body>\n</html>\n",
-                endHtml: "<p>Notes Test for MarkupEditor</p><p><br></p><p>A paragraph&nbsp;</p><p><br></p><p>&nbsp;&nbsp;&nbsp;&nbsp;An indented paragraph&nbsp;</p><p><br></p><p>A paragraph&nbsp;</p><p>With another immediately below.</p><p><br></p><p>A paragraph with bold, italic, and underline , and combo formatting in it and a link.</p><p><br></p><ul><li>A checklist</li></ul><ul><li>With a checked item</li></ul><p><br></p><p>A Title</p><p>A Subtitle</p><p><br></p><ol><li>A numbered list</li><li>With two items</li><ol><li>One of which has a subitem</li></ol></ol><p><br></p><ul><li>A bulleted list</li><li>With two items</li><ul><li>One of which has a subitem</li></ul></ul><p><br></p><table cellspacing=\"0\" cellpadding=\"0\"><tbody><tr><td valign=\"top\"><p>A table</p></td><td valign=\"top\"><p>With two columns</p></td></tr><tr><td valign=\"top\"><p>And two rows</p></td><td valign=\"top\"><p>😜</p></td></tr></tbody></table><p>And here is an image…</p><p><br></p><p><img src=\"file:///Pasted%20Graphic.png\" alt=\"Pasted Graphic.png\"></p>",
-                startId: "p",
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                endHtml:
+                    """
+                    <p>Notes Test for MarkupEditor</p><p><br></p><p>A paragraph&nbsp;</p><p><br></p><p>An indented paragraph&nbsp;</p><p><br></p><p>A paragraph&nbsp;</p><p>With another immediately below.</p><p><br></p><p>A paragraph with bold, italic, and underline , and combo formatting in it and a link.</p><p><br></p><ul><li><p>A checklist</p></li></ul><ul><li><p>With a checked item</p></li></ul><p><br></p><p>A Title</p><p>A Subtitle</p><p><br></p><ol><li><p>A numbered list</p></li><li><p>With two items</p><ol><li><p>One of which has a subitem</p></li></ol></li></ol><p><br></p><ul><li><p>A bulleted list</p></li><li><p>With two items</p><ul><li><p>One of which has a subitem</p></li></ul></li></ul><p><br></p><table class="t1"><tr><td><p>A table</p></td><td><p>With two columns</p></td></tr><tr><td><p>And two rows</p></td><td><p>😜</p></td></tr></table><p>And here is an image…</p><p><br></p><p><img src="file:///Pasted%20Graphic.png" alt="Pasted Graphic.png"></p>
+                    """
             ),
         ]
         for test in htmlTests {
@@ -2808,174 +2624,106 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testPasteText() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple text at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded HTML at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello &lt;b&gt;bold&lt;/b&gt; worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello &lt;b&gt;bold&lt;/b&gt; world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded bold at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello bold worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "Hello <strong>bold</strong> world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple text at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "Hello world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste text with embedded italic at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello bold worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello bold world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "Hello <em>bold</em> world"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is juHello bold worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at insertion point in a bolded word",
-                startHtml: "<p>This is <strong>just</strong> a simple paragraph.</p>",
-                endHtml: "<p>This is <strong>juHello bold worldst</strong> a simple paragraph.</p>",
-                startId: "b",     // Select "ju|st "
-                startOffset: 2,
-                endId: "b",
-                endOffset: 2,
+                startHtml: "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+                endHtml: "<p>This is <strong>ju</strong>Hello bold world<strong>st</strong> a simple paragraph.</p>",
                 pasteString: "<p>Hello <em>bold</em> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at beginning of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "<p>Hello worldThis is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at beginning of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "<p>Hello bold worldThis is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at end of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just a simple paragraph.|</p>",
                 endHtml: "<p>This is just a simple paragraph.Hello world</p>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at end of another",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just a simple paragraph.|</p>",
                 endHtml: "<p>This is just a simple paragraph.Hello bold world</p>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste simple paragraph at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in P - Paste paragraph with children at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello bold world</p>",
-                startId: "blank",     // Select "|This"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<p>Hello <strong>bold</strong> world</p>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "H5 in P - Paste simple h5 at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello world</p>",
-                startId: "blank",     // Select "|<br>"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h5>Hello world</h5>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "H5 in P - Paste h5 with children at a blank paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p><p><br></p>",
+                startHtml: "<p>This is just a simple paragraph.</p><p>|</p>",
                 endHtml: "<p>This is just a simple paragraph.</p><p>Hello bold world</p>",
-                startId: "blank",     // Select "|This"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h5>Hello <strong>bold</strong> world</h5>"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "P in Empty Document - Paste multiple paragraphs into an empty document",
-                startHtml: "<p><br></p>",
+                startHtml: "<p>|</p>",
                 endHtml: "<p>A title</p><p>A subtitle</p><p>A paragraph.</p>",
-                startId: "blank",     // Select "|"
-                startOffset: 0,
-                endId: "blank",
-                endOffset: 0,
                 pasteString: "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>"
             ),
         ]
@@ -2986,13 +2734,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Paste various html at various places")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.pasteText(test.pasteString) {
-                            self.webView.getRawHtml() { pasted in
-                                self.assertEqualStrings(expected: endHtml, saw: pasted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.pasteText(test.pasteString) {
+                        self.webView.getRawHtml() { pasted in
+                            self.assertEqualStrings(expected: endHtml, saw: pasted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -3003,14 +2749,10 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testPasteImage() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Image in P - Paste image at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
-                endHtml: "<p>This is juHello worldst a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
+                endHtml: "<p>This is juHello worldst a simple paragraph.</p>"
             ),
         ]
         for test in htmlTests {
@@ -3019,16 +2761,14 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Paste an image")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.pasteImage(UIImage(systemName: "calendar")) {
-                            self.webView.getRawHtml() { pasted in
-                                if let imageFileName = pasted?.imageFileNameInTag() {
-                                    XCTAssertTrue(self.webView.resourceExists(imageFileName))
-                                    expectation.fulfill()
-                                } else {
-                                    XCTFail("The pasted HTML was not returned properly.")
-                                }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.pasteImage(UIImage(systemName: "calendar")) {
+                        self.webView.getRawHtml() { pasted in
+                            if let imageFileName = pasted?.imageFileNameInTag() {
+                                XCTAssertTrue(self.webView.resourceExists(imageFileName))
+                                expectation.fulfill()
+                            } else {
+                                XCTFail("The pasted HTML was not returned properly.")
                             }
                         }
                     }
@@ -3040,34 +2780,22 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testPasteImageUrl() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "MP4 URL in P - Paste image URL at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.mp4\">st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.mp4"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "JPG URL in P - Paste image URL at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.jpg\">st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.jpg"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "PNG URL in P - Paste image URL at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is ju|st a simple paragraph.</p>",
                 endHtml: "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.png\">st a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.png"
             ),
         ]
@@ -3077,13 +2805,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Paste an image URL")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
-                            self.webView.getRawHtml() { pasted in
-                                self.assertEqualStrings(expected: test.endHtml, saw: pasted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
+                        self.webView.getRawHtml() { pasted in
+                            self.assertEqualStrings(expected: test.endHtml, saw: pasted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -3094,54 +2820,34 @@ class BasicTests: XCTestCase, MarkupDelegate {
     
     func testPasteLink() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
-                description: "Link in P - Paste link at insertion point in a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+            HtmlTest.withSelection(
+                description: "Link in P - Paste link at a fully-selected word",
+                startHtml: "<p>This is |just| a simple paragraph.</p>",
                 endHtml: "<p>This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a> a simple paragraph.</p>",
-                startId: "p",     // Select "ju|st "
-                startOffset: 10,
-                endId: "p",
-                endOffset: 10,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Link in P - Paste link at end of a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just| a simple paragraph.</p>",
                 endHtml: "<p>This is just<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a> a simple paragraph.</p>",
-                startId: "p",     // Select "just|"
-                startOffset: 12,
-                endId: "p",
-                endOffset: 12,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Link in P - Paste link at beginning of a word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is |just a simple paragraph.</p>",
                 endHtml: "<p>This is <a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>just a simple paragraph.</p>",
-                startId: "p",     // Select "|just"
-                startOffset: 8,
-                endId: "p",
-                endOffset: 8,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Link in P - Paste link at beginning of paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "<p><a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>This is just a simple paragraph.</p>",
-                startId: "p",     // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Link in P - Paste link at end of paragraph",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>This is just a simple paragraph.|</p>",
                 endHtml: "<p>This is just a simple paragraph.<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a></p>",
-                startId: "p",     // Select "paragraph.|"
-                startOffset: 32,
-                endId: "p",
-                endOffset: 32,
                 pasteString: "https://github.com/stevengharris/MarkupEditor/foo.bogus"
             ),
         ]
@@ -3151,13 +2857,11 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Paste a link")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
-                            self.webView.getRawHtml() { pasted in
-                                self.assertEqualStrings(expected: test.endHtml, saw: pasted)
-                                expectation.fulfill()
-                            }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
+                        self.webView.getRawHtml() { pasted in
+                            self.assertEqualStrings(expected: test.endHtml, saw: pasted)
+                            expectation.fulfill()
                         }
                     }
                 }
@@ -3169,114 +2873,74 @@ class BasicTests: XCTestCase, MarkupDelegate {
     // Repurpose the endHtml, undoHtml, and pasteString state in HtmlTest as commented below for search tests
     func testSearch() throws {
         let htmlTests: [HtmlTest] = [
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Exact word match",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "just",        // Search forward result
                 undoHtml: "just",       // Search backward result
-                startId: "p",           // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "just"     // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Partial word match",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "us",          // Search forward result
                 undoHtml: "us",         // Search backward result
-                startId: "p",           // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "us"       // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Mixed case word match",
-                startHtml: "<p>This is just a SiMpLe paragraph.</p>",
+                startHtml: "<p>|This is just a SiMpLe paragraph.</p>",
                 endHtml: "SiMpLe",      // Search forward result
                 undoHtml: "SiMpLe",     // Search backward result
-                startId: "p",           // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "simple"   // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Mixed case search for lowercase word",
-                startHtml: "<p>This is just a simple paragraph.</p>",
+                startHtml: "<p>|This is just a simple paragraph.</p>",
                 endHtml: "simple",      // Search forward result
                 undoHtml: "simple",     // Search backward result
-                startId: "p",           // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "SiMpLe"   // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search with apostrophe",
                 startHtml: "<p>This isn't just a simple paragraph.</p>",
                 endHtml: "isn't",       // Search forward result
                 undoHtml: "isn't",      // Search backward result
-                startId: "p",           // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "isn't"     // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search with apostrophe and quotes",
-                startHtml: "<p>This isn't just a \"simple\" paragraph.</p>",
+                startHtml: "<p>|This isn't just a \"simple\" paragraph.</p>",
                 endHtml: "isn't just a \"simple\"",         // Search forward result
                 undoHtml: "isn't just a \"simple\"",        // Search backward result
-                startId: "p",                               // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "isn't just a \"simple\""      // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search with smart quotes",
-                startHtml: "<p>This isn't just a \"simple\" paragraph.</p>",
+                startHtml: "<p>|This isn't just a \"simple\" paragraph.</p>",
                 endHtml: "\"simple\"",          // Search forward result
                 undoHtml: "\"simple\"",         // Search backward result
-                startId: "p",                   // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "“simple”"         // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search with smart apostrophe",
-                startHtml: "<p>This isn't just a \"simple\" paragraph.</p>",
+                startHtml: "<p>|This isn't just a \"simple\" paragraph.</p>",
                 endHtml: "isn't",               // Search forward result
                 undoHtml: "isn't",              // Search backward result
-                startId: "p",                   // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "isn’t"            // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search with mixed smart apostrophe and quotes",
-                startHtml: "<p>This isn't just a \"simple\" paragraph.</p>",
+                startHtml: "<p>|This isn't just a \"simple\" paragraph.</p>",
                 endHtml: "isn't just a \"simple\"",         // Search forward result
                 undoHtml: "isn't just a \"simple\"",        // Search backward result
-                startId: "p",                               // Select "|This"
-                startOffset: 0,
-                endId: "p",
-                endOffset: 0,
                 pasteString: "isn’t just a “simple”"        // Search for
             ),
-            HtmlTest(
+            HtmlTest.withSelection(
                 description: "Search relative to selection",
-                startHtml: "<p>This is just a SiMpLe word in a sImPlE paragraph.</p>",
+                startHtml: "<p>This is just a SiMpLe word| in a sImPlE paragraph.</p>",
                 endHtml: "sImPlE",      // Search forward result
                 undoHtml: "SiMpLe",     // Search backward result
-                startId: "p",           // Select "word|"
-                startOffset: 26,
-                endId: "p",
-                endOffset: 26,
                 pasteString: "simple"   // Search for
             ),
         ]
@@ -3287,18 +2951,15 @@ class BasicTests: XCTestCase, MarkupDelegate {
             let expectation = XCTestExpectation(description: "Search forward and backward")
             webView.setTestHtml(value: startHtml) {
                 self.webView.getRawHtml { contents in
-                     self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
-                    self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                        self.webView.search(for: searchString, direction: .forward) {
-                            self.webView.getSelectionState() { state in
-                                XCTAssertTrue(state.selection == test.endHtml)   // Selection extends beyond word!
-                                self.webView.setTestRange(startId: test.startId, startOffset: test.startOffset, endId: test.endId, endOffset: test.endOffset, startChildNodeIndex: test.startChildNodeIndex, endChildNodeIndex: test.endChildNodeIndex) { result in
-                                    self.webView.search(for: searchString, direction: .backward) {
-                                        self.webView.getSelectionState() { state in
-                                            // In some cases, selection extends beyond a word to include blanks. Not sure if this is a bug, frankly.
-                                            XCTAssertTrue(state.selection == test.undoHtml)
-                                            expectation.fulfill()
-                                        }
+                    self.assertEqualStrings(expected: self.withoutSelection(startHtml), saw: contents)
+                    self.webView.search(for: searchString, direction: .forward) {
+                        self.webView.getSelectionState() { state in
+                            XCTAssertTrue(state.selection == test.endHtml)   // Selection extends beyond word!
+                            self.webView.setTestHtml(value: startHtml) {
+                                self.webView.search(for: searchString, direction: .backward) {
+                                    self.webView.getSelectionState() { state in
+                                        XCTAssertTrue(state.selection == test.undoHtml)
+                                        expectation.fulfill()
                                     }
                                 }
                             }
