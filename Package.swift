@@ -27,22 +27,10 @@ let package = Package(
             path: "MarkupEditor",
             exclude: ["rollup"],
             resources: [.process("Resources")]),
-        .target(
-            name: "SharedTest",
-            dependencies: ["MarkupEditor"],
-            path: "MarkupEditorTests/Shared"),
         .testTarget(
             name: "BasicTests",
-            dependencies: ["MarkupEditor", "SharedTest"],
+            dependencies: ["MarkupEditor"],
             path: "MarkupEditorTests/BasicTests"),
-        .testTarget(
-            name: "UndoTests",
-            dependencies: ["MarkupEditor", "SharedTest"],
-            path: "MarkupEditorTests/UndoTests"),
-        .testTarget(
-            name: "RedoTests",
-            dependencies: ["MarkupEditor", "SharedTest"],
-            path: "MarkupEditorTests/RedoTests"),
     ]
 )
 
