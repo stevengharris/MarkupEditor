@@ -728,11 +728,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Return unformatted but clean HTML contained in this MarkupWKWebView.
+    /// Return unformatted but clean HTML contained in this MarkupWKWebView, with selection points
+    /// indicated by `sel`.
     ///
-    /// The HTML is functionally equivalent to `getHtml()` but is compressed.
-    public func getRawHtml(divID: String? = nil, _ handler: ((String?)->Void)?) {
-        getHtml(pretty: false, divID: divID, handler)
+    /// Except for the `sel` markers, the HTML is functionally equivalent to `getHtml()` but is not prettified..
+    public func getTestHtml(sel: String = "|", _ handler: ((String?)->Void)?) {
+        evaluateJavaScript("MU.getTestHTML('\(sel)')") { result, error in
+            handler?(result as? String)
+        }
     }
     
     public func emptyDocument(handler: (()->Void)? = nil) {

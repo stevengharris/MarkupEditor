@@ -19339,7 +19339,20 @@
       const transaction = view.state.tr.setSelection(new TextSelection($from, $to));
       view.dispatch(transaction);
   }
-
+  /**
+   * Get the HTML contents and show the selection from/to using the text identified by `sel`
+   * @param {*} sel       An embedded character in contents indicating selection point(s)
+   */
+  function getTestHTML(sel) {
+      if (!sel) return getHTML(false);   // Return the compressed/unformatted HTML if no sel
+      const selection = view.state.selection;
+      let transaction = view.state.tr.insertText(sel, selection.from);
+      if (selection.from != selection.to) transaction = transaction.insertText(sel, selection.to + sel.length);
+      const htmlElement = DOMSerializer.fromSchema(view.state.schema).serializeFragment(transaction.doc.content);
+      const div = document.createElement('div');
+      div.appendChild(htmlElement);
+      return div.innerHTML;
+  }
   /**
    * Set the contents of the editor.
    * 
@@ -21401,7 +21414,7 @@
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: true,   // TODO: We need a way to make this configurable at setup time
+        menuBar: false,   // TODO: We need a way to make this configurable at setup time
         schema: muSchema
       })
     }),
@@ -21441,6 +21454,7 @@
   exports.getHTML = getHTML;
   exports.getHeight = getHeight;
   exports.getSelectionState = getSelectionState;
+  exports.getTestHTML = getTestHTML;
   exports.indent = indent;
   exports.insertImage = insertImage;
   exports.insertLink = insertLink;

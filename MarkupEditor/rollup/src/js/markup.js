@@ -1240,7 +1240,22 @@ export function setTestHTML(contents, sel) {
     const $to = view.state.doc.resolve(selTo)
     const transaction = view.state.tr.setSelection(new TextSelection($from, $to));
     view.dispatch(transaction);
-}
+};
+
+/**
+ * Get the HTML contents and show the selection from/to using the text identified by `sel`
+ * @param {*} sel       An embedded character in contents indicating selection point(s)
+ */
+export function getTestHTML(sel) {
+    if (!sel) return getHTML(false);   // Return the compressed/unformatted HTML if no sel
+    const selection = view.state.selection;
+    let transaction = view.state.tr.insertText(sel, selection.from);
+    if (selection.from != selection.to) transaction = transaction.insertText(sel, selection.to + sel.length);
+    const htmlElement = DOMSerializer.fromSchema(view.state.schema).serializeFragment(transaction.doc.content);
+    const div = document.createElement('div');
+    div.appendChild(htmlElement);
+    return div.innerHTML;
+};
 
 /**
  * Set the contents of the editor.
