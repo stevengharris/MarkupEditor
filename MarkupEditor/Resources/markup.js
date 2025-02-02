@@ -19314,46 +19314,6 @@
   };
 
   /**
-   * Set the HTML `contents` and select the text identified by `sel`
-   * @param {*} contents  The HTML for the editor
-   * @param {*} sel       An embedded character in contents indicating selection point(s)
-   */
-  function setTestHTML(contents, sel) {
-      setHTML(contents, false);   // Do a normal setting of HTML
-      if (!sel) return;           // Don't do any selection if we don't know what marks it
-      const selFrom = searcher.searchFor(sel).from;
-      if (selFrom) {              // Delete the 1st sel
-          view.dispatch(view.state.tr.deleteSelection());
-      } else {
-          return;
-      }
-      let selTo = searcher.searchFor(sel).to;
-      if (selTo != selFrom) {     // Delete the 2nd sel if there is one; if not, they are the same
-          view.dispatch(view.state.tr.deleteSelection());
-          selTo = selTo - sel.length;
-      }
-
-      // Set the selection based on where we found the sel markers
-      const $from = view.state.doc.resolve(selFrom);
-      const $to = view.state.doc.resolve(selTo);
-      const transaction = view.state.tr.setSelection(new TextSelection($from, $to));
-      view.dispatch(transaction);
-  }
-  /**
-   * Get the HTML contents and show the selection from/to using the text identified by `sel`
-   * @param {*} sel       An embedded character in contents indicating selection point(s)
-   */
-  function getTestHTML(sel) {
-      if (!sel) return getHTML(false);   // Return the compressed/unformatted HTML if no sel
-      const selection = view.state.selection;
-      let transaction = view.state.tr.insertText(sel, selection.from);
-      if (selection.from != selection.to) transaction = transaction.insertText(sel, selection.to + sel.length);
-      const htmlElement = DOMSerializer.fromSchema(view.state.schema).serializeFragment(transaction.doc.content);
-      const div = document.createElement('div');
-      div.appendChild(htmlElement);
-      return div.innerHTML;
-  }
-  /**
    * Set the contents of the editor.
    * 
    * The exported placeholderText is set after setting the contents.
@@ -19369,7 +19329,8 @@
       const selection = new AllSelection(doc);
       let transaction = tr
           .setSelection(selection)
-          .replaceSelectionWith(node, false);
+          .replaceSelectionWith(node, false)
+          .setMeta("addToHistory", false);    // History begins here!
       const $pos = transaction.doc.resolve(0);
       transaction
           .setSelection(TextSelection.near($pos))
@@ -20433,33 +20394,73 @@
   //MARK: Testing Support
 
   /**
-   * For testing purposes, set selection based on elementIds and offsets
-   * Like range, the startOffset and endOffset are number of characters
-   * when startElement is #text; else, child number. Optionally specify
-   * startChildNodeIndex and/or endChildNodeIndex to identify a child
-   * within startElement and/or endElement. These optional params are
-   * useful for list testing particularly.
-   *
-   * @param   {String}  startElementId        The id of the element to use as startContainer for the range.
-   * @param   {Int}     startOffset           The offset into the startContainer for the range.
-   * @param   {String}  endElementId          The id of the element to use as endContainer for the range.
-   * @param   {Int}     endOffset             The offset into the endContainer for the range.
-   * @param   {Int}     startChildNodeIndex   Index into startElement.childNodes to find startChild.
-   * @param   {Int}     endChildNodeIndex     Index into endElement.childNodes to find endChild.
-   * @return  {Boolean}                       True if both elements are found; else, false.
+   * Set the HTML `contents` and select the text identified by `sel`, removing the 
+   * `sel` markers in the process.
+   * @param {*} contents  The HTML for the editor
+   * @param {*} sel       An embedded character in contents marking selection point(s)
    */
-  function setRange(startElementId, startOffset, endElementId, endOffset, startChildNodeIndex, endChildNodeIndex) {
-      return false;
+  function setTestHTML(contents, sel) {
+      setHTML(contents, false);   // Do a normal setting of HTML
+      if (!sel) return;           // Don't do any selection if we don't know what marks it
+
+      // It's important that deleting the sel markers is not part of history, because 
+      // otherwise undoing later will put them back.
+      const selFrom = searcher.searchFor(sel).from;   // Find the first marker
+      if (selFrom) {              // Delete the 1st sel
+          const transaction = view.state.tr
+              .deleteSelection()
+              .setMeta("addToHistory", false);
+          view.dispatch(transaction);
+      } else {
+          return;                 // There was no marker to find
+      }
+
+      let selTo = searcher.searchFor(sel).to;         // May be the same if only one marker
+      if (selTo != selFrom) {     // Delete the 2nd sel if there is one; if not, they are the same
+          const transaction = view.state.tr
+              .deleteSelection()
+              .setMeta("addToHistory", false);
+          view.dispatch(transaction);
+          selTo = selTo - sel.length;
+      }
+
+      // Set the selection based on where we found the sel markers. This should be part of 
+      // history, because we need it to be set back on undo.
+      const $from = view.state.doc.resolve(selFrom);
+      const $to = view.state.doc.resolve(selTo);
+      const transaction = view.state.tr.setSelection(new TextSelection($from, $to));
+      view.dispatch(transaction);
   }
   /**
-   * For testing purposes, invoke undo by direct input to undoer.
+   * Get the HTML contents and mark the selection from/to using the text identified by `sel`.
+   * @param {*} sel       An embedded character in contents indicating selection point(s)
    */
-  function testUndo() {
+  function getTestHTML(sel) {
+      if (!sel) return getHTML(false);   // Return the compressed/unformatted HTML if no sel
+      let state = view.state;
+      const selection = state.selection;
+      const selFrom = selection.from;
+      const selTo = selection.to;
+      // Note that we never dispatch the transaction, so the view is not changed and
+      // history is not affected.
+      let transaction = state.tr.insertText(sel, selFrom);
+      if (selFrom != selTo) transaction = transaction.insertText(sel, selTo + sel.length);
+      const htmlElement = DOMSerializer.fromSchema(state.schema).serializeFragment(transaction.doc.content);
+      const div = document.createElement('div');
+      div.appendChild(htmlElement);
+      return div.innerHTML;
   }
   /**
-   * For testing purposes, invoke redo by direct input to undoer.
+   * Invoke the undo command.
    */
-  function testRedo() {
+  function undoCommand() {
+      undo(view.state, view.dispatch);
+  }
+  /**
+   * Invoke the redo command.
+   */
+  function redoCommand() {
+      redo(view.state, view.dispatch);
   }
   /**
    * For testing purposes, invoke _doBlockquoteEnter programmatically.
@@ -20670,22 +20671,20 @@
       }
       const table = nodeTypes.table.createChecked(null, table_rows);
       if (!table) return;     // Something went wrong, like we tried to insert it at a disallowed spot
-      // Replace the existing selection range and track the transaction
-      let transaction = view.state.tr.replaceRangeWith(selection.from, selection.to, table);
-      let state = view.state.apply(transaction);
+      // Replace the existing selection and track the transaction
+      let transaction = view.state.tr.replaceSelectionWith(table, false);
       // Locate the first paragraph position in the transaction's doc
       let pPos;
-      state.tr.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
+      transaction.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
           if (node === firstP) {
               pPos = pos;
               return false;
           }        return true;
       });
       // Set the selection in the first cell, apply it to the state and  the view
-      const cellSelection = new TextSelection(state.tr.doc.resolve(pPos));
-      transaction = state.tr.setSelection(cellSelection);
-      state = state.apply(transaction);
-      view.updateState(state);
+      const textSelection = TextSelection.near(transaction.doc.resolve(pPos));
+      transaction = transaction.setSelection(textSelection);
+      view.dispatch(transaction);
       stateChanged();
   }
   /**
@@ -21465,6 +21464,7 @@
   exports.padBottom = padBottom;
   exports.pasteHTML = pasteHTML;
   exports.pasteText = pasteText;
+  exports.redoCommand = redoCommand;
   exports.removeAllDivs = removeAllDivs;
   exports.removeButton = removeButton;
   exports.removeDiv = removeDiv;
@@ -21473,7 +21473,6 @@
   exports.searchFor = searchFor;
   exports.setHTML = setHTML;
   exports.setPlaceholder = setPlaceholder;
-  exports.setRange = setRange;
   exports.setStyle = setStyle;
   exports.setTestHTML = setTestHTML;
   exports.setTopLevelAttributes = setTopLevelAttributes;
@@ -21483,8 +21482,6 @@
   exports.testListEnter = testListEnter;
   exports.testPasteHTMLPreprocessing = testPasteHTMLPreprocessing;
   exports.testPasteTextPreprocessing = testPasteTextPreprocessing;
-  exports.testRedo = testRedo;
-  exports.testUndo = testUndo;
   exports.toggleBold = toggleBold;
   exports.toggleCode = toggleCode;
   exports.toggleItalic = toggleItalic;
@@ -21493,5 +21490,6 @@
   exports.toggleSubscript = toggleSubscript;
   exports.toggleSuperscript = toggleSuperscript;
   exports.toggleUnderline = toggleUnderline;
+  exports.undoCommand = undoCommand;
 
 }));

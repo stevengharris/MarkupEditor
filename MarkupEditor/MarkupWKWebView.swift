@@ -631,39 +631,33 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Testing support
 
-    /// Set the html content for testing after a delay.
+    /// Return unformatted but clean HTML contained in this MarkupWKWebView, with selection points
+    /// indicated by `sel`.
     ///
-    /// The small delay seems to avoid intermitted problems when running many tests together.
-    public func setTestHtml(value: String, sel: String = "|", handler: (() -> Void)? = nil) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.evaluateJavaScript("MU.setTestHTML('\(value.escaped)', '\(sel)')") { result, error in
-                handler?()
+    /// Except for the `sel` markers, the HTML is functionally equivalent to `getHtml()` but is not prettified..
+    public func getTestHtml(sel: String = "|", handler: ((String?)->Void)? = nil) {
+        // DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.evaluateJavaScript("MU.getTestHTML('\(sel)')") { result, error in
+                handler?(result as? String)
             }
-        }
+        // }
     }
     
-    /// Set the range for testing.
+    /// Set the html content for testing and return the sel-marked-up string.
     ///
-    /// If startChildNodeIndex is nil, then startOffset is the offset into the childNode with startId in parentNode;
-    /// if not, then the startOffset is the offset into parentNode.childNodes[startChildNodeIndex].
-    /// If endChildNodeIndex is nil, then endOffset is the offset into the childNode with endId parentNode;
-    /// if not, then the endOffset is the offset into parentNode.childNodes[endChildNodeIndex].
-    public func setTestRange(startId: String, startOffset: Int, endId: String, endOffset: Int, startChildNodeIndex: Int? = nil, endChildNodeIndex: Int? = nil, handler: @escaping (Bool) -> Void) {
-        var rangeCall = "MU.setRange('\(startId)', '\(startOffset)', '\(endId)', '\(endOffset)'"
-        if let startChildNodeIndex = startChildNodeIndex {
-            rangeCall += ", '\(startChildNodeIndex)'"
-        } else {
-            rangeCall += ", null"
-        }
-        if let endChildNodeIndex = endChildNodeIndex {
-            rangeCall += ", '\(endChildNodeIndex)'"
-        } else {
-            rangeCall += ", null"
-        }
-        rangeCall += ")"
-        evaluateJavaScript(rangeCall) { result, error in
-            handler(result as? Bool ?? false)
-        }
+    /// The small delay seems to avoid intermitted problems when running many tests together.
+    public func setTestHtml(_ value: String, sel: String = "|", handler: ((String?) -> Void)? = nil) {
+        // DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.evaluateJavaScript("MU.setTestHTML('\(value.escaped)', '\(sel)')") { result, error in
+                if error == nil {
+                    self.getTestHtml(sel: sel) { string in
+                        handler?(string)
+                    }
+                } else {
+                    handler?(nil)
+                }
+            }
+        // }
     }
     
     /// Invoke the preprocessing step for MU.pasteHTML directly.
@@ -677,24 +671,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func testPasteTextPreprocessing(html: String, handler: ((String?)->Void)? = nil) {
         evaluateJavaScript("MU.testPasteTextPreprocessing('\(html.escaped)')") { result, error in
             handler?(result as? String)
-        }
-    }
-    
-    /// Invoke the \_undoOperation directly.
-    ///
-    /// Delay to allow the async operation being done to have completed.
-    public func testUndo(handler: (()->Void)? = nil) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.evaluateJavaScript("MU.testUndo()") { result, error in handler?() }
-        }
-    }
-    
-    /// Invoke the \_redoOperation directly.
-    ///
-    /// Delay to allow the async operation being undone to have completed.
-    public func testRedo(handler: (()->Void)? = nil) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.evaluateJavaScript("MU.testRedo()") { result, error in handler?() }
         }
     }
     
@@ -724,16 +700,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         //  Clean HTML has divs, spans, and empty text nodes removed.
         let argString = divID == nil ? "'\(pretty)', '\(clean)'" : "'\(pretty)', '\(clean)', '\(divID!)'"
         evaluateJavaScript("MU.getHTML(\(argString))") { result, error in
-            handler?(result as? String)
-        }
-    }
-    
-    /// Return unformatted but clean HTML contained in this MarkupWKWebView, with selection points
-    /// indicated by `sel`.
-    ///
-    /// Except for the `sel` markers, the HTML is functionally equivalent to `getHtml()` but is not prettified..
-    public func getTestHtml(sel: String = "|", _ handler: ((String?)->Void)?) {
-        evaluateJavaScript("MU.getTestHTML('\(sel)')") { result, error in
             handler?(result as? String)
         }
     }
@@ -981,7 +947,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Note that this operation interleaves the browser-native undo (e.g., undoing typing)
     /// with the _undoOperation implemented in markup.js.
     public func undo(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.undo()") { result, error in handler?() }
+        evaluateJavaScript("MU.undoCommand()") { result, error in handler?() }
     }
     
     /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
@@ -989,7 +955,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Note that this operation interleaves the browser-native redo (e.g., redoing typing)
     /// with the _redoOperation implemented in markup.js.
     public func redo(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.redo()") { result, error in handler?() }
+        evaluateJavaScript("MU.redoCommand()") { result, error in handler?() }
     }
     
     //MARK: Table editing

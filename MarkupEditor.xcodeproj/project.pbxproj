@@ -81,7 +81,6 @@
 		AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */; };
 		AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040728B1A0780063BE2A /* SimplestViewController.swift */; };
 		AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040928B1A3240063BE2A /* SimplestContentView.swift */; };
-		AAB1041028BE911A0063BE2A /* BackgroundClearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */; };
 		AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1042F28C10B600063BE2A /* LinkViewController.swift */; };
 		AAB1043228C2AEA30063BE2A /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043128C2AEA30063BE2A /* ImageViewController.swift */; };
 		AAB1043428C6A26A0063BE2A /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */; };
@@ -101,6 +100,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AA0BE5A02D4ED31B00F0090E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA652923260E80EE000674B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
+		};
 		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
@@ -943,7 +949,6 @@
 		AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupMenu.swift; sourceTree = "<group>"; };
 		AAB1040728B1A0780063BE2A /* SimplestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestViewController.swift; sourceTree = "<group>"; };
 		AAB1040928B1A3240063BE2A /* SimplestContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestContentView.swift; sourceTree = "<group>"; };
-		AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundClearView.swift; sourceTree = "<group>"; };
 		AAB1042F28C10B600063BE2A /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
 		AAB1043128C2AEA30063BE2A /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -1006,7 +1011,6 @@
 		AA1749E4269B9444005F0428 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */,
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */,
 				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
@@ -3738,6 +3742,7 @@
 			);
 			dependencies = (
 				AAF404D7290B004900129FD9 /* PBXTargetDependency */,
+				AA0BE5A12D4ED31B00F0090E /* PBXTargetDependency */,
 			);
 			name = BasicTests;
 			productName = FooTests;
@@ -3883,7 +3888,6 @@
 				AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */,
 				AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */,
 				AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */,
-				AAB1041028BE911A0063BE2A /* BackgroundClearView.swift in Sources */,
 				AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */,
 				AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */,
 				AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */,
@@ -3940,6 +3944,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AA0BE5A12D4ED31B00F0090E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AA0BE5A02D4ED31B00F0090E /* PBXContainerItemProxy */;
+		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;

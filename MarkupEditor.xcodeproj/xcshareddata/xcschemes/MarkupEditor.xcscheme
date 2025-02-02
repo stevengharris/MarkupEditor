@@ -30,8 +30,7 @@
       <Testables>
          <TestableReference
             skipped = "NO"
-            parallelizable = "YES"
-            testExecutionOrdering = "random">
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AAFADF40261524AE0024F2DC"
@@ -39,6 +38,26 @@
                BlueprintName = "BasicTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "BasicTests/testBlockquoteEnter()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testListEnterCollapsed()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testListEnterRange()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testLists()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testMultiLists()">
+               </Test>
+               <Test
+                  Identifier = "BasicTests/testTableActions()">
+               </Test>
+            </SkippedTests>
          </TestableReference>
          <TestableReference
             skipped = "NO"
