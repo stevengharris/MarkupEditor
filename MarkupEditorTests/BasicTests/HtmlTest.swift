@@ -15,7 +15,7 @@ public struct HtmlTest {
     public var description: String? = nil
     public var startHtml: String
     public var endHtml: String
-    public var undoHtml: String?
+    public var undoHtml: String
     public var pasteString: String?
     public var action: ((@escaping ()->Void)->Void)?
     
@@ -23,7 +23,7 @@ public struct HtmlTest {
         self.description = description
         self.startHtml = startHtml
         self.endHtml = endHtml ?? startHtml
-        self.undoHtml = undoHtml
+        self.undoHtml = undoHtml ?? startHtml
         self.pasteString = pasteString
         self.action = action
     }

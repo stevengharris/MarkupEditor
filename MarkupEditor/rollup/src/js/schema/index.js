@@ -231,7 +231,7 @@ const tNodes = tableNodes({
     },
   }
 });
-tNodes.table.attrs = {class: {default: 'bordered-table-cell'}};
+tNodes.table.attrs = {class: {default: null}};
 // The class for table indicates the type of bordering so needs to be parsed and output as 
 // part of the table.
 tNodes.table.parseDOM = [{

@@ -14633,7 +14633,7 @@
       },
     }
   });
-  tNodes.table.attrs = {class: {default: 'bordered-table-cell'}};
+  tNodes.table.attrs = {class: {default: null}};
   // The class for table indicates the type of bordering so needs to be parsed and output as 
   // part of the table.
   tNodes.table.parseDOM = [{
@@ -20752,7 +20752,7 @@
       // selection to restore the selection to where it was before.
       tableAttributes = _getTableAttributes(state);
       let headerSize;
-      state.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node) => {
+      state.tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node) => {
           if (!headerSize && (node.type == nodeTypes.table_row)) {
               headerSize = node.nodeSize;
               return false;
@@ -20821,12 +20821,8 @@
       const $pos = state.doc.resolve(pPos);
       // When the first cell is an empty colspanned header, the $pos resolves to a table_cell,
       // so we need to use NodeSelection in that case.
-      let selection;
-      if ($pos.node().type === nodeTypes.table_cell) {
-          selection = new NodeSelection($pos);
-      } else {
-          selection = new TextSelection($pos);
-      }    const transaction = state.tr.setSelection(selection);
+      let selection = TextSelection.between($pos, $pos);
+      const transaction = state.tr.setSelection(selection);
       state.apply(transaction);
       if (dispatch) {
           dispatch(transaction);
@@ -20856,7 +20852,7 @@
           const firstHeaderPos = headers[0];
           const lastHeaderPos = headers[headers.length - 1];
           const rowSelection = CellSelection.create(state.tr.doc, firstHeaderPos, lastHeaderPos);
-          let transaction = state.tr.setSelection(rowSelection);
+          const transaction = state.tr.setSelection(rowSelection);
           const newState = state.apply(transaction);
           mergeCells(newState, dispatch);
       }}
@@ -20893,9 +20889,10 @@
               table.attrs.class = 'bordered-table-cell';
               break;
       }    const transaction = view.state.tr
-          .setNodeMarkup(fromPos, table.type, table.attrs)
-          .setMeta("bordered-table", {border: border, fromPos: fromPos, toPos: toPos});
+          .setMeta("bordered-table", {border: border, fromPos: fromPos, toPos: toPos})
+          .setNodeMarkup(fromPos, table.type, table.attrs);
       view.dispatch(transaction);
+      stateChanged();
       view.focus();
   }
   /**
