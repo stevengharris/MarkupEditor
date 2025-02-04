@@ -8,7 +8,7 @@ import {AllSelection, TextSelection, NodeSelection} from 'prosemirror-state'
 import {DOMParser, DOMSerializer} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
 import {undo, redo, history} from 'prosemirror-history'
-import {wrapInList, liftListItem} from 'prosemirror-schema-list'
+import {wrapInList, liftListItem, splitListItem} from 'prosemirror-schema-list'
 import {
     addRowBefore, 
     addRowAfter, 
@@ -2454,6 +2454,8 @@ export function testBlockquoteEnter() {
  * For testing purposes, invoke _doListEnter programmatically.
  */
 export function testListEnter() {
+    const splitCommand = splitListItem(view.state.schema.nodes.list_item);
+    splitCommand(view.state, view.dispatch);
 };
 
 /**

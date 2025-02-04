@@ -100,7 +100,7 @@ export function buildKeymap(schema, mapKeys) {
     // In ProseMirror, empty paragraphs don't change the doc until they contain something, 
     // so we don't get a notification until something is put in the paragraph. By chaining 
     // the stateChanged with splitListItem that is bound to Enter here, it always executes, 
-    // but it splitListItem will also execute as will anything else beyond it in the chain 
+    // but splitListItem will also execute, as will anything else beyond it in the chain 
     // if splitListItem returns false (i.e., it doesn't really split the list).
     bind("Enter", chainCommands(handleEnter, splitListItem(type)))
     bind("Mod-[", liftListItem(type))
@@ -108,7 +108,7 @@ export function buildKeymap(schema, mapKeys) {
   }
   // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
   bind("Shift-Enter", handleShiftEnter)
-  
+
   if (type = schema.nodes.paragraph)
     bind("Shift-Ctrl-0", setBlockType(type))
   if (type = schema.nodes.code_block)
