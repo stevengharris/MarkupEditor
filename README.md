@@ -10,6 +10,8 @@
 
 # MarkupEditor
 
+## **Note:** This README is currently being revised to reflect changes associated with adopting ProseMirror and will likely contain errors. See the [Version History](#version-0.8.0-(beta-7)) for more details.
+
 ### 
 
 WYSIWYG editing for SwiftUI and UIKit apps.
@@ -394,6 +396,17 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### Version 0.8.0 (Beta 7)
+
+This release is a very big change under the covers but should remain (almost completely) compatible with previous versions. The big change consists of replacing the MarkupEditor's custom DOM manipulation code in markup.js with code that uses [ProseMirror](https://prosemirror.net). ProseMirror is a JavaScript "toolkit for building rich-text editors." Instead of writing JavaScript code to manipulate the contenteditable DOM directly, the MarkupEditor now uses ProseMirror APIs to apply transactional changes to the ProseMirror EditorState which in turn modify the DOM shown in the MarkupWKWebView. I'll be writing more about ProseMirror and how it is used by the MarkupEditor separately, but this entry in the README serves as a notification of the change.
+
+* Update README to reflect changes to use ProseMirror. 
+    * There are effectively no changes to the MarkupEditor API on the Swift side. Your existing overrides and custom implementations of MarkupDelegate methods should continue to work. Existing applications that use the MarkupEditor without modification should work without any issues. Existing usage of custom user css and scripts should work without issues.
+    * Any customizations of markup.css or markup.html will need to be 
+    * If you forked markup.js, then you will need to adapt those changes to the new ProseMirror approach present in the new markup.js. Some public methods of markup.js that are invoked using `evaluateJavaScript` in the MarkupWKWebView have been deprecated or changed. The README has been changed to reflect the adoption of ProseMirror, but it does not discuss what has changed from the older non-ProseMirror version.
+* File new issues to identify any lingering bugs from adopting ProseMirror, close others out that are fixed by adopting ProseMirror.
+* Remove UndoTests and RedoTests, adopting an approach in BasicTests that exercises undo and redo for every action. These new tests also verify that the selection is set properly after every action and the undo/redo of that action. The BasicTest suite is faster than before, even including undo and redo.
 
 #### Version 0.7.2 (Beta 6)
 
