@@ -199,10 +199,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -280,10 +280,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -489,10 +489,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -636,22 +636,18 @@ import OSLog
                     }
                 }
             ),
-            // The following test shows how the styling fails, and that works fine, but the
-            // undo/redo adds another selection point (|) as a byproduct of the initial
-            // correct failure. Just commenting the test out, but maybe will add it to some
-            // new group of failure tests that don't include undo/redo as a group.
-            //HtmlTest(
-            //    description: "Fail to replace p containing formatted text with code",
-            //    startHtml: "<p>He<strong>llo| wor</strong>ld</p>",
-            //    endHtml: "<p>He<strong>llo| wor</strong>ld</p>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.replaceStyle(state.style, with: .PRE) {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            HtmlTest(
+                description: "Fail to replace p containing formatted text with code",
+                startHtml: "<p>He<strong>llo| wor</strong>ld</p>",
+                endHtml: "<p>He<strong>llo| wor</strong>ld</p>",
+                action: { handler in
+                    self.webView.getSelectionState() { state in
+                        self.webView.replaceStyle(state.style, with: .PRE) {
+                            handler()
+                        }
+                    }
+                }
+            ),
         ]
         wait(for: [loadedExpectation], timeout: 10)
         for test in htmlTests {
@@ -665,10 +661,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -746,10 +742,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -771,10 +767,8 @@ import OSLog
                 startHtml: "<p>He|llo <strong>world</strong></p>",
                 endHtml: "<blockquote><p>He|llo <strong>world</strong></p></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
@@ -783,10 +777,8 @@ import OSLog
                 startHtml: "<p><em><strong>He|llo </strong></em><strong>world</strong></p>",
                 endHtml: "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
@@ -795,10 +787,8 @@ import OSLog
                 startHtml: "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
                 endHtml: "<p><em><strong>He|llo </strong></em><strong>world</strong></p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.outdent() {
-                            handler()
-                        }
+                    self.webView.outdent() {
+                        handler()
                     }
                 }
             ),
@@ -807,10 +797,8 @@ import OSLog
                 startHtml: "<blockquote><blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote></blockquote>",
                 endHtml: "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.outdent() {
-                            handler()
-                        }
+                    self.webView.outdent() {
+                        handler()
                     }
                 }
             ),
@@ -819,10 +807,8 @@ import OSLog
                 startHtml: "<blockquote><p><em><strong>Hello </strong></em><strong>world</strong></p><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
                 endHtml: "<blockquote><p><em><strong>Hello </strong></em><strong>world</strong></p><blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
@@ -839,10 +825,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -857,7 +843,6 @@ import OSLog
         }
     }
     
-    //TODO: Uncomment the no-op tests once they work. Right now they don't do denting, so the undo/redo fails.
     func testMultiDenting() throws {
         let htmlTests: [HtmlTest] = [
             HtmlTest(
@@ -865,94 +850,78 @@ import OSLog
                 startHtml: "<p>He|llo world1</p><p>He|llo world2</p>",
                 endHtml: "<blockquote><p>He|llo world1</p><p>He|llo world2</p></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
-            //HtmlTest(
-            //    description: "Outdent no-op <blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
-            //    startHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
-            //    endHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            HtmlTest(
+                description: "Outdent no-op <blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
+                startHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
+                endHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
             HtmlTest(
                 description: "Indent <p>He|llo world1</p><h5>He|llo world2</h5>",
                 startHtml: "<p>He|llo world1</p><h5>He|llo world2</h5>",
                 endHtml: "<blockquote><p>He|llo world1</p><h5>He|llo world2</h5></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
-            //HtmlTest(
-            //    description: "Outdent no-op <blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
-            //    startHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
-            //    endHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            HtmlTest(
+                description: "Outdent no-op <blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+                startHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+                endHtml: "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
             HtmlTest(
                 description: "Indent <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 endHtml: "<blockquote><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></blockquote>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
-            //HtmlTest(
-            //    description: "Outdent no-op <blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
-            //    startHtml: "<blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
-            //    endHtml: "<blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
-            //HtmlTest(
-            //    description: "Indent no-op <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
-            //    startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
-            //    endHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.indent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            HtmlTest(
+                description: "Outdent no-op <blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
+                startHtml: "<blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
+                endHtml: "<blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
+            HtmlTest(
+                description: "Indent no-op <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                endHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                action: { handler in
+                    self.webView.indent() {
+                        handler()
+                    }
+                }
+            ),
             HtmlTest(
                 description: "Outdent <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.<p></li></ol></li></ul>",
                 startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
                 endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.outdent() {
-                            handler()
-                        }
+                    self.webView.outdent() {
+                        handler()
                     }
                 }
             ),
@@ -961,61 +930,51 @@ import OSLog
                 startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 endHtml: "<blockquote><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p></blockquote><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.indent() {
-                            handler()
-                        }
+                    self.webView.indent() {
+                        handler()
                     }
                 }
             ),
-            //HtmlTest(
-            //    description: "Outdent no-op interleaved paragraphs and lists",
-            //    startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-            //    endHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
-            //HtmlTest(
-            //    description: "Indent no-op list with sublists",
-            //    startHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
-            //    endHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.indent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
-            //HtmlTest(
-            //    description: "Outdent no-op list with sublists",
-            //    startHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
-            //    endHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
-            //HtmlTest(
-            //    description: "Outdent no-op, start and end in styles surround list",
-            //    startHtml: "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>With two items.</h5></li></ul><p>En|ding paragraph.</p>",
-            //    endHtml: "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>With two items.</h5></li></ul><p>En|ding paragraph.</p>",
-            //    action: { handler in
-            //        self.webView.getSelectionState() { state in
-            //            self.webView.outdent() {
-            //                handler()
-            //            }
-            //        }
-            //    }
-            //),
+            HtmlTest(
+                description: "Outdent no-op interleaved paragraphs and lists",
+                startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+                endHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
+            HtmlTest(
+                description: "Indent no-op list with sublists",
+                startHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+                endHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+                action: { handler in
+                    self.webView.indent() {
+                        handler()
+                    }
+                }
+            ),
+            HtmlTest(
+                description: "Outdent no-op list with sublists",
+                startHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+                endHtml: "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
+            HtmlTest(
+                description: "Outdent no-op, start and end in styles surround list",
+                startHtml: "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>With two items.</h5></li></ul><p>En|ding paragraph.</p>",
+                endHtml: "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>With two items.</h5></li></ul><p>En|ding paragraph.</p>",
+                action: { handler in
+                    self.webView.outdent() {
+                        handler()
+                    }
+                }
+            ),
         ]
         wait(for: [loadedExpectation], timeout: 10)
         for test in htmlTests {
@@ -1029,10 +988,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1209,10 +1168,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1234,10 +1193,8 @@ import OSLog
                 startHtml: "<p>He|llo <strong>world</strong></p>",
                 endHtml: "<ol><li><p>He|llo <strong>world</strong></p></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1246,10 +1203,8 @@ import OSLog
                 startHtml: "<p>He|llo <strong>world</strong></p>",
                 endHtml: "<ul><li><p>He|llo <strong>world</strong></p></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1258,10 +1213,8 @@ import OSLog
                 startHtml: "<ul><li><p>He|llo <strong>world</strong></p></li></ul>",
                 endHtml: "<p>He|llo <strong>world</strong></p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1270,10 +1223,8 @@ import OSLog
                 startHtml: "<ol><li><p>He|llo <strong>world</strong></p></li></ol>",
                 endHtml: "<p>He|llo <strong>world</strong></p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1282,76 +1233,58 @@ import OSLog
                 startHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
                 endHtml: "<p>Hello <strong>wo|rld1</strong></p><ul><li><p>Hello <strong>world2</strong></p></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
-            /*
-             TODO: The undo fails when the do is a no-op
             HtmlTest(
                 description: "Try but fail to change the top list item in a multi-element list to a different list type",
                 startHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
                 endHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
-            */
             HtmlTest(
                 description: "Change a sub list item in a multi-element list to a different list item",
                 startHtml: "<ul><li><p>Hello <strong>world1</strong></p></li><li><p>Hel|lo <strong>world2</strong></p></li></ul>",
                 endHtml: "<ul><li><p>Hello <strong>world1</strong></p><ol><li><p>Hel|lo <strong>world2</strong></p></li></ol></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
             HtmlTest(
                 description: "Remove UL <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                startHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
-                endHtml: "<p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
+                startHtml: "<ul><li><p>AAHe|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+                endHtml: "<p>AAHe|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
-            /*
-            TODO: The undo fails when the do is a no-op
             HtmlTest(
                 description: "Outdent <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
                 startHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
                 endHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.outdent() {
-                            handler()
-                        }
+                    self.webView.outdent() {
+                        handler()
                     }
                 }
             ),
-            */
             HtmlTest(
                 description: "Outdent <ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
                 startHtml: "<ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
                 endHtml: "<ul><li><p>Hello paragraph</p><h5>He|llo header in list</h5></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.outdent() {
-                            handler()
-                        }
+                    self.webView.outdent() {
+                        handler()
                     }
                 }
             ),
@@ -1367,10 +1300,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
-                                self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.assertEqualStrings(expected: test.undoHtml, saw: formatted)
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1615,10 +1548,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1721,10 +1654,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1816,10 +1749,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -1878,10 +1811,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -2040,10 +1973,10 @@ import OSLog
                 test.action?() {
                     self.webView.getTestHtml { formatted in
                         self.assertEqualStrings(expected: endHtml, saw: formatted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: test.undoHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -2359,10 +2292,10 @@ import OSLog
                 self.webView.pasteHtml(test.pasteString) {
                     self.webView.getTestHtml() { pasted in
                         self.assertEqualStrings(expected: endHtml, saw: pasted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -2572,10 +2505,10 @@ import OSLog
                 self.webView.pasteText(test.pasteString) {
                     self.webView.getTestHtml() { pasted in
                         self.assertEqualStrings(expected: endHtml, saw: pasted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { formatted in
                                 self.assertEqualStrings(expected: startHtml, saw: formatted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { formatted in
                                         self.assertEqualStrings(expected: endHtml, saw: formatted)
                                         expectation.fulfill()
@@ -2608,10 +2541,10 @@ import OSLog
                     self.webView.getTestHtml() { pasted in
                         if let imageFileName = self.imageFilename(in: pasted) {
                             XCTAssertTrue(self.webView.resourceExists(imageFileName))
-                            self.webView.undo() {
+                            self.webView.undo {
                                 self.webView.getTestHtml { pasted in
                                     self.assertEqualStrings(expected: startHtml, saw: pasted)
-                                    self.webView.redo() {
+                                    self.webView.redo {
                                         self.webView.getTestHtml { pasted in
                                             XCTAssertTrue(self.webView.resourceExists(imageFileName))
                                             expectation.fulfill()
@@ -2660,10 +2593,10 @@ import OSLog
                 self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
                     self.webView.getTestHtml() { pasted in
                         self.assertEqualStrings(expected: test.endHtml, saw: pasted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { pasted in
                                 self.assertEqualStrings(expected: startHtml, saw: pasted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { pasted in
                                         self.assertEqualStrings(expected: test.endHtml, saw: pasted)
                                         expectation.fulfill()
@@ -2721,10 +2654,10 @@ import OSLog
                 self.webView.pasteUrl(url: URL(string: test.pasteString!)) {
                     self.webView.getTestHtml() { pasted in
                         self.assertEqualStrings(expected: test.endHtml, saw: pasted)
-                        self.webView.undo() {
+                        self.webView.undo {
                             self.webView.getTestHtml { pasted in
                                 self.assertEqualStrings(expected: startHtml, saw: pasted)
-                                self.webView.redo() {
+                                self.webView.redo {
                                     self.webView.getTestHtml { pasted in
                                         self.assertEqualStrings(expected: test.endHtml, saw: pasted)
                                         expectation.fulfill()

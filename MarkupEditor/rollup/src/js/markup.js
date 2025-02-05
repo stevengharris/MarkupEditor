@@ -4,10 +4,10 @@
  That file contains the combined ProseMirror code along with markup.js.
  */
 
-import {AllSelection, TextSelection, NodeSelection} from 'prosemirror-state'
+import {AllSelection, TextSelection, NodeSelection, EditorState} from 'prosemirror-state'
 import {DOMParser, DOMSerializer} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
-import {undo, redo, history} from 'prosemirror-history'
+import {undo, redo} from 'prosemirror-history'
 import {wrapInList, liftListItem, splitListItem} from 'prosemirror-schema-list'
 import {
     addRowBefore, 
@@ -1747,7 +1747,7 @@ function _setParagraphStyle(protonode) {
  * for different cases of selections.
  * If the selection is in a list type that is different than newListTyle,
  * we need to create a new list and make the selection appear in it.
- * @deprecated
+ * 
  * @param {String}  newListType     The kind of list we want the list item to be in if we are turning it on or changing it.
  */
 export function toggleListItem(newListType) {
@@ -1780,10 +1780,10 @@ function _setListType(listType) {
 function _outdentListItems() {
     const selection = view.state.selection;
     const nodeTypes = view.state.schema.nodes;
+    const command = liftListItem(nodeTypes.list_item);
     let newState;
     view.state.doc.nodesBetween(selection.from, selection.to, node => {
         if (node.type === nodeTypes.list_item) {   
-            const command = liftListItem(node.type);
             command(view.state, (transaction) => {
                 newState = view.state.apply(transaction);
             });
@@ -1793,7 +1793,7 @@ function _outdentListItems() {
     if (newState) {
         view.updateState(newState);
         stateChanged();
-    }
+    };
 };
 
 /**
@@ -1910,6 +1910,9 @@ export function outdent() {
     if (newState) {
         view.updateState(newState);
         stateChanged();
+        return true;
+    } else {
+        return false;
     }
 };
 
@@ -2374,10 +2377,21 @@ export function postMessage(message) {
 /**
  * Set the HTML `contents` and select the text identified by `sel`, removing the 
  * `sel` markers in the process.
+ * 
+ * Note that because we run multiple tests against a given view, and we use setTestHTML
+ * to set the contents, we need to reset the view state completely each time. Otherwise, 
+ * the history can be left in a state where an undo will work because the previous test
+ * executed redo.
+ * 
  * @param {*} contents  The HTML for the editor
  * @param {*} sel       An embedded character in contents marking selection point(s)
  */
 export function setTestHTML(contents, sel) {
+    // Start by resetting the view state.
+    let state = EditorState.create({schema: view.state.schema, doc: view.state.doc, plugins: view.state.plugins});
+    view.updateState(state);
+
+    // Then set the HTML, which won't contain any sel markers.
     setHTML(contents, false);   // Do a normal setting of HTML
     if (!sel) return;           // Don't do any selection if we don't know what marks it
 
