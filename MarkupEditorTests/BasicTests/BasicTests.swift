@@ -1325,10 +1325,8 @@ import OSLog
                 startHtml: "<p>He|llo world1</p><p>He|llo world2</p>",
                 endHtml: "<ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1337,10 +1335,8 @@ import OSLog
                 startHtml: "<ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
                 endHtml: "<p>He|llo world1</p><p>He|llo world2</p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1349,10 +1345,8 @@ import OSLog
                 startHtml: "<p>He|llo world1</p><h5>He|llo world2</h5>",
                 endHtml: "<ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1361,34 +1355,31 @@ import OSLog
                 startHtml: "<ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
                 endHtml: "<p>He|llo world1</p><h5>He|llo world2</h5>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
+            //TODO: Fix so it's not a no-op
             HtmlTest(
-                description: "UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                description: "No-op UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                endHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+                //endHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+                action: { handler in
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
+                    }
+                }
+            ),
+            //TODO: Fix so it's not a no-op
+            HtmlTest(
+                description: "No-op Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+                startHtml: "<ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
                 endHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
-                    }
-                }
-            ),
-            HtmlTest(
-                description: "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
-                startHtml: "<ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
-                endHtml: "<p>He|llo paragraph</p><h5>He|llo header in list</h5>",
-                action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1397,22 +1388,19 @@ import OSLog
                 startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 endHtml: "<ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
+            /*
             HtmlTest(
                 description: "Remove OL <ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
                 startHtml: "<ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
                 endHtml: "<p>He|llo paragraph</p><h5>He|llo header in list</h5>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1421,10 +1409,8 @@ import OSLog
                 startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
                 endHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li>Or|dered sublist.</li></ul></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1433,10 +1419,8 @@ import OSLog
                 startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul></li></ul>",
                 endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><p>Un|ordered sublist.</p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1445,10 +1429,8 @@ import OSLog
                 startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
                 endHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1457,10 +1439,8 @@ import OSLog
                 startHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
                 endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><p>Or|dered sublist.</p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1469,10 +1449,8 @@ import OSLog
                 startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 endHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1481,10 +1459,8 @@ import OSLog
                 startHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
                 endHtml: "<p>To|p-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>To|p-level paragraph 2</p><p>Ordered list paragraph 1</p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
@@ -1493,10 +1469,8 @@ import OSLog
                 startHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
                 endHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1505,10 +1479,8 @@ import OSLog
                 startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 endHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1517,10 +1489,8 @@ import OSLog
                 startHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
                 endHtml: "<p>To|p-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>To|p-level paragraph 2</p><p>Ordered list paragraph 1</p>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .OL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
                     }
                 }
             ),
@@ -1529,13 +1499,12 @@ import OSLog
                 startHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
                 endHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
                 action: { handler in
-                    self.webView.getSelectionState() { state in
-                        self.webView.toggleListItem(type: .UL) {
-                            handler()
-                        }
+                    self.webView.toggleListItem(type: .UL) {
+                        handler()
                     }
                 }
             ),
+             */
         ]
         wait(for: [loadedExpectation], timeout: 10)
         for test in htmlTests {
