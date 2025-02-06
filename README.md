@@ -10,7 +10,7 @@
 
 # MarkupEditor
 
-## **Note:** This README is currently being revised to reflect changes associated with adopting ProseMirror and will likely contain errors. See the [Version History](#version-0.8.0-(beta-7)) for more details.
+## **Note:** This README is currently being revised to reflect changes associated with adopting ProseMirror and may contain errors or be incomplete. See the [History](#history) for more details.
 
 ### 
 
@@ -164,8 +164,8 @@ A great byproduct of using HTML under the covers of the MarkupEditor is that you
 
 The MarkupEditor uses a subset of HTML elements and generally does not specify the HTML element "class" at all. (The one exception is for images and the associated resizing handles that are displayed when you select an image.) The MarkupEditor uses the following HTML elements:
 
-* Paragraph Styles: `<H1>`, `<H2>`, `<H3>`, `<H4>`, `<H5>`, `<H6>`, `<P>`. `<P>` is the default style, also referred to as "Normal" in various places. The `<CODE>` element is supported as a paragraph style or inlined. When used as a paragraph style, it is output as `<PRE><CODE>` to preserve its exact form.
-* Formatting: `<STRONG>`, `<EM>`, `<U>`, `<CODE>`, `<S>`.
+* Paragraph Styles: `<H1>`, `<H2>`, `<H3>`, `<H4>`, `<H5>`, `<H6>`, `<P>`. `<P>` is the default style, also referred to as "Normal" in various places. The `<CODE>` element is supported as a paragraph style or an inlined format. When used as a paragraph style, it is output as `<PRE><CODE>` to preserve its exact form.
+* Formatting: `<STRONG>`, `<EM>`, `<U>`, `<CODE>`, `<S>`, `<SUB>`, `<SUP>`.
 * Images: `<IMG class="resize-image">`. The internal details of the styling and classes to support resizable images are in `markup.js` but will not be covered here.
 * Links: `<A>`.
 * Lists: `<UL>`, `<OL>`, `<LI>`.
@@ -393,7 +393,8 @@ This release is a very big change under the covers but should remain (almost com
     * Some public methods of `markup.js` that are invoked using `evaluateJavaScript` in the MarkupWKWebView have been deprecated or changed.
     * The README has been changed to reflect the adoption of ProseMirror by the MarkupEditor, but it does not discuss what has changed from the older non-ProseMirror version. I did not think that such a discussion was appropriate for the README.
 * Support new *Code* paragraph style in addition to the existing *P* and *H1-H6*. The new style shows up in the MarkupToolbar by default. This was a [longstanding issue](https://github.com/stevengharris/MarkupEditor/issues/96) but was very simple to fix with ProseMirror.
-* Use `<EM>` rather than `<I>` and `<STRONG>` rather than `<B>` in HTML output. The MarkupEditor still accepts HTML with `<I>` and `<B>` tags but will only produce HTML (via `getHtml`) that contains `<EM>` and `<STRONG>`.
+* Use `<EM>` rather than `<I>` and `<STRONG>` rather than `<B>` in HTML output. The MarkupEditor still accepts HTML with `<I>` and `<B>` tags in `setHtml`, but will only produce HTML (via `getHtml`) that contains `<EM>` and `<STRONG>`.
+* Remove the use of `<TBODY>` and `<THEAD>`, since `<TD>` and `<TH>` properly define the header and body elements. The MarkupEditor still accepts HTML with `<TBODY>` and `<THEAD>` tags in `setHtml`, but will not produce HTML (via `getHtml`) that contains them.
 * File new issues to identify any lingering bugs from adopting ProseMirror, close others out that are fixed by adopting ProseMirror.
     * [TBD LIST]
 * Remove UndoTests and RedoTests, adopting an approach in BasicTests that exercises undo and redo for every action. These new tests also verify that the selection is set properly after every action and the undo/redo of that action. The BasicTest suite is faster than before, even including undo and redo.
