@@ -30,9 +30,8 @@
 		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2EB1862B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
 		AA2EB1872B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
-		AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* StyledContentView.swift */; };
-		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
-		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
+		AA2EB18B2B535F1E00224F5E /* CustomContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* CustomContentView.swift */; };
+		AA2EB18E2B535F5B00224F5E /* CustomViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
 		AA408B192616683B00CAE8B9 /* MarkupEditor.h in Headers */ = {isa = PBXBuildFile; fileRef = AAFADF64261525B90024F2DC /* MarkupEditor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA408B202616685B00CAE8B9 /* MarkupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A13260E9A00000674B7 /* MarkupCoordinator.swift */; };
@@ -174,8 +173,8 @@
 		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
 		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
 		AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+CustomExtensions.swift"; sourceTree = "<group>"; };
-		AA2EB1882B53579900224F5E /* StyledContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledContentView.swift; sourceTree = "<group>"; };
-		AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledViewController.swift; sourceTree = "<group>"; };
+		AA2EB1882B53579900224F5E /* CustomContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomContentView.swift; sourceTree = "<group>"; };
+		AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomViewController.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2932,7 +2931,7 @@
 				AAB411252AD069F80072C765 /* SearchableContentView.swift */,
 				AAB411222AD0695F0072C765 /* SearchBar.swift */,
 				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
-				AA2EB1882B53579900224F5E /* StyledContentView.swift */,
+				AA2EB1882B53579900224F5E /* CustomContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
 				AA65294D260E8114000674B7 /* Info.plist */,
@@ -2956,7 +2955,7 @@
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* DemoViewController.swift */,
 				AAB1040728B1A0780063BE2A /* SimplestViewController.swift */,
-				AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */,
+				AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -3303,8 +3302,7 @@
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
 				AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */,
 				AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */,
-				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
-				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
+				AA2EB18B2B535F1E00224F5E /* CustomContentView.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
@@ -3315,7 +3313,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */,
-				AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */,
+				AA2EB18E2B535F5B00224F5E /* CustomViewController.swift in Sources */,
 				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
 				AA7B24E52B59A72F003C607A /* DemoDivs.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,

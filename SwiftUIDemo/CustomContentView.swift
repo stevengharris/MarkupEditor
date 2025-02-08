@@ -1,5 +1,5 @@
 //
-//  StyledContentView.swift
+//  CustomContentView.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 1/13/24.
@@ -9,8 +9,8 @@ import SwiftUI
 import MarkupEditor
 
 /// Identical to the DemoContentView, except also demonstrating the use of custom.js and custom.css
-/// to customize style and add a userscript that returns the wordcount of the document.
-struct CustomizedContentView: View {
+/// to customize style and add a user script that returns the word count of the document.
+struct CustomContentView: View {
 
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
@@ -23,7 +23,9 @@ struct CustomizedContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            Spacer()
             Label("Word count: \(wordCount)", systemImage: "text.word.spacing")
+            Spacer()
             MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $demoHtml, id: "Document")
             if rawShowing {
                 VStack {
@@ -72,7 +74,7 @@ struct CustomizedContentView: View {
         var attributes = [NSAttributedString.Key: AnyObject]()
         attributes[.foregroundColor] = UIColor.label
         attributes[.font] = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
-        return /Users/steve/XCodeProjects/MarkupEditor/SwiftUIDemo/StyledContentView.swiftNSAttributedString(string: string, attributes: attributes)
+        return NSAttributedString(string: string, attributes: attributes)
     }
     
     private func openExistingDocument(url: URL) {
@@ -86,7 +88,7 @@ struct CustomizedContentView: View {
     
 }
 
-extension CustomizedContentView: MarkupDelegate {
+extension CustomContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         // Now that the code in markup.js and custom.js has been loaded, and the markup.css and custom.css
@@ -112,7 +114,7 @@ extension CustomizedContentView: MarkupDelegate {
 
 }
 
-extension CustomizedContentView: FileToolbarDelegate {
+extension CustomContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {

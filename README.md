@@ -135,7 +135,7 @@ In this example, `demoHtml` is **not** modified by the MarkupEditor as you edit 
 
 You can do some limited customization of the MarkupToolbar and the MarkupEditor behavior overall. You should always do these customizations early in your app lifecycle.
 
-You can also provide your own CSS-based style customization and JavaScript scripts for the MarkupEditor to use in your app. The StyledContentView and StyledViewController demonstrate usage of custom CSS and scripts on the `demo.html` document and are discussed below.
+You can also provide your own CSS-based style customization and JavaScript scripts for the MarkupEditor to use in your app. The CustomContentView and CustomViewController demonstrate usage of custom CSS and scripts on the `demo.html` document and are discussed below.
 
 ### Customizing the Toolbar
 
@@ -209,50 +209,48 @@ markupConfiguration.userScriptFile = "custom.js"
 
 The `userScriptFile` is loaded after `markup.js`. Your code can use the functions in `markup.js` or which you loaded using `userScripts` if needed.
 
-**NOTE:** This example, which does direct manipulation of the DOM, is no longer valid and will be revised. See https://github.com/stevengharris/MarkupEditor/issues/221.
+**NOTE:** Your script has access to the DOM, but you will not be able to modify the DOM directly in a user script. To be more exact: you can write code that modifies the DOM, but your changes will not be reflected in the view itself or in the document contents you retrieve using `getHtml`. This is because such changes must be done using the exported functions in `markup.js` or using the kind of ProseMirror APIs accessed from `markup.js`. Being able to add a script even within this restriction can still be very useful, however. For example, you could use a JavaScript library to return the document contents as Markdown. If you need to modify the DOM directly or otherwise interact with ProseMirror APIs, refer to [this discussion](https://github.com/stevengharris/MarkupEditor/discussions/220) for details about how to build the MarkupEditor and modify the JavaScript in it.
 
 To invoke a function in your custom script, you should extend the MarkupWKWebView. For example, if you have a `custom.js` file that contains this function:
 
 ```
 /**
- * A public method that can be invoked from MarkupWKWebView to execute the
- * assignment of classes to h1 and h2 elements, so that custom.css styling
- * will show up. Invoking this method requires an extension to MarkupWKWebView
- * which can be called from the MarkupDelegate.markupLoaded method.
+ * A public method that can be invoked from MarkupWKWebView to return
+ * the number of words in the HTML document using a simpleminded approach.
+ * Invoking this method requires an extension to MarkupWKWebView.
  */
-MU.assignClasses = function() {
-    const h1Elements = document.getElementsByTagName('h1');
-    for (let i = 0; i < h1Elements.length; i++) {
-        element = h1Elements[i];
-        element.classList.add('title');
+MU.wordCount = function() {
+    let wordCount = 0;
+    const styles = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'CODE'];
+    for (const style of styles) {
+        const elements = document.querySelectorAll(style);
+        for (const element of elements) {
+            wordCount += element.textContent.trim().split(' ').length;
+        }
     };
-    const h2Elements = document.getElementsByTagName('h2');
-    for (let i = 0; i < h2Elements.length; i++) {
-        element = h2Elements[i];
-        element.classList.add('subtitle');
-    };
+    return wordCount;
 };
 ```
 
-then you can extend MarkupWKWebView to be able to invoke `MU.assignClasses`:
+then you can extend MarkupWKWebView to be able to invoke `MU.wordCount`:
 
 ```
 extension MarkupWKWebView {
     
-    /// Invoke the MU.assignClasses method on the JavaScript side that was added-in via custom.js.
-    public func assignClasses(_ handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.assignClasses()") { result, error in
+    /// Invoke the MU.wordcount method on the JavaScript side that was added-in via custom.js.
+    public func wordcount(_ handler: ((Int?)->Void)? = nil) {
+        evaluateJavaScript("MU.wordCount()") { result, error in
             if let error {
                 print(error.localizedDescription)
             }
-            handler?()
+            handler?(result as? Int)
         }
     }
     
 }
 ```
 
-The StyledContentView and StyledViewController demos use this approach along with `custom.css` to set the `title` class on `H1` elements, and `subtitle` class on `H2` elements and apply styling to them. This is a contrived use case (you could just use `custom.css` to style `H1` and `H2` directly), but it shows both custom scripting and CSS being used.
+The CustomContentView and CustomViewController demos use this approach along with `custom.css` to modify the styling of some elements and to display a word count in the demo. This is a contrived use case, but it demonstrates how to use custom scripting and CSS.
 
 ## Local Images
 
@@ -395,7 +393,8 @@ This release is a very big change under the covers but should remain (almost com
     * Any customizations of `markup.css` or `markup.html` will need to be compared to the new versions and merged properly.
     * If you forked `markup.js`, then you will need to adapt those changes to the new ProseMirror approach present in the new `markup.js`. **NOTE:** The `Resources/markup.js` file that is now loaded by the MarkupEditor is a build artifact created using [rollup](https://rollupjs.org) and __should not be edited directly__ except for transient debugging purposes. See [this discussion](https://github.com/stevengharris/MarkupEditor/discussions/220) about the MarkupEditor build and how that is integrated with ProseMirror modules. 
     * Some public methods of `markup.js` that are invoked using `evaluateJavaScript` in the MarkupWKWebView have been deprecated or changed, but their public signatures in MarkupWKWebView have not changed or have been extended in a compatible manner if needed.
-    * Custom scripts that attempt to modify the DOM will not work in the new ProseMirror-based world. I consider DOM manipulation to be something that is only allowed in `markup.js`, and it will require a full development setup per [this discussion](https://github.com/stevengharris/MarkupEditor/discussions/220). If this is a problem for you, please file an issue with details, and perhaps something can be done to support your use case.
+    * Custom scripts that attempt to modify the DOM directly will not work in the new ProseMirror-based world. DOM manipulation is available only through the exported functions of `markup.js`. If you need to work at this level, you will require a full development setup per [this discussion](https://github.com/stevengharris/MarkupEditor/discussions/220). The README section on [Customizing the MarkupEditor](#customizing-the-markupeditor) and the example code has been updated to reflect this change.
+* Change `StyledContentView` and `StyledViewController` to `CustomContentView` and `CustomViewController` to reflect the limitations on direct modification of the DOM in user scripts, as discussed in [Customizing the MarkupEditor](#customizing-the-markupeditor). Update `custom.js` and `custom.css` used in those demos.
 * The README has been updated to reflect the adoption of ProseMirror in MarkupEditor. It does not discuss the changes from the previous non-ProseMirror version. There is some limited context provided in [Legacy and Acknowledgements](#legacy-and-acknowledgements).
 * Support new *Code* paragraph style in addition to the existing *P* and *H1-H6*. The new style shows up in the MarkupToolbar by default. This was a [longstanding issue](https://github.com/stevengharris/MarkupEditor/issues/96) but was very simple to fix with ProseMirror.
 * Use `<EM>` rather than `<I>` and `<STRONG>` rather than `<B>` in HTML output. The MarkupEditor still accepts HTML with `<I>` and `<B>` tags in `setHtml`, but will only produce HTML (via `getHtml`) that contains `<EM>` and `<STRONG>`. This was done to adhere to ProseMirror's defaults, but I also think it is "more correct" from an HTML perspective. Since any existing documents produced using the MarkupEditor will contain `<B>` and `<I>`, but they load and display properly into the new version, the change (in my own usage) results in a kind of lazy update, where it only affects new documents or old ones that you make changes to.
@@ -413,7 +412,6 @@ This release is a very big change under the covers but should remain (almost com
 * [FIXED] [Support line breaks](https://github.com/stevengharris/MarkupEditor/issues/135)
 * [FIXED] [Treatment of \<code> blocks](https://github.com/stevengharris/MarkupEditor/issues/96)
 * [OPEN] [Multi-selection in lists doesn't work properly [ProseMirror version only]](https://github.com/stevengharris/MarkupEditor/issues/219)
-* [OPEN] [Customization example needs updating [ProseMirror version only]](https://github.com/stevengharris/MarkupEditor/issues/221)
 * [OPEN] [Search mode background indication [ProseMirror version only]](https://github.com/stevengharris/MarkupEditor/issues/223)
 
 #### Version 0.7.2 (Beta 6)
@@ -608,26 +606,8 @@ The original MarkupEditor had the advantage of not supporting arbitrary HTML. In
 
 In case you think "To heck with this contentEditable nonsense. How hard can it be to build a little editor!?", I refer you to this [article on lord.io](https://lord.io/text-editing-hates-you-too/). The DOM and its incredibly well-documented API are proven and kind of amazing, even if `contenteditable` itself is a kind of dumpster fire. To be able to ride on top of the work done in the browser is a gift horse that should not be looked in the mouth.
 
-## Legalities
+## License
 
-MarkupEditor uses ProseMirror(https://prosemirror.net, https://github.com/prosemirror). Be aware that if you distribute MarkupEditor or embed it in your application, you will be distributing `markup.js`, which in addition to original MarkupEditor code under [MIT license](https://github.com/stevengharris/MarkupEditor/blob/main/LICENSE), also embeds "substantial portions" of ProseMirror under the following [license](https://github.com/ProseMirror/prosemirror/blob/master/LICENSE):
+MarkupEditor is available under the [MIT license](https://github.com/stevengharris/MarkupEditor/blob/main/LICENSE).
 
-Copyright (C) 2015-2017 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+MarkupEditor depends on ProseMirror (https://prosemirror.net, https://github.com/prosemirror). Be aware that if you distribute MarkupEditor or embed it in your application, you will be distributing `markup.js`, which in addition to original MarkupEditor code, contains "substantial portions" of ProseMirror. ProseMirror is also available under the [MIT license](https://github.com/ProseMirror/prosemirror/blob/master/LICENSE).

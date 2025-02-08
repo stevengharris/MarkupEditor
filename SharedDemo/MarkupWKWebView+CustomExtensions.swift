@@ -9,13 +9,13 @@ import MarkupEditor
 
 extension MarkupWKWebView {
     
-    /// Invoke the MU.assignClasses method on the JavaScript side that was added-in via custom.js.
-    public func assignClasses(_ handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.assignClasses()") { result, error in
+    /// Invoke the MU.wordcount method on the JavaScript side that was added-in via custom.js.
+    public func wordcount(_ handler: ((Int?)->Void)? = nil) {
+        evaluateJavaScript("MU.wordCount()") { result, error in
             if let error {
                 print(error.localizedDescription)
             }
-            handler?()
+            handler?(result as? Int)
         }
     }
     
