@@ -37,7 +37,7 @@ struct SearchBar: View {
                     .padding(2)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
-                    .onSubmit { search() }
+                    .onSubmit { search(activate: true) }
                     .focused($searchIsFocused)
                     .overlay(alignment: .leading) {
                         if (!searchIsFocused && searchString.isEmpty) {
@@ -80,9 +80,9 @@ struct SearchBar: View {
     
     /// Initiate search for `searchString`, entering into a mode where Enter will find next in the same direction.
     @MainActor
-    private func search() {
-        guard !searchString.isEmpty, let selectedWebView = MarkupEditor.selectedWebView else { return }
-        selectedWebView.search(for: searchString, direction: direction, activate: true)
+    private func search(activate: Bool = false) {
+        guard let selectedWebView = MarkupEditor.selectedWebView else { return }
+        selectedWebView.search(for: searchString, direction: direction, activate: activate)
     }
     
     /// Clear the search string, suppress Enter doing next search, and make sure the selectedWebView is firstResponder.

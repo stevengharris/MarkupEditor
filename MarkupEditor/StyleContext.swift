@@ -19,9 +19,10 @@ public class StyleContext: @unchecked Sendable, ObservableObject, Identifiable, 
     public static let H4 = StyleContext(tag: "H4", name: "Header 4", fontSize: 20)
     public static let H5 = StyleContext(tag: "H5", name: "Header 5", fontSize: 18)
     public static let H6 = StyleContext(tag: "H6", name: "Header 6", fontSize: 16)
-    public static let AllCases = [Undefined, Multiple, P, H1, H2, H3, H4, H5, H6]
-    public static let StyleCases = [P, H1, H2, H3, H4, H5, H6]
-    public static let SizeCases = [P, H6, H5, H4, H3, H2, H1]  // In order smallest to largest
+    public static let PRE = StyleContext(tag: "PRE", name: "Code", fontSize: 14)
+    public static let AllCases = [Undefined, Multiple, P, H1, H2, H3, H4, H5, H6, PRE]
+    public static let StyleCases = [P, H1, H2, H3, H4, H5, H6, PRE]
+    public static let SizeCases = [P, PRE, H6, H5, H4, H3, H2, H1]  // In order smallest to largest
     
     public static func == (lhs: StyleContext, rhs: StyleContext) -> Bool {
         return lhs.tag == rhs.tag

@@ -6,20 +6,18 @@
 //
 
 /**
- * A public method that can be invoked from MarkupWKWebView to execute the
- * assignment of classes to h1 and h2 elements, so that custom.css styling
- * will show up. Invoking this method requires an extension to MarkupWKWebView
- * which can be called from the MarkupDelegate.markupLoaded method.
+ * A public method that can be invoked from MarkupWKWebView to return
+ * the number of words in the HTML document using a simpleminded approach.
+ * Invoking this method requires an extension to MarkupWKWebView.
  */
-MU.assignClasses = function() {
-    const h1Elements = document.getElementsByTagName('h1');
-    for (let i = 0; i < h1Elements.length; i++) {
-        element = h1Elements[i];
-        element.classList.add('title');
+MU.wordCount = function() {
+    let wordCount = 0;
+    const styles = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'CODE'];
+    for (const style of styles) {
+        const elements = document.querySelectorAll(style);
+        for (const element of elements) {
+            wordCount += element.textContent.trim().split(' ').length;
+        }
     };
-    const h2Elements = document.getElementsByTagName('h2');
-    for (let i = 0; i < h2Elements.length; i++) {
-        element = h2Elements[i];
-        element.classList.add('subtitle');
-    };
+    return wordCount;
 };

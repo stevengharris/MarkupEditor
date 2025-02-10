@@ -1,38 +1,32 @@
 //
-//  DemoContentView.swift
-//  SwiftUIDemo
+//  CustomContentView.swift
+//  MarkupEditor
 //
-//  Created by Steven Harris on 3/9/21.
-//  Copyright © 2021 Steven Harris. All rights reserved.
+//  Created by Steven Harris on 1/13/24.
 //
 
 import SwiftUI
 import MarkupEditor
 
-/// The main view for the SwiftUIDemo.
-///
-/// Displays the MarkupEditorView containing demo.html and a TextView to display the raw HTML that can be toggled
-/// on and off from the FileToolbar. By default, the MarkupEditorView shows the MarkupToolbar at the top.
-/// 
-/// Acts as the MarkupDelegate to interact with editing operations as needed, and as the FileToolbarDelegate to interact
-/// with the FileToolbar.
-///
-/// A local png image is packaged along with the rest of the demo app resources for demo purposes only.
-/// Normally, you would want to put resources in a subdirectory of where your html file comes from, or in
-/// a directory that holds both the html file and all of its resources. When you do that, you would specify
-/// `resourcesUrl` when  instantiating MarkupEditorView, so that the \<img src=...> tag can identify
-/// the `src` for the image relative to your html document.
-struct DemoContentView: View {
+/// Identical to the DemoContentView, except also demonstrating the use of custom.js and custom.css
+/// to customize style and add a user script that returns the word count of the document.
+struct CustomContentView: View {
 
     @ObservedObject var selectImage = MarkupEditor.selectImage
     @State private var rawText = NSAttributedString(string: "")
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
+    @State private var wordCount: Int = 0
+    /// The `markupConfiguration` holds onto the userCSSFile and userScriptFile we set in init.
+    private let markupConfiguration = MarkupWKWebViewConfiguration()
     
     var body: some View {
         VStack(spacing: 0) {
-            MarkupEditorView(markupDelegate: self, html: $demoHtml, placeholder: "Add document content...", id: "Document")
+            Spacer()
+            Label("Word count: \(wordCount)", systemImage: "text.word.spacing")
+            Spacer()
+            MarkupEditorView(markupDelegate: self, configuration: markupConfiguration, html: $demoHtml, id: "Document")
             if rawShowing {
                 VStack {
                     Divider()
@@ -60,11 +54,17 @@ struct DemoContentView: View {
         } else {
             _demoHtml = State(initialValue: "")
         }
+        // Identify the the css and js that will be loaded after markup.html is fully loaded.
+        // For demo purposes, both files are included in SharedDemo. See markupLoaded below
+        // where the classes are assigned using a call to `assignClasses` in the MarkupWKWebView.
+        markupConfiguration.userCssFile = "custom.css"
+        markupConfiguration.userScriptFile = "custom.js"
     }
     
     private func setRawText(_ handler: (()->Void)? = nil) {
         MarkupEditor.selectedWebView?.getHtml { html in
             rawText = attributedString(from: html ?? "")
+            MarkupEditor.selectedWebView?.wordcount { count in wordCount = count ?? 0 }
             handler?()
         }
     }
@@ -88,20 +88,18 @@ struct DemoContentView: View {
     
 }
 
-extension DemoContentView: MarkupDelegate {
+extension CustomContentView: MarkupDelegate {
     
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        // Now that the code in markup.js and custom.js has been loaded, and the markup.css and custom.css
+        // have been set, we can invoke wordCount to display the number of words in the document.
         MarkupEditor.selectedWebView = view
         setRawText(handler)
     }
     
     func markupInput(_ view: MarkupWKWebView) {
         // This is way too heavyweight, but it suits the purposes of the demo
-        view.getSelectionState() { selectionState in
-            //Logger.coordinator.debug("* selectionChange")
-            MarkupEditor.selectionState.reset(from: selectionState)
-            setRawText()
-        }
+        setRawText()
     }
     
     /// Callback received after a local image has been added to the document.
@@ -116,7 +114,7 @@ extension DemoContentView: MarkupDelegate {
 
 }
 
-extension DemoContentView: FileToolbarDelegate {
+extension CustomContentView: FileToolbarDelegate {
 
     func newDocument(handler: ((URL?)->Void)? = nil) {
         MarkupEditor.selectedWebView?.emptyDocument() {

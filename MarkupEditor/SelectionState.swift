@@ -124,7 +124,7 @@ public class SelectionState: ObservableObject, Identifiable, CustomStringConvert
           link: \(linkString())
           image: \(imageString())
           table: \(tableString())
-        """ : "invalid, divid: \(divid ?? "none"))"
+        """ : "invalid, divid: \(divid ?? "none")"
     }
     
     public init() {}
