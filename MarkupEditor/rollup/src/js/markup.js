@@ -840,6 +840,21 @@ export function handleShiftEnter() {
 }
 
 /**
+ * Handle pressing Delete.
+ * 
+ * Notify about deleted images if one was selected, but always notify state changed and return false.
+ * 
+ *  * @returns bool    Value is false if subsequent commands should execute;
+ *                      else true if execution should stop here.
+ */
+export function handleDelete() {
+    const imageAttributes = _getImageAttributes();
+    if (imageAttributes.src) postMessage({ 'messageType': 'deletedImage', 'src': imageAttributes.src, 'divId': (selectedID ?? '') });
+    stateChanged();
+    return false;
+}
+
+/**
  * Called to set attributes to the editor div, typically to ,
  * set spellcheck and autocorrect. Note that contenteditable 
  * should not be set for the editor element, even if it is 
@@ -2359,10 +2374,13 @@ export function clicked() {
 /**
  * Report a change in the ProseMirror document state to the Swift side. The 
  * change might be from typing or formatting or styling, etc.
+ * 
+ * @returns Bool    Return false so we can use in chainCommands directly
  */
 export function stateChanged() {
     deactivateSearch()
     _callbackInput()
+    return false;
 }
 
 export function postMessage(message) {

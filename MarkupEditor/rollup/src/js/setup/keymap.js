@@ -4,7 +4,7 @@ import {wrapInList, splitListItem, liftListItem, sinkListItem} from "prosemirror
 import {undo, redo} from "prosemirror-history"
 import {undoInputRule} from "prosemirror-inputrules"
 import {goToNextCell} from 'prosemirror-tables';
-import { handleEnter, handleShiftEnter } from "../markup";
+import { stateChanged, handleDelete, handleEnter, handleShiftEnter } from "../markup";
 import { findNext, findPrev } from "prosemirror-search";
 
 const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false
@@ -24,11 +24,11 @@ const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : f
 // * **Ctrl-Shift-8** to wrap the selection in an ordered list
 // * **Ctrl-Shift-9** to wrap the selection in a bullet list
 // * **Ctrl->** to wrap the selection in a block quote
-// * **Enter** to split a non-empty textblock in a list item while at
-//   the same time splitting the list item
+// * **Enter** to do MarkupEditor processing and split a non-empty textblock in a 
+//   list item while at the same time splitting the list item
 // * **Mod-Enter** to insert a hard break
 // * **Mod-_** to insert a horizontal rule
-// * **Backspace** to undo an input rule
+// * **Backspace** to notify MarkupEditor and undo an input rule
 // * **Alt-ArrowUp** to `joinUp`
 // * **Alt-ArrowDown** to `joinDown`
 // * **Mod-BracketLeft** to `lift`
@@ -51,9 +51,9 @@ export function buildKeymap(schema, mapKeys) {
   bind("Ctrl-f", findNext)
   bind("Ctrl-Shift-f", findPrev)
 
-  bind("Mod-z", undo)
-  bind("Shift-Mod-z", redo)
-  bind("Backspace", undoInputRule)
+  bind("Mod-z", chainCommands(stateChanged, undo))
+  bind("Shift-Mod-z", chainCommands(stateChanged, redo))
+  bind("Backspace", chainCommands(handleDelete, undoInputRule))
   if (!mac) bind("Mod-y", redo)
 
   bind("Alt-ArrowUp", joinUp)
@@ -108,6 +108,8 @@ export function buildKeymap(schema, mapKeys) {
   }
   // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
   bind("Shift-Enter", handleShiftEnter)
+  // The MarkupEditor needs to be notified of state changes on Delete, like Backspace
+  bind("Delete", handleDelete)
 
   if (type = schema.nodes.paragraph)
     bind("Shift-Ctrl-0", setBlockType(type))

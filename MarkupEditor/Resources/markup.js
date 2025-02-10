@@ -18970,6 +18970,21 @@
   }
 
   /**
+   * Handle pressing Delete.
+   * 
+   * Notify about deleted images if one was selected, but always notify state changed and return false.
+   * 
+   *  * @returns bool    Value is false if subsequent commands should execute;
+   *                      else true if execution should stop here.
+   */
+  function handleDelete() {
+      const imageAttributes = _getImageAttributes();
+      if (imageAttributes.src) postMessage({ 'messageType': 'deletedImage', 'src': imageAttributes.src, 'divId': (selectedID ?? '') });
+      stateChanged();
+      return false;
+  }
+
+  /**
    * Called to set attributes to the editor div, typically to ,
    * set spellcheck and autocorrect. Note that contenteditable 
    * should not be set for the editor element, even if it is 
@@ -20380,10 +20395,13 @@
   /**
    * Report a change in the ProseMirror document state to the Swift side. The 
    * change might be from typing or formatting or styling, etc.
+   * 
+   * @returns Bool    Return false so we can use in chainCommands directly
    */
   function stateChanged() {
       deactivateSearch();
       _callbackInput();
+      return false;
   }
 
   function postMessage(message) {
@@ -21059,11 +21077,11 @@
   // * **Ctrl-Shift-8** to wrap the selection in an ordered list
   // * **Ctrl-Shift-9** to wrap the selection in a bullet list
   // * **Ctrl->** to wrap the selection in a block quote
-  // * **Enter** to split a non-empty textblock in a list item while at
-  //   the same time splitting the list item
+  // * **Enter** to do MarkupEditor processing and split a non-empty textblock in a 
+  //   list item while at the same time splitting the list item
   // * **Mod-Enter** to insert a hard break
   // * **Mod-_** to insert a horizontal rule
-  // * **Backspace** to undo an input rule
+  // * **Backspace** to notify MarkupEditor and undo an input rule
   // * **Alt-ArrowUp** to `joinUp`
   // * **Alt-ArrowDown** to `joinDown`
   // * **Mod-BracketLeft** to `lift`
@@ -21086,9 +21104,9 @@
     bind("Ctrl-f", findNext);
     bind("Ctrl-Shift-f", findPrev);
 
-    bind("Mod-z", undo);
-    bind("Shift-Mod-z", redo);
-    bind("Backspace", undoInputRule);
+    bind("Mod-z", chainCommands(stateChanged, undo));
+    bind("Shift-Mod-z", chainCommands(stateChanged, redo));
+    bind("Backspace", chainCommands(handleDelete, undoInputRule));
     if (!mac) bind("Mod-y", redo);
 
     bind("Alt-ArrowUp", joinUp);
@@ -21143,6 +21161,8 @@
     }
     // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
     bind("Shift-Enter", handleShiftEnter);
+    // The MarkupEditor needs to be notified of state changes on Delete, like Backspace
+    bind("Delete", handleDelete);
 
     if (type = schema.nodes.paragraph)
       bind("Shift-Ctrl-0", setBlockType(type));
