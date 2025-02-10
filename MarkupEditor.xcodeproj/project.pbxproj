@@ -24,21 +24,15 @@
 		AA1B818126273D9200891FFB /* demo.html in Resources */ = {isa = PBXBuildFile; fileRef = AA1B816C26265CAD00891FFB /* demo.html */; };
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
 		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
-		AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
-		AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA2EB1802B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2EB1842B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
 		AA2EB1862B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
 		AA2EB1872B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */; };
-		AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* StyledContentView.swift */; };
-		AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
-		AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */; };
+		AA2EB18B2B535F1E00224F5E /* CustomContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB1882B53579900224F5E /* CustomContentView.swift */; };
+		AA2EB18E2B535F5B00224F5E /* CustomViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */; };
 		AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
-		AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A927FE44C90068828F /* UndoTests.swift */; };
-		AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2FA8A127FE43A50068828F /* HtmlTest.swift */; };
-		AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA408B192616683B00CAE8B9 /* MarkupEditor.h in Headers */ = {isa = PBXBuildFile; fileRef = AAFADF64261525B90024F2DC /* MarkupEditor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA408B202616685B00CAE8B9 /* MarkupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A13260E9A00000674B7 /* MarkupCoordinator.swift */; };
 		AA408B242616685B00CAE8B9 /* MarkupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A11260E9A00000674B7 /* MarkupEditorView.swift */; };
@@ -51,6 +45,7 @@
 		AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A00260E99FF000674B7 /* MarkupToolbar.swift */; };
 		AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A0C260E99FF000674B7 /* InsertToolbar.swift */; };
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
+		AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */ = {isa = PBXBuildFile; fileRef = AA40BA1E2CD54D5300264B1F /* mirror.css */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */; };
@@ -58,7 +53,6 @@
 		AA4EBE952B3747D6006C614B /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE942B3747D6006C614B /* markup.js */; };
 		AA4EBEA42B3B8700006C614B /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */; };
 		AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
-		AA52F3222806354000EEC655 /* RedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA52F320280634B200EEC655 /* RedoTests.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
 		AA652949260E8114000674B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
@@ -66,7 +60,6 @@
 		AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA6529A0260E8450000674B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299F260E8450000674B7 /* SceneDelegate.swift */; };
 		AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529A1260E8450000674B7 /* DemoViewController.swift */; };
-		AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6529D0260E8E8E000674B7 /* String+Extensions.swift */; };
 		AA7B24E02B59A617003C607A /* HtmlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */; };
 		AA7B24E12B59A61E003C607A /* HtmlButtonGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */; };
 		AA7B24E22B59A628003C607A /* HtmlDiv.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7B24DE2B58A043003C607A /* HtmlDiv.swift */; };
@@ -87,7 +80,6 @@
 		AAAF7A6F289B343A005EF58E /* MarkupMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */; };
 		AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040728B1A0780063BE2A /* SimplestViewController.swift */; };
 		AAB1040A28B1A3240063BE2A /* SimplestContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040928B1A3240063BE2A /* SimplestContentView.swift */; };
-		AAB1041028BE911A0063BE2A /* BackgroundClearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */; };
 		AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1042F28C10B600063BE2A /* LinkViewController.swift */; };
 		AAB1043228C2AEA30063BE2A /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043128C2AEA30063BE2A /* ImageViewController.swift */; };
 		AAB1043428C6A26A0063BE2A /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */; };
@@ -107,14 +99,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
+		AA0BE5A02D4ED31B00F0090E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
-			remoteInfo = MarkupEditor;
+			remoteGlobalIDString = AA652941260E8113000674B7;
+			remoteInfo = SwiftUIDemo;
 		};
-		AA87E8892C2B59C300109559 /* PBXContainerItemProxy */ = {
+		AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
@@ -129,13 +121,6 @@
 			remoteInfo = MarkupEditor;
 		};
 		AAF404D6290B004900129FD9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA652923260E80EE000674B7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA408AFA261666D200CAE8B9;
-			remoteInfo = MarkupEditor;
-		};
-		AAF404D8290B005000129FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA652923260E80EE000674B7 /* Project object */;
 			proxyType = 1;
@@ -185,17 +170,571 @@
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
 		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
-		AA2548732805FAE300C9DEB2 /* RedoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
 		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
 		AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+CustomExtensions.swift"; sourceTree = "<group>"; };
-		AA2EB1882B53579900224F5E /* StyledContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledContentView.swift; sourceTree = "<group>"; };
-		AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyledViewController.swift; sourceTree = "<group>"; };
+		AA2EB1882B53579900224F5E /* CustomContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomContentView.swift; sourceTree = "<group>"; };
+		AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomViewController.swift; sourceTree = "<group>"; };
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
-		AA2FA8A727FE44C90068828F /* UndoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UndoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA2FA8A927FE44C90068828F /* UndoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoTests.swift; sourceTree = "<group>"; };
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA40BA1E2CD54D5300264B1F /* mirror.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = mirror.css; sourceTree = "<group>"; };
+		AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupmirror.umd.js; sourceTree = "<group>"; };
+		AA40BA3C2CD572C100264B1F /* acorn */ = {isa = PBXFileReference; lastKnownFileType = text; path = acorn; sourceTree = "<group>"; };
+		AA40BA3D2CD572C100264B1F /* resolve */ = {isa = PBXFileReference; lastKnownFileType = text; path = resolve; sourceTree = "<group>"; };
+		AA40BA3E2CD572C100264B1F /* rollup */ = {isa = PBXFileReference; lastKnownFileType = text; path = rollup; sourceTree = "<group>"; };
+		AA40BA432CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA442CD572C100264B1F /* index.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.es.js; sourceTree = "<group>"; };
+		AA40BA452CD572C100264B1F /* index.es.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = index.es.js.map; sourceTree = "<group>"; };
+		AA40BA462CD572C100264B1F /* index.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = index.js.map; sourceTree = "<group>"; };
+		AA40BA482CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA4A2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA4B2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA4E2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA502CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BA512CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BA522CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA532CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BA572CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA592CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BA5A2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BA5B2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA5C2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BA5E2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA5F2CD572C100264B1F /* index.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.es.js; sourceTree = "<group>"; };
+		AA40BA612CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA632CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BA642CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA672CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA692CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BA6A2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BA6B2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA6C2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BA702CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA722CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BA732CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BA742CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA752CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BA782CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA792CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BA7A2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BA7B2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BA7D2CD572C100264B1F /* strict.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = strict.d.ts; sourceTree = "<group>"; };
+		AA40BA7F2CD572C100264B1F /* disposable.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = disposable.d.ts; sourceTree = "<group>"; };
+		AA40BA802CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA812CD572C100264B1F /* indexable.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = indexable.d.ts; sourceTree = "<group>"; };
+		AA40BA822CD572C100264B1F /* iterators.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = iterators.d.ts; sourceTree = "<group>"; };
+		AA40BA842CD572C100264B1F /* promises.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = promises.d.ts; sourceTree = "<group>"; };
+		AA40BA862CD572C100264B1F /* promises.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = promises.d.ts; sourceTree = "<group>"; };
+		AA40BA882CD572C100264B1F /* promises.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = promises.d.ts; sourceTree = "<group>"; };
+		AA40BA8A2CD572C100264B1F /* consumers.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = consumers.d.ts; sourceTree = "<group>"; };
+		AA40BA8B2CD572C100264B1F /* promises.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = promises.d.ts; sourceTree = "<group>"; };
+		AA40BA8C2CD572C100264B1F /* web.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = web.d.ts; sourceTree = "<group>"; };
+		AA40BA8E2CD572C100264B1F /* promises.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = promises.d.ts; sourceTree = "<group>"; };
+		AA40BA902CD572C100264B1F /* buffer.buffer.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = buffer.buffer.d.ts; sourceTree = "<group>"; };
+		AA40BA912CD572C100264B1F /* globals.typedarray.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = globals.typedarray.d.ts; sourceTree = "<group>"; };
+		AA40BA922CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BA942CD572C100264B1F /* assert.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = assert.d.ts; sourceTree = "<group>"; };
+		AA40BA952CD572C100264B1F /* async_hooks.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = async_hooks.d.ts; sourceTree = "<group>"; };
+		AA40BA962CD572C100264B1F /* buffer.buffer.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = buffer.buffer.d.ts; sourceTree = "<group>"; };
+		AA40BA972CD572C100264B1F /* buffer.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = buffer.d.ts; sourceTree = "<group>"; };
+		AA40BA982CD572C100264B1F /* child_process.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = child_process.d.ts; sourceTree = "<group>"; };
+		AA40BA992CD572C100264B1F /* cluster.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = cluster.d.ts; sourceTree = "<group>"; };
+		AA40BA9A2CD572C100264B1F /* console.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = console.d.ts; sourceTree = "<group>"; };
+		AA40BA9B2CD572C100264B1F /* constants.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = constants.d.ts; sourceTree = "<group>"; };
+		AA40BA9C2CD572C100264B1F /* crypto.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = crypto.d.ts; sourceTree = "<group>"; };
+		AA40BA9D2CD572C100264B1F /* dgram.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = dgram.d.ts; sourceTree = "<group>"; };
+		AA40BA9E2CD572C100264B1F /* diagnostics_channel.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = diagnostics_channel.d.ts; sourceTree = "<group>"; };
+		AA40BA9F2CD572C100264B1F /* dns.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = dns.d.ts; sourceTree = "<group>"; };
+		AA40BAA02CD572C100264B1F /* dom-events.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = "dom-events.d.ts"; sourceTree = "<group>"; };
+		AA40BAA12CD572C100264B1F /* domain.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = domain.d.ts; sourceTree = "<group>"; };
+		AA40BAA22CD572C100264B1F /* events.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = events.d.ts; sourceTree = "<group>"; };
+		AA40BAA32CD572C100264B1F /* fs.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = fs.d.ts; sourceTree = "<group>"; };
+		AA40BAA42CD572C100264B1F /* globals.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = globals.d.ts; sourceTree = "<group>"; };
+		AA40BAA52CD572C100264B1F /* globals.typedarray.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = globals.typedarray.d.ts; sourceTree = "<group>"; };
+		AA40BAA62CD572C100264B1F /* http.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = http.d.ts; sourceTree = "<group>"; };
+		AA40BAA72CD572C100264B1F /* http2.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = http2.d.ts; sourceTree = "<group>"; };
+		AA40BAA82CD572C100264B1F /* https.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = https.d.ts; sourceTree = "<group>"; };
+		AA40BAA92CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BAAA2CD572C100264B1F /* inspector.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = inspector.d.ts; sourceTree = "<group>"; };
+		AA40BAAB2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BAAC2CD572C100264B1F /* module.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = module.d.ts; sourceTree = "<group>"; };
+		AA40BAAD2CD572C100264B1F /* net.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = net.d.ts; sourceTree = "<group>"; };
+		AA40BAAE2CD572C100264B1F /* os.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = os.d.ts; sourceTree = "<group>"; };
+		AA40BAAF2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BAB02CD572C100264B1F /* path.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = path.d.ts; sourceTree = "<group>"; };
+		AA40BAB12CD572C100264B1F /* perf_hooks.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = perf_hooks.d.ts; sourceTree = "<group>"; };
+		AA40BAB22CD572C100264B1F /* process.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = process.d.ts; sourceTree = "<group>"; };
+		AA40BAB32CD572C100264B1F /* punycode.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = punycode.d.ts; sourceTree = "<group>"; };
+		AA40BAB42CD572C100264B1F /* querystring.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = querystring.d.ts; sourceTree = "<group>"; };
+		AA40BAB52CD572C100264B1F /* readline.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = readline.d.ts; sourceTree = "<group>"; };
+		AA40BAB62CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BAB72CD572C100264B1F /* repl.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = repl.d.ts; sourceTree = "<group>"; };
+		AA40BAB82CD572C100264B1F /* sea.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = sea.d.ts; sourceTree = "<group>"; };
+		AA40BAB92CD572C100264B1F /* sqlite.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = sqlite.d.ts; sourceTree = "<group>"; };
+		AA40BABA2CD572C100264B1F /* stream.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = stream.d.ts; sourceTree = "<group>"; };
+		AA40BABB2CD572C100264B1F /* string_decoder.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = string_decoder.d.ts; sourceTree = "<group>"; };
+		AA40BABC2CD572C100264B1F /* test.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = test.d.ts; sourceTree = "<group>"; };
+		AA40BABD2CD572C100264B1F /* timers.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = timers.d.ts; sourceTree = "<group>"; };
+		AA40BABE2CD572C100264B1F /* tls.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = tls.d.ts; sourceTree = "<group>"; };
+		AA40BABF2CD572C100264B1F /* trace_events.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = trace_events.d.ts; sourceTree = "<group>"; };
+		AA40BAC02CD572C100264B1F /* tty.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = tty.d.ts; sourceTree = "<group>"; };
+		AA40BAC12CD572C100264B1F /* url.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = url.d.ts; sourceTree = "<group>"; };
+		AA40BAC22CD572C100264B1F /* util.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = util.d.ts; sourceTree = "<group>"; };
+		AA40BAC32CD572C100264B1F /* v8.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = v8.d.ts; sourceTree = "<group>"; };
+		AA40BAC42CD572C100264B1F /* vm.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = vm.d.ts; sourceTree = "<group>"; };
+		AA40BAC52CD572C100264B1F /* wasi.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = wasi.d.ts; sourceTree = "<group>"; };
+		AA40BAC62CD572C100264B1F /* worker_threads.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = worker_threads.d.ts; sourceTree = "<group>"; };
+		AA40BAC72CD572C100264B1F /* zlib.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = zlib.d.ts; sourceTree = "<group>"; };
+		AA40BAC92CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BACA2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BACB2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BACC2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BAF32CD572C100264B1F /* dir.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = dir.js; sourceTree = "<group>"; };
+		AA40BAF52CD572C100264B1F /* dirs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = dirs.js; sourceTree = "<group>"; };
+		AA40BAF72CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BAF82CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BAF92CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BAFA2CD572C100264B1F /* readme.markdown */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.markdown; sourceTree = "<group>"; };
+		AA40BB062CD572C100264B1F /* crel.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = crel.js; sourceTree = "<group>"; };
+		AA40BB072CD572C100264B1F /* crel.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = crel.es.js; sourceTree = "<group>"; };
+		AA40BB082CD572C100264B1F /* crel.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = crel.min.js; sourceTree = "<group>"; };
+		AA40BB092CD572C100264B1F /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		AA40BB0A2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB0B2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB172CD572C100264B1F /* estree-walker.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "estree-walker.umd.js"; sourceTree = "<group>"; };
+		AA40BB182CD572C100264B1F /* estree-walker.umd.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = "estree-walker.umd.js.map"; sourceTree = "<group>"; };
+		AA40BB1A2CD572C100264B1F /* estree-walker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "estree-walker.js"; sourceTree = "<group>"; };
+		AA40BB1B2CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BB1D2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BB1F2CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BB202CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB212CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB292CD572C100264B1F /* FUNDING.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = FUNDING.yml; sourceTree = "<group>"; };
+		AA40BB2A2CD572C100264B1F /* SECURITY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SECURITY.md; sourceTree = "<group>"; };
+		AA40BB2C2CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BB2D2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB2F2CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BB302CD572C100264B1F /* .nycrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .nycrc; sourceTree = "<group>"; };
+		AA40BB312CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BB322CD572C100264B1F /* implementation.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = implementation.js; sourceTree = "<group>"; };
+		AA40BB332CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB342CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB352CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB362CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB3F2CD572C100264B1F /* FUNDING.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = FUNDING.yml; sourceTree = "<group>"; };
+		AA40BB412CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BB422CD572C100264B1F /* .nycrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .nycrc; sourceTree = "<group>"; };
+		AA40BB432CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BB442CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB452CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BB462CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB472CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB482CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB492CD572C100264B1F /* tsconfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tsconfig.json; sourceTree = "<group>"; };
+		AA40BB562CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB582CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BB592CD572C100264B1F /* .nycrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .nycrc; sourceTree = "<group>"; };
+		AA40BB5A2CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BB5B2CD572C100264B1F /* core.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = core.json; sourceTree = "<group>"; };
+		AA40BB5C2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB5D2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB5E2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB5F2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB612CD572C100264B1F /* .npmignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .npmignore; sourceTree = "<group>"; };
+		AA40BB622CD572C100264B1F /* component.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = component.json; sourceTree = "<group>"; };
+		AA40BB632CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB642CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB652CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB672CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BB692CD572C100264B1F /* is-reference.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "is-reference.js"; sourceTree = "<group>"; };
+		AA40BB6A2CD572C100264B1F /* is-reference.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "is-reference.es.js"; sourceTree = "<group>"; };
+		AA40BB6C2CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BB6D2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB6E2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB702CD572C100264B1F /* magic-string.cjs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "magic-string.cjs.js"; sourceTree = "<group>"; };
+		AA40BB712CD572C100264B1F /* magic-string.cjs.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = "magic-string.cjs.js.map"; sourceTree = "<group>"; };
+		AA40BB722CD572C100264B1F /* magic-string.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "magic-string.es.js"; sourceTree = "<group>"; };
+		AA40BB732CD572C100264B1F /* magic-string.es.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = "magic-string.es.js.map"; sourceTree = "<group>"; };
+		AA40BB742CD572C100264B1F /* magic-string.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "magic-string.umd.js"; sourceTree = "<group>"; };
+		AA40BB752CD572C100264B1F /* magic-string.umd.js.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = "magic-string.umd.js.map"; sourceTree = "<group>"; };
+		AA40BB772CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BB782CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB792CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB7A2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB812CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB822CD572C100264B1F /* license.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = license.md; sourceTree = "<group>"; };
+		AA40BB832CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB842CD572C100264B1F /* readme.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
+		AA40BB8B2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BB8C2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB8D2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BB8E2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BB902CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB912CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB922CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB992CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BB9A2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BB9B2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BB9C2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BB9E2CD572C100264B1F /* constants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = constants.js; sourceTree = "<group>"; };
+		AA40BB9F2CD572C100264B1F /* parse.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = parse.js; sourceTree = "<group>"; };
+		AA40BBA02CD572C100264B1F /* picomatch.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = picomatch.js; sourceTree = "<group>"; };
+		AA40BBA12CD572C100264B1F /* scan.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = scan.js; sourceTree = "<group>"; };
+		AA40BBA22CD572C100264B1F /* utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = utils.js; sourceTree = "<group>"; };
+		AA40BBA42CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BBA52CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBA62CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BBA72CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BBA82CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBAA2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BBAB2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBAC2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BBAD2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BBAF2CD572C100264B1F /* commands.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = commands.ts; sourceTree = "<group>"; };
+		AA40BBB02CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBB22CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BBB32CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BBB42CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BBB52CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BBB62CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BBB72CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBB92CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BBBA2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBBB2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BBBC2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BBBE2CD572C100264B1F /* dropcursor.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = dropcursor.ts; sourceTree = "<group>"; };
+		AA40BBC02CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BBC12CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BBC22CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BBC32CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BBC42CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBDB2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BBDC2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBDD2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BBDE2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BBE02CD572C100264B1F /* gapcursor.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = gapcursor.ts; sourceTree = "<group>"; };
+		AA40BBE12CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BBE22CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBE42CD572C100264B1F /* gapcursor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = gapcursor.css; sourceTree = "<group>"; };
+		AA40BBE62CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BBE72CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BBE82CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BBE92CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BBEA2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBEC2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BBED2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBEE2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BBEF2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BBF12CD572C100264B1F /* history.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = history.ts; sourceTree = "<group>"; };
+		AA40BBF22CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBF42CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BBF52CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BBF62CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BBF72CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BBF82CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BBF92CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BBFB2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BBFC2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BBFD2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BBFE2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC002CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BC012CD572C100264B1F /* inputrules.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = inputrules.ts; sourceTree = "<group>"; };
+		AA40BC022CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC032CD572C100264B1F /* rulebuilders.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = rulebuilders.ts; sourceTree = "<group>"; };
+		AA40BC042CD572C100264B1F /* rules.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = rules.ts; sourceTree = "<group>"; };
+		AA40BC062CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC072CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC082CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC092CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC0A2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC0B2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC0D2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC0E2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC0F2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC102CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC122CD572C100264B1F /* keymap.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = keymap.ts; sourceTree = "<group>"; };
+		AA40BC132CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC152CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC162CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC172CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC182CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC192CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC1A2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC302CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC312CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC322CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC332CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC352CD572C100264B1F /* comparedeep.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = comparedeep.ts; sourceTree = "<group>"; };
+		AA40BC362CD572C100264B1F /* content.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = content.ts; sourceTree = "<group>"; };
+		AA40BC372CD572C100264B1F /* diff.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = diff.ts; sourceTree = "<group>"; };
+		AA40BC382CD572C100264B1F /* dom.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = dom.ts; sourceTree = "<group>"; };
+		AA40BC392CD572C100264B1F /* fragment.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = fragment.ts; sourceTree = "<group>"; };
+		AA40BC3A2CD572C100264B1F /* from_dom.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = from_dom.ts; sourceTree = "<group>"; };
+		AA40BC3B2CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BC3C2CD572C100264B1F /* mark.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = mark.ts; sourceTree = "<group>"; };
+		AA40BC3D2CD572C100264B1F /* node.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = node.ts; sourceTree = "<group>"; };
+		AA40BC3E2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC3F2CD572C100264B1F /* replace.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = replace.ts; sourceTree = "<group>"; };
+		AA40BC402CD572C100264B1F /* resolvedpos.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = resolvedpos.ts; sourceTree = "<group>"; };
+		AA40BC412CD572C100264B1F /* schema.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = schema.ts; sourceTree = "<group>"; };
+		AA40BC422CD572C100264B1F /* to_dom.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = to_dom.ts; sourceTree = "<group>"; };
+		AA40BC442CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC452CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC462CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC472CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC482CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC492CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC4B2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC4C2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC4D2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC4E2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC502CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC512CD572C100264B1F /* schema-basic.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = "schema-basic.ts"; sourceTree = "<group>"; };
+		AA40BC532CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC542CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC552CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC562CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC572CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC582CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC5A2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC5B2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC5C2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC5D2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC5F2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC602CD572C100264B1F /* schema-list.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = "schema-list.ts"; sourceTree = "<group>"; };
+		AA40BC622CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC632CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC642CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC652CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC662CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC672CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC692CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC6A2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC6B2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC6C2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC6E2CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BC6F2CD572C100264B1F /* plugin.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = plugin.ts; sourceTree = "<group>"; };
+		AA40BC702CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC712CD572C100264B1F /* selection.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = selection.ts; sourceTree = "<group>"; };
+		AA40BC722CD572C100264B1F /* state.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = state.ts; sourceTree = "<group>"; };
+		AA40BC732CD572C100264B1F /* transaction.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = transaction.ts; sourceTree = "<group>"; };
+		AA40BC752CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC762CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC772CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC782CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC792CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC7A2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC7C2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC7D2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC7E2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC7F2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC812CD572C100264B1F /* tables.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = tables.css; sourceTree = "<group>"; };
+		AA40BC832CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC842CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC852CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC872CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BC882CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BC892CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BC8A2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BC8C2CD572C100264B1F /* attr_step.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = attr_step.ts; sourceTree = "<group>"; };
+		AA40BC8D2CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BC8E2CD572C100264B1F /* map.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = map.ts; sourceTree = "<group>"; };
+		AA40BC8F2CD572C100264B1F /* mark.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = mark.ts; sourceTree = "<group>"; };
+		AA40BC902CD572C100264B1F /* mark_step.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = mark_step.ts; sourceTree = "<group>"; };
+		AA40BC912CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC922CD572C100264B1F /* replace.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = replace.ts; sourceTree = "<group>"; };
+		AA40BC932CD572C100264B1F /* replace_step.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = replace_step.ts; sourceTree = "<group>"; };
+		AA40BC942CD572C100264B1F /* step.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = step.ts; sourceTree = "<group>"; };
+		AA40BC952CD572C100264B1F /* structure.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = structure.ts; sourceTree = "<group>"; };
+		AA40BC962CD572C100264B1F /* transform.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = transform.ts; sourceTree = "<group>"; };
+		AA40BC982CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BC992CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BC9A2CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BC9B2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BC9C2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BC9D2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BC9F2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BCA02CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCA12CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BCA22CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BCA42CD572C100264B1F /* browser.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = browser.ts; sourceTree = "<group>"; };
+		AA40BCA52CD572C100264B1F /* capturekeys.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = capturekeys.ts; sourceTree = "<group>"; };
+		AA40BCA62CD572C100264B1F /* clipboard.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = clipboard.ts; sourceTree = "<group>"; };
+		AA40BCA72CD572C100264B1F /* decoration.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = decoration.ts; sourceTree = "<group>"; };
+		AA40BCA82CD572C100264B1F /* dom.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = dom.ts; sourceTree = "<group>"; };
+		AA40BCA92CD572C100264B1F /* domchange.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = domchange.ts; sourceTree = "<group>"; };
+		AA40BCAA2CD572C100264B1F /* domcoords.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = domcoords.ts; sourceTree = "<group>"; };
+		AA40BCAB2CD572C100264B1F /* domobserver.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = domobserver.ts; sourceTree = "<group>"; };
+		AA40BCAC2CD572C100264B1F /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		AA40BCAD2CD572C100264B1F /* input.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = input.ts; sourceTree = "<group>"; };
+		AA40BCAE2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BCAF2CD572C100264B1F /* selection.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = selection.ts; sourceTree = "<group>"; };
+		AA40BCB02CD572C100264B1F /* viewdesc.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = viewdesc.ts; sourceTree = "<group>"; };
+		AA40BCB22CD572C100264B1F /* prosemirror.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = prosemirror.css; sourceTree = "<group>"; };
+		AA40BCB42CD572C100264B1F /* .tern-project */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-project"; sourceTree = "<group>"; };
+		AA40BCB52CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BCB62CD572C100264B1F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		AA40BCB72CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BCB82CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCB92CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BCBB2CD572C100264B1F /* FUNDING.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = FUNDING.yml; sourceTree = "<group>"; };
+		AA40BCBD2CD572C100264B1F /* resolve */ = {isa = PBXFileReference; lastKnownFileType = text; path = resolve; sourceTree = "<group>"; };
+		AA40BCBF2CD572C100264B1F /* async.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = async.js; sourceTree = "<group>"; };
+		AA40BCC02CD572C100264B1F /* sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = sync.js; sourceTree = "<group>"; };
+		AA40BCC22CD572C100264B1F /* async.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = async.js; sourceTree = "<group>"; };
+		AA40BCC32CD572C100264B1F /* caller.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = caller.js; sourceTree = "<group>"; };
+		AA40BCC42CD572C100264B1F /* core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = core.js; sourceTree = "<group>"; };
+		AA40BCC52CD572C100264B1F /* core.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = core.json; sourceTree = "<group>"; };
+		AA40BCC62CD572C100264B1F /* homedir.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = homedir.js; sourceTree = "<group>"; };
+		AA40BCC72CD572C100264B1F /* is-core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "is-core.js"; sourceTree = "<group>"; };
+		AA40BCC82CD572C100264B1F /* node-modules-paths.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "node-modules-paths.js"; sourceTree = "<group>"; };
+		AA40BCC92CD572C100264B1F /* normalize-options.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "normalize-options.js"; sourceTree = "<group>"; };
+		AA40BCCA2CD572C100264B1F /* sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = sync.js; sourceTree = "<group>"; };
+		AA40BCCC2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCCE2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCD02CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCD32CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCD62CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BCD72CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCDB2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCDD2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCE02CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCE22CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCE62CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BCE92CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCEA2CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BCEC2CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BCEE2CD572C100264B1F /* aaa.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = aaa.js; sourceTree = "<group>"; };
+		AA40BCEF2CD572C100264B1F /* bbb.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = bbb.js; sourceTree = "<group>"; };
+		AA40BCF12CD572C100264B1F /* doom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = doom.js; sourceTree = "<group>"; };
+		AA40BCF22CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCF32CD572C100264B1F /* quux.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = quux.js; sourceTree = "<group>"; };
+		AA40BCF52CD572C100264B1F /* a.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = a.js; sourceTree = "<group>"; };
+		AA40BCF62CD572C100264B1F /* b.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = b.js; sourceTree = "<group>"; };
+		AA40BCF72CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCF92CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCFA2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCFC2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BCFD2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BCFF2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD002CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD022CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD032CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD052CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD072CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD082CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD0A2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD0B2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD0E2CD572C100264B1F /* lerna.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lerna.json; sourceTree = "<group>"; };
+		AA40BD0F2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD112CD572C100264B1F /* async.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = async.js; sourceTree = "<group>"; };
+		AA40BD122CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD132CD572C100264B1F /* sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = sync.js; sourceTree = "<group>"; };
+		AA40BD162CD572C100264B1F /* other-lib.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "other-lib.js"; sourceTree = "<group>"; };
+		AA40BD182CD572C100264B1F /* root.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = root.js; sourceTree = "<group>"; };
+		AA40BD1A2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD1D2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD1F2CD572C100264B1F /* foo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = foo.js; sourceTree = "<group>"; };
+		AA40BD212CD572C100264B1F /* foo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = foo.js; sourceTree = "<group>"; };
+		AA40BD232CD572C100264B1F /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
+		AA40BD262CD572C100264B1F /* bar.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = bar.js; sourceTree = "<group>"; };
+		AA40BD272CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD2A2CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BD2C2CD572C100264B1F /* cup.coffee */ = {isa = PBXFileReference; lastKnownFileType = text; path = cup.coffee; sourceTree = "<group>"; };
+		AA40BD2D2CD572C100264B1F /* foo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = foo.js; sourceTree = "<group>"; };
+		AA40BD2E2CD572C100264B1F /* mug.coffee */ = {isa = PBXFileReference; lastKnownFileType = text; path = mug.coffee; sourceTree = "<group>"; };
+		AA40BD2F2CD572C100264B1F /* mug.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mug.js; sourceTree = "<group>"; };
+		AA40BD312CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD352CD572C100264B1F /* core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = core.js; sourceTree = "<group>"; };
+		AA40BD362CD572C100264B1F /* dotdot.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = dotdot.js; sourceTree = "<group>"; };
+		AA40BD372CD572C100264B1F /* faulty_basedir.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = faulty_basedir.js; sourceTree = "<group>"; };
+		AA40BD382CD572C100264B1F /* filter.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = filter.js; sourceTree = "<group>"; };
+		AA40BD392CD572C100264B1F /* filter_sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = filter_sync.js; sourceTree = "<group>"; };
+		AA40BD3A2CD572C100264B1F /* home_paths.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = home_paths.js; sourceTree = "<group>"; };
+		AA40BD3B2CD572C100264B1F /* home_paths_sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = home_paths_sync.js; sourceTree = "<group>"; };
+		AA40BD3C2CD572C100264B1F /* mock.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mock.js; sourceTree = "<group>"; };
+		AA40BD3D2CD572C100264B1F /* mock_sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mock_sync.js; sourceTree = "<group>"; };
+		AA40BD3E2CD572C100264B1F /* module_dir.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = module_dir.js; sourceTree = "<group>"; };
+		AA40BD3F2CD572C100264B1F /* node_path.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = node_path.js; sourceTree = "<group>"; };
+		AA40BD402CD572C100264B1F /* node-modules-paths.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "node-modules-paths.js"; sourceTree = "<group>"; };
+		AA40BD412CD572C100264B1F /* nonstring.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = nonstring.js; sourceTree = "<group>"; };
+		AA40BD422CD572C100264B1F /* pathfilter.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = pathfilter.js; sourceTree = "<group>"; };
+		AA40BD432CD572C100264B1F /* precedence.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = precedence.js; sourceTree = "<group>"; };
+		AA40BD442CD572C100264B1F /* resolver.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = resolver.js; sourceTree = "<group>"; };
+		AA40BD452CD572C100264B1F /* resolver_sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = resolver_sync.js; sourceTree = "<group>"; };
+		AA40BD462CD572C100264B1F /* shadowed_core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = shadowed_core.js; sourceTree = "<group>"; };
+		AA40BD472CD572C100264B1F /* subdirs.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = subdirs.js; sourceTree = "<group>"; };
+		AA40BD482CD572C100264B1F /* symlinks.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = symlinks.js; sourceTree = "<group>"; };
+		AA40BD4A2CD572C100264B1F /* .editorconfig */ = {isa = PBXFileReference; lastKnownFileType = text; path = .editorconfig; sourceTree = "<group>"; };
+		AA40BD4B2CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BD4C2CD572C100264B1F /* async.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = async.js; sourceTree = "<group>"; };
+		AA40BD4D2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD4E2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BD4F2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD502CD572C100264B1F /* readme.markdown */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.markdown; sourceTree = "<group>"; };
+		AA40BD512CD572C100264B1F /* SECURITY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SECURITY.md; sourceTree = "<group>"; };
+		AA40BD522CD572C100264B1F /* sync.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = sync.js; sourceTree = "<group>"; };
+		AA40BD542CD572C100264B1F /* rollup */ = {isa = PBXFileReference; lastKnownFileType = text; path = rollup; sourceTree = "<group>"; };
+		AA40BD562CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD572CD572C100264B1F /* node-entry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "node-entry.js"; sourceTree = "<group>"; };
+		AA40BD592CD572C100264B1F /* rollup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = rollup.js; sourceTree = "<group>"; };
+		AA40BD5A2CD572C100264B1F /* rollup.browser.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = rollup.browser.js; sourceTree = "<group>"; };
+		AA40BD5B2CD572C100264B1F /* rollup.browser.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = rollup.browser.es.js; sourceTree = "<group>"; };
+		AA40BD5C2CD572C100264B1F /* rollup.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = rollup.d.ts; sourceTree = "<group>"; };
+		AA40BD5D2CD572C100264B1F /* rollup.es.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = rollup.es.js; sourceTree = "<group>"; };
+		AA40BD5F2CD572C100264B1F /* flow.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = flow.d.ts; sourceTree = "<group>"; };
+		AA40BD602CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BD612CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BD622CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD632CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BD672CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BD682CD572C100264B1F /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		AA40BD692CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD6A2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BD6C2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BD6D2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD6E2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BD6F2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BD712CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD722CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BD732CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD742CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BD752CD572C100264B1F /* test.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = test.js; sourceTree = "<group>"; };
+		AA40BD832CD572C100264B1F /* FUNDING.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = FUNDING.yml; sourceTree = "<group>"; };
+		AA40BD852CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD872CD572C100264B1F /* .eslintrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .eslintrc; sourceTree = "<group>"; };
+		AA40BD882CD572C100264B1F /* .nycrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = .nycrc; sourceTree = "<group>"; };
+		AA40BD892CD572C100264B1F /* browser.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = browser.js; sourceTree = "<group>"; };
+		AA40BD8A2CD572C100264B1F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		AA40BD8B2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BD8C2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BD8D2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BD8E2CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BDBA2CD572C100264B1F /* .tern-port */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".tern-port"; sourceTree = "<group>"; };
+		AA40BDBB2CD572C100264B1F /* index.cjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.cjs; sourceTree = "<group>"; };
+		AA40BDBC2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BDBD2CD572C100264B1F /* index.d.cts */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.d.cts; sourceTree = "<group>"; };
+		AA40BDBE2CD572C100264B1F /* index.d.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.d.ts; sourceTree = "<group>"; };
+		AA40BDBF2CD572C100264B1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AA40BDC02CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BDC12CD572C100264B1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA40BDC82CD572C100264B1F /* .package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ".package-lock.json"; sourceTree = "<group>"; };
+		AA40BDCA2CD572C100264B1F /* icons.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = icons.js; sourceTree = "<group>"; };
+		AA40BDCB2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BDCC2CD572C100264B1F /* menu.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = menu.js; sourceTree = "<group>"; };
+		AA40BDCD2CD572C100264B1F /* menubar.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = menubar.js; sourceTree = "<group>"; };
+		AA40BDCF2CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BDD12CD572C100264B1F /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		AA40BDD22CD572C100264B1F /* inputrules.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = inputrules.js; sourceTree = "<group>"; };
+		AA40BDD32CD572C100264B1F /* keymap.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = keymap.js; sourceTree = "<group>"; };
+		AA40BDD42CD572C100264B1F /* menu.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = menu.js; sourceTree = "<group>"; };
+		AA40BDD52CD572C100264B1F /* prompt.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = prompt.js; sourceTree = "<group>"; };
+		AA40BDD72CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
+		AA40BDD82CD572C100264B1F /* markup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
+		AA40BDD92CD572C100264B1F /* oldMarkup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = oldMarkup.js; sourceTree = "<group>"; };
+		AA40BDDD2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		AA40BDDE2CD572C100264B1F /* package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
@@ -203,7 +742,6 @@
 		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
-		AA52F320280634B200EEC655 /* RedoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedoTests.swift; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
 		AA652942260E8114000674B7 /* SwiftUIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -217,7 +755,6 @@
 		AA6529A1260E8450000674B7 /* DemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoViewController.swift; sourceTree = "<group>"; };
 		AA6529AB260E8450000674B7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA6529AF260E846C000674B7 /* UIKitDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UIKitDemo.entitlements; sourceTree = "<group>"; };
-		AA6529D0260E8E8E000674B7 /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		AA6529D3260E8E8E000674B7 /* BasicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicTests.swift; sourceTree = "<group>"; };
 		AA652A00260E99FF000674B7 /* MarkupToolbar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkupToolbar.swift; sourceTree = "<group>"; };
 		AA652A06260E99FF000674B7 /* StyleContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StyleContext.swift; sourceTree = "<group>"; };
@@ -248,7 +785,6 @@
 		AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupMenu.swift; sourceTree = "<group>"; };
 		AAB1040728B1A0780063BE2A /* SimplestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestViewController.swift; sourceTree = "<group>"; };
 		AAB1040928B1A3240063BE2A /* SimplestContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestContentView.swift; sourceTree = "<group>"; };
-		AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundClearView.swift; sourceTree = "<group>"; };
 		AAB1042F28C10B600063BE2A /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
 		AAB1043128C2AEA30063BE2A /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		AAB1043328C6A26A0063BE2A /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -264,20 +800,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		AA2548702805FAE300C9DEB2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AA2FA8A427FE44C90068828F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AA408AF8261666D200CAE8B9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -325,7 +847,6 @@
 		AA1749E4269B9444005F0428 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				AAB1040F28BE911A0063BE2A /* BackgroundClearView.swift */,
 				AA1749E2269B8EC3005F0428 /* Blur.swift */,
 				AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */,
 				AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */,
@@ -360,30 +881,10 @@
 			path = SharedDemo;
 			sourceTree = "<group>";
 		};
-		AA2FA8A827FE44C90068828F /* UndoTests */ = {
-			isa = PBXGroup;
-			children = (
-				AA2FA8A927FE44C90068828F /* UndoTests.swift */,
-			);
-			path = UndoTests;
-			sourceTree = "<group>";
-		};
-		AA2FA8C227FFAA370068828F /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				AA6529D0260E8E8E000674B7 /* String+Extensions.swift */,
-				AA2FA8A127FE43A50068828F /* HtmlTest.swift */,
-			);
-			path = Shared;
-			sourceTree = "<group>";
-		};
 		AA2FA8C327FFAA500068828F /* MarkupEditorTests */ = {
 			isa = PBXGroup;
 			children = (
-				AA2FA8C227FFAA370068828F /* Shared */,
 				AA6529CF260E8E8E000674B7 /* BasicTests */,
-				AA2FA8A827FE44C90068828F /* UndoTests */,
-				AA52F31F280634B200EEC655 /* RedoTests */,
 			);
 			path = MarkupEditorTests;
 			sourceTree = "<group>";
@@ -397,12 +898,1999 @@
 			path = MarkupEditorFramework;
 			sourceTree = "<group>";
 		};
-		AA52F31F280634B200EEC655 /* RedoTests */ = {
+		AA40BA3B2CD572C100264B1F /* dist */ = {
 			isa = PBXGroup;
 			children = (
-				AA52F320280634B200EEC655 /* RedoTests.swift */,
+				AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */,
 			);
-			path = RedoTests;
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BA3F2CD572C100264B1F /* .bin */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA3C2CD572C100264B1F /* acorn */,
+				AA40BA3D2CD572C100264B1F /* resolve */,
+				AA40BA3E2CD572C100264B1F /* rollup */,
+			);
+			path = .bin;
+			sourceTree = "<group>";
+		};
+		AA40BA472CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA432CD572C100264B1F /* index.js */,
+				AA40BA442CD572C100264B1F /* index.es.js */,
+				AA40BA452CD572C100264B1F /* index.es.js.map */,
+				AA40BA462CD572C100264B1F /* index.js.map */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BA492CD572C100264B1F /* cjs */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA482CD572C100264B1F /* index.js */,
+			);
+			path = cjs;
+			sourceTree = "<group>";
+		};
+		AA40BA4C2CD572C100264B1F /* es */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA4A2CD572C100264B1F /* index.js */,
+				AA40BA4B2CD572C100264B1F /* package.json */,
+			);
+			path = es;
+			sourceTree = "<group>";
+		};
+		AA40BA4D2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA492CD572C100264B1F /* cjs */,
+				AA40BA4C2CD572C100264B1F /* es */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BA4F2CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA4E2CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BA542CD572C100264B1F /* pluginutils */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA4D2CD572C100264B1F /* dist */,
+				AA40BA4F2CD572C100264B1F /* types */,
+				AA40BA502CD572C100264B1F /* CHANGELOG.md */,
+				AA40BA512CD572C100264B1F /* LICENSE */,
+				AA40BA522CD572C100264B1F /* package.json */,
+				AA40BA532CD572C100264B1F /* README.md */,
+			);
+			path = pluginutils;
+			sourceTree = "<group>";
+		};
+		AA40BA552CD572C100264B1F /* @rollup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA542CD572C100264B1F /* pluginutils */,
+			);
+			path = "@rollup";
+			sourceTree = "<group>";
+		};
+		AA40BA562CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA552CD572C100264B1F /* @rollup */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BA582CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA572CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BA5D2CD572C100264B1F /* plugin-commonjs */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA472CD572C100264B1F /* dist */,
+				AA40BA562CD572C100264B1F /* node_modules */,
+				AA40BA582CD572C100264B1F /* types */,
+				AA40BA592CD572C100264B1F /* CHANGELOG.md */,
+				AA40BA5A2CD572C100264B1F /* LICENSE */,
+				AA40BA5B2CD572C100264B1F /* package.json */,
+				AA40BA5C2CD572C100264B1F /* README.md */,
+			);
+			path = "plugin-commonjs";
+			sourceTree = "<group>";
+		};
+		AA40BA602CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA5E2CD572C100264B1F /* index.js */,
+				AA40BA5F2CD572C100264B1F /* index.es.js */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BA622CD572C100264B1F /* cjs */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA612CD572C100264B1F /* index.js */,
+			);
+			path = cjs;
+			sourceTree = "<group>";
+		};
+		AA40BA652CD572C100264B1F /* es */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA632CD572C100264B1F /* index.js */,
+				AA40BA642CD572C100264B1F /* package.json */,
+			);
+			path = es;
+			sourceTree = "<group>";
+		};
+		AA40BA662CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA622CD572C100264B1F /* cjs */,
+				AA40BA652CD572C100264B1F /* es */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BA682CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA672CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BA6D2CD572C100264B1F /* pluginutils */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA662CD572C100264B1F /* dist */,
+				AA40BA682CD572C100264B1F /* types */,
+				AA40BA692CD572C100264B1F /* CHANGELOG.md */,
+				AA40BA6A2CD572C100264B1F /* LICENSE */,
+				AA40BA6B2CD572C100264B1F /* package.json */,
+				AA40BA6C2CD572C100264B1F /* README.md */,
+			);
+			path = pluginutils;
+			sourceTree = "<group>";
+		};
+		AA40BA6E2CD572C100264B1F /* @rollup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA6D2CD572C100264B1F /* pluginutils */,
+			);
+			path = "@rollup";
+			sourceTree = "<group>";
+		};
+		AA40BA6F2CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA6E2CD572C100264B1F /* @rollup */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BA712CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA702CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BA762CD572C100264B1F /* plugin-node-resolve */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA602CD572C100264B1F /* dist */,
+				AA40BA6F2CD572C100264B1F /* node_modules */,
+				AA40BA712CD572C100264B1F /* types */,
+				AA40BA722CD572C100264B1F /* CHANGELOG.md */,
+				AA40BA732CD572C100264B1F /* LICENSE */,
+				AA40BA742CD572C100264B1F /* package.json */,
+				AA40BA752CD572C100264B1F /* README.md */,
+			);
+			path = "plugin-node-resolve";
+			sourceTree = "<group>";
+		};
+		AA40BA772CD572C100264B1F /* @rollup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA5D2CD572C100264B1F /* plugin-commonjs */,
+				AA40BA762CD572C100264B1F /* plugin-node-resolve */,
+			);
+			path = "@rollup";
+			sourceTree = "<group>";
+		};
+		AA40BA7C2CD572C100264B1F /* estree */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA782CD572C100264B1F /* index.d.ts */,
+				AA40BA792CD572C100264B1F /* LICENSE */,
+				AA40BA7A2CD572C100264B1F /* package.json */,
+				AA40BA7B2CD572C100264B1F /* README.md */,
+			);
+			path = estree;
+			sourceTree = "<group>";
+		};
+		AA40BA7E2CD572C100264B1F /* assert */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA7D2CD572C100264B1F /* strict.d.ts */,
+			);
+			path = assert;
+			sourceTree = "<group>";
+		};
+		AA40BA832CD572C100264B1F /* compatibility */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA7F2CD572C100264B1F /* disposable.d.ts */,
+				AA40BA802CD572C100264B1F /* index.d.ts */,
+				AA40BA812CD572C100264B1F /* indexable.d.ts */,
+				AA40BA822CD572C100264B1F /* iterators.d.ts */,
+			);
+			path = compatibility;
+			sourceTree = "<group>";
+		};
+		AA40BA852CD572C100264B1F /* dns */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA842CD572C100264B1F /* promises.d.ts */,
+			);
+			path = dns;
+			sourceTree = "<group>";
+		};
+		AA40BA872CD572C100264B1F /* fs */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA862CD572C100264B1F /* promises.d.ts */,
+			);
+			path = fs;
+			sourceTree = "<group>";
+		};
+		AA40BA892CD572C100264B1F /* readline */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA882CD572C100264B1F /* promises.d.ts */,
+			);
+			path = readline;
+			sourceTree = "<group>";
+		};
+		AA40BA8D2CD572C100264B1F /* stream */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA8A2CD572C100264B1F /* consumers.d.ts */,
+				AA40BA8B2CD572C100264B1F /* promises.d.ts */,
+				AA40BA8C2CD572C100264B1F /* web.d.ts */,
+			);
+			path = stream;
+			sourceTree = "<group>";
+		};
+		AA40BA8F2CD572C100264B1F /* timers */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA8E2CD572C100264B1F /* promises.d.ts */,
+			);
+			path = timers;
+			sourceTree = "<group>";
+		};
+		AA40BA932CD572C100264B1F /* ts5.6 */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA902CD572C100264B1F /* buffer.buffer.d.ts */,
+				AA40BA912CD572C100264B1F /* globals.typedarray.d.ts */,
+				AA40BA922CD572C100264B1F /* index.d.ts */,
+			);
+			path = ts5.6;
+			sourceTree = "<group>";
+		};
+		AA40BAC82CD572C100264B1F /* node */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA7E2CD572C100264B1F /* assert */,
+				AA40BA832CD572C100264B1F /* compatibility */,
+				AA40BA852CD572C100264B1F /* dns */,
+				AA40BA872CD572C100264B1F /* fs */,
+				AA40BA892CD572C100264B1F /* readline */,
+				AA40BA8D2CD572C100264B1F /* stream */,
+				AA40BA8F2CD572C100264B1F /* timers */,
+				AA40BA932CD572C100264B1F /* ts5.6 */,
+				AA40BA942CD572C100264B1F /* assert.d.ts */,
+				AA40BA952CD572C100264B1F /* async_hooks.d.ts */,
+				AA40BA962CD572C100264B1F /* buffer.buffer.d.ts */,
+				AA40BA972CD572C100264B1F /* buffer.d.ts */,
+				AA40BA982CD572C100264B1F /* child_process.d.ts */,
+				AA40BA992CD572C100264B1F /* cluster.d.ts */,
+				AA40BA9A2CD572C100264B1F /* console.d.ts */,
+				AA40BA9B2CD572C100264B1F /* constants.d.ts */,
+				AA40BA9C2CD572C100264B1F /* crypto.d.ts */,
+				AA40BA9D2CD572C100264B1F /* dgram.d.ts */,
+				AA40BA9E2CD572C100264B1F /* diagnostics_channel.d.ts */,
+				AA40BA9F2CD572C100264B1F /* dns.d.ts */,
+				AA40BAA02CD572C100264B1F /* dom-events.d.ts */,
+				AA40BAA12CD572C100264B1F /* domain.d.ts */,
+				AA40BAA22CD572C100264B1F /* events.d.ts */,
+				AA40BAA32CD572C100264B1F /* fs.d.ts */,
+				AA40BAA42CD572C100264B1F /* globals.d.ts */,
+				AA40BAA52CD572C100264B1F /* globals.typedarray.d.ts */,
+				AA40BAA62CD572C100264B1F /* http.d.ts */,
+				AA40BAA72CD572C100264B1F /* http2.d.ts */,
+				AA40BAA82CD572C100264B1F /* https.d.ts */,
+				AA40BAA92CD572C100264B1F /* index.d.ts */,
+				AA40BAAA2CD572C100264B1F /* inspector.d.ts */,
+				AA40BAAB2CD572C100264B1F /* LICENSE */,
+				AA40BAAC2CD572C100264B1F /* module.d.ts */,
+				AA40BAAD2CD572C100264B1F /* net.d.ts */,
+				AA40BAAE2CD572C100264B1F /* os.d.ts */,
+				AA40BAAF2CD572C100264B1F /* package.json */,
+				AA40BAB02CD572C100264B1F /* path.d.ts */,
+				AA40BAB12CD572C100264B1F /* perf_hooks.d.ts */,
+				AA40BAB22CD572C100264B1F /* process.d.ts */,
+				AA40BAB32CD572C100264B1F /* punycode.d.ts */,
+				AA40BAB42CD572C100264B1F /* querystring.d.ts */,
+				AA40BAB52CD572C100264B1F /* readline.d.ts */,
+				AA40BAB62CD572C100264B1F /* README.md */,
+				AA40BAB72CD572C100264B1F /* repl.d.ts */,
+				AA40BAB82CD572C100264B1F /* sea.d.ts */,
+				AA40BAB92CD572C100264B1F /* sqlite.d.ts */,
+				AA40BABA2CD572C100264B1F /* stream.d.ts */,
+				AA40BABB2CD572C100264B1F /* string_decoder.d.ts */,
+				AA40BABC2CD572C100264B1F /* test.d.ts */,
+				AA40BABD2CD572C100264B1F /* timers.d.ts */,
+				AA40BABE2CD572C100264B1F /* tls.d.ts */,
+				AA40BABF2CD572C100264B1F /* trace_events.d.ts */,
+				AA40BAC02CD572C100264B1F /* tty.d.ts */,
+				AA40BAC12CD572C100264B1F /* url.d.ts */,
+				AA40BAC22CD572C100264B1F /* util.d.ts */,
+				AA40BAC32CD572C100264B1F /* v8.d.ts */,
+				AA40BAC42CD572C100264B1F /* vm.d.ts */,
+				AA40BAC52CD572C100264B1F /* wasi.d.ts */,
+				AA40BAC62CD572C100264B1F /* worker_threads.d.ts */,
+				AA40BAC72CD572C100264B1F /* zlib.d.ts */,
+			);
+			path = node;
+			sourceTree = "<group>";
+		};
+		AA40BACD2CD572C100264B1F /* resolve */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BAC92CD572C100264B1F /* index.d.ts */,
+				AA40BACA2CD572C100264B1F /* LICENSE */,
+				AA40BACB2CD572C100264B1F /* package.json */,
+				AA40BACC2CD572C100264B1F /* README.md */,
+			);
+			path = resolve;
+			sourceTree = "<group>";
+		};
+		AA40BACE2CD572C100264B1F /* @types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA7C2CD572C100264B1F /* estree */,
+				AA40BAC82CD572C100264B1F /* node */,
+				AA40BACD2CD572C100264B1F /* resolve */,
+			);
+			path = "@types";
+			sourceTree = "<group>";
+		};
+		AA40BAF42CD572C100264B1F /* example */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BAF32CD572C100264B1F /* dir.js */,
+			);
+			path = example;
+			sourceTree = "<group>";
+		};
+		AA40BAF62CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BAF52CD572C100264B1F /* dirs.js */,
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BAFB2CD572C100264B1F /* commondir */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BAF42CD572C100264B1F /* example */,
+				AA40BAF62CD572C100264B1F /* test */,
+				AA40BAF72CD572C100264B1F /* index.js */,
+				AA40BAF82CD572C100264B1F /* LICENSE */,
+				AA40BAF92CD572C100264B1F /* package.json */,
+				AA40BAFA2CD572C100264B1F /* readme.markdown */,
+			);
+			path = commondir;
+			sourceTree = "<group>";
+		};
+		AA40BB0C2CD572C100264B1F /* crel */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB062CD572C100264B1F /* crel.js */,
+				AA40BB072CD572C100264B1F /* crel.es.js */,
+				AA40BB082CD572C100264B1F /* crel.min.js */,
+				AA40BB092CD572C100264B1F /* LICENSE.txt */,
+				AA40BB0A2CD572C100264B1F /* package.json */,
+				AA40BB0B2CD572C100264B1F /* README.md */,
+			);
+			path = crel;
+			sourceTree = "<group>";
+		};
+		AA40BB192CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB172CD572C100264B1F /* estree-walker.umd.js */,
+				AA40BB182CD572C100264B1F /* estree-walker.umd.js.map */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BB1C2CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB1A2CD572C100264B1F /* estree-walker.js */,
+				AA40BB1B2CD572C100264B1F /* index.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BB1E2CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB1D2CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BB222CD572C100264B1F /* estree-walker */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB192CD572C100264B1F /* dist */,
+				AA40BB1C2CD572C100264B1F /* src */,
+				AA40BB1E2CD572C100264B1F /* types */,
+				AA40BB1F2CD572C100264B1F /* CHANGELOG.md */,
+				AA40BB202CD572C100264B1F /* package.json */,
+				AA40BB212CD572C100264B1F /* README.md */,
+			);
+			path = "estree-walker";
+			sourceTree = "<group>";
+		};
+		AA40BB2B2CD572C100264B1F /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB292CD572C100264B1F /* FUNDING.yml */,
+				AA40BB2A2CD572C100264B1F /* SECURITY.md */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
+		AA40BB2E2CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB2C2CD572C100264B1F /* .eslintrc */,
+				AA40BB2D2CD572C100264B1F /* index.js */,
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BB372CD572C100264B1F /* function-bind */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB2B2CD572C100264B1F /* .github */,
+				AA40BB2E2CD572C100264B1F /* test */,
+				AA40BB2F2CD572C100264B1F /* .eslintrc */,
+				AA40BB302CD572C100264B1F /* .nycrc */,
+				AA40BB312CD572C100264B1F /* CHANGELOG.md */,
+				AA40BB322CD572C100264B1F /* implementation.js */,
+				AA40BB332CD572C100264B1F /* index.js */,
+				AA40BB342CD572C100264B1F /* LICENSE */,
+				AA40BB352CD572C100264B1F /* package.json */,
+				AA40BB362CD572C100264B1F /* README.md */,
+			);
+			path = "function-bind";
+			sourceTree = "<group>";
+		};
+		AA40BB402CD572C100264B1F /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB3F2CD572C100264B1F /* FUNDING.yml */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
+		AA40BB4A2CD572C100264B1F /* hasown */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB402CD572C100264B1F /* .github */,
+				AA40BB412CD572C100264B1F /* .eslintrc */,
+				AA40BB422CD572C100264B1F /* .nycrc */,
+				AA40BB432CD572C100264B1F /* CHANGELOG.md */,
+				AA40BB442CD572C100264B1F /* index.js */,
+				AA40BB452CD572C100264B1F /* index.d.ts */,
+				AA40BB462CD572C100264B1F /* LICENSE */,
+				AA40BB472CD572C100264B1F /* package.json */,
+				AA40BB482CD572C100264B1F /* README.md */,
+				AA40BB492CD572C100264B1F /* tsconfig.json */,
+			);
+			path = hasown;
+			sourceTree = "<group>";
+		};
+		AA40BB572CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB562CD572C100264B1F /* index.js */,
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BB602CD572C100264B1F /* is-core-module */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB572CD572C100264B1F /* test */,
+				AA40BB582CD572C100264B1F /* .eslintrc */,
+				AA40BB592CD572C100264B1F /* .nycrc */,
+				AA40BB5A2CD572C100264B1F /* CHANGELOG.md */,
+				AA40BB5B2CD572C100264B1F /* core.json */,
+				AA40BB5C2CD572C100264B1F /* index.js */,
+				AA40BB5D2CD572C100264B1F /* LICENSE */,
+				AA40BB5E2CD572C100264B1F /* package.json */,
+				AA40BB5F2CD572C100264B1F /* README.md */,
+			);
+			path = "is-core-module";
+			sourceTree = "<group>";
+		};
+		AA40BB662CD572C100264B1F /* is-module */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB612CD572C100264B1F /* .npmignore */,
+				AA40BB622CD572C100264B1F /* component.json */,
+				AA40BB632CD572C100264B1F /* index.js */,
+				AA40BB642CD572C100264B1F /* package.json */,
+				AA40BB652CD572C100264B1F /* README.md */,
+			);
+			path = "is-module";
+			sourceTree = "<group>";
+		};
+		AA40BB682CD572C100264B1F /* types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB672CD572C100264B1F /* index.d.ts */,
+			);
+			path = types;
+			sourceTree = "<group>";
+		};
+		AA40BB6B2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB682CD572C100264B1F /* types */,
+				AA40BB692CD572C100264B1F /* is-reference.js */,
+				AA40BB6A2CD572C100264B1F /* is-reference.es.js */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BB6F2CD572C100264B1F /* is-reference */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB6B2CD572C100264B1F /* dist */,
+				AA40BB6C2CD572C100264B1F /* CHANGELOG.md */,
+				AA40BB6D2CD572C100264B1F /* package.json */,
+				AA40BB6E2CD572C100264B1F /* README.md */,
+			);
+			path = "is-reference";
+			sourceTree = "<group>";
+		};
+		AA40BB762CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB702CD572C100264B1F /* magic-string.cjs.js */,
+				AA40BB712CD572C100264B1F /* magic-string.cjs.js.map */,
+				AA40BB722CD572C100264B1F /* magic-string.es.js */,
+				AA40BB732CD572C100264B1F /* magic-string.es.js.map */,
+				AA40BB742CD572C100264B1F /* magic-string.umd.js */,
+				AA40BB752CD572C100264B1F /* magic-string.umd.js.map */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BB7B2CD572C100264B1F /* magic-string */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB762CD572C100264B1F /* dist */,
+				AA40BB772CD572C100264B1F /* index.d.ts */,
+				AA40BB782CD572C100264B1F /* LICENSE */,
+				AA40BB792CD572C100264B1F /* package.json */,
+				AA40BB7A2CD572C100264B1F /* README.md */,
+			);
+			path = "magic-string";
+			sourceTree = "<group>";
+		};
+		AA40BB852CD572C100264B1F /* ms */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB812CD572C100264B1F /* index.js */,
+				AA40BB822CD572C100264B1F /* license.md */,
+				AA40BB832CD572C100264B1F /* package.json */,
+				AA40BB842CD572C100264B1F /* readme.md */,
+			);
+			path = ms;
+			sourceTree = "<group>";
+		};
+		AA40BB8F2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB8B2CD572C100264B1F /* index.cjs */,
+				AA40BB8C2CD572C100264B1F /* index.js */,
+				AA40BB8D2CD572C100264B1F /* index.d.cts */,
+				AA40BB8E2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BB932CD572C100264B1F /* orderedmap */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB8F2CD572C100264B1F /* dist */,
+				AA40BB902CD572C100264B1F /* LICENSE */,
+				AA40BB912CD572C100264B1F /* package.json */,
+				AA40BB922CD572C100264B1F /* README.md */,
+			);
+			path = orderedmap;
+			sourceTree = "<group>";
+		};
+		AA40BB9D2CD572C100264B1F /* path-parse */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB992CD572C100264B1F /* index.js */,
+				AA40BB9A2CD572C100264B1F /* LICENSE */,
+				AA40BB9B2CD572C100264B1F /* package.json */,
+				AA40BB9C2CD572C100264B1F /* README.md */,
+			);
+			path = "path-parse";
+			sourceTree = "<group>";
+		};
+		AA40BBA32CD572C100264B1F /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BB9E2CD572C100264B1F /* constants.js */,
+				AA40BB9F2CD572C100264B1F /* parse.js */,
+				AA40BBA02CD572C100264B1F /* picomatch.js */,
+				AA40BBA12CD572C100264B1F /* scan.js */,
+				AA40BBA22CD572C100264B1F /* utils.js */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		AA40BBA92CD572C100264B1F /* picomatch */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBA32CD572C100264B1F /* lib */,
+				AA40BBA42CD572C100264B1F /* CHANGELOG.md */,
+				AA40BBA52CD572C100264B1F /* index.js */,
+				AA40BBA62CD572C100264B1F /* LICENSE */,
+				AA40BBA72CD572C100264B1F /* package.json */,
+				AA40BBA82CD572C100264B1F /* README.md */,
+			);
+			path = picomatch;
+			sourceTree = "<group>";
+		};
+		AA40BBAE2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBAA2CD572C100264B1F /* index.cjs */,
+				AA40BBAB2CD572C100264B1F /* index.js */,
+				AA40BBAC2CD572C100264B1F /* index.d.cts */,
+				AA40BBAD2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BBB12CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBAF2CD572C100264B1F /* commands.ts */,
+				AA40BBB02CD572C100264B1F /* README.md */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BBB82CD572C100264B1F /* prosemirror-commands */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBAE2CD572C100264B1F /* dist */,
+				AA40BBB12CD572C100264B1F /* src */,
+				AA40BBB22CD572C100264B1F /* .tern-project */,
+				AA40BBB32CD572C100264B1F /* CHANGELOG.md */,
+				AA40BBB42CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BBB52CD572C100264B1F /* LICENSE */,
+				AA40BBB62CD572C100264B1F /* package.json */,
+				AA40BBB72CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-commands";
+			sourceTree = "<group>";
+		};
+		AA40BBBD2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBB92CD572C100264B1F /* index.cjs */,
+				AA40BBBA2CD572C100264B1F /* index.js */,
+				AA40BBBB2CD572C100264B1F /* index.d.cts */,
+				AA40BBBC2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BBBF2CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBBE2CD572C100264B1F /* dropcursor.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BBC52CD572C100264B1F /* prosemirror-dropcursor */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBBD2CD572C100264B1F /* dist */,
+				AA40BBBF2CD572C100264B1F /* src */,
+				AA40BBC02CD572C100264B1F /* CHANGELOG.md */,
+				AA40BBC12CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BBC22CD572C100264B1F /* LICENSE */,
+				AA40BBC32CD572C100264B1F /* package.json */,
+				AA40BBC42CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-dropcursor";
+			sourceTree = "<group>";
+		};
+		AA40BBDF2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBDB2CD572C100264B1F /* index.cjs */,
+				AA40BBDC2CD572C100264B1F /* index.js */,
+				AA40BBDD2CD572C100264B1F /* index.d.cts */,
+				AA40BBDE2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BBE32CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBE02CD572C100264B1F /* gapcursor.ts */,
+				AA40BBE12CD572C100264B1F /* index.ts */,
+				AA40BBE22CD572C100264B1F /* README.md */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BBE52CD572C100264B1F /* style */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBE42CD572C100264B1F /* gapcursor.css */,
+			);
+			path = style;
+			sourceTree = "<group>";
+		};
+		AA40BBEB2CD572C100264B1F /* prosemirror-gapcursor */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBDF2CD572C100264B1F /* dist */,
+				AA40BBE32CD572C100264B1F /* src */,
+				AA40BBE52CD572C100264B1F /* style */,
+				AA40BBE62CD572C100264B1F /* CHANGELOG.md */,
+				AA40BBE72CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BBE82CD572C100264B1F /* LICENSE */,
+				AA40BBE92CD572C100264B1F /* package.json */,
+				AA40BBEA2CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-gapcursor";
+			sourceTree = "<group>";
+		};
+		AA40BBF02CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBEC2CD572C100264B1F /* index.cjs */,
+				AA40BBED2CD572C100264B1F /* index.js */,
+				AA40BBEE2CD572C100264B1F /* index.d.cts */,
+				AA40BBEF2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BBF32CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBF12CD572C100264B1F /* history.ts */,
+				AA40BBF22CD572C100264B1F /* README.md */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BBFA2CD572C100264B1F /* prosemirror-history */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBF02CD572C100264B1F /* dist */,
+				AA40BBF32CD572C100264B1F /* src */,
+				AA40BBF42CD572C100264B1F /* .tern-project */,
+				AA40BBF52CD572C100264B1F /* CHANGELOG.md */,
+				AA40BBF62CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BBF72CD572C100264B1F /* LICENSE */,
+				AA40BBF82CD572C100264B1F /* package.json */,
+				AA40BBF92CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-history";
+			sourceTree = "<group>";
+		};
+		AA40BBFF2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBFB2CD572C100264B1F /* index.cjs */,
+				AA40BBFC2CD572C100264B1F /* index.js */,
+				AA40BBFD2CD572C100264B1F /* index.d.cts */,
+				AA40BBFE2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC052CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC002CD572C100264B1F /* index.ts */,
+				AA40BC012CD572C100264B1F /* inputrules.ts */,
+				AA40BC022CD572C100264B1F /* README.md */,
+				AA40BC032CD572C100264B1F /* rulebuilders.ts */,
+				AA40BC042CD572C100264B1F /* rules.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC0C2CD572C100264B1F /* prosemirror-inputrules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BBFF2CD572C100264B1F /* dist */,
+				AA40BC052CD572C100264B1F /* src */,
+				AA40BC062CD572C100264B1F /* .tern-project */,
+				AA40BC072CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC082CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC092CD572C100264B1F /* LICENSE */,
+				AA40BC0A2CD572C100264B1F /* package.json */,
+				AA40BC0B2CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-inputrules";
+			sourceTree = "<group>";
+		};
+		AA40BC112CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC0D2CD572C100264B1F /* index.cjs */,
+				AA40BC0E2CD572C100264B1F /* index.js */,
+				AA40BC0F2CD572C100264B1F /* index.d.cts */,
+				AA40BC102CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC142CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC122CD572C100264B1F /* keymap.ts */,
+				AA40BC132CD572C100264B1F /* README.md */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC1B2CD572C100264B1F /* prosemirror-keymap */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC112CD572C100264B1F /* dist */,
+				AA40BC142CD572C100264B1F /* src */,
+				AA40BC152CD572C100264B1F /* .tern-project */,
+				AA40BC162CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC172CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC182CD572C100264B1F /* LICENSE */,
+				AA40BC192CD572C100264B1F /* package.json */,
+				AA40BC1A2CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-keymap";
+			sourceTree = "<group>";
+		};
+		AA40BC342CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC302CD572C100264B1F /* index.cjs */,
+				AA40BC312CD572C100264B1F /* index.js */,
+				AA40BC322CD572C100264B1F /* index.d.cts */,
+				AA40BC332CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC432CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC352CD572C100264B1F /* comparedeep.ts */,
+				AA40BC362CD572C100264B1F /* content.ts */,
+				AA40BC372CD572C100264B1F /* diff.ts */,
+				AA40BC382CD572C100264B1F /* dom.ts */,
+				AA40BC392CD572C100264B1F /* fragment.ts */,
+				AA40BC3A2CD572C100264B1F /* from_dom.ts */,
+				AA40BC3B2CD572C100264B1F /* index.ts */,
+				AA40BC3C2CD572C100264B1F /* mark.ts */,
+				AA40BC3D2CD572C100264B1F /* node.ts */,
+				AA40BC3E2CD572C100264B1F /* README.md */,
+				AA40BC3F2CD572C100264B1F /* replace.ts */,
+				AA40BC402CD572C100264B1F /* resolvedpos.ts */,
+				AA40BC412CD572C100264B1F /* schema.ts */,
+				AA40BC422CD572C100264B1F /* to_dom.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC4A2CD572C100264B1F /* prosemirror-model */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC342CD572C100264B1F /* dist */,
+				AA40BC432CD572C100264B1F /* src */,
+				AA40BC442CD572C100264B1F /* .tern-project */,
+				AA40BC452CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC462CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC472CD572C100264B1F /* LICENSE */,
+				AA40BC482CD572C100264B1F /* package.json */,
+				AA40BC492CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-model";
+			sourceTree = "<group>";
+		};
+		AA40BC4F2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC4B2CD572C100264B1F /* index.cjs */,
+				AA40BC4C2CD572C100264B1F /* index.js */,
+				AA40BC4D2CD572C100264B1F /* index.d.cts */,
+				AA40BC4E2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC522CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC502CD572C100264B1F /* README.md */,
+				AA40BC512CD572C100264B1F /* schema-basic.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC592CD572C100264B1F /* prosemirror-schema-basic */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC4F2CD572C100264B1F /* dist */,
+				AA40BC522CD572C100264B1F /* src */,
+				AA40BC532CD572C100264B1F /* .tern-project */,
+				AA40BC542CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC552CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC562CD572C100264B1F /* LICENSE */,
+				AA40BC572CD572C100264B1F /* package.json */,
+				AA40BC582CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-schema-basic";
+			sourceTree = "<group>";
+		};
+		AA40BC5E2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC5A2CD572C100264B1F /* index.cjs */,
+				AA40BC5B2CD572C100264B1F /* index.js */,
+				AA40BC5C2CD572C100264B1F /* index.d.cts */,
+				AA40BC5D2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC612CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC5F2CD572C100264B1F /* README.md */,
+				AA40BC602CD572C100264B1F /* schema-list.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC682CD572C100264B1F /* prosemirror-schema-list */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC5E2CD572C100264B1F /* dist */,
+				AA40BC612CD572C100264B1F /* src */,
+				AA40BC622CD572C100264B1F /* .tern-project */,
+				AA40BC632CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC642CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC652CD572C100264B1F /* LICENSE */,
+				AA40BC662CD572C100264B1F /* package.json */,
+				AA40BC672CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-schema-list";
+			sourceTree = "<group>";
+		};
+		AA40BC6D2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC692CD572C100264B1F /* index.cjs */,
+				AA40BC6A2CD572C100264B1F /* index.js */,
+				AA40BC6B2CD572C100264B1F /* index.d.cts */,
+				AA40BC6C2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC742CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC6E2CD572C100264B1F /* index.ts */,
+				AA40BC6F2CD572C100264B1F /* plugin.ts */,
+				AA40BC702CD572C100264B1F /* README.md */,
+				AA40BC712CD572C100264B1F /* selection.ts */,
+				AA40BC722CD572C100264B1F /* state.ts */,
+				AA40BC732CD572C100264B1F /* transaction.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC7B2CD572C100264B1F /* prosemirror-state */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC6D2CD572C100264B1F /* dist */,
+				AA40BC742CD572C100264B1F /* src */,
+				AA40BC752CD572C100264B1F /* .tern-project */,
+				AA40BC762CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC772CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC782CD572C100264B1F /* LICENSE */,
+				AA40BC792CD572C100264B1F /* package.json */,
+				AA40BC7A2CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-state";
+			sourceTree = "<group>";
+		};
+		AA40BC802CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC7C2CD572C100264B1F /* index.cjs */,
+				AA40BC7D2CD572C100264B1F /* index.js */,
+				AA40BC7E2CD572C100264B1F /* index.d.cts */,
+				AA40BC7F2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC822CD572C100264B1F /* style */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC812CD572C100264B1F /* tables.css */,
+			);
+			path = style;
+			sourceTree = "<group>";
+		};
+		AA40BC862CD572C100264B1F /* prosemirror-tables */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC802CD572C100264B1F /* dist */,
+				AA40BC822CD572C100264B1F /* style */,
+				AA40BC832CD572C100264B1F /* LICENSE */,
+				AA40BC842CD572C100264B1F /* package.json */,
+				AA40BC852CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-tables";
+			sourceTree = "<group>";
+		};
+		AA40BC8B2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC872CD572C100264B1F /* index.cjs */,
+				AA40BC882CD572C100264B1F /* index.js */,
+				AA40BC892CD572C100264B1F /* index.d.cts */,
+				AA40BC8A2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BC972CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC8C2CD572C100264B1F /* attr_step.ts */,
+				AA40BC8D2CD572C100264B1F /* index.ts */,
+				AA40BC8E2CD572C100264B1F /* map.ts */,
+				AA40BC8F2CD572C100264B1F /* mark.ts */,
+				AA40BC902CD572C100264B1F /* mark_step.ts */,
+				AA40BC912CD572C100264B1F /* README.md */,
+				AA40BC922CD572C100264B1F /* replace.ts */,
+				AA40BC932CD572C100264B1F /* replace_step.ts */,
+				AA40BC942CD572C100264B1F /* step.ts */,
+				AA40BC952CD572C100264B1F /* structure.ts */,
+				AA40BC962CD572C100264B1F /* transform.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BC9E2CD572C100264B1F /* prosemirror-transform */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC8B2CD572C100264B1F /* dist */,
+				AA40BC972CD572C100264B1F /* src */,
+				AA40BC982CD572C100264B1F /* .tern-project */,
+				AA40BC992CD572C100264B1F /* CHANGELOG.md */,
+				AA40BC9A2CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BC9B2CD572C100264B1F /* LICENSE */,
+				AA40BC9C2CD572C100264B1F /* package.json */,
+				AA40BC9D2CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-transform";
+			sourceTree = "<group>";
+		};
+		AA40BCA32CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BC9F2CD572C100264B1F /* index.cjs */,
+				AA40BCA02CD572C100264B1F /* index.js */,
+				AA40BCA12CD572C100264B1F /* index.d.cts */,
+				AA40BCA22CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BCB12CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCA42CD572C100264B1F /* browser.ts */,
+				AA40BCA52CD572C100264B1F /* capturekeys.ts */,
+				AA40BCA62CD572C100264B1F /* clipboard.ts */,
+				AA40BCA72CD572C100264B1F /* decoration.ts */,
+				AA40BCA82CD572C100264B1F /* dom.ts */,
+				AA40BCA92CD572C100264B1F /* domchange.ts */,
+				AA40BCAA2CD572C100264B1F /* domcoords.ts */,
+				AA40BCAB2CD572C100264B1F /* domobserver.ts */,
+				AA40BCAC2CD572C100264B1F /* index.ts */,
+				AA40BCAD2CD572C100264B1F /* input.ts */,
+				AA40BCAE2CD572C100264B1F /* README.md */,
+				AA40BCAF2CD572C100264B1F /* selection.ts */,
+				AA40BCB02CD572C100264B1F /* viewdesc.ts */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BCB32CD572C100264B1F /* style */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCB22CD572C100264B1F /* prosemirror.css */,
+			);
+			path = style;
+			sourceTree = "<group>";
+		};
+		AA40BCBA2CD572C100264B1F /* prosemirror-view */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCA32CD572C100264B1F /* dist */,
+				AA40BCB12CD572C100264B1F /* src */,
+				AA40BCB32CD572C100264B1F /* style */,
+				AA40BCB42CD572C100264B1F /* .tern-project */,
+				AA40BCB52CD572C100264B1F /* CHANGELOG.md */,
+				AA40BCB62CD572C100264B1F /* CONTRIBUTING.md */,
+				AA40BCB72CD572C100264B1F /* LICENSE */,
+				AA40BCB82CD572C100264B1F /* package.json */,
+				AA40BCB92CD572C100264B1F /* README.md */,
+			);
+			path = "prosemirror-view";
+			sourceTree = "<group>";
+		};
+		AA40BCBC2CD572C100264B1F /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCBB2CD572C100264B1F /* FUNDING.yml */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
+		AA40BCBE2CD572C100264B1F /* bin */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCBD2CD572C100264B1F /* resolve */,
+			);
+			path = bin;
+			sourceTree = "<group>";
+		};
+		AA40BCC12CD572C100264B1F /* example */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCBF2CD572C100264B1F /* async.js */,
+				AA40BCC02CD572C100264B1F /* sync.js */,
+			);
+			path = example;
+			sourceTree = "<group>";
+		};
+		AA40BCCB2CD572C100264B1F /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCC22CD572C100264B1F /* async.js */,
+				AA40BCC32CD572C100264B1F /* caller.js */,
+				AA40BCC42CD572C100264B1F /* core.js */,
+				AA40BCC52CD572C100264B1F /* core.json */,
+				AA40BCC62CD572C100264B1F /* homedir.js */,
+				AA40BCC72CD572C100264B1F /* is-core.js */,
+				AA40BCC82CD572C100264B1F /* node-modules-paths.js */,
+				AA40BCC92CD572C100264B1F /* normalize-options.js */,
+				AA40BCCA2CD572C100264B1F /* sync.js */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		AA40BCCD2CD572C100264B1F /* abc */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCCC2CD572C100264B1F /* index.js */,
+			);
+			path = abc;
+			sourceTree = "<group>";
+		};
+		AA40BCCF2CD572C100264B1F /* dotdot */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCCD2CD572C100264B1F /* abc */,
+				AA40BCCE2CD572C100264B1F /* index.js */,
+			);
+			path = dotdot;
+			sourceTree = "<group>";
+		};
+		AA40BCD12CD572C100264B1F /* aaa */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD02CD572C100264B1F /* index.js */,
+			);
+			path = aaa;
+			sourceTree = "<group>";
+		};
+		AA40BCD22CD572C100264B1F /* xmodules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD12CD572C100264B1F /* aaa */,
+			);
+			path = xmodules;
+			sourceTree = "<group>";
+		};
+		AA40BCD42CD572C100264B1F /* aaa */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD32CD572C100264B1F /* index.js */,
+			);
+			path = aaa;
+			sourceTree = "<group>";
+		};
+		AA40BCD52CD572C100264B1F /* ymodules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD42CD572C100264B1F /* aaa */,
+			);
+			path = ymodules;
+			sourceTree = "<group>";
+		};
+		AA40BCD82CD572C100264B1F /* bbb */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD62CD572C100264B1F /* main.js */,
+				AA40BCD72CD572C100264B1F /* package.json */,
+			);
+			path = bbb;
+			sourceTree = "<group>";
+		};
+		AA40BCD92CD572C100264B1F /* zmodules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD82CD572C100264B1F /* bbb */,
+			);
+			path = zmodules;
+			sourceTree = "<group>";
+		};
+		AA40BCDA2CD572C100264B1F /* module_dir */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCD22CD572C100264B1F /* xmodules */,
+				AA40BCD52CD572C100264B1F /* ymodules */,
+				AA40BCD92CD572C100264B1F /* zmodules */,
+			);
+			path = module_dir;
+			sourceTree = "<group>";
+		};
+		AA40BCDC2CD572C100264B1F /* aaa */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCDB2CD572C100264B1F /* index.js */,
+			);
+			path = aaa;
+			sourceTree = "<group>";
+		};
+		AA40BCDE2CD572C100264B1F /* ccc */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCDD2CD572C100264B1F /* index.js */,
+			);
+			path = ccc;
+			sourceTree = "<group>";
+		};
+		AA40BCDF2CD572C100264B1F /* x */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCDC2CD572C100264B1F /* aaa */,
+				AA40BCDE2CD572C100264B1F /* ccc */,
+			);
+			path = x;
+			sourceTree = "<group>";
+		};
+		AA40BCE12CD572C100264B1F /* bbb */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE02CD572C100264B1F /* index.js */,
+			);
+			path = bbb;
+			sourceTree = "<group>";
+		};
+		AA40BCE32CD572C100264B1F /* ccc */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE22CD572C100264B1F /* index.js */,
+			);
+			path = ccc;
+			sourceTree = "<group>";
+		};
+		AA40BCE42CD572C100264B1F /* y */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE12CD572C100264B1F /* bbb */,
+				AA40BCE32CD572C100264B1F /* ccc */,
+			);
+			path = y;
+			sourceTree = "<group>";
+		};
+		AA40BCE52CD572C100264B1F /* node_path */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCDF2CD572C100264B1F /* x */,
+				AA40BCE42CD572C100264B1F /* y */,
+			);
+			path = node_path;
+			sourceTree = "<group>";
+		};
+		AA40BCE72CD572C100264B1F /* deep_ref */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE62CD572C100264B1F /* main.js */,
+			);
+			path = deep_ref;
+			sourceTree = "<group>";
+		};
+		AA40BCE82CD572C100264B1F /* pathfilter */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE72CD572C100264B1F /* deep_ref */,
+			);
+			path = pathfilter;
+			sourceTree = "<group>";
+		};
+		AA40BCEB2CD572C100264B1F /* aaa */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCE92CD572C100264B1F /* index.js */,
+				AA40BCEA2CD572C100264B1F /* main.js */,
+			);
+			path = aaa;
+			sourceTree = "<group>";
+		};
+		AA40BCED2CD572C100264B1F /* bbb */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCEC2CD572C100264B1F /* main.js */,
+			);
+			path = bbb;
+			sourceTree = "<group>";
+		};
+		AA40BCF02CD572C100264B1F /* precedence */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCEB2CD572C100264B1F /* aaa */,
+				AA40BCED2CD572C100264B1F /* bbb */,
+				AA40BCEE2CD572C100264B1F /* aaa.js */,
+				AA40BCEF2CD572C100264B1F /* bbb.js */,
+			);
+			path = precedence;
+			sourceTree = "<group>";
+		};
+		AA40BCF42CD572C100264B1F /* baz */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCF12CD572C100264B1F /* doom.js */,
+				AA40BCF22CD572C100264B1F /* package.json */,
+				AA40BCF32CD572C100264B1F /* quux.js */,
+			);
+			path = baz;
+			sourceTree = "<group>";
+		};
+		AA40BCF82CD572C100264B1F /* browser_field */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCF52CD572C100264B1F /* a.js */,
+				AA40BCF62CD572C100264B1F /* b.js */,
+				AA40BCF72CD572C100264B1F /* package.json */,
+			);
+			path = browser_field;
+			sourceTree = "<group>";
+		};
+		AA40BCFB2CD572C100264B1F /* dot_main */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCF92CD572C100264B1F /* index.js */,
+				AA40BCFA2CD572C100264B1F /* package.json */,
+			);
+			path = dot_main;
+			sourceTree = "<group>";
+		};
+		AA40BCFE2CD572C100264B1F /* dot_slash_main */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCFC2CD572C100264B1F /* index.js */,
+				AA40BCFD2CD572C100264B1F /* package.json */,
+			);
+			path = dot_slash_main;
+			sourceTree = "<group>";
+		};
+		AA40BD012CD572C100264B1F /* false_main */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCFF2CD572C100264B1F /* index.js */,
+				AA40BD002CD572C100264B1F /* package.json */,
+			);
+			path = false_main;
+			sourceTree = "<group>";
+		};
+		AA40BD042CD572C100264B1F /* incorrect_main */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD022CD572C100264B1F /* index.js */,
+				AA40BD032CD572C100264B1F /* package.json */,
+			);
+			path = incorrect_main;
+			sourceTree = "<group>";
+		};
+		AA40BD062CD572C100264B1F /* invalid_main */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD052CD572C100264B1F /* package.json */,
+			);
+			path = invalid_main;
+			sourceTree = "<group>";
+		};
+		AA40BD092CD572C100264B1F /* package-a */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD072CD572C100264B1F /* index.js */,
+				AA40BD082CD572C100264B1F /* package.json */,
+			);
+			path = "package-a";
+			sourceTree = "<group>";
+		};
+		AA40BD0C2CD572C100264B1F /* package-b */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD0A2CD572C100264B1F /* index.js */,
+				AA40BD0B2CD572C100264B1F /* package.json */,
+			);
+			path = "package-b";
+			sourceTree = "<group>";
+		};
+		AA40BD0D2CD572C100264B1F /* packages */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD092CD572C100264B1F /* package-a */,
+				AA40BD0C2CD572C100264B1F /* package-b */,
+			);
+			path = packages;
+			sourceTree = "<group>";
+		};
+		AA40BD102CD572C100264B1F /* multirepo */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD0D2CD572C100264B1F /* packages */,
+				AA40BD0E2CD572C100264B1F /* lerna.json */,
+				AA40BD0F2CD572C100264B1F /* package.json */,
+			);
+			path = multirepo;
+			sourceTree = "<group>";
+		};
+		AA40BD142CD572C100264B1F /* mylib */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD112CD572C100264B1F /* async.js */,
+				AA40BD122CD572C100264B1F /* package.json */,
+				AA40BD132CD572C100264B1F /* sync.js */,
+			);
+			path = mylib;
+			sourceTree = "<group>";
+		};
+		AA40BD152CD572C100264B1F /* nested_symlinks */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD142CD572C100264B1F /* mylib */,
+			);
+			path = nested_symlinks;
+			sourceTree = "<group>";
+		};
+		AA40BD172CD572C100264B1F /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD162CD572C100264B1F /* other-lib.js */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		AA40BD192CD572C100264B1F /* other_path */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD172CD572C100264B1F /* lib */,
+				AA40BD182CD572C100264B1F /* root.js */,
+			);
+			path = other_path;
+			sourceTree = "<group>";
+		};
+		AA40BD1B2CD572C100264B1F /* foo */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD1A2CD572C100264B1F /* index.js */,
+			);
+			path = foo;
+			sourceTree = "<group>";
+		};
+		AA40BD1C2CD572C100264B1F /* quux */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD1B2CD572C100264B1F /* foo */,
+			);
+			path = quux;
+			sourceTree = "<group>";
+		};
+		AA40BD1E2CD572C100264B1F /* foo */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD1D2CD572C100264B1F /* index.js */,
+			);
+			path = foo;
+			sourceTree = "<group>";
+		};
+		AA40BD202CD572C100264B1F /* same_names */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD1E2CD572C100264B1F /* foo */,
+				AA40BD1F2CD572C100264B1F /* foo.js */,
+			);
+			path = same_names;
+			sourceTree = "<group>";
+		};
+		AA40BD222CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD212CD572C100264B1F /* foo.js */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BD242CD572C100264B1F /* symlink_target */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD232CD572C100264B1F /* .gitkeep */,
+			);
+			path = symlink_target;
+			sourceTree = "<group>";
+		};
+		AA40BD252CD572C100264B1F /* _ */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD222CD572C100264B1F /* node_modules */,
+				AA40BD242CD572C100264B1F /* symlink_target */,
+			);
+			path = _;
+			sourceTree = "<group>";
+		};
+		AA40BD282CD572C100264B1F /* package */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD262CD572C100264B1F /* bar.js */,
+				AA40BD272CD572C100264B1F /* package.json */,
+			);
+			path = package;
+			sourceTree = "<group>";
+		};
+		AA40BD292CD572C100264B1F /* symlinked */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD252CD572C100264B1F /* _ */,
+				AA40BD282CD572C100264B1F /* package */,
+			);
+			path = symlinked;
+			sourceTree = "<group>";
+		};
+		AA40BD2B2CD572C100264B1F /* without_basedir */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD2A2CD572C100264B1F /* main.js */,
+			);
+			path = without_basedir;
+			sourceTree = "<group>";
+		};
+		AA40BD302CD572C100264B1F /* resolver */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCF42CD572C100264B1F /* baz */,
+				AA40BCF82CD572C100264B1F /* browser_field */,
+				AA40BCFB2CD572C100264B1F /* dot_main */,
+				AA40BCFE2CD572C100264B1F /* dot_slash_main */,
+				AA40BD012CD572C100264B1F /* false_main */,
+				AA40BD042CD572C100264B1F /* incorrect_main */,
+				AA40BD062CD572C100264B1F /* invalid_main */,
+				AA40BD102CD572C100264B1F /* multirepo */,
+				AA40BD152CD572C100264B1F /* nested_symlinks */,
+				AA40BD192CD572C100264B1F /* other_path */,
+				AA40BD1C2CD572C100264B1F /* quux */,
+				AA40BD202CD572C100264B1F /* same_names */,
+				AA40BD292CD572C100264B1F /* symlinked */,
+				AA40BD2B2CD572C100264B1F /* without_basedir */,
+				AA40BD2C2CD572C100264B1F /* cup.coffee */,
+				AA40BD2D2CD572C100264B1F /* foo.js */,
+				AA40BD2E2CD572C100264B1F /* mug.coffee */,
+				AA40BD2F2CD572C100264B1F /* mug.js */,
+			);
+			path = resolver;
+			sourceTree = "<group>";
+		};
+		AA40BD322CD572C100264B1F /* util */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD312CD572C100264B1F /* index.js */,
+			);
+			path = util;
+			sourceTree = "<group>";
+		};
+		AA40BD332CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD322CD572C100264B1F /* util */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BD342CD572C100264B1F /* shadowed_core */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD332CD572C100264B1F /* node_modules */,
+			);
+			path = shadowed_core;
+			sourceTree = "<group>";
+		};
+		AA40BD492CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCCF2CD572C100264B1F /* dotdot */,
+				AA40BCDA2CD572C100264B1F /* module_dir */,
+				AA40BCE52CD572C100264B1F /* node_path */,
+				AA40BCE82CD572C100264B1F /* pathfilter */,
+				AA40BCF02CD572C100264B1F /* precedence */,
+				AA40BD302CD572C100264B1F /* resolver */,
+				AA40BD342CD572C100264B1F /* shadowed_core */,
+				AA40BD352CD572C100264B1F /* core.js */,
+				AA40BD362CD572C100264B1F /* dotdot.js */,
+				AA40BD372CD572C100264B1F /* faulty_basedir.js */,
+				AA40BD382CD572C100264B1F /* filter.js */,
+				AA40BD392CD572C100264B1F /* filter_sync.js */,
+				AA40BD3A2CD572C100264B1F /* home_paths.js */,
+				AA40BD3B2CD572C100264B1F /* home_paths_sync.js */,
+				AA40BD3C2CD572C100264B1F /* mock.js */,
+				AA40BD3D2CD572C100264B1F /* mock_sync.js */,
+				AA40BD3E2CD572C100264B1F /* module_dir.js */,
+				AA40BD3F2CD572C100264B1F /* node_path.js */,
+				AA40BD402CD572C100264B1F /* node-modules-paths.js */,
+				AA40BD412CD572C100264B1F /* nonstring.js */,
+				AA40BD422CD572C100264B1F /* pathfilter.js */,
+				AA40BD432CD572C100264B1F /* precedence.js */,
+				AA40BD442CD572C100264B1F /* resolver.js */,
+				AA40BD452CD572C100264B1F /* resolver_sync.js */,
+				AA40BD462CD572C100264B1F /* shadowed_core.js */,
+				AA40BD472CD572C100264B1F /* subdirs.js */,
+				AA40BD482CD572C100264B1F /* symlinks.js */,
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BD532CD572C100264B1F /* resolve */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BCBC2CD572C100264B1F /* .github */,
+				AA40BCBE2CD572C100264B1F /* bin */,
+				AA40BCC12CD572C100264B1F /* example */,
+				AA40BCCB2CD572C100264B1F /* lib */,
+				AA40BD492CD572C100264B1F /* test */,
+				AA40BD4A2CD572C100264B1F /* .editorconfig */,
+				AA40BD4B2CD572C100264B1F /* .eslintrc */,
+				AA40BD4C2CD572C100264B1F /* async.js */,
+				AA40BD4D2CD572C100264B1F /* index.js */,
+				AA40BD4E2CD572C100264B1F /* LICENSE */,
+				AA40BD4F2CD572C100264B1F /* package.json */,
+				AA40BD502CD572C100264B1F /* readme.markdown */,
+				AA40BD512CD572C100264B1F /* SECURITY.md */,
+				AA40BD522CD572C100264B1F /* sync.js */,
+			);
+			path = resolve;
+			sourceTree = "<group>";
+		};
+		AA40BD552CD572C100264B1F /* bin */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD542CD572C100264B1F /* rollup */,
+			);
+			path = bin;
+			sourceTree = "<group>";
+		};
+		AA40BD582CD572C100264B1F /* shared */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD562CD572C100264B1F /* index.js */,
+				AA40BD572CD572C100264B1F /* node-entry.js */,
+			);
+			path = shared;
+			sourceTree = "<group>";
+		};
+		AA40BD5E2CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD552CD572C100264B1F /* bin */,
+				AA40BD582CD572C100264B1F /* shared */,
+				AA40BD592CD572C100264B1F /* rollup.js */,
+				AA40BD5A2CD572C100264B1F /* rollup.browser.js */,
+				AA40BD5B2CD572C100264B1F /* rollup.browser.es.js */,
+				AA40BD5C2CD572C100264B1F /* rollup.d.ts */,
+				AA40BD5D2CD572C100264B1F /* rollup.es.js */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BD642CD572C100264B1F /* estree */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD5F2CD572C100264B1F /* flow.d.ts */,
+				AA40BD602CD572C100264B1F /* index.d.ts */,
+				AA40BD612CD572C100264B1F /* LICENSE */,
+				AA40BD622CD572C100264B1F /* package.json */,
+				AA40BD632CD572C100264B1F /* README.md */,
+			);
+			path = estree;
+			sourceTree = "<group>";
+		};
+		AA40BD652CD572C100264B1F /* @types */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD642CD572C100264B1F /* estree */,
+			);
+			path = "@types";
+			sourceTree = "<group>";
+		};
+		AA40BD662CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD652CD572C100264B1F /* @types */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BD6B2CD572C100264B1F /* rollup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD5E2CD572C100264B1F /* dist */,
+				AA40BD662CD572C100264B1F /* node_modules */,
+				AA40BD672CD572C100264B1F /* CHANGELOG.md */,
+				AA40BD682CD572C100264B1F /* LICENSE.md */,
+				AA40BD692CD572C100264B1F /* package.json */,
+				AA40BD6A2CD572C100264B1F /* README.md */,
+			);
+			path = rollup;
+			sourceTree = "<group>";
+		};
+		AA40BD702CD572C100264B1F /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD6C2CD572C100264B1F /* index.cjs */,
+				AA40BD6D2CD572C100264B1F /* index.js */,
+				AA40BD6E2CD572C100264B1F /* index.d.cts */,
+				AA40BD6F2CD572C100264B1F /* index.d.ts */,
+			);
+			path = dist;
+			sourceTree = "<group>";
+		};
+		AA40BD762CD572C100264B1F /* rope-sequence */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD702CD572C100264B1F /* dist */,
+				AA40BD712CD572C100264B1F /* index.js */,
+				AA40BD722CD572C100264B1F /* LICENSE */,
+				AA40BD732CD572C100264B1F /* package.json */,
+				AA40BD742CD572C100264B1F /* README.md */,
+				AA40BD752CD572C100264B1F /* test.js */,
+			);
+			path = "rope-sequence";
+			sourceTree = "<group>";
+		};
+		AA40BD842CD572C100264B1F /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD832CD572C100264B1F /* FUNDING.yml */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
+		AA40BD862CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD852CD572C100264B1F /* index.js */,
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BD8F2CD572C100264B1F /* supports-preserve-symlinks-flag */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BD842CD572C100264B1F /* .github */,
+				AA40BD862CD572C100264B1F /* test */,
+				AA40BD872CD572C100264B1F /* .eslintrc */,
+				AA40BD882CD572C100264B1F /* .nycrc */,
+				AA40BD892CD572C100264B1F /* browser.js */,
+				AA40BD8A2CD572C100264B1F /* CHANGELOG.md */,
+				AA40BD8B2CD572C100264B1F /* index.js */,
+				AA40BD8C2CD572C100264B1F /* LICENSE */,
+				AA40BD8D2CD572C100264B1F /* package.json */,
+				AA40BD8E2CD572C100264B1F /* README.md */,
+			);
+			path = "supports-preserve-symlinks-flag";
+			sourceTree = "<group>";
+		};
+		AA40BDC22CD572C100264B1F /* w3c-keyname */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDBA2CD572C100264B1F /* .tern-port */,
+				AA40BDBB2CD572C100264B1F /* index.cjs */,
+				AA40BDBC2CD572C100264B1F /* index.js */,
+				AA40BDBD2CD572C100264B1F /* index.d.cts */,
+				AA40BDBE2CD572C100264B1F /* index.d.ts */,
+				AA40BDBF2CD572C100264B1F /* LICENSE */,
+				AA40BDC02CD572C100264B1F /* package.json */,
+				AA40BDC12CD572C100264B1F /* README.md */,
+			);
+			path = "w3c-keyname";
+			sourceTree = "<group>";
+		};
+		AA40BDC92CD572C100264B1F /* node_modules */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA3F2CD572C100264B1F /* .bin */,
+				AA40BA772CD572C100264B1F /* @rollup */,
+				AA40BACE2CD572C100264B1F /* @types */,
+				AA40BAFB2CD572C100264B1F /* commondir */,
+				AA40BB0C2CD572C100264B1F /* crel */,
+				AA40BB222CD572C100264B1F /* estree-walker */,
+				AA40BB372CD572C100264B1F /* function-bind */,
+				AA40BB4A2CD572C100264B1F /* hasown */,
+				AA40BB602CD572C100264B1F /* is-core-module */,
+				AA40BB662CD572C100264B1F /* is-module */,
+				AA40BB6F2CD572C100264B1F /* is-reference */,
+				AA40BB7B2CD572C100264B1F /* magic-string */,
+				AA40BB852CD572C100264B1F /* ms */,
+				AA40BB932CD572C100264B1F /* orderedmap */,
+				AA40BB9D2CD572C100264B1F /* path-parse */,
+				AA40BBA92CD572C100264B1F /* picomatch */,
+				AA40BBB82CD572C100264B1F /* prosemirror-commands */,
+				AA40BBC52CD572C100264B1F /* prosemirror-dropcursor */,
+				AA40BBEB2CD572C100264B1F /* prosemirror-gapcursor */,
+				AA40BBFA2CD572C100264B1F /* prosemirror-history */,
+				AA40BC0C2CD572C100264B1F /* prosemirror-inputrules */,
+				AA40BC1B2CD572C100264B1F /* prosemirror-keymap */,
+				AA40BC4A2CD572C100264B1F /* prosemirror-model */,
+				AA40BC592CD572C100264B1F /* prosemirror-schema-basic */,
+				AA40BC682CD572C100264B1F /* prosemirror-schema-list */,
+				AA40BC7B2CD572C100264B1F /* prosemirror-state */,
+				AA40BC862CD572C100264B1F /* prosemirror-tables */,
+				AA40BC9E2CD572C100264B1F /* prosemirror-transform */,
+				AA40BCBA2CD572C100264B1F /* prosemirror-view */,
+				AA40BD532CD572C100264B1F /* resolve */,
+				AA40BD6B2CD572C100264B1F /* rollup */,
+				AA40BD762CD572C100264B1F /* rope-sequence */,
+				AA40BD8F2CD572C100264B1F /* supports-preserve-symlinks-flag */,
+				AA40BDC22CD572C100264B1F /* w3c-keyname */,
+				AA40BDC82CD572C100264B1F /* .package-lock.json */,
+			);
+			path = node_modules;
+			sourceTree = "<group>";
+		};
+		AA40BDCE2CD572C100264B1F /* menu */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDCA2CD572C100264B1F /* icons.js */,
+				AA40BDCB2CD572C100264B1F /* index.js */,
+				AA40BDCC2CD572C100264B1F /* menu.js */,
+				AA40BDCD2CD572C100264B1F /* menubar.js */,
+			);
+			path = menu;
+			sourceTree = "<group>";
+		};
+		AA40BDD02CD572C100264B1F /* schema */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDCF2CD572C100264B1F /* index.js */,
+			);
+			path = schema;
+			sourceTree = "<group>";
+		};
+		AA40BDD62CD572C100264B1F /* setup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDD12CD572C100264B1F /* index.js */,
+				AA40BDD22CD572C100264B1F /* inputrules.js */,
+				AA40BDD32CD572C100264B1F /* keymap.js */,
+				AA40BDD42CD572C100264B1F /* menu.js */,
+				AA40BDD52CD572C100264B1F /* prompt.js */,
+			);
+			path = setup;
+			sourceTree = "<group>";
+		};
+		AA40BDDA2CD572C100264B1F /* js */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDCE2CD572C100264B1F /* menu */,
+				AA40BDD02CD572C100264B1F /* schema */,
+				AA40BDD62CD572C100264B1F /* setup */,
+				AA40BDD72CD572C100264B1F /* main.js */,
+				AA40BDD82CD572C100264B1F /* markup.js */,
+				AA40BDD92CD572C100264B1F /* oldMarkup.js */,
+			);
+			path = js;
+			sourceTree = "<group>";
+		};
+		AA40BDDB2CD572C100264B1F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BDDA2CD572C100264B1F /* js */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		AA40BDDC2CD572C100264B1F /* test */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = test;
+			sourceTree = "<group>";
+		};
+		AA40BDE02CD572C100264B1F /* rollup */ = {
+			isa = PBXGroup;
+			children = (
+				AA40BA3B2CD572C100264B1F /* dist */,
+				AA40BDC92CD572C100264B1F /* node_modules */,
+				AA40BDDB2CD572C100264B1F /* src */,
+				AA40BDDC2CD572C100264B1F /* test */,
+				AA40BDDD2CD572C100264B1F /* package.json */,
+				AA40BDDE2CD572C100264B1F /* package-lock.json */,
+			);
+			path = rollup;
 			sourceTree = "<group>";
 		};
 		AA652922260E80EE000674B7 = {
@@ -429,8 +2917,6 @@
 				AA65299B260E8450000674B7 /* UIKitDemo.app */,
 				AAFADF41261524AE0024F2DC /* BasicTests.xctest */,
 				AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */,
-				AA2FA8A727FE44C90068828F /* UndoTests.xctest */,
-				AA2548732805FAE300C9DEB2 /* RedoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -445,7 +2931,7 @@
 				AAB411252AD069F80072C765 /* SearchableContentView.swift */,
 				AAB411222AD0695F0072C765 /* SearchBar.swift */,
 				AAB1040928B1A3240063BE2A /* SimplestContentView.swift */,
-				AA2EB1882B53579900224F5E /* StyledContentView.swift */,
+				AA2EB1882B53579900224F5E /* CustomContentView.swift */,
 				AAD26E87264463AA00908777 /* DocumentPicker.swift */,
 				AA1B80D72620ECD100891FFB /* TextView.swift */,
 				AA65294D260E8114000674B7 /* Info.plist */,
@@ -469,7 +2955,7 @@
 				AA65299F260E8450000674B7 /* SceneDelegate.swift */,
 				AA6529A1260E8450000674B7 /* DemoViewController.swift */,
 				AAB1040728B1A0780063BE2A /* SimplestViewController.swift */,
-				AA2EB18C2B535F5B00224F5E /* StyledViewController.swift */,
+				AA2EB18C2B535F5B00224F5E /* CustomViewController.swift */,
 				AA6529AB260E8450000674B7 /* Info.plist */,
 			);
 			path = UIKitDemo;
@@ -485,6 +2971,7 @@
 		AA6529CF260E8E8E000674B7 /* BasicTests */ = {
 			isa = PBXGroup;
 			children = (
+				AA2FA8A127FE43A50068828F /* HtmlTest.swift */,
 				AA6529D3260E8E8E000674B7 /* BasicTests.swift */,
 			);
 			path = BasicTests;
@@ -502,6 +2989,7 @@
 				AA7B24E82B59CBAA003C607A /* MarkupWKWebViewConfiguration.swift */,
 				AA0DDC6528AE91920081B869 /* MarkupWKWebViewRepresentable.swift */,
 				AA652A07260E99FF000674B7 /* Resources */,
+				AA40BDE02CD572C100264B1F /* rollup */,
 				AA652A3B260E9B55000674B7 /* Selection */,
 				AA652A38260E9B24000674B7 /* Toolbars */,
 				AA1749E4269B9444005F0428 /* Utilities */,
@@ -514,6 +3002,7 @@
 		AA652A07260E99FF000674B7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				AA40BA1E2CD54D5300264B1F /* mirror.css */,
 				AA652A0A260E99FF000674B7 /* markup.html */,
 				AA4EBE942B3747D6006C614B /* markup.js */,
 				AA1B81B8262CF16A00891FFB /* markup.css */,
@@ -574,42 +3063,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		AA2548722805FAE300C9DEB2 /* RedoTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AA25487A2805FAE300C9DEB2 /* Build configuration list for PBXNativeTarget "RedoTests" */;
-			buildPhases = (
-				AA25486F2805FAE300C9DEB2 /* Sources */,
-				AA2548702805FAE300C9DEB2 /* Frameworks */,
-				AA2548712805FAE300C9DEB2 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AA87E88A2C2B59C300109559 /* PBXTargetDependency */,
-			);
-			name = RedoTests;
-			productName = RedoTests;
-			productReference = AA2548732805FAE300C9DEB2 /* RedoTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		AA2FA8A627FE44C90068828F /* UndoTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */;
-			buildPhases = (
-				AA2FA8A327FE44C90068828F /* Sources */,
-				AA2FA8A427FE44C90068828F /* Frameworks */,
-				AA2FA8A527FE44C90068828F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AAF404D9290B005000129FD9 /* PBXTargetDependency */,
-			);
-			name = UndoTests;
-			productName = UndoTests;
-			productReference = AA2FA8A727FE44C90068828F /* UndoTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		AA408AFA261666D200CAE8B9 /* MarkupEditor */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA408B00261666D200CAE8B9 /* Build configuration list for PBXNativeTarget "MarkupEditor" */;
@@ -682,6 +3135,7 @@
 			);
 			dependencies = (
 				AAF404D7290B004900129FD9 /* PBXTargetDependency */,
+				AA0BE5A12D4ED31B00F0090E /* PBXTargetDependency */,
 			);
 			name = BasicTests;
 			productName = FooTests;
@@ -698,12 +3152,6 @@
 				LastSwiftUpdateCheck = 1330;
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
-					AA2548722805FAE300C9DEB2 = {
-						CreatedOnToolsVersion = 13.3;
-					};
-					AA2FA8A627FE44C90068828F = {
-						CreatedOnToolsVersion = 13.3;
-					};
 					AA408AFA261666D200CAE8B9 = {
 						CreatedOnToolsVersion = 12.4;
 					};
@@ -737,31 +3185,16 @@
 				AA65299A260E8450000674B7 /* UIKitDemo */,
 				AA408AFA261666D200CAE8B9 /* MarkupEditor */,
 				AAFADF40261524AE0024F2DC /* BasicTests */,
-				AA2FA8A627FE44C90068828F /* UndoTests */,
-				AA2548722805FAE300C9DEB2 /* RedoTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AA2548712805FAE300C9DEB2 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AA2FA8A527FE44C90068828F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AA408AF9261666D200CAE8B9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */,
 				AA4EBE952B3747D6006C614B /* markup.js in Resources */,
 				AA408B372616686C00CAE8B9 /* markup.html in Resources */,
 				AA1B81B9262CF16A00891FFB /* markup.css in Resources */,
@@ -805,26 +3238,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AA25486F2805FAE300C9DEB2 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AA25487E2805FB1800C9DEB2 /* HtmlTest.swift in Sources */,
-				AA52F3222806354000EEC655 /* RedoTests.swift in Sources */,
-				AA25487F2805FBC000C9DEB2 /* String+Extensions.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AA2FA8A327FE44C90068828F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AA2FA8B127FE46830068828F /* String+Extensions.swift in Sources */,
-				AA2FA8B027FE46740068828F /* HtmlTest.swift in Sources */,
-				AA2FA8AA27FE44C90068828F /* UndoTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AA408AF7261666D200CAE8B9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -868,7 +3281,6 @@
 				AA408B2C2616685B00CAE8B9 /* ListContext.swift in Sources */,
 				AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */,
 				AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */,
-				AAB1041028BE911A0063BE2A /* BackgroundClearView.swift in Sources */,
 				AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */,
 				AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */,
 				AAB1043028C10B600063BE2A /* LinkViewController.swift in Sources */,
@@ -890,8 +3302,7 @@
 				AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */,
 				AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */,
 				AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */,
-				AA2EB18B2B535F1E00224F5E /* StyledContentView.swift in Sources */,
-				AA2EB18D2B535F5B00224F5E /* StyledViewController.swift in Sources */,
+				AA2EB18B2B535F1E00224F5E /* CustomContentView.swift in Sources */,
 				AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */,
 				AA1B8137262621AC00891FFB /* FileToolbar.swift in Sources */,
 			);
@@ -902,7 +3313,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA6529A2260E8450000674B7 /* DemoViewController.swift in Sources */,
-				AA2EB18E2B535F5B00224F5E /* StyledViewController.swift in Sources */,
+				AA2EB18E2B535F5B00224F5E /* CustomViewController.swift in Sources */,
 				AAB1040828B1A0780063BE2A /* SimplestViewController.swift in Sources */,
 				AA7B24E52B59A72F003C607A /* DemoDivs.swift in Sources */,
 				AA65299E260E8450000674B7 /* AppDelegate.swift in Sources */,
@@ -917,7 +3328,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA74CF6527E65E72006A5865 /* String+Extensions.swift in Sources */,
 				AA2FA8A227FE43A50068828F /* HtmlTest.swift in Sources */,
 				AAFADF56261525110024F2DC /* BasicTests.swift in Sources */,
 			);
@@ -926,15 +3336,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AA0BE5A12D4ED31B00F0090E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA652941260E8113000674B7 /* SwiftUIDemo */;
+			targetProxy = AA0BE5A02D4ED31B00F0090E /* PBXContainerItemProxy */;
+		};
 		AA408B4F26166B0100CAE8B9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AA408B4E26166B0100CAE8B9 /* PBXContainerItemProxy */;
-		};
-		AA87E88A2C2B59C300109559 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
-			targetProxy = AA87E8892C2B59C300109559 /* PBXContainerItemProxy */;
 		};
 		AA8EFBAB2620B379008AE31E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -946,118 +3356,9 @@
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 			targetProxy = AAF404D6290B004900129FD9 /* PBXContainerItemProxy */;
 		};
-		AAF404D9290B005000129FD9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
-			targetProxy = AAF404D8290B005000129FD9 /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		AA25487B2805FAE300C9DEB2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.RedoTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-			};
-			name = Debug;
-		};
-		AA25487C2805FAE300C9DEB2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.RedoTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-			};
-			name = Release;
-		};
-		AA2FA8AC27FE44C90068828F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-			};
-			name = Debug;
-		};
-		AA2FA8AD27FE44C90068828F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XXG4VJQ59;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UndoTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-			};
-			name = Release;
-		};
 		AA408B01261666D200CAE8B9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1431,24 +3732,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA25487A2805FAE300C9DEB2 /* Build configuration list for PBXNativeTarget "RedoTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA25487B2805FAE300C9DEB2 /* Debug */,
-				AA25487C2805FAE300C9DEB2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AA2FA8AB27FE44C90068828F /* Build configuration list for PBXNativeTarget "UndoTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA2FA8AC27FE44C90068828F /* Debug */,
-				AA2FA8AD27FE44C90068828F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AA408B00261666D200CAE8B9 /* Build configuration list for PBXNativeTarget "MarkupEditor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -52,9 +52,9 @@ extension HtmlDivHolder {
         get { htmlDiv.buttonGroup }
         set { htmlDiv.buttonGroup = newValue }
     }
-    public var buttons: [HtmlButton] {
-        get { buttonGroup?.buttons ?? [] }
-        set { buttonGroup = HtmlButtonGroup(in: id, buttons: newValue) }
+    public var buttons: [HtmlButton]? {
+        get { buttonGroup?.buttons }
+        set { buttonGroup = newValue == nil ? nil : HtmlButtonGroup(in: id, buttons: newValue) }
     }
     public var description: String { htmlDiv.description }
 }

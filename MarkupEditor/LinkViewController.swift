@@ -233,10 +233,7 @@ class LinkViewController: UIViewController {
     
     /// Cancel the link action and dismiss
     @objc private func cancel() {
-        // Use endModalInput because insertLink was never called to restore selection
-        MarkupEditor.selectedWebView?.endModalInput {
-            self.dismiss()
-        }
+        dismiss()
     }
     
     /// Return false to disable various menu items depending on selectionState

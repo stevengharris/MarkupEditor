@@ -9,42 +9,74 @@ import OSLog
 
 extension MarkupWKWebView {
     
-    /// Add all the divs in `divStructure` into this view along with their resources which must be uniquely named.
-    ///
-    /// This method invokes many async JavaScript methods to add the `divStructure` divs, without waiting for any response.
-    public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
-        for div in divStructure.divs {
-            if let resourcesUrl = div.resourcesUrl {
-                copyResources(from: resourcesUrl)
-            }
-            addDiv(div)
-        }
-        handler?()
-    }
-    
-    /// Unload all divs in the `divStructure`.
-    ///
-    /// This method invokes many async JavaScript methods to remove the `divStructure` divs, without waiting for any response.
-    /// As an alternative, we could use `removeAllDivs`, but we do it explicitly this way because we want it to be obvious if
-    /// the contents of divStructure does not correspond to what is in the view. This can happen if the view is SwiftUI view that holds
-    /// the MarkupEditorView gets initialized because of a state change.
-    public func unload(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
-        for div in divStructure.divs {
-            // Note we do not remove resources from the temp directory
-            removeDiv(div)
-        }
-        handler?()
-    }
+    ///// Add all the divs in `divStructure` into this view along with their resources which must be uniquely named.
+    /////
+    ///// This method invokes many async JavaScript methods to add the `divStructure` divs, without waiting for any response.
+    ///// However, the handler is only called after all divs, including buttongroups, are added.
+    //public func load(divStructure: MarkupDivStructure, handler: (()->Void)? = nil) {
+    //    let divs = divStructure.divs()
+    //    guard divs.count > 0 else {
+    //        // It makes no sense to load a divStructure with no divs, but who am I to judge?
+    //        handler?()
+    //        return
+    //    }
+    //    for index in divs.indices {
+    //        let div = divs[index]
+    //        if let resourcesUrl = div.resourcesUrl {
+    //            copyResources(from: resourcesUrl)
+    //        }
+    //        addDiv(div) {
+    //            if index == divs.count - 1 {
+    //                handler?()
+    //            }
+    //        }
+    //    }
+    //    //var addedCount = 0
+    //    //for index in divs.indices {
+    //    //    let div = divs[index]
+    //    //    if let resourcesUrl = div.resourcesUrl {
+    //    //        copyResources(from: resourcesUrl)
+    //    //    }
+    //    //    addDiv(div) { added in
+    //    //        addedCount += added
+    //    //        if addedCount == divStructure.divCount {
+    //    //            handler?()
+    //    //        }
+    //    //    }
+    //    //}
+    //}
+    //
+    ///// Unload all divs in the `divStructure`.
+    /////
+    ///// This method invokes many async JavaScript methods to remove the `divStructure` divs, without waiting for any response.
+    ///// As an alternative, we could use `removeAllDivs`, but we do it explicitly this way because we want it to be obvious if
+    ///// the contents of divStructure does not correspond to what is in the view. This can happen if the view is SwiftUI view that holds
+    ///// the MarkupEditorView gets initialized because of a state change.
+    //public func unload(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
+    //    for div in divStructure.divs() {
+    //        // Note we do not remove resources from the temp directory
+    //        removeDiv(div)
+    //    }
+    //    handler?()
+    //}
     
     /* Alternative to use recursion and wait for callbacks */
-    /*
     /// Recursively load all divs in `divStructure` into this view, executing the handler when they are all done.
     public func load(divStructure: MarkupDivStructure, index: Int = 0, handler: (()->Void)? = nil) {
         loadDiv(divStructure: divStructure, atIndex: index) { nextIndex in
             if let nextIndex {
-                self.load(divStructure: divStructure, index: nextIndex, handler: handler)
+                let div = divStructure.topLevelDivs[index]
+                if
+                    let buttonGroup = div as? HtmlButtonGroup,
+                    let buttons = buttonGroup.buttons,
+                    !buttonGroup.isDynamic {
+                    self.addButtons(buttons, in: div.id) {
+                        self.load(divStructure: divStructure, index: nextIndex, handler: handler)
+                    }
+                } else {
+                    self.load(divStructure: divStructure, index: nextIndex, handler: handler)
+                }
             } else {
-                print("executing load handler")
                 handler?()
             }
         }
@@ -58,11 +90,12 @@ extension MarkupWKWebView {
     /// execute their handler. See https://forums.developer.apple.com/forums/thread/670959 as an example,
     /// but I have seen "IPC throttling was triggered (has 625 pending incoming messages, will only process 600 before yielding)".
     private func loadDiv(divStructure: MarkupDivStructure, atIndex index: Int, handler: @escaping (Int?)->Void) {
-        guard index < divStructure.divs.count else {
+        let divs = divStructure.topLevelDivs
+        guard index < divs.count else {
             handler(nil)
             return
         }
-        let div = divStructure.divs[index]
+        let div = divs[index]
         if let resourcesUrl = div.resourcesUrl {
             copyResources(from: resourcesUrl)
         }
@@ -83,17 +116,17 @@ extension MarkupWKWebView {
     }
     
     private func unloadDiv(divStructure: MarkupDivStructure, atIndex index: Int, handler: @escaping (Int?)->Void) {
-        guard index < divStructure.divs.count else {
+        let divs = divStructure.topLevelDivs
+        guard index < divs.count else {
             handler(nil)
             return
         }
-        let div = divStructure.divs[index]
+        let div = divs[index]
         // TODO: Remove resources
         removeDiv(div) {
             handler(index + 1)
         }
     }
-    */
     
     /// Copy all the resources from the baseUrl into the temp path used for editing.
     ///
@@ -121,29 +154,26 @@ extension MarkupWKWebView {
         }
     }
     
-    /// Add the `div` into the view, including its buttons if they are not dynamically created.
+    /// Add the `div` into the view, including its buttons if they are not dynamically created. Pass the number of
+    /// divs actually added in the handler. We do this because we only want to invoke the caller's handler when all
+    /// divs have been added, and the buttonGroup div is added implicitly if it exists.
     public func addDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
         let id = div.id
         let parentId = div.parentId
         let cssClass = div.cssClass
-        let attributes = div.attributes
-        var jsonAttributes: String?
-        if !attributes.isEmpty, let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options) {
-            jsonAttributes = String(data: jsonData, encoding: .utf8)
+        let attributes = div.attributes.json ?? "{}"
+        let htmlContents = div.htmlContents
+        var argString: String
+        if let buttonGroup = div.buttonGroup?.json() {
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(buttonGroup)', '\(htmlContents)'"
+        } else {
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', null, '\(htmlContents)'"
         }
-        let htmlContents = div.htmlContents.escaped
-        let buttonGroup = div.buttonGroup
-        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)', '\(jsonAttributes ?? "null")', '\(htmlContents)')") { result, error in
+        evaluateJavaScript("MU.addDiv(\(argString))") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
-            if let buttonGroup, !buttonGroup.isDynamic {
-                self.addButtonGroup(buttonGroup) {
-                    handler?()
-                }
-            } else {
-                handler?()
-            }
+            handler?()
         }
     }
     
@@ -161,22 +191,54 @@ extension MarkupWKWebView {
     ///
     /// A button group is a div containing buttons, so they can be positioned as a group.
     /// Button groups always reside in some parent, typically non-contenteditable header with a focusId of the contentEditable div.
+    /// Execute the handler only once, after adding all buttons.
     public func addButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
         let id = buttonGroup.id
         let parentId = buttonGroup.parentId
         let cssClass = buttonGroup.cssClass
-        evaluateJavaScript("MU.addDiv('\(id)', '\(parentId)', '\(cssClass)')") { result, error in
+        let attributes = buttonGroup.attributes.json ?? "{}"
+        var argString: String
+        if let json = buttonGroup.json(force: true) {
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(json)'"
+        } else {
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)'"
+        }
+        evaluateJavaScript("MU.addDiv(\(argString))") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButtonGroup: \(error)")
             } else if let result {
                 Logger.webview.warning("\(result as? String ?? "nil")")
-            } else {
-                // We are going to be running handler before all the buttons are added, but we don't care
-                for button in buttonGroup.buttons {
-                    self.addButton(button, in: id)
-                }
             }
             handler?()
+        }
+    }
+    
+    private func addButtons(_ buttons: [HtmlButton], in parentId: String, index: Int = 0, handler: (()->Void)? = nil) {
+        self.addButton(from: buttons, in: parentId, atIndex: index) { nextIndex in
+            if let nextIndex {
+                self.addButtons(buttons, in: parentId, index: nextIndex, handler: handler)
+            } else {
+                handler?()
+            }
+        }
+    }
+
+    /// Add a `button` into a parent HtmlButtonGroup div with id `parentId`.
+    private func addButton(from buttons: [HtmlButton], in parentId: String, atIndex index: Int, handler: ((Int?)->Void)?) {
+        guard index < buttons.count else {
+            handler?(nil)
+            return
+        }
+        let button = buttons[index]
+        let id = button.id
+        let cssClass = button.cssClass
+        let label = button.label
+        evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
+            if let error {
+                Logger.webview.error("Error adding HtmlButton: \(error)")
+            }
+            print("addedButton \(button.id)")
+            handler?(index + 1)
         }
     }
     
@@ -185,19 +247,6 @@ extension MarkupWKWebView {
         evaluateJavaScript("MU.removeDiv('\(buttonGroup.id)')") { result, error in
             if let error {
                 Logger.webview.error("Error removing HtmlButtonGroup: \(error)")
-            }
-            handler?()
-        }
-    }
-
-    /// Add a `button` into a parent HtmlButtonGroup div with id `parentId`.
-private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->Void)? = nil) {
-        let id = button.id
-        let cssClass = button.cssClass
-        let label = button.label.escaped
-        evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
-            if let error {
-                Logger.webview.error("Error adding HtmlButton: \(error)")
             }
             handler?()
         }
@@ -213,7 +262,7 @@ private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->
         }
     }
     
-    /// Focus on the element with `id`.
+    /// Scroll the element with `id` into the view and focus on it.
     ///
     /// Used to set the focus on a contenteditable div. After focusing, the selection state is reset.
     public func focus(on id: String?, handler: (()->Void)? = nil) {
@@ -230,20 +279,6 @@ private func addButton(_ button: HtmlButton, in parentId: String, handler: (()->
                 MarkupEditor.selectionState.reset(from: selectionState)
                 handler?()
             }
-        }
-    }
-    
-    /// Scroll the element with `id` into the view.
-    public func scrollIntoView(id: String?, handler: (()->Void)? = nil) {
-        guard let id else {
-            handler?()
-            return
-        }
-        evaluateJavaScript("MU.scrollIntoView('\(id)')") { result, error in
-            if let error {
-                Logger.webview.error("Error scrolling to element with id \(id): \(error)")
-            }
-            handler?()
         }
     }
     

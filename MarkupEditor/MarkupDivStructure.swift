@@ -9,16 +9,22 @@ import Foundation
 
 /// MarkupDivStructure is a class that holds the divs and buttongroups used by the MarkupEditor.
 public class MarkupDivStructure {
-    public var divs: [HtmlDivHolder] = []
-    private var divsById: [String : HtmlDivHolder] = [:]
-    private var buttonsById: [String : HtmlButton] = [:]
-    private var focusIdsByDivId: [String : String] = [:]
-    private var buttonGroupIdsByFocusId: [String : String] = [:]
+    public var topLevelDivs: [HtmlDivHolder]
+    private var divsById: [String : HtmlDivHolder]
+    private var buttonsById: [String : HtmlButton]
+    private var focusIdsByDivId: [String : String]
+    private var buttonGroupIdsByFocusId: [String : String]
     
-    public init() {}
+    public init() {
+        topLevelDivs = []   // Does not include button groups, which are divs, too.
+        divsById = [:]
+        buttonsById = [:]
+        focusIdsByDivId = [:]
+        buttonGroupIdsByFocusId = [:]
+    }
     
     public func reset() {
-        divs = []
+        topLevelDivs = []
         divsById = [:]
         buttonsById = [:]
         focusIdsByDivId = [:]
@@ -26,30 +32,32 @@ public class MarkupDivStructure {
     }
     
     public func add(_ div: HtmlDivHolder) {
-        divs.append(div)
+        topLevelDivs.append(div)
         divsById[div.id] = div
         if let focusId = div.focusId {
             focusIdsByDivId[div.id] = focusId
         }
-        if let buttonGroup = div.buttonGroup {
+        if let buttonGroup = div.buttonGroup, let buttons = buttonGroup.buttons {
             divsById[buttonGroup.id] = buttonGroup
             if let focusId = div.focusId {
                 buttonGroupIdsByFocusId[focusId] = buttonGroup.id
             }
-            for button in buttonGroup.buttons {
+            for button in buttons {
                 buttonsById[button.id] = button
             }
         }
     }
     
     public func remove(_ div: HtmlDivHolder) {
-        guard let index = divs.firstIndex(where: {existing in existing.id == div.id }) else { return }
-        divs.remove(at: index)
+        guard let index = topLevelDivs.firstIndex(where: {existing in existing.id == div.id }) else { return }
+        topLevelDivs.remove(at: index)
         divsById.removeValue(forKey: div.id)
         focusIdsByDivId.removeValue(forKey: div.id)
         buttonGroupIdsByFocusId.removeValue(forKey: div.id) // If this div.id was a focusId, then remove it
-        for button in div.buttons {
-            buttonsById.removeValue(forKey: button.id)
+        if let buttons = div.buttons {
+            for button in buttons {
+                buttonsById.removeValue(forKey: button.id)
+            }
         }
     }
     
