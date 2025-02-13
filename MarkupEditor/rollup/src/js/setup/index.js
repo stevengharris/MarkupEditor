@@ -12,7 +12,7 @@ import {buildMenuItems} from "./menu"
 import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
 
-import { placeholderText, postMessage, selectedID, stateChanged, searchIsActive } from "../markup"
+import {placeholderText, postMessage, selectedID, stateChanged, searchIsActive} from "../markup"
 
 export {buildMenuItems, buildKeymap, buildInputRules}
 
@@ -80,14 +80,6 @@ const searchModePlugin  = new Plugin({
     decorations: (state) => { return searchModePlugin.getState(state) }
   }
 })
-
-//function selectingDOM(view, getPos) {
-//  const div = document.createElement('div');
-//  div.setAttribute('width', '100%');
-//  div.setAttribute('height', '100%');
-//  div.setAttribute('class', 'searching');
-//  return div
-//}
 
 /**
  * The imagePlugin handles the interaction with the Swift side that we need for images.

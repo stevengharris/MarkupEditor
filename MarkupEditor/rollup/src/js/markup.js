@@ -985,15 +985,27 @@ window.addEventListener('resize', function() {
  */
 //MARK: Search
 
+/**
+ * 
+ * @param {string}  text        The string to search for in a case-insensitive manner
+ * @param {string}  direction   Search direction, either `forward ` or `backward`.
+ * @param {*}       activate    Set to true to activate "search mode", where Enter/Shift-Enter = Search forward/backward.
+ */
 export function searchFor(text, direction, activate) {
     const searchOnEnter = activate === 'true';
     searcher.searchFor(text, direction, searchOnEnter);
 };
 
+/**
+ * Deactivate search mode, stop intercepting Enter to search.
+ */
 export function deactivateSearch() {
     searcher.deactivate();
 };
 
+/**
+ * Cancel searching, resetting search state.
+ */
 export function cancelSearch() {
     searcher.cancel()
 }
@@ -1492,6 +1504,13 @@ export function removeDiv(id) {
     };
 };
 
+/**
+ * 
+ * @param {string} id           The element ID of the button that will be added.
+ * @param {string} parentId     The element ID of the parent DIV to place the button in.
+ * @param {string} cssClass     The CSS class of the button.
+ * @param {string} label        The label for the button.
+ */
 export function addButton(id, parentId, cssClass, label) {
     const buttonNodeType = view.state.schema.nodes.button;
     const button = document.createElement('button');
@@ -1520,6 +1539,10 @@ export function addButton(id, parentId, cssClass, label) {
     }
 };
 
+/**
+ * 
+ * @param {string} id   The ID of the button to be removed.
+ */
 export function removeButton(id) {
     const {node, pos} = _getNode(id)
     if (view.state.schema.nodes.button === node?.type) {
@@ -1531,7 +1554,10 @@ export function removeButton(id) {
     };
 };
 
-
+/**
+ * 
+ * @param {string} id   The ID of the DIV to focus on.
+ */
 export function focusOn(id) {
     const {node, pos} = _getNode(id);
     if (node && (node.attrs.id !== selectedID)) {
@@ -1585,39 +1611,62 @@ function _getNode(id, doc, from, to) {
  */
 //MARK: Formatting
 
+/**
+ * Toggle the selection to/from bold (<STRONG>)
+ */
 export function toggleBold() {
     _toggleFormat('B');
 };
 
+/**
+ * Toggle the selection to/from italic (<EM>)
+ */
 export function toggleItalic() {
     _toggleFormat('I');
 };
 
+/**
+ * Toggle the selection to/from underline (<U>)
+ */
 export function toggleUnderline() {
     _toggleFormat('U');
 };
 
+/**
+ * Toggle the selection to/from strikethrough (<S>)
+ */
 export function toggleStrike() {
     _toggleFormat('DEL');
 };
 
+/**
+ * Toggle the selection to/from code (<CODE>)
+ */
 export function toggleCode() {
     _toggleFormat('CODE');
 };
 
+/**
+ * Toggle the selection to/from subscript (<SUB>)
+ */
 export function toggleSubscript() {
     _toggleFormat('SUB');
 };
 
+/**
+ * Toggle the selection to/from superscript (<SUP>)
+ */
 export function toggleSuperscript() {
     _toggleFormat('SUP');
 };
 
 /**
  * Turn the format tag off and on for selection.
- * Called directly on undo/redo so that nothing new is pushed onto the undo stack
+ * 
+ * Although the HTML will contain <STRONG>, <EM>, and <S>, the types
+ * passed here are <B>, <I>, and <DEL> for compatibility reasons.
  *
- * type must be called using uppercase
+ * @param {string} type     The *uppercase* type to be toggled at the selection.
  */
 function _toggleFormat(type) {
     const state = view.state;
@@ -1680,6 +1729,11 @@ export function replaceStyle(oldStyle, newStyle) {
     setStyle(newStyle);
 };
 
+/**
+ * Return a ProseMirror Node that corresponds to the MarkupEditor paragraph style.
+ * @param {string} paragraphStyle   One of the paragraph styles supported by the MarkupEditor.
+ * @returns {Node | null}           A ProseMirror Node of the specified type or null if unknown.
+ */
 function _nodeFor(paragraphStyle) {
     const nodeTypes = view.state.schema.nodes;
     let node;
@@ -2113,15 +2167,6 @@ const _getSelectionState = function() {
     state['sub'] = markTypes.has(schema.marks.sub);
     state['sup'] = markTypes.has(schema.marks.sup);
     state['code'] = markTypes.has(schema.marks.code);
-    // DEBUGGING
-    //const focusNode = document.getSelection().focusNode;
-    //if (focusNode) {
-    //    state['focusNodeType'] = focusNode.nodeType;
-    //}
-    //const focusOffset = document.getSelection().focusOffset;
-    //if (focusOffset) {
-    //    state['focusOffset'] = focusOffset;
-    //}
     return state;
 };
 
@@ -2383,6 +2428,12 @@ export function stateChanged() {
     return false;
 }
 
+/**
+ * Post a message to the MarkupCoordinator.
+ * 
+ * Refer to MarkupCoordinate.swift source for message types and contents that are supported.
+ * @param {string | Object} message  A JSON-serializable JavaScript object.
+ */
 export function postMessage(message) {
     _callback(JSON.stringify(message))
 }
