@@ -58,7 +58,7 @@ As described in the README, when the MarkupEditor loads the MarkupWKWebView, it 
 
 ### JavaScript Build
 
-The `rollup/package.json` file defines the build and commands to produce the `Resources/markup.js` file that is loaded by the MarkupEditor at runtime. Invoking `npm run build` causes `rollup` to be executed using the configuration in `rollup.config.mjs`. The configuration identifies the kind of output that is produced: a browser-loadable JavaScript module, `dist/markupmirror.umd.js`. After the build produces this file, the post-build step in `package.json` copies it to `Resources/markup.js`.
+The `rollup/package.json` file defines the build and commands to produce the `Resources/markup.js` file that is loaded by the MarkupEditor at runtime. Invoking `npm run build` from the `MarkupEditor/rollup` directory causes `rollup` to be executed using the configuration in `rollup.config.mjs`. The configuration identifies the kind of output that is produced: a browser-loadable JavaScript module, `dist/markupmirror.umd.js`. After the build produces this file, the post-build step in `package.json` copies it to `Resources/markup.js`.
 
 ```
 $ npm run build
@@ -92,9 +92,9 @@ The import causes an error without `with { type: "json" }` and the ominous warni
 
 ### Summary of Development Flow
 
-I keep both Xcode and VSCode open. I use the terminal window in VSCode to invoke `npm` on the command line. The Xcode project includes the `MarkupEditor/rollup` directory, but I have VSCode open on that directory and use it to do JavaScript coding. The MarkupEditor git repository excludes the `MarkupEditor/rollup/node_modules` and `MarkupEditor/rollup/dist` directories.
+I keep both Xcode and VSCode open. I use the terminal window in VSCode from the `MarkupEditor/rollup` directory to invoke `npm` on the command line. The Xcode project includes files in the `MarkupEditor/rollup` directory, but I have VSCode open on that directory and use VSCode to do JavaScript coding. The MarkupEditor git repository excludes the `MarkupEditor/rollup/node_modules` and `MarkupEditor/rollup/dist` directories.
 
-* If you have modified code in `MarkupEditor/rollup/src/js`, then rebuild `Resources/markup.js` by invoking:
+* After you modify code in `MarkupEditor/rollup/src/js`, rebuild `Resources/markup.js` by invoking:
 
 ```
 npm run build
@@ -140,7 +140,7 @@ Included in `markup.js` are two ProseMirror NodeViews: `ImageView` and `DivView`
 
 ### `setup/index.js`
 
-The `setup/index.js` file defines and returns the set of ProseMirror Plugins used by the MarkupEditor. These plugins are loaded from `main.js`. The plugins are commented reasonably well, but details of the code and, well, what a ProseMirror plugin is, are beyond the scope of this document.
+The `setup/index.js` file defines and returns the set of ProseMirror Plugins used by the MarkupEditor. These plugins are loaded from `main.js`. The plugins are commented reasonably well, but details of the code and, well, what a ProseMirror Plugin is, are beyond the scope of this document.
 
 ### `setup/keymap.js`
 
@@ -152,7 +152,7 @@ From the ProseMirror [Reference manual](https://prosemirror.net/docs/ref/):
 
 > Every ProseMirror document conforms to a schema, which describes the set of nodes and marks that it is made out of, along with the relations between those, such as which node may occur as a child node of which other nodes.
 
-Basically, if it's not defined in the schema, then it cannot exist in a MarkupEditor document. For example, if you attempt to load HTML containing SPAN elements, they will be ignored. (This is not strictly true, since the MarkupEditor preprocesses HTML to extract SPAN contents that will be recognized by the MarkupEditor as defined in the Schema.)
+Basically, if it's not defined in the schema, then it cannot exist in a MarkupEditor document. For example, if you attempt to load HTML containing SPAN elements, they will be ignored. (This is not strictly true, since the MarkupEditor preprocesses HTML to extract SPAN contents that will be recognized by the MarkupEditor as defined in the Schema.) The end result is that MarkupEditor only produces "clean" HTML documents, not ones littered with SPANS and styles. You can paste from an HTML page in your browser, which often contains gnarly HTML because of whatever the web site used to produce it, but it will be brought into the MarkupEditor containing only the elements defined in the schema.
 
 This file defines the Schema for the MarkupEditor. It's similar to the `prosemirror-example-setup`, but includes such things as DIV and BUTTON to support the MarkupEditor usage of multiple contenteditable divs [discussed here](https://github.com/stevengharris/MarkupEditor/discussions/178).
 
@@ -169,3 +169,19 @@ EditorState.create({
     })
 })
 ```
+
+## Debugging
+
+I use the [Safari Web Inspector](https://developer.apple.com/documentation/safari-developer-tools/web-inspector) for debugging JavaScript code. Swift developers may not even be aware of its capabilities. If you have not enabled it before, in Safari -> Settings -> Advanced, check the "Show features for web developers" checkbox. This should add a Develop menu in Safari, which displays among other items a list of devices displaying web views that can be inspected. (You'll see Xcode there if you have the help section opened on the right, since that is an embedded web view!) When you're running an application displaying a MarkupWKWebView, like SwiftUIDemo on your Mac or iPhone or in the simulator, the app will show up in the Develop menu under the device it is running on. Select the app, and the Safari Web Inspector will open. You can see what scripts are loaded, set breakpoints, see the DOM, and check out how CSS styling is working among many other things. 
+
+Note that the MarkupEditor sets `isInspectable` to `true` for the MarkupWKWebView in DEBUG builds. This had been necessary to use the Safari Web Inspector since iOS 16.4. The default is `false`, so you (and your users) won't be able to inspect non-DEBUG builds or your production app.
+
+A debugging cycle often consists of:
+
+* Launch the app.
+* Open the Safari Web Inspector on the app from the Safari pwdDevelop menu.
+* Set a breakpoint in `markup.js` from within the Safari Web Inspector. Note that `markup.js` in the Web Inspector is what you see in XCode in `MarkupEditor/Resources/markup.js`. This file was produced by rollup, and it contains packaged source from within `MarkupEditor/rollup/src/js`.
+* Do whatever you need to in the app to cause it to hit the breakpoint. Step, step-in, etc to debug.
+* Once you identify some JavaScript code to change, then go to VSCode opened on the `MarkupEditor/rollup` directory, and modify the original file in `src/js`. which will almost certainly be one of the key files identified above.
+* Execute `npm run build` from the `MarkupEditor/rollup` directory in the terminal window of VSCode.
+* Relaunch the app to check that the fix/change worked.
