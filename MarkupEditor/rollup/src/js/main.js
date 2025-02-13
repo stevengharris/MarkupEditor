@@ -68,6 +68,9 @@ import {
   borderTable,
 } from "./markup.js"
 
+/**
+ * The public MarkupEditor API callable from Swift as "MU.<function name>"
+ */
 export {
   setTopLevelAttributes,
   loadUserFiles,
@@ -146,6 +149,7 @@ window.view = new EditorView(document.querySelector("#editor"), {
     image(node, view, getPos) { return new ImageView(node, view, getPos) },
     div(node, view, getPos) { return new DivView(node, view, getPos) },
   },
+  // All text input notifies Swift that the document state has changed.
   handleTextInput() {
     stateChanged();
     return false; // All the default behavior should occur

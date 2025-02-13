@@ -732,10 +732,10 @@
 		AA40BDD52CD572C100264B1F /* prompt.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = prompt.js; sourceTree = "<group>"; };
 		AA40BDD72CD572C100264B1F /* main.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = main.js; sourceTree = "<group>"; };
 		AA40BDD82CD572C100264B1F /* markup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
-		AA40BDD92CD572C100264B1F /* oldMarkup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = oldMarkup.js; sourceTree = "<group>"; };
 		AA40BDDD2CD572C100264B1F /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		AA40BDDE2CD572C100264B1F /* package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		AA46D5D62D5D6E7500D6B7A0 /* READMEJS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = READMEJS.md; sourceTree = "<group>"; };
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
 		AA4EBE942B3747D6006C614B /* markup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
@@ -2860,7 +2860,6 @@
 				AA40BDD62CD572C100264B1F /* setup */,
 				AA40BDD72CD572C100264B1F /* main.js */,
 				AA40BDD82CD572C100264B1F /* markup.js */,
-				AA40BDD92CD572C100264B1F /* oldMarkup.js */,
 			);
 			path = js;
 			sourceTree = "<group>";
@@ -2899,6 +2898,7 @@
 				AA652A2E260E9A27000674B7 /* LICENSE */,
 				AA1B80C82620B62000891FFB /* Package.swift */,
 				AA652A30260E9A27000674B7 /* README.md */,
+				AA46D5D62D5D6E7500D6B7A0 /* READMEJS.md */,
 				AA6529FE260E99FF000674B7 /* MarkupEditor */,
 				AA1749E5269DFE84005F0428 /* SharedDemo */,
 				AA652943260E8114000674B7 /* SwiftUIDemo */,
