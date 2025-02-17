@@ -21,7 +21,7 @@ import {
     mergeCells,
     toggleHeaderRow,
 } from 'prosemirror-tables'
-import { SearchQuery, setSearchState, findNext, findPrev } from 'prosemirror-search'
+import {SearchQuery, setSearchState, findNext, findPrev} from 'prosemirror-search'
 
 /**
  * The NodeView to support divs, as installed in main.js.
@@ -1832,9 +1832,9 @@ export function toggleListItem(newListType) {
  * @param {String}  listType    The list type { 'UL' | 'OL' } we want to set.
  */
 function _setListType(listType) {
-    const nodeType = _nodeTypeFor(listType);
-    if (nodeType !== null) {
-        const command = wrapInList(nodeType);
+    const targetListType = _nodeTypeFor(listType);
+    if (targetListType !== null) {
+        const command = multiWrapInList(view.state, targetListType);
         command(view.state, (transaction) => {
             const newState = view.state.apply(transaction);
             view.updateState(newState);
@@ -1847,17 +1847,11 @@ function _setListType(listType) {
  * Outdent all the list items in the selection.
  */
 function _outdentListItems() {
-    const selection = view.state.selection;
     const nodeTypes = view.state.schema.nodes;
     const command = liftListItem(nodeTypes.list_item);
     let newState;
-    view.state.doc.nodesBetween(selection.from, selection.to, node => {
-        if (node.type === nodeTypes.list_item) {   
-            command(view.state, (transaction) => {
-                newState = view.state.apply(transaction);
-            });
-        };
-        return true;        // Lists can nest, so we need to recurse
+    command(view.state, (transaction) => {
+        newState = view.state.apply(transaction);
     });
     if (newState) {
         view.updateState(newState);
@@ -1867,23 +1861,37 @@ function _outdentListItems() {
 
 /**
  * Return the type of list the selection is in, else null.
+ * 
+ * If a list type is returned, then it will be able to be outdented. Visually, 
+ * the MarkupToolbar will show filled-in (aka selected), and pressing that button 
+ * will outdent the list, an operation that can be repeated until the selection 
+ * no longer contains a list. Similarly, if the list returned here is null, then  
+ * the selection can be set to a list.
+ * 
+ * Note that `nodesBetween` on a collapsed selection within a list will iterate 
+ * over the nodes above it in the list thru the selected text node. Thus, a 
+ * selection in an OL nested inside of a UL will return null, since both will be 
+ * found by `nodesBetween`.
+ * 
  * @return { 'UL' | 'OL' | null }
  */
 function _getListType() {
     const selection = view.state.selection;
     const ul = view.state.schema.nodes.bullet_list;
     const ol = view.state.schema.nodes.ordered_list;
-    const nodeTypes = [];
+    let hasUl = false;
+    let hasOl = false;
     view.state.doc.nodesBetween(selection.from, selection.to, node => {
         if (node.isBlock) {
-            if ((node.type === ul) || (node.type === ol)) { 
-                nodeTypes.push(node.type)
-            }
+            hasUl = hasUl || (node.type === ul);
+            hasOl = hasOl || (node.type === ol);
             return true;  // Lists can nest, so we need to recurse
         }
         return false; 
     });
-    return (nodeTypes.length > 0) ? _listTypeFor(nodeTypes[nodeTypes.length - 1]) : null;
+    // If selection contains no lists or multiple list types, return null; else return the one list type
+    const hasType = hasUl ? (hasOl ? null : ul) : (hasOl ? ol : null)
+    return _listTypeFor(hasType);
 };
 
 /**
@@ -1914,6 +1922,158 @@ function _listTypeFor(nodeType) {
     } else {
         return null;
     }
+};
+
+/**
+ * Return a command that performs `wrapInList`, or if `wrapInList` fails, does a wrapping across the 
+ * selection. This is done by finding the common list node for the selection and then recursively 
+ * replacing existing list nodes among its descendants that are not of the `targetListType`. So, the 
+ * every descendant is made into `targetListType`, but not the common list node or its siblings. Note 
+ * that when the selection includes a mixture of list nodes and non-list nodes (e.g., begins in a 
+ * top-level <p> and ends in a list), the wrapping might be done by `wrapInList`, which doesn't follow 
+ * quite the same rules in that it leaves existing sub-lists untouched. The wrapping can also just 
+ * fail entirely (e.g., selection starting in a sublist and going outside of the list).
+ * 
+ * It seems a little silly to be passing `listTypes` and `listItemTypes` to the functions called from here, but it 
+ * does avoid those methods from knowing about state or schema.
+ * 
+ * Adapted from code in https://discuss.prosemirror.net/t/changing-the-node-type-of-a-list/4996.
+ * @param {EditorState}     state               The EditorState against which changes are made.
+ * @param {NodeType}        targetListType      One of state.schema.nodes.bullet_list or ordered_list to change selection to.
+ * @param {Attrs | null}    attrs               Attributes of the new list items.
+ * @returns {Command}                           A command to wrap the selection in a list.
+ */
+function multiWrapInList(state, targetListType, attrs) {
+    const listTypes = [state.schema.nodes.bullet_list, state.schema.nodes.ordered_list];
+    const targetListItemType = state.schema.list_item;
+    const listItemTypes = [targetListItemType];
+    
+    const command = wrapInList(targetListType, attrs);
+
+    const commandAdapter = (state, dispatch) => {
+        const result = command(state);
+        if (result) return command(state, dispatch);
+
+        const commonListNode = findCommonListNode(state, listTypes);
+        if (!commonListNode) return false;
+
+        if (dispatch) {
+            const updatedNode = updateNode(
+                commonListNode.node,
+                targetListType,
+                targetListItemType,
+                listTypes,
+                listItemTypes
+            );
+
+            let tr = state.tr;
+
+            tr = tr.replaceRangeWith(
+                commonListNode.from,
+                commonListNode.to,
+                updatedNode
+            );
+
+            tr = tr.setSelection(
+                new TextSelection(
+                    tr.doc.resolve(state.selection.from),
+                    tr.doc.resolve(state.selection.to)
+                )
+            );
+
+            dispatch(tr);
+        }
+
+        return true;
+    };
+
+    return commandAdapter;
+};
+
+/**
+ * Return the common list node in the selection that is one of the `listTypes` if one exists.
+ * @param {EditorState}     state       The EditorState containing the selection.
+ * @param {Array<NodeType>} listTypes   The list types we're looking for.
+ * @returns {node: Node, from: number, to: number}
+ */
+function findCommonListNode(state, listTypes) {
+
+    const range = state.selection.$from.blockRange(state.selection.$to);
+    if (!range) return null;
+
+    const node = range.$from.node(-2);
+    if (!node || !listTypes.find((item) => item === node.type)) return null;
+
+    const from = range.$from.posAtIndex(0, -2);
+    return { node, from, to: from + node.nodeSize - 1 };
+};
+
+/**
+ * Return a Fragment with its children replaced by ones that are of `targetListType` or `targetListItemType`.
+ * @param {Fragment}        content             The ProseMirror Fragment taken from the selection.
+ * @param {NodeType}        targetListType      The bullet_list or ordered_list NodeType we are changing children to.
+ * @param {NodeType}        targetListItemType  The list_item NodeType we are changing children to.
+ * @param {Array<NodeType>} listTypes           The list types we're looking for.
+ * @param {Array<NodeType>} listItemTypes       The list item types we're looking for.
+ * @returns {Fragment}  A ProseMirror Fragment with the changed nodes.
+ */
+function updateContent(content, targetListType, targetListItemType, listTypes, listItemTypes) {
+    let newContent = content;
+
+    for (let i = 0; i < content.childCount; i++) {
+        newContent = newContent.replaceChild(
+            i,
+            updateNode(
+                newContent.child(i),
+                targetListType,
+                targetListItemType,
+                listTypes,
+                listItemTypes
+            )
+        );
+    }
+
+    return newContent;
+};
+
+/**
+ * Return the `target` node type if the type of `node` is one of the `options`.
+ * @param {Node}            node 
+ * @param {NodeType}        target 
+ * @param {Array<NodeType>} options 
+ * @returns {NodeType | null}
+ */
+function getReplacementType(node, target, options) {
+    return options.find((item) => item === node.type) ? target : null;
+};
+
+/**
+ * Return a new Node with one of the target types.
+ * @param {Node}            node                The node to change to targetListType or targetListItemType.
+ * @param {NodeType}        targetListType      The list type we want to change `node` to.
+ * @param {NodeType}        targetListItemType  The list item types we want to change `node` to.
+ * @param {Array<NodeType>} listTypes           The list types we're looking for.
+ * @param {Array<NodeType>} listItemTypes       The list item types we're looking for.
+ * @returns Node
+ */
+function updateNode(node, targetListType, targetListItemType, listTypes, listItemTypes) {
+    const newContent = updateContent(
+        node.content,
+        targetListType,
+        targetListItemType,
+        listTypes,
+        listItemTypes
+    );
+
+    const replacementType = 
+        getReplacementType(node, targetListType, listTypes) ||
+        getReplacementType(node, targetListItemType, listItemTypes);
+
+    if (replacementType) {
+        return replacementType.create(node.attrs, newContent, node.marks);
+    } else {
+        return node.copy(newContent);
+    };
 };
 
 /********************************************************************************

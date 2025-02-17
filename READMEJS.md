@@ -174,12 +174,12 @@ EditorState.create({
 
 I use the [Safari Web Inspector](https://developer.apple.com/documentation/safari-developer-tools/web-inspector) for debugging JavaScript code. Swift developers may not even be aware of its capabilities. If you have not enabled it before, in Safari -> Settings -> Advanced, check the "Show features for web developers" checkbox. This should add a Develop menu in Safari, which displays among other items a list of devices displaying web views that can be inspected. (You'll see Xcode there if you have the help section opened on the right, since that is an embedded web view!) When you're running an application displaying a MarkupWKWebView, like SwiftUIDemo on your Mac or iPhone or in the simulator, the app will show up in the Develop menu under the device it is running on. Select the app, and the Safari Web Inspector will open. You can see what scripts are loaded, set breakpoints, see the DOM, and check out how CSS styling is working among many other things. 
 
-Note that the MarkupEditor sets `isInspectable` to `true` for the MarkupWKWebView in DEBUG builds. This had been necessary to use the Safari Web Inspector since iOS 16.4. The default is `false`, so you (and your users) won't be able to inspect non-DEBUG builds or your production app.
+Note that the MarkupEditor sets `isInspectable` to `true` for the MarkupWKWebView in DEBUG builds. This has been necessary to use the Safari Web Inspector since iOS 16.4. The default is `false`, so you (and your users) won't be able to inspect non-DEBUG builds or your production app.
 
 A debugging cycle often consists of:
 
 * Launch the app.
-* Open the Safari Web Inspector on the app from the Safari pwdDevelop menu.
+* Open the Safari Web Inspector on the app from the Safari Develop menu.
 * Set a breakpoint in `markup.js` from within the Safari Web Inspector. Note that `markup.js` in the Web Inspector is what you see in XCode in `MarkupEditor/Resources/markup.js`. This file was produced by rollup, and it contains packaged source from within `MarkupEditor/rollup/src/js`.
 * Do whatever you need to in the app to cause it to hit the breakpoint. Step, step-in, etc to debug.
 * Once you identify some JavaScript code to change, then go to VSCode opened on the `MarkupEditor/rollup` directory, and modify the original file in `src/js`. which will almost certainly be one of the key files identified above.

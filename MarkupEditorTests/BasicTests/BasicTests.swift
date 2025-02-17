@@ -1239,9 +1239,9 @@ import OSLog
                 }
             ),
             HtmlTest(
-                description: "Try but fail to change the top list item in a multi-element list to a different list type",
+                description: "Change the top list item in a multi-element list to a different list type",
                 startHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
-                endHtml: "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
+                endHtml: "<ol><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1360,7 +1360,7 @@ import OSLog
                     }
                 }
             ),
-            //TODO: Fix so it's not a no-op
+            // Selecting starting outside of a list, ending in a list won't outdent the list
             HtmlTest(
                 description: "No-op UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
@@ -1372,11 +1372,10 @@ import OSLog
                     }
                 }
             ),
-            //TODO: Fix so it's not a no-op
             HtmlTest(
-                description: "No-op Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
-                startHtml: "<ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
-                endHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+                description: "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+                startHtml: "<ul><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+                endHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 action: { handler in
                     self.webView.toggleListItem(type: .UL) {
                         handler()
@@ -1386,18 +1385,7 @@ import OSLog
             HtmlTest(
                 description: "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
                 startHtml: "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
-                endHtml: "<ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
-                action: { handler in
-                    self.webView.toggleListItem(type: .OL) {
-                        handler()
-                    }
-                }
-            ),
-            /*
-            HtmlTest(
-                description: "Remove OL <ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
-                startHtml: "<ol><li><p>He|llo paragraph</p></li><ol><li><h5>He|llo header in list</h5></li></ol></ol>",
-                endHtml: "<p>He|llo paragraph</p><h5>He|llo header in list</h5>",
+                endHtml: "<ol><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1405,9 +1393,19 @@ import OSLog
                 }
             ),
             HtmlTest(
-                description: "UL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                endHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li>Or|dered sublist.</li></ul></li></ul>",
+                description: "Remove OL <ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
+                startHtml: "<ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
+                endHtml: "<p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol>",
+                action: { handler in
+                    self.webView.toggleListItem(type: .OL) {
+                        handler()
+                    }
+                }
+            ),
+            HtmlTest(
+                description: "UL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                endHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Or|dered sublist.</p></li></ul></li></ul>",
                 action: { handler in
                     self.webView.toggleListItem(type: .UL) {
                         handler()
@@ -1417,7 +1415,7 @@ import OSLog
             HtmlTest(
                 description: "Remove UL <ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
                 startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul></li></ul>",
-                endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><p>Un|ordered sublist.</p>",
+                endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul>",
                 action: { handler in
                     self.webView.toggleListItem(type: .UL) {
                         handler()
@@ -1425,9 +1423,9 @@ import OSLog
                 }
             ),
             HtmlTest(
-                description: "OL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ul>",
-                endHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li>Or|dered sublist.</li></ol></li></ol>",
+                description: "OL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                startHtml: "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+                endHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1437,7 +1435,7 @@ import OSLog
             HtmlTest(
                 description: "Remove OL <ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
                 startHtml: "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
-                endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><p>Or|dered sublist.</p>",
+                endHtml: "<h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1447,7 +1445,7 @@ import OSLog
             HtmlTest(
                 description: "UL interleaved paragraphs and lists",
                 startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-                endHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+                endHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul></li><li><p>To|p-level paragraph 2</p></li></ul><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .UL) {
                         handler()
@@ -1457,7 +1455,7 @@ import OSLog
             HtmlTest(
                 description: "Unset all UL interleaved paragraphs and lists",
                 startHtml: "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
-                endHtml: "<p>To|p-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>To|p-level paragraph 2</p><p>Ordered list paragraph 1</p>",
+                endHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul>",
                 action: { handler in
                     self.webView.toggleListItem(type: .UL) {
                         handler()
@@ -1477,7 +1475,7 @@ import OSLog
             HtmlTest(
                 description: "OL interleaved paragraphs and lists",
                 startHtml: "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
-                endHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+                endHtml: "<ol><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul></li><li><p>To|p-level paragraph 2</p></li></ol><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1487,7 +1485,7 @@ import OSLog
             HtmlTest(
                 description: "Unset all OL interleaved paragraphs and lists",
                 startHtml: "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
-                endHtml: "<p>To|p-level paragraph 1</p><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p><p>To|p-level paragraph 2</p><p>Ordered list paragraph 1</p>",
+                endHtml: "<p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
                 action: { handler in
                     self.webView.toggleListItem(type: .OL) {
                         handler()
@@ -1504,7 +1502,6 @@ import OSLog
                     }
                 }
             ),
-             */
         ]
         wait(for: [loadedExpectation], timeout: 10)
         for test in htmlTests {
