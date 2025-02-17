@@ -21643,7 +21643,7 @@
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: true,   // TODO: We need a way to make this configurable at setup time
+        menuBar: false,   // TODO: We need a way to make this configurable at setup time
         schema: muSchema
       })
     }),
