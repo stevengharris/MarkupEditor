@@ -742,6 +742,7 @@
 		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
+		AA56B5CE2D63F632007D4CD7 /* rollup.config.mjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = rollup.config.mjs; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
 		AA61AD4C263B13C100326810 /* LabeledToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledToolbar.swift; sourceTree = "<group>"; };
 		AA652942260E8114000674B7 /* SwiftUIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2872,20 +2873,13 @@
 			path = src;
 			sourceTree = "<group>";
 		};
-		AA40BDDC2CD572C100264B1F /* test */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = test;
-			sourceTree = "<group>";
-		};
 		AA40BDE02CD572C100264B1F /* rollup */ = {
 			isa = PBXGroup;
 			children = (
+				AA56B5CE2D63F632007D4CD7 /* rollup.config.mjs */,
 				AA40BA3B2CD572C100264B1F /* dist */,
 				AA40BDC92CD572C100264B1F /* node_modules */,
 				AA40BDDB2CD572C100264B1F /* src */,
-				AA40BDDC2CD572C100264B1F /* test */,
 				AA40BDDD2CD572C100264B1F /* package.json */,
 				AA40BDDE2CD572C100264B1F /* package-lock.json */,
 			);
