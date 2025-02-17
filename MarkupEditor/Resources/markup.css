@@ -155,12 +155,10 @@ img {
 /* Provide a slightly darkened or lightened overlay while search is active */
 .searching {
     background-color: rgba(0, 0, 0, 0.10);
-    /* background-color: red */
 }
 @media (prefers-color-scheme: dark) {
     .searching {
         background: rgba(255, 255, 255, 0.10);
-        /* background-color: yellow; */
     }
 }
 
