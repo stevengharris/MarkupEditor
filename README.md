@@ -382,6 +382,12 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 ### History
 
+#### Version 0.8.3 (Beta 7.1)
+
+* Created an initial writeup of how to work with JavaScript code in MarkupEditor, called [READMEJS](https://github.com/stevengharris/MarkupEditor/blob/main/READMEJS.md). The writeup includes information about the build process and requirements, key files, as well as debugging tips.
+* [FIXED] [Multi-selection in lists doesn't work properly](https://github.com/stevengharris/MarkupEditor/issues/219)
+* [FIXED] [Search mode background indication](https://github.com/stevengharris/MarkupEditor/issues/223)
+
 #### Version 0.8.0 (Beta 7)
 
 This release is a very big change under the covers but should remain (almost completely) compatible with previous versions. The big change consists of replacing the MarkupEditor's custom DOM manipulation code in `markup.js` with code that uses [ProseMirror](https://prosemirror.net). ProseMirror is a JavaScript "toolkit for building rich-text editors." Instead of writing JavaScript code to manipulate the `contenteditable` DOM directly, the MarkupEditor now uses ProseMirror APIs to apply transactional changes to the ProseMirror `EditorState` which in turn modifies the DOM shown in the MarkupWKWebView. I'll be writing more about ProseMirror and how it is used by the MarkupEditor separately, but this entry in the README serves as a notification of the change.
@@ -410,8 +416,6 @@ This release is a very big change under the covers but should remain (almost com
 * [FIXED] [Keyboard dismissing when I select the "Bold" option from tool bar](https://github.com/stevengharris/MarkupEditor/issues/159)
 * [FIXED] [Support line breaks](https://github.com/stevengharris/MarkupEditor/issues/135)
 * [FIXED] [Treatment of \<code> blocks](https://github.com/stevengharris/MarkupEditor/issues/96)
-* [OPEN] [Multi-selection in lists doesn't work properly [ProseMirror version only]](https://github.com/stevengharris/MarkupEditor/issues/219)
-* [OPEN] [Search mode background indication [ProseMirror version only]](https://github.com/stevengharris/MarkupEditor/issues/223)
 
 #### Version 0.7.2 (Beta 6)
 
