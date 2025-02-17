@@ -18867,8 +18867,8 @@
        * Activate search mode where Enter is being intercepted
        */
       _activate() {
-          // TODO: Add "searching" to the doc classList
           this._isActive = true;
+          view.dom.classList.add("searching");
           _callback('activateSearch');
       }
       
@@ -18876,7 +18876,7 @@
        * Deactivate search mode where Enter is being intercepted
        */
       deactivate() {
-          // TODO: Remove "searching" from the doc classList
+          view.dom.classList.remove("searching");
           this._isActive = false;
           this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
           const transaction = setSearchState(view.state.tr, this._searchQuery);
