@@ -42,9 +42,6 @@
                <Test
                   Identifier = "BasicTests/testBlockquoteEnter()">
                </Test>
-               <Test
-                  Identifier = "BasicTests/testMultiLists()">
-               </Test>
             </SkippedTests>
          </TestableReference>
          <TestableReference
