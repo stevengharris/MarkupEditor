@@ -385,6 +385,8 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 #### Version 0.8.3 (Beta 7.1)
 
 * Created an initial writeup of how to work with JavaScript code in MarkupEditor, called [READMEJS](https://github.com/stevengharris/MarkupEditor/blob/main/READMEJS.md). The writeup includes information about the build process and requirements, key files, as well as debugging tips.
+* [FIXED] For documents with [multiple content-editable divs](https://github.com/stevengharris/MarkupEditor/discussions/178), it was possible to select across divs, which thereby allowed deletion and editing operations for multiple divs at once. This version prevents selection across divs.
+* [FIXED] Remove Xcode project references to the now-deleted UndoTests and RedoTests.
 * [FIXED] [Multi-selection in lists doesn't work properly](https://github.com/stevengharris/MarkupEditor/issues/219)
 * [FIXED] [Search mode background indication](https://github.com/stevengharris/MarkupEditor/issues/223)
 
