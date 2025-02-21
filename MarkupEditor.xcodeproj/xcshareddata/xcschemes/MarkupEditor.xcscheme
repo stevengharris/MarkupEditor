@@ -42,46 +42,7 @@
                <Test
                   Identifier = "BasicTests/testBlockquoteEnter()">
                </Test>
-               <Test
-                  Identifier = "BasicTests/testListEnterCollapsed()">
-               </Test>
-               <Test
-                  Identifier = "BasicTests/testListEnterRange()">
-               </Test>
-               <Test
-                  Identifier = "BasicTests/testLists()">
-               </Test>
-               <Test
-                  Identifier = "BasicTests/testMultiLists()">
-               </Test>
-               <Test
-                  Identifier = "BasicTests/testTableActions()">
-               </Test>
             </SkippedTests>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES"
-            testExecutionOrdering = "random">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA2FA8A627FE44C90068828F"
-               BuildableName = "UndoTests.xctest"
-               BlueprintName = "UndoTests"
-               ReferencedContainer = "container:MarkupEditor.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES"
-            testExecutionOrdering = "random">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA2548722805FAE300C9DEB2"
-               BuildableName = "RedoTests.xctest"
-               BlueprintName = "RedoTests"
-               ReferencedContainer = "container:MarkupEditor.xcodeproj">
-            </BuildableReference>
          </TestableReference>
       </Testables>
    </TestAction>

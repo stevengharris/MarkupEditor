@@ -14517,6 +14517,10 @@
       toDOM() { return brDOM }
     },
 
+    // A div-delineated area within the MarkupEditor which can be editable or not,
+    // and typically has its own styling. It may contain a <p> title and/or another div. 
+    // In the latter case, this is used to hold a group of buttons.
+    //
     // Notes: 
     //
     // 1. Changes to div here may need to be reflected in DivView found in markup.js.
@@ -14572,11 +14576,13 @@
       // Notes:
       // 1. We produce div HTML that includes the id and class. This is because for non-editable 
       // divs, we have to find elements by id based on the HTML because we prevent ProseMirror from 
-      // handling selection and rendering, and we have to do it for ourselves in the DivView.
-      // 
+      // handling selection and rendering, and we have to do it for ourselves in the DivView. Also
+      // the attributes on div are not part of the HTML content they hold, which is what is of
+      // interest in MarkupEditor usage.
+      //
       // 2. For the MarkupEditor, we set the top-level attributes of the editor div at initialization, 
       // and the other divs embedded in it inherit the behavior set once at the top.
-      toDOM(node) { 
+      toDOM(node) {
         let {id, cssClass} = node.attrs; 
         return ["div", { id: id, class: cssClass }, 0] 
       }
@@ -18876,6 +18882,7 @@
        * Deactivate search mode where Enter is being intercepted
        */
       deactivate() {
+          if (!this.isActive) return;
           view.dom.classList.remove("searching");
           this._isActive = false;
           this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
@@ -19236,6 +19243,14 @@
       setHTML('<p></p>');
   }
   /**
+   * Set the `selectedID` to `id`, a byproduct of clicking or otherwise iteractively
+   * changing the selection, triggered by `createSelectionBetween`.
+   * @param {string} id 
+   */
+  function resetSelectedID(id) { 
+      selectedID = id;
+  }
+  /**
    * Get the contents of the div with id `divID` or of the full doc.
    *
    * If pretty, then the text will be nicely formatted for reading.
@@ -19500,6 +19515,7 @@
       const divSlice = _sliceFromHTML(div.innerHTML);
       const startedEmpty = (div.childNodes.length == 1) && (div.firstChild.nodeName == 'P') && (div.firstChild.textContent == "");
       const divNode = divNodeType.create({id, parentId, cssClass, editable, startedEmpty}, divSlice.content);
+      divNode.editable = editable;
       const transaction = view.state.tr;
       if (parentId && (parentId !== 'editor')) {
           // This path is only executed when adding a dynamic button group
@@ -20365,23 +20381,23 @@
 
   /**
    * Return the id and editable state of the selection.
+   * 
+   * We look at the outermost div from the selection anchor, so if the 
+   * selection extends between divs (which should not happen), or we have 
+   * a div embedding a div where the editable attribute is different (which 
+   * should not happen), then the return might be unexpected (haha, which 
+   * should not happen, of course!).
+   * 
    * @returns {Object} The id and editable state that is selected.
    */
   function _getContentEditable() {
       const anchor = view.state.selection.$anchor;
-      const sharedDepth = anchor.sharedDepth(view.state.selection.to);
-      // We can walk up the tree starting at anchor, looking for a div with its 
-      // editable attribute set to true. If we hit the root doc without finding 
-      // any div, then we are in a fully editable doc and will return 'editor'.
-      // If we hit any div marked editable, then we will return its id and whether
-      // it is editable or null if not.
-      for (let depth = sharedDepth; depth > 0; depth--) {
-          const node = view.state.doc.resolve(anchor.before(depth)).node();
-          if (node.type === view.state.schema.nodes.div) {
-              return {id: node.attrs.id, editable: node.attrs.editable ?? false}
-          }
+      const divNode = outermostOfTypeAt(view.state.schema.nodes.div, anchor);
+      if (divNode) {
+          return {id: divNode.attrs.id, editable: divNode.attrs.editable ?? false};
+      } else {
+          return {id: 'editor', editable: true};
       }
-      return {id: 'editor', editable: true}
   }
 
   /**
@@ -21158,6 +21174,19 @@
               break;
       }    return border;
   }
+  /**
+   * Return the first node starting at depth 0 (the top) that is of type `type`.
+   * @param {NodeType}    type The NodeType we are looking for that contains $pos.
+   * @param {ResolvedPos} $pos A resolved position within a document node.
+   * @returns Node | null
+   */
+  function outermostOfTypeAt(type, $pos) {
+      const depth = $pos.depth;
+      for (let i = 0; i < depth; i++) {
+        if ($pos.node(i).type == type) return $pos.node(i);
+      }    return null;
+  }
+
   /********************************************************************************
    * Common private functions
    */
@@ -21492,9 +21521,6 @@
             // TODO: Fix. I have some commented-out versions of things I tried that work even less well.
             const nodeSelection = new NodeSelection(tr.doc.resolve(0));
             const decoration = Decoration.node(nodeSelection.from, nodeSelection.to, {class: 'searching'});
-            //const decoration = Decoration.widget(0, selectingDOM);
-            //const allSelection = new AllSelection(tr.doc);
-            //const decoration = Decoration.node(allSelection.from, allSelection.to, {class: "searching"});
             return DecorationSet.create(tr.doc, [decoration])
           }
         } else if (set) {
@@ -21657,12 +21683,23 @@
       return false; // All the default behavior should occur
     },
     // Use createSelectionBetween to handle selection and click both.
-    // Note that we handle button clicks in non-editable divs in DivView, since 
-    // they can't be selected.
-    createSelectionBetween() {
+    // Here we guard against selecting across divs.
+    createSelectionBetween(view, $anchor, $head) {
+      const divType = view.state.schema.nodes.div;
+      const range = $anchor.blockRange($head);
+      // Find the divs that the anchor and head reside in.
+      // Both, one, or none can be null.
+      const fromDiv = outermostOfTypeAt(divType, range.$from);
+      const toDiv = outermostOfTypeAt(divType, range.$to);
+      // If selection is all within one div, then default occurs; else return existing selection
+      if ((fromDiv || toDiv) && !$anchor.sameParent($head)) {
+        if (fromDiv != toDiv) {
+          return view.state.selection;    // Return the existing selection
+        }
+      }    resetSelectedID(fromDiv?.attrs.id ?? toDiv?.attrs.id);  // Set the selectedID to the div's id. Might be null.
       selectionChanged();
       clicked();
-      return null; // All the default behavior should occur
+      return null;                        // Default behavior should occur
     }
   });
 

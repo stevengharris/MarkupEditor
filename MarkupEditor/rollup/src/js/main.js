@@ -50,6 +50,8 @@ import {
   stateChanged,
   undoCommand,
   redoCommand,
+  resetSelectedID,
+  outermostOfTypeAt,
   testBlockquoteEnter,
   testListEnter,
   testExtractContents,
@@ -155,11 +157,23 @@ window.view = new EditorView(document.querySelector("#editor"), {
     return false; // All the default behavior should occur
   },
   // Use createSelectionBetween to handle selection and click both.
-  // Note that we handle button clicks in non-editable divs in DivView, since 
-  // they can't be selected.
-  createSelectionBetween() {
+  // Here we guard against selecting across divs.
+  createSelectionBetween(view, $anchor, $head) {
+    const divType = view.state.schema.nodes.div;
+    const range = $anchor.blockRange($head);
+    // Find the divs that the anchor and head reside in.
+    // Both, one, or none can be null.
+    const fromDiv = outermostOfTypeAt(divType, range.$from);
+    const toDiv = outermostOfTypeAt(divType, range.$to);
+    // If selection is all within one div, then default occurs; else return existing selection
+    if ((fromDiv || toDiv) && !$anchor.sameParent($head)) {
+      if (fromDiv != toDiv) {
+        return view.state.selection;    // Return the existing selection
+      }
+    };
+    resetSelectedID(fromDiv?.attrs.id ?? toDiv?.attrs.id)  // Set the selectedID to the div's id. Might be null.
     selectionChanged();
     clicked();
-    return null; // All the default behavior should occur
+    return null;                        // Default behavior should occur
   }
 })
