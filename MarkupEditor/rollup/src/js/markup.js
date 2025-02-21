@@ -5,7 +5,7 @@
  */
 
 import {AllSelection, TextSelection, NodeSelection, EditorState} from 'prosemirror-state'
-import {DOMParser, DOMSerializer} from 'prosemirror-model'
+import {DOMParser, DOMSerializer, ResolvedPos} from 'prosemirror-model'
 import {toggleMark, wrapIn, lift} from 'prosemirror-commands'
 import {undo, redo} from 'prosemirror-history'
 import {wrapInList, liftListItem, splitListItem} from 'prosemirror-schema-list'
@@ -743,6 +743,7 @@ class Searcher {
      * Deactivate search mode where Enter is being intercepted
      */
     deactivate() {
+        if (!this.isActive) return;
         view.dom.classList.remove("searching");
         this._isActive = false;
         this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
@@ -1129,6 +1130,15 @@ export function emptyDocument() {
 };
 
 /**
+ * Set the `selectedID` to `id`, a byproduct of clicking or otherwise iteractively
+ * changing the selection, triggered by `createSelectionBetween`.
+ * @param {string} id 
+ */
+export function resetSelectedID(id) { 
+    selectedID = id;
+};
+
+/**
  * Get the contents of the div with id `divID` or of the full doc.
  *
  * If pretty, then the text will be nicely formatted for reading.
@@ -1411,6 +1421,7 @@ export function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, 
     const divSlice = _sliceFromHTML(div.innerHTML);
     const startedEmpty = (div.childNodes.length == 1) && (div.firstChild.nodeName == 'P') && (div.firstChild.textContent == "");
     const divNode = divNodeType.create({id, parentId, cssClass, editable, startedEmpty}, divSlice.content);
+    divNode.editable = editable;
     const transaction = view.state.tr;
     if (parentId && (parentId !== 'editor')) {
         // This path is only executed when adding a dynamic button group
@@ -2332,23 +2343,23 @@ const _getSelectionState = function() {
 
 /**
  * Return the id and editable state of the selection.
+ * 
+ * We look at the outermost div from the selection anchor, so if the 
+ * selection extends between divs (which should not happen), or we have 
+ * a div embedding a div where the editable attribute is different (which 
+ * should not happen), then the return might be unexpected (haha, which 
+ * should not happen, of course!).
+ * 
  * @returns {Object} The id and editable state that is selected.
  */
 function _getContentEditable() {
     const anchor = view.state.selection.$anchor;
-    const sharedDepth = anchor.sharedDepth(view.state.selection.to);
-    // We can walk up the tree starting at anchor, looking for a div with its 
-    // editable attribute set to true. If we hit the root doc without finding 
-    // any div, then we are in a fully editable doc and will return 'editor'.
-    // If we hit any div marked editable, then we will return its id and whether
-    // it is editable or null if not.
-    for (let depth = sharedDepth; depth > 0; depth--) {
-        const node = view.state.doc.resolve(anchor.before(depth)).node();
-        if (node.type === view.state.schema.nodes.div) {
-            return {id: node.attrs.id, editable: node.attrs.editable ?? false}
-        }
+    const divNode = outermostOfTypeAt(view.state.schema.nodes.div, anchor);
+    if (divNode) {
+        return {id: divNode.attrs.id, editable: divNode.attrs.editable ?? false};
+    } else {
+        return {id: 'editor', editable: true};
     }
-    return {id: 'editor', editable: true}
 }
 
 /**
@@ -3180,6 +3191,20 @@ function _getBorder(table) {
     };
     return border;
 };
+
+/**
+ * Return the first node starting at depth 0 (the top) that is of type `type`.
+ * @param {NodeType}    type The NodeType we are looking for that contains $pos.
+ * @param {ResolvedPos} $pos A resolved position within a document node.
+ * @returns Node | null
+ */
+export function outermostOfTypeAt(type, $pos) {
+    const depth = $pos.depth;
+    for (let i = 0; i < depth; i++) {
+      if ($pos.node(i).type == type) return $pos.node(i);
+    };
+    return null;
+}
 
 /********************************************************************************
  * Common private functions

@@ -115,6 +115,10 @@ let baseNodes = OrderedMap.from({
     toDOM() { return brDOM }
   },
 
+  // A div-delineated area within the MarkupEditor which can be editable or not,
+  // and typically has its own styling. It may contain a <p> title and/or another div. 
+  // In the latter case, this is used to hold a group of buttons.
+  //
   // Notes: 
   //
   // 1. Changes to div here may need to be reflected in DivView found in markup.js.
@@ -170,11 +174,13 @@ let baseNodes = OrderedMap.from({
     // Notes:
     // 1. We produce div HTML that includes the id and class. This is because for non-editable 
     // divs, we have to find elements by id based on the HTML because we prevent ProseMirror from 
-    // handling selection and rendering, and we have to do it for ourselves in the DivView.
-    // 
+    // handling selection and rendering, and we have to do it for ourselves in the DivView. Also
+    // the attributes on div are not part of the HTML content they hold, which is what is of
+    // interest in MarkupEditor usage.
+    //
     // 2. For the MarkupEditor, we set the top-level attributes of the editor div at initialization, 
     // and the other divs embedded in it inherit the behavior set once at the top.
-    toDOM(node) { 
+    toDOM(node) {
       let {id, cssClass} = node.attrs; 
       return ["div", { id: id, class: cssClass }, 0] 
     }

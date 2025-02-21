@@ -12,7 +12,7 @@ import {buildMenuItems} from "./menu"
 import {buildKeymap} from "./keymap"
 import {buildInputRules} from "./inputrules"
 
-import {placeholderText, postMessage, selectedID, stateChanged, searchIsActive} from "../markup"
+import {placeholderText, postMessage, selectedID, resetSelectedID, stateChanged, searchIsActive} from "../markup"
 
 export {buildMenuItems, buildKeymap, buildInputRules}
 
@@ -64,9 +64,6 @@ const searchModePlugin  = new Plugin({
           // TODO: Fix. I have some commented-out versions of things I tried that work even less well.
           const nodeSelection = new NodeSelection(tr.doc.resolve(0));
           const decoration = Decoration.node(nodeSelection.from, nodeSelection.to, {class: 'searching'})
-          //const decoration = Decoration.widget(0, selectingDOM);
-          //const allSelection = new AllSelection(tr.doc);
-          //const decoration = Decoration.node(allSelection.from, allSelection.to, {class: "searching"});
           return DecorationSet.create(tr.doc, [decoration])
         }
       } else if (set) {
