@@ -54,6 +54,9 @@ struct CustomContentView: View {
         } else {
             _demoHtml = State(initialValue: "")
         }
+        // Identify any resources coming from the app bundle that need to be co-located with
+        // the document. In this case, we have an image that we load from within demo.html.
+        markupConfiguration.userResourceFiles = ["steve.png"]
         // Identify the the css and js that will be loaded after markup.html is fully loaded.
         // For demo purposes, both files are included in SharedDemo. See markupLoaded below
         // where the classes are assigned using a call to `assignClasses` in the MarkupWKWebView.

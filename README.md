@@ -250,6 +250,18 @@ extension MarkupWKWebView {
 
 The CustomContentView and CustomViewController demos use this approach along with `custom.css` to modify the styling of some elements and to display a word count in the demo. This is a contrived use case, but it demonstrates how to use custom scripting and CSS.
 
+### Adding Resources From Your App
+
+The MarkupEditor knows to pull-in certain resources from your app when you identify them using `userCssFile` or `userScriptFile`. When you identify CSS and scripts in this way, the files are co-located with the document you are editing when it is opened. However, you may have additional resources you also want to pull-in. You can do this by passing the file names in `userResourceFiles` in MarkupWKWebViewConfiguration. 
+
+To specify the MarkupWKWebViewConfiguration, you might hold onto it in your MarkupDelegate as `markupConfiguration = MarkupWKWebViewConfiguration()`. Assuming you have an image called `myImage.png` and packaged it as a resource with your app, specify it in the `markupConfiguration` using:
+
+```
+markupConfiguration.userResourceFiles = ["myImage.png"]
+```
+
+You can add as many resources as you want to the `userResourceFiles` array.
+
 ## Local Images
 
 Being able to insert an image into a document you are editing is fundamental. In Markdown, you do this by referencing a URL, and the URL can point to a file on your local file system. The MarkupEditor can do the same, of course, but when you insert an image into a document in even the simplest WYSIWYG editor, you don't normally have to think, "Hmm, I'll have to remember to copy this file around with my document when I move my document" or "Hmm, where can I stash this image so it will be accessible across the Internet in the future."  From an end-user perspective, the image is just part of the document. Furthermore, you expect to be able to paste images into your document that you copied from elsewhere. Nobody wants to think about creating and tracking a local file in that case.
@@ -381,6 +393,11 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 [Issues](https://github.com/stevengharris/MarkupEditor/issues) are being tracked on GitHub.
 
 ### History
+
+#### Main
+
+* Add `userResourceFiles` to MarkupWKWebViewConfiguration to be able to identify resources from the app bundle to co-locate with the document being edited. The README section on [Customizing the MarkupEditor](#customizing-the-markupeditor) and the demos have been updated to reflect this change.
+* Fix callback to `this.imageAdded` when an error is encountered loading an image.
 
 #### Version 0.8.3 (Beta 7.1)
 

@@ -213,7 +213,7 @@ class ResizableImage {
         const src = node.attrs.src
 
         // If the img node does not have both width and height attr, get them from naturalWidth 
-        // after loading.
+        // after loading. Use => style function to reference this.
         img.addEventListener('load', e => {
             if (node.attrs.width && node.attrs.height) {
                 img.setAttribute('width', node.attrs.width)
@@ -227,8 +227,8 @@ class ResizableImage {
             this.imageLoaded(src)
         })
 
-        // Notify the Swift side of any errors
-        img.addEventListener('error', function () {
+        // Notify the Swift side of any errors. Use => style function to reference this.
+        img.addEventListener('error', e => {
             this.imageLoaded(src)
         });
         

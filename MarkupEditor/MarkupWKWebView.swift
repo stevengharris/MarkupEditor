@@ -296,6 +296,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if let userScriptFile, let userScript = url(forResource: userScriptFile, withExtension: nil) {
             srcUrls.append(userScript)
         }
+        if let userResourceFiles = markupConfiguration?.userResourceFiles {
+            for file in userResourceFiles {
+                if let userResource = url(forResource: file, withExtension: nil) {
+                    srcUrls.append(userResource)
+                }
+            }
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
