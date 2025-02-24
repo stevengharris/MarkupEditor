@@ -36,9 +36,14 @@ class DemoViewController: UIViewController {
     // where your html file comes from, or in a directory that holds both the html file and all
     // of its resources.
     private let resourcesUrl: URL? = URL(string: Bundle.main.resourceURL!.path)
+    /// The `markupConfiguration` holds onto the name of any userResourceFiles we set in init.
+    private let markupConfiguration = MarkupWKWebViewConfiguration()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Identify any resources coming from the app bundle that need to be co-located with
+        // the document. In this case, we have an image that we load from within demo.html.
+        markupConfiguration.userResourceFiles = ["steve.png"]
         initializePickers()
         MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self))
         initializeStackView()
@@ -81,7 +86,7 @@ class DemoViewController: UIViewController {
         stack.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(stack)
         // Create the webView
-        let markupEditorView = MarkupEditorUIView(markupDelegate: self, html: demoHtml(), resourcesUrl: resourcesUrl, id: "Document")
+        let markupEditorView = MarkupEditorUIView(markupDelegate: self, configuration: markupConfiguration, html: demoHtml(), resourcesUrl: resourcesUrl, id: "Document")
         stack.addArrangedSubview(markupEditorView)
         bottomStack = UIStackView()
         bottomStack.isHidden = true
