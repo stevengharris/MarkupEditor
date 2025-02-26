@@ -396,8 +396,9 @@ The current version is a feature-complete Beta. I am now consuming it myself in 
 
 #### Main
 
-* Add `userResourceFiles` to MarkupWKWebViewConfiguration to be able to identify resources from the app bundle to co-locate with the document being edited. The README section on [Customizing the MarkupEditor](#customizing-the-markupeditor) and the demos have been updated to reflect this change.
+* Add `userResourceFiles` to MarkupWKWebViewConfiguration to be able to identify resources from the app bundle to co-locate with the document being edited See [Issue 229](https://github.com/stevengharris/MarkupEditor/issues/229). The README section on [Customizing the MarkupEditor](#customizing-the-markupeditor) and the demos have been updated to reflect this change.
 * Fix callback to `this.imageAdded` when an error is encountered loading an image.
+* [FIXED] [Make code blocks horizontally scrollable on overflow when selected.](https://github.com/stevengharris/MarkupEditor/issues/231)
 
 #### Version 0.8.3 (Beta 7.1)
 
