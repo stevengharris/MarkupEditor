@@ -96,7 +96,6 @@ export class DivView {
  */
 export class ImageView {
     constructor(node, view, getPos) {
-        this.node = node;
         this.resizableImage = new ResizableImage(node, getPos())
         this.dom = this.resizableImage.imageContainer
     }
@@ -113,6 +112,31 @@ export class ImageView {
         selectionChanged()
     }
 
+}
+
+/**
+ * The NodeView to support setting the `selectedCode` class via Decoration when a code_block is clicked-in.
+ * The CodeBlockPlugin resets the decoration when the selection is set outside of the code_block.
+ */
+export class CodeBlockView {
+    constructor(node, view, getPos) {
+        this.clickedIn = false;
+        const el = document.createElement('code');
+        el.innerHTML = node.textContent;
+        el.addEventListener('click', () => {
+            if (!this.clickedIn) {
+                this.clickedIn = true;
+                const transaction = view.state.tr.setMeta('selectedCode', {fromPos: getPos(), toPos: getPos() + node.nodeSize});
+                view.dispatch(transaction);
+            }
+        })
+        this.dom = el;
+        this.contentDOM = this.dom;
+    }
+
+    update() {
+        return false;   // Force the node to update each time so event is reset and selection is cleared out
+    }
 }
 
 /**
