@@ -18254,7 +18254,6 @@
    */
   class ImageView {
       constructor(node, view, getPos) {
-          this.node = node;
           this.resizableImage = new ResizableImage(node, getPos());
           this.dom = this.resizableImage.imageContainer;
       }
@@ -18271,6 +18270,31 @@
           selectionChanged();
       }
 
+  }
+
+  /**
+   * The NodeView to support setting the `selectedCode` class via Decoration when a code_block is clicked-in.
+   * The CodeBlockPlugin resets the decoration when the selection is set outside of the code_block.
+   */
+  class CodeBlockView {
+      constructor(node, view, getPos) {
+          this.clickedIn = false;
+          const el = document.createElement('code');
+          el.innerHTML = node.textContent;
+          el.addEventListener('click', () => {
+              if (!this.clickedIn) {
+                  this.clickedIn = true;
+                  const transaction = view.state.tr.setMeta('selectedCode', {fromPos: getPos(), toPos: getPos() + node.nodeSize});
+                  view.dispatch(transaction);
+              }
+          });
+          this.dom = el;
+          this.contentDOM = this.dom;
+      }
+
+      update() {
+          return false;   // Force the node to update each time so event is reset and selection is cleared out
+      }
   }
 
   /**
@@ -21492,13 +21516,13 @@
         return DecorationSet.create(doc, [])
       },
       apply(tr, set) {
-        if (tr.getMeta("bordered-table")) {
-          const {border, fromPos, toPos} = tr.getMeta("bordered-table");
+        if (tr.getMeta('bordered-table')) {
+          const {border, fromPos, toPos} = tr.getMeta('bordered-table');
           return DecorationSet.create(tr.doc, [
-            Decoration.node(fromPos, toPos, {class: "bordered-table-" + border})
+            Decoration.node(fromPos, toPos, {class: 'bordered-table-' + border})
           ])
         } else if (set) {
-          // map "other" changes so our decoration "stays put" 
+          // map other changes so our decoration stays put
           // (e.g. user is typing so decoration's pos must change)
           return set.map(tr.mapping, tr.doc)
         }
@@ -21515,16 +21539,14 @@
         return DecorationSet.create(doc, [])
       },
       apply(tr, set) {
-        if (tr.getMeta("search$")) {
+        if (tr.getMeta('search$')) {
           if (searchIsActive()) {
-            // This only sets class=searching for the first node in doc, I am not sure why.
-            // TODO: Fix. I have some commented-out versions of things I tried that work even less well.
             const nodeSelection = new NodeSelection(tr.doc.resolve(0));
             const decoration = Decoration.node(nodeSelection.from, nodeSelection.to, {class: 'searching'});
             return DecorationSet.create(tr.doc, [decoration])
           }
         } else if (set) {
-          // map "other" changes so our decoration "stays put" 
+          // map other changes so our decoration stays put 
           // (e.g. user is typing so decoration's pos must change)
           return set.map(tr.mapping, tr.doc)
         }
@@ -21544,15 +21566,15 @@
    * 
    * We want a notification on the Swift side for the first image load, because when we insert 
    * a new image, that new image is placed in cached storage but has not been saved for the doc.
-   * This is done using postMessage to send "addedImage", identifying the src. However, we don't 
+   * This is done using postMessage to send 'addedImage', identifying the src. However, we don't 
    * want to tell the Swift side we added an image every time we resize it. To deal with this 
-   * problem, we set "imageLoaded" metadata in the transaction that is dispatched on at load. The 
+   * problem, we set 'imageLoaded' metadata in the transaction that is dispatched on at load. The 
    * first time, we update the Map held in the imagePlugin. When we resize, the image loads again 
    * as the ImageView gets recreated, but in the plugin, we can check the Map to see if we already 
    * loaded it once and avoid notifying the Swift side multiple times.
    * 
    * The Map is keyed by the src for the image. If the src is duplicated in the document, we only 
-   * get one "addedImage" notification.
+   * get one 'addedImage' notification.
    */
   const imagePlugin = new Plugin({
     state: {
@@ -21560,8 +21582,8 @@
         return new Map()
       },
       apply(tr, srcMap) {
-        if (tr.getMeta("imageLoaded")) {
-          const src = tr.getMeta("imageLoaded").src;
+        if (tr.getMeta('imageLoaded')) {
+          const src = tr.getMeta('imageLoaded').src;
           const srcIsLoaded = srcMap.get(src) == true;
           if (!srcIsLoaded) {
             srcMap.set(src, true);
@@ -21575,7 +21597,6 @@
     props: {
       attributes: (state) => { return imagePlugin.getState(state) }
     }
-    
   });
 
   /**
@@ -21599,6 +21620,32 @@
           return DecorationSet.create(doc, [decoration])
         }
       }
+    }
+  });
+
+  /**
+   * A plugin that applies the `selectedCode` style to code_blocks when they are selected, 
+   * so that in css we can use `overflow-x: scroll`. The transaction to decorate the code_block 
+   * node is created in the CodeBlockView NodeView.
+   */
+  const codeBlockPlugin = new Plugin({
+    state: {
+      init(_, {doc}) {
+        return DecorationSet.create(doc, [])
+      },
+      apply(tr) {
+        if (tr.getMeta('selectedCode')) {
+          const {fromPos, toPos} = tr.getMeta('selectedCode');
+          return DecorationSet.create(tr.doc, [
+            Decoration.node(fromPos, toPos, {class: 'selectedCode'})
+          ])
+        } else {
+          return DecorationSet.empty  // No decorations unless selected
+        }
+      }
+    },
+    props: {
+      decorations: (state) => { return codeBlockPlugin.getState(state) }
     }
   });
 
@@ -21655,6 +21702,9 @@
     plugins.push(search());
     plugins.push(searchModePlugin);
 
+    // Add the plugin that decorates code_blocks when selected, so they can scroll sideways
+    plugins.push(codeBlockPlugin);
+
     return plugins;
   }
 
@@ -21676,6 +21726,7 @@
     nodeViews: {
       image(node, view, getPos) { return new ImageView(node, view, getPos) },
       div(node, view, getPos) { return new DivView(node, view, getPos) },
+      code_block(node, view, getPos) { return new CodeBlockView(node, view, getPos) },
     },
     // All text input notifies Swift that the document state has changed.
     handleTextInput() {
@@ -21696,7 +21747,7 @@
         if (fromDiv != toDiv) {
           return view.state.selection;    // Return the existing selection
         }
-      }    resetSelectedID(fromDiv?.attrs.id ?? toDiv?.attrs.id);  // Set the selectedID to the div's id. Might be null.
+      }    resetSelectedID(fromDiv?.attrs.id ?? toDiv?.attrs.id ?? null);  // Set the selectedID to the div's id or null.
       selectionChanged();
       clicked();
       return null;                        // Default behavior should occur

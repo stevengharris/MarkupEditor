@@ -130,11 +130,17 @@ code {
     border-radius: 3px;
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
     white-space: pre;
+    overflow-x: clip;
 }
 @media (prefers-color-scheme: dark) {
     code {
         background-color: #808080;
     }
+}
+
+/* Class for code blocks that allows horizontal scrolling when selected */
+.selectedCode {
+    overflow-x: scroll;
 }
 
 p code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
