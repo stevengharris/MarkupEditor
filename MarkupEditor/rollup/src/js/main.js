@@ -7,7 +7,6 @@ import {markupSetup} from "./setup/index.js"
 import {
   DivView,
   ImageView,
-  CodeBlockView,
   setTopLevelAttributes,
   loadUserFiles,
   searchFor,
@@ -151,7 +150,6 @@ window.view = new EditorView(document.querySelector("#editor"), {
   nodeViews: {
     image(node, view, getPos) { return new ImageView(node, view, getPos) },
     div(node, view, getPos) { return new DivView(node, view, getPos) },
-    code_block(node, view, getPos) { return new CodeBlockView(node, view, getPos) },
   },
   // All text input notifies Swift that the document state has changed.
   handleTextInput() {

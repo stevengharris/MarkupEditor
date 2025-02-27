@@ -18273,31 +18273,6 @@
   }
 
   /**
-   * The NodeView to support setting the `selectedCode` class via Decoration when a code_block is clicked-in.
-   * The CodeBlockPlugin resets the decoration when the selection is set outside of the code_block.
-   */
-  class CodeBlockView {
-      constructor(node, view, getPos) {
-          this.clickedIn = false;
-          const el = document.createElement('code');
-          el.innerHTML = node.textContent;
-          el.addEventListener('click', () => {
-              if (!this.clickedIn) {
-                  this.clickedIn = true;
-                  const transaction = view.state.tr.setMeta('selectedCode', {fromPos: getPos(), toPos: getPos() + node.nodeSize});
-                  view.dispatch(transaction);
-              }
-          });
-          this.dom = el;
-          this.contentDOM = this.dom;
-      }
-
-      update() {
-          return false;   // Force the node to update each time so event is reset and selection is cleared out
-      }
-  }
-
-  /**
    * A ResizableImage tracks a specific image element, and the imageContainer it is
    * contained in. The style of the container and its handles is handled in markup.css.
    *
@@ -21623,32 +21598,6 @@
     }
   });
 
-  /**
-   * A plugin that applies the `selectedCode` style to code_blocks when they are selected, 
-   * so that in css we can use `overflow-x: scroll`. The transaction to decorate the code_block 
-   * node is created in the CodeBlockView NodeView.
-   */
-  const codeBlockPlugin = new Plugin({
-    state: {
-      init(_, {doc}) {
-        return DecorationSet.create(doc, [])
-      },
-      apply(tr) {
-        if (tr.getMeta('selectedCode')) {
-          const {fromPos, toPos} = tr.getMeta('selectedCode');
-          return DecorationSet.create(tr.doc, [
-            Decoration.node(fromPos, toPos, {class: 'selectedCode'})
-          ])
-        } else {
-          return DecorationSet.empty  // No decorations unless selected
-        }
-      }
-    },
-    props: {
-      decorations: (state) => { return codeBlockPlugin.getState(state) }
-    }
-  });
-
   // :: (Object) → [Plugin]
   // A convenience plugin that bundles together a simple menu with basic
   // key bindings, input rules, and styling for the example schema.
@@ -21702,9 +21651,6 @@
     plugins.push(search());
     plugins.push(searchModePlugin);
 
-    // Add the plugin that decorates code_blocks when selected, so they can scroll sideways
-    plugins.push(codeBlockPlugin);
-
     return plugins;
   }
 
@@ -21726,7 +21672,6 @@
     nodeViews: {
       image(node, view, getPos) { return new ImageView(node, view, getPos) },
       div(node, view, getPos) { return new DivView(node, view, getPos) },
-      code_block(node, view, getPos) { return new CodeBlockView(node, view, getPos) },
     },
     // All text input notifies Swift that the document state has changed.
     handleTextInput() {
