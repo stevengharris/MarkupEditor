@@ -142,32 +142,6 @@ const placeholderPlugin = new Plugin({
   }
 })
 
-/**
- * A plugin that applies the `selectedCode` style to code_blocks when they are selected, 
- * so that in css we can use `overflow-x: scroll`. The transaction to decorate the code_block 
- * node is created in the CodeBlockView NodeView.
- */
-const codeBlockPlugin = new Plugin({
-  state: {
-    init(_, {doc}) {
-      return DecorationSet.create(doc, [])
-    },
-    apply(tr) {
-      if (tr.getMeta('selectedCode')) {
-        const {fromPos, toPos} = tr.getMeta('selectedCode')
-        return DecorationSet.create(tr.doc, [
-          Decoration.node(fromPos, toPos, {class: 'selectedCode'})
-        ])
-      } else {
-        return DecorationSet.empty  // No decorations unless selected
-      }
-    }
-  },
-  props: {
-    decorations: (state) => { return codeBlockPlugin.getState(state) }
-  }
-})
-
 // :: (Object) → [Plugin]
 // A convenience plugin that bundles together a simple menu with basic
 // key bindings, input rules, and styling for the example schema.
@@ -220,9 +194,6 @@ export function markupSetup(options) {
   // Add the plugins that performs search, decorates matches, and indicates searchmode
   plugins.push(search())
   plugins.push(searchModePlugin)
-
-  // Add the plugin that decorates code_blocks when selected, so they can scroll sideways
-  plugins.push(codeBlockPlugin)
 
   return plugins;
 }
