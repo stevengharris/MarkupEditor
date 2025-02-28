@@ -1,9 +1,9 @@
 {
-  "name": "rollup-markupmirror",
-  "version": "1.0.0",
-  "main": "dist/markupmirror.cjs.js",
-  "module": "dist/markupmirror.esm.js",
-  "browser": "dist/markupmirror.umd.js",
+  "name": "markupeditor",
+  "version": "0.8",
+  "main": "dist/markupeditor.cjs.js",
+  "module": "dist/markupeditor.esm.js",
+  "browser": "dist/markupeditor.umd.js",
   "dependencies": {
     "crel": "^4.2.1",
     "ms": "^2.0.0",
@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "postbuild": "cp -f dist/markupmirror.umd.js ../Resources/markup.js",
+    "postbuild": "cp -f dist/markupeditor.umd.js ../Resources/markup.js",
     "dev": "rollup -c -w",
     "test": "node test/test.js",
     "pretest": "npm run build"

@@ -179,7 +179,6 @@
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA40BA1E2CD54D5300264B1F /* mirror.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = mirror.css; sourceTree = "<group>"; };
-		AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupmirror.umd.js; sourceTree = "<group>"; };
 		AA40BA3C2CD572C100264B1F /* acorn */ = {isa = PBXFileReference; lastKnownFileType = text; path = acorn; sourceTree = "<group>"; };
 		AA40BA3D2CD572C100264B1F /* resolve */ = {isa = PBXFileReference; lastKnownFileType = text; path = resolve; sourceTree = "<group>"; };
 		AA40BA3E2CD572C100264B1F /* rollup */ = {isa = PBXFileReference; lastKnownFileType = text; path = rollup; sourceTree = "<group>"; };
@@ -784,6 +783,7 @@
 		AAA1B0962889D2F000303721 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		AAAF7A6C289AE4B9005EF58E /* ToolbarContents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarContents.swift; sourceTree = "<group>"; };
 		AAAF7A6E289B343A005EF58E /* MarkupMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupMenu.swift; sourceTree = "<group>"; };
+		AAB0496E2D72798D002B761E /* markupeditor.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupeditor.umd.js; sourceTree = "<group>"; };
 		AAB1040728B1A0780063BE2A /* SimplestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestViewController.swift; sourceTree = "<group>"; };
 		AAB1040928B1A3240063BE2A /* SimplestContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimplestContentView.swift; sourceTree = "<group>"; };
 		AAB1042F28C10B600063BE2A /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
@@ -902,7 +902,7 @@
 		AA40BA3B2CD572C100264B1F /* dist */ = {
 			isa = PBXGroup;
 			children = (
-				AA40BA3A2CD572C100264B1F /* markupmirror.umd.js */,
+				AAB0496E2D72798D002B761E /* markupeditor.umd.js */,
 			);
 			path = dist;
 			sourceTree = "<group>";
