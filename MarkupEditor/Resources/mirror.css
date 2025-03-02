@@ -6,19 +6,6 @@
  Styling from search.css in prosemirror-search were added and modified.
  */
 
-#editor, .editor {
-  background: white;
-  color: black;
-  background-clip: padding-box;
-  margin: -4px -8px -4px -8px;     /* Set so that the .ProseMirror padding starts from edges */
-}
-@media (prefers-color-scheme: dark) {
-  #editor, .editor {
-    background: black;
-    color: white;
-  }
-}
-
 .ProseMirror {
   position: relative;
   padding: 4px 8px 4px 8px;
