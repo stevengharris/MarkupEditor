@@ -873,6 +873,20 @@ export function setTopLevelAttributes(jsonString) {
 };
 
 /**
+ * Set the receiver for postMessage().
+ * 
+ * By default, the receiver will be window.webkit.messageHandlers.markup. 
+ * However, to allow embedding of MarkupEditor in other environments, such 
+ * as VSCode, allow it to be set externally.
+ */
+let _messageHandler;
+let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
+export function setMessageHandler(handler) {
+    _messageHandler = handler;
+    console.log("set handler: " + handler);
+};
+
+/**
  * Called to load user script and CSS before loading html.
  *
  * The scriptFile and cssFile are loaded in sequence, with the single 'loadedUserFiles'
@@ -904,7 +918,7 @@ export function loadUserFiles(scriptFile, cssFile) {
  * @param {String} message     The message, which might be a JSONified string
  */
 function _callback(message) {
-    window.webkit.messageHandlers.markup.postMessage(message);
+    messageHandler?.postMessage(message);
 };
 
 function _callbackInput() {
@@ -914,7 +928,7 @@ function _callbackInput() {
     if (selectedID !== null) {
         source = selectedID;
     };
-    window.webkit.messageHandlers.markup.postMessage('input' + source);
+    messageHandler?.postMessage('input' + source);
 };
 
 function _loadedUserFiles() {

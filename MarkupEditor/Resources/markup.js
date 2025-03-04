@@ -19006,6 +19006,19 @@
               if (key !== 'contenteditable') editor.setAttribute(key, value);
           }    }}
   /**
+   * Set the receiver for postMessage().
+   * 
+   * By default, the receiver will be window.webkit.messageHandlers.markup. 
+   * However, to allow embedding of MarkupEditor in other environments, such 
+   * as VSCode, allow it to be set externally.
+   */
+  let _messageHandler;
+  let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
+  function setMessageHandler(handler) {
+      _messageHandler = handler;
+      console.log("set handler: " + handler);
+  }
+  /**
    * Called to load user script and CSS before loading html.
    *
    * The scriptFile and cssFile are loaded in sequence, with the single 'loadedUserFiles'
@@ -19036,7 +19049,7 @@
    * @param {String} message     The message, which might be a JSONified string
    */
   function _callback(message) {
-      window.webkit.messageHandlers.markup.postMessage(message);
+      messageHandler?.postMessage(message);
   }
   function _callbackInput() {
       // I'd like to use nullish coalescing on selectedID, but rollup's tree-shaking
@@ -19044,7 +19057,7 @@
       let source = '';
       if (selectedID !== null) {
           source = selectedID;
-      }    window.webkit.messageHandlers.markup.postMessage('input' + source);
+      }    messageHandler?.postMessage('input' + source);
   }
   function _loadedUserFiles() {
       _callback('loadedUserFiles');
@@ -21736,6 +21749,7 @@
   exports.resetSelection = resetSelection;
   exports.searchFor = searchFor;
   exports.setHTML = setHTML;
+  exports.setMessageHandler = setMessageHandler;
   exports.setPlaceholder = setPlaceholder;
   exports.setStyle = setStyle;
   exports.setTestHTML = setTestHTML;

@@ -8,6 +8,7 @@ import {
   DivView,
   ImageView,
   setTopLevelAttributes,
+  setMessageHandler,
   loadUserFiles,
   searchFor,
   deactivateSearch,
@@ -75,6 +76,7 @@ import {
  */
 export {
   setTopLevelAttributes,
+  setMessageHandler,
   loadUserFiles,
   searchFor,
   deactivateSearch,
