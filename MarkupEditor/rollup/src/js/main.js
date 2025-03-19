@@ -140,12 +140,22 @@ const muSchema = new Schema({
 })
 
 /**
- * Return whether the editor is embedded in VSCode, determining whether the menubar is shown.
- * @returns {bool} Whether we are embedded in VSCode, as evidenced by the presence of acquireVsCodeApi.
+ * Return whether to show the menubar in the web view.
+ * 
+ * The markupConfig var must be defined in an earlier script that is loaded into the 
+ * web view that markup.js (or dist/markupeditor.umd.js) is loaded into. For example:
+ * 
+ *   var markupConfig = {
+ *     menuBar: true,
+ *   }
+ * 
+ * By default, if markupConfig is not defined, returns false and the menuBar is not shown.
+ * 
+ * @returns {bool} Whether markupConfig?.menuBar is present and true.
  */
-function inVsCode() {
+function menuBar() {
   try {
-    return acquireVsCodeApi != null
+    return markupConfig?.menuBar ?? false
   } catch {
     return false
   };
@@ -157,7 +167,7 @@ window.view = new EditorView(document.querySelector("#editor"), {
     // There is mo need to use a separate content element.
     doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
     plugins: markupSetup({
-      menuBar: inVsCode(),    // Show the menubar only if we are in VSCode
+      menuBar: menuBar(),    // Show the menubar only if markupConfig?.menuBar is defined and true
       schema: muSchema
     })
   }),

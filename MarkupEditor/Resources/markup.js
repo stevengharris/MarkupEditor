@@ -17414,7 +17414,7 @@
   //     Determines whether the menu floats, i.e. whether it sticks to
   //     the top of the viewport when the editor is partially scrolled
   //     out of view.
-  function menuBar(options) {
+  function menuBar$1(options) {
     return new Plugin({
       view(editorView) { return new MenuBarView(editorView, options) }
     })
@@ -21645,7 +21645,7 @@
       gapCursor(),
     ];
     if (options.menuBar !== false)
-      plugins.push(menuBar({floating: options.floatingMenu !== false,
+      plugins.push(menuBar$1({floating: options.floatingMenu !== false,
                             content: options.menuContent || buildMenuItems(options.schema).fullMenu}));
     if (options.history !== false)
       plugins.push(history());
@@ -21672,12 +21672,22 @@
   });
 
   /**
-   * Return whether the editor is embedded in VSCode, determining whether the menubar is shown.
-   * @returns {bool} Whether we are embedded in VSCode, as evidenced by the presence of acquireVsCodeApi.
+   * Return whether to show the menubar in the web view.
+   * 
+   * The markupConfig var must be defined in an earlier script that is loaded into the 
+   * web view that markup.js (or dist/markupeditor.umd.js) is loaded into. For example:
+   * 
+   *   var markupConfig = {
+   *     menuBar: true,
+   *   }
+   * 
+   * By default, if markupConfig is not defined, returns false and the menuBar is not shown.
+   * 
+   * @returns {bool} Whether markupConfig?.menuBar is present and true.
    */
-  function inVsCode() {
+  function menuBar() {
     try {
-      return acquireVsCodeApi != null
+      return markupConfig?.menuBar ?? false
     } catch {
       return false
     }}
@@ -21688,7 +21698,7 @@
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: inVsCode(),    // Show the menubar only if we are in VSCode
+        menuBar: menuBar(),    // Show the menubar only if markupConfig?.menuBar is defined and true
         schema: muSchema
       })
     }),
