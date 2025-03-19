@@ -883,7 +883,6 @@ let _messageHandler;
 let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
 export function setMessageHandler(handler) {
     _messageHandler = handler;
-    console.log("set handler: " + handler);
 };
 
 /**

@@ -19016,7 +19016,6 @@
   let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
   function setMessageHandler(handler) {
       _messageHandler = handler;
-      console.log("set handler: " + handler);
   }
   /**
    * Called to load user script and CSS before loading html.
@@ -21678,7 +21677,7 @@
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: false,   // TODO: We need a way to make this configurable at setup time
+        menuBar: acquireVsCodeApi != null,
         schema: muSchema
       })
     }),
