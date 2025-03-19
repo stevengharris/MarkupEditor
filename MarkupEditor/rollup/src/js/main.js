@@ -139,13 +139,25 @@ const muSchema = new Schema({
   marks: schema.spec.marks
 })
 
+/**
+ * Return whether the editor is embedded in VSCode, determining whether the menubar is shown.
+ * @returns {bool} Whether we are embedded in VSCode, as evidenced by the presence of acquireVsCodeApi.
+ */
+function inVsCode() {
+  try {
+    return acquireVsCodeApi != null
+  } catch {
+    return false
+  };
+}
+
 window.view = new EditorView(document.querySelector("#editor"), {
   state: EditorState.create({
     // For the MarkupEditor, we can just use the editor element. 
     // There is mo need to use a separate content element.
     doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
     plugins: markupSetup({
-      menuBar: acquireVsCodeApi != null,
+      menuBar: inVsCode(),    // Show the menubar only if we are in VSCode
       schema: muSchema
     })
   }),
