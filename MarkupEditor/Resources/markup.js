@@ -17414,7 +17414,7 @@
   //     Determines whether the menu floats, i.e. whether it sticks to
   //     the top of the viewport when the editor is partially scrolled
   //     out of view.
-  function menuBar(options) {
+  function menuBar$1(options) {
     return new Plugin({
       view(editorView) { return new MenuBarView(editorView, options) }
     })
@@ -19016,7 +19016,6 @@
   let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
   function setMessageHandler(handler) {
       _messageHandler = handler;
-      console.log("set handler: " + handler);
   }
   /**
    * Called to load user script and CSS before loading html.
@@ -21646,7 +21645,7 @@
       gapCursor(),
     ];
     if (options.menuBar !== false)
-      plugins.push(menuBar({floating: options.floatingMenu !== false,
+      plugins.push(menuBar$1({floating: options.floatingMenu !== false,
                             content: options.menuContent || buildMenuItems(options.schema).fullMenu}));
     if (options.history !== false)
       plugins.push(history());
@@ -21672,13 +21671,34 @@
     marks: schema.spec.marks
   });
 
+  /**
+   * Return whether to show the menubar in the web view.
+   * 
+   * The markupConfig var must be defined in an earlier script that is loaded into the 
+   * web view that markup.js (or dist/markupeditor.umd.js) is loaded into. For example:
+   * 
+   *   var markupConfig = {
+   *     menuBar: true,
+   *   }
+   * 
+   * By default, if markupConfig is not defined, returns false and the menuBar is not shown.
+   * 
+   * @returns {bool} Whether markupConfig?.menuBar is present and true.
+   */
+  function menuBar() {
+    try {
+      return markupConfig?.menuBar ?? false
+    } catch {
+      return false
+    }}
+
   window.view = new EditorView(document.querySelector("#editor"), {
     state: EditorState.create({
       // For the MarkupEditor, we can just use the editor element. 
       // There is mo need to use a separate content element.
       doc: DOMParser.fromSchema(muSchema).parse(document.querySelector("#editor")),
       plugins: markupSetup({
-        menuBar: false,   // TODO: We need a way to make this configurable at setup time
+        menuBar: menuBar(),    // Show the menubar only if markupConfig?.menuBar is defined and true
         schema: muSchema
       })
     }),
