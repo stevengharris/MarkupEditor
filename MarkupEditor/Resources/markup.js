@@ -19050,14 +19050,18 @@
   function _callback(message) {
       messageHandler?.postMessage(message);
   }
+  /**
+   * Callback into Swift to signal that input came-in, passing along the DIV ID
+   * that the input occurred-in if known. If DIV ID is not known, the raw 'input'
+   * callback means the change happened in the 'editor' div.
+   */
   function _callbackInput() {
-      // I'd like to use nullish coalescing on selectedID, but rollup's tree-shaking
-      // actively removes it, at least until I do something with it.
-      let source = '';
-      if (selectedID !== null) {
-          source = selectedID;
-      }    messageHandler?.postMessage('input' + source);
+      _callback('input' + (selectedID ?? ''));
   }
+  /**
+   * Callback into Swift to signal that user-provided CSS and/or script files have
+   * been loaded.
+   */
   function _loadedUserFiles() {
       _callback('loadedUserFiles');
   }
@@ -20628,6 +20632,7 @@
   function stateChanged() {
       deactivateSearch();
       _callbackInput();
+      selectionChanged();
       return false;
   }
 
