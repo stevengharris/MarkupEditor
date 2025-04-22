@@ -2419,12 +2419,19 @@ function _getSelectionRect() {
  * @returns {Set<MarkType>}   The set of MarkTypes at the selection.
  */
 function _getMarkTypes() {
-    const selection = view.state.selection;
-    const markTypes = new Set();
-    view.state.doc.nodesBetween(selection.from, selection.to, node => {
-        node.marks.forEach(mark => markTypes.add(mark.type));
-    });
-    return markTypes;
+    const state = view.state;
+    const {from, $from, to, empty} = state.selection;
+    if (empty) {
+        const marks = state.storedMarks || $from.marks();
+        const markTypes = marks.map(mark => { return mark.type });
+        return new Set(markTypes);
+    } else {
+        const markTypes = new Set();
+        state.doc.nodesBetween(from, to, node => {
+            node.marks.forEach(mark => markTypes.add(mark.type));
+        });
+        return markTypes;
+    }
 };
 
 /**
