@@ -20406,7 +20406,7 @@
   function _getSelectionText() {
       const doc = view.state.doc;
       const selection = view.state.selection;
-      if (selection.empty) return null;
+      if (selection.empty) return '';
       const fragment =  doc.cut(selection.from, selection.to).content;
       let text = '';
       fragment.nodesBetween(0, fragment.size, (node) => {
