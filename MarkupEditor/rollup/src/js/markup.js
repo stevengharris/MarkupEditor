@@ -879,10 +879,9 @@ export function setTopLevelAttributes(jsonString) {
  * However, to allow embedding of MarkupEditor in other environments, such 
  * as VSCode, allow it to be set externally.
  */
-let _messageHandler;
-let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
+let messageHandler = window?.webkit?.messageHandlers?.markup;
 export function setMessageHandler(handler) {
-    _messageHandler = handler;
+    messageHandler = handler;
 };
 
 /**
