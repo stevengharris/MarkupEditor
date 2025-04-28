@@ -18996,10 +18996,9 @@
    * However, to allow embedding of MarkupEditor in other environments, such 
    * as VSCode, allow it to be set externally.
    */
-  let _messageHandler;
-  let messageHandler = _messageHandler ?? window?.webkit?.messageHandlers?.markup;
+  let messageHandler = window?.webkit?.messageHandlers?.markup;
   function setMessageHandler(handler) {
-      _messageHandler = handler;
+      messageHandler = handler;
   }
   /**
    * Called to load user script and CSS before loading html.
