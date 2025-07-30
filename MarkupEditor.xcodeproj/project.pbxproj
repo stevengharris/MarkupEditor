@@ -50,7 +50,6 @@
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */; };
 		AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
-		AA4EBE952B3747D6006C614B /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE942B3747D6006C614B /* markup.js */; };
 		AA4EBEA42B3B8700006C614B /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */; };
 		AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
@@ -73,6 +72,7 @@
 		AA8EFADA261E0882008AE31E /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */; };
 		AA8EFAE0261E0A06008AE31E /* CorrectionToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */; };
 		AA8EFB3B261FB7D8008AE31E /* TableToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */; };
+		AA932DDD2E3ADA5800686795 /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA932DDC2E3ADA5800686795 /* markup.js */; };
 		AAA1B0912889D27E00303721 /* ForcePopoverModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */; };
 		AAA1B0952889D2E200303721 /* PopoverHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0942889D2E200303721 /* PopoverHostingController.swift */; };
 		AAA1B0972889D2F000303721 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA1B0962889D2F000303721 /* View+Extensions.swift */; };
@@ -737,7 +737,6 @@
 		AA46D5D62D5D6E7500D6B7A0 /* READMEJS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = READMEJS.md; sourceTree = "<group>"; };
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
-		AA4EBE942B3747D6006C614B /* markup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
 		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
@@ -778,6 +777,7 @@
 		AA8EFAD9261E0882008AE31E /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
 		AA8EFADF261E0A06008AE31E /* CorrectionToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionToolbar.swift; sourceTree = "<group>"; };
 		AA8EFB3A261FB7D8008AE31E /* TableToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableToolbar.swift; sourceTree = "<group>"; };
+		AA932DDC2E3ADA5800686795 /* markup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
 		AAA1B0902889D27E00303721 /* ForcePopoverModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForcePopoverModifier.swift; sourceTree = "<group>"; };
 		AAA1B0942889D2E200303721 /* PopoverHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHostingController.swift; sourceTree = "<group>"; };
 		AAA1B0962889D2F000303721 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
@@ -2996,9 +2996,9 @@
 		AA652A07260E99FF000674B7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				AA932DDC2E3ADA5800686795 /* markup.js */,
 				AA40BA1E2CD54D5300264B1F /* mirror.css */,
 				AA652A0A260E99FF000674B7 /* markup.html */,
-				AA4EBE942B3747D6006C614B /* markup.js */,
 				AA1B81B8262CF16A00891FFB /* markup.css */,
 			);
 			path = Resources;
@@ -3189,9 +3189,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */,
-				AA4EBE952B3747D6006C614B /* markup.js in Resources */,
 				AA408B372616686C00CAE8B9 /* markup.html in Resources */,
 				AA1B81B9262CF16A00891FFB /* markup.css in Resources */,
+				AA932DDD2E3ADA5800686795 /* markup.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -2,7 +2,7 @@
     background: white;
     color: black;
     background-clip: padding-box;
-    margin: -4px -8px -4px -8px;        /* Set so that the .ProseMirror padding starts from edges */
+    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */
     --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */
     padding-block: 0 var(--padBottom);
     overflow-x: clip;
@@ -15,11 +15,12 @@
 }
 
 body {
-    font-family: -apple-system;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     font: -apple-system-body;
 }
 
 a {
+    color: blue;
     text-decoration: none;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,8 +33,8 @@ a:hover {
     text-decoration: underline;
 }
 
-p {
-    font-size: 1.0em;
+p, pre {
+    font-size: 1.0rem;
 }
 
 p, ul, ol, dl, table, pre {
@@ -45,27 +46,27 @@ ul, ol {
 }
 
 h1 {
-    font-size: 2.5em;
+    font-size: 2.5rem;
 }
 
 h2 {
-    font-size: 2.0em;
+    font-size: 2.0rem;
 }
 
 h3 {
-    font-size: 1.5em;
+    font-size: 1.5rem;
 }
 
 h4 {
-    font-size: 1.2em;
+    font-size: 1.2rem;
 }
 
 h5 {
-    font-size: 1.0em;
+    font-size: 1.0rem;
 }
 
 h6 {
-    font-size: .83em;
+    font-size: .83rem;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -251,4 +252,19 @@ img {
     content: attr(placeholder);
     position: absolute;
     color: #ccc;
+}
+
+/* Classes set by prosemirror-search module, modified for MarkupEditor */
+/* Note the dark and light mode are the same */
+
+.ProseMirror-search-match {
+  background-color: yellow;
+  color: black;
+}
+
+.ProseMirror-active-search-match {
+  background-color: orange;
+  color: black;
+  outline: 1px orangered solid;
+  z-index: 2;
 }

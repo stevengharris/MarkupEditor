@@ -954,7 +954,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Note that this operation interleaves the browser-native undo (e.g., undoing typing)
     /// with the _undoOperation implemented in markup.js.
     public func undo(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.undoCommand()") { result, error in handler?() }
+        evaluateJavaScript("MU.doUndo()") { result, error in handler?() }
     }
     
     /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
@@ -962,7 +962,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Note that this operation interleaves the browser-native redo (e.g., redoing typing)
     /// with the _redoOperation implemented in markup.js.
     public func redo(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.redoCommand()") { result, error in handler?() }
+        evaluateJavaScript("MU.doRedo()") { result, error in handler?() }
     }
     
     //MARK: Table editing
