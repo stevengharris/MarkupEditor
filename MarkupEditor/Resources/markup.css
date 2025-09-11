@@ -6,6 +6,9 @@
     --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */
     padding-block: 0 var(--padBottom);
     overflow-x: clip;
+    overflow-y: scroll;
+    height: 100vh;
+    padding-right: 8px;
 }
 @media (prefers-color-scheme: dark) {
   #editor, .editor {

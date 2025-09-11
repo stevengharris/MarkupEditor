@@ -818,9 +818,11 @@
   function insertInto(content, dist, insert, parent) {
       let { index, offset } = content.findIndex(dist), child = content.maybeChild(index);
       if (offset == dist || child.isText) {
+          if (parent && !parent.canReplace(index, index, insert))
+              return null;
           return content.cut(0, dist).append(insert).append(content.cut(dist));
       }
-      let inner = insertInto(child.content, dist - offset - 1, insert);
+      let inner = insertInto(child.content, dist - offset - 1, insert, child);
       return inner && content.replaceChild(index, child.copy(inner));
   }
   function replace($from, $to, slice) {
@@ -14285,19 +14287,25 @@
 
     // :: NodeSpec A heading textblock, with a `level` attribute that
     // should hold the number 1 to 6. Parsed and serialized as `<h1>` to
-    // `<h6>` elements.
+    // `<h6>` elements. We include ID so that local links can reference them.
     heading: {
-      attrs: {level: {default: 1}},
+      attrs: {
+        id: {default: null},
+        level: {default: 1}
+      },
       content: "inline*",
       group: "block",
       defining: true,
-      parseDOM: [{tag: "h1", attrs: {level: 1}},
-                 {tag: "h2", attrs: {level: 2}},
-                 {tag: "h3", attrs: {level: 3}},
-                 {tag: "h4", attrs: {level: 4}},
-                 {tag: "h5", attrs: {level: 5}},
-                 {tag: "h6", attrs: {level: 6}}],
-      toDOM(node) { return ["h" + node.attrs.level, 0] }
+      parseDOM: [
+        {tag: "h1", getAttrs(dom) { return {level: 1, id: dom.getAttribute("id")}}},
+        {tag: "h2", getAttrs(dom) { return {level: 2, id: dom.getAttribute("id")}}},
+        {tag: "h3", getAttrs(dom) { return {level: 3, id: dom.getAttribute("id")}}},
+        {tag: "h4", getAttrs(dom) { return {level: 4, id: dom.getAttribute("id")}}},
+        {tag: "h5", getAttrs(dom) { return {level: 5, id: dom.getAttribute("id")}}},
+        {tag: "h6", getAttrs(dom) { return {level: 6, id: dom.getAttribute("id")}}}],
+      toDOM(node) { 
+        return ["h" + node.attrs.level, { id: node.attrs.id }, 0]
+      }
     },
 
     // :: NodeSpec A code listing. Disallows marks or non-text inline
@@ -14371,13 +14379,13 @@
     //
     // 1. Changes to div here may need to be reflected in DivView found in markup.js.
     //
-    // 2. At some point, we may want to be able to set attributes like spellcheck
-    // at an individual div level, but for now these are not needed but are left 
-    // commented-out for future use.
+    // 2. We use a style rule to require divs to include id, class, parentId. The div elements 
+    // are used in the Swift MarkupEditor under these specific conditions, and requiring these 
+    // attributes prevents issues when pasting (e.g., from GitHub READMEs) include divs.
     //
     // 3. It might be possible to exclude divs that don't conform to MarkupEditor expectations 
     // by using a rule. For now, deriving a Node from html always removes divs and buttons, so 
-    // the only way for them to get into the MarkupEditor is via addDiv and addButton.
+    // the only way for them to get into the MarkupEditor is via paste, addDiv, and addButton.
     // See https://discuss.prosemirror.net/t/how-to-filter-pasted-content-by-node-type/4866 and
     // https://prosemirror.net/docs/ref/#inputrules
     div: {
@@ -14396,7 +14404,7 @@
         writingsuggestions: {default: false},
       },
       parseDOM: [{
-        tag: "div",
+        style: "div[id, class, parentId]",
         getAttrs(dom) {
           const id = dom.getAttribute("id");
           const parentId = dom.getAttribute("parentId");
@@ -14514,7 +14522,6 @@
     // :: MarkSpec A link. Has `href` and `title` attributes. `title`
     // defaults to the empty string. Rendered and parsed as an `<a>`
     // element.
-    // TODO: Eliminate title?
     link: {
       attrs: {
         href: {},
@@ -16552,34 +16559,6 @@
   */
   const findPrev = findCommand(true, -1);
 
-  function crelt() {
-    var elt = arguments[0];
-    if (typeof elt == "string") elt = document.createElement(elt);
-    var i = 1, next = arguments[1];
-    if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
-      for (var name in next) if (Object.prototype.hasOwnProperty.call(next, name)) {
-        var value = next[name];
-        if (typeof value == "string") elt.setAttribute(name, value);
-        else if (value != null) elt[name] = value;
-      }
-      i++;
-    }
-    for (; i < arguments.length; i++) add(elt, arguments[i]);
-    return elt
-  }
-
-  function add(elt, child) {
-    if (typeof child == "string") {
-      elt.appendChild(document.createTextNode(child));
-    } else if (child == null) ; else if (child.nodeType != null) {
-      elt.appendChild(child);
-    } else if (Array.isArray(child)) {
-      for (var i = 0; i < child.length; i++) add(elt, child[i]);
-    } else {
-      throw new RangeError("Unsupported child node: " + child)
-    }
-  }
-
   /**
    * The NodeView to support divs, as installed in main.js.
    */
@@ -16640,6 +16619,37 @@
           return buttonRect;
       };
 
+  }
+
+  class LinkView {
+      constructor(node, view, getPos) {
+          let href = node.attrs.href;
+          let title = '\u2325+Click to follow\n' + href;
+          const link = document.createElement('a');
+          link.setAttribute('href', href);
+          link.setAttribute('title', title);
+          link.addEventListener('click', (ev)=> {
+              if (ev.altKey) {
+                  if (href.startsWith('#')) {
+                      let id = href.substring(1);
+                      let {pos} = nodeWithId(id, view.state);
+                      if (pos) {
+                          let resolvedPos = view.state.tr.doc.resolve(pos);
+                          let selection = TextSelection.near(resolvedPos);
+                          let transaction = view.state.tr
+                              .setSelection(selection)
+                              .scrollIntoView();
+                          view.dispatch(transaction);
+                          selectionChanged();
+                      }
+                  } else {
+                      window.open(href);
+                  }
+              }
+          });
+          this.dom = link;
+          this.contentDOM = this.dom;
+      }
   }
 
   /**
@@ -17162,7 +17172,7 @@
   const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', 'META', 'PARAM']; // Tags that are self-closing
 
   /**
-   * selectedID is the id of the contentEditable DIV containing the currently selected element.
+   * `selectedID` is the id of the contentEditable DIV containing the currently selected element.
    */
   let selectedID = null;
 
@@ -17217,6 +17227,9 @@
    * 
    * The searcher uses the ProseMirror search plugin https://github.com/proseMirror/prosemirror-search to create 
    * and track ranges within the doc that match a given SearchQuery.
+   * 
+   * Note that `isActive` and intercepting Enter/Shift-Enter is only relevant in the Swift case, where the search 
+   * bar is implemented in Swift.
    */
   class Searcher {
       
@@ -17351,7 +17364,7 @@
        * Deactivate search mode where Enter is being intercepted
        */
       deactivate(view) {
-          //if (!this.isActive) return;
+          if (this.isActive) _callback('deactivateSearch');
           view.dom.classList.remove("searching");
           this._isActive = false;
           this._searchQuery = new SearchQuery({search: "", caseSensitive: this._caseSensitive});
@@ -17359,7 +17372,6 @@
           view.dispatch(transaction);
           this._matchCount = null;
           this._matchIndex = null;
-          _callback('deactivateSearch');
       }
       
       /**
@@ -17409,6 +17421,13 @@
    */
   const searcher = new Searcher();
   function searchIsActive() { return searcher.isActive }
+
+  /** changed tracks whether the document has changed since `setHTML` */
+  let changed = false;
+
+  function isChanged() {
+      return changed
+  }
 
   /**
    * Handle pressing Enter.
@@ -17529,6 +17548,7 @@
    * callback means the change happened in the 'editor' div.
    */
   function callbackInput() {
+      changed = true;
       _callback('input' + (selectedID ?? ''));
   }
   /**
@@ -17789,6 +17809,41 @@
       selectedID = id;
   }
   /**
+   * Return an array of `src` attributes for images that are encoded as data, empty if there are none.
+   * 
+   * @returns {[string]}
+   */
+  function getDataImages() {
+      let images = document.getElementsByTagName('img');
+      let dataImages = [];
+      for (let i = 0; i < images.length; i++) {
+          let src = images[i].getAttribute('src');
+          if (src && src.startsWith('data')) dataImages.push(src);
+      }
+      return dataImages
+  }
+
+  /**
+   * We saved an image at a new location or translated it from data to a file reference, 
+   * so we need to update the document to reflect it.
+   * 
+   * @param {string} oldSrc Some or all of the original src for the image
+   * @param {string} newSrc The src that should replace the old src
+   */
+  function savedDataImage(oldSrc, newSrc) {
+      let images = document.getElementsByTagName('img');
+      for (let i = 0; i < images.length; i++) {
+          let img = images[i];
+          let src = img.getAttribute('src');
+          if (src && src.startsWith(oldSrc)) {
+              let imgPos = view.posAtDOM(img, 0);
+              const transaction = view.state.tr.setNodeAttribute(imgPos, 'src', newSrc);
+              view.dispatch(transaction);
+          }
+      }
+  }
+
+  /**
    * Get the contents of the div with id `divID` or of the full doc.
    *
    * If pretty, then the text will be nicely formatted for reading.
@@ -17893,6 +17948,27 @@
       return _isTextNode(node) || _isFormatElement(node) || _isLinkNode(node) || _isVoidNode(node)
   };
 
+  /** 
+   * Set the base element for the body to `string`. 
+   * 
+   * Used so relative hrefs and srcs work. 
+   * If `string` is undefined, then the base element is removed if it exists.
+   */
+  function setBase(string) {
+      let base = document.getElementsByTagName('base')[0];
+      if (string) {
+          if (!base) {
+              base = document.createElement('base');
+              document.body.insertBefore(base, document.body.firstChild);
+          }
+          base.setAttribute('href', string);
+      } else {
+          if (base) {
+              base.parentElement.removeChild(base);
+          }
+      }
+  }
+
   /**
    * Set the contents of the editor.
    * 
@@ -17901,7 +17977,10 @@
    * @param {string}  contents            The HTML for the editor
    * @param {boolean} selectAfterLoad     Whether we should focus after load
    */
-  function setHTML(contents, focusAfterLoad=true) {
+  function setHTML(contents, focusAfterLoad=true, base) {
+      // If defined, set base; else remove base if it exists. This way, when setHTML is used to,
+      // say, create a new empty document, base will be reset.
+      setBase(base);
       const state = view.state;
       const doc = state.doc;
       const tr = state.tr;
@@ -17921,6 +18000,8 @@
       // But always set placeholder in the end so it will appear when the doc is empty
       placeholderText = _placeholderText;
       if (focusAfterLoad) view.focus();
+      // Reset change tracking
+      changed = false;
   }
   /**
    * Internal value of placeholder text
@@ -19421,6 +19502,139 @@
       return commandAdapter;
   }
 
+  function insertInternalLinkCommand(hTag, index) {
+      const commandAdapter = (state, dispatch, view) => {
+          // Find the node matching hTag that is index into the nodes matching hTag
+          let {node, pos} = headerMatching(hTag, index, state);
+          if (!node) return false
+          // Get the unique id for this header, which is may or may not already have.
+          let id = idForHeader(node, state);
+          let attrs = node.attrs;
+          attrs.id = id;
+          // Insert the mark (id is always referenced with # at front) and set (or reset) the 
+          // id in the header itself. We don't care if it's the same, but we want these changes 
+          // to be made in a single transaction so we can undo them if needed.
+          const selection = state.selection;
+          const linkMark = state.schema.marks.link.create({ href: '#' + id });
+          if (selection.empty) {
+              // In case of an empty selection, insert the textContent of the header and then use 
+              // that to link-to the header
+              const textNode = state.schema.text(node.textContent, [linkMark]);
+              let transaction = state.tr.replaceSelectionWith(textNode, false);
+              dispatch(transaction);
+              stateChanged();
+              return true;
+          } else {
+              const toggle = toggleMark(linkMark.type, linkMark.attrs);
+              if (toggle) {
+                  toggle(state, dispatch);
+                  stateChanged();
+                  return true;
+              } else {
+                  return false;
+              }
+          }
+      };
+      return commandAdapter;
+  }
+
+  /**
+   * Unlike other commands, this one returns an object identifying the id for the header with hTag. 
+   * Other commands return true or false. This command also never does anything with the view or state.
+   * @param {string} hTag One of the strings `H1`-`H6`
+   * @param {*} index     Within existing elements with tag `hTag`, this is the index into them that is identified
+   * @returns 
+   */
+  function idForInternalLinkCommand(hTag, index) {
+      const commandAdapter = (state) => {
+          let {node} = headerMatching(hTag, index, state);
+          if (!node) return false;
+          return {hTag: hTag, index: index, id: idForHeader(node, state), exists: node.attrs.id != null}
+      };
+      return commandAdapter;
+  }
+
+  /**
+   * Return a unique identifier for the heading `node` by lowercasing its trimmed textContent
+   * and replacing blanks with `-`, then appending a number until its unique if required.
+   * If the heading `node` has an id, then just return it.
+   * 
+   * Since the `node.textContent` can be arbitrarily large, we limit the id to 40 characters 
+   * just to avoid unwieldy IDs.
+   * 
+   * @param {Node}        node    A ProseMirror Node that is of heading type
+   * @param {EditorState} state     
+   * @returns {string}            A unique ID that is used by `node` or that can be assigned to `node`
+   */
+  function idForHeader(node, state) {
+      if (node.attrs.id) return node.attrs.id
+      let id = node.textContent.toLowerCase().substring(0, 40);
+      id = id.replaceAll(' ', '-');
+      let {node: idNode} = nodeWithId(id, state);
+      let index = 0;
+      while (idNode) {
+          index++;
+          id = id + index.toString();
+          let {node} = nodeWithId(id, state);
+          idNode = node;
+      }
+      return id
+  }
+
+  /**
+   * Return the node and its position that has an attrs.id matching `id`
+   * @param {string} id The id attr of a Node we are trying to match
+   * @param {*} state 
+   * @returns {object}    The `node` and its `pos` in the `state.doc`
+   */
+  function nodeWithId(id, state) {
+      let idNode, idPos;
+      state.doc.nodesBetween(0, state.doc.content.size, (node, pos) => {
+          if (!idNode && (node.attrs.id == id)) {
+              idNode = node;
+              idPos = pos;
+              return false
+          }
+          return !idNode  // Keep traversing unless we found a matching id
+      });
+      return {node: idNode, pos: idPos}
+  }
+
+  function headerMatching(hTag, index, state) {
+      let header = {node: null, pos: null};
+      let hLevel = parseInt(hTag.substring(1));
+      let headersAtLevel = headers(state)[hLevel];
+      if (!headersAtLevel) {
+          return header
+      } else {
+          return headersAtLevel[index]
+      }
+  }
+
+  // Return all the headers that exist in `state.doc` as arrays keyed by level
+  function headers(state) {
+      let headers = {};
+      let hType = state.schema.nodes.heading;
+      let pType = state.schema.nodes.paragraph;
+      let cType = state.schema.nodes.code_block;
+      state.doc.nodesBetween(0, state.doc.content.size, (node, pos) => {
+          let nodeType = node.type;
+          if (nodeType == hType) {
+              let level = node.attrs.level;
+              if (!headers[level]) headers[level] = [];
+              headers[level].push({node: node, pos: pos});
+              return false
+          } else if ((nodeType == pType) || (nodeType == cType)) {
+              // We don't need to keep traversing a <H1-6>, <P>, or <PRE><CODE> because 
+              // they can't contain other headers
+              return false
+          }
+          // However, the remaining block nodes like table cells and lists can contain them
+          return true
+      });
+      return headers
+  }
+
   /**
    * Remove the link at the selection, maintaining the same selection.
    * 
@@ -19428,9 +19642,6 @@
    * areas outside of the link.
    */
   function deleteLink() {
-      view.state.schema.marks.link;
-      view.state.selection;
-
       // Make sure the selection is in a single text node with a linkType Mark and 
       // that the full link is selected in the view.
       selectFullLink(view);
@@ -19601,35 +19812,54 @@
   function insertTableCommand(rows, cols) {
       const commandAdapter = (viewState, dispatch, view) => {
           let state = view?.state ?? viewState;
-          const selection = state.selection;
           const nodeTypes = state.schema.nodes;
-          let firstP;
           const table_rows = [];
           for (let j = 0; j < rows; j++) {
               const table_cells = [];
               for (let i = 0; i < cols; i++) {
                   const paragraph = state.schema.node('paragraph');
-                  if ((i == 0) && (j == 0)) firstP = paragraph;
                   table_cells.push(nodeTypes.table_cell.create(null, paragraph));
               }
               table_rows.push(nodeTypes.table_row.create(null, table_cells));
           }
-          const table = nodeTypes.table.createChecked(null, table_rows);
+          const table = nodeTypes.table.create(null, table_rows);
           if (!table) return false;     // Something went wrong, like we tried to insert it at a disallowed spot
-
           if (dispatch) {
               // Replace the existing selection and track the transaction
               let transaction = view.state.tr.replaceSelectionWith(table, false);
-              // Locate the first paragraph position in the transaction's doc
+              // Locate the table we just inserted in the transaction's doc.
+              // Note that because pPos can be 0 or 1, we really need to check 
+              // explicityly on undefined to terminate nodesBetween traversal.
               let pPos;
-              transaction.doc.nodesBetween(selection.from, selection.from + table.nodeSize, (node, pos) => {
-                  if (node === firstP) {
+              let from = transaction.selection.from;
+              let to = transaction.selection.to;
+              transaction.doc.nodesBetween(from, to, (node, pos) => {
+                  if (node === table) {
                       pPos = pos;
-                      return false;
-                  }                return true;
+                  }                return (pPos == undefined);    // Keep going if pPos hasn't been defined
               });
-              // Set the selection in the first cell, apply it to the state and  the view
-              const textSelection = TextSelection.near(transaction.doc.resolve(pPos));
+              // After we replace the selection with the table, you would think that 
+              // the transaction.selection.from and to would encompass the table, but 
+              // they do not necessarily. IOW if you do transaction.doc.nodesBetween 
+              // on from and to, you should find the table, right? Not always, so if 
+              // we didn't emerge with pPos defined, just look for the thing across 
+              // the entire doc as a backup.
+              if (pPos == undefined) {
+                  transaction.doc.nodesBetween(0, transaction.doc.content.size, (node, pos) => {
+                      if (node === table) {
+                          pPos = pos;
+                      }                    return (pPos == undefined);    // Keep going if pPos hasn't been defined
+                  });
+              }
+              // Set the selection in the first cell, apply it to the state and the view.
+              // We have to special-case for empty documents to get selection in the 1st cell.
+              let empty = (view.state.doc.textContent.length == 0);
+              let textSelection;
+              if (empty) {
+                  textSelection = TextSelection.near(transaction.doc.resolve(pPos), -1);
+              } else {
+                  textSelection = TextSelection.near(transaction.doc.resolve(pPos));
+              }
               transaction = transaction.setSelection(textSelection);
               state = state.apply(transaction);
               view.updateState(state);
@@ -20076,95 +20306,244 @@
       return node && (node.nodeName === 'A');
   }
 
+  class DOMAccess {
+
+      constructor(prefix) {
+          this.prefix = prefix ?? 'Markup';
+      }
+
+      setPrefix(prefix) {
+          this.prefix = prefix;
+      }
+
+      /**
+       * Return the toolbar div in `view`
+       * @param {EditorView} view 
+       * @returns {HTMLDivElement}  The toolbar div in the view
+       */
+      getToolbar() {
+          return document.getElementById(this.prefix + "-toolbar");
+      }
+
+      getSearchItem() {
+          return document.getElementById(this.prefix + '-searchitem')
+      }
+
+      getSearchbar() {
+          return document.getElementById(this.prefix + "-searchbar");
+      }
+
+      getToolbarMore() {
+          return document.getElementById(this.prefix + "-toolbar-more")
+      }
+
+      getWrapper() {
+          return this.getToolbar().parentElement;
+      }
+
+      /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
+      addPromptShowing() {
+          setClass(getWrapper(), promptShowing(), true);
+      }
+
+      /** Removing promptShowing class on wrapper lets wrapper scroll again */
+      removePromptShowing() {
+          setClass(getWrapper(), promptShowing(), false);
+      }
+
+      promptShowing() {
+          return this.prefix + "-prompt-showing"
+      }
+
+      searchbarShowing() {
+          return this.prefix + "-searchbar-showing"
+      }
+
+      searchbarHidden() {
+          return this.prefix + "-searchbar-hidden"
+      }
+
+  }
+
+  let domAccess = new DOMAccess();
+  const prefix = domAccess.prefix;
+  const setPrefix = domAccess.setPrefix.bind(domAccess);
+  const getToolbar = domAccess.getToolbar.bind(domAccess);
+  domAccess.getSearchItem.bind(domAccess);
+  const getSearchbar = domAccess.getSearchbar.bind(domAccess);
+  const getToolbarMore = domAccess.getToolbarMore.bind(domAccess);
+  const getWrapper = domAccess.getWrapper.bind(domAccess);
+  const addPromptShowing = domAccess.addPromptShowing.bind(domAccess);
+  const removePromptShowing = domAccess.removePromptShowing.bind(domAccess);
+  const promptShowing = domAccess.promptShowing.bind(domAccess);
+  const searchbarShowing = domAccess.searchbarShowing.bind(domAccess);
+  const searchbarHidden = domAccess.searchbarHidden.bind(domAccess);
+
+  function getMarkupEditorConfig() {
+    return JSON.parse(window.sessionStorage.getItem("markupEditorConfig"))
+  }
+
+  function setMarkupEditorConfig(config) {
+      window.sessionStorage.setItem("markupEditorConfig", JSON.stringify(config));
+  }
+
   /**
-   * Adapted, expanded, and copied-from prosemirror-menu under MIT license.
-   * Original prosemirror-menu at https://github.com/prosemirror/prosemirror-menu.
    * 
-   * Adaptations:
-   *  - Modify buildMenuItems to use a `config` object that specifies visibility and content
-   *  - Use separate buildKeymap in keymap.js with a `config` object that specifies key mappings
-   *  - Modify icons to use SVG from Google Material Fonts
-   *  - Allow Dropdown menus to be icons, not just labels
-   *  - Replace use of prompt with custom dialogs for links and images
-   * 
-   * Expansions:
-   *  - Added table support using MarkupEditor capabilities for table editing
-   *  - Use MarkupEditor capabilities for list/denting across range
-   *  - Use MarkupEditor capability for toggling and changing list types
-   *  - Added SearchItem, LinkItem, ImageItem
-   *  - Added TableCreateSubmenu and TableInsertItem in support of table creation
-   *  - Added ParagraphStyleItem to support showing font sizes for supported styles
-   * 
-   * Copied:
-   *  - MenuItem
-   *  - Dropdown
-   *  - DropdownSubmenu
-   *  - Various "helper methods" returning MenuItems
+   * @param {EditorView}  view
+   * @param {string} text Text to be translated
+   * @returns {string}    The translated text if the view supports it
    */
-
-
-  let prefix;
+  function translate(view, text) {
+      return view._props.translate ? view._props.translate(text) : text;
+  }
+  /**
+   * Add or remove a class from the element.
+   * 
+   * Apparently a workaround for classList.toggle being broken in IE11
+   * 
+   * @param {HTMLElement}  dom 
+   * @param {string}          cls The class name to add or remove
+   * @param {boolean}         on  True to add the class name to the `classList`
+   */
+  function setClass(dom, cls, on) {
+      if (on)
+          dom.classList.add(cls);
+      else
+          dom.classList.remove(cls);
+  }
 
   /**
-   * The `markupMenuConfig` is the default for the MarkupEditor. It can be overridden
-   * by modifying it before you instantiate the MarkupEditor.
-   * 
-   * To customize the menu bar, for example, in your index.html:
-   * 
-   *    let menuConfig = MU.markupMenuConfig;         // Grab the standard menu config as a baseline
-   *    menuConfig.visibility.correctionBar = true;   // Turn on undo/redo
-   *    const markupEditor = new MU.MarkupEditor(
-   *      document.querySelector('#editor'),
-   *      '<h1>Hello, world!</h1>'
-   *    )
-   *    
-   * Turn off entire toolbars and menus using the "visibility" settings. Turn off specific items
-   * within a toolbar or menu using the settings specific to that toolbar or menu.
+   *  A set of MarkupEditor icons. Used to identify the icon for a 
+   * `MenuItem` by specifying the `svg`. The `svg` value was obtained from
+   * https://fonts.google.com/icons for the icons identified in the comment,
+   * with the `fill` attribute removed so it can be set in css.
    */
-  const markupMenuConfig = {
-    "visibility": {             // Control the visibility of toolbars, etc
-      "toolbar": true,          // Whether the toolbar is visible at all
-      "correctionBar": false,   // Whether the correction bar (undo/redo) is visible
-      "insertBar": true,        // Whether the insert bar (link, image, table) is visible
-      "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
-      "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
-      "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
-      "tableMenu": true,        // Whether the table menu (create, add, delete, border) is visible
-      "search": true,           // Whether the search menu item (hide/show search bar) is visible
-    }, 
-    "insertBar": { 
-      "link": true,             // Whether the link menu item is visible
-      "image": true,            // Whether the image menu item is visible
-      "table": true,            // Whether the table menu is visible
-    }, 
-    "formatBar": { 
-      "bold": true,             // Whether the bold menu item is visible
-      "italic": true,           // Whether the italic menu item is visible
-      "underline": false,       // Whether the underline menu item is visible
-      "code": true,             // Whether the code menu item is visible
-      "strikethrough": true,    // Whether the strikethrough menu item is visible
-      "subscript": false,       // Whether the subscript menu item is visible
-      "superscript": false,     // Whether the superscript menu item is visible
-    }, 
-    "styleMenu": { 
-      "p": "Body",              // The label in the menu for "P" style
-      "h1": "H1",               // The label in the menu for "H1" style
-      "h2": "H2",               // The label in the menu for "H2" style
-      "h3": "H3",               // The label in the menu for "H3" style
-      "h4": "H4",               // The label in the menu for "H4" style
-      "h5": "H5",               // The label in the menu for "H5" style
-      "h6": "H6",               // The label in the menu for "H6" style
-      "pre": "Code" ,           // The label in the menu for "PRE" aka code_block style
-    }, 
-    "styleBar": { 
-      "list": true,             // Whether bullet and numbered list items are visible
-      "dent": true,             // Whether indent and outdent items are visible
-    }, 
-    "tableMenu": { 
-      "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
-      "border": true,           // Whether the "Border" item is visible in the "Table" menu
+  const icons = {
+    undo: {
+      // <span class="material-icons-outlined">undo</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>'
     },
+    redo: {
+      // <span class="material-icons-outlined">redo</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>'
+    },
+    strong: {
+      // <span class="material-icons-outlined">format_bold</span>
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>`
+    },
+    em: {
+      // <span class="material-icons-outlined">format_italic</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>'
+    },
+    u: {
+      // <span class="material-icons-outlined">format_underlined</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>'
+    },
+    s: {
+      // <span class="material-icons-outlined">strikethrough_s</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>'
+    },
+    code: {
+      // <span class="material-icons-outlined">data_object</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>'
+    },
+    sub: {
+      // <span class="material-icons-outlined">subscript</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>'
+    },
+    sup: {
+      // <span class="material-icons-outlined">superscript</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>'
+    },
+    link: {
+      // <span class="material-icons-outlined">link</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
+    },
+    image: {
+      // <span class="material-icons-outlined">image</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>'
+    },
+    table: {
+      // <span class="material-icons-outlined">table</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>'
+    },
+    bulletList: {
+      // <span class="material-icons-outlined">format_list_bulleted</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>'
+    },
+    orderedList: {
+      // <span class="material-icons-outlined">format_list_numbered</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>'
+    },
+    blockquote: {
+      // <span class="material-icons-outlined">format_indent_increase</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>'
+    },
+    lift: {
+      // <span class="material-icons-outlined">format_indent_decrease</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>'
+    },
+    search: {
+      // <span class="material-symbols-outlined">search</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>'
+    },
+    searchForward: {
+      // <span class="material-symbols-outlined">chevron_forward</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>'
+    },
+    searchBackward: {
+      // <span class="material-symbols-outlined">chevron_backward</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>'
+    },
+    matchCase: {
+      // <span class="material-symbols-outlined">match_case</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>'
+    },
+    paragraphStyle: {
+      // <span class="material-symbols-outlined">format_paragraph</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>'
+    },
+    more: {
+      // <span class="material-symbols-outlined">more_horiz</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
+    }
   };
+
+  function getIcon(root, icon) {
+      let doc = (root.nodeType == 9 ? root : root.ownerDocument) || document;
+      let node = doc.createElement("span");
+      node.className = prefix + "-icon";
+      node.innerHTML = icon.svg;
+      return node;
+  }
+
+  function crelt() {
+    var elt = arguments[0];
+    if (typeof elt == "string") elt = document.createElement(elt);
+    var i = 1, next = arguments[1];
+    if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
+      for (var name in next) if (Object.prototype.hasOwnProperty.call(next, name)) {
+        var value = next[name];
+        if (typeof value == "string") elt.setAttribute(name, value);
+        else if (value != null) elt[name] = value;
+      }
+      i++;
+    }
+    for (; i < arguments.length; i++) add(elt, arguments[i]);
+    return elt
+  }
+
+  function add(elt, child) {
+    if (typeof child == "string") {
+      elt.appendChild(document.createTextNode(child));
+    } else if (child == null) ; else if (child.nodeType != null) {
+      elt.appendChild(child);
+    } else if (Array.isArray(child)) {
+      for (var i = 0; i < child.length; i++) add(elt, child[i]);
+    } else {
+      throw new RangeError("Unsupported child node: " + child)
+    }
+  }
 
   /**
   An icon or label that, when clicked, executes a command.
@@ -20205,8 +20584,12 @@
         dom.style.cssText += spec.css;
       dom.addEventListener("mousedown", e => {
         e.preventDefault();
-        if (!dom.classList.contains(prefix + "-disabled"))
-          spec.run(view.state, view.dispatch, view, e);
+        if (!dom.classList.contains(prefix + "-disabled")) {
+          let result = spec.run(view.state, view.dispatch, view, e);
+          if (spec.callback) {
+            spec.callback(result);
+          }
+        }
       });
 
       function update(state) {
@@ -20387,17 +20770,904 @@
     }
   }
 
+  class ParagraphStyleItem {
+
+    constructor(nodeType, style, options) {
+      this.style = style;
+      this.label = options["label"] ?? "Unknown";  // It should always be specified
+      this.keymap = options["keymap"];             // It may or may not exist
+      this.item = this.paragraphStyleItem(nodeType, style, options);
+    }
+
+    paragraphStyleItem(nodeType, style, options) {
+      let command = setStyleCommand(style);
+      let passedOptions = {
+          run: command,
+          enable(state) { return command(state) },
+          active(state) {
+              let { $from, to, node } = state.selection;
+              if (node)
+                  return node.hasMarkup(nodeType, options.attrs);
+              return to <= $from.end() && $from.parent.hasMarkup(nodeType, options.attrs);
+          }
+      };
+      for (let prop in options)
+          passedOptions[prop] = options[prop];
+      return new MenuItem(passedOptions);
+    }
+
+    render(view) {
+      let {dom, update} = this.item.render(view);
+      let keymapElement = crelt ('span', {class: prefix + '-stylelabel-keymap'}, this.keymap);
+      // Add some space between the label and keymap, css uses whitespace: pre to preserve it
+      let styledElement = crelt(this.style, {class: prefix + '-stylelabel'}, this.label + '  ', keymapElement);
+      dom.replaceChild(styledElement, dom.firstChild);
+      return {dom, update}
+    }
+  }
+
+  /**
+   * DialogItem provides common functionality for MenuItems that present dialogs next to 
+   * a selection, such as LinkItem and ImageItem. The shared functionality mainly deals 
+   * with opening, closing, and positioning the dialog so it stays in view as much as possible.
+   * Each of the subclasses defines its `dialogWidth` and `dialogHeight` and deals with its 
+   * own content/layout.
+   */
+  class DialogItem {
+
+      constructor(config) {
+          this.config = config;
+          this.dialog = null;
+          this.selectionDiv = null;
+          this.selectionDivRect = null;
+      }
+
+      /**
+       * Command to open the link dialog and show it modally.
+       *
+       * @param {EditorState} state 
+       * @param {fn(tr: Transaction)} dispatch 
+       * @param {EditorView} view 
+       */
+      openDialog(state, dispatch, view) {
+          this.createDialog(view);
+          this.dialog.show();
+      }
+
+      /**
+       * Create and append a div that encloses the selection, with a class that displays it properly.
+       */
+      setSelectionDiv() {
+          this.selectionDiv = crelt('div', { id: prefix + '-selection', class: prefix + '-selection' });
+          this.selectionDiv.style.top = this.selectionDivRect.top + 'px';
+          this.selectionDiv.style.left = this.selectionDivRect.left + 'px';
+          this.selectionDiv.style.width = this.selectionDivRect.width + 'px';
+          this.selectionDiv.style.height = this.selectionDivRect.height + 'px';
+          getWrapper().appendChild(this.selectionDiv);
+      }
+
+      /**
+       * Return an object with location and dimension properties for the selection rectangle.
+       * @returns {Object}  The {top, left, right, width, height, bottom} of the selection.
+       */
+      getSelectionDivRect() {
+          let wrapper = view.dom.parentElement;
+          let originY = wrapper.getBoundingClientRect().top;
+          let originX = wrapper.getBoundingClientRect().left;
+          let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
+          let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
+          let selrect = getSelectionRect();
+          let top = selrect.top + scrollY - originY;
+          let left = selrect.left + scrollX - originX;
+          let right = selrect.right;
+          let width = selrect.right - selrect.left;
+          let height = selrect.bottom - selrect.top;
+          let bottom = selrect.bottom;
+          return { top: top, left: left, right: right, width: width, height: height, bottom: bottom }
+      }
+
+      /**
+       * Set the `dialog` location on the screen so it is adjacent to the selection.
+       */
+      setDialogLocation() {
+          let dialogHeight = this.dialogHeight;
+          let dialogWidth = this.dialogWidth;
+
+          // selRect is the position within the document. So, doesn't change even if the document is scrolled.
+          let selrect = this.selectionDivRect;
+
+          // The dialog needs to be positioned within the document regardless of scroll, too, but the position is
+          // set based on the direction from selrect that has the most screen real-estate. We always prefer right 
+          // or left of the selection if we can fit it in the visible area on either side. We can bias it as 
+          // close as we can to the vertical center. If we can't fit it right or left, then we will put it above
+          // or below, whichever fits, biasing alignment as close as we can to the horizontal center.
+          // Generally speaking, the selection itself is on the screen, so we want the dialog to be adjacent to 
+          // it with the best chance of showing the entire dialog.
+          let wrapper = view.dom.parentElement;
+          let originX = wrapper.getBoundingClientRect().left;
+          let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
+          let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
+          let style = this.dialog.style;
+          let toolbarHeight = getToolbar().getBoundingClientRect().height;
+          let minTop = toolbarHeight + scrollY + 4;
+          let maxTop = scrollY + innerHeight - dialogHeight - 4;
+          let minLeft = scrollX + 4;
+          let maxLeft = innerWidth - dialogWidth - 4;
+          let fitsRight = window.innerWidth - selrect.right - scrollX > dialogWidth + 4;
+          let fitsLeft = selrect.left - scrollX > dialogWidth + 4;
+          let fitsTop = selrect.top - scrollY - toolbarHeight > dialogHeight + 4;
+          if (fitsRight) {           // Put dialog right of selection
+              style.left = selrect.right + 4 + scrollX - originX + 'px';
+              style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
+          } else if (fitsLeft) {     // Put dialog left of selection
+              style.left = selrect.left - dialogWidth - 4 + scrollX - originX + 'px';
+              style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
+          } else if (fitsTop) {     // Put dialog above selection
+              style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
+              style.top = Math.min(Math.max((selrect.top - dialogHeight - 4), minTop), maxTop) + 'px';
+          } else {                                          // Put dialog below selection, even if it's off the screen somewhat
+              style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
+              style.top = Math.min((selrect.bottom + 4), maxTop) + 'px';
+          }
+      }
+
+      /**
+       * Close the dialog, deleting the dialog and selectionDiv and clearing out state.
+       */
+      closeDialog() {
+          removePromptShowing();
+          this.toolbarOverlay?.parentElement?.removeChild(this.toolbarOverlay);
+          this.overlay?.parentElement?.removeChild(this.overlay);
+          this.selectionDiv?.parentElement?.removeChild(this.selectionDiv);
+          this.selectionDiv = null;
+          this.dialog?.close();
+          this.dialog?.parentElement?.removeChild(this.dialog);
+          this.dialog = null;
+          this.okUpdate = null;
+          this.cancelUpdate = null;
+      }
+
+      /**
+       * Show the MenuItem that LinkItem holds in its `item` property.
+       * @param {EditorView} view 
+       * @returns {Object}    The {dom, update} object for `item`.
+       */
+      render(view) {
+          return this.item.render(view);
+      }
+
+  }
+
+  /**
+   * Represents the link MenuItem in the toolbar, which opens the link dialog and maintains its state.
+   */
+  class LinkItem extends DialogItem {
+
+    constructor(config) {
+      super(config);
+      let keymap = this.config.keymap;
+      let options = {
+        enable: () => { return true }, // Always enabled because it is presented modally
+        active: (state) => { return markActive(state, state.schema.marks.link) },
+        title: 'Insert/edit link' + keyString('link', keymap),
+        icon: icons.link
+      };
+
+      // If `behavior.insertLink` is true, the LinkItem just invokes the delegate's 
+      // `markupInsertLink` method, passing the `state`, `dispatch`, and `view` like any 
+      // other command. Otherwise, we use the default dialog.
+      if ((this.config.behavior.insertLink) && (this.config.delegate?.markupInsertLink)) {
+        this.command = this.config.delegate.markupInsertLink;
+      } else {
+        this.command = this.openDialog.bind(this);
+      }
+      this.item = cmdItem(this.command, options);
+
+      // We need the dialogHeight and width because we can only position the dialog top and left. 
+      // You would think that an element could be positioned by specifying right and bottom, but 
+      // apparently not. Even when width is fixed, specifying right doesn't work. The values below
+      // are dependent on toolbar.css for .Markup-prompt-link.
+      this.dialogHeight = 104;
+      this.dialogWidth = 317;
+    }
+
+    /**
+     * Create the dialog element for adding/modifying links. Append it to the wrapper after the toolbar.
+     * 
+     * @param {EditorView} view 
+     */
+    createDialog(view) {
+      this.href = getLinkAttributes().href;   // href is what is linked-to, undefined if there is no link at selection
+
+      // Select the full link if the selection is in one, and then set selectionDivRect that surrounds it
+      selectFullLink(view);
+      this.selectionDivRect = this.getSelectionDivRect();
+
+      // Show the selection, because the view is not focused, so it doesn't otherwise show up
+      this.setSelectionDiv();
+
+      // Create the dialog in the proper position
+      this.dialog = crelt('dialog', { class: prefix + '-prompt', contenteditable: 'false' });
+      setClass(this.dialog, prefix + '-prompt-link', true);
+      this.setDialogLocation();
+
+      let title = crelt('p', (this.href) ? 'Edit link' : 'Insert link');
+      this.dialog.appendChild(title);
+
+      this.setInputArea(view);
+      this.setButtons(view);
+      this.okUpdate(view.state);
+      this.cancelUpdate(view.state);
+      
+      let wrapper = getWrapper();
+      addPromptShowing();
+      wrapper.appendChild(this.dialog);
+
+      // Add an overlay so we can get a modal effect without using showModal
+      // showModal puts the dialog in the top-layer, so it slides over the toolbar 
+      // when scrolling and ignores z-order. Good article: https://bitsofco.de/accessible-modal-dialog/.
+      // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
+      // because it sits at a higher z-level than the prompt and overlay.
+      this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
+      this.overlay.addEventListener('click', e => {
+        this.closeDialog();
+      });
+      wrapper.appendChild(this.overlay);
+
+      this.toolbarOverlay = crelt('div', {class: prefix + '-toolbar-overlay', tabindex: "-1", contenteditable: 'false'});
+      if (getSearchbar()) {
+        setClass(this.toolbarOverlay, searchbarShowing(), true);
+      } else {
+        setClass(this.toolbarOverlay, searchbarHidden(), true);
+      }
+      this.toolbarOverlay.addEventListener('click', e => {
+        this.closeDialog();
+      });
+      wrapper.appendChild(this.toolbarOverlay);
+    }
+
+    /**
+     * Create and add the input element for the URL.
+     * 
+     * Capture Enter to perform the command of the active button, either OK or Cancel.
+     * 
+     * @param {*} view 
+     */
+    setInputArea(view) {
+      this.hrefArea = crelt('input', { type: 'text', placeholder: 'Enter url...' });
+      this.hrefArea.value = this.href ?? '';
+      this.hrefArea.addEventListener('input', () => {
+        if (this.isValid()) {
+          setClass(this.okDom, 'Markup-menuitem-disabled', false);
+        } else {
+          setClass(this.okDom, 'Markup-menuitem-disabled', true);
+        }      this.okUpdate(view.state);
+        this.cancelUpdate(view.state);
+      });
+      this.hrefArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (this.isValid()) {
+            this.insertLink(view.state, view.dispatch, view);
+          } else {
+            this.closeDialog();
+          }
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+        } else if (e.key === 'Escape') {
+          this.closeDialog();
+        }
+      });
+      this.dialog.appendChild(this.hrefArea);
+    }
+
+    /**
+     * Create and append the buttons in the `dialog`.
+     * 
+     * Track the `dom` and `update` properties for the OK and Cancel buttons so we can show when
+     * they are active as a way to indicate the default action on Enter in the `hrefArea`.
+     * 
+     * @param {EditorView} view 
+     */
+    setButtons(view) {
+      let buttonsDiv = crelt('div', { class: prefix + '-prompt-buttons' });
+      this.dialog.appendChild(buttonsDiv);
+
+      // Only insert the Remove button if we have a link selected
+      if (this.isValid()) {
+        let removeItem = cmdItem(this.deleteLink.bind(this), {
+          class: prefix + '-menuitem',
+          title: 'Remove',
+          enable: () => { return true }
+        });
+        let {dom} = removeItem.render(view);
+        buttonsDiv.appendChild(dom);
+      }
+
+      // Insert the dropdown to identify local links to headers
+      let localRefDropdown = this.getLocalRefDropdown();
+      if (localRefDropdown) {
+        let {dom: localRefDom} = localRefDropdown.render(view);
+        let itemWrapper = crelt('span', {class: prefix + '-menuitem'}, localRefDom);
+        buttonsDiv.appendChild(itemWrapper);
+      } else {
+        let spacer = crelt('div', document.createTextNode('\u200b'));
+        buttonsDiv.appendChild(spacer);
+      }
+
+      let group = crelt('div', {class: prefix + '-prompt-buttongroup'});
+      let okItem = cmdItem(this.insertLink.bind(this), {
+        class: prefix + '-menuitem',
+        title: 'OK',
+        active: () => {
+          return this.isValid()
+        },
+        enable: () => {
+          return this.isValid()
+        }
+      });
+      let {dom: okDom, update: okUpdate} = okItem.render(view);
+      this.okDom = okDom;
+      this.okUpdate = okUpdate;
+      group.appendChild(this.okDom);
+
+      let cancelItem = cmdItem(this.closeDialog.bind(this), {
+        class: prefix + '-menuitem',
+        title: 'Cancel',
+        active: () => {
+          return !this.isValid()
+        },
+        enable: () => {
+          return true
+        }
+      });
+      let {dom: cancelDom, update: cancelUpdate} = cancelItem.render(view);
+      this.cancelDom = cancelDom;
+      this.cancelUpdate = cancelUpdate;
+      group.appendChild(this.cancelDom);
+
+      buttonsDiv.appendChild(group);
+    }
+
+    getLocalRefDropdown() {
+      let localRefItems = this.getLocalRefItems();
+      if (localRefItems.length == 0) { return null }
+      return new Dropdown(localRefItems, {
+        title: 'Insert link to header',
+        label: 'H1-6'
+        // Note: enable doesn't work for Dropdown
+      })
+    }
+
+    getLocalRefItems() {
+      let submenuItems = [];
+      let headersByLevel = headers(view.state);
+      for (let i = 1; i < 7; i++) {
+        let hTag = 'H' + i.toString();
+        let menuItems = [];
+        let hNodes = headersByLevel[i];
+        if (hNodes && hNodes.length > 0) {
+          for (let j = 0; j < hNodes.length; j++) {
+            // Add a MenuItem that invokes the insertInternalLinkCommand passing the hTag and the index into hElements
+            menuItems.push(this.refMenuItem(hTag, j, hNodes[j].node.textContent));
+          }
+          submenuItems.push(new DropdownSubmenu(
+            menuItems, {
+            title: 'Link to ' + hTag,
+            label: hTag,
+            enable: () => { return menuItems.length > 0 }
+          }
+          ));
+        }
+      }
+      return submenuItems
+    }
+
+    // Return a MenuItem with class `prefex + menuitem-clipped` because the text inside of a header is unlimited.
+    // The `insertInternalLinkCommand` executes the callback providing a unique id for the header based on its 
+    // contents, along with the tag and index into headers with that tag in the document being edited.
+    refMenuItem(hTag, index, label) {
+      return cmdItem(
+        idForInternalLinkCommand(hTag, index), 
+        { 
+          label: label, 
+          class: prefix + '-menuitem-clipped',
+          callback: (result) => { 
+            if (result) {
+              this.hTag = result.hTag;
+              this.index = result.index;
+              this.id = '#' + result.id;
+              this.hrefArea.value = this.id;
+              this.okUpdate(view.state);
+              this.cancelUpdate(view.state);
+            }
+          }
+        }
+      )
+    }
+
+    // Return true if `hrefValue()` is a valid ID for a header or if the URL can be parsed.
+    // A valid ID begins with # and has no whitespace in it.
+    isValid() {
+      let href = this.hrefValue();
+      return (this.isInternalLink() && (href.indexOf(' ') == -1)) || URL.canParse(href)
+    }
+
+    /**
+     * Return the string from the `hrefArea`.
+     * @returns {string}
+     */
+    hrefValue() {
+      return this.hrefArea.value
+    }
+
+    /**
+     * Insert the link provided in the hrefArea if it's valid, deleting any existing link first. Close if it worked.
+     * 
+     * @param {EditorState} state 
+     * @param {fn(tr: Transaction)} dispatch 
+     * @param {EditorView} view 
+     */
+    insertLink(state, dispatch, view) {
+      if (!this.isValid()) return;
+      if (this.href) deleteLinkCommand()(state, dispatch, view);
+      let command;
+      if (this.isInternalLink()) {
+        // It could have been edited, not just inserted by selecting from H1-6
+        if (this.hrefValue() == this.id) {
+          // Id was set from H1=6 and nothing has changed. So, insert the link
+          // based on the hTag and its index into headers with that hTag.
+          command = insertInternalLinkCommand(this.hTag, this.index);
+        } else {
+          // Otherwise, just insert the link to an ID, which may not exist
+          command = insertLinkCommand(this.hrefValue());
+        }
+      } else {
+        command = insertLinkCommand(this.hrefValue());
+      }
+      let result = command(view.state, view.dispatch);
+      if (result) this.closeDialog();
+    }
+
+    isInternalLink() {
+      return this.hrefValue().startsWith('#')
+    }
+
+    /**
+     * Delete the link at the selection. Close if it worked.
+     * 
+     * @param {EditorState} state 
+     * @param {fn(tr: Transaction)} dispatch 
+     * @param {EditorView} view 
+     */
+    deleteLink(state, dispatch, view) {
+      let command = deleteLinkCommand();
+      let result = command(state, dispatch, view);
+      if (result) this.closeDialog();
+    }
+
+  }
+
+  /**
+   * Represents the image MenuItem in the toolbar, which opens the image dialog and maintains its state.
+   * Requires commands={getImageAttributes, insertImageCommand, modifyImageCommand, getSelectionRect}
+   */
+  class ImageItem extends DialogItem {
+
+    constructor(config) {
+      super(config);
+      let options = {
+        enable: () => { return true }, // Always enabled because it is presented modally
+        active: (state) => { return getImageAttributes(state).src  },
+        title: 'Insert/edit image' + keyString('image', config.keymap),
+        icon: icons.image
+      };
+
+      // If `behavior.insertImage` is true, the ImageItem just invokes the delegate's 
+      // `markupInsertImage` method, passing the `state`, `dispatch`, and `view` like any 
+      // other command. Otherwise, we use the default dialog.
+      if ((config.behavior.insertImage) && (config.delegate?.markupInsertImage)) {
+        this.command = config.delegate.markupInsertImage;
+      } else {
+        this.command = this.openDialog.bind(this);
+      }
+
+      this.item = cmdItem(this.command, options);
+      this.isValid = false;
+      this.preview = null;
+
+      // We need the dialogHeight and width because we can only position the dialog top and left. 
+      // You would think that an element could be positioned by specifying right and bottom, but 
+      // apparently not. Even when width is fixed, specifying right doesn't work. The values below
+      // are dependent on toolbar.css for .Markup-prompt-image.
+      this.dialogHeight = 134;
+      this.dialogWidth = 317;
+    }
+
+    /**
+     * Create the dialog element for adding/modifying images. Append it to the wrapper after the toolbar.
+     * 
+     * @param {EditorView} view 
+     */
+    createDialog(view) {
+      let {src, alt} = getImageAttributes(view.state);
+      this.src = src;   // src for the selected image, undefined if there is no image at selection
+      this.alt = alt;
+
+      // Set selectionDivRect that surrounds the selection
+      this.selectionDivRect = this.getSelectionDivRect();
+
+      // Show the selection, because the view is not focused, so it doesn't otherwise show up
+      this.setSelectionDiv();
+
+      // Create the dialog in the proper position
+      this.dialog = crelt('dialog', { class: prefix + '-prompt', contenteditable: 'false' });
+      setClass(this.dialog, prefix + '-prompt-image', true);
+      this.setDialogLocation();
+
+      let title = crelt('p', (this.src) ? 'Edit image' : 'Insert image');
+      this.dialog.appendChild(title);
+
+      this.setInputArea(view);
+      this.setButtons(view);
+      this.updatePreview();
+
+      let wrapper = getWrapper();
+      addPromptShowing();
+      wrapper.appendChild(this.dialog);
+
+      // Add an overlay so we can get a modal effect without using showModal
+      // showModal puts the dialog in the top-laver, so it slides over the toolbar 
+      // when scrolling and ignores z-order. Good article: https://bitsofco.de/accessible-modal-dialog/.
+      // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
+      // because it sits at a higher z-level than the prompt and overlay.
+      this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
+      this.overlay.addEventListener('click', e => {
+        this.closeDialog();
+      });
+      wrapper.appendChild(this.overlay);
+      this.toolbarOverlay = crelt('div', {class: prefix + '-toolbar-overlay', tabindex: "-1", contenteditable: 'false'});
+      if (getSearchbar()) {
+        setClass(this.toolbarOverlay, searchbarShowing(), true);
+      } else {
+        setClass(this.toolbarOverlay, searchbarHidden(), true);
+      }
+      this.toolbarOverlay.addEventListener('click', e => {
+        this.closeDialog();
+      });
+      wrapper.appendChild(this.toolbarOverlay);
+    }
+
+    /**
+     * Create and add the input elements.
+     * 
+     * Capture Enter to perform the command of the active button, either OK or Cancel.
+     * 
+     * @param {*} view 
+     */
+    setInputArea(view) {
+      this.srcArea = crelt('input', { type: 'text', placeholder: 'Enter url...' });
+      this.srcArea.value = this.src ?? '';
+      this.srcArea.addEventListener('input', () => {
+        // Update the img src as we type, which will cause this.preview to load, which may result in 
+        // "Not allowed to load local resource" at every keystroke until the image loads properly.
+        this.updatePreview();
+      });
+      this.srcArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (this.isValid) {
+            this.insertImage(view.state, view.dispatch, view);
+          } else {
+            this.closeDialog();
+          }
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          this.altArea.focus();
+        } else if (e.key === 'Escape') {
+          this.closeDialog();
+        }
+      });
+      this.dialog.appendChild(this.srcArea);
+
+      this.altArea = crelt('input', { type: 'text', placeholder: 'Enter description...' });
+      this.altArea.value = this.alt ?? '';
+      this.altArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (this.isValid) {
+            this.insertImage(view.state, view.dispatch, view);
+          } else {
+            this.closeDialog();
+          }
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          this.srcArea.focus();
+        } else if (e.key === 'Escape') {
+          this.closeDialog();
+        }
+      });
+      this.dialog.appendChild(this.altArea);
+    }
+
+    /**
+     * Create and append the buttons in the `dialog`.
+     * 
+     * Track the `dom` and `update` properties for the OK and Cancel buttons so we can show when
+     * they are active as a way to indicate the default action on Enter in the input areas.
+     * 
+     * @param {EditorView} view 
+     */
+    setButtons(view) {
+      let buttonsDiv = crelt('div', { class: prefix + '-prompt-buttons' });
+      this.dialog.appendChild(buttonsDiv);
+
+      // When local images are allowed, we insert a "Select..." button that will bring up a 
+      // file chooser. However, the MarkupEditor can't do that itself, so it invokes the 
+      // delegate's `markupSelectImage` method if it exists. Thus, when `selectImage` is 
+      // true in BehaviorConfig, that method should exist. It should bring up a file chooser
+      // and then invoke `MU.insertImage`.
+      if (this.config.behavior.selectImage) {
+        this.preview = null;
+        let selectItem = cmdItem(this.selectImage.bind(this), {
+          class: prefix + '-menuitem',
+          title: 'Select...',
+          active: () => { return false },
+          enable: () => { return true }
+        });
+        let {dom, update} = selectItem.render(view);
+        buttonsDiv.appendChild(dom);
+      } else {
+        // If there is no Select button, we insert a tiny preview to help.
+        this.preview = this.getPreview();
+        buttonsDiv.appendChild(this.preview);
+      }
+
+      let group = crelt('div', {class: prefix + '-prompt-buttongroup'});
+      let okItem = cmdItem(this.insertImage.bind(this), {
+        class: prefix + '-menuitem',
+        title: 'OK',
+        active: () => {
+          return this.isValid
+        },
+        enable: () => {
+          // We enable the OK button to allow saving even invalid src values. For example, 
+          // maybe you are offline and can't reach a URL or you will later put the image 
+          // file into place. However, pressing Enter will result in `closeDialog` being 
+          // executed unless the OK button is active; i.e., only if `srcValue()` is valid.
+          return this.srcValue().length > 0
+        }
+      });
+      let {dom: okDom, update: okUpdate} = okItem.render(view);
+      this.okDom = okDom;
+      this.okUpdate = okUpdate;
+      group.appendChild(this.okDom);
+
+      let cancelItem = cmdItem(this.closeDialog.bind(this), {
+        class: prefix + '-menuitem',
+        title: 'Cancel',
+        active: () => {
+          return !this.isValid
+        },
+        enable: () => {
+          return true
+        }
+      });
+      let {dom: cancelDom, update: cancelUpdate} = cancelItem.render(view);
+      this.cancelDom = cancelDom;
+      this.cancelUpdate = cancelUpdate;
+      group.appendChild(this.cancelDom);
+
+      buttonsDiv.appendChild(group);
+    }
+
+    getPreview() {
+      let preview = crelt('img');
+      preview.style.visibility = 'hidden';
+      preview.addEventListener('load', () => {
+        this.isValid = true;
+        preview.style.visibility = 'visible';
+        setClass(this.okDom, 'Markup-menuitem-disabled', false);
+        setClass(this.srcArea, 'invalid', false);
+        this.okUpdate(view.state);
+        this.cancelUpdate(view.state);
+      });
+      preview.addEventListener('error', (e) => {
+        this.isValid = false;
+        preview.style.visibility = 'hidden';
+        setClass(this.okDom, 'Markup-menuitem-disabled', true);
+        setClass(this.srcArea, 'invalid', true);
+        this.okUpdate(view.state);
+        this.cancelUpdate(view.state);
+      });
+      return preview
+    }
+
+    updatePreview() {
+      if (this.preview) this.preview.src = this.srcValue();
+    }
+
+    /**
+     * Return the string from the `srcArea`.
+     * @returns {string}
+     */
+    srcValue() {
+      return this.srcArea.value
+    }
+
+    /**
+     * Return the string from the `altArea`.
+     * @returns {string}
+     */
+    altValue() {
+      return this.altArea.value
+    }
+
+    /** Tell the delegate to select an image to insert, because we don't know how to do that */
+    selectImage(state, dispatch, view) {
+      this.closeDialog();
+      if (this.config.delegate?.markupSelectImage) this.config.delegate?.markupSelectImage(view);
+    }
+
+    /**
+     * Insert the image provided in the srcArea if it's valid, modifying image if it exists. Close if it worked.
+     * Note that the image that is saved might be not exist or be properly formed.
+     * 
+     * @param {EditorState} state 
+     * @param {fn(tr: Transaction)} dispatch 
+     * @param {EditorView} view 
+     */
+    insertImage(state, dispatch, view) {
+      let newSrc = this.srcValue();
+      let newAlt = this.altValue();
+      let command = (this.src) ? modifyImageCommand(newSrc, newAlt) : insertImageCommand(newSrc, newAlt);
+      let result = command(view.state, view.dispatch, view);
+      if (result) this.closeDialog();
+    }
+
+  }
+
+  /**
+   * A MenuItem that inserts a table of size rows/cols and invokes `onMouseover` when 
+   * the mouse is over it to communicate the size of table it will create when selected.
+   */
+  class TableInsertItem {
+
+    constructor(rows, cols, onMouseover, options) {
+      this.prefix = prefix + "-menuitem";
+      this.rows = rows;
+      this.cols = cols;
+      this.onMouseover = onMouseover;
+      this.command = insertTableCommand(this.rows, this.cols);
+      this.item = this.tableInsertItem(this.command, options);
+    }
+
+    tableInsertItem(command, options) {
+      let passedOptions = {
+        run: command,
+        enable(state) { return command(state); },
+      };
+      for (let prop in options)
+        passedOptions[prop] = options[prop];
+      return new MenuItem(passedOptions);
+    }
+
+    render(view) {
+      let {dom, update} = this.item.render(view);
+      dom.addEventListener('mouseover', e => {
+        this.onMouseover(this.rows, this.cols);
+      });
+      return {dom, update}
+    }
+
+  }
+
+  /**
+    A submenu for creating a table, which contains many TableInsertItems each of which 
+    will insert a table of a specific size. The items are bounded divs in a css grid 
+    layout that highlight to show the size of the table being created, so we end up with 
+    a compact way to display 24 TableInsertItems.
+    */
+  class TableCreateSubmenu {
+    constructor(options = {}) {
+      this.prefix = prefix + "-menu";
+      this.options = options;
+      this.content = [];
+      this.maxRows = 6;
+      this.maxCols = 4;
+      this.rowSize = 0;
+      this.colSize = 0;
+      for (let row = 0; row < this.maxRows; row++) {
+        for (let col = 0; col < this.maxCols; col++) {
+          // If we want the MenuItem div to respond to keydown, it needs to contain something, 
+          // in this case a non-breaking space. Just ' ' doesn't work.
+          let options = {
+            label: '\u00A0', 
+            active: () => {
+              return (row < this.rowSize) && (col < this.colSize)
+            }
+          };
+          let insertItem = new TableInsertItem(row + 1, col + 1, this.onMouseover.bind(this), options);
+          this.content.push(insertItem);
+        }
+      }
+    }
+
+    /**
+     * Track rowSize and columnSize as we drag over an item in the `sizer`.
+     * @param {number} rows 
+     * @param {number} cols 
+     */
+    onMouseover(rows, cols) {
+      this.rowSize = rows;
+      this.colSize = cols;
+      this.itemsUpdate(view.state);
+    }
+
+    resetSize() {
+      this.rowSize = 0;
+      this.colSize = 0;
+    }
+
+    /**
+    Renders the submenu.
+    */
+    render(view) {
+      let resetSize = this.resetSize.bind(this);
+      let options = this.options;
+      let items = renderDropdownItems(this.content, view);
+      this.itemsUpdate = items.update;  // Track the update method so we can update as the mouse is over items
+      let win = view.dom.ownerDocument.defaultView || window;
+      let label = crelt("div", { class: this.prefix + "-submenu-label" }, translate(view, this.options.label || ""));
+      let sizer = crelt("div", { class: this.prefix + "-tablesizer" }, items.dom);
+      let wrap = crelt("div", { class: this.prefix + "-submenu-wrap" }, label, sizer);
+      let listeningOnClose = null;
+      // Clear the sizer when the mouse moves outside of it
+      // It's not enough to just resetSize, because it doesn't clear properly until the 
+      // mouse is back over an item.
+      sizer.addEventListener("mouseleave", () => {this.onMouseover.bind(this)(0, 0);});
+      label.addEventListener("mousedown", e => {
+        e.preventDefault();
+        markMenuEvent(e);
+        setClass(wrap, this.prefix + "-submenu-wrap-active", false);
+        if (!listeningOnClose)
+          win.addEventListener("mousedown", listeningOnClose = () => {
+            if (!isMenuEvent(wrap)) {
+              wrap.classList.remove(this.prefix + "-submenu-wrap-active");
+              win.removeEventListener("mousedown", listeningOnClose);
+              listeningOnClose = null;
+            }
+          });
+      });
+      function update(state) {
+        resetSize();
+        let enabled = true;
+        if (options.enable) {
+          enabled = options.enable(state) || false;
+          setClass(label, this.prefix + "-disabled", !enabled);
+        }
+        let inner = items.update(state);
+        wrap.style.display = inner ? "" : "none";
+        return inner;
+      }
+      return { dom: wrap, update };
+    }
+
+  }
+
   /**
    * Represents the search MenuItem in the toolbar, which hides/shows the search bar and maintains its state.
    */
   class SearchItem {
 
-    constructor(keymap) {
+    constructor(config) {
+      let keymap = config.keymap;
       let options = {
         enable: (state) => { return true },
         active: (state) => { return this.showing() },
         title: 'Toggle search' + keyString('search', keymap),
-        icon: icons.search
+        icon: icons.search,
+        id: prefix + '-searchitem'
       };
       this.command = this.toggleSearch.bind(this);
       this.item = cmdItem(this.command, options);
@@ -20453,7 +21723,8 @@
       let idClass = prefix + "-searchbar";
       let searchbar = crelt("div", { class: idClass, id: idClass }, input);
       this.addSearchButtons(view, searchbar);
-      toolbar.parentElement.insertBefore(searchbar, toolbar.nextSibling);
+      let beforeTarget = getToolbarMore() ? getToolbarMore().nextSibling : toolbar.nextSibling;
+      toolbar.parentElement.insertBefore(searchbar, beforeTarget);
     }
 
     setStatus() {
@@ -20568,948 +21839,83 @@
 
   }
 
-  /**
-   * Represents the link MenuItem in the toolbar, which opens the link dialog and maintains its state.
-   */
-  class LinkItem {
+  /** A special item for showing a "more" button in the toolbar, which shows its `items` as a sub-toolbar */
+  class MoreItem {
 
-    constructor(keymap) {
+    constructor(items) {
       let options = {
-        enable: () => { return true }, // Always enabled because it is presented modally
-        active: (state) => { return markActive(state, state.schema.marks.link) },
-        title: 'Insert/edit link' + keyString('link', keymap),
-        icon: icons.link
+        enable: (state) => { return true },
+        active: (state) => { return this.showing() },
+        title: 'Show more',
+        icon: icons.more
       };
-      this.command = this.openLinkDialog.bind(this);
+      this.command = this.toggleMore.bind(this);
       this.item = cmdItem(this.command, options);
-      this.dialog = null;
-      this.selectionDiv = null;
+      this.items = items;
     }
 
-    /**
-     * Command to open the link dialog and show it modally.
-     *
-     * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
-     * @param {EditorView} view 
-     */
-    openLinkDialog(state, dispatch, view) {
-      this.createLinkDialog(view);
-      this.dialog.show();
+    showing() {
+      return getToolbarMore() != null;
     }
 
-    /**
-     * Create the dialog element for adding/modifying links. Append it to the wrapper after the toolbar.
-     * 
-     * @param {EditorView} view 
-     */
-    createLinkDialog(view) {
-      this.href = getLinkAttributes().href;   // href is what is linked-to, undefined if there is no link at selection
-
-      // Select the full link if the selection is in one, and then set selectionDivRect that surrounds it
-      selectFullLink(view);
-      this.selectionDivRect = this.getSelectionDivRect();
-
-      // Show the selection, because the view is not focused, so it doesn't otherwise show up
-      this.setSelectionDiv();
-
-      // Create the dialog in the proper position
-      this.dialog = crelt('dialog', { class: prefix + '-prompt', contenteditable: 'false' });
-      setClass(this.dialog, prefix + '-prompt-link', true);
-      this.setDialogLocation();
-
-      let title = crelt('p', (this.href) ? 'Edit link' : 'Insert link');
-      this.dialog.appendChild(title);
-
-      this.setInputArea(view);
-      this.setButtons(view);
-      this.okUpdate(view.state);
-      this.cancelUpdate(view.state);
-      
-      let wrapper = getWrapper();
-      addPromptShowing();
-      wrapper.appendChild(this.dialog);
-
-      // Add an overlay so we can get a modal effect without using showModal
-      // showModal puts the dialog in the top-layer, so it slides over the toolbar 
-      // when scrolling and ignores z-order. Good article: https://bitsofco.de/accessible-modal-dialog/.
-      // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
-      // because it sits at a higher z-level than the prompt and overlay.
-      this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
-      this.overlay.addEventListener('click', e => {
-        this.closeDialog();
-      });
-      wrapper.appendChild(this.overlay);
-
-      this.toolbarOverlay = crelt('div', {class: prefix + '-toolbar-overlay', tabindex: "-1", contenteditable: 'false'});
-      if (getSearchbar()) {
-        setClass(this.toolbarOverlay, searchbarShowing(), true);
+    toggleMore(state, dispatch, view) {
+      if (this.showing()) {
+        this.hideMore();
       } else {
-        setClass(this.toolbarOverlay, searchbarHidden(), true);
+        this.showMore(state, dispatch, view);
       }
-      this.toolbarOverlay.addEventListener('click', e => {
-        this.closeDialog();
-      });
-      wrapper.appendChild(this.toolbarOverlay);
+      this.update && this.update(state);
     }
 
-    /**
-     * Create and add the input element for the URL.
-     * 
-     * Capture Enter to perform the command of the active button, either OK or Cancel.
-     * 
-     * @param {*} view 
-     */
-    setInputArea(view) {
-      this.hrefArea = crelt('input', { type: 'text', placeholder: 'Enter url...' });
-      this.hrefArea.value = this.href ?? '';
-      this.hrefArea.addEventListener('input', () => {
-        if (this.isValid()) {
-          setClass(this.okDom, 'Markup-menuitem-disabled', false);
-        } else {
-          setClass(this.okDom, 'Markup-menuitem-disabled', true);
-        }      this.okUpdate(view.state);
-        this.cancelUpdate(view.state);
-      });
-      this.hrefArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (this.isValid()) {
-            this.insertLink(view.state, view.dispatch, view);
-          } else {
-            this.closeDialog();
-          }
-        } else if (e.key === 'Tab') {
-          e.preventDefault();
-        } else if (e.key === 'Escape') {
-          this.closeDialog();
-        }
-      });
-      this.dialog.appendChild(this.hrefArea);
+    hideMore() {
+      let toolbarMore = getToolbarMore();
+      toolbarMore.parentElement.removeChild(toolbarMore);
     }
 
-    /**
-     * Create and append the buttons in the `dialog`.
-     * 
-     * Track the `dom` and `update` properties for the OK and Cancel buttons so we can show when
-     * they are active as a way to indicate the default action on Enter in the `hrefArea`.
-     * 
-     * @param {EditorView} view 
-     */
-    setButtons(view) {
-      let buttonsDiv = crelt('div', { class: prefix + '-prompt-buttons' });
-      this.dialog.appendChild(buttonsDiv);
-
-      if (this.isValid()) {
-        let removeItem = cmdItem(this.deleteLink.bind(this), {
-          class: prefix + '-menuitem',
-          title: 'Remove',
-          enable: () => { return true }
-        });
-        let {dom} = removeItem.render(view);
-        buttonsDiv.appendChild(dom);
-      } else {
-        let spacer = crelt('div', {class: prefix + '-menuitem'});
-        spacer.style.visibility = 'hidden';
-        buttonsDiv.appendChild(spacer);
-      }
-      let group = crelt('div', {class: prefix + '-prompt-buttongroup'});
-      let okItem = cmdItem(this.insertLink.bind(this), {
-        class: prefix + '-menuitem',
-        title: 'OK',
-        active: () => {
-          return this.isValid()
-        },
-        enable: () => {
-          return this.isValid()
-        }
-      });
-      let {dom: okDom, update: okUpdate} = okItem.render(view);
-      this.okDom = okDom;
-      this.okUpdate = okUpdate;
-      group.appendChild(this.okDom);
-
-      let cancelItem = cmdItem(this.closeDialog.bind(this), {
-        class: prefix + '-menuitem',
-        title: 'Cancel',
-        active: () => {
-          return !this.isValid()
-        },
-        enable: () => {
-          return true
-        }
-      });
-      let {dom: cancelDom, update: cancelUpdate} = cancelItem.render(view);
-      this.cancelDom = cancelDom;
-      this.cancelUpdate = cancelUpdate;
-      group.appendChild(this.cancelDom);
-
-      buttonsDiv.appendChild(group);
-    }
-
-    /**
-     * Create and append a div that encloses the selection, with a class that displays it properly.
-     */
-    setSelectionDiv() {
-      this.selectionDiv = crelt('div', {id: prefix + '-selection', class: prefix + '-selection'});
-      this.selectionDiv.style.top = this.selectionDivRect.top + 'px';
-      this.selectionDiv.style.left = this.selectionDivRect.left + 'px';
-      this.selectionDiv.style.width = this.selectionDivRect.width + 'px';
-      this.selectionDiv.style.height = this.selectionDivRect.height + 'px';
-      getWrapper().appendChild(this.selectionDiv);
-    }
-
-    /**
-     * Return an object with location and dimension properties for the selection rectangle.
-     * @returns {Object}  The {top, left, right, width, height, bottom} of the selection.
-     */
-    getSelectionDivRect() {
-      let wrapper = view.dom.parentElement;
-      let originY = wrapper.getBoundingClientRect().top;
-      let originX = wrapper.getBoundingClientRect().left;
-      let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
-      let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
-      let selrect = getSelectionRect();
-      let top = selrect.top + scrollY - originY;
-      let left = selrect.left + scrollX - originX;
-      let right = selrect.right;
-      let width = selrect.right - selrect.left;
-      let height = selrect.bottom - selrect.top;
-      let bottom = selrect.bottom;
-      return { top: top, left: left, right: right, width: width, height: height, bottom: bottom }
-    }
-
-    /**
-     * Set the `dialog` location on the screen so it is adjacent to the selection.
-     */
-
-    setDialogLocation() {
-      // selRect is the position within the document. So, doesn't change even if the document is scrolled.
-      let selrect = this.selectionDivRect;
-
-      // We need the dialogHeight and width because we can only position the dialog top and left. 
-      // You would think that an element could be positioned by specifying right and bottom, but 
-      // apparently not. Even when width is fixed, specifying right doesn't work. The values below
-      // are dependent on toolbar.css for .Markup-prompt-link.
-      let dialogHeight = 104;
-      let dialogWidth = 317;
-
-      // The dialog needs to be positioned within the document regardless of scroll, too, but the position is
-      // set based on the direction from selrect that has the most screen real-estate. We always prefer right 
-      // or left of the selection if we can fit it in the visible area on either side. We can bias it as 
-      // close as we can to the vertical center. If we can't fit it right or left, then we will put it above
-      // or below, whichever fits, biasing alignment as close as we can to the horizontal center.
-      // Generally speaking, the selection itself is on the screen, so we want the dialog to be adjacent to 
-      // it with the best chance of showing the entire dialog.
-      let wrapper = view.dom.parentElement;
-      let originX = wrapper.getBoundingClientRect().left;
-      let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
-      let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
-      let style = this.dialog.style;
-      let toolbarHeight = getToolbar().getBoundingClientRect().height;
-      let minTop = toolbarHeight + scrollY + 4;
-      let maxTop = scrollY + innerHeight - dialogHeight - 4;
-      let minLeft = scrollX + 4;
-      let maxLeft = innerWidth - dialogWidth - 4;
-      let fitsRight = window.innerWidth - selrect.right - scrollX > dialogWidth + 4;
-      let fitsLeft = selrect.left - scrollX > dialogWidth + 4;
-      let fitsTop = selrect.top - scrollY - toolbarHeight > dialogHeight + 4;
-      if (fitsRight) {           // Put dialog right of selection
-        style.left = selrect.right + 4 + scrollX - originX + 'px';
-        style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
-      } else if (fitsLeft) {     // Put dialog left of selection
-        style.left = selrect.left - dialogWidth - 4 + scrollX - originX + 'px';
-        style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
-      } else if (fitsTop) {     // Put dialog above selection
-        style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
-        style.top = Math.min(Math.max((selrect.top - dialogHeight - 4), minTop), maxTop) + 'px';
-      } else {                                          // Put dialog below selection, even if it's off the screen somewhat
-        style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
-        style.top = Math.min((selrect.bottom + 4), maxTop) + 'px';
-      }
-    }
-
-    isValid() {
-      return URL.canParse(this.hrefValue())
-    }
-
-    /**
-     * Return the string from the `hrefArea`.
-     * @returns {string}
-     */
-    hrefValue() {
-      return this.hrefArea.value
-    }
-
-    /**
-     * Insert the link provided in the hrefArea if it's valid, deleting any existing link first. Close if it worked.
-     * 
-     * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
-     * @param {EditorView} view 
-     */
-    insertLink(state, dispatch, view) {
-      if (!this.isValid()) return;
-      if (this.href) deleteLinkCommand()(state, dispatch, view);
-      let command = insertLinkCommand(this.hrefValue());
-      command(view.state, view.dispatch);
-      this.closeDialog();
-    }
-
-    /**
-     * Delete the link at the selection. Close if it worked.
-     * 
-     * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
-     * @param {EditorView} view 
-     */
-    deleteLink(state, dispatch, view) {
-      let command = deleteLinkCommand();
-      let result = command(state, dispatch, view);
-      if (result) this.closeDialog();
-    }
-
-    /**
-     * Close the dialog, deleting the dialog and selectionDiv and clearing out state.
-     */
-    closeDialog() {
-      removePromptShowing();
-      this.toolbarOverlay?.parentElement?.removeChild(this.toolbarOverlay);
-      this.overlay?.parentElement?.removeChild(this.overlay);
-      this.selectionDiv?.parentElement?.removeChild(this.selectionDiv);
-      this.selectionDiv = null;
-      this.dialog?.close();
-      this.dialog?.parentElement?.removeChild(this.dialog);
-      this.dialog = null;
-      this.okUpdate = null;
-      this.cancelUpdate = null;
-    }
-
-    /**
-     * Show the MenuItem that LinkItem holds in its `item` property.
-     * @param {EditorView} view 
-     * @returns {Object}    The {dom, update} object for `item`.
-     */
-    render(view) {
-      return this.item.render(view);
-    }
-
-  }
-
-  /**
-   * Represents the image MenuItem in the toolbar, which opens the image dialog and maintains its state.
-   */
-  class ImageItem {
-
-    constructor(keymap) {
-      let options = {
-        enable: () => { return true }, // Always enabled because it is presented modally
-        active: (state) => { return getImageAttributes(state).src  },
-        title: 'Insert/edit image' + keyString('image', keymap),
-        icon: icons.image
-      };
-      this.command = this.openImageDialog.bind(this);
-      this.item = cmdItem(this.command, options);
-      this.dialog = null;
-      this.selectionDiv = null;
-      this.isValid = false;
-    }
-
-    /**
-     * Command to open the image dialog and show it modally.
-     *
-     * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
-     * @param {EditorView} view 
-     */
-    openImageDialog(state, dispatch, view) {
-      this.createImageDialog(view);
-      this.dialog.show();
-    }
-
-    /**
-     * Create the dialog element for adding/modifying images. Append it to the wrapper after the toolbar.
-     * 
-     * @param {EditorView} view 
-     */
-    createImageDialog(view) {
-      let {src, alt} = getImageAttributes(view.state);
-      this.src = src;   // src for the selected image, undefined if there is no image at selection
-      this.alt = alt;
-
-      // Set selectionDivRect that surrounds the selection
-      this.selectionDivRect = this.getSelectionDivRect();
-
-      // Show the selection, because the view is not focused, so it doesn't otherwise show up
-      this.setSelectionDiv();
-
-      // Create the dialog in the proper position
-      this.dialog = crelt('dialog', { class: prefix + '-prompt', contenteditable: 'false' });
-      setClass(this.dialog, prefix + '-prompt-image', true);
-      this.setDialogLocation();
-
-      let title = crelt('p', (this.src) ? 'Edit image' : 'Insert image');
-      this.dialog.appendChild(title);
-
-      this.setInputArea(view);
-      this.setButtons(view);
-      this.updateSrc();
-
-      let wrapper = getWrapper();
-      addPromptShowing();
-      wrapper.appendChild(this.dialog);
-
-      // Add an overlay so we can get a modal effect without using showModal
-      // showModal puts the dialog in the top-laver, so it slides over the toolbar 
-      // when scrolling and ignores z-order. Good article: https://bitsofco.de/accessible-modal-dialog/.
-      // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
-      // because it sits at a higher z-level than the prompt and overlay.
-      this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
-      this.overlay.addEventListener('click', e => {
-        this.closeDialog();
-      });
-      wrapper.appendChild(this.overlay);
-      this.toolbarOverlay = crelt('div', {class: prefix + '-toolbar-overlay', tabindex: "-1", contenteditable: 'false'});
-      if (getSearchbar()) {
-        setClass(this.toolbarOverlay, searchbarShowing(), true);
-      } else {
-        setClass(this.toolbarOverlay, searchbarHidden(), true);
-      }
-      this.toolbarOverlay.addEventListener('click', e => {
-        this.closeDialog();
-      });
-      wrapper.appendChild(this.toolbarOverlay);
-    }
-
-    /**
-     * Create and add the input elements.
-     * 
-     * Capture Enter to perform the command of the active button, either OK or Cancel.
-     * 
-     * @param {*} view 
-     */
-    setInputArea(view) {
-      this.srcArea = crelt('input', { type: 'text', placeholder: 'Enter url...' });
-      this.srcArea.value = this.src ?? '';
-      this.srcArea.addEventListener('input', () => {
-        // Update the img src as we type, which will cause this.preview to load, which may result in 
-        // "Not allowed to load local resource" at every keystroke until the image loads properly.
-        this.updateSrc();
-      });
-      this.srcArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (this.isValid) {
-            this.insertImage(view.state, view.dispatch, view);
-          } else {
-            this.closeDialog();
-          }
-        } else if (e.key === 'Tab') {
-          e.preventDefault();
-          this.altArea.focus();
-        } else if (e.key === 'Escape') {
-          this.closeDialog();
-        }
-      });
-      this.dialog.appendChild(this.srcArea);
-
-      this.altArea = crelt('input', { type: 'text', placeholder: 'Enter description...' });
-      this.altArea.value = this.alt ?? '';
-      this.altArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (this.isValid) {
-            this.insertImage(view.state, view.dispatch, view);
-          } else {
-            this.closeDialog();
-          }
-        } else if (e.key === 'Tab') {
-          e.preventDefault();
-          this.srcArea.focus();
-        } else if (e.key === 'Escape') {
-          this.closeDialog();
-        }
-      });
-      this.dialog.appendChild(this.altArea);
-    }
-
-    /**
-     * Create and append the buttons in the `dialog`.
-     * 
-     * Track the `dom` and `update` properties for the OK and Cancel buttons so we can show when
-     * they are active as a way to indicate the default action on Enter in the input areas.
-     * 
-     * @param {EditorView} view 
-     */
-    setButtons(view) {
-      let buttonsDiv = crelt('div', { class: prefix + '-prompt-buttons' });
-      this.dialog.appendChild(buttonsDiv);
-
-      // TODO: When local images are allowed, we should insert a "Select..." button  
-      // somewhere that will bring up a file chooser. For it to really work for editing, the 
-      // choosing has to be followed by copying from the selection into the current working 
-      // dieectory or a "resources" type of directory below. In Swift, this is all handled 
-      // by the app itself, which is notified of the UUID file that is placed in the temp 
-      // directory, so the app can do what it wants with it.
-
-      this.preview = this.getPreview();
-      buttonsDiv.appendChild(this.preview);
-
-      let group = crelt('div', {class: prefix + '-prompt-buttongroup'});
-      let okItem = cmdItem(this.insertImage.bind(this), {
-        class: prefix + '-menuitem',
-        title: 'OK',
-        active: () => {
-          return this.isValid
-        },
-        enable: () => {
-          // We enable the OK button to allow saving even invalid src values. For example, 
-          // maybe you are offline and can't reach a URL or you will later put the image 
-          // file into place. However, pressing Enter will result in `closeDialog` being 
-          // executed unless the OK button is active; i.e., only if `srcValue()` is valid.
-          return this.srcValue().length > 0
-        }
-      });
-      let {dom: okDom, update: okUpdate} = okItem.render(view);
-      this.okDom = okDom;
-      this.okUpdate = okUpdate;
-      group.appendChild(this.okDom);
-
-      let cancelItem = cmdItem(this.closeDialog.bind(this), {
-        class: prefix + '-menuitem',
-        title: 'Cancel',
-        active: () => {
-          return !this.isValid
-        },
-        enable: () => {
-          return true
-        }
-      });
-      let {dom: cancelDom, update: cancelUpdate} = cancelItem.render(view);
-      this.cancelDom = cancelDom;
-      this.cancelUpdate = cancelUpdate;
-      group.appendChild(this.cancelDom);
-
-      buttonsDiv.appendChild(group);
-    }
-
-    getPreview() {
-      let preview = crelt('img');
-      preview.style.visibility = 'hidden';
-      preview.addEventListener('load', () => {
-        this.isValid = true;
-        preview.style.visibility = 'visible';
-        setClass(this.okDom, 'Markup-menuitem-disabled', false);
-        setClass(this.srcArea, 'invalid', false);
-        this.okUpdate(view.state);
-        this.cancelUpdate(view.state);
-      });
-      preview.addEventListener('error', (e) => {
-        this.isValid = false;
-        preview.style.visibility = 'hidden';
-        setClass(this.okDom, 'Markup-menuitem-disabled', true);
-        setClass(this.srcArea, 'invalid', true);
-        this.okUpdate(view.state);
-        this.cancelUpdate(view.state);
-      });
-      return preview
-    }
-
-    updateSrc() {
-      this.preview.src = this.srcValue();
-    }
-
-    /**
-     * Create and append a div that encloses the selection, with a class that displays it properly.
-     */
-    setSelectionDiv() {
-      this.selectionDiv = crelt('div', {id: prefix + '-selection', class: prefix + '-selection'});
-      this.selectionDiv.style.top = this.selectionDivRect.top + 'px';
-      this.selectionDiv.style.left = this.selectionDivRect.left + 'px';
-      this.selectionDiv.style.width = this.selectionDivRect.width + 'px';
-      this.selectionDiv.style.height = this.selectionDivRect.height + 'px';
-      getWrapper().appendChild(this.selectionDiv);
-    }
-
-    /**
-     * Return an object with location and dimension properties for the selection rectangle.
-     * @returns {Object}  The {top, left, right, width, height, bottom} of the selection.
-     */
-    getSelectionDivRect() {
-      let wrapper = view.dom.parentElement;
-      let originY = wrapper.getBoundingClientRect().top;
-      let originX = wrapper.getBoundingClientRect().left;
-      let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
-      let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
-      let selrect = getSelectionRect();
-      let top = selrect.top + scrollY - originY;
-      let left = selrect.left + scrollX - originX;
-      let right = selrect.right;
-      let width = selrect.right - selrect.left;
-      let height = selrect.bottom - selrect.top;
-      let bottom = selrect.bottom;
-      return { top: top, left: left, right: right, width: width, height: height, bottom: bottom }
-    }
-
-    /**
-     * Set the `dialog` location on the screen so it is adjacent to the selection.
-     */
-    setDialogLocation() {
-      // selRect is the position within the document. So, doesn't change even if the document is scrolled.
-      let selrect = this.selectionDivRect;
-
-      // We need the dialogHeight and width because we can only position the dialog top and left. 
-      // You would think that an element could be positioned by specifying right and bottom, but 
-      // apparently not. Even when width is fixed, specifying right doesn't work. The values below
-      // are dependent on toolbar.css for .Markup-prompt-image.
-      let dialogHeight = 134;
-      let dialogWidth = 317;
-
-      // The dialog needs to be positioned within the document regardless of scroll, too, but the position is
-      // set based on the direction from selrect that has the most screen real-estate. We always prefer right 
-      // or left of the selection if we can fit it in the visible area on either side. We can bias it as 
-      // close as we can to the vertical center. If we can't fit it right or left, then we will put it above
-      // or below, whichever fits, biasing alignment as close as we can to the horizontal center.
-      // Generally speaking, the selection itself is on the screen, so we want the dialog to be adjacent to 
-      // it with the best chance of showing the entire dialog.
-      let wrapper = view.dom.parentElement;
-      let originX = wrapper.getBoundingClientRect().left;
-      let scrollY = wrapper.scrollTop;   // The editor scrolls within its wrapper
-      let scrollX = window.scrollX;      // The editor doesn't scroll horizontally
-      let style = this.dialog.style;
-      let toolbarHeight = getToolbar().getBoundingClientRect().height;
-      let minTop = toolbarHeight + scrollY + 4;
-      let maxTop = scrollY + innerHeight - dialogHeight - 4;
-      let minLeft = scrollX + 4;
-      let maxLeft = innerWidth - dialogWidth - 4;
-      let fitsRight = window.innerWidth - selrect.right - scrollX > dialogWidth + 4;
-      let fitsLeft = selrect.left - scrollX > dialogWidth + 4;
-      let fitsTop = selrect.top - scrollY - toolbarHeight > dialogHeight + 4;
-      if (fitsRight) {           // Put dialog right of selection
-        style.left = selrect.right + 4 + scrollX - originX + 'px';
-        style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
-      } else if (fitsLeft) {     // Put dialog left of selection
-        style.left = selrect.left - dialogWidth - 4 + scrollX - originX + 'px';
-        style.top = Math.min(Math.max((selrect.top + (selrect.height / 2) - (dialogHeight / 2)), minTop), maxTop) + 'px';
-      } else if (fitsTop) {     // Put dialog above selection
-        style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
-        style.top = Math.min(Math.max((selrect.top - dialogHeight - 4), minTop), maxTop) + 'px';
-      } else {                                          // Put dialog below selection, even if it's off the screen somewhat
-        style.left = Math.min(Math.max((selrect.left + (selrect.width / 2) - (dialogWidth / 2)), minLeft), maxLeft) + 'px';
-        style.top = Math.min((selrect.bottom + 4), maxTop) + 'px';
-      }
-    }
-
-    /**
-     * Return the string from the `srcArea`.
-     * @returns {string}
-     */
-    srcValue() {
-      return this.srcArea.value
-    }
-
-    /**
-     * Return the string from the `altArea`.
-     * @returns {string}
-     */
-    altValue() {
-      return this.altArea.value
-    }
-
-    /**
-     * Insert the image provided in the srcArea if it's valid, modifying image if it exists. Close if it worked.
-     * Note that the image that is saved might be not exist or be properly formed.
-     * 
-     * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
-     * @param {EditorView} view 
-     */
-    insertImage(state, dispatch, view) {
-      let newSrc = this.srcValue();
-      let newAlt = this.altValue();
-      let command = (this.src) ? modifyImageCommand(newSrc, newAlt) : insertImageCommand(newSrc, newAlt);
-      let result = command(view.state, view.dispatch, view);
-      if (result) this.closeDialog();
-    }
-
-    /**
-     * Close the dialog, deleting the dialog and selectionDiv and clearing out state.
-     */
-    closeDialog() {
-      removePromptShowing();
-      this.toolbarOverlay?.parentElement?.removeChild(this.toolbarOverlay);
-      this.overlay?.parentElement?.removeChild(this.overlay);
-      this.selectionDiv?.parentElement?.removeChild(this.selectionDiv);
-      this.selectionDiv = null;
-      this.dialog?.close();
-      this.dialog?.parentElement?.removeChild(this.dialog);
-      this.dialog = null;
-      this.okUpdate = null;
-      this.cancelUpdate = null;
-    }
-
-    /**
-     * Show the MenuItem that LinkItem holds in its `item` property.
-     * @param {EditorView} view 
-     * @returns {Object}    The {dom, update} object for `item`.
-     */
-    render(view) {
-      return this.item.render(view);
-    }
-
-  }
-
-  /**
-    A submenu for creating a table, which contains many TableInsertItems each of which 
-    will insert a table of a specific size. The items are bounded divs in a css grid 
-    layout that highlight to show the size of the table being created, so we end up with 
-    a compact way to display 24 TableInsertItems.
-    */
-  class TableCreateSubmenu {
-    constructor(options = {}) {
-      this.prefix = prefix + "-menu";
-      this.options = options;
-      this.content = [];
-      this.maxRows = 6;
-      this.maxCols = 4;
-      this.rowSize = 0;
-      this.colSize = 0;
-      for (let row = 0; row < this.maxRows; row++) {
-        for (let col = 0; col < this.maxCols; col++) {
-          // If we want the MenuItem div to respond to keydown, it needs to contain something, 
-          // in this case a non-breaking space. Just ' ' doesn't work.
-          let options = {
-            label: '\u00A0', 
-            active: () => {
-              return (row < this.rowSize) && (col < this.colSize)
-            }
-          };
-          let insertItem = new TableInsertItem(row + 1, col + 1, this.onMouseover.bind(this), options);
-          this.content.push(insertItem);
-        }
-      }
-    }
-
-    /**
-     * Track rowSize and columnSize as we drag over an item in the `sizer`.
-     * @param {number} rows 
-     * @param {number} cols 
-     */
-    onMouseover(rows, cols) {
-      this.rowSize = rows;
-      this.colSize = cols;
-      this.itemsUpdate(view.state);
-    }
-
-    resetSize() {
-      this.rowSize = 0;
-      this.colSize = 0;
-    }
-
-    /**
-    Renders the submenu.
-    */
-    render(view) {
-      let resetSize = this.resetSize.bind(this);
-      let options = this.options;
-      let items = renderDropdownItems(this.content, view);
-      this.itemsUpdate = items.update;  // Track the update method so we can update as the mouse is over items
-      let win = view.dom.ownerDocument.defaultView || window;
-      let label = crelt("div", { class: this.prefix + "-submenu-label" }, translate(view, this.options.label || ""));
-      let sizer = crelt("div", { class: this.prefix + "-tablesizer" }, items.dom);
-      let wrap = crelt("div", { class: this.prefix + "-submenu-wrap" }, label, sizer);
-      let listeningOnClose = null;
-      // Clear the sizer when the mouse moves outside of it
-      // It's not enough to just resetSize, because it doesn't clear properly until the 
-      // mouse is back over an item.
-      sizer.addEventListener("mouseleave", () => {this.onMouseover.bind(this)(0, 0);});
-      label.addEventListener("mousedown", e => {
-        e.preventDefault();
-        markMenuEvent(e);
-        setClass(wrap, this.prefix + "-submenu-wrap-active", false);
-        if (!listeningOnClose)
-          win.addEventListener("mousedown", listeningOnClose = () => {
-            if (!isMenuEvent(wrap)) {
-              wrap.classList.remove(this.prefix + "-submenu-wrap-active");
-              win.removeEventListener("mousedown", listeningOnClose);
-              listeningOnClose = null;
-            }
-          });
-      });
-      function update(state) {
-        resetSize();
-        let enabled = true;
-        if (options.enable) {
-          enabled = options.enable(state) || false;
-          setClass(label, this.prefix + "-disabled", !enabled);
-        }
-        let inner = items.update(state);
-        wrap.style.display = inner ? "" : "none";
-        return inner;
-      }
-      return { dom: wrap, update };
-    }
-
-  }
-
-  /**
-   * A MenuItem that inserts a table of size rows/cols and invokes `onMouseover` when 
-   * the mouse is over it to communicate the size of table it will create when selected.
-   */
-  class TableInsertItem {
-
-    constructor(rows, cols, onMouseover, options) {
-      this.prefix = prefix + "-menuitem";
-      this.rows = rows;
-      this.cols = cols;
-      this.onMouseover = onMouseover;
-      this.command = insertTableCommand(this.rows, this.cols);
-      this.item = this.tableInsertItem(this.command, options);
-    }
-
-    tableInsertItem(command, options) {
-      let passedOptions = {
-        run: command,
-        enable(state) { return command(state); },
-      };
-      for (let prop in options)
-        passedOptions[prop] = options[prop];
-      return new MenuItem(passedOptions);
+    showMore(state, dispatch, view) {
+      let toolbar = getToolbar();
+      if (!toolbar) return;
+      let idClass = prefix + "-toolbar-more";
+      let toolbarMore = crelt('div', { class: idClass, id: idClass } );
+      let {dom, update} = renderGrouped(view, [this.items]);
+      toolbarMore.appendChild(dom);
+      toolbar.parentElement.insertBefore(toolbarMore, toolbar.nextSibling);
+      // Then update the moreItem to show it's active
+      update(view.state);
     }
 
     render(view) {
       let {dom, update} = this.item.render(view);
-      dom.addEventListener('mouseover', e => {
-        this.onMouseover(this.rows, this.cols);
-      });
-      return {dom, update}
+      this.update = update;
+      return {dom, update};
     }
 
   }
 
-  class ParagraphStyleItem {
-
-    constructor(nodeType, style, options) {
-      this.style = style;
-      this.styleLabel = options["label"] ?? "Unknown"; // It should always be specified
-      this.item = this.paragraphStyleItem(nodeType, style, options);
-    }
-
-    paragraphStyleItem(nodeType, style, options) {
-      let command = setStyleCommand(style);
-      let passedOptions = {
-          run: command,
-          enable(state) { return command(state) },
-          active(state) {
-              let { $from, to, node } = state.selection;
-              if (node)
-                  return node.hasMarkup(nodeType, options.attrs);
-              return to <= $from.end() && $from.parent.hasMarkup(nodeType, options.attrs);
-          }
-      };
-      for (let prop in options)
-          passedOptions[prop] = options[prop];
-      return new MenuItem(passedOptions);
-    }
-
-    render(view) {
-      let {dom, update} = this.item.render(view);
-      let styledElement = crelt(this.style, this.styleLabel);
-      dom.replaceChild(styledElement, dom.firstChild);
-      return {dom, update}
-    }
-  }
-
   /**
-   * Build an array of MenuItems and nested MenuItems that comprise the content of the Toolbar 
-   * based on the `config` and `schema`.
+   * Return a MenuItem that runs the command when selected.
    * 
-   * This is the first entry point for menu that is called from `setup/index.js', returning the 
-   * contents that `renderGrouped` can display. It also sets the prefix used locally.
-   * 
-   * @param {string}  basePrefix  The prefix used when building style strings, "Markup" by default.
-   * @param {Object}  config      The configuration of the menu.
-   * @param {Schema}  schema      The schema that holds node and mark types.
-   * @returns [MenuItem]    The array of MenuItems or nested MenuItems used by `renderGrouped`.
+   * The label is the same as the title, and the MenuItem will be enabled/disabled based on 
+   * what `cmd(state)` returns unless otherwise specified in `options`.
+   * @param {Command}     cmd 
+   * @param {*} options   The spec for the MenuItem
+   * @returns {MenuItem}
    */
-  function buildMenuItems(basePrefix, menuConfig, keymap, schema) {
-    prefix = basePrefix;
-    let itemGroups = [];
-    let { correctionBar, insertBar, formatBar, styleMenu, styleBar, search } = menuConfig.visibility;
-    if (correctionBar) itemGroups.push(correctionBarItems(keymap));
-    if (insertBar) itemGroups.push(insertBarItems(menuConfig, keymap));
-    if (styleMenu) itemGroups.push(styleMenuItems(menuConfig, keymap, schema));
-    if (styleBar) itemGroups.push(styleBarItems(menuConfig, keymap, schema));
-    if (formatBar) itemGroups.push(formatItems(menuConfig, keymap, schema));
-    if (search) itemGroups.push([new SearchItem(keymap)]);
-    return itemGroups;
+  function cmdItem(cmd, options) {
+    let passedOptions = {
+      label: options.title,
+      run: cmd
+    };
+    for (let prop in options) passedOptions[prop] = options[prop];
+    if ((!options.enable || options.enable === true) && !options.select)
+      passedOptions[options.enable ? "enable" : "select"] = state => cmd(state);
+
+    return new MenuItem(passedOptions)
   }
 
-  /* Utility functions */
-
-  /**
-   * Return the toolbar div in `view`
-   * @param {EditorView} view 
-   * @returns {HTMLDivElement}  The toolbar div in the view
-   */
-  function getToolbar() {
-    return document.getElementById(prefix + "-toolbar");
-  }
-
-  function getSearchbar() {
-    return document.getElementById(prefix + "-searchbar");
-  }
-
-  function getWrapper() {
-    return getToolbar().parentElement;
-  }
-
-  /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
-  function addPromptShowing() {
-    setClass(getWrapper(), promptShowing(), true);
-  }
-
-  /** Removing promptShowing class on wrapper lets wrapper scroll again */
-  function removePromptShowing() {
-    setClass(getWrapper(), promptShowing(), false);
-  }
-
-  function promptShowing() {
-    return prefix + "-prompt-showing"
-  }
-
-  function searchbarShowing() {
-    return prefix + "-searchbar-showing"
-  }
-
-  function searchbarHidden() {
-    return prefix + "-searchbar-hidden"
-  }
-
-  /**
-   * 
-   * @param {EditorView}  view
-   * @param {string} text Text to be translated
-   * @returns {string}    The translated text if the view supports it
-   */
-  function translate(view, text) {
-      return view._props.translate ? view._props.translate(text) : text;
-  }
-
-  /**
-   * Add or remove a class from the element.
-   * 
-   * Apparently a workaround for classList.toggle being broken in IE11
-   * 
-   * @param {HTMLElement}  dom 
-   * @param {string}          cls The class name to add or remove
-   * @param {boolean}         on  True to add the class name to the `classList`
-   */
-  function setClass(dom, cls, on) {
-      if (on)
-          dom.classList.add(cls);
-      else
-          dom.classList.remove(cls);
+  /** Return a span for a separator between groups of MenuItems */
+  function separator() {
+      return crelt("span", { class: prefix + "-menuseparator" });
   }
 
   /**
@@ -21531,18 +21937,219 @@
    * @returns string
    */
   function keyString(itemName, keymap) {
+    return ' (' + baseKeyString(itemName, keymap) + ')'
+  }
+
+  function baseKeyString(itemName, keymap) {
     let keyString = keymap[itemName];
     if (!keyString) return ''
     if (keyString instanceof Array) keyString = keyString[0];  // Use the first if there are multiple
     // Clean up to something more understandable
-    keyString = keyString.replaceAll("Mod", "Cmd");
-    keyString = keyString.replaceAll("-", "+");
-    return ' (' + keyString + ')'
+    keyString = keyString.replaceAll('Mod', 'Cmd');
+    keyString = keyString.replaceAll('Cmd', '\u2318');     // ⌘
+    keyString = keyString.replaceAll('Ctrl', '\u2303');    // ⌃
+    keyString = keyString.replaceAll('Shift', '\u21E7');   // ⇧
+    keyString = keyString.replaceAll('Alt', '\u2325');     // ⌥
+    keyString = keyString.replaceAll('-', '');
+    return keyString
+  }
+
+  function renderGrouped(view, content) {
+      let result = document.createDocumentFragment();
+      let updates = [], separators = [];
+      for (let i = 0; i < content.length; i++) {
+          let items = content[i], localUpdates = [], localNodes = [];
+          for (let j = 0; j < items.length; j++) {
+              let { dom, update } = items[j].render(view);
+              let span = crelt("span", { class: prefix + "-menuitem" }, dom);
+              result.appendChild(span);
+              localNodes.push(span);
+              localUpdates.push(update);
+          }
+          if (localUpdates.length) {
+              updates.push(combineUpdates(localUpdates, localNodes));
+              if (i < content.length - 1)
+                  separators.push(result.appendChild(separator()));
+          }
+      }
+      function update(state) {
+          let something = false, needSep = false;
+          for (let i = 0; i < updates.length; i++) {
+              let hasContent = updates[i](state);
+              if (i)
+                  separators[i - 1].style.display = needSep && hasContent ? "" : "none";
+              needSep = hasContent;
+              if (hasContent)
+                  something = true;
+          }
+          return something;
+      }
+      return { dom: result, update };
+  }
+
+  /**
+   * Like `renderGrouped`, but at `wrapIndex` in the `content`, place a `MoreItem` that 
+   * will display a subtoolbar of `content` items starting at `wrapIndex` when it is 
+   * pressed. The `MoreItem` renders using `renderGrouped`, not `renderGroupedFit`. Let's 
+   * face it, if you need to wrap a toolbar into more than two lines, you need to think
+   * through your life choices.
+   * 
+   * @param {EditorView} view 
+   * @param {[MenuItem | [MenuItem]]} content 
+   * @param {number}  wrapAtIndex             The index in  content` to wrap in another toolbar
+   * @returns 
+   */
+  function renderGroupedFit(view, content, wrapAtIndex) {
+    let result = document.createDocumentFragment();
+    let updates = [], separators = [];
+    let itemIndex = 0;
+    let moreItems = [];
+    for (let i = 0; i < content.length; i++) {
+      let items = content[i], localUpdates = [], localNodes = [];
+      for (let j = 0; j < items.length; j++) {
+        if (itemIndex >= wrapAtIndex) {
+          // Track the items to be later rendered in the "more" dropdown
+          moreItems.push(items[j]);
+        } else {
+          let { dom, update } = items[j].render(view);
+          let span = crelt("span", { class: prefix + "-menuitem" }, dom);
+          result.appendChild(span);
+          localNodes.push(span);
+          localUpdates.push(update);
+        }
+        itemIndex++;
+      }
+      if (localUpdates.length) {
+        updates.push(combineUpdates(localUpdates, localNodes));
+        if (i < content.length - 1)
+          separators.push(result.appendChild(separator()));
+      }
+    }
+    if (moreItems.length > 0) {
+      let more = new MoreItem(moreItems);
+      let {dom, update} = more.render(view);
+      let span = crelt("span", { class: prefix + "-menuitem" }, dom);
+      result.appendChild(span);
+      updates.push(update);
+    }
+    function update(state) {
+      let something = false, needSep = false;
+      for (let i = 0; i < updates.length; i++) {
+        let hasContent = updates[i](state);
+        if (i)
+          separators[i - 1].style.display = needSep && hasContent ? "" : "none";
+        needSep = hasContent;
+        if (hasContent)
+          something = true;
+      }
+      return something;
+    }
+    return { dom: result, update };
+  }
+
+  function renderDropdownItems(items, view) {
+      let rendered = [], updates = [];
+      for (let i = 0; i < items.length; i++) {
+          let { dom, update } = items[i].render(view);
+          rendered.push(crelt("div", { class: prefix + "-menu-dropdown-item" }, dom));
+          updates.push(update);
+      }    return { dom: rendered, update: combineUpdates(updates, rendered) };
+  }
+
+  function combineUpdates(updates, nodes) {
+      return (state) => {
+          let something = false;
+          for (let i = 0; i < updates.length; i++) {
+              let up = updates[i](state);
+              nodes[i].style.display = up ? "" : "none";
+              if (up)
+                  something = true;
+          }
+          return something;
+      };
+  }
+
+  let lastMenuEvent = { time: 0, node: null };
+
+  function markMenuEvent(e) {
+      lastMenuEvent.time = Date.now();
+      lastMenuEvent.node = e.target;
+  }
+
+  function isMenuEvent(wrapper) {
+      return Date.now() - 100 < lastMenuEvent.time &&
+          lastMenuEvent.node && wrapper.contains(lastMenuEvent.node);
+  }
+
+  /**
+   * Adapted, expanded, and copied-from prosemirror-menu under MIT license.
+   * Original prosemirror-menu at https://github.com/prosemirror/prosemirror-menu.
+   * 
+   * Adaptations:
+   *  - Modify buildMenuItems to use a `config` object that specifies visibility and content
+   *  - Use separate buildKeymap in keymap.js with a `config` object that specifies key mappings
+   *  - Modify icons to use SVG from Google Material Fonts
+   *  - Allow Dropdown menus to be icons, not just labels
+   *  - Replace use of prompt with custom dialogs for links and images
+   * 
+   * Expansions:
+   *  - Added table support using MarkupEditor capabilities for table editing
+   *  - Use MarkupEditor capabilities for list/denting across range
+   *  - Use MarkupEditor capability for toggling and changing list types
+   *  - Added SearchItem, LinkItem, ImageItem
+   *  - Added TableCreateSubmenu and TableInsertItem in support of table creation
+   *  - Added ParagraphStyleItem to support showing font sizes for supported styles
+   * 
+   * Copied:
+   *  - MenuItem
+   *  - Dropdown
+   *  - DropdownSubmenu
+   *  - Various "helper methods" returning MenuItems
+   */
+
+
+  /**
+   * Build an array of MenuItems and nested MenuItems that comprise the content of the Toolbar 
+   * based on the `config` and `schema`.
+   * 
+   * This is the first entry point for menu that is called from `setup/index.js', returning the 
+   * contents that `renderGrouped` can display. It also sets the prefix used locally.
+   * 
+   * @param {string}  basePrefix      The prefix used when building style strings, "Markup" by default.
+   * @param {Object}  config          The MarkupEditor.config.
+   * @param {Schema}  schema          The schema that holds node and mark types.
+   * @returns [MenuItem]              The array of MenuItems or nested MenuItems used by `renderGrouped`.
+   */
+  function buildMenuItems(config, schema) {
+    let itemGroups = [];
+    let ordering = config.toolbar.ordering;
+    let { correctionBar, insertBar, formatBar, styleMenu, styleBar, search } = config.toolbar.visibility;
+    if (correctionBar) {
+      itemGroups.push({item: correctionBarItems(config), order: ordering.correctionBar});
+    }
+    if (insertBar) {
+      itemGroups.push({item: insertBarItems(config), order: ordering.insertBar});
+    }
+    if (styleMenu) {
+      itemGroups.push({item: styleMenuItems(config, schema), order: ordering.styleMenu});
+    }
+    if (styleBar) {
+      itemGroups.push({item: styleBarItems(config, schema), order: ordering.styleBar});
+    }
+    if (formatBar) {
+      itemGroups.push({item: formatItems(config, schema), order: ordering.formatBar});
+    }
+    if (search) {
+      itemGroups.push({item: [new SearchItem(config)], order: ordering.search});
+    }
+    itemGroups.sort((a, b) => a.order - b.order);
+    return itemGroups.map((ordered) => ordered.item)
   }
 
   /* Correction Bar (Undo, Redo) */
 
-  function correctionBarItems(keymap) {
+  function correctionBarItems(config) {
+    let keymap = config.keymap;
     let items = [];
     items.push(undoItem({ title: 'Undo' + keyString('undo', keymap), icon: icons.undo }));
     items.push(redoItem({ title: 'Redo' + keyString('redo', keymap), icon: icons.redo }));
@@ -21575,18 +22182,23 @@
    * @param {Schema} schema 
    * @returns {[MenuItem]}  An array or MenuItems to be shown in the style bar
    */
-  function insertBarItems(menuConfig, keymap, schema) {
+  function insertBarItems(config, schema) {
     let items = [];
-    let { link, image, table } = menuConfig.insertBar;
-    if (link) items.push(new LinkItem(keymap));
-    if (image) items.push(new ImageItem(keymap));
-    if (table) items.push(tableMenuItems(menuConfig));
+    let { link, image, tableMenu } = config.toolbar.insertBar;
+    if (link) {
+      items.push(new LinkItem(config));
+    }
+    if (image) {
+      let imageCommands = {getImageAttributes, insertImageCommand, modifyImageCommand, getSelectionRect};
+      items.push(new ImageItem(config, imageCommands));
+    }
+    if (tableMenu) items.push(tableMenuItems(config));
     return items;
   }
 
-  function tableMenuItems(menuConfig, keymap, schema) {
+  function tableMenuItems(config, schema) {
     let items = [];
-    let { header, border } = menuConfig.tableMenu;
+    let { header, border } = config.toolbar.tableMenu;
     items.push(new TableCreateSubmenu({title: 'Insert table', label: 'Insert'}));
     let addItems = [];
     addItems.push(tableEditItem(addRowCommand('BEFORE'), {label: 'Row above'}));
@@ -21661,9 +22273,10 @@
    * @param {Schema} schema 
    * @returns {[MenuItem]}  An array or MenuItems to be shown in the style bar
    */
-  function styleBarItems(menuConfig, keymap, schema) {
+  function styleBarItems(config, schema) {
+    let keymap = config.keymap;
     let items = [];
-    let { list, dent } = menuConfig.styleBar;
+    let { list, dent } = config.toolbar.styleBar;
     if (list) {
       let bullet = toggleListItem(
         schema,
@@ -21724,12 +22337,13 @@
   /**
    * Return the array of formatting MenuItems that should show per the config.
    * 
-   * @param {Object} config   The markupConfig that is passed-in, with boolean values in config.formatBar.
+   * @param {Object} config   The MarkupEditor.config with boolean values in config.toolbar.formatBar.
    * @returns [MenuItem]      The array of MenuItems that show as passed in `config`
    */
-  function formatItems(menuConfig, keymap, schema) {
+  function formatItems(config, schema) {
+    let keymap = config.keymap;
     let items = [];
-    let { bold, italic, underline, code, strikethrough, subscript, superscript } = menuConfig.formatBar;
+    let { bold, italic, underline, code, strikethrough, subscript, superscript } = config.toolbar.formatBar;
     if (bold) items.push(formatItem(schema.marks.strong, 'B', { title: 'Toggle bold' + keyString('bold', keymap), icon: icons.strong }));
     if (italic) items.push(formatItem(schema.marks.em, 'I', { title: 'Toggle italic' + keyString('italic', keymap), icon: icons.em }));
     if (underline) items.push(formatItem(schema.marks.u, 'U', { title: 'Toggle underline' + keyString('underline', keymap), icon: icons.u }));
@@ -21754,277 +22368,23 @@
   /**
    * Return the Dropdown containing the styling MenuItems that should show per the config.
    * 
-   * @param {*} config    The markupConfig that is passed-in, with boolean values in config.styleMenu.
+   * @param {Object}  config          The MarkupEditor.config.
+   * @param {Schema}  schema          The schema that holds node and mark types.
    * @returns [Dropdown]  The array of MenuItems that show as passed in `config`
    */
-  function styleMenuItems(menuConfig, keymap, schema) {
+  function styleMenuItems(config, schema) {
+    let keymap = config.keymap;
     let items = [];
-    let { p, h1, h2, h3, h4, h5, h6, pre } = menuConfig.styleMenu;
-    if (p) items.push(new ParagraphStyleItem(schema.nodes.paragraph, 'P', { label: p }));
-    if (h1) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H1', { label: h1, attrs: { level: 1 }}));
-    if (h2) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H2', { label: h2, attrs: { level: 2 }}));
-    if (h3) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H3', { label: h3, attrs: { level: 3 }}));
-    if (h4) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H4', { label: h4, attrs: { level: 4 }}));
-    if (h5) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H5', { label: h5, attrs: { level: 5 }}));
-    if (h6) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H6', { label: h6, attrs: { level: 6 }}));
+    let { p, h1, h2, h3, h4, h5, h6, pre } = config.toolbar.styleMenu;
+    if (p) items.push(new ParagraphStyleItem(schema.nodes.paragraph, 'P', { label: p, keymap: baseKeyString('p', keymap) }));
+    if (h1) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H1', { label: h1, keymap: baseKeyString('h1', keymap), attrs: { level: 1 }}));
+    if (h2) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H2', { label: h2, keymap: baseKeyString('h2', keymap), attrs: { level: 2 }}));
+    if (h3) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H3', { label: h3, keymap: baseKeyString('h3', keymap), attrs: { level: 3 }}));
+    if (h4) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H4', { label: h4, keymap: baseKeyString('h4', keymap), attrs: { level: 4 }}));
+    if (h5) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H5', { label: h5, keymap: baseKeyString('h5', keymap), attrs: { level: 5 }}));
+    if (h6) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H6', { label: h6, keymap: baseKeyString('h6', keymap), attrs: { level: 6 }}));
     if (pre) items.push(new ParagraphStyleItem(schema.nodes.code_block, 'PRE', { label: pre }));
     return [new Dropdown(items, { title: 'Set paragraph style', icon: icons.paragraphStyle })]
-  }
-
-  /* Rendering support and utility functions for MenuItem, Dropdown */
-
-  /**
-   * Render the given, possibly nested, array of menu elements into a
-   * document fragment, placing separators between them (and ensuring no
-   * superfluous separators appear when some of the groups turn out to
-   * be empty).
-   * @param {EditorView} view 
-   * @param {[MenuItem | [MenuItem]]} content 
-   * @returns 
-   */
-  function renderGrouped(view, content) {
-      let result = document.createDocumentFragment();
-      let updates = [], separators = [];
-      for (let i = 0; i < content.length; i++) {
-          let items = content[i], localUpdates = [], localNodes = [];
-          for (let j = 0; j < items.length; j++) {
-              let { dom, update } = items[j].render(view);
-              let span = crelt("span", { class: prefix + "-menuitem" }, dom);
-              result.appendChild(span);
-              localNodes.push(span);
-              localUpdates.push(update);
-          }
-          if (localUpdates.length) {
-              updates.push(combineUpdates(localUpdates, localNodes));
-              if (i < content.length - 1)
-                  separators.push(result.appendChild(separator()));
-          }
-      }
-      function update(state) {
-          let something = false, needSep = false;
-          for (let i = 0; i < updates.length; i++) {
-              let hasContent = updates[i](state);
-              if (i)
-                  separators[i - 1].style.display = needSep && hasContent ? "" : "none";
-              needSep = hasContent;
-              if (hasContent)
-                  something = true;
-          }
-          return something;
-      }
-      return { dom: result, update };
-  }
-
-  function renderGroupedFit(view, content, wrapAtIndex) {
-    let result = document.createDocumentFragment();
-    let updates = [], separators = [];
-    let itemIndex = 0;
-    let moreItems = [];
-    for (let i = 0; i < content.length; i++) {
-      let items = content[i], localUpdates = [], localNodes = [];
-      for (let j = 0; j < items.length; j++) {
-        if (itemIndex >= wrapAtIndex) {
-          // Track the items to be later rendered in the "more" dropdown
-          moreItems.push(items[j]);
-        } else {
-          let { dom, update } = items[j].render(view);
-          let span = crelt("span", { class: prefix + "-menuitem" }, dom);
-          result.appendChild(span);
-          localNodes.push(span);
-          localUpdates.push(update);
-        }
-        itemIndex++;
-      }
-      if (localUpdates.length) {
-        updates.push(combineUpdates(localUpdates, localNodes));
-        if (i < content.length - 1)
-          separators.push(result.appendChild(separator()));
-      }
-    }
-    if (moreItems.length > 0) {
-      let more = new Dropdown(moreItems, { title: 'More...', icon: icons.more, indicator: false });
-      let {dom, update} = more.render(view);
-      let span = crelt("span", { class: prefix + "-menuitem" }, dom);
-      result.appendChild(span);
-      updates.push(update);
-    }
-    function update(state) {
-      let something = false, needSep = false;
-      for (let i = 0; i < updates.length; i++) {
-        let hasContent = updates[i](state);
-        if (i)
-          separators[i - 1].style.display = needSep && hasContent ? "" : "none";
-        needSep = hasContent;
-        if (hasContent)
-          something = true;
-      }
-      return something;
-    }
-    return { dom: result, update };
-  }
-
-  /**
-   * Return a MenuItem that runs the command when selected.
-   * 
-   * The label is the same as the title, and the MenuItem will be enabled/disabled based on 
-   * what `cmd(state)` returns unless otherwise specified in `options`.
-   * @param {Command}     cmd 
-   * @param {*} options   The spec for the MenuItem
-   * @returns {MenuItem}
-   */
-  function cmdItem(cmd, options) {
-    let passedOptions = {
-      label: options.title,
-      run: cmd
-    };
-    for (let prop in options) passedOptions[prop] = options[prop];
-    if ((!options.enable || options.enable === true) && !options.select)
-      passedOptions[options.enable ? "enable" : "select"] = state => cmd(state);
-
-    return new MenuItem(passedOptions)
-  }
-
-  function renderDropdownItems(items, view) {
-      let rendered = [], updates = [];
-      for (let i = 0; i < items.length; i++) {
-          let { dom, update } = items[i].render(view);
-          rendered.push(crelt("div", { class: prefix + "-menu-dropdown-item" }, dom));
-          updates.push(update);
-      }    return { dom: rendered, update: combineUpdates(updates, rendered) };
-  }
-
-  function separator() {
-      return crelt("span", { class: prefix + "-menuseparator" });
-  }
-
-  function combineUpdates(updates, nodes) {
-      return (state) => {
-          let something = false;
-          for (let i = 0; i < updates.length; i++) {
-              let up = updates[i](state);
-              nodes[i].style.display = up ? "" : "none";
-              if (up)
-                  something = true;
-          }
-          return something;
-      };
-  }
-
-  let lastMenuEvent = { time: 0, node: null };
-
-  function markMenuEvent(e) {
-      lastMenuEvent.time = Date.now();
-      lastMenuEvent.node = e.target;
-  }
-
-  function isMenuEvent(wrapper) {
-      return Date.now() - 100 < lastMenuEvent.time &&
-          lastMenuEvent.node && wrapper.contains(lastMenuEvent.node);
-  }
-
-  /**
-   *  A set of MarkupEditor icons. Used to identify the icon for a 
-   * `MenuItem` by specifying the `svg`. The `svg` value was obtained from
-   * https://fonts.google.com/icons for the icons identified in the comment,
-   * with the `fill` attribute removed so it can be set in css.
-   */
-  const icons = {
-    undo: {
-      // <span class="material-icons-outlined">undo</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>'
-    },
-    redo: {
-      // <span class="material-icons-outlined">redo</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>'
-    },
-    strong: {
-      // <span class="material-icons-outlined">format_bold</span>
-      svg: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>`
-    },
-    em: {
-      // <span class="material-icons-outlined">format_italic</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>'
-    },
-    u: {
-      // <span class="material-icons-outlined">format_underlined</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>'
-    },
-    s: {
-      // <span class="material-icons-outlined">strikethrough_s</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>'
-    },
-    code: {
-      // <span class="material-icons-outlined">data_object</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>'
-    },
-    sub: {
-      // <span class="material-icons-outlined">subscript</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>'
-    },
-    sup: {
-      // <span class="material-icons-outlined">superscript</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>'
-    },
-    link: {
-      // <span class="material-icons-outlined">link</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
-    },
-    image: {
-      // <span class="material-icons-outlined">image</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>'
-    },
-    table: {
-      // <span class="material-icons-outlined">table</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>'
-    },
-    bulletList: {
-      // <span class="material-icons-outlined">format_list_bulleted</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>'
-    },
-    orderedList: {
-      // <span class="material-icons-outlined">format_list_numbered</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>'
-    },
-    blockquote: {
-      // <span class="material-icons-outlined">format_indent_increase</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>'
-    },
-    lift: {
-      // <span class="material-icons-outlined">format_indent_decrease</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>'
-    },
-    search: {
-      // <span class="material-symbols-outlined">search</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>'
-    },
-    searchForward: {
-      // <span class="material-symbols-outlined">chevron_forward</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>'
-    },
-    searchBackward: {
-      // <span class="material-symbols-outlined">chevron_backward</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>'
-    },
-    matchCase: {
-      // <span class="material-symbols-outlined">match_case</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>'
-    },
-    paragraphStyle: {
-      // <span class="material-symbols-outlined">format_paragraph</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>'
-    },
-    more: {
-      // <span class="material-symbols-outlined">more_horiz</span>
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
-    }
-  };
-
-  function getIcon(root, icon) {
-      let doc = (root.nodeType == 9 ? root : root.ownerDocument) || document;
-      let node = doc.createElement("span");
-      node.className = prefix + "-icon";
-      node.innerHTML = icon.svg;
-      return node;
   }
 
   /**
@@ -22252,57 +22612,14 @@
   }
 
   /**
-   * The `markupKeymapConfig` is the default for the MarkupEditor. It can be overridden
-   * by modifying it before you instantiate the MarkupEditor.
-   * 
-   * To customize the key mapping, for example, in your index.html:
-   * 
-   *    let keymapConfig = MU.markupKeymapConfig;     // Grab the standard keymap config as a baseline
-   *    keymapConfig.link = ["Ctrl-L", "Ctrl-l"];     // Use Control+L instead of Command+k
-   *    const markupEditor = new MU.MarkupEditor(
-   *      document.querySelector('#editor'),
-   *      '<h1>Hello, world!</h1>'
-   *    )
-   *    
-   * Note that the key mapping will exist and work regardless of whether you disable a toolbar 
-   * or a specific item in a menu. For example, undo/redo by default map to Mod-z/Shift-Mod-z even  
-   * though the "correctionBar" is off by default in the MarkupEditor. You can remove a key mapping 
-   * by setting its value to null or an empty string. 
-   */
-  const markupKeymapConfig = {
-      // Correction
-      "undo": "Mod-z",
-      "redo": "Shift-Mod-z",
-      // Insert
-      "link": ["Mod-K", "Mod-k"],
-      "image": ["Mod-G", "Mod-g"],
-      "table": ["Mod-T", "Mod-t"],
-      // Stylebar
-      "bullet": ["Ctrl-U", "Ctrl-u"],
-      "number": ["Ctrl-O", "Ctrl-o"],
-      "indent": ["Mod-]", "Ctrl-q"],
-      "outdent": ["Mod-[", "Shift-Ctrl-q"],
-      // Format
-      "bold": ["Mod-B", "Mod-b"],
-      "italic": ["Mod-I", "Mod-i"],
-      "underline": ["Mod-U", "Mod-u"],
-      "strikethrough": ["Ctrl-S", "Ctrl-s"],
-      "code": "Mod-`",
-      "subscript": "Ctrl-,",
-      "superscript": "Ctrl-.",
-      // Search
-      "search": ["Ctrl-F", "Ctrl-f"],
-  };
-
-  /**
    * Return a map of Commands that will be invoked when key combos are pressed.
    * 
-   * @param {Object}  keymapConfig    The keymap configuration, markupKeymapConfig by default.
-   * @param {Schema}  schema          The schema that holds node and mark types.
-   * @returns [String : Command]      Commands bound to keys identified by strings (e.g., "Mod-b")
+   * @param {Object}  config      The MarkupEditor.config
+   * @param {Schema}  schema      The schema that holds node and mark types.
+   * @returns [String : Command]  Commands bound to keys identified by strings (e.g., "Mod-b")
    */
-  function buildKeymap(keymapConfig, schema) {
-      let keymap = keymapConfig;   // Shorthand
+  function buildKeymap(config, schema) {
+      let keymap = config.keymap;   // Shorthand
       let keys = {};
 
       /** Allow keyString to be a string or array of strings identify the map from keys to cmd */
@@ -22353,34 +22670,27 @@
       bind(keymap.indent, indentCommand());
       bind(keymap.outdent, outdentCommand());
       // Insert
-      bind(keymap.link, new LinkItem(keymap).command);
-      bind(keymap.image, new ImageItem(keymap).command);
+      bind(keymap.link, new LinkItem(config).command);
+      bind(keymap.image, new ImageItem(config).command);
       bind(keymap.table, new TableInsertItem().command); // TODO: Doesn't work properly
+      // Styling
+      bind(keymap.p, setStyleCommand('P'));
+      bind(keymap.h1, setStyleCommand('H1'));
+      bind(keymap.h2, setStyleCommand('H2'));
+      bind(keymap.h3, setStyleCommand('H3'));
+      bind(keymap.h4, setStyleCommand('H4'));
+      bind(keymap.h5, setStyleCommand('H5'));
+      bind(keymap.h6, setStyleCommand('H6'));
       // Search
-      bind(keymap.search, new SearchItem(keymap).command);
+      bind(keymap.search, new SearchItem(config).command);
       return keys
   }
 
-  /**
-   * The markupeditor-base holds its configuration in a global `markupConfig` which is referenced in 
-   * `main.js`. This object needs to be set up before a MarkupEditor web page is launched. This needs to be  
-   * done as a script before `dist/markupeditor.umd.js` is loaded. You can see this in the `demo/index.html`, and
-   * in markupeditor-vs, the VSCode extension, in the webview panel setup done in `markupCoordinator.js`.
-   * It's a bit odd that the markupeditor-base package references something like `markupConfig` but itself
-   * never defines it. The intent is that something external creates an actual web page that holds onto the
-   * MarkupEditor and loads all of its scripts - like `demo/index.html` does in the simplest case. That external
-   * thing is what controls and defines the `markupConfig`. In the VSCode extension, that is done via the standard 
-   * VSCode extension settings mechanisms. In Swift, it is done using the MarkupEditor settings. In the
-   * markupeditor-base demo, the global `markupConfig` exists but is `undefined`, which results in `main.js` using
-   * the value returned from `MenuConfig.standard()`.
-   */
-
-
   exports.toolbarView = void 0;
 
-  function toolbar(prefix, content) {
+  function toolbar(content) {
     let view = function view(editorView) {
-      exports.toolbarView = new ToolbarView(editorView, prefix, content);
+      exports.toolbarView = new ToolbarView(editorView, content);
       return exports.toolbarView;
     };
     return new Plugin({view})
@@ -22388,21 +22698,26 @@
 
   class ToolbarView {
 
-    constructor(editorView, prefix, content) {
+    constructor(editorView, content) {
       this.prefix = prefix + "-toolbar";
       this.editorView = editorView;
       this.content = content;
       this.root = editorView.root;
+
+      // Embed the toolbar and editorView in a wrapper.
       this.wrapper = crelt("div", {class: this.prefix + "-wrapper"});
-      this.menu = this.wrapper.appendChild(crelt("div", {class: this.prefix, id: this.prefix}));
-      this.menu.className = this.prefix;
+      this.toolbar = this.wrapper.appendChild(crelt("div", {class: this.prefix, id: this.prefix}));
+      // Since the menu adjusts to fit using a `MoreItem` for contents that doesn't fit, 
+      // we need to refresh how it is rendered when resizing takes place.
+      window.addEventListener('resize', ()=>{ this.refresh(); });
+      this.toolbar.className = this.prefix;
       if (editorView.dom.parentNode)
         editorView.dom.parentNode.replaceChild(this.wrapper, editorView.dom);
       this.wrapper.appendChild(editorView.dom);
 
       let {dom, update} = renderGrouped(editorView, this.content);
       this.contentUpdate = update;
-      this.menu.appendChild(dom);
+      this.toolbar.appendChild(dom);
       this.update();
     }
 
@@ -22411,9 +22726,9 @@
         this.refreshFit();
         this.root = this.editorView.root;
       }
-      // Returning this.fitMenu() will return this.contentUpdate(this.editorView.state) for 
+      // Returning this.fitToolbar() will return this.contentUpdate(this.editorView.state) for 
       // the menu that fits in the width.
-      return this.fitMenu();
+      return this.fitToolbar();
     }
 
     /**
@@ -22434,17 +22749,39 @@
       this.refreshFit();
     }
 
+    /** Refresh the toolbar, wrapping at the item at `wrapAtIndex` */
     refreshFit(wrapAtIndex) {
-        let { dom, update } = renderGroupedFit(this.editorView, this.content, wrapAtIndex);
-        this.contentUpdate = update;
-        // dom is an HTMLDocumentFragment and needs to replace all of menu
-        this.menu.innerHTML = '';
-        this.menu.appendChild(dom);
+      let { dom, update } = renderGroupedFit(this.editorView, this.content, wrapAtIndex);
+      this.contentUpdate = update;
+      // dom is an HTMLDocumentFragment and needs to replace all of menu
+      this.toolbar.innerHTML = '';
+      this.toolbar.appendChild(dom);
     }
 
-    fitMenu() {
-      let items = this.menu.children;
-      let menuRight = this.menu.getBoundingClientRect().right;
+    /** 
+     * Refresh the toolbar with all items and then fit it. 
+     * We need to do this because when resize makes the toolbar wider, we don't want to keep 
+     * the same `MoreItem` in place if more fits in the toolbar itself.
+     */
+    refresh() {
+      let { dom, update } = renderGrouped(this.editorView, this.content);
+      this.contentUpdate = update;
+      this.toolbar.innerHTML = '';
+      this.toolbar.appendChild(dom);
+      this.fitToolbar();
+    }
+
+    /**
+     * Fit the items in the toolbar into the toolbar width,
+     * 
+     * If the toolbar as currently rendered does not fit in the width, then execute `refreshFit`,
+     * identifying the item to be replaced by a "more" button. That button will be a MoreItem
+     * that toggles a sub-toolbar containing the items starting with the one at wrapAtIndex.
+     */
+    fitToolbar() {
+      let items = this.toolbar.children;
+      let menuRect = this.toolbar.getBoundingClientRect();
+      let menuRight = menuRect.right;
       let separatorHTML = separator().outerHTML;
       let wrapAtIndex = -1; // Track the last non-separator (i.e., content) item that was fully in-width
       for (let i = 0; i < items.length; i++) {
@@ -22604,7 +22941,9 @@
             srcMap.set(src, true);
             postMessage({ 'messageType': 'addedImage', 'src': src, 'divId': (selectedID ?? '') });
           }
-          stateChanged();
+            // We already notified of a state change, and this one causes callbackInput which 
+            // is used to track changes
+            //stateChanged();
         }
         return srcMap
       }
@@ -22656,27 +22995,44 @@
     exports.toolbarView.append(items);
   }
 
+  function toggleSearch() {
+    let searchItem = new SearchItem(getMarkupEditorConfig());
+    // TODO: How to not rely on toolbarView being present
+    let view = exports.toolbarView.editorView;
+    searchItem.toggleSearch(view.state, view.dispatch, view);
+  }
+
+  function openLinkDialog() {
+    let linkItem = new LinkItem(getMarkupEditorConfig());
+    let view = exports.toolbarView.editorView;
+    linkItem.openDialog(view.state, view.dispatch, view);
+  }
+
+  function openImageDialog() {
+    let imageItem = new ImageItem(getMarkupEditorConfig());
+    let view = exports.toolbarView.editorView;
+    imageItem.openDialog(view.state, view.dispatch, view);
+  }
+
   /**
    * Return an array of Plugins used for the MarkupEditor
    * @param {Schema} schema The schema used for the MarkupEditor
    * @returns 
    */
-  function markupSetup(schema, config) {
-    let prefix = "Markup";
-    let menuConfig = config?.menu ? config.menu : markupMenuConfig;
-    let keymapConfig = config?.keymap ? config.keymap: markupKeymapConfig;
+  function markupSetup(config, schema) {
+    setPrefix('Markup');
     let plugins = [
       buildInputRules(schema),
-      keymap(buildKeymap(keymapConfig, schema)),
+      keymap(buildKeymap(config, schema)),
       keymap(baseKeymap),
       dropCursor(),
       gapCursor(),
     ];
 
     // Only show the toolbar if the config indicates it is visible
-    if (menuConfig.visibility.toolbar) {
-      let content = buildMenuItems(prefix, menuConfig, keymapConfig, schema);
-      plugins.push(toolbar(prefix, content));
+    if (config.toolbar.visibility.toolbar) {
+      let content = buildMenuItems(config, schema);
+      plugins.push(toolbar(content));
     }
 
     plugins.push(history());
@@ -22700,54 +23056,389 @@
   }
 
   /**
-   * The instance that will receive `postMessage` from the MarkupEditor as the document state changes.
+   * `ToolbarConfig.standard()` is the default for the MarkupEditor and is designed to correspond 
+   * to GitHub flavored markdown. It can be overridden by passing it a new config when instantiating
+   * the MarkupEditor. You can use the pre-defined static methods like `full` or customize what they 
+   * return. The predefined statics each allow you to turn on or off the `correctionBar` visibility.
+   * The `correctionBar` visibility is off by default, because while it's useful for touch devices 
+   * without a keyboard, undo/redo are mapped to the hotkeys most people have in muscle memory.
+   * 
+   * To customize the menu bar, for example, in your index.html:
+   * 
+   *    let toolbarConfig = MU.ToolbarConfig.full(true);  // Grab the full toolbar, including correction, as a baseline
+   *    toolbarConfig.insertBar.table = false;               // Turn off table insert
+   *    const markupEditor = new MU.MarkupEditor(
+   *      document.querySelector('#editor'),
+   *      {
+   *        html: '<h1>Hello, world!</h1>',
+   *        toolbar: toolbarConfig,
+   *      }
+   *    )
+   *    
+   * Turn off entire toolbars and menus using the "visibility" settings. Turn off specific items
+   * within a toolbar or menu using the settings specific to that toolbar or menu. Customize 
+   * left-to-right ordering using the "ordering" settings.
    */
-  class MessageHandler {
-    constructor(markupEditor) {
-      this.markupEditor = markupEditor;
+  class ToolbarConfig {
+
+    static all = {
+      "visibility": {             // Control the visibility of toolbars, etc
+        "toolbar": true,          // Whether the toolbar is visible at all
+        "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
+        "insertBar": true,        // Whether the insert bar (link, image, table) is visible
+        "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
+        "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
+        "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
+        "search": true,           // Whether the search item (hide/show search bar) is visible
+      },
+      "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
+        "correctionBar": 10,      // Correction bar order if it is visible
+        "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
+        "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
+        "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
+        "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
+        "search": 60,             // Search item (hide/show search bar) order if it is visible
+      },
+      "insertBar": {
+        "link": true,             // Whether the link menu item is visible
+        "image": true,            // Whether the image menu item is visible
+        "tableMenu": true,        // Whether the table menu is visible
+      },
+      "formatBar": {
+        "bold": true,             // Whether the bold menu item is visible
+        "italic": true,           // Whether the italic menu item is visible
+        "underline": true,        // Whether the underline menu item is visible
+        "code": true,             // Whether the code menu item is visible
+        "strikethrough": true,    // Whether the strikethrough menu item is visible
+        "subscript": true,        // Whether the subscript menu item is visible
+        "superscript": true,      // Whether the superscript menu item is visible
+      },
+      "styleMenu": {
+        "p": "Body",              // The label in the menu for "P" style
+        "h1": "H1",               // The label in the menu for "H1" style
+        "h2": "H2",               // The label in the menu for "H2" style
+        "h3": "H3",               // The label in the menu for "H3" style
+        "h4": "H4",               // The label in the menu for "H4" style
+        "h5": "H5",               // The label in the menu for "H5" style
+        "h6": "H6",               // The label in the menu for "H6" style
+        "pre": "Code",            // The label in the menu for "PRE" aka code_block style
+      },
+      "styleBar": {
+        "list": true,             // Whether bullet and numbered list items are visible
+        "dent": true,             // Whether indent and outdent items are visible
+      },
+      "tableMenu": {
+        "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
+        "border": true,           // Whether the "Border" item is visible in the "Table" menu
+      },
     }
 
-    /**
-     * Take action when messages we care about come in.
-     * @param {string | JSON} message   The message passed from the MarkupEditor as the state changes. 
-     */
-    postMessage(message) {
-      let config = this.markupEditor.config;
-      let delegate = config.delegate;
-      switch (message) {
-        case (message.startsWith('input')): {
-          // Some input or change happened in the document, so let the delegate know immediately 
-          // if it exists, and return. Input happens with every keystroke and editing operation, 
-          // so generally delegate should be doing very little, except perhaps noting that the 
-          // document has changed. However, what your delegate does is very application-specific.
-          delegate?.markupInput(message);
-          return
-        }
-        // The editor posts `ready` when all scripts are loaded, so we can set the HTML. If HTML
-        // is an empty document, then the config.placeholder will be shown.
-        case 'ready': {
-          setHTML(config.html, config.focusAfterLoad ?? true);
-          delegate?.markupReady(this.markupEditor);
-          return
-        }
-      }
+    static full(correction=false) {
+      let full = this.all;
+      full.visibility.correctionBar = correction;
+      return full
+    }
+
+    static standard(correction=false) {
+      return this.markdown(correction)
+    }
+
+    static desktop(correction=false) {
+      return this.full(correction)
+    }
+
+    static markdown(correction=false) {
+      let markdown = this.full(correction);
+      markdown.formatBar.underline = false;
+      markdown.formatBar.subscript = false;
+      markdown.formatBar.superscript = false;
+      return markdown
     }
   }
 
   /**
-   * The MarkupEditor holds the properly set-up EditorView and any additional 
+   * `KeymapConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
+   * passing a new KeymapConfig when instantiating the MarkupEditor. You can use the pre-defined 
+   * static methods like `standard()` or customize what it returns.
    * 
-   * Note that `markupConfig` is a global that must already exist, but which can be undefined.
-   * This is typically accomplished by setting it in the first script loaded into the view, 
-   * something as simple as `<script>let markupConfig;</script>'. For an environment like VSCode, 
-   * which has a rich configuration capability, it can be set using `vscode.getConfiguration()`.
+   * To customize the key mapping, for example, in your index.html:
    * 
-   * If `markupConfig` is undefined, the "standard" config is supplied by `MenuConfig.standard()`.
+   *    let keymapConfig = MU.KeymapConfig.standard();    // Grab the standard keymap config as a baseline
+   *    keymapConfig.link = ["Ctrl-L", "Ctrl-l"];         // Use Control+L instead of Command+k
+   *    const markupEditor = new MU.MarkupEditor(
+   *      document.querySelector('#editor'),
+   *      {
+   *        html: '<h1>Hello, world!</h1>',
+   *        keymap: keymapConfig,
+   *      }
+   *    )
+   *    
+   * Note that the key mapping will exist and work regardless of whether you disable a toolbar 
+   * or a specific item in a menu. For example, undo/redo by default map to Mod-z/Shift-Mod-z even  
+   * though the "correctionBar" is off by default in the MarkupEditor. You can remove a key mapping 
+   * by setting its value to null or an empty string. 
+   */
+  class KeymapConfig {
+      static all = {
+          // Correction
+          "undo": "Mod-z",
+          "redo": "Shift-Mod-z",
+          // Insert
+          "link": ["Mod-K", "Mod-k"],
+          "image": ["Mod-G", "Mod-g"],
+          //"table": ["Mod-T", "Mod-t"],  // Does not work anyway
+          // Stylemenu
+          "p": "Ctrl-Shift-0",
+          "h1": "Ctrl-Shift-1",
+          "h2": "Ctrl-Shift-2",
+          "h3": "Ctrl-Shift-3",
+          "h4": "Ctrl-Shift-4",
+          "h5": "Ctrl-Shift-5",
+          "h6": "Ctrl-Shift-6",
+          // Stylebar
+          "bullet": ["Ctrl-U", "Ctrl-u"],
+          "number": ["Ctrl-O", "Ctrl-o"],
+          "indent": ["Mod-]", "Ctrl-q"],
+          "outdent": ["Mod-[", "Shift-Ctrl-q"],
+          // Format
+          "bold": ["Mod-B", "Mod-b"],
+          "italic": ["Mod-I", "Mod-i"],
+          "underline": ["Mod-U", "Mod-u"],
+          "strikethrough": ["Ctrl-S", "Ctrl-s"],
+          "code": "Mod-`",
+          "subscript": "Ctrl-Mod--",
+          "superscript": "Ctrl-Mod-+",
+          // Search
+          "search": ["Ctrl-F", "Ctrl-f"],
+      }
+
+      static full() {
+          return this.all
+      }
+
+      static standard() {
+          return this.markdown()
+      }
+
+      static desktop() {
+          return this.full()
+      }
+
+      static markdown() {
+          let markdown = this.full();
+          markdown.underline = null;
+          markdown.subscript = null;
+          markdown.superscript = null;
+          return markdown
+      }
+  }
+
+  /**
+   * `BehaviorConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
+   * passing a new BehaviorConfig when instantiating the MarkupEditor.
+   * 
+   * To customize the behavior config, for example, in your index.html:
+   * 
+   *    let behaviorConfig = MU.BehaviorConfig.desktop();    // Use the desktop editor config as a baseline
+   *    const markupEditor = new MU.MarkupEditor(
+   *      document.querySelector('#editor'),
+   *      {
+   *        html: '<h1>Hello, world!</h1>',
+   *        behavior: behaviorConfig,
+   *      }
+   *    )
+   */
+  class BehaviorConfig {
+
+      static all = {
+          "focusAfterLoad": true,     // Whether the editor should take focus after loading
+          "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
+          "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
+          "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
+      }
+
+      static standard() { 
+          return this.all
+      }
+
+      static desktop() { 
+          let desktop = this.all;
+          desktop.selectImage = true;
+          return desktop
+      }
+
+  }
+
+  /**
+   * The MessageHandler receives `postMessage` from the MarkupEditor as the document state changes.
+   * 
+   * You can set the MessageHandler used by the MarkupEditor using `MU.setMessageHandler`. This is how 
+   * the MarkupEditor is embedded in Swift and VSCode. If you don't set your own MessageHandler, then 
+   * this is the default version that will be used. These other MessageHandlers will typically use the 
+   * same MarkupDelegate pattern to route document state notifications to an app-specific delegate.
+   * 
+   * Although the default MessageHandler does some important work, like loading content when the view 
+   * is ready, its primary job is to let your MarkupDelegate know of state changes in the document. 
+   * This is so that your app that uses the MarkupEditor can take action if needed.
+   * 
+   * Note that delegate can be undefined, and any of `markup` methods invoked in it may also be 
+   * undefined. This way, you only need to implement delegate methods that are useful in your app.
+   * For example, if you want to track if any changes have occurred in the document, you would want 
+   * to implement `markupInput` so you know some input/change has occurred. You could then do a kind 
+   * of auto-save method within your app, for example.
+   */
+  class MessageHandler {
+      constructor(markupEditor) {
+          this.markupEditor = markupEditor;
+      }
+
+      /**
+       * Take action when messages we care about come in.
+       * @param {string | JSON} message   The message passed from the MarkupEditor as the state changes. 
+       */
+      postMessage(message) {
+          let config = this.markupEditor.config;
+          let delegate = config.delegate;
+
+          if (message.startsWith('input')) {
+              // Some input or change happened in the document, so let the delegate know immediately 
+              // if it exists, and return. Input happens with every keystroke and editing operation, 
+              // so generally delegate should be doing very little, except perhaps noting that the 
+              // document has changed. However, what your delegate does is very application-specific.
+              delegate?.markupInput && delegate?.markupInput(message, this.markupEditor);
+              return
+          }
+          switch (message) {
+              // The editor posts `ready` when all scripts are loaded, so we can set the HTML. If HTML
+              // is an empty document, then the config.placeholder will be shown.
+              case 'ready':
+                  this.loadContents(config);
+                  delegate?.markupReady && delegate?.markupReady(this.markupEditor);
+                  return
+              case "updateHeight":
+                  delegate?.markupUpdateHeight && delegate?.markupUpdateHeight(getHeight(), this.markupEditor);
+                  return
+              case "selectionChanged":
+                  delegate?.markupSelectionChanged && delegate?.markupSelectionChanged(this.markupEditor);
+                  return
+              case "clicked":
+                  delegate?.markupClicked && delegate?.markupClicked(this.markupEditor);
+                  return
+              case "searched":
+                  delegate?.markupSearched && delegate?.markupSearched(this.markupEditor);
+                  return
+              default:
+                  // By default, try to process the message as a JSON object, and if it's not parseable, 
+                  // then log to the console so we know about it during development. Between the `postMessage` 
+                  // method and its companion `receivedMessageData`, every message received from the 
+                  // MarkupEditor should be handled, with no exceptions. Otherwise, something is going 
+                  // on over in the web view that we are ignoring, and while we might want to ignore it, 
+                  // we don't want anything to slip thru the cracks here.
+                  try {
+                      const messageData = JSON.parse(message);
+                      this.receivedMessageData(messageData);
+                  } catch {
+                      console.log("Unhandled message: " + message);
+                  }
+          }
+      }
+
+      /**
+       * Examine the `messageData.messageType` and take appropriate action with the other 
+       * data that is supplied in the `messageData`.
+       * 
+       * @param {Object} messageData The object obtained by parsing the JSON of a message.
+       */
+      receivedMessageData(messageData) {
+          let delegate = this.markupEditor.config.delegate;
+          let messageType = messageData.messageType;
+          switch (messageType) {
+              case "log":
+                  console.log(messageData.log);
+                  return
+              case "error":
+                  let code = messageData.code;
+                  let message = messageData.message;
+                  if (!code || !message) {
+                      console.log("Bad error message.");
+                      return
+                  }
+                  let info = messageData.info;
+                  let alert = messageData.alert ?? true;
+                  delegate?.markupError && delegate?.markupError(code, message, info, alert);
+                  return
+              case "copyImage":
+                  console.log("fix copyImage " + messageData.src);
+                  return
+              case "addedImage":
+                  if (!delegate?.markupImageAdded) return;
+                  let divId = messageData.divId;
+                  // Even if divid is identified, if it's empty or the editor element, then
+                  // use the old call without divid to maintain compatibility with earlier versions
+                  // that did not support multi-contenteditable divs.
+                  if ((divId.length == 0) || (divId == "editor")) {
+                      delegate.markupImageAdded(this.markupEditor, messageData.src);
+                  } else if (!divId.length == 0) {
+                      delegate?.markupImageAdded(this.markupEditor, messageData.src, divId);
+                  } else {
+                      console.log("Error: The div id for the image could not be decoded.");
+                  }
+                  return
+              case "deletedImage":
+                  console.log("fix deletedImage " + messageData.src);
+                  return
+              case "buttonClicked":
+                  console.log("fix deletedImage " + messageData.src);
+                  return
+              default:
+                  console.log(`Unknown message of type ${messageType}: ${messageData}.`);
+          }
+      }
+
+      /** This really doesn't do anything for now, but it a placeholder */
+      loadUserFiles(config) {
+          let scriptFiles = config.userScriptFiles;
+          let cssFiles = config.userCssFiles;
+          loadUserFiles(scriptFiles, cssFiles);
+      }
+
+      /** Load the contents from `filename`, or if not specified, from `html` */
+      loadContents(config) {
+          let filename = config.filename;
+          let base = config.base;
+          let focusAfterLoad = config.behavior.focusAfterLoad;
+          if (filename) {
+              fetch(filename)
+                  .then((response) => response.text())
+                  .then((text) => {
+                      // A fetch failure returns 'Cannot GET <filename with path>'
+                      MU.setHTML(text, focusAfterLoad, base);
+                  })
+                  .catch(() => {
+                      // But just in case, report a failure if needed.
+                      MU.setHTML(`<p>Failed to load ${filename}.</p>`, focusAfterLoad);
+                  });
+          } else {
+              let html = config.html ?? '<p></p>';
+              MU.setHTML(html, focusAfterLoad);
+          }
+      }
+  }
+
+  /**
+   * The MarkupEditor holds the properly set-up EditorView and any additional configuration.
    */
   class MarkupEditor {
     constructor(target, config) {
       this.element = target ?? document.querySelector("#editor");
+
+      // Make sure config always contains menu, keymap, and behavior
       this.config = config ?? {};
+      if (!this.config.toolbar) this.config.toolbar = ToolbarConfig.standard();
+      if (!this.config.keymap) this.config.keymap = KeymapConfig.standard();
+      if (!this.config.behavior) this.config.behavior = BehaviorConfig.standard();
+      setMarkupEditorConfig(this.config);
+
       this.html = this.config.html ?? emptyHTML();
       setMessageHandler(this.config.messageHandler ?? new MessageHandler(this));
       window.view = new EditorView(this.element, {
@@ -22755,9 +23446,10 @@
           // For the MarkupEditor, we can just use the editor element. 
           // There is no need to use a separate content element.
           doc: DOMParser.fromSchema(schema).parse(this.element),
-          plugins: markupSetup(schema, config)
+          plugins: markupSetup(config, schema)
         }),
         nodeViews: {
+          link(node, view, getPos) { return new LinkView(node, view, getPos)},
           image(node, view, getPos) { return new ImageView(node, view, getPos) },
           div(node, view, getPos) { return new DivView(node, view, getPos) },
         },
@@ -22807,10 +23499,13 @@
     }
   }
 
+  exports.BehaviorConfig = BehaviorConfig;
   exports.Dropdown = Dropdown;
   exports.DropdownSubmenu = DropdownSubmenu;
+  exports.KeymapConfig = KeymapConfig;
   exports.MarkupEditor = MarkupEditor;
   exports.MenuItem = MenuItem;
+  exports.ToolbarConfig = ToolbarConfig;
   exports.addButton = addButton;
   exports.addCol = addCol;
   exports.addDiv = addDiv;
@@ -22830,18 +23525,21 @@
   exports.endModalInput = endModalInput;
   exports.focus = focus;
   exports.focusOn = focusOn;
+  exports.getDataImages = getDataImages;
   exports.getHTML = getHTML;
   exports.getHeight = getHeight;
+  exports.getMarkupEditorConfig = getMarkupEditorConfig;
   exports.getSelectionState = getSelectionState;
   exports.getTestHTML = getTestHTML;
   exports.indent = indent;
   exports.insertImage = insertImage;
   exports.insertLink = insertLink;
   exports.insertTable = insertTable;
+  exports.isChanged = isChanged;
   exports.loadUserFiles = loadUserFiles;
-  exports.markupKeymapConfig = markupKeymapConfig;
-  exports.markupMenuConfig = markupMenuConfig;
   exports.modifyImage = modifyImage;
+  exports.openImageDialog = openImageDialog;
+  exports.openLinkDialog = openLinkDialog;
   exports.outdent = outdent;
   exports.padBottom = padBottom;
   exports.pasteHTML = pasteHTML;
@@ -22854,8 +23552,10 @@
   exports.renderGrouped = renderGrouped;
   exports.replaceStyle = replaceStyle;
   exports.resetSelection = resetSelection;
+  exports.savedDataImage = savedDataImage;
   exports.searchFor = searchFor;
   exports.setHTML = setHTML;
+  exports.setMarkupEditorConfig = setMarkupEditorConfig;
   exports.setMessageHandler = setMessageHandler;
   exports.setPlaceholder = setPlaceholder;
   exports.setStyle = setStyle;
@@ -22871,6 +23571,7 @@
   exports.toggleCode = toggleCode;
   exports.toggleItalic = toggleItalic;
   exports.toggleListItem = toggleListItem$1;
+  exports.toggleSearch = toggleSearch;
   exports.toggleStrike = toggleStrike;
   exports.toggleSubscript = toggleSubscript;
   exports.toggleSuperscript = toggleSuperscript;

@@ -1,0 +1,21 @@
+{
+  "name": "markupeditor",
+  "version": "0.8.1",
+  "description": "Swift MarkupEditor uptake of markupeditor-base",
+  "homepage": "https://github.com/stevengharris/MarkupEditor",
+  "bugs": {
+    "url": "https://github.com/stevengharris/MarkupEditor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/stevengharris/MarkupEditor.git"
+  },
+  "license": "MIT",
+  "author": "Steven G. Harris",
+  "scripts": {
+    "prepare": "sh prepare.sh"
+  },
+  "devDependencies": {
+    "markupeditor-base": "file:../../../VSCodeProjects/markupeditor-base"
+  }
+}
