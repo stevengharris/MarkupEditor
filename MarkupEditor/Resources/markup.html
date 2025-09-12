@@ -11,5 +11,17 @@
     <body>
         <div id="editor"></div>
         <script src="markup.js"></script>
+        <script>
+            let toolbarConfig = MU.ToolbarConfig.standard();
+            toolbarConfig.visibility.toolbar = false;
+            new MU.MarkupEditor(
+                document.querySelector('#editor'),
+                {
+                    messageHandler: window.webkit?.messageHandlers?.markup,
+                    toolbar: toolbarConfig,
+                    html: '<p>Loading...</p>'
+                }
+            )
+        </script>
     </body>
 </html>
