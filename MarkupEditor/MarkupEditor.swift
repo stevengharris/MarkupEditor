@@ -26,8 +26,8 @@ public struct MarkupEditor {
         "autocorrect" : "true"
     ]
     public static let markupMenu = MarkupMenu()
-    public static let toolbarContents = ToolbarContents.shared
-    public static let toolbarStyle = ToolbarStyle()
+    public static var toolbarContents = ToolbarContents.shared
+    public static var toolbarStyle = ToolbarStyle()
     public static var toolbarLocation = ToolbarLocation.automatic
     public static var leftToolbar: AnyView? {
         didSet {
