@@ -10,8 +10,8 @@ import UIKit
 @MainActor
 public class ToolbarStyle: @unchecked Sendable, ObservableObject {
     
-    static let compact = ToolbarStyle(.compact)
-    static let labeled = ToolbarStyle(.labeled)
+    public static let compact = ToolbarStyle(.compact)
+    public static let labeled = ToolbarStyle(.labeled)
     
     var style: Style
     
