@@ -1,0 +1,47 @@
+{
+    "description": "Simple toggle-off of formatting.",
+    "tests": [
+        {
+            "description": "Unbold selection",
+            "startHtml": "<p>This |<strong>is|</strong> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleBold()"
+        },
+        {
+            "description": "Unitalic selection",
+            "startHtml": "<p>This |<em>is|</em> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleItalic()"
+        },
+        {
+            "description": "Ununderline selection",
+            "startHtml": "<p>This |<u>is|</u> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleUnderline()"
+        },
+        {
+            "description": "Unstrikethrough selection",
+            "startHtml": "<p>This |<s>is|</s> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleStrike()"
+        },
+        {
+            "description": "Unsuperscript selection",
+            "startHtml": "<p>This |<sup>is|</sup> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleSuperscript()"
+        },
+        {
+            "description": "Unsubscript selection",
+            "startHtml": "<p>This |<sub>is|</sub> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleSubscript()"
+        },
+        {
+            "description": "Uncode selection",
+            "startHtml": "<p>This |<code>is|</code> a start</p>",
+            "endHtml": "<p>This |is| a start</p>",
+            "action": "MU.toggleCode()"
+        }
+    ]
+}

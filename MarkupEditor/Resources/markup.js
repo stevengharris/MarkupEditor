@@ -4582,7 +4582,7 @@
       }
       return null;
   }
-  function lift$1(tr, range, target) {
+  function lift(tr, range, target) {
       let { $from, $to, depth } = range;
       let gapStart = $from.before(depth + 1), gapEnd = $to.after(depth + 1);
       let start = gapStart, end = gapEnd;
@@ -5591,7 +5591,7 @@
       sure the lift is valid.
       */
       lift(range, target) {
-          lift$1(this, range, target);
+          lift(this, range, target);
           return this;
       }
       /**
@@ -7782,7 +7782,7 @@
           // (one where the focus is before the anchor), but not all
           // browsers support it yet.
           let domSelExtended = false;
-          if ((domSel.extend || anchor == head) && !brKludge) {
+          if ((domSel.extend || anchor == head) && !(brKludge && gecko)) {
               domSel.collapse(anchorDOM.node, anchorDOM.offset);
               try {
                   if (anchor != head)
@@ -8194,17 +8194,18 @@
       }
       // Mark this node as being the selected node.
       selectNode() {
-          if (this.nodeDOM.nodeType == 1)
+          if (this.nodeDOM.nodeType == 1) {
               this.nodeDOM.classList.add("ProseMirror-selectednode");
-          if (this.contentDOM || !this.node.type.spec.draggable)
-              this.dom.draggable = true;
+              if (this.contentDOM || !this.node.type.spec.draggable)
+                  this.nodeDOM.draggable = true;
+          }
       }
       // Remove selected node marking from this node.
       deselectNode() {
           if (this.nodeDOM.nodeType == 1) {
               this.nodeDOM.classList.remove("ProseMirror-selectednode");
               if (this.contentDOM || !this.node.type.spec.draggable)
-                  this.dom.removeAttribute("draggable");
+                  this.nodeDOM.removeAttribute("draggable");
           }
       }
       get domAtom() { return this.node.isAtom; }
@@ -9043,17 +9044,14 @@
       });
   }
   function selectCursorWrapper(view) {
-      let domSel = view.domSelection(), range = document.createRange();
+      let domSel = view.domSelection();
       if (!domSel)
           return;
       let node = view.cursorWrapper.dom, img = node.nodeName == "IMG";
       if (img)
-          range.setStart(node.parentNode, domIndex(node) + 1);
+          domSel.collapse(node.parentNode, domIndex(node) + 1);
       else
-          range.setStart(node, 0);
-      range.collapse(true);
-      domSel.removeAllRanges();
-      domSel.addRange(range);
+          domSel.collapse(node, 0);
       // Kludge to kill 'control selection' in IE11 when selecting an
       // invisible cursor wrapper, since that would result in those weird
       // resize handles and a selection that considers the absolutely
@@ -9531,11 +9529,14 @@
       let dom, slice;
       if (!html && !text)
           return null;
-      let asText = text && (plainText || inCode || !html);
+      let asText = !!text && (plainText || inCode || !html);
       if (asText) {
           view.someProp("transformPastedText", f => { text = f(text, inCode || plainText, view); });
-          if (inCode)
-              return text ? new Slice(Fragment.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0) : Slice.empty;
+          if (inCode) {
+              slice = new Slice(Fragment.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0);
+              view.someProp("transformPasted", f => { slice = f(slice, view, true); });
+              return slice;
+          }
           let parsed = view.someProp("clipboardTextParser", f => f(text, $context, plainText, view));
           if (parsed) {
               slice = parsed;
@@ -9593,7 +9594,7 @@
               slice = closeSlice(slice, openStart, openEnd);
           }
       }
-      view.someProp("transformPasted", f => { slice = f(slice, view); });
+      view.someProp("transformPasted", f => { slice = f(slice, view, asText); });
       return slice;
   }
   const inlineParents = /^(a|abbr|acronym|b|cite|code|del|em|i|ins|kbd|label|output|q|ruby|s|samp|span|strong|sub|sup|time|u|tt|var)$/i;
@@ -10055,7 +10056,7 @@
           }
           const target = flushed ? null : event.target;
           const targetDesc = target ? view.docView.nearestDesc(target, true) : null;
-          this.target = targetDesc && targetDesc.dom.nodeType == 1 ? targetDesc.dom : null;
+          this.target = targetDesc && targetDesc.nodeDOM.nodeType == 1 ? targetDesc.nodeDOM : null;
           let { selection } = view.state;
           if (event.button == 0 &&
               targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false ||
@@ -10452,7 +10453,7 @@
       let $mouse = view.state.doc.resolve(eventPos.pos);
       let slice = dragging && dragging.slice;
       if (slice) {
-          view.someProp("transformPasted", f => { slice = f(slice, view); });
+          view.someProp("transformPasted", f => { slice = f(slice, view, false); });
       }
       else {
           slice = parseFromClipboard(view, getText(event.dataTransfer), brokenClipboardAPI ? null : event.dataTransfer.getData("text/html"), false, $mouse);
@@ -11737,16 +11738,13 @@
       let $to = parse.doc.resolveNoCache(change.endB - parse.from);
       let $fromA = doc.resolve(change.start);
       let inlineChange = $from.sameParent($to) && $from.parent.inlineContent && $fromA.end() >= change.endA;
-      let nextSel;
       // If this looks like the effect of pressing Enter (or was recorded
       // as being an iOS enter press), just dispatch an Enter key instead.
       if (((ios && view.input.lastIOSEnter > Date.now() - 225 &&
           (!inlineChange || addedNodes.some(n => n.nodeName == "DIV" || n.nodeName == "P"))) ||
           (!inlineChange && $from.pos < parse.doc.content.size &&
               (!$from.sameParent($to) || !$from.parent.inlineContent) &&
-              !/\S/.test(parse.doc.textBetween($from.pos, $to.pos, "", "")) &&
-              (nextSel = Selection.findFrom(parse.doc.resolve($from.pos + 1), 1, true)) &&
-              nextSel.head > $from.pos)) &&
+              $from.pos < $to.pos && !/\S/.test(parse.doc.textBetween($from.pos, $to.pos, "", "")))) &&
           view.someProp("handleKeyDown", f => f(view, keyEvent(13, "Enter")))) {
           view.input.lastIOSEnter = 0;
           return;
@@ -13474,6 +13472,8 @@
     }
   };
   new PluginKey("fix-tables");
+
+  // src/commands.ts
   function selectedRect(state) {
     const sel = state.selection;
     const $pos = selectionCell(state);
@@ -14474,7 +14474,7 @@
   });
 
   // Mix the nodes from prosemirror-schema-list into the baseNodes to create a schema with list support.
-  baseNodes = addListNodes(baseNodes, '(paragraph | heading) block*', 'block');
+  baseNodes = addListNodes(baseNodes, '(paragraph | heading)+ block*', 'block');
 
   // Create table nodes that support bordering
   const tNodes = tableNodes({
@@ -14502,7 +14502,7 @@
       return {class: dom.getAttribute('class')}
     }
   }];
-  tNodes.table.toDOM = (node) => { let tClass = node.attrs; return ['table', tClass, 0] };
+  tNodes.table.toDOM = (node) => { return ['table', node.attrs, 0] };
 
   // Append the modified tableNodes and export the resulting nodes
   // :: Object
@@ -15405,19 +15405,6 @@
       return null;
   }
   /**
-  Lift the selected block, or the closest ancestor block of the
-  selection that can be lifted, out of its parent node.
-  */
-  const lift = (state, dispatch) => {
-      let { $from, $to } = state.selection;
-      let range = $from.blockRange($to), target = range && liftTarget(range);
-      if (target == null)
-          return false;
-      if (dispatch)
-          dispatch(state.tr.lift(range, target).scrollIntoView());
-      return true;
-  };
-  /**
   If the selection is in a node whose type has a truthy
   [`code`](https://prosemirror.net/docs/ref/#model.NodeSpec.code) property in its spec, replace the
   selection with a newline character.
@@ -15661,22 +15648,6 @@
   Moves the cursor to the end of current text block.
   */
   const selectTextblockEnd = selectTextblockSide(1);
-  // Parameterized commands
-  /**
-  Wrap the selection in a node of the given type with the given
-  attributes.
-  */
-  function wrapIn(nodeType, attrs = null) {
-      return function (state, dispatch) {
-          let { $from, $to } = state.selection;
-          let range = $from.blockRange($to), wrapping = range && findWrapping(range, nodeType, attrs);
-          if (!wrapping)
-              return false;
-          if (dispatch)
-              dispatch(state.tr.wrap(range, wrapping).scrollIntoView());
-          return true;
-      };
-  }
   function markApplies(doc, ranges, type, enterAtoms) {
       for (let i = 0; i < ranges.length; i++) {
           let { $from, $to } = ranges[i];
@@ -16559,6 +16530,8 @@
   */
   const findPrev = findCommand(true, -1);
 
+  /* global view */
+
   /**
    * The NodeView to support divs, as installed in main.js.
    */
@@ -16622,7 +16595,7 @@
   }
 
   class LinkView {
-      constructor(node, view, getPos) {
+      constructor(node, view) {
           let href = node.attrs.href;
           let title = '\u2325+Click to follow\n' + href;
           const link = document.createElement('a');
@@ -16797,7 +16770,7 @@
           });
 
           // Display a broken image background and notify of any errors.
-          img.addEventListener('error', e => {
+          img.addEventListener('error', () => {
               // https://fonts.google.com/icons?selected=Material+Symbols+Outlined:broken_image:FILL@0;wght@400;GRAD@0;opsz@20&icon.query=missing&icon.size=18&icon.color=%231f1f1f
               const imageSvg = '<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1f1f1f"><path d="M216-144q-29 0-50.5-21.5T144-216v-528q0-29.7 21.5-50.85Q187-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29-21.15 50.5T744-144H216Zm48-303 144-144 144 144 144-144 48 48v-201H216v249l48 48Zm-48 231h528v-225l-48-48-144 144-144-144-144 144-48-48v177Zm0 0v-240 63-351 528Z"/></svg>';
               const image64 = btoa(imageSvg);
@@ -17270,6 +17243,13 @@
                   this.cancel();
                   return result;
               }
+              // On the Swift side, we replace smart quotes and apostrophes with &quot; and &apos;
+              // before getting here, but when doing searches in markupeditor-base, they will come 
+              // in here unchanged. So replace them with the proper " or ' now.
+              text = text.replaceAll('’', "'");
+              text = text.replaceAll('‘', "'");
+              text = text.replaceAll('“', '"');
+              text = text.replaceAll('”', '"');
               text = text.replaceAll('&quot;', '"');       // Fix the hack for quotes in the call
               text = text.replaceAll('&apos;', "'");       // Fix the hack for apostrophes in the call
 
@@ -17599,7 +17579,7 @@
        * Please file issues for any errors captured by this function,
        * with the call stack and reproduction instructions if at all possible.
        */
-      window.addEventListener('error', function (ev) {
+      window.addEventListener('error', function () {
           const muError = new MUError('Internal', 'Break at MUError(\'Internal\'... in Safari Web Inspector to debug.');
           muError.callback();
       });
@@ -17696,9 +17676,11 @@
 
   /**
    * Paste html at the selection, replacing the selection as-needed.
+   * 
+   * `event` is a mocked ClipboardEvent for testing purposes, else nil.
    */
-  function pasteHTML(html) {
-      view.pasteHTML(html);
+  function pasteHTML(html, event) {
+      view.pasteHTML(html, event);
       stateChanged();
   }
   /**
@@ -17708,12 +17690,14 @@
    * The trick here is that we want to use the same code to paste text as we do for
    * HTML, but we want to paste something that is the MarkupEditor-equivalent of
    * unformatted text.
+   * 
+   * `event` is a mocked ClipboardEvent for testing purposes, else nil.
    */
-  function pasteText(html) {
+  function pasteText(html, event) {
       const node = _nodeFromHTML(html);
       const htmlFragment = _fragmentFromNode(node);
       const minimalHTML = _minimalHTML(htmlFragment); // Reduce to MarkupEditor-equivalent of "plain" text
-      pasteHTML(minimalHTML);
+      pasteHTML(minimalHTML, event);
   }
   /**
    * Return a minimal "unformatted equivalent" version of the HTML that is in fragment.
@@ -17921,7 +17905,7 @@
           const attributes = node.attributes;
           for (let i = 0; i < attributes.length; i++) {
               const attribute = attributes[i];
-              text += ' ' + attribute.name + '=\"' + attribute.value + '\"';
+              text += ' ' + attribute.name + '="' + attribute.value + '"';
           }        text += '>';
           node.childNodes.forEach(childNode => {
               text = _prettyHTML(childNode, indent + '    ', text, _isInlined(childNode));
@@ -18564,11 +18548,6 @@
    * no longer contains a list. Similarly, if the list returned here is null, then  
    * the selection can be set to a list.
    * 
-   * Note that `nodesBetween` on a collapsed selection within a list will iterate 
-   * over the nodes above it in the list thru the selected text node. Thus, a 
-   * selection in an OL nested inside of a UL will return null, since both will be 
-   * found by `nodesBetween`.
-   * 
    * @return { 'UL' | 'OL' | null }
    */
   function getListType(state) {
@@ -18792,26 +18771,95 @@
   function indentCommand() {
       let commandAdapter = (viewState, dispatch, view) => {
           let state = view?.state ?? viewState;
-          const selection = state.selection;
-          const nodeTypes = state.schema.nodes;
-          let newState;
-          state.doc.nodesBetween(selection.from, selection.to, node => {
+          let blockquote = state.schema.nodes.blockquote;
+          let li = state.schema.nodes.list_item;
+          let ul = state.schema.nodes.bullet_list;
+          let ol = state.schema.nodes.ordered_list;
+          const { $from, $to } = state.selection;
+          let tr = state.tr;
+          let willWrap = false;
+          let nodePos = [];
+          state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
               if (node.isBlock) {
-                  const command = wrapIn(nodeTypes.blockquote);
-                  command(state, (transaction) => {
-                      newState = state.apply(transaction);
-                  });
-                  return true;
-              }            return false;
+                  const $start = tr.doc.resolve(pos);
+                  const $end = tr.doc.resolve(pos + node.nodeSize);
+                  const range = $start.blockRange($end);
+                  if ((range) && (node.type != li)) { // We will never wrap an li
+                      // Later we will check if the range is valid for wrapping
+                      nodePos.push({node: node, pos: pos});
+                  }
+                  return true
+              } else {
+                  return false
+              }
           });
-          if (view && newState) {
-              view.updateState(newState);
-              stateChanged();
-          } else {
-              return newState;
+
+          let newState;
+          let skipParents = [];
+          if (nodePos.length > 0) {
+              for (let { node, pos } of nodePos.sort((a, b) => b.pos - a.pos)) {
+                  if (skipParents.filter((np) => {return (node === np.node)}).length > 0) continue
+                  let $start = tr.doc.resolve(pos);
+                  let $end = tr.doc.resolve(pos + node.nodeSize);
+                  let range = $start.blockRange($end); // We know range will be defined
+                  // We need to determine what we will wrap in
+                  let nodeIsList = (node.type == ul) || (node.type == ol);
+                  if (!nodeIsList && ($start.parent.type == li)) {
+                      // We are going to try to wrap the list in a sublist, but if we 
+                      // cannot, then we will try to wrap the list in a blockquote
+                      let list = $start.node($start.depth - 1);
+                      let willWrapInList = wrapRangeInList(null, range, list.type, list.attrs);
+                      willWrap = willWrap || willWrapInList;
+                      if (willWrapInList) {
+                          // If we are wrapping this <li><p></p></li>, then skip all of its parents
+                          skipParents.push(...parents($start, null, 1));
+                      }
+                      if (dispatch && willWrapInList) {
+                          wrapRangeInList(tr, range, list.type, list.attrs);
+                          newState = state.apply(tr);
+                      }
+                  } else {
+                      // We are going to try tp wrap in a blockquote
+                      let wrappers = findWrapping(range, blockquote, node.attrs);
+                      if (wrappers) {
+                          willWrap = true;
+                          let parentsInSelection = [];
+                          let allParents = parents($start, null, 1);
+                          // If we are wrapping a list, then track parents to skip
+                          if (nodeIsList) {
+                              // Find the parents to skip as we try to indent ones above us
+                              parentsInSelection = allParents.filter((np) => {
+                                  let npNode = np.node;
+                                  let npIsList = (npNode.type == ul) || (npNode.type == ol); 
+                                  if (!npIsList) return false                 // We are only skipping lists
+                                  if (npNode.type != node.type) return false  // We are only skipping parent lists of same type
+                                  // And only lists outside of the original selection
+                                  return (np.start < $from.pos) && (np.end > $to.pos)
+                              });
+                              skipParents.push(...parentsInSelection);
+                          } else {
+                              parentsInSelection = allParents.filter((np) => {
+                                  let npNode = np.node;
+                                  let npIsBlockquote = (npNode.type == blockquote);
+                                  if (!npIsBlockquote) return false                 // We are only skipping blockquotes
+                                  // And only blockquotes outside of the original selection
+                                  return (np.start < $from.pos) && (np.end > $to.pos)
+                              });
+                          }
+                          skipParents.push(...parentsInSelection);
+                          if (dispatch) {
+                              newState = state.apply(tr.wrap(range, wrappers));
+                          }
+                      }
+                  }
+              }
           }
+
+          if (dispatch && willWrap && newState) view.updateState(newState);
+          return willWrap
+
       };
-      return commandAdapter;
+      return commandAdapter
   }
 
   /**
@@ -18820,6 +18868,11 @@
    * If in a list, outdent the item to a less nested level in the list if appropriate.
    * If in a blockquote, remove a blockquote to outdent further.
    * Else, do nothing.
+   * 
+   * Note that outdenting of a top-level list with a sublist doesn't work. TBH, I'm not sure why, 
+   * but liftTarget returns null at the top-level in that case. As a result, the outdenting has 
+   * to be done at least twice, the first of which splits the sublist from the top level. When this 
+   * happens, we should probably just do the equivalent of toggleListType.
    *
    */
   function outdent() {
@@ -18829,32 +18882,76 @@
   function outdentCommand() {
       let commandAdapter = (viewState, dispatch, view) => {
           let state = view?.state ?? viewState;
-          const selection = state.selection;
-          const blockquote = state.schema.nodes.blockquote;
-          const ul = state.schema.nodes.bullet_list;
-          const ol = state.schema.nodes.ordered_list;
-          let newState;
-          state.doc.nodesBetween(selection.from, selection.to, node => {
-              if ((node.type == blockquote) || (node.type == ul) || (node.type == ol)) {
-                  lift(state, (transaction) => {
-                      // Note that some selections will not outdent, even though they
-                      // contain outdentable items. For example, multiple blockquotes 
-                      // within a selection cannot be outdented. However, multiple 
-                      // blocks (e.g., p) can be outdented within a blockquote, because
-                      // the selection is identifying the paragraphs to be outdented.
-                      newState = state.apply(transaction);
-                  });
-              }            return true;
+          const { $from, $to } = state.selection;
+          let tr = state.tr;
+          let willLift = false;
+          let nodePos = [];
+          state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+              if (node.isBlock) {
+                  const $start = tr.doc.resolve(pos);
+                  const $end = tr.doc.resolve(pos + node.nodeSize);
+                  const range = $start.blockRange($end);
+                  if (range) {
+                      const target = liftTarget(range);
+                      if ((target !== null) && (target >= 0)) {
+                          nodePos.push({node: node, pos: pos});
+                      }
+                  }
+                  return true
+              } else {
+                  return false
+              }
           });
-          if (view && newState) {
-              view.updateState(newState);
-              stateChanged();
-              return true;
-          } else {
-              return newState;
+
+          if (nodePos.length > 0) {
+              let skipParents = [];
+              for (let {node, pos} of nodePos.sort((a, b) => b.pos - a.pos)) {
+                  // The problem we have here is that when we lift node within
+                  // a blockquote and it has no siblings, the lift operation removes 
+                  // the parent (see https://discuss.prosemirror.net/t/lifting-and-parent-nodes/1332).
+                  // In particular, we don't want to resolve the pos of node after 
+                  // its only child has been lifted, because it doesn't exist any more.
+                  // In fact, we need to skip lifting of all the ancestors when this happens.
+                  if (skipParents.filter((np) => {return (node === np.node)}).length > 0) continue
+                  let $start = tr.doc.resolve(pos);
+                  if ($start.parent.children.length == 1) {
+                      // Then this node, when lifted will remove 
+                      // the parent. Therefore, track the parent 
+                      // and don't lift it if we encounter it later
+                      // in the iteration over nodePos.
+                      skipParents.push(...parents($start, null, 1));
+                  }
+                  let $end = tr.doc.resolve(pos + node.nodeSize);
+                  let range = $start.blockRange($end);
+                  if (range) { 
+                      let target = liftTarget(range);
+                      if ((target !== null) && (target >= 0)) {
+                          willLift = true;
+                          if (dispatch) tr.lift(range, target);
+                      }
+                  }
+              }
           }
+
+          if (dispatch && willLift) dispatch(tr);
+          return willLift
+
       };
       return commandAdapter
+  }
+
+  function parents($pos, start, end) {
+      //$pos.node($pos.depth) is the same as $pos.parent.
+      let startDepth = $pos.depth;    // start at immediate parent by default
+      let endDepth = end;                 // end at the top-level by default (i.e., include 'doc')
+      let parents = [];
+      for (let depth = startDepth; depth >= endDepth; depth--) {
+          let node = $pos.node(depth);
+          let start = $pos.start(depth);
+          let end = $pos.end(depth);
+          parents.push({node: node, start: start, end: end});
+      }
+      return parents
   }
 
   /********************************************************************************
@@ -19480,7 +19577,7 @@
       return result
   }
   function insertLinkCommand(url) {
-      const commandAdapter = (state, dispatch, view) => {
+      const commandAdapter = (state, dispatch) => {
           const selection = state.selection;
           const linkMark = state.schema.marks.link.create({ href: url });
           if (selection.empty) {
@@ -19503,9 +19600,9 @@
   }
 
   function insertInternalLinkCommand(hTag, index) {
-      const commandAdapter = (state, dispatch, view) => {
+      const commandAdapter = (state, dispatch) => {
           // Find the node matching hTag that is index into the nodes matching hTag
-          let {node, pos} = headerMatching(hTag, index, state);
+          let {node} = headerMatching(hTag, index, state);
           if (!node) return false
           // Get the unique id for this header, which is may or may not already have.
           let id = idForHeader(node, state);
@@ -20128,25 +20225,24 @@
               }            return false;
           });
           if (!table) return false;
-          switch (border) {
-              case 'outer':
-                  table.attrs.class = 'bordered-table-outer';
-                  break;
-              case 'header':
-                  table.attrs.class = 'bordered-table-header';
-                  break;
-              case 'cell':
-                  table.attrs.class = 'bordered-table-cell';
-                  break;
-              case 'none':
-                  table.attrs.class = 'bordered-table-none';
-                  break;
-              default:
-                  table.attrs.class = 'bordered-table-cell';
-                  break;
-          }
           if (dispatch) {
-              // At this point, the state.selection is in the new header row we just added. By definition, 
+              switch (border) {
+                  case 'outer':
+                      table.attrs.class = 'bordered-table-outer';
+                      break;
+                  case 'header':
+                      table.attrs.class = 'bordered-table-header';
+                      break;
+                  case 'cell':
+                      table.attrs.class = 'bordered-table-cell';
+                      break;
+                  case 'none':
+                      table.attrs.class = 'bordered-table-none';
+                      break;
+                  default:
+                      table.attrs.class = 'bordered-table-cell';
+                      break;
+              }            // At this point, the state.selection is in the new header row we just added. By definition, 
               // the header is placed before the original selection, so we can add its size to the 
               // selection to restore the selection to where it was before.
                const transaction = view.state.tr
@@ -20545,6 +20641,8 @@
     }
   }
 
+  /* global view */
+
   /**
   An icon or label that, when clicked, executes a command.
   */
@@ -20655,11 +20753,6 @@
         label.setAttribute("title", translate(view, this.options.title));
       if (this.options.labelClass)
         label.classList.add(this.options.labelClass);
-      let enabled = true;
-      if (this.options.enable) {
-        enabled = this.options.enable(state) || false;
-        setClass(dom, this.prefix + "-disabled", !enabled);
-      }
       let iconWrapClass = this.options.indicator ? "-dropdown-icon-wrap" : "-dropdown-icon-wrap-noindicator";
       let wrapClass = (this.options.icon) ? this.prefix + iconWrapClass : this.prefix + "-dropdown-wrap";
       let wrap = crelt("span", { class: wrapClass }, label);
@@ -21009,7 +21102,7 @@
       // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
       // because it sits at a higher z-level than the prompt and overlay.
       this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
-      this.overlay.addEventListener('click', e => {
+      this.overlay.addEventListener('click', () => {
         this.closeDialog();
       });
       wrapper.appendChild(this.overlay);
@@ -21020,7 +21113,7 @@
       } else {
         setClass(this.toolbarOverlay, searchbarHidden(), true);
       }
-      this.toolbarOverlay.addEventListener('click', e => {
+      this.toolbarOverlay.addEventListener('click', () => {
         this.closeDialog();
       });
       wrapper.appendChild(this.toolbarOverlay);
@@ -21322,7 +21415,7 @@
       // We also have to add a separate toolbarOverlay over the toolbar to prevent interaction with it, 
       // because it sits at a higher z-level than the prompt and overlay.
       this.overlay = crelt('div', {class: prefix + '-prompt-overlay', tabindex: "-1", contenteditable: 'false'});
-      this.overlay.addEventListener('click', e => {
+      this.overlay.addEventListener('click', () => {
         this.closeDialog();
       });
       wrapper.appendChild(this.overlay);
@@ -21332,7 +21425,7 @@
       } else {
         setClass(this.toolbarOverlay, searchbarHidden(), true);
       }
-      this.toolbarOverlay.addEventListener('click', e => {
+      this.toolbarOverlay.addEventListener('click', () => {
         this.closeDialog();
       });
       wrapper.appendChild(this.toolbarOverlay);
@@ -21415,7 +21508,7 @@
           active: () => { return false },
           enable: () => { return true }
         });
-        let {dom, update} = selectItem.render(view);
+        let {dom} = selectItem.render(view);
         buttonsDiv.appendChild(dom);
       } else {
         // If there is no Select button, we insert a tiny preview to help.
@@ -21472,7 +21565,7 @@
         this.okUpdate(view.state);
         this.cancelUpdate(view.state);
       });
-      preview.addEventListener('error', (e) => {
+      preview.addEventListener('error', () => {
         this.isValid = false;
         preview.style.visibility = 'hidden';
         setClass(this.okDom, 'Markup-menuitem-disabled', true);
@@ -21554,7 +21647,7 @@
 
     render(view) {
       let {dom, update} = this.item.render(view);
-      dom.addEventListener('mouseover', e => {
+      dom.addEventListener('mouseover', () => {
         this.onMouseover(this.rows, this.cols);
       });
       return {dom, update}
@@ -21663,8 +21756,8 @@
     constructor(config) {
       let keymap = config.keymap;
       let options = {
-        enable: (state) => { return true },
-        active: (state) => { return this.showing() },
+        enable: () => { return true },
+        active: () => { return this.showing() },
         title: 'Toggle search' + keyString('search', keymap),
         icon: icons.search,
         id: prefix + '-searchitem'
@@ -21844,8 +21937,8 @@
 
     constructor(items) {
       let options = {
-        enable: (state) => { return true },
-        active: (state) => { return this.showing() },
+        enable: () => { return true },
+        active: () => { return this.showing() },
         title: 'Show more',
         icon: icons.more
       };
@@ -22179,10 +22272,9 @@
   /**
    * Return the MenuItems for the style bar, as specified in `config`.
    * @param {Object} config The config object with booleans indicating whether list and denting items are included
-   * @param {Schema} schema 
    * @returns {[MenuItem]}  An array or MenuItems to be shown in the style bar
    */
-  function insertBarItems(config, schema) {
+  function insertBarItems(config) {
     let items = [];
     let { link, image, tableMenu } = config.toolbar.insertBar;
     if (link) {
@@ -22196,7 +22288,7 @@
     return items;
   }
 
-  function tableMenuItems(config, schema) {
+  function tableMenuItems(config) {
     let items = [];
     let { header, border } = config.toolbar.tableMenu;
     items.push(new TableCreateSubmenu({title: 'Insert table', label: 'Insert'}));
@@ -22247,7 +22339,7 @@
     let passedOptions = {
       run: command,
       enable(state) { return command(state); },
-      active(state) { return false }  // FIX
+      active() { return false }  // FIX
     };
     for (let prop in options)
       passedOptions[prop] = options[prop];
@@ -22258,7 +22350,7 @@
     let passedOptions = {
       run: command,
       enable(state) { return command(state); },
-      active(state) { return false }  // FIX
+      active() { return false }  // FIX
     };
     for (let prop in options)
       passedOptions[prop] = options[prop];
@@ -22805,6 +22897,8 @@
 
   }
 
+  /* eslint no-cond-assign: 0 */
+
   // : (NodeType) → InputRule
   // Given a blockquote node type, returns an input rule that turns `"> "`
   // at the start of a textblock into a blockquote.
@@ -23269,6 +23363,8 @@
 
   }
 
+  /* global MU */
+
   /**
    * The MessageHandler receives `postMessage` from the MarkupEditor as the document state changes.
    * 
@@ -23356,7 +23452,7 @@
               case "log":
                   console.log(messageData.log);
                   return
-              case "error":
+              case "error": {
                   let code = messageData.code;
                   let message = messageData.message;
                   if (!code || !message) {
@@ -23367,10 +23463,11 @@
                   let alert = messageData.alert ?? true;
                   delegate?.markupError && delegate?.markupError(code, message, info, alert);
                   return
+              }
               case "copyImage":
                   console.log("fix copyImage " + messageData.src);
                   return
-              case "addedImage":
+              case "addedImage": {
                   if (!delegate?.markupImageAdded) return;
                   let divId = messageData.divId;
                   // Even if divid is identified, if it's empty or the editor element, then
@@ -23384,6 +23481,7 @@
                       console.log("Error: The div id for the image could not be decoded.");
                   }
                   return
+              }
               case "deletedImage":
                   console.log("fix deletedImage " + messageData.src);
                   return
@@ -23446,7 +23544,7 @@
           // For the MarkupEditor, we can just use the editor element. 
           // There is no need to use a separate content element.
           doc: DOMParser.fromSchema(schema).parse(this.element),
-          plugins: markupSetup(config, schema)
+          plugins: markupSetup(this.config, schema)
         }),
         nodeViews: {
           link(node, view, getPos) { return new LinkView(node, view, getPos)},
@@ -23463,7 +23561,7 @@
           'click': () => { setTimeout(() => { clicked(); }, 0); },
           'delete': () => { setTimeout(() => { callbackInput(); }, 0); },
         },
-        handlePaste(view, event, slice) {
+        handlePaste() {
           setTimeout(() => { callbackInput(); }, 0);
           return false
         },

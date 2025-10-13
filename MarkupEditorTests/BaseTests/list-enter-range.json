@@ -1,0 +1,44 @@
+{
+    "description": "Enter at range selection in a list.",
+    "tests": [
+        {
+            "description": "Word in single list item",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered |item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P </p></li><li><p>|item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Part of a formatted item in a list item",
+            "startHtml": "<ul><li><h5>Bulleted <em>i|te|m</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>i</em></h5></li><li><h5><em>|m</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "The entire formatted item in a list item",
+            "startHtml": "<ul><li><h5>Bulleted |<em>item|</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted </h5></li><li><h5>| 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Begin selection in one list item, end in another",
+            "skipTest": "Doesn't work like it should in test, but does fine in editor",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P |Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P </p><p>|Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Begin selection at start of one list item, end in another",
+            "skipTest": "Doesn't work like it should in test, but does fine in editor",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>|P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>|P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>|P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Begin selection in a bulleted list item, end in an ordered one",
+            "skipTest": "Doesn't work like it should in test, but does fine in editor",
+            "startHtml": "<ul><li><h5>Bul|leted <em>item</em> 1.</h5><ol><li><p>P Numbered item 1.</p></li><li><p>P Numbered item 2.</p></li><li><p>P Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbered item 6.</p></li><li><p>Num|bered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bul</h5><h5>bered item 7.</h5><ol><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        }
+    ]
+}

@@ -1,0 +1,87 @@
+{
+    "description": "Various actions within a table.",
+    "tests": [
+        {
+            "description": "Delete row",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p>|Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.deleteTableArea(\"ROW\")"
+        },
+        {
+            "description": "Delete col",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p>|Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.deleteTableArea(\"COL\")"
+        },
+        {
+            "description": "Delete table",
+            "startHtml": "<p>Hello</p><table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>world</p>",
+            "endHtml": "<p>Hello</p><p>|world</p>",
+            "action": "MU.deleteTableArea(\"TABLE\")"
+        },
+        {
+            "description": "Add row above",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p></p></td><td><p></p></td></tr><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.addRow(\"BEFORE\")"
+        },
+        {
+            "description": "Add row below",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p></p></td><td><p></p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.addRow(\"AFTER\")"
+        },
+        {
+            "description": "Add col before",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p></p></td><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p></p></td><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.addCol(\"BEFORE\")"
+        },
+        {
+            "description": "Add col after",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p></p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p></p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.addCol(\"AFTER\")"
+        },
+        {
+            "description": "Add header",
+            "comment": "//TODO: The selection is wrong after undo, undoHtml should not be set here",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><th colspan=\"2\"><p></p></th></tr><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "undoHtml": "<table><tr><td><p>|Row 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.addHeader()"
+        },
+        {
+            "description": "Set cell border",
+            "comment": "//TODO: Undo isn't working, undoHtml should not be set here",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "endHtml": "<table class=\"bordered-table-cell\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "undoHtml": "<table class=\"bordered-table-cell\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "action": "MU.borderTable(\"cell\")"
+        },
+        {
+            "description": "Set header border",
+            "comment": "//TODO: Undo isn't working, undoHtml should not be set here",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "endHtml": "<table class=\"bordered-table-header\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "undoHtml": "<table class=\"bordered-table-header\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "action": "MU.borderTable(\"header\")"
+        },
+        {
+            "description": "Set outer border",
+            "comment": "//TODO: Undo isn't working, undoHtml should not be set here",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "endHtml": "<table class=\"bordered-table-outer\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "undoHtml": "<table class=\"bordered-table-outer\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "action": "MU.borderTable(\"outer\")"
+        },
+        {
+            "description": "Set no border",
+            "comment": "//TODO: Undo isn't working, undoHtml should not be set here",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "endHtml": "<table class=\"bordered-table-none\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "undoHtml": "<table class=\"bordered-table-none\"><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",
+            "action": "MU.borderTable(\"none\")"
+        }
+    ]
+}

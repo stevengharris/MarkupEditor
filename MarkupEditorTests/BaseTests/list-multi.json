@@ -1,0 +1,113 @@
+{
+    "description": "List operations with selections spanning multiple elements.",
+    "tests": [
+        {
+            "description": "UL <p>He|llo world1</p><p>He|llo world2</p>",
+            "startHtml": "<p>He|llo world1</p><p>He|llo world2</p>",
+            "endHtml": "<ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove UL <ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+            "startHtml": "<ul><li><p>He|llo world1</p></li><li><p>He|llo world2</p></li></ul>",
+            "endHtml": "<p>He|llo world1</p><p>He|llo world2</p>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "UL <p>He|llo world1</p><h5>He|llo world2</h5>",
+            "startHtml": "<p>He|llo world1</p><h5>He|llo world2</h5>",
+            "endHtml": "<ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove UL <ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+            "startHtml": "<ul><li><p>He|llo world1</p></li><li><h5>He|llo world2</h5></li></ul>",
+            "endHtml": "<p>He|llo world1</p><h5>He|llo world2</h5>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "No-op UL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "startHtml": "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "endHtml": "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove UL <ul><li><p>He|llo paragraph</p></li><ul><li><h5>He|llo header in list</h5></li></ul></ul>",
+            "startHtml": "<ul><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+            "endHtml": "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "OL <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "startHtml": "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "endHtml": "<ol><li><p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Remove OL <ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
+            "startHtml": "<ol><li><p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol></li></ol>",
+            "endHtml": "<p>He|llo paragraph</p><ol><li><h5>He|llo header in list</h5></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "UL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "startHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "endHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Or|dered sublist.</p></li></ul></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove UL <ul><li><h5>Unordered <em>H5</em> list.</h5><ul><li><p>Unordered sublist.</p></li></ul></li></ul>",
+            "startHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul></li></ul>",
+            "endHtml": "<h5>Un|ordered <em>H5</em> list.</h5><ul><li><p>Un|ordered sublist.</p></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "OL <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "startHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "endHtml": "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Remove OL <ol><li><h5>Unordered <em>H5</em> list.</h5><ol><li><p>Ordered sublist.</p></li></ol></li></ol>",
+            "startHtml": "<ol><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ol>",
+            "endHtml": "<h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "UL interleaved paragraphs and lists",
+            "startHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "endHtml": "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul></li><li><p>To|p-level paragraph 2</p></li></ul><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Unset all UL interleaved paragraphs and lists",
+            "startHtml": "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+            "endHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Set all OL lists and sublists",
+            "startHtml": "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+            "endHtml": "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "OL interleaved paragraphs and lists",
+            "startHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "endHtml": "<ol><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul></li><li><p>To|p-level paragraph 2</p></li></ol><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Unset all OL interleaved paragraphs and lists",
+            "startHtml": "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+            "endHtml": "<p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Set all UL lists and sublists",
+            "startHtml": "<ol><li><p>To|p-level paragraph 1</p><ol><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ol></li><li><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol></li></ol>",
+            "endHtml": "<ul><li><p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ul><li><p>Ordered sublist paragraph</p></li></ul></li></ul></li><li><p>To|p-level paragraph 2</p><ul><li><p>Ordered list paragraph 1</p></li></ul></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        }
+    ]
+}

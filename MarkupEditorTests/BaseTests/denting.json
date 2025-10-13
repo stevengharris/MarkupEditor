@@ -1,0 +1,35 @@
+{
+    "description": "Increasing and decreasing block levels.",
+    "tests": [
+        {
+            "description": "Indent, selection in text element",
+            "startHtml": "<p>He|llo <strong>world</strong></p>",
+            "endHtml": "<blockquote><p>He|llo <strong>world</strong></p></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Indent, selection in a formatted element",
+            "startHtml": "<p><em><strong>He|llo </strong></em><strong>world</strong></p>",
+            "endHtml": "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent from 1 to 0, selection in nested format",
+            "startHtml": "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
+            "endHtml": "<p><em><strong>He|llo </strong></em><strong>world</strong></p>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Outdent from 2 to 1, selection in nested format",
+            "startHtml": "<blockquote><blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote></blockquote>",
+            "endHtml": "<blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent in an embedded paragraph in a blockquote, selection in a non-text element",
+            "startHtml": "<blockquote><p><em><strong>Hello </strong></em><strong>world</strong></p><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote>",
+            "endHtml": "<blockquote><p><em><strong>Hello </strong></em><strong>world</strong></p><blockquote><p><em><strong>He|llo </strong></em><strong>world</strong></p></blockquote></blockquote>",
+            "action": "MU.indent()"
+        }
+    ]
+}

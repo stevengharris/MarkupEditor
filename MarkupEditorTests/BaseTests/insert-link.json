@@ -1,0 +1,45 @@
+{
+    "description": "Insert link at various locations.",
+    "tests": [
+        {
+            "description": "Link in P - Paste link at a fully-selected word",
+            "startHtml": "<p>This is |just| a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Link in P - Paste link at end of a word",
+            "startHtml": "<p>This is just| a simple paragraph.</p>",
+            "endHtml": "<p>This is just|<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Link in P - Paste link at beginning of a word",
+            "startHtml": "<p>This is |just a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>|just a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Link in P - Paste link at beginning of paragraph",
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "<p>|<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>|This is just a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Link in P - Paste link at end of paragraph",
+            "startHtml": "<p>This is just a simple paragraph.|</p>",
+            "endHtml": "<p>This is just a simple paragraph.|<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">https://github.com/stevengharris/MarkupEditor/foo.bogus</a>|</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        }
+    ]
+}

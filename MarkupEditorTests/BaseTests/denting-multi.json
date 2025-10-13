@@ -1,0 +1,83 @@
+{
+    "description": "Indent/outdent with selections spanning multiple elements.",
+    "tests": [
+        {
+            "description": "Indent <p>He|llo world1</p><p>He|llo world2</p>",
+            "startHtml": "<p>He|llo world1</p><p>He|llo world2</p>",
+            "endHtml": "<blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent <blockquote><p>He|llo world1</p></blockquote><blockquote><p>He|llo world2</p></blockquote>",
+            "startHtml": "<blockquote><p>He|llo world1</p><p>He|llo world2</p></blockquote>",
+            "endHtml": "<p>He|llo world1</p><p>He|llo world2</p>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent <p>He|llo world1</p><h5>He|llo world2</h5>",
+            "startHtml": "<p>He|llo world1</p><h5>He|llo world2</h5>",
+            "endHtml": "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent <blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+            "startHtml": "<blockquote><p>He|llo world1</p></blockquote><blockquote><h5>He|llo world2</h5></blockquote>",
+            "endHtml": "<p>He|llo world1</p><h5>He|llo world2</h5>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent <p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "startHtml": "<p>He|llo paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "endHtml": "<blockquote><p>He|llo paragraph</p></blockquote><blockquote><ul><li><h5>He|llo header in list</h5></li></ul></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent <blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "startHtml": "<blockquote><p>He|llo paragraph</p></blockquote><ul><li><h5>He|llo header in list</h5></li></ul>",
+            "endHtml": "<p>He|llo paragraph</p><h5>He|llo header in list</h5>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "startHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "endHtml": "<blockquote><ul><li><h5>Un|ordered <em>H5</em> list.</h5><blockquote><ol><li><p>Or|dered sublist.</p></li></ol></blockquote></li></ul></blockquote>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent <ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.<p></li></ol></li></ul>",
+            "startHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><ol><li><p>Or|dered sublist.</p></li></ol></li></ul>",
+            "endHtml": "<ul><li><h5>Un|ordered <em>H5</em> list.</h5><p>Or|dered sublist.</p></li></ul>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent interleaved paragraphs and lists",
+            "startHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "endHtml": "<blockquote><p>To|p-level paragraph 1</p></blockquote><blockquote><ul><li><p>Unordered list paragraph 1</p><blockquote><ol><li><p>Ordered sublist paragraph</p></li></ol></blockquote></li></ul></blockquote><blockquote><p>To|p-level paragraph 2</p></blockquote><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent interleaved paragraphs and lists",
+            "startHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><ol><li><p>Ordered sublist paragraph</p></li></ol></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "endHtml": "<p>To|p-level paragraph 1</p><ul><li><p>Unordered list paragraph 1</p><p>Ordered sublist paragraph</p></li></ul><p>To|p-level paragraph 2</p><ol><li><p>Ordered list paragraph 1</p></li></ol>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Indent list with sublists",
+            "startHtml": "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p><ol><li><p>With two items.</p></li></ol></li></ol><ul><li><h5>Wi|th two items.</h5></li></ul></li></ul>",
+            "action": "MU.indent()"
+        },
+        {
+            "description": "Outdent list with sublists",
+            "startHtml": "<ul><li><h5>Un|ordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>Wi|th two items.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Un|ordered list.</h5><p>Ordered sublist.</p><p>With two items.</p></li></ul><h5>Wi|th two items.</h5>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Outdent, start and end in styles surround list",
+            "startHtml": "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><ol><li><p>Ordered sublist.</p></li><li><p>With two items.</p></li></ol></li><li><h5>With two items.</h5></li></ul><p>En|ding paragraph.</p>",
+            "endHtml": "<p>St|arting paragraph.</p><ul><li><h5>Unordered list.</h5><p>Ordered sublist.</p><p>With two items.</p></li></ul><h5>With two items.</h5><p>En|ding paragraph.</p>",
+            "action": "MU.outdent()"
+        }
+    ]
+}

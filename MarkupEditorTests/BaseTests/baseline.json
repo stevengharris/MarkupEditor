@@ -1,0 +1,20 @@
+{
+    "description": "Ensure baseline behavior works as expected.",
+    "tests": [
+        {
+            "description": "Simple test",
+            "startHtml": "<p>He|llo wor|ld</p>",
+            "endHtml": "<p>He|llo wor|ld</p>"
+        },
+        {
+            "description": "Extract when selection begins in one styled list item, ends in another",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered item 1.</p></li><li><p>P Numbered ite2.</p></li><li><p>P |Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbereitem 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted ite2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>P |Numbered item 1.</p></li><li><p>P Numbered ite2.</p></li><li><p>P |Numbered item 3.</p></li><li><p>P Numbered item 4.</p></li><li><p>Numbered item 5.</p></li><li><p>Numbereitem 6.</p></li><li><p>Numbered item 7.</p></li><li><p>Numbered item 8.</p></li></ol></li><li><h5>Bulleted ite2.</h5></li></ul>"
+        },
+        {
+            "description": "Extract when selection is in a table",
+            "startHtml": "<table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is simple paragraph</p>",
+            "endHtml": "<table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is simple paragraph</p>"
+        }
+    ]
+}
