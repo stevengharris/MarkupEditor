@@ -372,7 +372,7 @@ Then, if you need to locate the `text` in the document itself once you dereferen
 
 ## Tests
 
-There is a single test target, `BasicTests`. The `BasicTests` target covers all the functionality of the MarkupEditor, effectively everything that is accessible via the MarkupToolbar across a variety of text and selections. Each test that performs an action also tests the undo and redo of that action and validates the selection after each operation. Although there are approximately 25 XCTest test cases, each test case executes multiple `HTMLTest` instances to cover different HTML content and selections. The tests take less than 30 seconds when there are no errors.
+There is a single test target, `BaseTests`. The `BaseTests` target covers all the functionality of the MarkupEditor, effectively everything that is accessible via the MarkupToolbar across a variety of text and selections. The BaseTests use Swift Testing parameterized tests to exercise each test that is defined in a test suite `.json` file from the markupeditor-base project. Each test that performs an action also tests the undo and redo of that action and validates the selection after each operation. The tests take less than 30 seconds when there are no errors.
 
 ## Demos
 
