@@ -13,10 +13,10 @@ import Testing
 /// On the JavaScript side, these markers are removed and the corresponding selection is set. The actual HTML that is tested and returned
 /// from the test will not contain the embedded `sel` markers, so endHtml and undoHtml, if set, should not embed such markers.
 ///
-/// The JSON file for each suite also contains `action` items for each test, which produces in function in JavaScript using the
+/// The JSON file for each suite also contains `action` items for each test, which produces a function in JavaScript using the
 /// Function constructor. Since we can't do that in Swift, we specify the `action` var as an async function, and then in each
-/// test suite, we populate the `action` for each test. Occasionally (e.g., in `baseline`, no action is needed). Here we also
-/// use `stringAction` in the case where the action return a String. In JavaScript, we can just test if the return is null, but in
+/// test suite, we populate the `action` for each test. Occasionally (e.g., in `baseline`), no action is needed). Here we also
+/// use `stringAction` in the case where the action returns a `String`. In JavaScript, we can just test if the return is null, but in
 /// Swift we have to type the return properly, and all of the existing MU methods execute a handler with argument if needed.
 public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvertible {
     public static var timeout: Double = 5
@@ -85,11 +85,17 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
     
     @MainActor
     public func run(in view: MarkupWKWebView) async {
+        // The `description` of skipped tests is modified to flag them, but
+        // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }
+        // In some cases (e.g., checking HTML and text preprocessing), we don't
+        // want to set the initial HTML.
         if !skipSet {
             let html = await view.setTestHtml(startHtml, sel: sel)
             #expect(html == startHtml)
         }
+        // Execute either the `action` or `stringAction` if one if defined,
+        // and make sure it produces `endHtml`.
         if let action {
             do {
                 try await action()
@@ -109,6 +115,9 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
             }
             #expect(html == endHtml)
         }
+        // If not skipping the undo/redo step, then to each one, comparing
+        // the result with `undoHtml` and `endHtml` respectively. The `undoHtml`
+        // is the same as `startHtml` unless otherwise specified.
         if (action != nil || stringAction != nil) && !skipUndoRedo {
             await view.undo()
             let undoResult = await view.getTestHtml(sel: sel)
