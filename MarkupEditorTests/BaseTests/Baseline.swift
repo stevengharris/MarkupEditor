@@ -11,6 +11,7 @@ import WebKit
 
 @Suite(.serialized)
 class Baseline: MarkupDelegate {
+    static let tests = HtmlTestSuite.from("baseline.json").tests
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
     var loaded = false
@@ -53,8 +54,8 @@ class Baseline: MarkupDelegate {
         handler?()
     }
     
-    @Test(arguments: HtmlTestSuite.from("baseline.json").tests)
-    @MainActor
+    /// Run all the HtmlTests
+    @Test(arguments: Self.tests)
     func run(htmlTest: HtmlTest) async throws {
         await htmlTest.run(in: webView)
     }

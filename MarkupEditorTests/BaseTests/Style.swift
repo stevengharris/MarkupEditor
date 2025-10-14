@@ -76,7 +76,7 @@ class Style: MarkupDelegate {
         handler?()
     }
 
-    /// Run all of the HtmlTests, but serialize them because , once again, we can't do once-per-suite initialization
+    /// Run all the HtmlTests
     @Test(arguments: Self.tests)
     func run(htmlTest: HtmlTest) async throws {
         await htmlTest.run(in: webView)
