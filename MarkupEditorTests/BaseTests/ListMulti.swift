@@ -61,7 +61,7 @@ class ListMulti: MarkupDelegate {
                 coordinator,
                 name: "markup"
             )
-            _ = try await ready(timeout: .seconds(2), confirm: confirmation)
+            _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
         }
     }
 
