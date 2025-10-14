@@ -9,7 +9,7 @@ import MarkupEditor
 import Testing
 import WebKit
 
-@Suite
+@Suite(.serialized)
 class List: MarkupDelegate {
     // Avoid instantating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
@@ -82,7 +82,7 @@ class List: MarkupDelegate {
     }
 
     /// Run all of the HtmlTests, but serialize them because , once again, we can't do once-per-suite initialization
-    @Test(.serialized, arguments: Self.tests)
+    @Test(arguments: Self.tests)
     func run(htmlTest: HtmlTest) async throws {
         await htmlTest.run(in: webView)
     }
