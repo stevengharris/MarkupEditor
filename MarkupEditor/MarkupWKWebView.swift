@@ -1264,6 +1264,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func pasteImage(_ image: UIImage?) async {
+        await withCheckedContinuation { continuation in
+            pasteImage(image) {
+                continuation.resume()
+            }
+        }
+    }
+    
     //MARK: Formatting
     
     @objc public func bold(handler: (()->Void)? = nil) {

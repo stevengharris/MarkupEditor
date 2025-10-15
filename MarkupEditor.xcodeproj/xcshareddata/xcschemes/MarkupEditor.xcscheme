@@ -38,6 +38,16 @@
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA2FA6CC2E9EFE5600485CDF"
+               BuildableName = "SwiftTests.xctest"
+               BlueprintName = "SwiftTests"
+               ReferencedContainer = "container:MarkupEditor.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

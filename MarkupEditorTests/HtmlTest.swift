@@ -51,7 +51,7 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         skipTest: String? = nil,
         skipSet: Bool = false,
         skipUndoRedo: Bool = false,
-        sel: String,
+        sel: String = "|",
         startHtml: String,
         endHtml: String? = nil,
         undoHtml: String? = nil,
