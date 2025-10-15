@@ -1,5 +1,15 @@
 # Change Log
 
+## Version 0.8.6 (Beta 7.4)
+
+This release replaces the old MarkupEditor `BasicTests` with two new targets. The first, `BaseTests`, uses the test data from markupeditor-base to drive 22 new Swift Testing suites comprising a total of 226 tests. Sharing the test data between markupeditor-base and the Swift MarkupEditor is a significant milestone to ensuring they remain in sync and that changes in the base project don't introduce regressions in the Swift version. The second target, `SwiftTests`, although currently consisting of a single test, is meant to contain all tests that are specific to the Swift version of the MarkupEditor. The suite currently tests that pasting of an image results in a local file in the document directory, an operation not supported in markupeditor-base, but which was part of `BasicTests` before.
+
+* Extract existing test data from the Swift MarkupEditor XCTest cases into JSON files for use in [markupeditor-base](https://github.com/stevengharris/markupeditor-base). Those data files are now used to drive JEST-based testing in markupeditor-base, per https://github.com/stevengharris/markupeditor-base/issues/6,
+* Implement HtmlTestSuite to load markupeditor-base JSON test suites, populate an array of HtmlTests. Update old `HtmlTest.swift` to conform to the changes adopted in markupeditor-base and sharing a `run` method for parameterized testing.
+* Adopt Swift Testing framework, using parameterized tests to iterate over the JSON data. Move (only) the test targets to iOS 16.
+* Move remaining Swift MarkupEditor specific tests (PasteImage) into a new `SwiftTests` target.
+* Adjust `swift.yml` to use Swift Testing in GitHub Actions, moving `runs-on` to `macos-15`.
+
 ## Version 0.8.5 (Beta 7.3)
 
 This release formalizes the usage of a separate repository - [markupeditor-base](https://github.com/stevengharris/markupeditor-base) - for all the underlying JavaScript code in the Swift MarkupEditor. There should be no compatibility issues introduced at a Swift level. However, the project structure has been changed to accommodate this underlying change. The markupeditor-base project includes a [web site](https://stevengharris.github.io/markupeditor-base/), [demo](https://stevengharris.github.io/markupeditor-base/demo/index.html) and a [Developer's Guide](https://stevengharris.github.io/markupeditor-base/guide/index.html). The Developer's Guide has much more information than previously existed on the topic of embedding the JavaScript-based WYSIWYG editing capability into an application environment, one of which is Swift.
