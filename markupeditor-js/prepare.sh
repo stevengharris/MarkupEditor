@@ -7,22 +7,22 @@ MIRRORCSS="./node_modules/markupeditor-base/styles/mirror.css"
 TEST="./node_modules/markupeditor-base/test"
 READY=true
 if [ ! -e "$SCRIPT" ]; then
-  echo "$SCRIPT does not exist."
+  echo "Error: $SCRIPT does not exist."
   READY=false
 fi
 if [ ! -e "$MARKUPCSS" ]; then
-  echo "$MARKUPCSS does not exist."
+  echo "Error: $MARKUPCSS does not exist."
   READY=false
 fi
 if [ ! -e "$MIRRORCSS" ]; then
-  echo "$MIRRORCSS does not exist."
+  echo "Error: $MIRRORCSS does not exist."
   READY=false
 fi
 if [ ! -e "$TEST" ]; then
-  echo "$TEST does not exist."
+  echo "Error: $TEST does not exist."
   READY=false
 fi
-if [ ! $READY ]; then
+if [ "$READY" = false ]; then
     echo "Did you run npm install?"
     exit 1
 fi

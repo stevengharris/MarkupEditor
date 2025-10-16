@@ -1,6 +1,6 @@
 {
   "name": "markupeditor",
-  "version": "0.8.1",
+  "version": "0.8.6",
   "description": "Swift MarkupEditor uptake of markupeditor-base",
   "homepage": "https://github.com/stevengharris/MarkupEditor",
   "bugs": {
@@ -16,6 +16,6 @@
     "prepare": "sh prepare.sh"
   },
   "devDependencies": {
-    "markupeditor-base": "file:../../../VSCodeProjects/markupeditor-base"
+      "markupeditor-base": "^0.8.6"
   }
 }
