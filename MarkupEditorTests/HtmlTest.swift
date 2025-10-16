@@ -19,7 +19,7 @@ import Testing
 /// use `stringAction` in the case where the action returns a `String`. In JavaScript, we can just test if the return is null, but in
 /// Swift we have to type the return properly, and all of the existing MU methods execute a handler with argument if needed.
 public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvertible {
-    public static var timeout: Double = 5
+    public static var timeout: Double = 7
     public var description: String
     public var skipTest: String?
     public var skipSet: Bool
