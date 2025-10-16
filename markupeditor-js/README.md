@@ -20,7 +20,7 @@ The formalization of [markupeditor-base](https://github.com/stevengharris/markup
 
 Working with the markupeditor-base JavaScript code requires you to have node.js/npm installed. You can of course use whatever development tools you're comfortable with. I use VSCode for the markupeditor-base development and Xcode for Swift development.
 
-There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the dependency only involves the following files in the `MarkupEditor/Resources` directory:
+There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the runtime dependency only involves the following files in the `MarkupEditor/Resources` directory:
 
 * markup.js - A copy of `dist/markupeditor.umd.js` that was built using markupeditor-base.
 * markup.css - Styling needed to support basic MarkupEditor editing.
@@ -32,18 +32,23 @@ The `markupeditor-js` directory defines an npm package in `package.json` that de
 
 ### Install the markupeditor-js Project
 
-Install markupeditor-js, which also runs the prepare script.
+Install markupeditor-js, which also runs the prepare script that copies the runtime and test data dependencies from markupeditor-base into their expected locations in the Swift MarkupEditor.
 
 ```
 $ npm install
 
-> markupeditor@0.8.1 prepare
+> markupeditor@0.8.6 prepare
 > sh prepare.sh
 
 Updating dependencies from markupeditor-base...
-cp -f $SCRIPT ../MarkupEditor/Resources/markup.js
-cp -f $MARKUPCSS ../MarkupEditor/Resources/markup.css
-cp -f $MIRRORCSS ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/dist/markupeditor.umd.js
+  to ../MarkupEditor/Resources/markup.js
+ Copying ./node_modules/markupeditor-base/styles/markup.css
+  to ../MarkupEditor/Resources/markup.css
+ Copying ./node_modules/markupeditor-base/styles/mirror.css
+  to ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/test/*.json
+  to ../MarkupEditorTests/BaseTests/
 
 added 19 packages, and audited 20 packages in 887ms
 
@@ -74,7 +79,7 @@ Do your work in markupeditor-base locally. Build in your markupeditor-base direc
 ``` 
 $ npm run build
 
-> markupeditor-base@0.8.1 build
+> markupeditor-base@0.8.6 build
 > rollup -c
 
 
@@ -86,22 +91,31 @@ created dist/markupeditor.cjs.js, dist/markupeditor.esm.js in 72ms
 $
 ```
 
-In the markupeditor-js directory of your cloned Swift MarkupEditor project, run prepare to put the changes your made in markupeditor-base into the source control of the Swift MarkupEditor:
+Note that `npm run test` in the markupeditor-base directory will run all tests using JEST.
+
+Now, _in the markupeditor-js directory of your cloned Swift MarkupEditor project_, run `prepare` to put the changes you made in markupeditor-base into the source control of the Swift MarkupEditor:
 
 ```
 $ npm run prepare
 
-> markupeditor@0.8.1 prepare
+> markupeditor@0.8.6 prepare
 > sh prepare.sh
 
 Updating dependencies from markupeditor-base...
-cp -f $SCRIPT ../MarkupEditor/Resources/markup.js
-cp -f $MARKUPCSS ../MarkupEditor/Resources/markup.css
-cp -f $MIRRORCSS ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/dist/markupeditor.umd.js
+  to ../MarkupEditor/Resources/markup.js
+ Copying ./node_modules/markupeditor-base/styles/markup.css
+  to ../MarkupEditor/Resources/markup.css
+ Copying ./node_modules/markupeditor-base/styles/mirror.css
+  to ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/test/*.json
+  to ../MarkupEditorTests/BaseTests/
 $
 ```
 
-Run one of the Swift MarkupEditor demos, the tests, or whatever is appropriate. You probably have a separate project that has a dependency on the MarkupEditor. When you build it, the changes will be in effect.
+The `prepare` script also copies the current test files from markupeditor-base into the proper place for the Swift project to find them. The Swift MarkupEditor uses the same test data (the .json files copied in `prepare`), but uses Swift Testing to execute them. In Xcode, the tests are run in the `BaseTests` target. The Swift BaseTests use the MarkupWKWebView API from within Swift, which in turn calls into the JavaScript web view using `evaluateJavaScript`. In general, the test data identifies `startHtml` along with the `endHtml` that is produced by applying an action of some kind. While the test data is shared between the Swift MarkupEditor and markupeditor-base, there may be additional processing in the MarkupWKWebView before and after executing `evaluateJavaScript`, so it's important to test independently in Swift and not just rely on the markupeditor-base testing.
+
+To test your changes, you can run one of the Swift MarkupEditor demos, the tests, or whatever is appropriate. You probably have a separate project that has a dependency on the MarkupEditor. When you build it, the changes will be in effect.
 
 ## Debugging
 

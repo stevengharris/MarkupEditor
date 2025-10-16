@@ -260,11 +260,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Bundle to respond to module, where we can find markup.html etc that are
     /// part of the package.
     func bundle() -> Bundle {
-        #if SWIFT_PACKAGE
+#if SWIFT_PACKAGE
         return Bundle.module
-        #else
+#else
         return Bundle(for: MarkupWKWebView.self)
-        #endif
+#endif
     }
     
     /// Return the url for the named resource, always using the one in Bundle.main first if it exists.
@@ -377,7 +377,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     /// Set the EditableAttributes for the editor element.
     public func setTopLevelAttributes(_ handler: (()->Void)? = nil) {
-        guard 
+        guard
             let attributes = markupConfiguration?.topLevelAttributes,
             !attributes.isEmpty,
             let jsonData = try? JSONSerialization.data(withJSONObject: attributes.options),
@@ -434,7 +434,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Keyboard handling and accessoryView setup
-
+    
     /// Respond to keyboardWillShow event.
     ///
     /// We adjust toolbar height constraint so it shows properly and scroll the selection so it is not obscured by
@@ -637,17 +637,25 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Testing support
-
+    
     /// Return unformatted but clean HTML contained in this MarkupWKWebView, with selection points
     /// indicated by `sel`.
     ///
     /// Except for the `sel` markers, the HTML is functionally equivalent to `getHtml()` but is not prettified..
     public func getTestHtml(sel: String = "|", handler: ((String?)->Void)? = nil) {
         // DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.evaluateJavaScript("MU.getTestHTML('\(sel)')") { result, error in
-                handler?(result as? String)
-            }
+        self.evaluateJavaScript("MU.getTestHTML('\(sel)')") { result, error in
+            handler?(result as? String)
+        }
         // }
+    }
+    
+    public func getTestHtml(sel: String) async -> String? {
+        await withCheckedContinuation { continuation in
+            getTestHtml(sel: sel) { html in
+                continuation.resume(with: .success(html))
+            }
+        }
     }
     
     /// Set the html content for testing and return the sel-marked-up string.
@@ -655,16 +663,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// The small delay seems to avoid intermitted problems when running many tests together.
     public func setTestHtml(_ value: String, sel: String = "|", handler: ((String?) -> Void)? = nil) {
         // DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.evaluateJavaScript("MU.setTestHTML('\(value.escaped)', '\(sel)')") { result, error in
-                if error == nil {
-                    self.getTestHtml(sel: sel) { string in
-                        handler?(string)
-                    }
-                } else {
-                    handler?(nil)
+        self.evaluateJavaScript("MU.setTestHTML('\(value.escaped)', '\(sel)')") { result, error in
+            if error == nil {
+                self.getTestHtml(sel: sel) { string in
+                    handler?(string)
                 }
+            } else {
+                handler?(nil)
             }
+        }
         // }
+    }
+    
+    public func setTestHtml(_ value: String, sel: String) async -> String? {
+        await withCheckedContinuation { continuation in
+            setTestHtml(value) { html in
+                continuation.resume(with: .success(html))
+            }
+        }
     }
     
     /// Invoke the preprocessing step for MU.pasteHTML directly.
@@ -674,10 +690,26 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func testPasteHtmlPreprocessing(html: String) async -> String? {
+        await withCheckedContinuation { continuation in
+            testPasteHtmlPreprocessing(html: html) { endHtml in
+                continuation.resume(with: .success(endHtml))
+            }
+        }
+    }
+    
     /// Invoke the preprocessing step for MU.pasteText directly.
     public func testPasteTextPreprocessing(html: String, handler: ((String?)->Void)? = nil) {
         evaluateJavaScript("MU.testPasteTextPreprocessing('\(html.escaped)')") { result, error in
             handler?(result as? String)
+        }
+    }
+    
+    public func testPasteTextPreprocessing(html: String) async -> String? {
+        await withCheckedContinuation { continuation in
+            testPasteTextPreprocessing(html: html) { endHtml in
+                continuation.resume(with: .success(endHtml))
+            }
         }
     }
     
@@ -689,6 +721,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Invoke the \_doListEnter operation directly.
     public func testListEnter(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.testListEnter()") { result, error in handler?() }
+    }
+    
+    public func testListEnter() async {
+        await withCheckedContinuation { continuation in
+            testListEnter {
+                continuation.resume()
+            }
+        }
     }
     
     /// Ensure extractContents behaves as expected, since we depend on it.
@@ -778,6 +818,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func insertLink(_ href: String?) async {
+        await withCheckedContinuation { continuation in
+            insertLink(href) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func insertImage(src: String?, alt: String?, handler: (()->Void)? = nil) {
         var args = "'\(src!.escaped)'"
         if alt != nil {
@@ -785,6 +833,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         becomeFirstResponder()
         evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
+    }
+    
+    public func insertImage(src: String?, alt: String?) async {
+        await withCheckedContinuation { continuation in
+            insertImage(src: src, alt: alt) {
+                continuation.resume()
+            }
+        }
     }
     
     public func insertLocalImage(url: URL, handler: ((URL)->Void)? = nil) {
@@ -892,6 +948,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func search(for text: String, direction: FindDirection, activate: Bool = false) async {
+        await withCheckedContinuation { continuation in
+            search(for: text, direction: direction, activate: activate) {
+                continuation.resume()
+            }
+        }
+    }
+    
     /// Stop intercepting Enter to invoke searchForNext().
     public func deactivateSearch(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.deactivateSearch()") { result, error in
@@ -950,19 +1014,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //MARK: Undo/redo
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.
-    ///
-    /// Note that this operation interleaves the browser-native undo (e.g., undoing typing)
-    /// with the _undoOperation implemented in markup.js.
     public func undo(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.doUndo()") { result, error in handler?() }
     }
     
+    public func undo() async {
+        await withCheckedContinuation { continuation in
+            undo {
+                continuation.resume()
+            }
+        }
+    }
+    
     /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
-    ///
-    /// Note that this operation interleaves the browser-native redo (e.g., redoing typing)
-    /// with the _redoOperation implemented in markup.js.
     public func redo(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.doRedo()") { result, error in handler?() }
+    }
+    
+    public func redo() async {
+        await withCheckedContinuation { continuation in
+            redo {
+                continuation.resume()
+            }
+        }
     }
     
     //MARK: Table editing
@@ -979,6 +1053,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         evaluateJavaScript("MU.insertTable(\(rows), \(cols))") { result, error in handler?() }
     }
     
+    public func insertTable(rows: Int, cols: Int) async {
+        await withCheckedContinuation { continuation in
+            insertTable(rows: rows, cols: cols) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func addRow(_ direction: TableDirection, handler: (()->Void)? = nil) {
         switch direction {
         case .before:
@@ -988,8 +1070,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func addRow(_ direction: TableDirection) async {
+        await withCheckedContinuation { continuation in
+            addRow(direction) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func deleteRow(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.deleteTableArea('ROW')") { result, error in handler?() }
+    }
+    
+    public func deleteRow() async {
+        await withCheckedContinuation { continuation in
+            deleteRow() {
+                continuation.resume()
+            }
+        }
     }
     
     public func addCol(_ direction: TableDirection, handler: (()->Void)? = nil) {
@@ -1001,20 +1099,60 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func addCol(_ direction: TableDirection) async {
+        await withCheckedContinuation { continuation in
+            addCol(direction) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func deleteCol(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.deleteTableArea('COL')") { result, error in handler?() }
+    }
+    
+    public func deleteCol() async {
+        await withCheckedContinuation { continuation in
+            deleteCol() {
+                continuation.resume()
+            }
+        }
     }
     
     public func addHeader(colspan: Bool = true, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.addHeader(\(colspan))") { result, error in handler?() }
     }
     
+    public func addHeader(colspan: Bool = true) async {
+        await withCheckedContinuation { continuation in
+            addHeader(colspan: colspan) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func deleteTable(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.deleteTableArea('TABLE')") { result, error in handler?() }
     }
     
+    public func deleteTable() async {
+        await withCheckedContinuation { continuation in
+            deleteTable() {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func borderTable(_ border: TableBorder, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.borderTable(\"\(border)\")")  { result, error in handler?() }
+    }
+    
+    public func borderTable(_ border: TableBorder) async {
+        await withCheckedContinuation { continuation in
+            borderTable(border) {
+                continuation.resume()
+            }
+        }
     }
     
     //MARK: Image editing
@@ -1091,6 +1229,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func pasteHtml(_ html: String?) async {
+        await withCheckedContinuation { continuation in
+            pasteHtml(html) {
+                continuation.resume()
+            }
+        }
+    }
+    
     public func pasteImage(_ image: UIImage?, handler: (()->Void)? = nil) {
         guard let image = image, let contents = image.pngData(), !pastedAsync else { return }
         // Make a new unique ID for the image to save in the cacheUrl directory
@@ -1118,76 +1264,85 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    //MARK: Formatting
-    
-    @objc public func bold() {
-        bold(handler: nil)
+    public func pasteImage(_ image: UIImage?) async {
+        await withCheckedContinuation { continuation in
+            pasteImage(image) {
+                continuation.resume()
+            }
+        }
     }
     
-    public func bold(handler: (()->Void)? = nil) {
+    //MARK: Formatting
+    
+    @objc public func bold(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleBold()") { result, error in
+            if let error { print("ERROR: \(error.localizedDescription)") }
             handler?()
         }
     }
     
-    @objc public func italic() {
-        italic(handler: nil)
+    public func bold() async throws {
+        try await evaluateJavaScript("MU.toggleBold()")
     }
     
-    public func italic(handler: (()->Void)? = nil) {
+    @objc public func italic(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleItalic()") { result, error in
             handler?()
         }
     }
     
-    @objc public func underline() {
-        underline(handler: nil)
+    public func italic() async throws {
+        try await evaluateJavaScript("MU.toggleItalic()")
     }
     
-    public func underline(handler: (()->Void)? = nil) {
+    @objc public func underline(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleUnderline()") { result, error in
             handler?()
         }
     }
     
-    @objc public func code() {
-        code(handler: nil)
+    public func underline() async throws {
+        try await evaluateJavaScript("MU.toggleUnderline()")
     }
     
-    public func code(handler: (()->Void)? = nil) {
+    @objc public func code(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleCode()") { result, error in
             handler?()
         }
     }
 
-    @objc public func strike() {
-        strike(handler: nil)
+    public func code() async throws {
+        try await evaluateJavaScript("MU.toggleCode()")
     }
     
-    public func strike(handler: (()->Void)? = nil) {
+    @objc public func strike(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleStrike()") { result, error in
             handler?()
         }
     }
     
-    @objc public func subscriptText() {
-        subscriptText(handler: nil)
+    public func strike() async throws {
+        try await evaluateJavaScript("MU.toggleStrike()")
     }
     
-    public func subscriptText(handler: (()->Void)? = nil) {      // "superscript" is a keyword
+    @objc public func subscriptText(handler: (()->Void)? = nil) {      // "superscript" is a keyword
         evaluateJavaScript("MU.toggleSubscript()") { result, error in
             handler?()
         }
     }
     
-    @objc public func superscript() {
-        superscript(handler: nil)
+    public func subscriptText() async throws {
+        try await evaluateJavaScript("MU.toggleSubscript()")
     }
     
-    public func superscript(handler: (()->Void)? = nil) {
+    @objc public func superscript(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleSuperscript()") { result, error in
             handler?()
         }
+    }
+    
+    public func superscript() async throws {
+        try await evaluateJavaScript("MU.toggleSuperscript()")
     }
     
     //MARK: Selection state
@@ -1218,6 +1373,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
             self.selectionState.reset(from: newSelectionState)
             handler?(newSelectionState)
+        }
+    }
+    
+    public func getSelectionState() async -> SelectionState {
+        await withCheckedContinuation { continuation in
+            getSelectionState() { selectionState in
+                continuation.resume(with: .success(selectionState))
+            }
         }
     }
     
@@ -1342,34 +1505,40 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Indent from the menu or hotkey
-    @objc public func indent() {
-        indent(handler: nil)
+    public func replaceStyle(_ oldStyle: StyleContext?, with newStyle: StyleContext) async {
+        await withCheckedContinuation { continuation in
+            replaceStyle(oldStyle, with: newStyle) {
+                continuation.resume()
+            }
+        }
     }
-
+    
     /// Indent the selection based on the context.
     ///
     /// If in a list, move list item to the next nested level if appropriate.
     /// Otherwise, increase the quote level by inserting a new blockquote.
-    public func indent(handler: (()->Void)? = nil) {
+    @objc public func indent(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.indent()") { result, error in
             handler?()
         }
     }
     
-    /// Outdent from the menu or hotkey
-    @objc public func outdent() {
-        outdent(handler: nil)
+    public func indent() async throws {
+        try await evaluateJavaScript("MU.indent()")
     }
 
     /// Outdent the selection based on the context.
     ///
     /// If in a list, move list item to the previous nested level if appropriate.
     /// Otherwise, decrease the quote level by removing a blockquote if one exists.
-    public func outdent(handler: (()->Void)? = nil) {
+    @objc public func outdent(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.outdent()") { result, error in
             handler?()
         }
+    }
+    
+    public func outdent() async throws {
+        try await evaluateJavaScript("MU.outdent()")
     }
     
     @objc public func bullets() {
@@ -1384,6 +1553,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func toggleListItem(type: ListContext, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleListItem('\(type.tag)')") { result, error in
             handler?()
+        }
+    }
+    
+    public func toggleListItem(type: ListContext) async {
+        await withCheckedContinuation { continuation in
+            toggleListItem(type: type) {
+                continuation.resume()
+            }
         }
     }
     

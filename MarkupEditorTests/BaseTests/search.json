@@ -1,0 +1,187 @@
+{
+    "description": "Search forward and backward in various scenarios.",
+    "tests": [
+        {
+            "description": "Exact word match forward",
+            "skipUndoRedo": true,
+            "comment": "pasteString = search string",
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "just",
+            "pasteString": "just",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Exact word match backward",
+            "skipUndoRedo": true,
+            "comment": "pasteString = search string",
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "just",
+            "pasteString": "just",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Partial word match forward",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "us",
+            "pasteString": "us",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Partial word match backward",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "us",
+            "pasteString": "us",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Mixed case word match forward",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a SiMpLe paragraph.</p>",
+            "endHtml": "SiMpLe",
+            "pasteString": "simple",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Mixed case word match backward",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a SiMpLe paragraph.</p>",
+            "endHtml": "SiMpLe",
+            "pasteString": "simple",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Mixed case search forward for lowercase word",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "simple",
+            "pasteString": "SiMpLe",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Mixed case search backward for lowercase word",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "simple",
+            "pasteString": "SiMpLe",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward with apostrophe",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a simple paragraph.</p>",
+            "endHtml": "isn't",
+            "pasteString": "isn't",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward with apostrophe",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a simple paragraph.</p>",
+            "endHtml": "isn't",
+            "pasteString": "isn't",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward with apostrophe and quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't just a \"simple\"",
+            "pasteString": "isn't just a \"simple\"",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward with apostrophe and quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't just a \"simple\"",
+            "pasteString": "isn't just a \"simple\"",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward with smart quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "\"simple\"",
+            "pasteString": "“simple”",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward with smart quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "\"simple\"",
+            "pasteString": "“simple”",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward with smart apostrophe",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't",
+            "pasteString": "isn’t",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward with smart apostrophe",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't",
+            "pasteString": "isn’t",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward with mixed smart apostrophe and quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't just a \"simple\"",
+            "pasteString": "isn’t just a “simple”",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward with mixed smart apostrophe and quotes",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|This isn't just a \"simple\" paragraph.</p>",
+            "endHtml": "isn't just a \"simple\"",
+            "pasteString": "isn’t just a “simple”",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search forward relative to selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is just a SiMpLe word| in a sImPlE paragraph.</p>",
+            "endHtml": "sImPlE",
+            "pasteString": "simple",
+            "action": "MU.searchFor(pasteString, \"forward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Search backward relative to selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is just a SiMpLe word| in a sImPlE paragraph.</p>",
+            "endHtml": "SiMpLe",
+            "pasteString": "simple",
+            "action": "MU.searchFor(pasteString, \"backward\"); let state = JSON.parse(MU.getSelectionState()); return state.selection",
+            "arg": "pasteString"
+        }
+    ]
+}

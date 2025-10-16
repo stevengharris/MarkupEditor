@@ -1,0 +1,65 @@
+{
+    "description": "List operations, changing types, outdenting.",
+    "tests": [
+        {
+            "description": "Make a paragraph into an ordered list",
+            "startHtml": "<p>He|llo <strong>world</strong></p>",
+            "endHtml": "<ol><li><p>He|llo <strong>world</strong></p></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Make a paragraph into an unordered list",
+            "startHtml": "<p>He|llo <strong>world</strong></p>",
+            "endHtml": "<ul><li><p>He|llo <strong>world</strong></p></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove a list item from a single-element unordered list, thereby removing the list, too",
+            "startHtml": "<ul><li><p>He|llo <strong>world</strong></p></li></ul>",
+            "endHtml": "<p>He|llo <strong>world</strong></p>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Remove a list item from a single-element ordered list, thereby removing the list, too",
+            "startHtml": "<ol><li><p>He|llo <strong>world</strong></p></li></ol>",
+            "endHtml": "<p>He|llo <strong>world</strong></p>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Remove a list item from a multi-element unordered list, leaving the list in place",
+            "startHtml": "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
+            "endHtml": "<p>Hello <strong>wo|rld1</strong></p><ul><li><p>Hello <strong>world2</strong></p></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Change the top list item in a multi-element list to a different list type",
+            "startHtml": "<ul><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ul>",
+            "endHtml": "<ol><li><p>Hello <strong>wo|rld1</strong></p></li><li><p>Hello <strong>world2</strong></p></li></ol>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Change a sub list item in a multi-element list to a different list item",
+            "startHtml": "<ul><li><p>Hello <strong>world1</strong></p></li><li><p>Hel|lo <strong>world2</strong></p></li></ul>",
+            "endHtml": "<ul><li><p>Hello <strong>world1</strong></p><ol><li><p>Hel|lo <strong>world2</strong></p></li></ol></li></ul>",
+            "action": "MU.toggleListItem(\"OL\")"
+        },
+        {
+            "description": "Remove UL <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+            "startHtml": "<ul><li><p>AAHe|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+            "endHtml": "<p>AAHe|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul>",
+            "action": "MU.toggleListItem(\"UL\")"
+        },
+        {
+            "description": "Outdent no-op <ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+            "startHtml": "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+            "endHtml": "<ul><li><p>He|llo paragraph</p><ul><li><h5>Hello header in list</h5></li></ul></li></ul>",
+            "action": "MU.outdent()"
+        },
+        {
+            "description": "Outdent <ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+            "startHtml": "<ul><li><p>Hello paragraph</p><ul><li><h5>He|llo header in list</h5></li></ul></li></ul>",
+            "endHtml": "<ul><li><p>Hello paragraph</p><h5>He|llo header in list</h5></li></ul>",
+            "action": "MU.outdent()"
+        }
+    ]
+}

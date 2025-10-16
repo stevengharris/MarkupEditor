@@ -1,0 +1,29 @@
+{
+    "description": "Style change  with selections spanning multiple elements.",
+    "tests": [
+        {
+            "description": "Replace p with h1, selection in embedded format",
+            "startHtml": "<p><em><strong>He|llo </strong></em><strong>world1</strong></p><p><em><strong>Hello </strong></em><strong>world2</strong></p><p><em><strong>He|llo </strong></em><strong>world3</strong></p>",
+            "endHtml": "<h1><em><strong>He|llo </strong></em><strong>world1</strong></h1><h1><em><strong>Hello </strong></em><strong>world2</strong></h1><h1><em><strong>He|llo </strong></em><strong>world3</strong></h1>",
+            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H1\")"
+        },
+        {
+            "description": "Replace p with h1, selection outside embedded format both ends",
+            "startHtml": "<p><em><strong>|Hello </strong></em><strong>world1</strong></p><p><em><strong>Hello </strong></em><strong>world2</strong></p><p><em><strong>Hello </strong></em><strong>world3|</strong></p>",
+            "endHtml": "<h1><em><strong>|Hello </strong></em><strong>world1</strong></h1><h1><em><strong>Hello </strong></em><strong>world2</strong></h1><h1><em><strong>Hello </strong></em><strong>world3|</strong></h1>",
+            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H1\")"
+        },
+        {
+            "description": "Replace p with h1, selection outside embedded format at start",
+            "startHtml": "<p><em><strong>|Hello </strong></em><strong>world1</strong></p><p><em><strong>Hello </strong></em><strong>world2</strong></p><p><em><strong>Hello </strong></em><strong>wo|rld3</strong></p>",
+            "endHtml": "<h1><em><strong>|Hello </strong></em><strong>world1</strong></h1><h1><em><strong>Hello </strong></em><strong>world2</strong></h1><h1><em><strong>Hello </strong></em><strong>wo|rld3</strong></h1>",
+            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H1\")"
+        },
+        {
+            "description": "Replace p with h1, selection across indented paragraphs",
+            "startHtml": "<blockquote><p>Pa|ragraph 1</p></blockquote><blockquote><p>Paragraph 2</p></blockquote><blockquote><p>Pa|ragraph 3</p></blockquote>",
+            "endHtml": "<blockquote><h1>Pa|ragraph 1</h1></blockquote><blockquote><h1>Paragraph 2</h1></blockquote><blockquote><h1>Pa|ragraph 3</h1></blockquote>",
+            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H1\")"
+        }
+    ]
+}

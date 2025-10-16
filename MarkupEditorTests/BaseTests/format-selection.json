@@ -1,0 +1,47 @@
+{
+    "description": "Selection state is proper for format selections.",
+    "tests": [
+        {
+            "description": "Bold selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <strong>i|s</strong> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).bold).toBeTruthy()"
+        },
+        {
+            "description": "Italic selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <em>i|s</em> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).italic).toBeTruthy()"
+        },
+        {
+            "description": "Underline selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <u>i|s</u> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).underline).toBeTruthy()"
+        },
+        {
+            "description": "Strikethrough selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <s>i|s</s> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).strike).toBeTruthy()"
+        },
+        {
+            "description": "Superscript selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <sup>i|s</sup> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).sup).toBeTruthy()"
+        },
+        {
+            "description": "Subscript selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <sub>i|s</sub> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).sub).toBeTruthy()"
+        },
+        {
+            "description": "Code selection",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This <code>i|s</code> a start</p>",
+            "action": "expect(JSON.parse(MU.getSelectionState()).code).toBeTruthy()"
+        }
+    ]
+}

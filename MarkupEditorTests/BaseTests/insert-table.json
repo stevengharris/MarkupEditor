@@ -1,0 +1,23 @@
+{
+    "description": "Insert table at various locations.",
+    "tests": [
+        {
+            "description": "Insert at beginning of a paragraph",
+            "startHtml": "<p>|This is a simple paragraph</p>",
+            "endHtml": "<table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>This is a simple paragraph</p>",
+            "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Insert in the middle of a paragraph",
+            "startHtml": "<p>This is a sim|ple paragraph</p>",
+            "endHtml": "<p>This is a sim</p><table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>ple paragraph</p>",
+            "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Insert at the end of a paragraph",
+            "startHtml": "<p>This is a simple paragraph|</p>",
+            "endHtml": "<p>This is a simple paragraph</p><table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table>",
+            "action": "MU.insertTable(2,2)"
+        }
+    ]
+}

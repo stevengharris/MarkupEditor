@@ -1,0 +1,141 @@
+{
+    "description": "Paste text at various locations.",
+    "tests": [
+        {
+            "description": "P in P - Paste simple text at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is juHello world|st a simple paragraph.</p>",
+            "pasteString": "Hello world",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste text with embedded HTML at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is juHello &lt;b&gt;bold&lt;/b&gt; world|st a simple paragraph.</p>",
+            "pasteString": "Hello &lt;b&gt;bold&lt;/b&gt; world",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste text with embedded bold at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is juHello bold world|st a simple paragraph.</p>",
+            "pasteString": "Hello <strong>bold</strong> world",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple text at insertion point in a bolded word",
+            "startHtml": "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+            "endHtml": "<p>This is <strong>ju</strong>Hello world|<strong>st</strong> a simple paragraph.</p>",
+            "pasteString": "Hello world",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste text with embedded italic at insertion point in a bolded word",
+            "startHtml": "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+            "endHtml": "<p>This is <strong>ju</strong>Hello bold world|<strong>st</strong> a simple paragraph.</p>",
+            "pasteString": "Hello <em>bold</em> world",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple paragraph at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is juHello world|st a simple paragraph.</p>",
+            "pasteString": "<p>Hello world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste paragraph with children at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is juHello bold world|st a simple paragraph.</p>",
+            "pasteString": "<p>Hello <strong>bold</strong> world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple paragraph at insertion point in a bolded word",
+            "startHtml": "<p>This is <strong>ju|st</strong> a simple paragraph.</p>",
+            "endHtml": "<p>This is <strong>ju</strong>Hello bold world|<strong>st</strong> a simple paragraph.</p>",
+            "pasteString": "<p>Hello <em>bold</em> world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple paragraph at beginning of another",
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "<p>Hello world|This is just a simple paragraph.</p>",
+            "pasteString": "<p>Hello world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste paragraph with children at beginning of another",
+            "startHtml": "<p>|This is just a simple paragraph.</p>",
+            "endHtml": "<p>Hello bold world|This is just a simple paragraph.</p>",
+            "pasteString": "<p>Hello <strong>bold</strong> world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple paragraph at end of another",
+            "startHtml": "<p>This is just a simple paragraph.|</p>",
+            "endHtml": "<p>This is just a simple paragraph.Hello world|</p>",
+            "pasteString": "<p>Hello world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste paragraph with children at end of another",
+            "startHtml": "<p>This is just a simple paragraph.|</p>",
+            "endHtml": "<p>This is just a simple paragraph.Hello bold world|</p>",
+            "pasteString": "<p>Hello <strong>bold</strong> world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste simple paragraph at a blank paragraph",
+            "startHtml": "<p>This is just a simple paragraph.</p><p>|</p>",
+            "endHtml": "<p>This is just a simple paragraph.</p><p>Hello world|</p>",
+            "pasteString": "<p>Hello world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in P - Paste paragraph with children at a blank paragraph",
+            "startHtml": "<p>This is just a simple paragraph.</p><p>|</p>",
+            "endHtml": "<p>This is just a simple paragraph.</p><p>Hello bold world|</p>",
+            "pasteString": "<p>Hello <strong>bold</strong> world</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "H5 in P - Paste simple h5 at a blank paragraph",
+            "startHtml": "<p>This is just a simple paragraph.</p><p>|</p>",
+            "endHtml": "<p>This is just a simple paragraph.</p><p>Hello world|</p>",
+            "pasteString": "<h5>Hello world</h5>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "H5 in P - Paste h5 with children at a blank paragraph",
+            "startHtml": "<p>This is just a simple paragraph.</p><p>|</p>",
+            "endHtml": "<p>This is just a simple paragraph.</p><p>Hello bold world|</p>",
+            "pasteString": "<h5>Hello <strong>bold</strong> world</h5>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "P in Empty Document - Paste multiple paragraphs into an empty document",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>A title</p><p>A subtitle</p><p>A paragraph.|</p>",
+            "pasteString": "<h1>A title</h1><h2>A subtitle</h2><p>A paragraph.</p>",
+            "action": "const event = new Event('paste', { bubbles: true, cancelable: true }); event.clipboardData = { getData () { return pasteString }}; MU.pasteText(pasteString, event)",
+            "arg": "pasteString"
+        }
+    ]
+}

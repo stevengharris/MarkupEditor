@@ -1,0 +1,49 @@
+{
+    "description": "Enter at collapsed selection in a list.",
+    "tests": [
+        {
+            "description": "Enter at end of h5",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.|</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5></li><li><p>|</p><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter at beginning of h5",
+            "startHtml": "<ul><li><h5>|Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5></h5></li><li><h5>|Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter in \"Bul|leted item 1.\"",
+            "startHtml": "<ul><li><h5>Bul|leted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bul</h5></li><li><h5>|leted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter in \"Bulleted item 1|.\"",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1|.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1</h5></li><li><h5>|.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter in italicized \"item\" in \"Bulleted it|em 1.\"",
+            "startHtml": "<ul><li><h5>Bulleted <em>it|em</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>it</em></h5></li><li><h5><em>|em</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>Bulleted item 2.</h5></li></ul>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter in empty p list item at end of list.",
+            "skipTest": "Does not properly replicate actual Enter at the end of a list, even though it works properly when done by hand.",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><p>|</p></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li></ul><p>|</p>",
+            "action": "MU.testListEnter()"
+        },
+        {
+            "description": "Enter in empty h5 list item at end of list.",
+            "skipTest": "Does not properly replicate actual Enter at the end of a list, even though it works properly when done by hand.",
+            "startHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li><li><h5>|</h5></li></ul>",
+            "endHtml": "<ul><li><h5>Bulleted <em>item</em> 1.</h5><ol><li><p>Numbered item 1.</p></li><li><p>Numbered item 2.</p></li></ol></li></ul><h5>|</h5>",
+            "action": "MU.testListEnter()"
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "description": "Insert image URL at various locations.",
+    "tests": [
+        {
+            "description": "MP4 URL in P - Paste image URL at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.mp4\">|st a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.mp4",
+            "action": "MU.insertImage(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "JPG URL in P - Paste image URL at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.jpg\">|st a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.jpg",
+            "action": "MU.insertImage(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "PNG URL in P - Paste image URL at insertion point in a word",
+            "startHtml": "<p>This is ju|st a simple paragraph.</p>",
+            "endHtml": "<p>This is ju<img src=\"https://github.com/stevengharris/MarkupEditor/foo.png\">|st a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.png",
+            "action": "MU.insertImage(pasteString)",
+            "arg": "pasteString"
+        }
+    ]
+}
