@@ -20,7 +20,7 @@ The formalization of [markupeditor-base](https://github.com/stevengharris/markup
 
 Working with the markupeditor-base JavaScript code requires you to have node.js/npm installed. You can of course use whatever development tools you're comfortable with. I use VSCode for the markupeditor-base development and Xcode for Swift development.
 
-There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the dependency only involves the following files in the `MarkupEditor/Resources` directory:
+There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the runtime dependency only involves the following files in the `MarkupEditor/Resources` directory:
 
 * markup.js - A copy of `dist/markupeditor.umd.js` that was built using markupeditor-base.
 * markup.css - Styling needed to support basic MarkupEditor editing.
@@ -32,18 +32,23 @@ The `markupeditor-js` directory defines an npm package in `package.json` that de
 
 ### Install the markupeditor-js Project
 
-Install markupeditor-js, which also runs the prepare script.
+Install markupeditor-js, which also runs the prepare script that copies the runtime and test data dependencies from markupeditor-base into their expected locations in the Swift MarkupEditor.
 
 ```
 $ npm install
 
-> markupeditor@0.8.1 prepare
+> markupeditor@0.8.6 prepare
 > sh prepare.sh
 
 Updating dependencies from markupeditor-base...
-cp -f $SCRIPT ../MarkupEditor/Resources/markup.js
-cp -f $MARKUPCSS ../MarkupEditor/Resources/markup.css
-cp -f $MIRRORCSS ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/dist/markupeditor.umd.js
+  to ../MarkupEditor/Resources/markup.js
+ Copying ./node_modules/markupeditor-base/styles/markup.css
+  to ../MarkupEditor/Resources/markup.css
+ Copying ./node_modules/markupeditor-base/styles/mirror.css
+  to ../MarkupEditor/Resources/mirror.css
+ Copying ./node_modules/markupeditor-base/test/*.json
+  to ../MarkupEditorTests/BaseTests/
 
 added 19 packages, and audited 20 packages in 887ms
 
@@ -74,7 +79,7 @@ Do your work in markupeditor-base locally. Build in your markupeditor-base direc
 ``` 
 $ npm run build
 
-> markupeditor-base@0.8.1 build
+> markupeditor-base@0.8.6 build
 > rollup -c
 
 
@@ -93,7 +98,7 @@ Now, _in the markupeditor-js directory of your cloned Swift MarkupEditor project
 ```
 $ npm run prepare
 
-> markupeditor@0.8.1 prepare
+> markupeditor@0.8.6 prepare
 > sh prepare.sh
 
 Updating dependencies from markupeditor-base...
