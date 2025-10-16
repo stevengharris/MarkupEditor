@@ -55,7 +55,7 @@ class Baseline: MarkupDelegate {
     }
     
     /// Run all the HtmlTests
-    @Test(arguments: Self.tests)
+    @Test(.serialized, arguments: Self.tests)
     func run(htmlTest: HtmlTest) async throws {
         await htmlTest.run(in: webView)
     }
