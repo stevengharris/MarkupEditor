@@ -23,6 +23,11 @@ class InsertImageUrl: MarkupDelegate {
         try await waitForReady()
         setActions()
     }
+    
+    deinit {
+        webView = nil
+        coordinator = nil
+    }
 
     /// Again, ridiculous to set these for every test, but since they need access to `webView`, I don't see
     /// any way around it.

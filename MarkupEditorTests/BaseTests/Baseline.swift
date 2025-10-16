@@ -21,6 +21,11 @@ class Baseline: MarkupDelegate {
         try await waitForReady()
     }
     
+    deinit {
+        webView = nil
+        coordinator = nil
+    }
+    
     func waitForReady() async throws {
         try await confirmation() { confirmation in
             webView = MarkupWKWebView(markupDelegate: self)

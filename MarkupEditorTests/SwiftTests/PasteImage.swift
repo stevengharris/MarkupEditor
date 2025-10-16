@@ -33,6 +33,12 @@ class PasteImage: MarkupDelegate {
         htmlTest.stringAction = paste()
     }
     
+    deinit {
+        webView = nil
+        coordinator = nil
+        htmlTest = nil
+    }
+    
     /// Paste a UIImage at the selection point. Paste is handled on the Swift side, where the clipboard contents
     /// produces a UIImage, and then the image contents is saved to a unique filename in the document directory.
     /// The filename is then passed to the JavaScript side as src pointing at the local filename. The name is
