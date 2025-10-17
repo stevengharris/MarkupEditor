@@ -19380,6 +19380,20 @@
   }
 
   /**
+   * Report focus.
+   */
+  function focused() {
+      _callback('focus');
+  }
+
+  /**
+   * Report blur.
+   */
+  function blurred() {
+      _callback('blur');
+  }
+
+  /**
    * Report a change in the ProseMirror document state. The 
    * change might be from typing or formatting or styling, etc.
    * and triggers both a `selectionChanged` and `input` callback.
@@ -23557,6 +23571,8 @@
         // for things things other than the `input` event.
         handleDOMEvents: {
           'input': () => { callbackInput(); },
+          'focus': () => { setTimeout(() => focused());},
+          'blur': () => { setTimeout(() => blurred());},
           'cut': () => { setTimeout(() => { callbackInput(); }, 0); },
           'click': () => { setTimeout(() => { clicked(); }, 0); },
           'delete': () => { setTimeout(() => { callbackInput(); }, 0); },
