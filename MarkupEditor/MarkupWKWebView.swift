@@ -1274,7 +1274,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     //MARK: Formatting
     
-    @objc public func bold(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func bold() {
+        bold(handler: nil)
+    }
+    
+    public func bold(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleBold()") { result, error in
             if let error { print("ERROR: \(error.localizedDescription)") }
             handler?()
@@ -1285,7 +1290,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleBold()")
     }
     
-    @objc public func italic(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func italic() {
+        italic(handler: nil)
+    }
+    
+    public func italic(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleItalic()") { result, error in
             handler?()
         }
@@ -1295,7 +1305,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleItalic()")
     }
     
-    @objc public func underline(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func underline() {
+        underline(handler: nil)
+    }
+    
+    public func underline(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleUnderline()") { result, error in
             handler?()
         }
@@ -1305,7 +1320,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleUnderline()")
     }
     
-    @objc public func code(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func code() {
+        code(handler: nil)
+    }
+    
+    public func code(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleCode()") { result, error in
             handler?()
         }
@@ -1315,7 +1335,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleCode()")
     }
     
-    @objc public func strike(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func strike() {
+        strike(handler: nil)
+    }
+    
+    public func strike(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleStrike()") { result, error in
             handler?()
         }
@@ -1325,7 +1350,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleStrike()")
     }
     
-    @objc public func subscriptText(handler: (()->Void)? = nil) {      // "superscript" is a keyword
+    // Required for menu support
+    @objc public func subscriptText() {
+        subscriptText(handler: nil)
+    }
+    
+    public func subscriptText(handler: (()->Void)? = nil) {      // "superscript" is a keyword
         evaluateJavaScript("MU.toggleSubscript()") { result, error in
             handler?()
         }
@@ -1335,7 +1365,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleSubscript()")
     }
     
-    @objc public func superscript(handler: (()->Void)? = nil) {
+    // Required for menu support
+    @objc public func superscript() {
+        superscript(handler: nil)
+    }
+    
+    public func superscript(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleSuperscript()") { result, error in
             handler?()
         }
@@ -1513,11 +1548,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    // Required for menu support
+    @objc public func indent() {
+        indent(handler: nil)
+    }
+    
     /// Indent the selection based on the context.
     ///
     /// If in a list, move list item to the next nested level if appropriate.
     /// Otherwise, increase the quote level by inserting a new blockquote.
-    @objc public func indent(handler: (()->Void)? = nil) {
+    public func indent(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.indent()") { result, error in
             handler?()
         }
@@ -1527,11 +1567,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.indent()")
     }
 
+    // Required for menu support
+    @objc public func outdent() {
+        outdent(handler: nil)
+    }
+    
     /// Outdent the selection based on the context.
     ///
     /// If in a list, move list item to the previous nested level if appropriate.
     /// Otherwise, decrease the quote level by removing a blockquote if one exists.
-    @objc public func outdent(handler: (()->Void)? = nil) {
+    public func outdent(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.outdent()") { result, error in
             handler?()
         }
