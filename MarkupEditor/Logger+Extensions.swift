@@ -7,7 +7,7 @@
 
 import OSLog
 
-extension Logger: @unchecked Sendable {
+extension Logger {
 
     private static let subsystem = Bundle.main.bundleIdentifier!
 
