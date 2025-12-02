@@ -51,8 +51,8 @@
             "description": "Clean up some text from Xcode",
             "skipSet": true,
             "skipUndoRedo": true,
-            "startHtml": "const _pasteHTML = function(html, oldUndoerData, undoable=true) {\n    const redoing = !undoable && (oldUndoerData !== null);\n    let sel = document.getSelection();\n    let anchorNode = (sel) ? sel.anchorNode : null;\n    if (!anchorNode) {\n        MUError.NoSelection.callback();\n        return null;\n    };",
-            "endHtml": "<p>const _pasteHTML = function(html, oldUndoerData, undoable=true) { const redoing = !undoable &amp;&amp; (oldUndoerData !== null); let sel = document.getSelection(); let anchorNode = (sel) ? sel.anchorNode : null; if (!anchorNode) { MUError.NoSelection.callback(); return null; };</p>",
+            "startHtml": "const _pasteHTML = function(html, oldUndoerData, undoable=true) {\n    const redoing = !undoable && (oldUndoerData !== null);\n    let sel = document.getSelection();\n    let anchorNode = (sel) ? sel.anchorNode : null;\n    if (!anchorNode) {\n        callbackError(MUError.NoSelection);\n        return null;\n    };",
+            "endHtml": "<p>const _pasteHTML = function(html, oldUndoerData, undoable=true) { const redoing = !undoable &amp;&amp; (oldUndoerData !== null); let sel = document.getSelection(); let anchorNode = (sel) ? sel.anchorNode : null; if (!anchorNode) { callbackError(MUError.NoSelection); return null; };</p>",
             "action": "return MU.testPasteTextPreprocessing(startHtml)",
             "arg": "startHtml"
         },

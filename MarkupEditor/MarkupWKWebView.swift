@@ -281,14 +281,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
     private func initRootFiles() {
         guard
-            let rootHtml = url(forResource: "markup", withExtension: "html"),
-            let rootCss = url(forResource: "markup", withExtension: "css"),
-            let rootJs = url(forResource: "markup", withExtension: "js"),
-            let mirrorCss = url(forResource: "mirror", withExtension: "css") else {
-            assertionFailure("Could not find markup.html, css, and js and mirror.css for this bundle.")
+            let rootCss = url(forResource: "markupeditor", withExtension: "css"),
+            let rootJs = url(forResource: "markupeditor.umd", withExtension: "js"),
+            let componentJs = url(forResource: "markup-editor", withExtension: "js"),
+            let editorCss = url(forResource: "markup", withExtension: "css"),
+            let mirrorCss = url(forResource: "mirror", withExtension: "css"),
+            let toolbarCss = url(forResource: "toolbar", withExtension: "css") else {
+            assertionFailure("Failure in initRootFiles. Could not find required files for this bundle.")
             return
         }
-        var srcUrls = [rootHtml, rootCss, rootJs, mirrorCss]
+        var srcUrls = [rootCss, rootJs, componentJs, editorCss, mirrorCss, toolbarCss]
         // If specified, the userCSS comes from the app's main bundle, not something MarkupEditor provides
         if let userCssFile, let userCss = url(forResource: userCssFile, withExtension: nil) {
             srcUrls.append(userCss)
@@ -315,8 +317,58 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
             }
+            populateMarkupHtml(cacheUrl: cacheUrl)
         } catch let error {
             assertionFailure("Failed to set up cacheDir with root resource files: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Create markup.html in the cache directory. By loading this file, everything else is kicked off.
+    ///
+    /// We use  the `<markup-editor>` web component, and because we copy the standard
+    /// `markupeditor.umd.js` and `markupeditor.css` (and the css files it imports) into the
+    /// cache directory, we don't need to specify `muscript` or `mustyle`. The Swift config values
+    /// for `placeholder`, `resourcesUrl`, and `selectedAfterLoad` are supplied as attributes
+    /// to the web component. Also note:
+    ///
+    /// * The Swift value for `delegate` is not useful to pass as an attribute, since the "swift" message
+    /// handler (i.e., the MarkupCoordinator) does all the calls to the Swift-native delegate.
+    /// * The JavaScript-created toolbar available from the MarkupEditor is turned off for the Swift
+    /// MarkupEditor, which has its own SwiftUI MarkupToolbar.
+    /// * The initial HTML is inserted as the content of the web component.
+    func populateMarkupHtml(cacheUrl: URL) {
+        let componentscript = cacheUrl.appendingPathComponent("markup-editor.js").path
+        let dstUrl = cacheUrl.appendingPathComponent("markup.html")
+        let html = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+                <meta name="supported-color-schemes" content="light dark">
+                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            </head>
+            <body>
+                <markup-editor
+                    \(placeholder != nil ? "placeholder=\"\(placeholder!)\"" : "")
+                    \(resourcesUrl != nil ? "base=\"\(resourcesUrl!.path)\"" : "")
+                    \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
+                    \(userCssFile != nil ? "userstyle=\"\(userCssFile!)\"" : "")
+                    selectafterload="\"\(selectAfterLoad)\"")
+                    toolbar="none"
+                    handler="swift">
+                \(html != nil ? html! : "<p></p>")
+                </markup-editor>
+                <script src="\(componentscript)"></script>
+                <script></script>
+            </body>
+        </html>
+        """
+        let fileManager = FileManager.default
+        do {
+            try? fileManager.removeItem(at: dstUrl)
+            try html.write(to: dstUrl, atomically: true, encoding: String.Encoding.utf8)
+        } catch let error {
+            assertionFailure("Failed to populate \(dstUrl.path): \(error.localizedDescription)")
         }
     }
     
@@ -832,7 +884,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             args += ", '\(alt!.escaped)'"
         }
         becomeFirstResponder()
-        evaluateJavaScript("MU.insertImage(\(args))") { result, error in handler?() }
+        evaluateJavaScript("MU.insertImage(\(args))") { result, error in
+            handler?() }
     }
     
     public func insertImage(src: String?, alt: String?) async {

@@ -1,0 +1,636 @@
+/* Spacing at the top */
+/* Note that toolbar-overlay below  is also set to these values */
+
+.Markup-searchbar-showing {
+  height: 38px;
+  top: 76px;
+}
+
+/* The wrapper lets us automatically embed a toolbar and scroll under it */
+.Markup-toolbar-wrapper {
+  margin-right: -12px;    /* Prevent side scroll even when menu fits */
+  height: inherit;
+  overflow-y: scroll;
+  position: relative; 
+}
+
+/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */
+.Markup-prompt-showing {
+  overflow-y: hidden;
+}
+
+/* Z-indexes in one place */
+
+.body-content { 
+  z-index: 1; 
+}
+
+.Markup-prompt-overlay { 
+  z-index: 2; 
+}
+
+.Markup-prompt, .Markup-selection {
+  z-index: 3;
+}
+
+.Markup-searchbar {
+  z-index: 4;
+}
+
+.Markup-toolbar, .Markup-toolbar-more {
+  z-index: 5;
+}
+
+.Markup-toolbar-overlay { 
+  z-index: 6; 
+}
+
+.Markup-menu-dropdown-menu {
+  z-index: 7;
+}
+
+/* Toolbar, menu item, and dropdown styling */
+
+.Markup-toolbar {
+  display: inline-flex;
+  position: sticky;
+  overflow: visible;
+  width: 100%;
+  font-size: 24px;
+  vertical-align: middle;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  top: 0;
+  max-height: 38px;
+  padding: 2px 8px;
+  color: blue;
+  background: rgba(250, 249, 246, 0.95);
+  border-bottom: 1px solid lightgray;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-toolbar {
+    color: rgb(250, 249, 246);
+    background: rgba(40, 40, 43, 0.9);
+    border-bottom: 1px solid gray;
+  }
+}
+
+.Markup-menuitem {
+  display: inline-block;
+  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */
+  overflow-y: visible;
+  vertical-align: middle;
+  min-width: 28px;
+  height: 28px;
+  cursor: pointer;
+  margin-right: 4px;
+  border-radius: 4px;
+  color: blue;
+  border: 1px solid blue;
+  background: white;
+  fill: blue;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menuitem {
+    color: lightblue;
+    border: 1px solid lightblue; 
+    /* border: 1px solid #4183c4; */
+    background: black;
+    fill: lightblue;
+  }
+}
+
+.Markup-menuitem-active {
+  fill: white;
+  color: white;
+  background: blue;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menuitem-active {
+      fill: black;
+      color: black;
+      background: lightblue;
+  }
+}
+
+.Markup-menuitem-disabled {
+  cursor: default;
+  opacity: .3;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menuitem-disabled {
+    opacity: .6;
+  }
+}
+
+.Markup-icon {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 0;
+}
+
+.Markup-icon span {
+  vertical-align: middle;
+}
+
+.Markup-icon svg {
+  padding: 2px;
+  border: 0;
+  fill: inherit;
+}
+
+.Markup-menuseparator {
+  display: inline-block;
+  vertical-align: middle;
+  height: 28px;
+  border-right: 1px solid lightgray;
+  margin-right: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menuseparator {
+    border-right: 1px solid gray;
+  }
+}
+
+.Markup-menu-disabled .Markup-icon {
+  cursor: default;
+}
+
+.Markup-menu-dropdown, .Markup-menu-dropdown-menu {
+  background: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.Markup-menu-dropdown span {
+  vertical-align: middle;
+}
+
+.Markup-menu-dropdown-icon span {
+  vertical-align: middle;
+}
+
+.Markup-menu-dropdown-wrap {
+  display: inline-block;
+  padding: 0 4px;
+  min-width: 3.0em;
+  height: inherit;
+  border-radius: 4px;
+  background: inherit;
+}
+
+.Markup-menu-dropdown-icon-wrap {
+  display: inline-block;
+  padding-right: 4px;
+  width: 1.8em;
+  height: inherit;
+  border-radius: 4px;
+  background: inherit;
+}
+
+.Markup-menu-dropdown-icon-wrap-noindicator {
+  display: inline-flex;
+  padding-right: 4px;
+  width: 1em;
+  height: inherit;
+  border-radius: 4px;
+  background: inherit;
+}
+
+.Markup-menu-dropdown {
+  display: inline-flex;
+  justify-content: space-between;
+  min-width: 3.0em;
+  height: inherit;
+  background: inherit;
+  position: absolute;
+}
+
+.Markup-menu-dropdown-icon {
+  display: inline-flex;
+  justify-content: space-between;
+  width: 1.8em;
+  cursor: pointer;
+  position: absolute;
+}
+
+.Markup-menu-dropdown-indicator, .Markup-menu-dropdown-icon-indicator{
+  opacity: .6;
+}
+
+.Markup-tooltip .Markup-menu {
+  width: -webkit-fit-content;
+  width: fit-content;
+  white-space: pre;
+}
+
+.Markup-menu-dropdown-menu, .Markup-menu-submenu {
+  position: absolute;
+  background: inherit;
+  padding: 2px;
+  background: inherit;
+  border: 1px solid gray;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-dropdown-menu, .Markup-menu-submenu {
+    border: 1px solid lightgray;
+  }
+}
+
+.Markup-menu-dropdown-menu {
+  margin-top: calc(1em + 6px);
+  min-width: 4em;
+}
+
+.Markup-menu-dropdown-item {
+  cursor: pointer;
+  padding: 2px 8px 2px 4px;
+}
+
+/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */
+.Markup-menuitem-clipped {
+  white-space: nowrap;  /* Required for text-overflow */
+  overflow-x: hidden;   /* Required for text-overflow */
+  max-width: 30em;
+  text-overflow: ellipsis;
+}
+
+.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {
+  background: #f2f2f2;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {
+    background: rgb(80, 80, 80);
+  }
+}
+
+.Markup-menu-dropdown-item p, 
+.Markup-menu-dropdown-item h1, 
+.Markup-menu-dropdown-item h2, 
+.Markup-menu-dropdown-item h3, 
+.Markup-menu-dropdown-item h4, 
+.Markup-menu-dropdown-item h5, 
+.Markup-menu-dropdown-item h6, 
+.Markup-menu-dropdown-item pre {
+  padding: 0;
+  margin: 0;
+  min-height: 24px;
+}
+
+.Markup-stylelabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  white-space: pre;
+  width: 100%;
+}
+
+.Markup-stylelabel-keymap {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 1.0rem;
+  font-weight: normal;
+  color: gray;
+}
+
+.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {
+  display: block;
+}
+
+.Markup-menu-submenu-wrap {
+  position: relative;
+  margin-right: -4px;
+  background: inherit;
+}
+
+.Markup-menu-submenu {
+  display: none;
+  min-width: 4em;
+  left: 100%;
+  top: -5px;
+  /* background cannot be inherited because of hover highlighting in dropdown */
+  background: white;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-submenu {
+    /* background cannot be inherited because of hover highlighting in dropdown */
+    background: black;
+  }
+}
+
+.Markup-menu-submenu-label:after {
+  content: "";
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 4px solid currentColor;
+  opacity: .6;
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 4px);
+}
+
+.Markup-selection {
+  position: absolute;
+  border: 1px solid blue;
+  background: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-selection {
+    border: 1px solid lightblue;
+  }
+}
+
+/* Toolbar-more styling */
+
+.Markup-toolbar-more {
+  display: inline-flex;
+  position: sticky;
+  overflow: visible;
+  width: 100%;
+  font-size: 24px;
+  vertical-align: middle;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  top: 35px;
+  max-height: 38px;
+  padding: 2px 8px;
+  color: blue;
+  background: rgba(250, 249, 246, 0.95);
+  border-bottom: 1px solid lightgray;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-toolbar-more {
+    color: rgb(250, 249, 246);
+    background: rgba(40, 40, 43, 0.9);
+    border-bottom: 1px solid gray;
+  }
+}
+
+/* Searchbar styling */
+
+.Markup-searchbar {
+  display: inline-block;
+  font-size: 24px;
+  vertical-align: middle;
+  position: sticky;
+  top: 35px;
+  width: 100%;
+  line-height: 30px;
+  height: 37px;
+  color: blue;
+  background: rgba(250, 249, 246, 0.95);
+  border-bottom: 1px solid lightgray;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-searchbar {
+    color: rgb(250, 249, 246);
+    background: rgba(40, 40, 43, 0.9);
+    border-bottom: 1px solid gray;
+  }
+}
+
+.Markup-searchbar input {
+  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */
+  position: relative;
+  font-size: 18px;
+  line-height: 30px;
+  height: 30px;
+  width: calc(100% - 128px);
+  margin: 0 8px;
+  padding: 0 4px;
+  outline: none;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  border: 1px solid lightgray;
+  border-radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-searchbar input {
+    color: rgb(250, 249, 246);
+    background: rgb(40, 40, 43);
+    border: 1px solid gray;
+  }
+}
+
+.Markup-searchbar .Markup-searchbar-status {
+  position: absolute;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 12px;
+  overflow-x: visible;
+  height: 28px;
+  top: 5px;
+  left: calc(100% - 13em);
+  width: 1px;
+  color: gray;
+  user-select: none;
+}
+
+/* Dialog/prompt styling for insert/edit actions */
+
+.Markup-prompt-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-prompt-overlay {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.Markup-toolbar-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	background-color: rgba(0, 0, 0, 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-toolbar-overlay {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.Markup-toolbar-overlay.Markup-searchbar-hidden {
+  height: 38px;
+}
+
+.Markup-toolbar-overlay.Markup-searchbar-showing {
+  height: 76px;
+}
+
+.Markup-prompt {
+  margin: 0;
+  font-size: 18px;
+  background: white;
+  padding: 8px;
+  border: 1px solid silver;
+  position: absolute;
+  border-radius: 3px;
+  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-prompt {
+    background: black;
+    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);
+  }
+}
+
+.Markup-prompt-link {
+  height: 96px;
+  width: 300px;
+}
+
+.Markup-prompt-image {
+  height: 130px;
+  width: 300px;
+}
+
+.Markup-prompt img {
+  display: inline-block;
+  vertical-align: middle;
+  min-width: 28px;
+  height: 28px;
+  margin-right: 4px;
+}
+
+.Markup-prompt p {
+  margin: 0 0 4px 0;
+  font-weight: normal;
+  color: black;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-prompt p {
+    color: white;
+  }
+}
+
+.Markup-prompt input[type="text"] {
+  font-size: 100%;
+  line-height: 28px;
+  margin-top: 2px;
+  padding: 1px 4px;
+  width: 100%;
+  appearance: none;
+  background: #eee;
+  outline: none;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  border: 1px solid lightgray;
+  border-radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-prompt input[type="text"] {
+    color: rgb(250, 249, 246);
+    background: rgb(40, 40, 43);
+    border: 1px solid gray;
+  }
+}
+
+.Markup-prompt input.invalid {
+  color: red;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-prompt input.invalid {
+    color: pink;
+  }
+}
+
+.Markup-prompt-buttons {
+  display: flex;
+  vertical-align: middle;
+  justify-content: space-between;
+  justify-items: center;
+  line-height: 28px;
+  height: 28px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.Markup-prompt-buttongroup {
+  flex-shrink: 0;
+}
+
+.Markup-prompt-buttons img {
+  aspect-ratio: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.Markup-prompt-buttons .Markup-menuitem {
+  display: inline-flex;
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+/* The buttongroup contains OK and Cancel menuitems on the right */
+.Markup-prompt-buttongroup .Markup-menuitem {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+/* .Markup-menu-tablesizer is a specialized submenu */
+.Markup-menu-tablesizer {
+  display: none;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 18px;
+  row-gap: 1px;
+  column-gap: 1px;
+  padding: 0;
+  left: 100%;
+  top: -5px;
+  /* background cannot be inherited because of hover highlighting in dropdown */
+  background: white;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-tablesizer {
+    /* background cannot be inherited because of hover highlighting in dropdown */
+    background: black;
+  }
+}
+
+.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {
+  display: grid;
+}
+
+.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {
+  position: absolute;
+  background: inherit;
+  padding: 2px;
+  background: inherit;
+  border: 1px solid gray;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-dropdown-menu, .Markup-menu-submenu {
+    border: 1px solid lightgray;
+  }
+}
+
+.Markup-menu-tablesizer .Markup-menu-dropdown-item {
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  border: 1px solid blue;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 13px;
+}
+@media (prefers-color-scheme: dark) {
+  .Markup-menu-tablesizer .Markup-menu-dropdown-item {
+    border: 1px solid lightblue;
+  }
+}

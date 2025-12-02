@@ -1,4 +1,5 @@
 #editor, .editor {
+    font-family: system-ui, sans-serif;
     background: white;
     color: black;
     background-clip: padding-box;
@@ -18,8 +19,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    font: -apple-system-body;
+    font-family: system-ui, sans-serif;
 }
 
 a {

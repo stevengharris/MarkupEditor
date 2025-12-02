@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
+		AA06CA042EDA36DE00320354 /* markup-editor.js in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA032EDA36DE00320354 /* markup-editor.js */; };
+		AA06CA082EDB948300320354 /* toolbar.css in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA072EDB948300320354 /* toolbar.css */; };
+		AA06CA0C2EDB99D800320354 /* markupeditor.css in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA0B2EDB99D800320354 /* markupeditor.css */; };
+		AA06CA102EDB9B1C00320354 /* markupeditor.umd.js in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */; };
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
@@ -102,7 +106,6 @@
 		AA4EBE912B34FA3C006C614B /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
 		AA4EBEA42B3B8700006C614B /* EditableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */; };
 		AA4EBEA62B3CC262006C614B /* DemoDivs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBEA52B3CC262006C614B /* DemoDivs.swift */; };
-		AA5A49C52E70E52C008DFDBA /* markup.js in Resources */ = {isa = PBXBuildFile; fileRef = AA5A49C42E70E52C008DFDBA /* markup.js */; };
 		AA6023F7261BCA6900B3D5B0 /* ToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */; };
 		AA61AD4D263B13C100326810 /* LabeledToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA61AD4C263B13C100326810 /* LabeledToolbar.swift */; };
 		AA652949260E8114000674B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA652948260E8114000674B7 /* Assets.xcassets */; };
@@ -206,6 +209,10 @@
 /* Begin PBXFileReference section */
 		4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButton.swift; sourceTree = "<group>"; };
 		4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButtonGroup.swift; sourceTree = "<group>"; };
+		AA06CA032EDA36DE00320354 /* markup-editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "markup-editor.js"; sourceTree = "<group>"; };
+		AA06CA072EDB948300320354 /* toolbar.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = toolbar.css; sourceTree = "<group>"; };
+		AA06CA0B2EDB99D800320354 /* markupeditor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markupeditor.css; sourceTree = "<group>"; };
+		AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupeditor.umd.js; sourceTree = "<group>"; };
 		AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditor.swift; sourceTree = "<group>"; };
 		AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStyle.swift; sourceTree = "<group>"; };
 		AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupToolbarUIView.swift; sourceTree = "<group>"; };
@@ -284,7 +291,6 @@
 		AA4EBE9F2B3B83D0006C614B /* HtmlDivHolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlDivHolder.swift; sourceTree = "<group>"; };
 		AA4EBEA32B3B8700006C614B /* EditableAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAttributes.swift; sourceTree = "<group>"; };
 		AA4EBEA52B3CC262006C614B /* DemoDivs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDivs.swift; sourceTree = "<group>"; };
-		AA5A49C42E70E52C008DFDBA /* markup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markup.js; sourceTree = "<group>"; };
 		AA5A55302E7346D4008DFDBA /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 		AA5A5B4A2E7363D6008DFDBA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA6023F6261BCA6900B3D5B0 /* ToolbarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolbarButton.swift; sourceTree = "<group>"; };
@@ -614,10 +620,13 @@
 		AA652A07260E99FF000674B7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				AA5A49C42E70E52C008DFDBA /* markup.js */,
+				AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */,
+				AA06CA032EDA36DE00320354 /* markup-editor.js */,
+				AA06CA0B2EDB99D800320354 /* markupeditor.css */,
 				AA40BA1E2CD54D5300264B1F /* mirror.css */,
-				AA652A0A260E99FF000674B7 /* markup.html */,
 				AA1B81B8262CF16A00891FFB /* markup.css */,
+				AA06CA072EDB948300320354 /* toolbar.css */,
+				AA652A0A260E99FF000674B7 /* markup.html */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -879,8 +888,11 @@
 			files = (
 				AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */,
 				AA408B372616686C00CAE8B9 /* markup.html in Resources */,
-				AA5A49C52E70E52C008DFDBA /* markup.js in Resources */,
+				AA06CA042EDA36DE00320354 /* markup-editor.js in Resources */,
+				AA06CA082EDB948300320354 /* toolbar.css in Resources */,
+				AA06CA0C2EDB99D800320354 /* markupeditor.css in Resources */,
 				AA1B81B9262CF16A00891FFB /* markup.css in Resources */,
+				AA06CA102EDB9B1C00320354 /* markupeditor.umd.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
