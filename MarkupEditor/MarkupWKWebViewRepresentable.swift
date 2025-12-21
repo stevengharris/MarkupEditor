@@ -83,7 +83,7 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
         // The coordinator acts as the WKScriptMessageHandler and will receive callbacks
         // from markup.js using window.webkit.messageHandlers.markup.postMessage(<message>);
         let coordinator = context.coordinator
-        webView.configuration.userContentController.add(coordinator, name: "markup")
+        webView.setCoordinatorConfiguration(coordinator)
 #if compiler(>=5.8)
         if #available(iOS 16.4, *) {
             webView.isInspectable = MarkupEditor.isInspectable

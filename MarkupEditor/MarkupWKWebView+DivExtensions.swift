@@ -86,7 +86,7 @@ extension MarkupWKWebView {
     ///
     /// Note that "done" just means the async call into JavaScript returned, not that whatever we are loading
     /// on the JavaScript side actually loaded. The reason to execute the loading process in this way is to avoid
-    /// triggering IPC throttling when executing hundreds of evaluateJavaScript calls without waiting for them to
+    /// triggering IPC throttling when executing hundreds of `executeJavaScript` calls without waiting for them to
     /// execute their handler. See https://forums.developer.apple.com/forums/thread/670959 as an example,
     /// but I have seen "IPC throttling was triggered (has 625 pending incoming messages, will only process 600 before yielding)".
     private func loadDiv(divStructure: MarkupDivStructure, atIndex index: Int, handler: @escaping (Int?)->Void) {
@@ -169,7 +169,7 @@ extension MarkupWKWebView {
         } else {
             argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', null, '\(htmlContents)'"
         }
-        evaluateJavaScript("MU.addDiv(\(argString))") { result, error in
+        executeJavaScript("MU.addDiv(\(argString))") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlDiv: \(error)")
             }
@@ -179,7 +179,7 @@ extension MarkupWKWebView {
     
     /// Remove the `div` from the view.
     public func removeDiv(_ div: HtmlDivHolder, handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.removeDiv('\(div.id)')") { result, error in
+        executeJavaScript("MU.removeDiv('\(div.id)')") { result, error in
             if let error {
                 Logger.webview.error("Error removing HtmlDiv: \(error)")
             }
@@ -203,7 +203,7 @@ extension MarkupWKWebView {
         } else {
             argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)'"
         }
-        evaluateJavaScript("MU.addDiv(\(argString))") { result, error in
+        executeJavaScript("MU.addDiv(\(argString))") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButtonGroup: \(error)")
             } else if let result {
@@ -233,7 +233,7 @@ extension MarkupWKWebView {
         let id = button.id
         let cssClass = button.cssClass
         let label = button.label
-        evaluateJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
+        executeJavaScript("MU.addButton('\(id)', '\(parentId)', '\(cssClass)', '\(label)')") { result, error in
             if let error {
                 Logger.webview.error("Error adding HtmlButton: \(error)")
             }
@@ -244,7 +244,7 @@ extension MarkupWKWebView {
     
     /// Remove the `buttonGroup` from the view.
     public func removeButtonGroup(_ buttonGroup: HtmlButtonGroup, handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.removeDiv('\(buttonGroup.id)')") { result, error in
+        executeJavaScript("MU.removeDiv('\(buttonGroup.id)')") { result, error in
             if let error {
                 Logger.webview.error("Error removing HtmlButtonGroup: \(error)")
             }
@@ -254,7 +254,7 @@ extension MarkupWKWebView {
     
     /// Remove a `button` based on its id.
     private func removeButton(_ button: HtmlButton, handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.removeButton('\(button.id)')") { result, error in
+        executeJavaScript("MU.removeButton('\(button.id)')") { result, error in
             if let error {
                 Logger.webview.error("Error removing HtmlButton: \(error)")
             }
@@ -270,7 +270,7 @@ extension MarkupWKWebView {
             handler?()
             return
         }
-        evaluateJavaScript("MU.focusOn('\(id)')") { result, error in
+        executeJavaScript("MU.focusOn('\(id)')") { result, error in
             if let error {
                 Logger.webview.error("Error focusing on element with id \(id): \(error)")
             }
@@ -283,7 +283,7 @@ extension MarkupWKWebView {
     }
     
     public func removeAllDivs(handler: (()->Void)? = nil) {
-        evaluateJavaScript("MU.removeAllDivs()") { result, error in
+        executeJavaScript("MU.removeAllDivs()") { result, error in
             if let error {
                 Logger.webview.error("Error removing all divs: \(error)")
             }

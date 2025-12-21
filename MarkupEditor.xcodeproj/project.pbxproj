@@ -8,10 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		4766AFAD2B3E42CA00D9E1E5 /* demoDivs.css in Resources */ = {isa = PBXBuildFile; fileRef = AA4EBE8E2B34C9DA006C614B /* demoDivs.css */; };
-		AA06CA042EDA36DE00320354 /* markup-editor.js in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA032EDA36DE00320354 /* markup-editor.js */; };
-		AA06CA082EDB948300320354 /* toolbar.css in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA072EDB948300320354 /* toolbar.css */; };
-		AA06CA0C2EDB99D800320354 /* markupeditor.css in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA0B2EDB99D800320354 /* markupeditor.css */; };
-		AA06CA102EDB9B1C00320354 /* markupeditor.umd.js in Resources */ = {isa = PBXBuildFile; fileRef = AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */; };
 		AA0DDC5928A1810D0081B869 /* MarkupEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */; };
 		AA0DDC5B28A1C3620081B869 /* ToolbarStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */; };
 		AA0DDC6228AAF4FF0081B869 /* MarkupToolbarUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */; };
@@ -27,7 +23,6 @@
 		AA1B817826273CEA00891FFB /* FileToolbarDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */; };
 		AA1B818126273D9200891FFB /* demo.html in Resources */ = {isa = PBXBuildFile; fileRef = AA1B816C26265CAD00891FFB /* demo.html */; };
 		AA1B81A72629E63400891FFB /* MarkupDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B81A62629E63400891FFB /* MarkupDelegate.swift */; };
-		AA1B81B9262CF16A00891FFB /* markup.css in Resources */ = {isa = PBXBuildFile; fileRef = AA1B81B8262CF16A00891FFB /* markup.css */; };
 		AA2EB1802B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1812B534BC900224F5E /* custom.css in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB17F2B534BC900224F5E /* custom.css */; };
 		AA2EB1832B534BE600224F5E /* custom.js in Resources */ = {isa = PBXBuildFile; fileRef = AA2EB1822B534BE600224F5E /* custom.js */; };
@@ -99,7 +94,6 @@
 		AA408B2D2616685B00CAE8B9 /* MarkupToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A00260E99FF000674B7 /* MarkupToolbar.swift */; };
 		AA408B2F2616685B00CAE8B9 /* InsertToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA652A0C260E99FF000674B7 /* InsertToolbar.swift */; };
 		AA408B372616686C00CAE8B9 /* markup.html in Resources */ = {isa = PBXBuildFile; fileRef = AA652A0A260E99FF000674B7 /* markup.html */; };
-		AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */ = {isa = PBXBuildFile; fileRef = AA40BA1E2CD54D5300264B1F /* mirror.css */; };
 		AA434306279F264B002E2AFD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA434304279F252E002E2AFD /* SceneDelegate.swift */; };
 		AA434308279F5837002E2AFD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA65299D260E8450000674B7 /* AppDelegate.swift */; };
 		AA4EBE8B2B3390F4006C614B /* DivsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */; };
@@ -145,6 +139,7 @@
 		AAD4559D2800CE3300270E4C /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AAD455A12800CE5800270E4C /* MarkupEditor.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; };
 		AAD455A22800CE5800270E4C /* MarkupEditor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AADCE9E32EF617FD0055C768 /* markup-editor.js in Resources */ = {isa = PBXBuildFile; fileRef = AADCE9E22EF617FD0055C768 /* markup-editor.js */; };
 		AAFB64DB277CEED70032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64DC277CEED80032E859 /* steve.png in Resources */ = {isa = PBXBuildFile; fileRef = AAFB64DA277CEECB0032E859 /* steve.png */; };
 		AAFB64E12780D8290032E859 /* DocumentPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD26E87264463AA00908777 /* DocumentPicker.swift */; };
@@ -209,10 +204,6 @@
 /* Begin PBXFileReference section */
 		4766AFA32B3E230500D9E1E5 /* HtmlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButton.swift; sourceTree = "<group>"; };
 		4766AFB12B3F523500D9E1E5 /* HtmlButtonGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlButtonGroup.swift; sourceTree = "<group>"; };
-		AA06CA032EDA36DE00320354 /* markup-editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "markup-editor.js"; sourceTree = "<group>"; };
-		AA06CA072EDB948300320354 /* toolbar.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = toolbar.css; sourceTree = "<group>"; };
-		AA06CA0B2EDB99D800320354 /* markupeditor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markupeditor.css; sourceTree = "<group>"; };
-		AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = markupeditor.umd.js; sourceTree = "<group>"; };
 		AA0DDC5828A1810D0081B869 /* MarkupEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupEditor.swift; sourceTree = "<group>"; };
 		AA0DDC5A28A1C3620081B869 /* ToolbarStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStyle.swift; sourceTree = "<group>"; };
 		AA0DDC5E28A83F4A0081B869 /* MarkupToolbarUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupToolbarUIView.swift; sourceTree = "<group>"; };
@@ -225,7 +216,6 @@
 		AA1B8150262633F600891FFB /* FileToolbarDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileToolbarDelegate.swift; sourceTree = "<group>"; };
 		AA1B816C26265CAD00891FFB /* demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = demo.html; sourceTree = "<group>"; };
 		AA1B81A62629E63400891FFB /* MarkupDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupDelegate.swift; sourceTree = "<group>"; };
-		AA1B81B8262CF16A00891FFB /* markup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = markup.css; sourceTree = "<group>"; };
 		AA2EB17F2B534BC900224F5E /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
 		AA2EB1822B534BE600224F5E /* custom.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = custom.js; sourceTree = "<group>"; };
 		AA2EB1852B5352A600224F5E /* MarkupWKWebView+CustomExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkupWKWebView+CustomExtensions.swift"; sourceTree = "<group>"; };
@@ -284,7 +274,6 @@
 		AA2FA8A127FE43A50068828F /* HtmlTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HtmlTest.swift; sourceTree = "<group>"; };
 		AA316DE22684DB30007E95CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA408AFB261666D200CAE8B9 /* MarkupEditor.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkupEditor.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA40BA1E2CD54D5300264B1F /* mirror.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = mirror.css; sourceTree = "<group>"; };
 		AA434304279F252E002E2AFD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AA4EBE8A2B3390F4006C614B /* DivsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivsContentView.swift; sourceTree = "<group>"; };
 		AA4EBE8E2B34C9DA006C614B /* demoDivs.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demoDivs.css; sourceTree = "<group>"; };
@@ -345,6 +334,7 @@
 		AABBAD4B2AA6382C00ADDA55 /* Logger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logger+Extensions.swift"; sourceTree = "<group>"; };
 		AAD26E85264463A300908777 /* DemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoContentView.swift; sourceTree = "<group>"; };
 		AAD26E87264463AA00908777 /* DocumentPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPicker.swift; sourceTree = "<group>"; };
+		AADCE9E22EF617FD0055C768 /* markup-editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "markup-editor.js"; sourceTree = "<group>"; };
 		AAFADF64261525B90024F2DC /* MarkupEditor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MarkupEditor.h; sourceTree = "<group>"; };
 		AAFB64DA277CEECB0032E859 /* steve.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = steve.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -620,12 +610,7 @@
 		AA652A07260E99FF000674B7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				AA06CA0F2EDB9B1C00320354 /* markupeditor.umd.js */,
-				AA06CA032EDA36DE00320354 /* markup-editor.js */,
-				AA06CA0B2EDB99D800320354 /* markupeditor.css */,
-				AA40BA1E2CD54D5300264B1F /* mirror.css */,
-				AA1B81B8262CF16A00891FFB /* markup.css */,
-				AA06CA072EDB948300320354 /* toolbar.css */,
+				AADCE9E22EF617FD0055C768 /* markup-editor.js */,
 				AA652A0A260E99FF000674B7 /* markup.html */,
 			);
 			path = Resources;
@@ -802,7 +787,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					AA2FA6122E94626E00485CDF = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -886,13 +871,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA40BA1F2CD54D5300264B1F /* mirror.css in Resources */,
 				AA408B372616686C00CAE8B9 /* markup.html in Resources */,
-				AA06CA042EDA36DE00320354 /* markup-editor.js in Resources */,
-				AA06CA082EDB948300320354 /* toolbar.css in Resources */,
-				AA06CA0C2EDB99D800320354 /* markupeditor.css in Resources */,
-				AA1B81B9262CF16A00891FFB /* markup.css in Resources */,
-				AA06CA102EDB9B1C00320354 /* markupeditor.umd.js in Resources */,
+				AADCE9E32EF617FD0055C768 /* markup-editor.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1092,6 +1072,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.BaseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1120,6 +1101,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.BaseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1147,6 +1129,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.SwiftTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1175,6 +1158,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.SwiftTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1205,12 +1189,13 @@
 				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				OTHER_SWIFT_FLAGS = "\"-DUSEFRAMEWORK\"";
@@ -1243,12 +1228,13 @@
 				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				OTHER_SWIFT_FLAGS = "\"-DUSEFRAMEWORK\"";
@@ -1325,6 +1311,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -1381,6 +1368,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
@@ -1397,13 +1385,17 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"SwiftUIDemo/Preview Content\"";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.SwiftUIDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1427,13 +1419,17 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"SwiftUIDemo/Preview Content\"";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.SwiftUIDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1456,12 +1452,16 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UIKitDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1483,12 +1483,16 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UIKitDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
