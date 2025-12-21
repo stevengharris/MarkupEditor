@@ -67,7 +67,7 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
         }
         switch messageBody {
         case "loadedUserFiles":
-            Logger.coordinator.debug("loadedUserFiles")
+            //Logger.coordinator.debug("loadedUserFiles")
             // After the user css and js are loaded, we set the top-level "editor" attributes,
             // and load the initial HTML, which will result in the MarkupDelegate.markupLoaded call.
             webView.setTopLevelAttributes() {
