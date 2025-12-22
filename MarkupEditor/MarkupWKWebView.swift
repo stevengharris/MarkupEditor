@@ -208,7 +208,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func executeJavaScript(_ muFunction: String, completionHandler: ((@MainActor @Sendable (Any?, (any Error)?)->Void))? = nil) {
         let wrappedFunction = """
         (() => {
-                    let element = document.getElementsByTagName("markup-editor")[0]
+                    let element = document.getElementById("markupeditor")
                     return element?.\(muFunction)
         })()
         """
@@ -218,7 +218,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     @discardableResult public func executeJavaScript(_ muFunction: String) async throws -> Any? {
         let wrappedFunction = """
         (() => {
-                    let element = document.getElementsByTagName("markup-editor")[0]
+                    let element = document.getElementById("markupeditor")
                     return element?.\(muFunction)
         })()
         """
@@ -371,6 +371,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             </head>
             <body>
                 <markup-editor
+                    id="markupeditor"
                     \(placeholder != nil ? "placeholder=\"\(placeholder!)\"" : "")
                     \(resourcesUrl != nil ? "base=\"\(resourcesUrl!.path)\"" : "")
                     \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
