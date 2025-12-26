@@ -14,6 +14,7 @@ if [ "$READY" = false ]; then
     exit 1
 fi
 echo " Copying $COMPONENT\n  to ../MarkupEditor/Resources/markup-editor.js"
+cp -f "$COMPONENT" ../MarkupEditor/Resources/markup-editor.js
 
 # Determine whether the test dependencies are available
 TEST="./node_modules/markupeditor/test"
