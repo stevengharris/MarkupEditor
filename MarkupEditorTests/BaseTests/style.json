@@ -6,31 +6,31 @@
             "description": "Replace p with h1",
             "startHtml": "<p><em><strong>He|llo </strong></em><strong>world</strong></p>",
             "endHtml": "<h1><em><strong>He|llo </strong></em><strong>world</strong></h1>",
-            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H1\")"
+            "action": "MU.setStyle(\"H1\")"
         },
         {
             "description": "Replace h2 with h6",
             "startHtml": "<h2>|Hello worl|d</h2>",
             "endHtml": "<h6>|Hello worl|d</h6>",
-            "action": "MU.replaceStyle(MU.getSelectionState().style, \"H6\")"
+            "action": "MU.setStyle(\"H6\")"
         },
         {
             "description": "Replace h3 with p",
             "startHtml": "<h3>He|llo wor|ld</h3>",
             "endHtml": "<p>He|llo wor|ld</p>",
-            "action": "MU.replaceStyle(MU.getSelectionState().style, \"P\")"
+            "action": "MU.setStyle(\"P\")"
         },
         {
             "description": "Replace p with code",
             "startHtml": "<p>He|llo wor|ld</p>",
             "endHtml": "<pre><code>He|llo wor|ld</code></pre>",
-            "action": "MU.replaceStyle(MU.getSelectionState().style, \"PRE\")"
+            "action": "MU.setStyle(\"PRE\")"
         },
         {
             "description": "Fail to replace p containing formatted text with code",
             "startHtml": "<p>He<strong>llo| wor</strong>ld</p>",
             "endHtml": "<p>He<strong>llo| wor</strong>ld</p>",
-            "action": "MU.replaceStyle(MU.getSelectionState().style, \"PRE\")"
+            "action": "MU.setStyle(\"PRE\")"
         }
     ]
 }

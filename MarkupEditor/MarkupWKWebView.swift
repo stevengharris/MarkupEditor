@@ -1596,24 +1596,30 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         replaceStyle(selectionState.style, with: .H6)
     }
     
-    /// Replace the oldStyle of the selection with the newStyle (e.g., from <p> to <h3>)
-    ///
-    /// A null value of oldStyle results in an unstyled element being styled (which really should never happen)
-    public func replaceStyle(_ oldStyle: StyleContext?, with newStyle: StyleContext, handler: (()->Void)? = nil) {
-        var replaceCall = "MU.replaceStyle("
-        if let oldStyle = oldStyle {
-            replaceCall += "'\(oldStyle)', '\(newStyle)')"
-        } else {
-            replaceCall += "null, '\(newStyle)')"
-        }
-        executeJavaScript(replaceCall) { result, error in
+    /// Set the selection style to newStyle (e.g., <h3>)
+    public func setStyle(to newStyle: StyleContext, handler: (()->Void)? = nil) {
+        executeJavaScript("MU.setStyle('\(newStyle)')") { result, error in
             handler?()
         }
     }
     
-    public func replaceStyle(_ oldStyle: StyleContext?, with newStyle: StyleContext) async {
+    public func setStyle(to newStyle: StyleContext) async {
         await withCheckedContinuation { continuation in
-            replaceStyle(oldStyle, with: newStyle) {
+            setStyle(to: newStyle) {
+                continuation.resume()
+            }
+        }
+    }
+    
+    /// Replace the oldStyle of the selection with the newStyle (e.g., from <p> to <h3>)
+    /// Function provided for backward compatibility. Use setStyle.
+    public func replaceStyle(_: StyleContext? = nil, with newStyle: StyleContext, handler: (()->Void)? = nil) {
+        setStyle(to: newStyle, handler: handler)
+    }
+    
+    public func replaceStyle(_: StyleContext? = nil, with newStyle: StyleContext) async {
+        await withCheckedContinuation { continuation in
+            setStyle(to: newStyle) {
                 continuation.resume()
             }
         }

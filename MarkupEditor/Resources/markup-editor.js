@@ -1,18 +1,21 @@
 const sheet$2 = new CSSStyleSheet();sheet$2.replaceSync("/**\n The CSS here was adapted from the ProseMirror example.\n The adaptations mainly consisted of removing styling when it interfered with\n markup.css in some way. These changes were commented-out and moved to the end of\n this file. Top-level Prosemirror styling was brought to the top of the file.\n Styling from search.css in prosemirror-search were added and modified.\n */\n\n .ProseMirror {\n    position: relative;\n    padding: 4px 8px 4px 8px;\n    line-height: 1.2;\n    outline: none;\n    word-wrap: break-word;\n    white-space: pre-wrap;\n    white-space: break-spaces;\n    font-variant-ligatures: none;\n  }\n  \n  .ProseMirror pre {\n    white-space: pre-wrap;\n  }\n  \n  .ProseMirror li {\n    position: relative;\n  }\n  \n  .ProseMirror-hideselection *::selection { background: transparent; }\n  .ProseMirror-hideselection *::-moz-selection { background: transparent; }\n  .ProseMirror-hideselection { caret-color: transparent; }\n  \n  /* See https://github.com/ProseMirror/prosemirror/issues/1421#issuecomment-1759320191 */\n  .ProseMirror [draggable][contenteditable=false] { user-select: text }\n  \n  .ProseMirror-selectednode {\n    outline: 2px solid #8cf;\n  }\n  \n  /* Make sure li selections wrap around markers */\n  \n  li.ProseMirror-selectednode {\n    outline: none;\n  }\n  \n  li.ProseMirror-selectednode:after {\n    content: \"\";\n    position: absolute;\n    left: -32px;\n    right: -2px; top: -2px; bottom: -2px;\n    border: 2px solid #8cf;\n    pointer-events: none;\n  }\n  \n  /* Protect against generic img rules */\n  \n  img.ProseMirror-separator {\n    display: inline !important;\n    border: none !important;\n    margin: 0 !important;\n  }\n  .ProseMirror-textblock-dropdown {\n    min-width: 3em;\n  }\n  \n  .ProseMirror-icon svg {\n    fill: currentColor;\n    height: 1em;\n  }\n  \n  .ProseMirror-icon span {\n    vertical-align: text-top;\n  }\n  .ProseMirror-gapcursor {\n    display: none;\n    pointer-events: none;\n    position: absolute;\n  }\n  \n  .ProseMirror-gapcursor:after {\n    content: \"\";\n    display: block;\n    position: absolute;\n    top: -2px;\n    width: 20px;\n    border-top: 1px solid black;\n    animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;\n  }\n  \n  @keyframes ProseMirror-cursor-blink {\n    to {\n      visibility: hidden;\n    }\n  }\n  \n  .ProseMirror-focused .ProseMirror-gapcursor {\n    display: block;\n  }\n  \n  .ProseMirror-prompt {\n    background: white;\n    padding: 5px 10px 5px 15px;\n    border: 1px solid silver;\n    position: fixed;\n    border-radius: 3px;\n    z-index: 11;\n    box-shadow: -.5px 2px 5px rgba(0, 0, 0, .2);\n  }\n  \n  .ProseMirror-prompt h5 {\n    margin: 0;\n    font-weight: normal;\n    font-size: 100%;\n    color: #444;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"],\n  .ProseMirror-prompt textarea {\n    background: #eee;\n    border: none;\n    outline: none;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"] {\n    padding: 0 4px;\n  }\n  \n  .ProseMirror-prompt-close {\n    position: absolute;\n    left: 2px; top: 1px;\n    color: #666;\n    border: none; background: transparent; padding: 0;\n  }\n  \n  .ProseMirror-prompt-close:after {\n    content: \"âœ•\";\n    font-size: 12px;\n  }\n  \n  .ProseMirror-invalid {\n    background: #ffc;\n    border: 1px solid #cc7;\n    border-radius: 4px;\n    padding: 5px 10px;\n    position: absolute;\n    min-width: 10em;\n  }\n  \n  .ProseMirror-prompt-buttons {\n    margin-top: 5px;\n    /* display: none; */\n  }\n  \n  /*\n   \n  #editor, .editor {\n    border-radius: 4px;\n    border: 2px solid rgba(0, 0, 0, 0.2);\n  }\n  \n  .ProseMirror-example-setup-style hr {\n    padding: 2px 10px;\n    border: none;\n    margin: 1em 0;\n  }\n  \n  .ProseMirror-example-setup-style hr:after {\n    content: \"\";\n    display: block;\n    height: 1px;\n    background-color: silver;\n    line-height: 2px;\n  }\n  \n  .ProseMirror ul, .ProseMirror ol {\n    padding-left: 30px;\n  }\n  \n  .ProseMirror blockquote {\n    padding-left: 1em;\n    border-left: 3px solid #eee;\n    margin-left: 0; margin-right: 0;\n  }\n  \n  .ProseMirror-example-setup-style img {\n    cursor: default;\n  }\n  \n  .ProseMirror p { margin-bottom: 1em }\n  */\n  ");
 
-const sheet$1 = new CSSStyleSheet();sheet$1.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 8px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0 auto;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -8px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -8px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -8px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -8px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
+const sheet$1 = new CSSStyleSheet();sheet$1.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
 
 const sheet = new CSSStyleSheet();sheet.replaceSync("/* Spacing at the top */\n/* Note that toolbar-overlay below  is also set to these values */\n\n.Markup-searchbar-showing {\n  height: 38px;\n  top: 76px;\n}\n\n/* The wrapper lets us automatically embed a toolbar and scroll under it */\n.Markup-toolbar-wrapper {\n  margin-right: -12px;    /* Prevent side scroll even when menu fits */\n  height: inherit;\n  overflow-y: scroll;\n  position: relative; \n}\n\n/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */\n.Markup-prompt-showing {\n  overflow-y: hidden;\n}\n\n/* Z-indexes in one place */\n\n.body-content { \n  z-index: 1; \n}\n\n.Markup-prompt-overlay { \n  z-index: 2; \n}\n\n.Markup-prompt, .Markup-selection {\n  z-index: 3;\n}\n\n.Markup-searchbar {\n  z-index: 4;\n}\n\n.Markup-toolbar, .Markup-toolbar-more {\n  z-index: 5;\n}\n\n.Markup-toolbar-overlay { \n  z-index: 6; \n}\n\n.Markup-menu-dropdown-menu {\n  z-index: 7;\n}\n\n/* Toolbar, menu item, and dropdown styling */\n\n.Markup-toolbar {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 0;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-menuitem {\n  display: inline-block;\n  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */\n  overflow-y: visible;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  cursor: pointer;\n  margin-right: 4px;\n  border-radius: 4px;\n  color: blue;\n  border: 1px solid blue;\n  background: white;\n  fill: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem {\n    color: lightblue;\n    border: 1px solid lightblue; \n    /* border: 1px solid #4183c4; */\n    background: black;\n    fill: lightblue;\n  }\n}\n\n.Markup-menuitem-active {\n  fill: white;\n  color: white;\n  background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}\n\n.Markup-menuitem-disabled {\n  cursor: default;\n  opacity: .3;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-disabled {\n    opacity: .6;\n  }\n}\n\n.Markup-icon {\n  display: inline-block;\n  width: 28px;\n  height: 28px;\n  border: 0;\n}\n\n.Markup-icon span {\n  vertical-align: middle;\n}\n\n.Markup-icon svg {\n  padding: 2px;\n  border: 0;\n  fill: inherit;\n}\n\n.Markup-menuseparator {\n  display: inline-block;\n  vertical-align: middle;\n  height: 28px;\n  border-right: 1px solid lightgray;\n  margin-right: 4px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuseparator {\n    border-right: 1px solid gray;\n  }\n}\n\n.Markup-menu-disabled .Markup-icon {\n  cursor: default;\n}\n\n.Markup-menu-dropdown, .Markup-menu-dropdown-menu {\n  background: inherit;\n  text-align: left;\n  white-space: nowrap;\n}\n\n.Markup-menu-dropdown span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-icon span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-wrap {\n  display: inline-block;\n  padding: 0 4px;\n  min-width: 3.0em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap {\n  display: inline-block;\n  padding-right: 4px;\n  width: 1.8em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap-noindicator {\n  display: inline-flex;\n  padding-right: 4px;\n  width: 1em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown {\n  display: inline-flex;\n  justify-content: space-between;\n  min-width: 3.0em;\n  height: inherit;\n  background: inherit;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-icon {\n  display: inline-flex;\n  justify-content: space-between;\n  width: 1.8em;\n  cursor: pointer;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-indicator, .Markup-menu-dropdown-icon-indicator{\n  opacity: .6;\n}\n\n.Markup-tooltip .Markup-menu {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-submenu {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-dropdown-menu {\n  margin-top: calc(1em + 6px);\n  min-width: 4em;\n}\n\n.Markup-menu-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */\n.Markup-menuitem-clipped {\n  white-space: nowrap;  /* Required for text-overflow */\n  overflow-x: hidden;   /* Required for text-overflow */\n  max-width: 30em;\n  text-overflow: ellipsis;\n}\n\n.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n  background: #f2f2f2;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n    background: rgb(80, 80, 80);\n  }\n}\n\n.Markup-menu-dropdown-item p, \n.Markup-menu-dropdown-item h1, \n.Markup-menu-dropdown-item h2, \n.Markup-menu-dropdown-item h3, \n.Markup-menu-dropdown-item h4, \n.Markup-menu-dropdown-item h5, \n.Markup-menu-dropdown-item h6, \n.Markup-menu-dropdown-item pre {\n  padding: 0;\n  margin: 0;\n  min-height: 24px;\n}\n\n.Markup-stylelabel {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  white-space: pre;\n  width: 100%;\n}\n\n.Markup-stylelabel-keymap {\n  display: flex;\n  justify-content: flex-end;\n  font-size: 1.0rem;\n  font-weight: normal;\n  color: gray;\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {\n  display: block;\n}\n\n.Markup-menu-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n  background: inherit;\n}\n\n.Markup-menu-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-submenu {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n.Markup-selection {\n  position: absolute;\n  border: 1px solid blue;\n  background: transparent;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-selection {\n    border: 1px solid lightblue;\n  }\n}\n\n/* Toolbar-more styling */\n\n.Markup-toolbar-more {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 35px;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-more {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n/* Searchbar styling */\n\n.Markup-searchbar {\n  display: inline-block;\n  font-size: 24px;\n  vertical-align: middle;\n  position: sticky;\n  top: 35px;\n  width: 100%;\n  line-height: 30px;\n  height: 37px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-searchbar input {\n  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */\n  position: relative;\n  font-size: 18px;\n  line-height: 30px;\n  height: 30px;\n  width: calc(100% - 128px);\n  margin: 0 8px;\n  padding: 0 4px;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar input {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-searchbar .Markup-searchbar-status {\n  position: absolute;\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  white-space: nowrap;\n  font-size: 12px;\n  overflow-x: visible;\n  height: 28px;\n  top: 5px;\n  left: calc(100% - 13em);\n  width: 1px;\n  color: gray;\n  user-select: none;\n}\n\n/* Dialog/prompt styling for insert/edit actions */\n\n.Markup-prompt-overlay {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt-overlay {\n    background-color: rgba(255, 255, 255, 0.2);\n  }\n}\n\n.Markup-toolbar-overlay {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-overlay {\n    background-color: rgba(255, 255, 255, 0.1);\n  }\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-hidden {\n  height: 38px;\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-showing {\n  height: 76px;\n}\n\n.Markup-prompt {\n  margin: 0;\n  font-size: 18px;\n  background: white;\n  padding: 8px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt {\n    background: black;\n    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);\n  }\n}\n\n.Markup-prompt-link {\n  height: 96px;\n  width: 300px;\n}\n\n.Markup-prompt-image {\n  height: 130px;\n  width: 300px;\n}\n\n.Markup-prompt img {\n  display: inline-block;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  margin-right: 4px;\n}\n\n.Markup-prompt p {\n  margin: 0 0 4px 0;\n  font-weight: normal;\n  color: black;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt p {\n    color: white;\n  }\n}\n\n.Markup-prompt input[type=\"text\"] {\n  font-size: 100%;\n  line-height: 28px;\n  margin-top: 2px;\n  padding: 1px 4px;\n  width: 100%;\n  appearance: none;\n  background: #eee;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input[type=\"text\"] {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-prompt input.invalid {\n  color: red;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input.invalid {\n    color: pink;\n  }\n}\n\n.Markup-prompt-buttons {\n  display: flex;\n  vertical-align: middle;\n  justify-content: space-between;\n  justify-items: center;\n  line-height: 28px;\n  height: 28px;\n  margin-top: 8px;\n  margin-bottom: 8px;\n}\n\n.Markup-prompt-buttongroup {\n  flex-shrink: 0;\n}\n\n.Markup-prompt-buttons img {\n  aspect-ratio: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n.Markup-prompt-buttons .Markup-menuitem {\n  display: inline-flex;\n  padding-right: 4px;\n  padding-left: 4px;\n}\n\n/* The buttongroup contains OK and Cancel menuitems on the right */\n.Markup-prompt-buttongroup .Markup-menuitem {\n  margin-right: 0;\n  margin-left: 4px;\n}\n\n/* .Markup-menu-tablesizer is a specialized submenu */\n.Markup-menu-tablesizer {\n  display: none;\n  grid-template-columns: repeat(4, 1fr);\n  grid-auto-rows: 18px;\n  row-gap: 1px;\n  column-gap: 1px;\n  padding: 0;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {\n  display: grid;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menu-dropdown-item {\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid blue;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 13px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menu-dropdown-item {\n    border: 1px solid lightblue;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menuitem-active {\n    height: 13px;\n    padding-top: 3px;\n    fill: black;\n    color: black;\n    background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}");
 
 /**
- * The global registry used to hold _editors, _delegates, _configs, 
- * _augmentations, and to track the active muId (of which there can be 
- * only one, generally set by focus/blur but sometimes by toolbar actions.
+ * The registry used to hold delegates, configs, handlers, and
+ * augmentations. Internally, the registry tracks the active `muId` 
+ * (of which there can be only one, generally set by focus/blur but 
+ * sometimes by toolbar actions). The `muId` is then used to identify 
+ * the active view/editor/document.
  * 
- * The registry is a singleton global but is only accessed via the methods exported 
+ * The registry is a singleton but is only accessed via the methods exported 
  * here.
+ * @ignore
  */
-class MURegistry {
+class Registry {
     constructor() {
         this._editors = new Map();
         this._delegates = new Map();
@@ -22,11 +25,20 @@ class MURegistry {
         this._activeMuId = null;
     }
 
-    /** Private method to set `activeMuId`. */
+    /** 
+     * Private method to set `activeMuId`. 
+     */
     _setActiveMuId(muId) {
         this._activeMuId = muId;
     }
 
+    /**
+     * Return the key that maps to the first value
+     * 
+     * @param {object}  value       The value we are 
+     * @param {Map}     map         The Map we are doing the lookup in
+     * @returns {string | null}     The key we found
+     */
     _keyFor(value, map) {
         return [...map].find(([, val]) => value === val)[0]
     }
@@ -34,30 +46,47 @@ class MURegistry {
     /**
      * Add the `editor` to the registry.
      * 
-     * When we register an editor, it becomes the active editor, so 
-     * `activeMuId` is always set initially.
+     * When we register an editor, it becomes the active editor.
+     * 
+     * @param {MarkupEditor}  editor       The MarkupEditor to be added
      */
     registerEditor(editor) {
         this._editors.set(editor.muId, editor);
         this._setActiveMuId(editor.muId);
     }
 
-    /** Remove the `editor` from the registry. */
+    /** 
+     * Remove the `editor` from the registry. 
+     * 
+     * @param {MarkupEditor}  editor       The MarkupEditor to be removed
+     */
     unregisterEditor(editor) {
         delete this._editors.delete(editor.muId);
     }
-    
-    /** Return the editor with `muId` of `this._activeMuId`. */
+
+    /** 
+     * Return the active editor with `muId` of `this._activeMuId`. 
+     */
     activeEditor() {
         return this._editors.get(this._activeMuId)
     }
 
-    /** Add the `delegate` to the registry. */
+    /** 
+     * Add the `delegate` to the registry. 
+     * If `name` is supplied, it is used to track it; else, 
+     * the class of `delegate`, derived using `delegate.constructor.name`
+     * is used.
+     * 
+     * @param {MarkupDelegate | object}     delegate    A MarkupDelegate or appropriate object.
+     * @param {string}                      name        A name used to retrieve the `delegate`.
+     */
     registerDelegate(delegate, name) {
         this._delegates.set(name ?? delegate.constructor.name, delegate);
     }
 
-    /** Remove the `delegate` from the registry. */
+    /** 
+     * Remove the `delegate` from the registry. 
+     */
     unregisterDelegate(delegate, name) {
         const key = name ?? this._keyFor(delegate, this._delegates);
         this._delegates.delete(key);
@@ -68,7 +97,15 @@ class MURegistry {
         return this._delegates.get(name)
     }
 
-    /** Add the `config` to the registry. */
+    /** 
+     * Add the `config` to the registry. 
+     * If `name` is supplied, it is used to track it; else, 
+     * the class of `config`, derived using `config.constructor.name`
+     * is used.
+     * 
+     * @param {ToolbarConfig | KeymapConfig | BehaviorConfig | object}  config  One of the "configs" from the MarkupEditor API or appropriate object.
+     * @param {string}                      name        A name used to retrieve the `config`.
+     */
     registerConfig(config, name) {
         this._configs.set(name ?? config.constructor.name, config);
     }
@@ -84,23 +121,41 @@ class MURegistry {
         return this._configs.get(name)
     }
 
+    /** 
+     * Add the `handler` to the registry. 
+     * If `name` is supplied, it is used to track it; else, 
+     * the class of `handler`, derived using `handler.constructor.name`
+     * is used.
+     * 
+     * @param {MessageHandler | object}  handler  An instance of MessageHandler or appropriate object.
+     * @param {string}                   name     A name used to retrieve the `config`.
+     */
     registerMessageHandler(handler, name) {
         this._handlers.set(name ?? handler.constructor.name, handler);
     }
 
+    /** Remove the `handler` from the registry. */
     unregisterMessageHandler(handler, name) {
         const key = name ?? this._keyFor(handler, this._handlers);
         this._handlers.delete(key);
     }
 
+    /** Return the `handler` with `name`. */
     getMessageHandler(name) {
         return this._handlers.get(name)
     }
 
     /** 
-     * Add the `augmentation` to the registry.
-     * An augmentation is a toolbar that holds `cmdItems` that can 
-     * either be prepended or appended to the normal MarkupEditor toolbar.
+     * Add the `toolbar` to the registry.
+     * A toolbar holds `cmdItems` that can either be prepended or appended to 
+     * the normal MarkupEditor toolbar.
+     * 
+     * If `name` is supplied, it is used to track it; else, 
+     * the class of `toolbar`, derived using `toolbar.constructor.name`
+     * is used.
+     * 
+     * @param {object}  toolbar     A toolbar that holds `cmdItems`.
+     * @param {string}  name        A name used to retrieve the `toolbar`.
      */
     registerAugmentation(toolbar, name) {
         this._augmentations.set(name ?? toolbar.constructor.name, toolbar);
@@ -113,14 +168,17 @@ class MURegistry {
     }
 
     /**
-     * Return the `augmentation` toolbar whose `menuItems` will be 
+     * Return the `toolbar` whose `menuItems` will be 
      * either prepended or appended to the normal MarkupEditor toolbar.
      */
     getAugmentation(name) {
         return this._augmentations.get(name)
     }
 
-    /** Return the active editor's `view`. */
+    /** Return the active editor's `view`. 
+     * 
+     * @returns {EditorView | null}    The ProseMirror Editor view that is currently active
+     */
     activeView() {
         return this.activeEditor()?.view
     }
@@ -140,6 +198,7 @@ class MURegistry {
         this._setActiveMuId(document?.muId);
     }
 
+    /** Return the `editor` that is active (typically with focus).*/
     activeEditorElement() {
         return this.activeEditor()?.element
     }
@@ -148,7 +207,7 @@ class MURegistry {
     activeMessageHandler() {
         return this.activeEditor()?.messageHandler
     }
-    
+
     /** Return the active editor's instance of Searcher, `searcher`. */
     activeSearcher() {
         return this.activeEditor()?.searcher
@@ -170,33 +229,95 @@ class MURegistry {
     }
 }
 
-/** Define the global _muRegistry instance and export methods that provide access to it. */
-const _muRegistry = new MURegistry();
-const registerEditor = _muRegistry.registerEditor.bind(_muRegistry);
-const unregisterEditor = _muRegistry.unregisterEditor.bind(_muRegistry);
-const registerDelegate = _muRegistry.registerDelegate.bind(_muRegistry);
-_muRegistry.unregisterDelegate.bind(_muRegistry);
-const getDelegate = _muRegistry.getDelegate.bind(_muRegistry);
-const registerConfig = _muRegistry.registerConfig.bind(_muRegistry);
-_muRegistry.unregisterConfig.bind(_muRegistry);
-const getConfig = _muRegistry.getConfig.bind(_muRegistry);
-const registerMessageHandler = _muRegistry.registerMessageHandler.bind(_muRegistry);
-_muRegistry.unregisterMessageHandler.bind(_muRegistry);
-const getMessageHandler = _muRegistry.getMessageHandler.bind(_muRegistry);
-const registerAugmentation = _muRegistry.registerAugmentation.bind(_muRegistry);
-_muRegistry.unregisterAugmentation.bind(_muRegistry);
-const getAugmentation = _muRegistry.getAugmentation.bind(_muRegistry);
-const activeEditor = _muRegistry.activeEditor.bind(_muRegistry);
-const activeView = _muRegistry.activeView.bind(_muRegistry);
-const setActiveView = _muRegistry.setActiveView.bind(_muRegistry);
-const activeDocument = _muRegistry.activeDocument.bind(_muRegistry);
-const setActiveDocument = _muRegistry.setActiveDocument.bind(_muRegistry);
-const activeEditorElement = _muRegistry.activeEditorElement.bind(_muRegistry);
-_muRegistry.activeMessageHandler.bind(_muRegistry);
-const activeSearcher = _muRegistry.activeSearcher.bind(_muRegistry);
-const activeConfig = _muRegistry.activeConfig.bind(_muRegistry);
-const selectedID = _muRegistry.selectedID.bind(_muRegistry);
-const setSelectedID = _muRegistry.setSelectedID.bind(_muRegistry);
+/** 
+ * Define the global registry instance and export methods that provide access to it. 
+ * Only the register* methods are part of the public MarkupEditor API.
+ * 
+ * @ignore
+ */
+const _registry = new Registry();
+
+/** 
+ * Return the active editor's configurations as one object keyed to the config type. 
+ * 
+ * @returns {object | null}    Object containing {"toolbar": ToolbarConfig, "keymap": KeymapConfig, "behavior": BehaviorConfig}.
+ */
+function activeConfig() {return _registry.activeConfig.bind(_registry)()}
+
+/** 
+ * Return the active editor's `view`. 
+ * 
+ * @returns {EditorView | null}    The ProseMirror EditorView that is currently active.
+ */
+function activeView() {return _registry.activeView.bind(_registry)()}
+
+/** 
+ * Add the `toolbar` to the registry.
+ * A toolbar holds `cmdItems` that can either be prepended or appended to 
+ * the normal MarkupEditor toolbar.
+ * 
+ * If `name` is supplied, it is used to track it; else, 
+ * the class of `toolbar`, derived using `toolbar.constructor.name`
+ * is used.
+ * 
+ * @param {object}  toolbar     A toolbar that holds `cmdItems`.
+ * @param {string}  name        A name used to retrieve the `toolbar`.
+ */
+function registerAugmentation(toolbar, name) {_registry.registerAugmentation.bind(_registry)(toolbar, name);}
+
+/** 
+ * Add the `config` to the registry. 
+ * If `name` is supplied, it is used to track it; else, 
+ * the class of `config`, derived using `config.constructor.name`
+ * is used.
+ * 
+ * @param {ToolbarConfig | KeymapConfig | BehaviorConfig | object}  config  One of the "configs" from the MarkupEditor API or appropriate object.
+ * @param {string}                      name        A name used to retrieve the `config`.
+ */
+function registerConfig(config, name) {_registry.registerConfig.bind(_registry)(config, name);}
+
+/** 
+ * Add the `delegate` to the registry. 
+ * If `name` is supplied, it is used to track it; else, 
+ * the class of `delegate`, derived using `delegate.constructor.name`
+ * is used.
+ * 
+ * @param {MarkupDelegate | object}     delegate    A MarkupDelegate or appropriate object.
+ * @param {string}                      name        A name used to retrieve the `delegate`.
+ */
+function registerDelegate(delegate, name) {_registry.registerDelegate.bind(_registry)(delegate, name);}
+
+
+/** 
+ * Add the `handler` to the registry. 
+ * If `name` is supplied, it is used to track it; else, 
+ * the class of `handler`, derived using `handler.constructor.name`
+ * is used.
+ * 
+ * @param {MessageHandler | object}  handler  An instance of MessageHandler or appropriate object.
+ * @param {string}                   name     A name used to retrieve the `config`.
+ */
+function registerMessageHandler(handler, name) {_registry.registerMessageHandler.bind(_registry)(handler, name);}
+
+const registerEditor = _registry.registerEditor.bind(_registry);
+const unregisterEditor = _registry.unregisterEditor.bind(_registry);
+_registry.unregisterDelegate.bind(_registry);
+const getDelegate = _registry.getDelegate.bind(_registry);
+_registry.unregisterConfig.bind(_registry);
+const getConfig = _registry.getConfig.bind(_registry);
+_registry.unregisterMessageHandler.bind(_registry);
+const getMessageHandler = _registry.getMessageHandler.bind(_registry);
+_registry.unregisterAugmentation.bind(_registry);
+const getAugmentation = _registry.getAugmentation.bind(_registry);
+_registry.activeEditor.bind(_registry);
+const setActiveView = _registry.setActiveView.bind(_registry);
+const activeDocument = _registry.activeDocument.bind(_registry);
+const setActiveDocument = _registry.setActiveDocument.bind(_registry);
+const activeEditorElement = _registry.activeEditorElement.bind(_registry);
+_registry.activeMessageHandler.bind(_registry);
+const activeSearcher = _registry.activeSearcher.bind(_registry);
+const selectedID = _registry.selectedID.bind(_registry);
+const setSelectedID = _registry.setSelectedID.bind(_registry);
 
 /**
  * MUError captures internal errors and makes it easy to communicate them externally.
@@ -16027,9 +16148,8 @@ const redo = buildCommand(true, true);
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
+ * @ignore
  */
-
-// Add STRONG and EM (leaving B and I) to support default ProseMirror output   
 const _formatTags = ['B', 'STRONG', 'I', 'EM', 'U', 'DEL', 'SUB', 'SUP', 'CODE'];       // All possible (nestable) formats
 
 const _minimalStyleTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE'];           // Convert to 'P' for pasteText
@@ -16039,6 +16159,8 @@ const _voidTags = ['BR', 'IMG', 'AREA', 'COL', 'EMBED', 'HR', 'INPUT', 'LINK', '
 /**
  * The searcher is the singleton that handles finding ranges that
  * contain a search string within editor.
+ * 
+ * @ignore
  */
 function searchIsActive() { return activeSearcher().isActive }
 
@@ -16050,7 +16172,8 @@ function searchIsActive() { return activeSearcher().isActive }
  * The logic for handling Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
  * We only need to report stateChanged when not in search mode.
  * 
- * @returns bool    Value is false if subsequent commands (like splitListItem) should execute;
+ * @ignore
+ * @returns {boolean}    Value is false if subsequent commands (like splitListItem) should execute;
  *                  else true if execution should stop here (like when search is active)
  */
 function handleEnter() {
@@ -16069,7 +16192,8 @@ function handleEnter() {
  * The logic for handling Shift-Enter is entirely MarkupEditor-specific, so is exported from here but imported in keymap.js.
  * We only need to report stateChanged when not in search mode.
  * 
- * @returns bool    Value is false if subsequent commands should execute;
+ * @ignore
+ * @returns {boolean}    Value is false if subsequent commands should execute;
  *                  else true if execution should stop here (like when search is active)
  */
 function handleShiftEnter() {
@@ -16087,15 +16211,19 @@ function handleShiftEnter() {
  * 
  * Notify about deleted images if one was selected, but always notify state changed and return false.
  * 
- *  * @returns bool    Value is false if subsequent commands should execute;
+ * @ignore
+ * @returns {boolean}    Value is false if subsequent commands should execute;
  *                      else true if execution should stop here.
  */
 function handleDelete() {
     const view = activeView();
     const imageAttributes = _getImageAttributes();
-    if (imageAttributes.src) _callback({ 'messageType': 'deletedImage', 'src': imageAttributes.src, 'divId': (selectedID() ?? '') });
+    if (imageAttributes.src) {
+        let messageDict = { 'messageType': 'deletedImage', 'src': imageAttributes.src, 'divId': (selectedID() ?? '') };
+        _callback(JSON.stringify(messageDict));
+    }
     stateChanged(view);
-    return false;
+    return false
 }
 
 /**
@@ -16105,6 +16233,8 @@ function handleDelete() {
  * included in the jsonString attributes. The same attributes
  * are used for contenteditable divs, and the attribute is 
  * relevant in that case.
+ * 
+ * @param {string}  jsonString  The stringified object containing the attributes to set for the editor
  */
 function setTopLevelAttributes(jsonString) {
     const attributes = JSON.parse(jsonString);
@@ -16114,23 +16244,17 @@ function setTopLevelAttributes(jsonString) {
             if (key !== 'contenteditable') editor.setAttribute(key, value);
         }    }}
 /**
- * Set the receiver for postMessage().
- * 
- * By default, the receiver will be window.webkit.messageHandlers.markup. 
- * However, to allow embedding of MarkupEditor in other environments, such 
- * as VSCode, allow it to be set externally.
- */
-function setMessageHandler(handler) {
-    let editor = activeEditor();
-    if (editor) editor.messageHandler = handler;
-}
-/**
  * Called to load user script and CSS before loading html.
  *
  * The scriptFile and cssFile are loaded in sequence, with the single 'loadedUserFiles'
  * callback only happening after their load events trigger. If neither scriptFile
  * nor cssFile are specified, then the 'loadedUserFiles' callback happens anyway,
  * since this ends up driving the loading process further.
+ * 
+ * @param   {string}    scriptFile  The filename for a script that should be loaded
+ * @param   {string}    cssFile     The filename for a CSS style that should be linked
+ * @param   {string}    target      The first element found with tag `target` will have the script or link added to it; default "body" for script, "head" for CSS
+ * @param   {string}    nonce       The "nonce" attribute to be applied
  */
 function loadUserFiles(scriptFile, cssFile, target=null, nonce=null) {
     if (scriptFile) {
@@ -16166,7 +16290,8 @@ function loadUserFiles(scriptFile, cssFile, target=null, nonce=null) {
  * 
  * In VSCode, the `messageHandler` is `vscode`.
  *
- * @param {String}      message     The message, which might be a JSONified string
+ * @ignore
+ * @param {string}      message     The message, which might be a JSONified string
  * @param {HTMLElement} element     An element that should be listening for a `muMessage`.
  */
 function _callback(message, element) {
@@ -16180,6 +16305,7 @@ function _dispatchMuCallback(message, element) {
 
 /**
  * Called to load user script before loading html.
+ * @ignore
  */
 function _loadUserScriptFile(file, nonce, callback, target) {
     let scriptTarget = target ?? document.getElementsByTagName('body')[0];
@@ -16192,6 +16318,7 @@ function _loadUserScriptFile(file, nonce, callback, target) {
 }
 /**
  * Called to load user CSS before loading html if userCSSFile has been defined for this MarkupWKWebView
+ * @ignore
  */
 function _loadUserCSSFile(file, target) {
     let cssTarget = target ?? document.getElementsByTagName('head')[0];
@@ -16250,7 +16377,7 @@ if (typeof window != 'undefined') {
  * @param {string}              text        The string to search for in a case-insensitive manner.
  * @param {string}              direction   Search direction, either `forward ` or `backward`.
  * @param {"true" | "false"}    activate    Set to "true" to activate "search mode", where Enter/Shift-Enter = Search forward/backward.
- * @returns {Object}                        The {to: number, from: number} location of the match.
+ * @returns {object}                        The {to: number, from: number} location of the match.
  */
 function searchFor(text, direction, activate) {
     const view = activeView();
@@ -16262,6 +16389,7 @@ function searchFor(text, direction, activate) {
  * Return the command that will execute search for `text` in `direction when provided with the 
  * view.state, view.dispatch, and view.
  *
+ * @ignore
  * @param {string}              text        The string to search for in a case-insensitive manner
  * @param {string}              direction   Search direction, either `forward ` or `backward`.
  * @param {"true" | "false"}    activate    Set to "true" to activate "search mode", where Enter/Shift-Enter = Search forward/backward.
@@ -16272,19 +16400,11 @@ function searchForCommand(text, direction, activate) {
 }
 
 /**
- * Set whether searches will be case sensitive or not.
- * 
- * @param {boolean} caseSensitive 
- */
-function matchCase(caseSensitive) {
-    let searcher = activeSearcher();
-    if (searcher) searcher.caseSensitive = caseSensitive;
-}
-
-/**
  * Deactivate search mode, stop intercepting Enter to search.
+ * 
+ * @param   {EditorView | null}    view    The view whose activeSearcher should be deactivated.
  */
-function deactivateSearch(view) {
+function deactivateSearch(view=null) {
     activeSearcher()?.deactivate(view);
 }
 /**
@@ -16295,9 +16415,21 @@ function cancelSearch() {
 }
 
 /**
+ * Set whether searches will be case sensitive or not.
+ * 
+ * @ignore
+ * @param {boolean} caseSensitive 
+ */
+function matchCase(caseSensitive) {
+    let searcher = activeSearcher();
+    if (searcher) searcher.caseSensitive = caseSensitive;
+}
+
+/**
  * Return the number of matches in the current search or null if search has not yet been initiated.
  * 
- * @returns {number | null }
+ * @ignore
+ * @returns {number | null}
  */
 function matchCount() {
     return activeSearcher()?.matchCount;
@@ -16307,7 +16439,8 @@ function matchCount() {
  * Return the index of the match in the current search, starting at the first match which began 
  * at the selection point, or null if search has not yet been initiated.
  * 
- * @returns {number | null }
+ * @ignore
+ * @returns {number | null}
  */
 function matchIndex() {
     return activeSearcher()?.matchIndex;
@@ -16321,7 +16454,8 @@ function matchIndex() {
 /**
  * Paste html at the selection, replacing the selection as-needed.
  * 
- * `event` is a mocked ClipboardEvent for testing purposes, else nil.
+ * @param   {string}                html    The HTML to be pasted
+ * @param   {ClipboardEvent | bull} event   A mocked ClipboardEvent for testing
  */
 function pasteHTML(html, event) {
     const view = activeView();
@@ -16335,8 +16469,9 @@ function pasteHTML(html, event) {
  * The trick here is that we want to use the same code to paste text as we do for
  * HTML, but we want to paste something that is the MarkupEditor-equivalent of
  * unformatted text.
- * 
- * `event` is a mocked ClipboardEvent for testing purposes, else nil.
+ *  
+ * @param   {string}                html    The HTML to be pasted
+ * @param   {ClipboardEvent | bull} event   A mocked ClipboardEvent for testing
  */
 function pasteText(html, event) {
     const node = _nodeFromHTML(html);
@@ -16350,6 +16485,7 @@ function pasteText(html, event) {
  * This equivalent is derived by making all top-level nodes into <P> and removing
  * formatting and links. However, we leave TABLE, UL, and OL alone, so they still
  * come in as tables and lists, but with formatting removed.
+ * @ignore
  */
 function _minimalHTML(fragment) {
     // Create a div to hold fragment so that we can getElementsByTagName on it
@@ -16363,6 +16499,7 @@ function _minimalHTML(fragment) {
 }
 /**
  * Replace all styles in the div with 'P'.
+ * @ignore
  */
 function _minimalStyle(div) {
     _minimalStyleTags.forEach(tag => {
@@ -16380,6 +16517,7 @@ function _minimalStyle(div) {
 }
 /**
  * Replace all formats in the div with unformatted text
+ * @ignore
  */
 function _minimalFormat(div) {
     _formatTags.forEach(tag => {
@@ -16398,6 +16536,7 @@ function _minimalFormat(div) {
 }
 /**
  * Replace all links with their text only
+ * @ignore
  */
 function _minimalLink(div) {
     // Reset elements using getElementsByTagName as we go along or the
@@ -16426,6 +16565,9 @@ function emptyDocument() {
     setHTML(emptyHTML());
 }
 
+/** Return the HTML that is contained in an empty document. 
+ * @returns {string} An empty paragraph
+ */
 function emptyHTML() {
     return '<p></p>'
 }
@@ -16433,6 +16575,8 @@ function emptyHTML() {
 /**
  * Set the `selectedID` to `id`, a byproduct of clicking or otherwise iteractively
  * changing the selection, triggered by `createSelectionBetween`.
+ * 
+ * @ignore
  * @param {string} id 
  */
 function resetSelectedID(id) { 
@@ -16442,13 +16586,13 @@ function resetSelectedID(id) {
 /**
  * Return an array of `src` attributes for images that are encoded as data, empty if there are none.
  * 
- * @returns {[string]}
+ * @returns {Array<string>}
  */
 function getDataImages() {
-    let images = activeEditorElement().getElementsByTagName('img');
+    let images = Array.from(activeEditorElement().getElementsByTagName('img'));
     let dataImages = [];
-    for (let i = 0; i < images.length; i++) {
-        let src = images[i].getAttribute('src');
+    for (let img of images) {
+        let src = img.getAttribute('src');
         if (src && src.startsWith('data')) dataImages.push(src);
     }
     return dataImages
@@ -16463,9 +16607,8 @@ function getDataImages() {
  */
 function savedDataImage(oldSrc, newSrc) {
     const view = activeView();
-    let images = activeDocument().getElementsByTagName('img');
-    for (let i = 0; i < images.length; i++) {
-        let img = images[i];
+    let images = Array.from(activeEditorElement().getElementsByTagName('img'));
+    for (let img of images) {
         let src = img.getAttribute('src');
         if (src && src.startsWith(oldSrc)) {
             let imgPos = view.posAtDOM(img, 0);
@@ -16478,9 +16621,6 @@ function savedDataImage(oldSrc, newSrc) {
 /**
  * Get the contents of the div with id `divID` or of the full doc.
  *
- * If pretty, then the text will be nicely formatted for reading.
- * If clean, the spans and empty text nodes will be removed first.
- *
  * Note: Clean is needed to avoid the selected ResizableImage from being
  * passed-back with spans around it, which is what are used internally to
  * represent the resizing handles and box around the selected image.
@@ -16488,8 +16628,11 @@ function savedDataImage(oldSrc, newSrc) {
  * MarkupEditor and should not be included with the HTML contents. It is
  * available here with clean !== true as an option in case it's needed 
  * for debugging.
- *
- * @return {string} The HTML for the div with id `divID` or of the full doc.
+ * 
+ * @param   {string}    pretty  Set to "true" to format nicely for reading.
+ * @param   {string}    clean   Set to "true" to remove spans and empty text nodes first.
+ * @param   {string}    divID   The ID for the DIV to return HTML from.
+ * @returns  {string}    The HTML for the div with id `divID` or of the full doc.
  */
 function getHTML(pretty='true', clean='true', divID) {
     const view = activeView();
@@ -16519,7 +16662,8 @@ function getHTML(pretty='true', clean='true', divID) {
  * Insert a newline between each top-level element so they are distinct
  * visually and each top-level element is in a contiguous text block vertically.
  *
- * @return {String}     A string showing the raw HTML with tags, etc.
+ * @ignore
+ * @returns {string}     A string showing the raw HTML with tags, etc.
  */
 function _allPrettyHTML(fragment) {
     let text = '';
@@ -16537,6 +16681,7 @@ function _allPrettyHTML(fragment) {
  * The inlined parameter forces whether to put a newline at the beginning
  * of the text. By passing it in rather than computing it from node, we
  * can avoid putting a newline in front of the first element in _allPrettyHTML.
+ * @ignore
  */
 function _prettyHTML(node, indent, text, inlined) {
     const nodeName = node.nodeName.toLowerCase();
@@ -16566,6 +16711,7 @@ function _prettyHTML(node, indent, text, inlined) {
 }
 /**
  * Return a new string that has all < replaced with &lt; and all > replaced with &gt;
+ * @ignore
  */
 function _replaceAngles(textContent) {
     return textContent.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -16573,6 +16719,7 @@ function _replaceAngles(textContent) {
 /**
  * Return whether node should be inlined during the prettyHTML assembly. An inlined node
  * like <I> in a <P> ends up looking like <P>This is an <I>italic</I> node</P>.
+ * @ignore
  */
 function _isInlined(node) {
     return _isTextNode(node) || _isFormatElement(node) || _isLinkNode(node) || _isVoidNode(node)
@@ -16582,8 +16729,9 @@ function _isInlined(node) {
  * 
  * Used so relative hrefs and srcs work. 
  * If `string` is undefined, then the base element is removed if it exists.
+ * @ignore
  */
-function setBase(string) {
+function _setBase(string) {
     let base = document.getElementsByTagName('base')[0];
     if (string) {
         if (!base) {
@@ -16611,7 +16759,7 @@ function setBase(string) {
 function setHTML(contents, focusAfterLoad=true, base, editorView) {
     // If defined, set base; else remove base if it exists. This way, when setHTML is used to,
     // say, create a new empty document, base will be reset.
-    setBase(base);
+    _setBase(base);
     const htmlView = (editorView) ? editorView : activeView();
     const state = htmlView.state;
     const doc = state.doc;
@@ -16639,7 +16787,7 @@ function setHTML(contents, focusAfterLoad=true, base, editorView) {
  * window.getComputedStyle(editor, null), and then asking that for the height. It does
  * not include padding. This kind of works, except that I found the height changed as
  * soon as I add a single character to the text. So, for example, it shows 21px when it
- * opens with just a single <p>Foo</p>, but once you add a character to the text, the
+ * opens with just a single `<p>Foo</p>`, but once you add a character to the text, the
  * height shows up as 36px. If you remove padding-block, then the behavior goes away.
  * To work around the problem, we set the padding block to 0 before getting height, and
  * then set it back afterward. With this change, both the touch-outside-of-text works
@@ -16658,13 +16806,15 @@ function getHeight() {
    editor.style['padding-block-end'] = paddingBlockEnd;
    return height;
 }
-/*
+/**
  * Pad the bottom of the text in editor to fill fullHeight.
  *
  * Setting padBottom pads the editor all the way to the bottom, so that the
  * focus area occupies the entire view. This allows long-press on iOS to bring up the
  * context menu anywhere on the screen, even when text only occupies a small portion
  * of the screen.
+ * 
+ * @param   {string}    fullHeight  The full height of the screen to be padded-to
  */
 function padBottom(fullHeight) {
     const editor = activeDocument().getElementById('editor');
@@ -16675,7 +16825,13 @@ function padBottom(fullHeight) {
         editor.style.setProperty('--padBottom', '0');
     }}
 /**
- * Reset the selection to the beginning of the document
+ * Focus immediately, leaving range alone.
+ */
+function focus() {
+    activeView().focus();
+}
+/**
+ * Reset the selection to the beginning of the document.
  */
 function resetSelection() {
     const view = activeView();
@@ -16688,6 +16844,7 @@ function resetSelection() {
 /**
  * Return the node and position of the first editable text; i.e., 
  * a text node inside of a contentEditable div.
+ * @ignore
  */
 function _firstEditableTextNode() {
     const view = activeView();
@@ -16716,6 +16873,13 @@ function _firstEditableTextNode() {
  * the buttonGroupJSON. However, button groups can also be added and removed dynamically.
  * In that case, a button group div is added to a parent div using this call, and the parent has to 
  * already exist so that we can find it.
+ * 
+ * @param   {string}    id          The id of the dive to add
+ * @param   {string}    parentId    The id of the parent for this div
+ * @param   {string}    cssClass    The class to assign to this div
+ * @param   {string}    attributesJSON  A stringified object containing the editable attributes
+ * @param   {string}    buttonGroupJSON A stringified object containing a group of buttons in this div
+ * @param   {string}    htmlContents    The inner HTML to place in this div
  */
 function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, htmlContents) {
     const view = activeView();
@@ -16769,9 +16933,9 @@ function addDiv(id, parentId, cssClass, attributesJSON, buttonGroupJSON, htmlCon
         view.dispatch(transaction);
     }}
 /**
- * 
+ * @ignore
  * @param {string} buttonGroupJSON A JSON string describing the button group
- * @returns HTMLDivElement
+ * @returns {HTMLDivElement}
  */
 function _buttonGroupDiv(buttonGroupJSON) {
     if (buttonGroupJSON) {
@@ -16862,6 +17026,7 @@ function addButton(id, parentId, cssClass, label) {
     }
 }
 /**
+ * Remove the HTMLButton element with the given `id`.
  * 
  * @param {string} id   The ID of the button to be removed.
  */
@@ -16876,6 +17041,7 @@ function removeButton(id) {
         view.dispatch(transaction);
     }}
 /**
+ * Focus on the DIV with `id`.
  * 
  * @param {string} id   The ID of the DIV to focus on.
  */
@@ -16901,10 +17067,11 @@ function removeAllDivs() {
  * across the view.state.doc from position `from` to position `to`. 
  * If `from` or `to` are unspecified, they default to the beginning 
  * and end of view.state.doc.
+ * @ignore
  * @param {string} id           The attrs.id of the node we are looking for.
  * @param {number} from         The position in the document to search from.
  * @param {number} to           The position in the document to search to.
- * @returns {Object}            The node and position that matched the search.
+ * @returns {object}            The node and position that matched the search.
  */
 function _getNode(id, doc, from, to) {
     const view = activeView();
@@ -16933,43 +17100,43 @@ function _getNode(id, doc, from, to) {
 //MARK: Formatting
 
 /**
- * Toggle the selection to/from bold (<STRONG>)
+ * Toggle the selection to/from bold.
  */
 function toggleBold() {
     _toggleFormat('B');
 }
 /**
- * Toggle the selection to/from italic (<EM>)
+ * Toggle the selection to/from italic.
  */
 function toggleItalic() {
     _toggleFormat('I');
 }
 /**
- * Toggle the selection to/from underline (<U>)
+ * Toggle the selection to/from underline.
  */
 function toggleUnderline() {
     _toggleFormat('U');
 }
 /**
- * Toggle the selection to/from strikethrough (<S>)
+ * Toggle the selection to/from strikethrough.
  */
 function toggleStrike() {
     _toggleFormat('DEL');
 }
 /**
- * Toggle the selection to/from code (<CODE>)
+ * Toggle the selection to/from code.
  */
 function toggleCode() {
     _toggleFormat('CODE');
 }
 /**
- * Toggle the selection to/from subscript (<SUB>)
+ * Toggle the selection to/from subscript.
  */
 function toggleSubscript() {
     _toggleFormat('SUB');
 }
 /**
- * Toggle the selection to/from superscript (<SUP>)
+ * Toggle the selection to/from superscript.
  */
 function toggleSuperscript() {
     _toggleFormat('SUP');
@@ -16980,6 +17147,7 @@ function toggleSuperscript() {
  * Although the HTML will contain <STRONG>, <EM>, and <S>, the types
  * passed here are <B>, <I>, and <DEL> for compatibility reasons.
  *
+ * @ignore
  * @param {string} type     The *uppercase* type to be toggled at the selection.
  */
 function _toggleFormat(type) {
@@ -17034,7 +17202,8 @@ function toggleFormatCommand(type) {
 
 /**
  * Set the paragraph style at the selection to `style` 
- * @param {String}  style    One of the styles P or H1-H6 to set the selection to.
+ * 
+ * @param {string}  style    One of the styles P or H1-H6 to set the selection to.
  */
 function setStyle(style) {
     const view = activeView();
@@ -17044,7 +17213,9 @@ function setStyle(style) {
 }
 /**
  * Return a Command that sets the paragraph style at the selection to `style` 
- * @param {String}  style    One of the styles P or H1-H6 to set the selection to.
+ * 
+ * @ignore
+ * @param {string}  style    One of the styles P or H1-H6 to set the selection to.
  */
 function setStyleCommand(style) {
     let commandAdapter = (viewState, dispatch, view) => {
@@ -17090,16 +17261,8 @@ function setStyleCommand(style) {
 }
 
 /**
- * Find/verify the oldStyle for the selection and replace it with newStyle.
- * @deprecated Use setStyle
- * @param {String}  oldStyle    One of the styles P or H1-H6 that exists at selection.
- * @param {String}  newStyle    One of the styles P or H1-H6 to replace oldStyle with.
- */
-function replaceStyle(oldStyle, newStyle) {
-    setStyle(newStyle);
-}
-/**
  * Return a ProseMirror Node that corresponds to the MarkupEditor paragraph style.
+ * @ignore
  * @param {string} paragraphStyle   One of the paragraph styles supported by the MarkupEditor.
  * @returns {Node | null}           A ProseMirror Node of the specified type or null if unknown.
  */
@@ -17151,7 +17314,7 @@ function _nodeFor(paragraphStyle, schema) {
  * We use a single command returned by `multiWrapInList` because the command 
  * can be assigned to a single button in JavaScript.
  * 
- * @param {String}  listType     The kind of list we want the list item to be in if we are turning it on or changing it.
+ * @param {string}  listType     The kind of list we want the list item to be in if we are turning it on or changing it.
  */
 function toggleListItem$1(listType) {
     const view = activeView();
@@ -17172,7 +17335,8 @@ function toggleListItem$1(listType) {
  * no longer contains a list. Similarly, if the list returned here is null, then  
  * the selection can be set to a list.
  * 
- * @return { 'UL' | 'OL' | null }
+ * @ignore
+ * @returns { 'UL' | 'OL' | null }
  */
 function getListType(state) {
     const selection = state.selection;
@@ -17199,7 +17363,9 @@ function _getListType() {
 }
 /**
  * Return the NodeType corresponding to `listType`, else null.
- * @param {"UL" | "OL" | String} listType The String corresponding to the NodeType
+ * 
+ * @ignore
+ * @param {"UL" | "OL" | string} listType The String corresponding to the NodeType
  * @returns {NodeType | null}
  */
 function nodeTypeFor(listType, schema) {
@@ -17213,6 +17379,8 @@ function nodeTypeFor(listType, schema) {
 
 /**
  * Return the String corresponding to `nodeType`, else null.
+ * 
+ * @ignore
  * @param {NodeType} nodeType The NodeType corresponding to the String
  * @returns {'UL' | 'OL' | null}
  */
@@ -17241,6 +17409,7 @@ function listTypeFor(nodeType, schema) {
  * 
  * Adapted from code in https://discuss.prosemirror.net/t/changing-the-node-type-of-a-list/4996.
  * 
+ * @ignore
  * @param {Schema}          schema              The schema holding the list and list item node types.
  * @param {NodeType}        targetNodeType      One of state.schema.nodes.bullet_list or ordered_list to change selection to.
  * @param {Attrs | null}    attrs               Attributes of the new list items.
@@ -17260,7 +17429,7 @@ function wrapInListCommand(schema, targetNodeType, attrs) {
             return result;
         }
 
-        const commonListNode = findCommonListNode(state, listTypes);
+        const commonListNode = _findCommonListNode(state, listTypes);
         if (!commonListNode) return false;
 
         if (dispatch) {
@@ -17297,11 +17466,13 @@ function wrapInListCommand(schema, targetNodeType, attrs) {
 }
 /**
  * Return the common list node in the selection that is one of the `listTypes` if one exists.
+ * 
+ * @ignore
  * @param {EditorState}     state       The EditorState containing the selection.
  * @param {Array<NodeType>} listTypes   The list types we're looking for.
- * @returns {node: Node, from: number, to: number}
+ * @returns {object}                    {node: Node, from: number, to: number}
  */
-function findCommonListNode(state, listTypes) {
+function _findCommonListNode(state, listTypes) {
 
     const range = state.selection.$from.blockRange(state.selection.$to);
     if (!range) return null;
@@ -17314,6 +17485,8 @@ function findCommonListNode(state, listTypes) {
 }
 /**
  * Return a Fragment with its children replaced by ones that are of `targetListType` or `targetListItemType`.
+ * 
+ * @ignore
  * @param {Fragment}        content             The ProseMirror Fragment taken from the selection.
  * @param {NodeType}        targetListType      The bullet_list or ordered_list NodeType we are changing children to.
  * @param {NodeType}        targetListItemType  The list_item NodeType we are changing children to.
@@ -17341,6 +17514,8 @@ function updateContent(content, targetListType, targetListItemType, listTypes, l
 }
 /**
  * Return the `target` node type if the type of `node` is one of the `options`.
+ * 
+ * @ignore
  * @param {Node}            node 
  * @param {NodeType}        target 
  * @param {Array<NodeType>} options 
@@ -17351,12 +17526,14 @@ function getReplacementType(node, target, options) {
 }
 /**
  * Return a new Node with one of the target types.
+ * 
+ * @ignore
  * @param {Node}            node                The node to change to targetListType or targetListItemType.
  * @param {NodeType}        targetListType      The list type we want to change `node` to.
  * @param {NodeType}        targetListItemType  The list item types we want to change `node` to.
  * @param {Array<NodeType>} listTypes           The list types we're looking for.
  * @param {Array<NodeType>} listItemTypes       The list item types we're looking for.
- * @returns Node
+ * @returns {Node}
  */
 function updateNode(node, targetListType, targetListItemType, listTypes, listItemTypes) {
     const newContent = updateContent(
@@ -17582,37 +17759,14 @@ function parents($pos, start, end) {
 }
 
 /********************************************************************************
- * Deal with modal input from the Swift side
- */
-//MARK: Modal Input
-
-/**
- * Called before beginning a modal popover on the Swift side, to enable the selection
- * to be restored by endModalInput.
- * 
- * @deprecated No longer needed.
- */
-function startModalInput() {
-}
-
-/**
- * Called typically after cancelling a modal popover on the Swift side, since
- * normally the result of using the popover is to modify the DOM and reset the
- * selection.
- * 
- * @deprecated No longer needed.
- */
-function endModalInput() {
-}
-
-/********************************************************************************
  * Clean up to avoid ugly HTML
  */
 //MARK: Clean Up
 
 /**
  * Remove all children with names in node.
- * @param {[string]} names 
+ * @ignore
+ * @param {string[]} names 
  * @param {HTMLElement} node 
  */
 function _cleanUpTypesWithin(names, node) {
@@ -17628,16 +17782,18 @@ function _cleanUpTypesWithin(names, node) {
         }    }}
 /**
  * Do a depth-first traversal from node, removing spans starting at the leaf nodes.
- *
- * @return {Int}    The number of spans removed
+ * 
+ * @ignore
+ * @returns {number}    The number of spans removed
  */
 function _cleanUpSpansWithin(node, spansRemoved) {
     return _cleanUpSpansDivsWithin(node, 'SPAN', spansRemoved);
 }
 /**
  * Do a depth-first traversal from node, removing divs starting at the leaf nodes.
- *
- * @return {Int}    The number of divs removed
+ * 
+ * @ignore
+ * @returns {number}    The number of divs removed
  */
 function _cleanUpDivsWithin(node, divsRemoved) {
     return _cleanUpSpansDivsWithin(node, 'DIV', divsRemoved);
@@ -17645,8 +17801,9 @@ function _cleanUpDivsWithin(node, divsRemoved) {
 
 /**
  * Do a depth-first traversal from node, removing divs/spans starting at the leaf nodes.
- *
- * @return {Int}    The number of divs/spans removed
+ * 
+ * @ignore
+ * @returns {number}    The number of divs/spans removed
  */
 function _cleanUpSpansDivsWithin(node, type, removed) {
     removed = removed ?? 0;
@@ -17679,7 +17836,7 @@ function _cleanUpSpansDivsWithin(node, type, removed) {
  * find out what the selection is in the document, so we
  * can tell if the selection is in a bolded word or a list or a table, etc.
  *
- * @return {String}      The stringified dictionary of selectionState.
+ * @returns {string}      The stringified dictionary of selectionState.
  */
 function getSelectionState() {
     const state = _getSelectionState();
@@ -17687,8 +17844,9 @@ function getSelectionState() {
 }
 /**
  * Populate a dictionary of properties about the current selection and return it.
- *
- * @return {String: String}     The dictionary of properties describing the selection
+ * 
+ * @ignore
+ * @returns {object}     The string-keyed dictionary of properties describing the selection
  */
 function _getSelectionState() {
     const state = {};
@@ -17764,7 +17922,8 @@ function _getSelectionState() {
  * should not happen), then the return might be unexpected (haha, which 
  * should not happen, of course!).
  * 
- * @returns {Object} The id and editable state that is selected.
+ * @ignore
+ * @returns {object} The id and editable state that is selected.
  */
 function _getContentEditable() {
     const view = activeView();
@@ -17779,7 +17938,9 @@ function _getContentEditable() {
 
 /**
  * Return the text at the selection.
- * @returns {String | null} The text that is selected.
+ * 
+ * @ignore
+ * @returns {string | null} The text that is selected.
  */
 function _getSelectionText() {
     const view = activeView();
@@ -17799,7 +17960,9 @@ function _getSelectionText() {
 }
 /**
  * Return the rectangle that encloses the selection.
- * @returns {Object} The selection rectangle's top, bottom, left, right.
+ * 
+ * @ignore
+ * @returns {object} The selection rectangle's top, bottom, left, right.
  */
 function getSelectionRect() {
     const view = activeView();
@@ -17816,6 +17979,8 @@ function getSelectionRect() {
 }
 /**
  * Return the MarkTypes that exist at the selection.
+ * 
+ * @ignore
  * @returns {Set<MarkType>}   The set of MarkTypes at the selection.
  */
 function _getMarkTypes() {
@@ -17836,7 +18001,8 @@ function _getMarkTypes() {
 }
 /**
  * Return the link attributes at the selection.
- * @returns {Object}   An Object whose properties are <a> attributes (like href, link) at the selection.
+ * 
+ * @returns {object}   An Object whose properties are the link attributes (like href, link) at the selection.
  */
 function getLinkAttributes() {
     const view = activeView();
@@ -17859,7 +18025,7 @@ function _getImageAttributes() {
 
 /**
  * Return the image attributes at the selection
- * @returns {Object}   An Object whose properties are <img> attributes (like src, alt, width, height, scale) at the selection.
+ * @returns {object}   An Object whose properties are the image attributes (like src, alt, width, height, scale) at the selection.
  */
 function getImageAttributes(state) {
     const selection = state.selection;
@@ -17880,7 +18046,8 @@ function getImageAttributes(state) {
  * In the MarkupEditor, if there is a header, it is always colspanned across the number 
  * of columns, and normal rows are never colspanned.
  *
- * @returns {Object}   An object with properties populated.
+ * @ignore
+ * @returns {object}   An object with properties populated.
  */
 function _getTableAttributes(state) {
     const view = activeView();
@@ -17940,8 +18107,9 @@ function _getTableAttributes(state) {
 
 /**
  * Return the paragraph style at the selection.
- *
- * @return {String}   {Tag name | 'Multiple'} that represents the selected paragraph style.
+ * 
+ * @ignore
+ * @returns {string}   {Tag name | 'Multiple'} that represents the selected paragraph style.
  */
 function _getParagraphStyle() {
     const view = activeView();
@@ -17959,9 +18127,11 @@ function paragraphStyle(state) {
 }
 
 /**
+ * Given a ProseMirror Node, return the HTML tag it corresponds to in the MarkupEditor.
  * 
+ * @ignore
  * @param {Node} node The node we want the paragraph style for
- * @returns {String}    { "P" | "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | null }
+ * @returns { "P" | "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | "PRE" | null }
  */
 function _paragraphStyleFor(node) {
     var style;
@@ -17985,8 +18155,9 @@ function isIndented(activeState) {
 
 /**
  * Return whether the selection is indented.
- *
- * @return {Boolean}   Whether the selection is in a blockquote.
+ * 
+ * @ignore
+ * @returns {boolean}   Whether the selection is in a blockquote.
  */
 function _getIndented(state) {
     const selection = state.selection;
@@ -18004,6 +18175,8 @@ function _getIndented(state) {
  * Callback to signal that input came-in, passing along the DIV ID
  * that the input occurred-in if known. If DIV ID is not known, the raw 'input'
  * callback means the change happened in the 'editor' div.
+ * 
+ * @ignore
  */
 function callbackInput(element) {
     _callback('input' + (selectedID() ?? ''), element);
@@ -18011,12 +18184,16 @@ function callbackInput(element) {
 /**
  * Callback to signal that user-provided CSS and/or script files have
  * been loaded.
+ * 
+ * @ignore
  */
 function _loadedUserFiles(target) {
     _callback('loadedUserFiles', target ?? activeDocument());
 }
 /**
  * Callback to signal that an error occurred.
+ * 
+ * @ignore
  * @param {MUError} error 
  */
 function _callbackError(error) {
@@ -18025,6 +18202,8 @@ function _callbackError(error) {
 
 /**
  * Report a selection change.
+ * 
+ * @ignore
  */
 function selectionChanged(element) {
     _callback('selectionChanged', element);
@@ -18032,6 +18211,8 @@ function selectionChanged(element) {
 
 /**
  * Report a click.
+ * 
+ * @ignore
  */
 function clicked(view, element) {
     deactivateSearch(view);
@@ -18040,6 +18221,8 @@ function clicked(view, element) {
 
 /**
  * Report a button click.
+ * 
+ * @ignore
  */
 function buttonClicked(message, element) {
     _callback(message, element);
@@ -18061,6 +18244,8 @@ function deactivateSearchCallback(element) {
 
 /**
  * Set the active document and report focus.
+ * 
+ * @param {HTMLElement} element The HTML element whose root node should become active
  */
 function focused(element) {
     setActiveDocument(element.getRootNode());
@@ -18071,6 +18256,7 @@ function focused(element) {
  * Report blur. Note we don't reset active `muId` because elements 
  * lose focus (e.g., during user interaction like search) and we 
  * still want to use the same root node `muId`.
+ * @ignore
  */
 function blurred(element) {
     _callback('blur', element);
@@ -18081,7 +18267,8 @@ function blurred(element) {
  * change might be from typing or formatting or styling, etc.
  * and triggers both a `selectionChanged` and `input` callback.
  * 
- * @returns Bool    Return false so we can use in chainCommands directly
+ * @ignore
+ * @returns {boolean}    Return false so we can use in chainCommands directly
  */
 function stateChanged(view) {
     if (!view) return
@@ -18098,8 +18285,10 @@ function _editor(view) {
 /**
  * Post a message to the message handler.
  * 
- * Refer to MarkupCoordinate.swift source for message types and contents that are supported in Swift.
- * @param {string | Object} message  A JSON-serializable JavaScript object.
+ * Refer to MarkupCoordinator.swift source for message types and contents that are supported in Swift.
+ * 
+ * @ignore
+ * @param {string | object} message  A JSON-serializable JavaScript object.
  */
 function postMessage(message) {
     _callback(JSON.stringify(message));
@@ -18119,8 +18308,8 @@ function postMessage(message) {
  * the history can be left in a state where an undo will work because the previous test
  * executed redo.
  * 
- * @param {*} contents  The HTML for the editor
- * @param {*} sel       An embedded character in contents marking selection point(s)
+ * @param {string} contents  The HTML for the editor
+ * @param {string} sel       An embedded character in contents marking selection point(s)
  */
 function setTestHTML(contents, sel) {
     const view = activeView();
@@ -18165,7 +18354,8 @@ function setTestHTML(contents, sel) {
 }
 /**
  * Get the HTML contents and mark the selection from/to using the text identified by `sel`.
- * @param {*} sel       An embedded character in contents indicating selection point(s)
+ * 
+ * @param {string} sel       An embedded character in contents indicating selection point(s)
  */
 function getTestHTML(sel) {
     if (!sel) return getHTML(false);   // Return the compressed/unformatted HTML if no sel
@@ -18183,6 +18373,7 @@ function getTestHTML(sel) {
     div.appendChild(htmlElement);
     return div.innerHTML;
 }
+/** Undo the previous action. */
 function doUndo() {
     const view = activeView();
     let command = undoCommand();
@@ -18192,6 +18383,8 @@ function doUndo() {
 
 /**
  * Return a command to undo and do the proper callbacks.
+ * 
+ * @ignore
  */
 function undoCommand() {
     let commandAdapter = (state, dispatch, view) => {
@@ -18203,6 +18396,7 @@ function undoCommand() {
     };
     return commandAdapter
 }
+/** Redo the previously undone action. */
 function doRedo() {
     const view = activeView();
     let command = redoCommand();
@@ -18212,6 +18406,8 @@ function doRedo() {
 
 /**
  * Return a command to redo and do the proper callbacks.
+ * 
+ * @ignore
  */
 function redoCommand() {
     let commandAdapter = (state, dispatch, view) => {
@@ -18225,11 +18421,13 @@ function redoCommand() {
 }
 /**
  * For testing purposes, invoke _doBlockquoteEnter programmatically.
+ * 
+ * TODO: Implement
  */
 function testBlockquoteEnter() {
 }
 /**
- * For testing purposes, invoke _doListEnter programmatically.
+ * For testing purposes, invoke the splitCommand programmatically.
  */
 function testListEnter() {
     const view = activeView();
@@ -18239,6 +18437,8 @@ function testListEnter() {
 /**
  * For testing purposes, invoke extractContents() on the selected range
  * to make sure the selection is as expected.
+ * 
+ * TODO: Implement
  */
 function testExtractContents() {
 }
@@ -18249,6 +18449,8 @@ function testExtractContents() {
  * clean HTML and test the effect of schema-conformance on HTML contents
  * separately. The html passed here is (typically) obtained from the paste 
  * buffer.
+ * 
+ * @param {string}  html    The HTML to paste
  */
 function testPasteHTMLPreprocessing(html) {
     const node = _nodeFromHTML(html);
@@ -18258,6 +18460,8 @@ function testPasteHTMLPreprocessing(html) {
 /**
  * Use the same approach as testPasteHTMLPreprocessing, but augment with 
  * _minimalHTML to get a MarkupEditor-equivalent of unformatted text.
+ * 
+ * @param {string}  html    The HTML to paste
  */
 function testPasteTextPreprocessing(html) {
     const node = _nodeFromHTML(html);
@@ -18276,7 +18480,7 @@ function testPasteTextPreprocessing(html) {
  *
  * When done, leave the link selected.
  *
- * @param {String}  url             The url/href to use for the link
+ * @param {string}  url             The url/href to use for the link
  */
 function insertLink(url) {
     const view = activeView();
@@ -18346,9 +18550,11 @@ function insertInternalLinkCommand(hTag, index) {
 /**
  * Unlike other commands, this one returns an object identifying the id for the header with hTag. 
  * Other commands return true or false. This command also never does anything with the view or state.
- * @param {string} hTag One of the strings `H1`-`H6`
- * @param {*} index     Within existing elements with tag `hTag`, this is the index into them that is identified
- * @returns 
+ * 
+ * @ignore
+ * @param {string} hTag     One of the strings `H1`-`H6`
+ * @param {number} index    Within existing elements with tag `hTag`, this is the index into them that is identified
+ * @returns {Function(EditorState): object} A function that contains hTag, index, id, and whether the if already exists
  */
 function idForInternalLinkCommand(hTag, index) {
     const commandAdapter = (state) => {
@@ -18367,6 +18573,7 @@ function idForInternalLinkCommand(hTag, index) {
  * Since the `node.textContent` can be arbitrarily large, we limit the id to 40 characters 
  * just to avoid unwieldy IDs.
  * 
+ * @ignore
  * @param {Node}        node    A ProseMirror Node that is of heading type
  * @param {EditorState} state     
  * @returns {string}            A unique ID that is used by `node` or that can be assigned to `node`
@@ -18387,10 +18594,12 @@ function idForHeader(node, state) {
 }
 
 /**
- * Return the node and its position that has an attrs.id matching `id`
- * @param {string} id The id attr of a Node we are trying to match
- * @param {*} state 
- * @returns {object}    The `node` and its `pos` in the `state.doc`
+ * Return the node and its position that has an attrs.id matching `id`.
+ * 
+ * @ignore
+ * @param {string} id           The id attr of a Node we are trying to match
+ * @param {EditorState} state   The state of the ProseMirror editor
+ * @returns {object}            The `node` and its `pos` in the `state.doc`
  */
 function nodeWithId(id, state) {
     let idNode, idPos;
@@ -18416,7 +18625,12 @@ function headerMatching(hTag, index, state) {
     }
 }
 
-// Return all the headers that exist in `state.doc` as arrays keyed by level
+/**
+ * Return all the headers that exist in `state.doc` as arrays keyed by level.
+ * 
+ * @ignore
+ * @param {EditorState} state   The state of the ProseMirror editor
+ */ 
 function headers(state) {
     let headers = {};
     let hType = state.schema.nodes.heading;
@@ -18512,8 +18726,8 @@ function selectFullLink(view) {
  * Insert the image at src with alt text, signaling state changed when done loading.
  * We leave the selection after the inserted image.
  *
- * @param {String}              src         The url of the image.
- * @param {String}              alt         The alt text describing the image.
+ * @param {string}              src         The url of the image.
+ * @param {string}              alt         The alt text describing the image.
  */
 function insertImage(src, alt) {
     const view = activeView();
@@ -18535,8 +18749,8 @@ function insertImageCommand(src, alt) {
 /**
  * Modify the attributes of the image at selection.
  *
- * @param {String}              src         The url of the image.
- * @param {String}              alt         The alt text describing the image.
+ * @param {string}              src         The url of the image.
+ * @param {string}              alt         The alt text describing the image.
  */
 function modifyImage(src, alt) {
     const view = activeView();
@@ -18582,7 +18796,7 @@ function cutImage() {
     const selection = view.state.selection;
     const imageNode = selection.node;
     if (imageNode?.type === schema.nodes.image) {
-        copyImage(imageNode);
+        _copyImage(imageNode);
         const transaction = view.state.tr.deleteSelection();
         view.dispatch(transaction);
         stateChanged(view);
@@ -18590,9 +18804,10 @@ function cutImage() {
 /**
  * Post a message with src, alt, and dimensions, so the image contents can be put into the clipboard.
  * 
+ * @ignore
  * @param {Node} node   A ProseMirror image node
  */
-function copyImage(node) {
+function _copyImage(node) {
     const messageDict = {
         'messageType' : 'copyImage',
         'src' : node.attrs.src,
@@ -18609,8 +18824,8 @@ function copyImage(node) {
 /**
  * Insert an empty table with the specified number of rows and cols.
  *
- * @param   {Int}                 rows        The number of rows in the table to be created.
- * @param   {Int}                 cols        The number of columns in the table to be created.
+ * @param   {number}                 rows        The number of rows in the table to be created.
+ * @param   {number}                 cols        The number of columns in the table to be created.
  */
 function insertTable(rows, cols) {
     const view = activeView();
@@ -18687,7 +18902,7 @@ function insertTableCommand(rows, cols) {
  * Add a row before or after the current selection, whether it's in the header or body.
  * For rows, AFTER = below; otherwise above.
  *
- * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
+ * @param {string}  direction   Either 'BEFORE' or 'AFTER' to identify where the new row goes relative to the selection.
  */
 function addRow(direction) {
     const view = activeView();
@@ -18715,7 +18930,7 @@ function addRowCommand(direction) {
  * In MarkupEditor, the header is always colspanned fully, so we need to merge the headers if adding 
  * a column in created a new element in the header row.
  *
- * @param {String}  direction   Either 'BEFORE' or 'AFTER' to identify where the new column goes relative to the selection.
+ * @param {string}  direction   Either 'BEFORE' or 'AFTER' to identify where the new column goes relative to the selection.
  */
 function addCol(direction) {
     const view = activeView();
@@ -18855,6 +19070,8 @@ function borderTable(border) {
 }
 /**
  * Return whether the selection is within a table.
+ * 
+ * @ignore
  * @returns {boolean} True if the selection is within a table
  */
 function _tableSelected() {
@@ -18893,6 +19110,8 @@ function _selectInFirstCell(state, dispatch) {
  * the MarkupEditor, the row is always colspanned across all columns, we need to 
  * merge the cells together when this happens. The operations that insert internal 
  * columns don't cause the header row to have a new cell.
+ * 
+ * @ignore
  */
 function _mergeHeaders(state, dispatch) {
     const nodeTypes = state.schema.nodes;
@@ -18977,6 +19196,8 @@ function setBorderCommand(border) {
 
 /**
  * Get the border around and within the cell.
+ * 
+ * @ignore
  * @returns {'outer' | 'header' | 'cell' | 'none'} The type of table border known on the view holder's side.
  */
 function _getBorder(table) {
@@ -19001,9 +19222,11 @@ function _getBorder(table) {
 }
 /**
  * Return the first node starting at depth 0 (the top) that is of type `type`.
+ * 
+ * @ignore
  * @param {NodeType}    type The NodeType we are looking for that contains $pos.
  * @param {ResolvedPos} $pos A resolved position within a document node.
- * @returns Node | null
+ * @returns {Node | null}
  */
 function outermostOfTypeAt(type, $pos) {
     const depth = $pos.depth;
@@ -19023,8 +19246,10 @@ function outermostOfTypeAt(type, $pos) {
  * Since the schema for the MarkupEditor accepts div and buttons, clean them from the 
  * html before deriving a Node. Cleaning up means retaining the div contents while removing
  * the divs, and removing buttons.
+ * 
+ * @ignore
  * @param {string} html 
- * @returns Node
+ * @returns {Node}
  */
 function _nodeFromHTML(html) {
     const fragment = _fragmentFromHTML(html);
@@ -19035,8 +19260,10 @@ function _nodeFromHTML(html) {
 }
 /**
  * Return a ProseMirror Node derived from an HTMLElement.
+ * 
+ * @ignore
  * @param {HTMLElement} htmlElement 
- * @returns Node
+ * @returns {Node}
  */
 function _nodeFromElement(htmlElement) {
     return DOMParser.fromSchema(schema).parse(htmlElement, { preserveWhiteSpace: true });
@@ -19044,16 +19271,20 @@ function _nodeFromElement(htmlElement) {
 
 /**
  * Return an HTML DocumentFragment derived from a ProseMirror node.
+ * 
+ * @ignore
  * @param {Node} node 
- * @returns DocumentFragment
+ * @returns {DocumentFragment}
  */
 function fragmentFromNode(node) {
     return DOMSerializer.fromSchema(schema).serializeFragment(node.content);
 }
 /**
  * Return the innerHTML string contained in a DocumentFragment.
+ * 
+ * @ignore
  * @param {DocumentFragment} fragment 
- * @returns string
+ * @returns {string}
  */
 function htmlFromFragment(fragment) {
     const div = document.createElement('div');
@@ -19062,8 +19293,10 @@ function htmlFromFragment(fragment) {
 }
 /**
  * Return an HTML DocumentFragment derived from HTML text.
+ * 
+ * @ignore
  * @param {string} html 
- * @returns DocumentFragment
+ * @returns {DocumentFragment}
  */
 function _fragmentFromHTML(html) {
     const template = document.createElement('template');
@@ -19072,8 +19305,10 @@ function _fragmentFromHTML(html) {
 }
 /**
  * Return a ProseMirror Slice derived from HTML text.
+ * 
+ * @ignore
  * @param {string} html 
- * @returns Slice
+ * @returns {Slice}
  */
 function _sliceFromHTML(html) {
     const div = document.createElement('div');
@@ -19082,8 +19317,10 @@ function _sliceFromHTML(html) {
 }
 /**
  * Return a ProseMirror Slice derived from an HTMLElement.
+ * 
+ * @ignore
  * @param {HTMLElement} htmlElement 
- * @returns Slice
+ * @returns {Slice}
  */
 function _sliceFromElement(htmlElement) {
     return DOMParser.fromSchema(schema).parseSlice(htmlElement, { preserveWhiteSpace: true });
@@ -19091,36 +19328,48 @@ function _sliceFromElement(htmlElement) {
 
 /**
  * Return whether node is a textNode or not
+ * 
+ * @ignore
  */
 function _isTextNode(node) {
     return node && (node.nodeType === Node.TEXT_NODE);
 }
 /**
  * Return whether node is an ELEMENT_NODE or not
+ * 
+ * @ignore
  */
 function _isElementNode(node) {
     return node && (node.nodeType === Node.ELEMENT_NODE);
 }
 /**
  * Return whether node is a format element; i.e., its nodeName is in _formatTags
+ * 
+ * @ignore
  */
 function _isFormatElement(node) {
     return _isElementNode(node) && _formatTags.includes(node.nodeName);
 }
 /**
  * Return whether node has a void tag (i.e., does not need a terminator)
+ * 
+ * @ignore
  */
 function _isVoidNode(node) {
     return node && (_voidTags.includes(node.nodeName));
 }
 /**
  * Return whether node is a link
+ * 
+ * @ignore
  */
 function _isLinkNode(node) {
     return node && (node.nodeName === 'A');
 }
 /**
  * Callback to show a string in the console, like console.log(), but for environments like Xcode.
+ * 
+ * @param {string}  string  The string to package up as a console log message in a callback
  */
 function consoleLog(string) {
     let messageDict = {
@@ -19131,196 +19380,418 @@ function consoleLog(string) {
 }
 
 /**
- * `ToolbarConfig.standard()` is the default for the MarkupEditor and is designed to correspond 
- * to GitHub flavored markdown. It can be overridden by passing it a new config when instantiating
- * the MarkupEditor. You can use the pre-defined static methods like `full` or customize what they 
- * return. The predefined statics each allow you to turn on or off the `correctionBar` visibility.
- * The `correctionBar` visibility is off by default, because while it's useful for touch devices 
- * without a keyboard, undo/redo are mapped to the hotkeys most people have in muscle memory.
+ * ToolbarConfig contains static utility methods to obtain a JavaScript object with properties 
+ * that define the configuration of the MarkupEditor toolbar. The class makes it convenient 
+ * to write and use the utility methods, but an instance of ToolbarConfig itself is not meaningful.
  * 
- * To customize the menu bar, for example, in your index.html:
+ * `ToolbarConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
+ * passing a new ToolbarConfig by name using the `toolbar` attribute of the `<markup-editor>` 
+ * element. You can use the pre-defined static methods like `standard()` and customize what 
+ * it returns, or you can use your own ToolbarConfig.
  * 
- *    let toolbarConfig = MU.ToolbarConfig.full(true);  // Grab the full toolbar, including correction, as a baseline
- *    toolbarConfig.insertBar.table = false;               // Turn off table insert
- *    const markupEditor = new MU.MarkupEditor(
- *      document.querySelector('#editor'),
- *      {
- *        html: '<h1>Hello, world!</h1>',
- *        toolbar: toolbarConfig,
- *      }
- *    )
+ * To customize the toolbar, for example, in a `userscript` named `mytoolbar.js`:
+ *
+ * ```
+ * import {MU} from "src/markup-editor.js"
+ * let toolbarConfig = MU.ToolbarConfig.full(true);    // Grab the full toolbar, including correction, as a baseline
+ * toolbarConfig.insertBar.tableMenu = false;          // Turn off table insert menu
+ * MU.registerConfig(toolbarConfig, "MyToolbarConfig") // Register the instance by name so we can reference it
+ *````
+ * 
+ * Then, where you insert the `<markup-editor>` element, set the ToolbarConfig by name:
+ * 
+ * ```
+ * <markup-editor userscript="mytoolbar.js" toolbar="MyToolbarConfig">
+ * ```
  *    
  * Turn off entire toolbars and menus using the "visibility" settings. Turn off specific items
  * within a toolbar or menu using the settings specific to that toolbar or menu. Customize 
- * left-to-right ordering using the "ordering" settings.
+ * left-to-right ordering using the "ordering" settings. Specify icon SVG in the "icon" settings.
+ * Use "augmentation" to prepend and/or append a toolbar you define yourself.
+ * 
+ * The following properties are supported:
+ * 
+ * ```
+ * {
+ *   "visibility": {             // Control the visibility of toolbars, etc
+ *     "toolbar": true,          // Whether the toolbar is visible at all
+ *     "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
+ *     "insertBar": true,        // Whether the insert bar (link, image, table) is visible
+ *     "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
+ *     "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
+ *     "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
+ *     "search": true,           // Whether the search item (hide/show search bar) is visible
+ *   },
+ *   "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
+ *     "correctionBar": 10,      // Correction bar order if it is visible
+ *     "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
+ *     "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
+ *     "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
+ *     "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
+ *     "search": 60,             // Search item (hide/show search bar) order if it is visible
+ *   },
+ *   "insertBar": {
+ *     "link": true,             // Whether the link menu item is visible
+ *     "image": true,            // Whether the image menu item is visible
+ *     "tableMenu": true,        // Whether the table menu is visible
+ *   },
+ *   "formatBar": {
+ *     "bold": true,             // Whether the bold menu item is visible
+ *     "italic": true,           // Whether the italic menu item is visible
+ *     "underline": true,        // Whether the underline menu item is visible
+ *     "code": true,             // Whether the code menu item is visible
+ *     "strikethrough": true,    // Whether the strikethrough menu item is visible
+ *     "subscript": true,        // Whether the subscript menu item is visible
+ *     "superscript": true,      // Whether the superscript menu item is visible
+ *   },
+ *   "styleMenu": {
+ *     "p": "Body",              // The label in the menu for "P" style
+ *     "h1": "H1",               // The label in the menu for "H1" style
+ *     "h2": "H2",               // The label in the menu for "H2" style
+ *     "h3": "H3",               // The label in the menu for "H3" style
+ *     "h4": "H4",               // The label in the menu for "H4" style
+ *     "h5": "H5",               // The label in the menu for "H5" style
+ *     "h6": "H6",               // The label in the menu for "H6" style
+ *     "pre": "Code",            // The label in the menu for "PRE" aka code_block style
+ *   },
+ *   "styleBar": {
+ *     "list": true,             // Whether bullet and numbered list items are visible
+ *     "dent": true,             // Whether indent and outdent items are visible
+ *   },
+ *   "tableMenu": {
+ *     "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
+ *     "border": true,           // Whether the "Border" item is visible in the "Table" menu
+ *   },
+ *   "augmentation": {
+ *     "prepend": null,          // Name of a registered array of cmdItems to prepend
+ *     "append": null            // Name of a registered array of cmdItems to append
+ *   },
+ *   "icons": {
+ *     // <span class="material-icons-outlined">undo</span>
+ *     "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
+ *     // <span class="material-icons-outlined">redo</span>
+ *     "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
+ *     // <span class="material-icons-outlined">format_bold</span>
+ *     "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
+ *     // <span class="material-icons-outlined">format_italic</span>
+ *     "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
+ *     // <span class="material-icons-outlined">format_underlined</span>
+ *     "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
+ *     // <span class="material-icons-outlined">strikethrough_s</span>
+ *     "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
+ *     // <span class="material-icons-outlined">data_object</span>
+ *     "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
+ *     // <span class="material-icons-outlined">subscript</span>
+ *     "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
+ *     // <span class="material-icons-outlined">superscript</span>
+ *     "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
+ *     // <span class="material-icons-outlined">link</span>
+ *     "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
+ *     // <span class="material-icons-outlined">image</span>
+ *     "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
+ *     // <span class="material-icons-outlined">table</span>
+ *     "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
+ *     // <span class="material-icons-outlined">format_list_bulleted</span>
+ *     "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
+ *     // <span class="material-icons-outlined">format_list_numbered</span>
+ *     "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
+ *     // <span class="material-icons-outlined">format_indent_increase</span>
+ *     "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
+ *     // <span class="material-icons-outlined">format_indent_decrease</span>
+ *     "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
+ *     // <span class="material-symbols-outlined">search</span>
+ *     "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
+ *     // <span class="material-symbols-outlined">chevron_forward</span>
+ *     "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
+ *     // <span class="material-symbols-outlined">chevron_backward</span>
+ *     "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
+ *     // <span class="material-symbols-outlined">match_case</span>
+ *     "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
+ *     // <span class="material-symbols-outlined">format_paragraph</span>
+ *     "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
+ *     // <span class="material-symbols-outlined">more_horiz</span>
+ *     "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
+ *   }
+ * }
+ * ```
  */
 class ToolbarConfig {
 
-  static _all() {                 // Needs to be a function not property for multiple editors
-    return {
-      "visibility": {             // Control the visibility of toolbars, etc
-        "toolbar": true,          // Whether the toolbar is visible at all
-        "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
-        "insertBar": true,        // Whether the insert bar (link, image, table) is visible
-        "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
-        "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
-        "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
-        "search": true,           // Whether the search item (hide/show search bar) is visible
-      },
-      "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
-        "correctionBar": 10,      // Correction bar order if it is visible
-        "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
-        "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
-        "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
-        "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
-        "search": 60,             // Search item (hide/show search bar) order if it is visible
-      },
-      "insertBar": {
-        "link": true,             // Whether the link menu item is visible
-        "image": true,            // Whether the image menu item is visible
-        "tableMenu": true,        // Whether the table menu is visible
-      },
-      "formatBar": {
-        "bold": true,             // Whether the bold menu item is visible
-        "italic": true,           // Whether the italic menu item is visible
-        "underline": true,        // Whether the underline menu item is visible
-        "code": true,             // Whether the code menu item is visible
-        "strikethrough": true,    // Whether the strikethrough menu item is visible
-        "subscript": true,        // Whether the subscript menu item is visible
-        "superscript": true,      // Whether the superscript menu item is visible
-      },
-      "styleMenu": {
-        "p": "Body",              // The label in the menu for "P" style
-        "h1": "H1",               // The label in the menu for "H1" style
-        "h2": "H2",               // The label in the menu for "H2" style
-        "h3": "H3",               // The label in the menu for "H3" style
-        "h4": "H4",               // The label in the menu for "H4" style
-        "h5": "H5",               // The label in the menu for "H5" style
-        "h6": "H6",               // The label in the menu for "H6" style
-        "pre": "Code",            // The label in the menu for "PRE" aka code_block style
-      },
-      "styleBar": {
-        "list": true,             // Whether bullet and numbered list items are visible
-        "dent": true,             // Whether indent and outdent items are visible
-      },
-      "tableMenu": {
-        "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
-        "border": true,           // Whether the "Border" item is visible in the "Table" menu
-      },
-      "augmentation": {
-        "prepend": null,          // Name of a registered array of cmdItems to prepend
-        "append": null            // Name of a registered array of cmdItems to append
-      },
-      "icons": {
-        // <span class="material-icons-outlined">undo</span>
-        "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
-        // <span class="material-icons-outlined">redo</span>
-        "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
-        // <span class="material-icons-outlined">format_bold</span>
-        "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
-        // <span class="material-icons-outlined">format_italic</span>
-        "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
-        // <span class="material-icons-outlined">format_underlined</span>
-        "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
-        // <span class="material-icons-outlined">strikethrough_s</span>
-        "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
-        // <span class="material-icons-outlined">data_object</span>
-        "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
-        // <span class="material-icons-outlined">subscript</span>
-        "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
-        // <span class="material-icons-outlined">superscript</span>
-        "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
-        // <span class="material-icons-outlined">link</span>
-        "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
-        // <span class="material-icons-outlined">image</span>
-        "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
-        // <span class="material-icons-outlined">table</span>
-        "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
-        // <span class="material-icons-outlined">format_list_bulleted</span>
-        "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
-        // <span class="material-icons-outlined">format_list_numbered</span>
-        "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
-        // <span class="material-icons-outlined">format_indent_increase</span>
-        "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
-        // <span class="material-icons-outlined">format_indent_decrease</span>
-        "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
-        // <span class="material-symbols-outlined">search</span>
-        "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
-        // <span class="material-symbols-outlined">chevron_forward</span>
-        "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
-        // <span class="material-symbols-outlined">chevron_backward</span>
-        "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
-        // <span class="material-symbols-outlined">match_case</span>
-        "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
-        // <span class="material-symbols-outlined">format_paragraph</span>
-        "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
-        // <span class="material-symbols-outlined">more_horiz</span>
-        "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
-      }
+    /**
+     * The private definition of all toolbar config options used by the public static methods.
+     * Needs to be a function not property for multiple editors.
+     * 
+     * If you add or modify these options, include those changes in the class doc above.
+     * 
+     * @ignore
+     * @returns {object} A JavaScript object with all options enabled.
+     */
+    static _all() {                 // Needs to be a function not property for multiple editors
+        return {
+            "visibility": {             // Control the visibility of toolbars, etc
+                "toolbar": true,          // Whether the toolbar is visible at all
+                "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
+                "insertBar": true,        // Whether the insert bar (link, image, table) is visible
+                "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
+                "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
+                "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
+                "search": true,           // Whether the search item (hide/show search bar) is visible
+            },
+            "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
+                "correctionBar": 10,      // Correction bar order if it is visible
+                "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
+                "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
+                "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
+                "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
+                "search": 60,             // Search item (hide/show search bar) order if it is visible
+            },
+            "insertBar": {
+                "link": true,             // Whether the link menu item is visible
+                "image": true,            // Whether the image menu item is visible
+                "tableMenu": true,        // Whether the table menu is visible
+            },
+            "formatBar": {
+                "bold": true,             // Whether the bold menu item is visible
+                "italic": true,           // Whether the italic menu item is visible
+                "underline": true,        // Whether the underline menu item is visible
+                "code": true,             // Whether the code menu item is visible
+                "strikethrough": true,    // Whether the strikethrough menu item is visible
+                "subscript": true,        // Whether the subscript menu item is visible
+                "superscript": true,      // Whether the superscript menu item is visible
+            },
+            "styleMenu": {
+                "p": "Body",              // The label in the menu for "P" style
+                "h1": "H1",               // The label in the menu for "H1" style
+                "h2": "H2",               // The label in the menu for "H2" style
+                "h3": "H3",               // The label in the menu for "H3" style
+                "h4": "H4",               // The label in the menu for "H4" style
+                "h5": "H5",               // The label in the menu for "H5" style
+                "h6": "H6",               // The label in the menu for "H6" style
+                "pre": "Code",            // The label in the menu for "PRE" aka code_block style
+            },
+            "styleBar": {
+                "list": true,             // Whether bullet and numbered list items are visible
+                "dent": true,             // Whether indent and outdent items are visible
+            },
+            "tableMenu": {
+                "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
+                "border": true,           // Whether the "Border" item is visible in the "Table" menu
+            },
+            "augmentation": {
+                "prepend": null,          // Name of a registered array of cmdItems to prepend
+                "append": null            // Name of a registered array of cmdItems to append
+            },
+            "icons": {
+                // <span class="material-icons-outlined">undo</span>
+                "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
+                // <span class="material-icons-outlined">redo</span>
+                "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
+                // <span class="material-icons-outlined">format_bold</span>
+                "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
+                // <span class="material-icons-outlined">format_italic</span>
+                "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
+                // <span class="material-icons-outlined">format_underlined</span>
+                "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
+                // <span class="material-icons-outlined">strikethrough_s</span>
+                "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
+                // <span class="material-icons-outlined">data_object</span>
+                "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
+                // <span class="material-icons-outlined">subscript</span>
+                "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
+                // <span class="material-icons-outlined">superscript</span>
+                "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
+                // <span class="material-icons-outlined">link</span>
+                "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
+                // <span class="material-icons-outlined">image</span>
+                "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
+                // <span class="material-icons-outlined">table</span>
+                "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
+                // <span class="material-icons-outlined">format_list_bulleted</span>
+                "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
+                // <span class="material-icons-outlined">format_list_numbered</span>
+                "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
+                // <span class="material-icons-outlined">format_indent_increase</span>
+                "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
+                // <span class="material-icons-outlined">format_indent_decrease</span>
+                "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
+                // <span class="material-symbols-outlined">search</span>
+                "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
+                // <span class="material-symbols-outlined">chevron_forward</span>
+                "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
+                // <span class="material-symbols-outlined">chevron_backward</span>
+                "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
+                // <span class="material-symbols-outlined">match_case</span>
+                "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
+                // <span class="material-symbols-outlined">format_paragraph</span>
+                "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
+                // <span class="material-symbols-outlined">more_horiz</span>
+                "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
+            }
+        }
     }
-  }
 
-  static fromJSON(string) {
-    try {
-      return JSON.parse(string)
-    } catch {
-      return null
+    /**
+     * Return a toolbar configuration object, but defined from a stringified JSON object.
+     * 
+     * @param {string} string A stringified object, perhaps used as an external definition of a toolbar configuration
+     * @returns {object}      An object parsed from the JSON in `string`, should contain data for all properties
+     */
+    static fromJSON(string) {
+        try {
+            return JSON.parse(string)
+        } catch {
+            return null
+        }
     }
-  }
 
-  static full(correction=false) {
-    let full = this._all();
-    full.visibility.correctionBar = correction;
-    return full
-  }
+    /**
+     * Return the SVG for an icon with the given name.
+     * 
+     * @param {string} string     The name of the icon to look up
+     * @returns {string | null}   The SVG definition of the icon if found
+     */
+    static iconFor(string) {
+        return this._all().icons[string]
+    }
 
-  static standard(correction=false) {
-    return this.markdown(correction)
-  }
+    /**
+     * Return a toolbar configuration object with all options enabled, including undo/redo depending on `correction`.
+     * 
+     * @param {boolean} correction  True if the correction (undo/redo) bar should be included, else false
+     * @returns {object}     A JavaScript object with all options enabled.
+     */
+    static full(correction = false) {
+        let full = this._all();
+        full.visibility.correctionBar = correction;
+        return full
+    }
 
-  static desktop(correction=false) {
-    return this.full(correction)
-  }
+    /**
+     * Return a default toolbar configuration object, including undo/redo depending on `correction`.
+     * 
+     * @param {boolean} correction  True if the correction (undo/redo) bar should be included, else false
+     * @returns {object}     A JavaScript object with all options enabled.
+     */
+    static standard(correction = false) {
+        return this.markdown(correction)
+    }
 
-  static none() {
-    let none = this._all();
-    none.visibility.toolbar = false;
-    return none
-  }
+    /**
+     * Return the desktop toolbar configuration object, including undo/redo depending on `correction`. This is the same as `full()`.
+     * 
+     * @param {boolean} correction  True if the correction (undo/redo) bar should be included, else false
+     * @returns {object}     A JavaScript object with options enabled for desktop-style usage.
+     */
+    static desktop(correction = false) {
+        return this.full(correction)
+    }
 
-  static markdown(correction=false) {
-    let markdown = this.full(correction);
-    markdown.formatBar.underline = false;
-    markdown.formatBar.subscript = false;
-    markdown.formatBar.superscript = false;
-    return markdown
-  }
+    /**
+     * Return a toolbar configuration object that prevents the toolbar from showing.
+     * 
+     * @returns {object} A toolbar configuration object with `visibility.toolbar` set to `false`
+     */
+    static none() {
+        let none = this._all();
+        none.visibility.toolbar = false;
+        return none
+    }
+
+    /**
+     * Return the Markdown-oriented toolbar configuration object, including undo/redo depending on `correction`.
+     * This toolbar excludes underline, and subscript/superscript.
+     * 
+     * @param {boolean} correction  True if the correction (undo/redo) bar should be included, else false
+     * @returns {object}     An toolbar configuration object with Markdown-oriented settings
+     */
+    static markdown(correction = false) {
+        let markdown = this.full(correction);
+        markdown.formatBar.underline = false;
+        markdown.formatBar.subscript = false;
+        markdown.formatBar.superscript = false;
+        return markdown
+    }
 }
 
 /**
+ * KeymapConfig contains static utility methods to obtain a JavaScript object with properties 
+ * that define the key mappingconfiguration of the MarkupEditor toolbar. The class makes it convenient 
+ * to write and use the utility methods, but an instance of KeymapConfig itself is not meaningful.
+ * 
  * `KeymapConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
- * passing a new KeymapConfig when instantiating the MarkupEditor. You can use the pre-defined 
- * static methods like `standard()` or customize what it returns.
+ * passing a new KeymapConfig by name using the `keymap` attribute of the `<markup-editor>` 
+ * element. You can use the pre-defined static methods like `standard()` and customize what 
+ * it returns, or you can use your own KeymapConfig.
  * 
- * To customize the key mapping, for example, in your index.html:
+ * To customize the key mapping, for example, in a `userscript` named `mykeymap.js`:
  * 
- *    let keymapConfig = MU.KeymapConfig.standard();    // Grab the standard keymap config as a baseline
- *    keymapConfig.link = ["Ctrl-L", "Ctrl-l"];         // Use Control+L instead of Command+k
- *    const markupEditor = new MU.MarkupEditor(
- *      document.querySelector('#editor'),
- *      {
- *        html: '<h1>Hello, world!</h1>',
- *        keymap: keymapConfig,
- *      }
- *    )
+ * ```
+ * import {MU} from "src/markup-editor.js"
+ * let keymapConfig = MU.KeymapConfig.standard();    // Grab the standard keymap config as a baseline
+ * keymapConfig.link = ["Ctrl-L", "Ctrl-l"];         // Use Control+L instead of Command+k
+ * MU.registerConfig(keymapConfig, "MyKeymapConfig") // Register the instance by name so we can reference it
+ * ```
+ * 
+ * Then, where you insert the `<markup-editor>` element, set the KeymapConfig by name:
+ * 
+ * ```
+ * <markup-editor userscript="mykeymap.js" keymap="MyKeymapConfig">
+ * ```
  *    
  * Note that the key mapping will exist and work regardless of whether you disable a toolbar 
  * or a specific item in a menu. For example, undo/redo by default map to Mod-z/Shift-Mod-z even  
  * though the "correctionBar" is off by default in the MarkupEditor. You can remove a key mapping 
  * by setting its value to null or an empty string. 
+ * 
+ * The following properties are supported:
+ * 
+ * ```
+ * {
+ *    // Correction
+ *    "undo": "Mod-z",
+ *    "redo": "Shift-Mod-z",
+ *    // Insert
+ *    "link": ["Mod-K", "Mod-k"],
+ *    "image": ["Mod-G", "Mod-g"],
+ *    //"table": ["Mod-T", "Mod-t"],  // Does not work
+ *    // Stylemenu
+ *    "p": "Ctrl-Shift-0",
+ *    "h1": "Ctrl-Shift-1",
+ *    "h2": "Ctrl-Shift-2",
+ *    "h3": "Ctrl-Shift-3",
+ *    "h4": "Ctrl-Shift-4",
+ *    "h5": "Ctrl-Shift-5",
+ *    "h6": "Ctrl-Shift-6",
+ *    // Stylebar
+ *    "bullet": ["Ctrl-U", "Ctrl-u"],
+ *    "number": ["Ctrl-O", "Ctrl-o"],
+ *    "indent": ["Mod-]", "Ctrl-q"],
+ *    "outdent": ["Mod-[", "Shift-Ctrl-q"],
+ *    // Format
+ *    "bold": ["Mod-B", "Mod-b"],
+ *    "italic": ["Mod-I", "Mod-i"],
+ *    "underline": ["Mod-U", "Mod-u"],
+ *    "strikethrough": ["Ctrl-S", "Ctrl-s"],
+ *    "code": "Mod-`",
+ *    "subscript": "Ctrl-Mod--",
+ *    "superscript": "Ctrl-Mod-+",
+ *    // Search
+ *    "search": ["Ctrl-F", "Ctrl-f"],
+ * }
+ * ```
  */
 class KeymapConfig {
-    static _all() {                 // Needs to be a function not property for multiple editors
+
+    /**
+     * The private definition of all keymap config options used by the public static methods.
+     * Needs to be a function not property for multiple editors.
+     * 
+     * If you add or modify these options, include those changes in the class doc above.
+     * 
+     * @ignore
+     * @returns {object} A JavaScript object with all options enabled.
+     */
+    static _all() {
         return {
             // Correction
             "undo": "Mod-z",
@@ -19328,7 +19799,7 @@ class KeymapConfig {
             // Insert
             "link": ["Mod-K", "Mod-k"],
             "image": ["Mod-G", "Mod-g"],
-            //"table": ["Mod-T", "Mod-t"],  // Does not work anyway
+            //"table": ["Mod-T", "Mod-t"],  // Does not work
             // Stylemenu
             "p": "Ctrl-Shift-0",
             "h1": "Ctrl-Shift-1",
@@ -19355,6 +19826,12 @@ class KeymapConfig {
         }
     }
 
+    /**
+     * Return a keymap configuration object, but defined from a stringified JSON object.
+     * 
+     * @param {string} string A stringified object, perhaps used as an external definition of a keymap configuration
+     * @returns {object}      An object parsed from the JSON in `string`, should contain data for all properties
+     */
     static fromJSON(string) {
         try {
             return JSON.parse(string)
@@ -19363,18 +19840,39 @@ class KeymapConfig {
         }
     }
 
+    /**
+     * Return a keymap configuration object with all options enabled.
+     * 
+     * @returns {object}     A JavaScript object with all options enabled.
+     */
     static full() {
         return this._all()
     }
 
+    /**
+     * Return a default keymap configuration object, corresponding to Markdown.
+     * 
+     * @returns {object}     A JavaScript object with Markdown-oriented settings.
+     */
     static standard() {
         return this.markdown()
     }
 
+    /**
+     * Return the desktop keymap configuration object. This is the same as `full()`.
+     * 
+     * @returns {object}     A JavaScript object with settings for desktop-style usage.
+     */
     static desktop() {
         return this.full()
     }
 
+    /**
+     * Return the Markdown-oriented keymap configuration object.
+     * This keymap excludes underline, and subscript/superscript.
+     * 
+     * @returns {object}     A keymap configuration object with Markdown-oriented settings.
+     */
     static markdown() {
         let markdown = this.full();
         markdown.underline = null;
@@ -19385,23 +19883,56 @@ class KeymapConfig {
 }
 
 /**
+ * BehaviorConfig contains static utility methods to obtain a JavaScript object with properties 
+ * that define the behavior configuration of the MarkupEditor. The class makes it convenient 
+ * to write and use the utility methods, but an instance of BehaviorConfig itself is not meaningful.
+ * 
  * `BehaviorConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
- * passing a new BehaviorConfig when instantiating the MarkupEditor.
+ * passing a new BehaviorConfig by name using the `behavior` attribute of the `<markup-editor> `
+ * element. You can use the pre-defined static methods like `standard()` and customize what 
+ * it returns, or you can use your own BehaviorConfig.
  * 
- * To customize the behavior config, for example, in your index.html:
+ * To customize the behavior config, for example, in a `userscript` named `mybehavior.js`:
  * 
- *    let behaviorConfig = MU.BehaviorConfig.desktop();    // Use the desktop editor config as a baseline
- *    const markupEditor = new MU.MarkupEditor(
- *      document.querySelector('#editor'),
- *      {
- *        html: '<h1>Hello, world!</h1>',
- *        behavior: behaviorConfig,
- *      }
- *    )
+ * ```
+ * import {MU} from "src/markup-editor.js"
+ * let behaviorConfig = MU.BehaviorConfig.desktop()        // Use the desktop config as a baseline
+ * MU.registerConfig(behaviorConfig, "MyBehaviorConfig")   // Register the instance by name so we can reference it
+ * ```
+ * 
+ * Then, where you insert the `<markup-editor>` element, set the BehaviorConfig by name:
+ * 
+ * ```
+ * <markup-editor userscript="mybehavior.js" behavior="MyBehaviorConfig">
+ * ```
+ *    
+ * BehaviorConfig lets you control whether the editor takes focus immediately or not, and
+ * allows you to defer to the MarkupDelegate for insert options, so you can use your own 
+ * (perhaps "native") dialogs for file selection, link insertion, and image insertion.
+ * 
+ * The following properties are supported:
+ * 
+ * ```
+ * {
+ *    "focusAfterLoad": true,     // Whether the editor should take focus after loading
+ *    "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
+ *    "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
+ *    "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
+ * }
+ * ```
  */
 class BehaviorConfig {
 
-    static _all() {                     // Needs to be a function not property for multiple editors
+    /**
+     * The private definition of all behavior config options used by the public static methods.
+     * Needs to be a function not property for multiple editors.
+     * 
+     * If you add or modify these options, include those changes in the class doc above.
+     * 
+     * @ignore
+     * @returns {object} A JavaScript object with all options enabled.
+     */
+    static _all() {
         return {
             "focusAfterLoad": true,     // Whether the editor should take focus after loading
             "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
@@ -19410,6 +19941,12 @@ class BehaviorConfig {
         }
     }
 
+    /**
+     * Return a behavior configuration object, but defined from a stringified JSON object.
+     * 
+     * @param {string} string A stringified object, perhaps used as an external definition of a behavior configuration
+     * @returns {object}      An object parsed from the JSON in `string`, should contain data for all properties
+     */
     static fromJSON(string) {
         try {
             return JSON.parse(string)
@@ -19418,12 +19955,31 @@ class BehaviorConfig {
         }
     }
 
+    /**
+     * Return a behavior configuration object with all options enabled.
+     * 
+     * @returns {object}     A JavaScript object with all options enabled.
+     */
+    static full() {
+        return this._all()
+    }
+
+    /**
+     * Return a default behavior configuration object.
+     * 
+     * @returns {object}     A JavaScript object with all settings.
+     */
     static standard() { 
         return this._all()
     }
 
+    /**
+     * Return the desktop behavior configuration object. This is the same as `full()` but with `selectImage` enabled.
+     * 
+     * @returns {object}     A JavaScript object with settings for desktop-style usage.
+     */
     static desktop() { 
-        let desktop = this._all();
+        let desktop = this.full();
         desktop.selectImage = true;
         return desktop
     }
@@ -20327,14 +20883,56 @@ function getIcon(root, icon) {
 }
 
 /**
-An icon or label that, when clicked, executes a command.
-*/
+ * An icon or label that, when clicked, executes a command.
+ * 
+ * Modified from: [prosemirror-menu](https://github.com/ProseMirror/prosemirror-menu)
+ */
 class MenuItem {
 
   /**
-   * Create a menu item.
+   * Create a menu item. The following items are supported in the MenuItem spec:
    * 
-   * @param {*} spec The spec used to create this item.
+   * * The function to execute when the menu item is activated.
+   * 
+   *    ```run: (state: EditorState, dispatch: (tr: Transaction) => void, view: EditorView, event: Event) => void```
+   * 
+   * * Optional function that is used to determine whether the item is appropriate at the moment. Deselected items will be hidden.
+   * 
+   *    ```select?: (state: EditorState) => boolean```
+   * 
+   * * Function that is used to determine if the item is enabled. If given and returning false, the item will be given a disabled styling.
+   * 
+   *    ```enable?: (state: EditorState) => boolean```
+   * 
+   * * A predicate function to determine whether the item is 'active' (for example, the item for toggling the strong mark might be active then the cursor is in strong text).
+   * 
+   *    ```active?: (state: EditorState) => boolean```
+   * 
+   * * A function that renders the item. You must provide either this, [`icon`](#menu.MenuItemSpec.icon), or [`label`](#MenuItemSpec.label).
+   * 
+   *    ```render?: (view: EditorView) => HTMLElement```
+   * 
+   * * Describes an icon to show for this item using SVG.
+   * 
+   *    ```icon?: string```
+   * 
+   * * Makes the item show up as a text label. Mostly useful for items wrapped in a [drop-down](#menu.Dropdown) or similar menu. The object should have a `label` property providing the text to display.
+   * 
+   *    ```label?: string```
+   * 
+   * * Defines DOM title (mouseover) text for the item.
+   * 
+   *    ```title?: string | ((state: EditorState) => string)```
+   * 
+   * * Optionally adds a CSS class to the item's DOM representation.
+   * 
+   *    ```class?: string```
+   * 
+   * * Optionally adds a string of inline CSS to the item's DOM representation.
+   * 
+   *    ```css?: string```
+   * 
+   * @param {object} spec The spec used to create this item. See list above.
   */
   constructor(spec) {
     this.prefix = prefix + "-menuitem";
@@ -20342,10 +20940,11 @@ class MenuItem {
   }
 
   /**
-  Renders the icon according to its [display
-  spec](https://prosemirror.net/docs/ref/#menu.MenuItemSpec.display), and adds an event handler which
-  executes the command when the representation is clicked.
-  */
+   * Renders the item according to the `spec`, and adds an event handler which 
+   * executes the command when the representation is clicked.
+   * 
+   * @param {EditorView}  view  The view to render this MenuItem in.
+   */
   render(view) {
     let spec = this.spec;
     let prefix = this.prefix;
@@ -20396,23 +20995,39 @@ class MenuItem {
 }
 
 /**
-A drop-down menu, displayed as a label with a downwards-pointing
-triangle to the right of it.
-*/
+ * A drop-down menu, displayed as a label with a downwards-pointing triangle to the right of it.
+ * 
+ * Modified from: [prosemirror-menu](https://github.com/ProseMirror/prosemirror-menu)
+ */
 class Dropdown {
 
   /**
-  Create a dropdown wrapping the elements.
-  */
+   * Create a dropdown wrapping the elements.
+   * The following options are available:
+   * 
+   * | Type                               | Property      | Description |
+   * |:--                                 |:--            |:-- |
+   * | `boolean`                        | `indicator`   | Whether an indicator triangle should be shown, default `true`. |
+   * | `Function(EditorState): string`  | `titleUpdate` | Function to execute that returns a label based on `state`. |
+   * | `Function(): boolean`            | `enable`      | Function to return true if MenuItem is enabled, else false |
+   * | `string`                         | `label`       | The string to show in the MenuItem |
+   * | `KeymapConfig`                   | `keymap`      | The KeymapConfig to use for the MenuItem |
+   * | `Command`                        | `run`         | The Command to run when the item is pressed |
+   * | `Function(): boolean`            | `active`      | Function to return true if MenuItem is active, else false. |
+   * | `object`                         | `attrs`       | Node attrs that can be used within the `enable` or `active` functions. |
+   */
   constructor(content, options = {}) {
     this.prefix = prefix + "-menu";
     this.options = options;
     if (this.options.indicator == undefined) this.options.indicator = true;
     this.content = Array.isArray(content) ? content : [content];
   }
-  /**
-  Render the dropdown menu and sub-items.
-  */
+
+  /** 
+   * Render the dropdown menu and sub-items.
+   * 
+   * @param {EditorView} view The EditorView to render this DropDown in.
+   */
   render(view) {
     let options = this.options;
     let content = renderDropdownItems(this.content, view);
@@ -20494,15 +21109,28 @@ class Dropdown {
 }
 
 /**
-Represents a submenu wrapping a group of elements that start
-hidden and expand to the right when hovered over or tapped.
-*/
+ * Represents a submenu wrapping a group of elements that start
+ * hidden and expand to the right when hovered over or tapped.
+ * 
+ * Modified from: [prosemirror-menu](https://github.com/ProseMirror/prosemirror-menu)
+ */
 class DropdownSubmenu {
 
-  /**
-  Creates a submenu for the given group of menu elements. The
-  following options are recognized:
-  */
+  /** 
+   * Creates a submenu for the given group of menu elements. The following options are available:
+   * 
+   * | Type                   | Property  | Description |
+   * |:--                     |:--        |:-- |
+   * | `Function(): boolean`  | `enable`  | Function to return true if MenuItem is enabled, else false.
+   * | `string`               | `label`   | The string to show in the MenuItem
+   * | `KeymapConfig`         | `keymap`  | The KeymapConfig to use for the MenuItem
+   * | `Command`              | `run`     | The Command to run when the item is pressed
+   * | `Function(): boolean`  | `active`  | Function to return true if MenuItem is active, else false.
+   * | `object`               | `attrs`   | Node attrs that can be used within the `enable` or `active` functions.
+   * 
+   * @param {Array<MenuItem | Array<MenuItem>>} content The submenu's contents in the form of MenuItems.
+   * @param {object}                            options See list above.
+   */
   constructor(content, options = {}) {
     this.prefix = prefix + "-menu";
     this.options = options;
@@ -20546,6 +21174,7 @@ class DropdownSubmenu {
   }
 }
 
+/** @private */
 class ParagraphStyleItem {
 
   constructor(nodeType, style, options) {
@@ -20588,6 +21217,8 @@ class ParagraphStyleItem {
  * with opening, closing, and positioning the dialog so it stays in view as much as possible.
  * Each of the subclasses defines its `dialogWidth` and `dialogHeight` and deals with its 
  * own content/layout.
+ * 
+ * @private
  */
 class DialogItem {
 
@@ -20602,7 +21233,7 @@ class DialogItem {
      * Command to open the link dialog and show it modally.
      *
      * @param {EditorState} state 
-     * @param {fn(tr: Transaction)} dispatch 
+     * @param {Function(Transaction)} dispatch 
      * @param {EditorView} view 
      */
     openDialog(state, dispatch, view) {
@@ -20718,6 +21349,8 @@ class DialogItem {
 
 /**
  * Represents the link MenuItem in the toolbar, which opens the link dialog and maintains its state.
+ * 
+ * @private
  */
 class LinkItem extends DialogItem {
 
@@ -20985,7 +21618,7 @@ class LinkItem extends DialogItem {
    * Insert the link provided in the hrefArea if it's valid, deleting any existing link first. Close if it worked.
    * 
    * @param {EditorState} state 
-   * @param {fn(tr: Transaction)} dispatch 
+   * @param {Function(Transaction)} dispatch 
    * @param {EditorView} view 
    */
   insertLink(state, dispatch, view) {
@@ -21017,7 +21650,7 @@ class LinkItem extends DialogItem {
    * Delete the link at the selection. Close if it worked.
    * 
    * @param {EditorState} state 
-   * @param {fn(tr: Transaction)} dispatch 
+   * @param {Function(Transaction)} dispatch 
    * @param {EditorView} view 
    */
   deleteLink(state, dispatch, view) {
@@ -21031,6 +21664,8 @@ class LinkItem extends DialogItem {
 /**
  * Represents the image MenuItem in the toolbar, which opens the image dialog and maintains its state.
  * Requires commands={getImageAttributes, insertImageCommand, modifyImageCommand, getSelectionRect}
+ * 
+ * @private
  */
 class ImageItem extends DialogItem {
 
@@ -21296,7 +21931,7 @@ class ImageItem extends DialogItem {
    * Note that the image that is saved might be not exist or be properly formed.
    * 
    * @param {EditorState} state 
-   * @param {fn(tr: Transaction)} dispatch 
+   * @param {Function(Transaction)} dispatch 
    * @param {EditorView} view 
    */
   insertImage(state, dispatch, view) {
@@ -21312,6 +21947,8 @@ class ImageItem extends DialogItem {
 /**
  * A MenuItem that inserts a table of size rows/cols and invokes `onMouseover` when 
  * the mouse is over it to communicate the size of table it will create when selected.
+ * 
+ * @private
  */
 class TableInsertItem {
 
@@ -21349,6 +21986,8 @@ class TableInsertItem {
   will insert a table of a specific size. The items are bounded divs in a css grid 
   layout that highlight to show the size of the table being created, so we end up with 
   a compact way to display 24 TableInsertItems.
+
+  @private
   */
 class TableCreateSubmenu {
   constructor(options = {}) {
@@ -21439,6 +22078,8 @@ class TableCreateSubmenu {
 
 /**
  * Represents the search MenuItem in the toolbar, which hides/shows the search bar and maintains its state.
+ * 
+ * @private
  */
 class SearchItem {
 
@@ -21470,7 +22111,7 @@ class SearchItem {
    * active `muId` rather than depend on it having been set from a focus event.
    * 
    * @param {EditorState} state 
-   * @param {fn(tr: Transaction)} dispatch 
+   * @param {Function(Transaction)} dispatch 
    * @param {EditorView} view 
    */
   toggleSearch(state, dispatch, view) {
@@ -21637,16 +22278,19 @@ class SearchItem {
 
 }
 
-/** A special item for showing a "more" button in the toolbar, which shows its `items` as a sub-toolbar */
+/** 
+ * A special item for showing a "more" button in the toolbar, which shows its `items` as a sub-toolbar.
+ * 
+ * @private
+ */
 class MoreItem {
 
-  constructor(items, config) {
-    let icons = config.toolbar.icons;
+  constructor(items) {
     let options = {
       enable: () => { return true },
       active: () => { return this.showing() },
       title: 'Show more',
-      icon: icons.more
+      icon: ToolbarConfig.iconFor('more')
     };
     this.command = this.toggleMore.bind(this);
     this.item = cmdItem(this.command, options);
@@ -21696,9 +22340,9 @@ class MoreItem {
  * 
  * The label is the same as the title, and the MenuItem will be enabled/disabled based on 
  * what `cmd(state)` returns unless otherwise specified in `options`.
- * @param {Command}     cmd 
- * @param {*} options   The spec for the MenuItem
- * @returns {MenuItem}
+ * @param {Command}     cmd   A ProseMirror [Command](https://prosemirror.net/docs/ref/#state.Command)
+ * @param {object} options   The spec for the MenuItem
+ * @returns {MenuItem}        Similar to prosemirror-menu, but [MarkupEditor-modified](MenuItem.html)
  */
 function cmdItem(cmd, options) {
   let passedOptions = {
@@ -21712,13 +22356,19 @@ function cmdItem(cmd, options) {
   return new MenuItem(passedOptions)
 }
 
-/** Return a span for a separator between groups of MenuItems */
+/** 
+ * Return a span for a separator between groups of MenuItems
+ * 
+ * @private
+ *  
+ */
 function separator() {
     return crelt("span", { class: prefix + "-menuseparator" });
 }
 
 /**
  * Return whether the selection in state is within a mark of type `markType`.
+ * @private
  * @param {EditorState} state 
  * @param {MarkType} type 
  * @returns {boolean} True if the selection is within a mark of type `markType`
@@ -21731,8 +22381,9 @@ function markActive(state, type) {
 
 /**
  * Return a string intended for the user to see showing the first key mapping for `itemName`.
+ * @private
  * @param {string} itemName           The name of the item in the keymap
- * @param {[string : string]} keymap  The mapping between item names and hotkeys
+ * @param {object} keymap             The mapping between string item names and string hotkeys
  * @returns string
  */
 function keyString(itemName, keymap) {
@@ -21753,6 +22404,13 @@ function baseKeyString(itemName, keymap) {
   return keyString
 }
 
+/**
+ * Render the content in view as a group of MenuItems.
+ * 
+ * @param {EditorView} view The view to render content in
+ * @param {Array<MenuItem>} content The menuitems to be rendered
+ * @returns {object}  Object with the DOM containing content and an update method to display it.
+ */
 function renderGrouped(view, content) {
     let result = document.createDocumentFragment();
     let updates = [], separators = [];
@@ -21793,10 +22451,11 @@ function renderGrouped(view, content) {
  * face it, if you need to wrap a toolbar into more than two lines, you need to think
  * through your life choices.
  * 
+ * @private
  * @param {EditorView} view 
- * @param {[MenuItem | [MenuItem]]} content 
+ * @param {Array<MenuItem> | Array<Array<MenuItem>>} content 
  * @param {number}  wrapAtIndex             The index in  content` to wrap in another toolbar
- * @returns 
+ * @returns {object}  An object containing the DOM for the content and an update function to display it
  */
 function renderGroupedFit(view, content, wrapAtIndex) {
   let result = document.createDocumentFragment();
@@ -21846,6 +22505,13 @@ function renderGroupedFit(view, content, wrapAtIndex) {
   return { dom: result, update };
 }
 
+/**
+ * Render the items in a Dropdown in the view.
+ * 
+ * @param {Array<MenuItem>} items The content to be rendered in a Dropdown
+ * @param {EditorView} view       The EditorView to render the items in 
+ * @returns {object}  An object containing the DOM for the Dropdown and an update function to display it
+ */
 function renderDropdownItems(items, view) {
     let rendered = [], updates = [];
     for (let i = 0; i < items.length; i++) {
@@ -22500,6 +23166,11 @@ function buildKeymap(config, schema) {
     return keys
 }
 
+/**
+ * The instance of ToolbarView in the editor.
+ * 
+ * @ignore
+ */
 let toolbarView;
 
 function toolbar(content) {
@@ -22546,7 +23217,7 @@ class ToolbarView {
 
   /**
    * Insert an array of MenuItems at the front of the toolbar
-   * @param {[MenuItem]} items 
+   * @param {Array<MenuItem>} items 
    */
   prepend(items) {
     this.content = [items].concat(this.content);
@@ -22555,7 +23226,7 @@ class ToolbarView {
 
   /**
    * Add an array of MenuItems at the end of the toolbar
-   * @param {[MenuItem]} items 
+   * @param {Array<MenuItem>} items 
    */
   append(items) {
     this.content = this.content.concat([items]);
@@ -22676,6 +23347,8 @@ function buildInputRules(schema) {
 /**
  * The tablePlugin handles decorations that add CSS styling 
  * for table borders.
+ * 
+ * @ignore
  */
 const tablePlugin = new Plugin({
   state: {
@@ -22742,6 +23415,8 @@ const searchModePlugin  = new Plugin({
  * 
  * The Map is keyed by the src for the image. If the src is duplicated in the document, we only 
  * get one 'addedImage' notification.
+ * 
+ * @ignore
  */
 const imagePlugin = new Plugin({
   state: {
@@ -22769,8 +23444,10 @@ const imagePlugin = new Plugin({
 });
 
 /**
- * Insert an array of MenuItems or a single MenuItem at the front of the toolbar
- * @param {[MenuItem] | MenuItem} menuItems 
+ * Insert an array of MenuItems or a single MenuItem at the front of the toolbar.
+ * 
+ * @ignore
+ * @param {Array<MenuItem> | MenuItem} menuItems 
  */
 function prependToolbar(menuItems) {
   let items = Array.isArray(menuItems) ? menuItems : [menuItems];
@@ -22779,13 +23456,18 @@ function prependToolbar(menuItems) {
 
 /**
  * Append an array of MenuItems or a single MenuItem at the end of the toolbar
- * @param {[MenuItem] | MenuItem} menuItems 
+ * 
+ * @ignore
+ * @param {Array<MenuItem> | MenuItem} menuItems 
  */
 function appendToolbar(menuItems) {
   let items = Array.isArray(menuItems) ? menuItems : [menuItems];
   toolbarView.append(items);
 }
 
+/**
+ * Toggle the search bar off and on.
+ */
 function toggleSearch() {
   let searchItem = new SearchItem(activeConfig());
   // TODO: How to not rely on toolbarView being present
@@ -22793,12 +23475,18 @@ function toggleSearch() {
   searchItem.toggleSearch(view.state, view.dispatch, view);
 }
 
+/**
+ * Open the default dialog to insert/edit links.
+ */
 function openLinkDialog() {
   let linkItem = new LinkItem(activeConfig());
   let view = toolbarView.editorView;
   linkItem.openDialog(view.state, view.dispatch, view);
 }
 
+/**
+ * Open the default dialog to insert/edit images.
+ */
 function openImageDialog() {
   let imageItem = new ImageItem(activeConfig());
   let view = toolbarView.editorView;
@@ -22807,8 +23495,9 @@ function openImageDialog() {
 
 /**
  * Return an array of Plugins used for the MarkupEditor
+ * @ignore
  * @param {Schema} schema The schema used for the MarkupEditor
- * @returns 
+ * @returns {Array<Plugin>}
  */
 function markupSetup(config, schema) {
   setPrefix('Markup');
@@ -23466,7 +24155,8 @@ class DivView {
 /**
  * The MessageHandler receives `postMessage` from the MarkupEditor as the document state changes.
  * 
- * You can set the MessageHandler used by the MarkupEditor using `MU.setMessageHandler`. This is how 
+ * You can set the MessageHandler used by the MarkupEditor using `registerMessageHandler` and
+ * then identifying it by name as a <markup-editor> element attribute. This is how 
  * the MarkupEditor is embedded in Swift and VSCode. If you don't set your own MessageHandler, then 
  * this is the default version that will be used. These other MessageHandlers will typically use the 
  * same MarkupDelegate pattern to route document state notifications to an app-specific delegate.
@@ -23505,17 +24195,9 @@ class MessageHandler {
             return
         }
         switch (message) {
-            // The editor posts `ready` when the markupeditor script is loaded, so we can set the HTML. 
-            // If HTML is an empty document, then the config.placeholder will be shown. However, before 
-            // loading the html and/or placeholder, we load any script or css file that the user 
-            // identified into the `target` if it was specified. In the absence of `target`, the user
-            // script is appended to the body and the user css to the head. We need the target to be 
-            // specified when using the MarkupEditor as a web component, in which case the `target`
-            // is the web component itself. The result of `loadUserFiles` is that the `loadedUserFiles`
-            // message is received here, and then content loading can proceed. 
-            case 'ready': 
-                loadUserFiles(config.userScriptFile, config.userCssFile, config.target);
-                return
+            // The editor posts `loadedUserFiles` when the markup-editor.js script and `userscript` 
+            // (if any) are loaded, so we can set the HTML. After loading the contents into the 
+            // editor, we let the `delegate`, if specified, know we are ready for editing.
             case 'loadedUserFiles':
                 this.loadContents();
                 delegate?.markupReady && delegate?.markupReady();
@@ -23839,11 +24521,12 @@ class Searcher {
 
 }
 
-// Needed locally by MarkupEditor class
+// Needed locally by MarkupEditor class, but not part of MU
 
 /**
  * The MarkupEditor holds the properly set-up EditorView and any additional configuration.
  * 
+ * @ignore
  * @param {HTMLElement} target  The div that will contain the editor.
  * @param {Object}      config  The configuration object. See the Developer's Guide.
  */
@@ -23902,7 +24585,7 @@ class MarkupEditor {
             this.config.behavior = BehaviorConfig.standard();
         }
 
-        // If `delegate` is supplied as a string, then dereference it to get the class from muRegistry.
+        // If `delegate` is supplied as a string, then dereference it to get the class from the Registry.
         let delegate = this.config.delegate;
         if (delegate && (typeof delegate === 'string')) {
             this.config.delegate = getDelegate(delegate);
@@ -23986,7 +24669,7 @@ class MarkupEditor {
         // there is more than one; otherwise is `editor` or null)
         this.selectedID = null;
 
-        // Finally, track the editor in the muRegistry.
+        // Finally, track the editor in the Registry.
         registerEditor(this);
     }
 
@@ -24016,7 +24699,7 @@ class MarkupEditor {
     }
 
     /**
-     * Destroy the EditorView we are holding onto and remove it from the `muRegistry`.
+     * Destroy the EditorView we are holding onto and remove it from the `Registry`.
      */
     destroy() {
         unregisterEditor(this);
@@ -24025,72 +24708,71 @@ class MarkupEditor {
 }
 
 /**
- * The public MarkupEditor API callable as "MU.<function name>"
+ * The object whose methods comprise the MarkupEditor API.
  */
 const MU = {
-    setTopLevelAttributes,
-    setMessageHandler,
-    loadUserFiles,
-    searchFor,
-    deactivateSearch,
+    activeConfig,
+    activeView,
+    addButton,
+    addCol,
+    addDiv,
+    addHeader,
+    addRow,
+    borderTable,
     cancelSearch,
-    pasteText,
-    pasteHTML,
+    consoleLog,
+    cutImage,
+    deactivateSearch,
+    deleteLink,
+    deleteTableArea,
+    doRedo,
+    doUndo,
     emptyDocument,
-    getHTML,
-    getTestHTML,
-    setHTML,
-    setTestHTML,
-    getHeight,
-    padBottom,
     focus,
     focusOn,
-    resetSelection,
-    addDiv,
-    removeDiv,
-    addButton,
-    removeButton,
+    focused,
+    getDataImages,
+    getHTML,
+    getHeight,
+    getImageAttributes,
+    getLinkAttributes,
+    getSelectionState,
+    getTestHTML,
+    indent,
+    insertImage,
+    insertLink,
+    insertTable,
+    loadUserFiles,
+    modifyImage,
+    openImageDialog,
+    openLinkDialog,
+    outdent,
+    padBottom,
+    pasteHTML,
+    pasteText,
     removeAllDivs,
+    removeButton,
+    removeDiv,
+    resetSelection,
+    savedDataImage,
+    searchFor,
+    setHTML,
+    setStyle,
+    setTestHTML,
+    setTopLevelAttributes,
+    testBlockquoteEnter,
+    testExtractContents,
+    testListEnter,
+    testPasteHTMLPreprocessing,
+    testPasteTextPreprocessing,
     toggleBold,
-    toggleItalic,
-    toggleUnderline,
     toggleCode,
+    toggleItalic,
+    toggleListItem: toggleListItem$1,
     toggleStrike,
     toggleSubscript,
     toggleSuperscript,
-    setStyle,
-    replaceStyle,
-    toggleListItem: toggleListItem$1,
-    indent,
-    outdent,
-    startModalInput,
-    endModalInput,
-    getSelectionState,
-    consoleLog,
-    doUndo,
-    doRedo,
-    testBlockquoteEnter,
-    testListEnter,
-    testExtractContents,
-    testPasteHTMLPreprocessing,
-    testPasteTextPreprocessing,
-    openLinkDialog,
-    insertLink,
-    deleteLink,
-    getDataImages,
-    savedDataImage,
-    openImageDialog,
-    insertImage,
-    modifyImage,
-    cutImage,
-    insertTable,
-    addRow,
-    addCol,
-    addHeader,
-    deleteTableArea,
-    borderTable,
-    // Allow access to the MarkupEditor class and the instance config
-    MarkupEditor,
+    toggleUnderline,
     // Helpers to create custom toolbar items
     MenuItem,
     Dropdown,
@@ -24098,47 +24780,46 @@ const MU = {
     cmdItem,
     renderGrouped,
     renderDropdownItems,
-    toolbarView,
     toggleSearch,
-    // Helpers to add items to the toolbar
-    prependToolbar,
-    appendToolbar,
     // Config access
     ToolbarConfig,
     KeymapConfig,
     BehaviorConfig,
-    // muRegistry access
-    activeEditor,
-    registerDelegate,
-    registerConfig,
-    registerMessageHandler,
-    getMessageHandler,
-    activeConfig,
+    // Registry access
     registerAugmentation,
-    getAugmentation,
-    setActiveView,
+    registerConfig,
+    registerDelegate,
+    registerMessageHandler,
 };
 
 /**
- * MarkupEditorElement is the Web Component for the MarkupEditor.
+ * A web component and API for WYSIWYG HTML editing. The element is available as `<markup-editor>`. The API is available using the element property `MU`.
  * 
- * The lifecycle and resulting document structure are probably the most interesting 
- * aspects of the MarkupEditorElement, especially because the HTML page can   
- * contain multiple of them. The MarkupEditor "base" script should be loaded 
- * only once in the first (or only) MarkupEditorElement. It defines the global
- * `MU` along with the global `muRegistry` with exported methods to access it.
+ * @element markup-editor
  * 
- * We use the `connectedCallback`, which is called for each MarkupEditorElement, 
- * to trigger appending the MarkupEditor base script only once. It's loaded into 
- * the first MarkupEditorElement, and produces the global `MU` that provides access
- * to all editor functionality regardless of where subsequent scripts are run.
- * When the base script finishes loading, we dispatch the `ready` `muCallback` 
- * event for each MarkupEditorElement instance in `document`. From that point, 
- * the MarkupEditor styling is appended to the `editor` set up for each individual 
- * MarkupEditorElement instance. Any user-supplied script and styling are also 
- * appended. Once those are appended (and even if they are not specified), the 
- * `loadedUserFiles` `muCallback` is dispatched for the `editorContainer`, and 
- * we can finally `createEditor` for the element and set its HTML contents.
+ * @attr {string} placeholder - HTML that should be displayed when the editor is empty.
+ * 
+ * @attr {string} filename - An HTML file whose contents should be loaded for the initial contents of the editor. If you also supply HTML within the <markup-editor> itself (e.g., <markup-editor><p>Hello, world</p></markupeditor>), the content of filename will take precedence.
+ * 
+ * @attr {string} base - The relative path for image src attributes in the editor. By default, if `filename` is specified with a path, `base` will be set to the directory containing the file. For example, if filename is “demo/guide/guide.html”, `base` will be set to “demo/guide/” so that an image with `src=“myImage.png”` will load. If you want this image to load from the “resources” directory below "demo/guide", then set base to “demo/guide/resources/” (with a trailing slash).
+ * 
+ * @attr {string} userscript - A JavaScript file that should be loaded as a script within the <markup-editor> element. The script can reference the global MU for access to MarkupEditor functionality. For example, the script could contain code to create and register a MarkupDelegate to receive callbacks during editing, or define a custom ToolbarConfiguration. 
+ * 
+ * @attr {string} userstyle - A CSS file that should be linked within the <markup-editor> element to supplement the MarkupEditor base styling.
+ * 
+ * @attr {string} delegate - The name of a MarkupDelegate that has been registered. See the documentation on MarkupDelegates for details on implementation, usage, and registration.
+ * 
+ * @attr {string} handler - The name of a MessageHandler that has been registered. See the documemtation on MessageHandler for details.
+ * 
+ * @attr {string} toolbar - The name of a ToolbarConfig that has been registered. See the documentation on ToolbarConfig for details of customizing the toolbar configuration and registering configs.
+ * 
+ * @attr {string} keymap - The name of a KeymapConfig that has been registered. See the documentation on KeymapConfig for details of customizing the keymap configuration and registering configs.
+ * 
+ * @attr {string} behavior - The name of a BehaviorConfig that has been registered. See the documentation on BehaviorConfig for details of customizing the behavior configuration and registering configs.
+ * 
+ * @attr {string} prepend: The name of a toolbar that has been registered, whose `menuItems` will be placed before the MarkupToolbar. See the documentation on Extending the Toolbar for details.
+ * 
+ * @attr {string} append - The name of a toolbar that has been registered, whose `menuItems` will be placed after the MarkupToolbar. See the documentation on Extending the Toolbar for details.
  */
 class MarkupEditorElement extends HTMLElement {
 
@@ -24148,6 +24829,24 @@ class MarkupEditorElement extends HTMLElement {
    */
   constructor() {
     super();   // Establish prototype chain
+
+    /** The object whose methods comprise the MarkupEditor API. */
+    this.MU;
+
+    /** The instance of MarkupEditor that holds onto configuration and a ProseMirror EditorView. 
+     * @ignore 
+     */
+    this.editor;
+
+    /** The DIV that contains the editor in the shadow DOM.
+     * @ignore
+     */
+    this.editorContainer;
+
+    /** The ShadowRoot for this element.
+     * @ignore 
+     */
+    this.shadowRoot;
 
     // Attach shadow tree and hold onto root reference
     // https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow
@@ -24187,6 +24886,8 @@ class MarkupEditorElement extends HTMLElement {
    * MarkupEditorScript has loaded, it dispatches a `muCallback` event on each 
    * MarkupEditorElement in the `document`, which in turn creates a properly 
    * configured MarkupEditor instance.
+   * 
+   * @ignore
    */ 
   connectedCallback() {
     this.loadUserFiles();
@@ -24199,6 +24900,8 @@ class MarkupEditorElement extends HTMLElement {
    * the ProseMirror EditorView held by the MarkupEditor instance in `this.editor`
    * as well as remove it from the `window.viewRegistry`. The editor does this in 
    * its `destroy` method.
+   * 
+   * @ignore
    */
   disconnectedCallback() {
     this.editor.destroy();
@@ -24211,6 +24914,8 @@ class MarkupEditorElement extends HTMLElement {
    * file specified in `userstyle` to the adoptedStyleSheets that along with
    * the three required styles already defined via import. Then we use the "standard" 
    * `MU.loadUserFiles` only specifying the `userScript`.
+   * 
+   * @ignore
    **/ 
   loadUserFiles() {
     const nonce = this.getAttribute('nonce');
@@ -24245,17 +24950,26 @@ class MarkupEditorElement extends HTMLElement {
    * Use the attributes from the <markup-editor> element to set up the 
    * configuration. Set the initial HTML based on the `innerHTML` for the 
    * <markup-editor> element, which will be overridden by `filename` contents 
-   * if it it specified and if the editor is running in an environment that 
-   * has access to the file system (e.g., node.js, but not a browser).
+   * if it is specified.
+   * 
+   * @ignore
    */
   createEditor() {
     const html = (this.innerHTML.length == 0) ? null : this.innerHTML;
     const filename = this.getAttribute('filename');
+    let base = this.getAttribute('base');
+    // Set `base` based on `filename` automatically when `base` is null but `filename` 
+    // is defined. The `filename` must include a "\" or "/", or `base` remains null.
+    if (!base && filename && (filename.includes('/') || filename.includes('\\'))) {
+      // Use a regex to match the last part (filename and extension) and replace 
+      // it with an empty string, handline both forward and backward slashes.
+      base = filename.replace(/[^/\\]*$/, '');
+    }
     const config = { 
       id: this.getAttribute('id'),
       filename: filename, 
       html: html,
-      base: this.getAttribute('base'),
+      base: base,
       placeholder: this.getAttribute('placeholder'), 
       delegate: this.getAttribute('delegate'),
       handler: this.getAttribute('handler'),
@@ -24267,16 +24981,13 @@ class MarkupEditorElement extends HTMLElement {
     };
 
     // Create an editor instance and hold onto it here
-    this.editor = new MU.MarkupEditor(this.editorContainer, config);
-    
-    // Let the delegate know the editor is ready
-    //this.editor.config.delegate?.markupReady && this.editor.config.delegate?.markupReady()
+    this.editor = new MarkupEditor(this.editorContainer, config);
 
     // Prepend and/or append any augmentations
-    const prependItems = MU.getAugmentation(config.prepend)?.menuItems;
-    if (prependItems) MU.prependToolbar(prependItems);
-    const appendItems = MU.getAugmentation(config.append)?.menuItems;
-    if (appendItems) MU.appendToolbar(appendItems);
+    const prependItems = getAugmentation(config.prepend)?.menuItems;
+    if (prependItems) prependToolbar(prependItems);
+    const appendItems = getAugmentation(config.append)?.menuItems;
+    if (appendItems) appendToolbar(appendItems);
 
     // Expose the MU API as a property of this element. In a well-behaved JavaScript 
     // modules world, we would not need to do this, but when using the web component 
