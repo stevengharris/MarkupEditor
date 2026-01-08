@@ -16,6 +16,6 @@
     "prepare": "sh prepare.sh"
   },
   "devDependencies": {
-      "markupeditor-base": "^0.8.6"
+      "markupeditor": "^0.9.0"
   }
 }

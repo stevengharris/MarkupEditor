@@ -67,11 +67,8 @@ class PasteImage: MarkupDelegate {
                 webView: webView
             )
             // The coordinator will receive callbacks from markup.js
-            // using window.webkit.messageHandlers.test.postMessage(<message>);
-            webView.configuration.userContentController.add(
-                coordinator,
-                name: "markup"
-            )
+            // using window.webkit.messageHandlers.test.postMessage(<message>)
+            webView.setCoordinatorConfiguration(coordinator)
             _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
         }
     }

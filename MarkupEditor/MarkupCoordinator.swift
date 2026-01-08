@@ -66,13 +66,6 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             return
         }
         switch messageBody {
-        case "ready":
-            //Logger.coordinator.debug("ready")
-            // When the root files are properly loaded, we can load user-supplied css and js.
-            // Afterward, the "loadedUserFiles" callback will be invoked. Without the separate
-            // callback to "loadedUserFiles", we can end up with the functions defined by user
-            // scripts to not be defined when invoked from the MarkupDelegate.markupLoaded method.
-            webView.loadUserFiles()
         case "loadedUserFiles":
             //Logger.coordinator.debug("loadedUserFiles")
             // After the user css and js are loaded, we set the top-level "editor" attributes,

@@ -1,37 +1,28 @@
 #!/bin/bash
 
-echo "Updating dependencies from markupeditor-base..."
-SCRIPT="./node_modules/markupeditor-base/dist/markupeditor.umd.js"
-MARKUPCSS="./node_modules/markupeditor-base/styles/markup.css"
-MIRRORCSS="./node_modules/markupeditor-base/styles/mirror.css"
-TEST="./node_modules/markupeditor-base/test"
+echo "Updating dependencies from markupeditor base project..."
+COMPONENT="./node_modules/markupeditor/dist/markup-editor.js"
+
+# Determine whether the required JavaScript dependencies are available
 READY=true
-if [ ! -e "$SCRIPT" ]; then
-  echo "Error: $SCRIPT does not exist."
-  READY=false
-fi
-if [ ! -e "$MARKUPCSS" ]; then
-  echo "Error: $MARKUPCSS does not exist."
-  READY=false
-fi
-if [ ! -e "$MIRRORCSS" ]; then
-  echo "Error: $MIRRORCSS does not exist."
-  READY=false
-fi
-if [ ! -e "$TEST" ]; then
-  echo "Error: $TEST does not exist."
+if [ ! -e "$COMPONENT" ]; then
+  echo "Error: $COMPONENT does not exist."
   READY=false
 fi
 if [ "$READY" = false ]; then
     echo "Did you run npm install?"
     exit 1
 fi
-echo " Copying $SCRIPT\n  to ../MarkupEditor/Resources/markup.js"
-cp -f "$SCRIPT" ../MarkupEditor/Resources/markup.js
-echo " Copying $MARKUPCSS\n  to ../MarkupEditor/Resources/markup.css"
-cp -f "$MARKUPCSS" ../MarkupEditor/Resources/markup.css
-echo " Copying $MIRRORCSS\n  to ../MarkupEditor/Resources/mirror.css"
-cp -f "$MIRRORCSS" ../MarkupEditor/Resources/mirror.css
-echo " Copying ${TEST}/*.json\n  to ../MarkupEditorTests/BaseTests/"
-# The simple cp with wildcarded "${TEST}*.json" fails, so used find + exec cp
-find $TEST -name "*.json" -exec cp {} "../MarkupEditorTests/BaseTests/" \;
+echo " Copying $COMPONENT\n  to ../MarkupEditor/Resources/markup-editor.js"
+cp -f "$COMPONENT" ../MarkupEditor/Resources/markup-editor.js
+
+# Determine whether the test dependencies are available
+TEST="./node_modules/markupeditor/test"
+if [ ! -e "$TEST" ]; then
+  echo "Warning: $TEST does not exist."
+  echo "To run tests, you must install using a local markupeditor dev-dependency."
+else
+    echo " Copying test data ${TEST}/*.json\n  to ../MarkupEditorTests/BaseTests/"
+    # The simple cp with wildcarded "${TEST}*.json" fails, so used find + exec cp
+    find $TEST -name "*.json" -exec cp {} "../MarkupEditorTests/BaseTests/" \;
+fi
