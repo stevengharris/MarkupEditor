@@ -252,6 +252,13 @@ function activeConfig() {return _registry.activeConfig.bind(_registry)()}
 function activeView() {return _registry.activeView.bind(_registry)()}
 
 /** 
+ * Set the active editor's active view. 
+ * 
+ * @param {EditorView}  view  The ProseMirror EditorView that should be active.
+ */
+function setActiveView(view) {_registry.setActiveView.bind(_registry)(view);}
+
+/** 
  * Add the `toolbar` to the registry.
  * A toolbar holds `cmdItems` that can either be prepended or appended to 
  * the normal MarkupEditor toolbar.
@@ -310,7 +317,6 @@ const getMessageHandler = _registry.getMessageHandler.bind(_registry);
 _registry.unregisterAugmentation.bind(_registry);
 const getAugmentation = _registry.getAugmentation.bind(_registry);
 _registry.activeEditor.bind(_registry);
-const setActiveView = _registry.setActiveView.bind(_registry);
 const activeDocument = _registry.activeDocument.bind(_registry);
 const setActiveDocument = _registry.setActiveDocument.bind(_registry);
 const activeEditorElement = _registry.activeEditorElement.bind(_registry);
@@ -17578,6 +17584,7 @@ function indentCommand() {
         let li = state.schema.nodes.list_item;
         let ul = state.schema.nodes.bullet_list;
         let ol = state.schema.nodes.ordered_list;
+        let div = state.schema.nodes.div;
         const { $from, $to } = state.selection;
         let tr = state.tr;
         let willWrap = false;
@@ -17633,7 +17640,8 @@ function indentCommand() {
                             // Find the parents to skip as we try to indent ones above us
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsList = (npNode.type == ul) || (npNode.type == ol); 
+                                if (npNode.type == div) return true         // Always skip divs
+                                let npIsList = (npNode.type == ul) || (npNode.type == ol);
                                 if (!npIsList) return false                 // We are only skipping lists
                                 if (npNode.type != node.type) return false  // We are only skipping parent lists of same type
                                 // And only lists outside of the original selection
@@ -17643,8 +17651,9 @@ function indentCommand() {
                         } else {
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsBlockquote = (npNode.type == blockquote);
-                                if (!npIsBlockquote) return false                 // We are only skipping blockquotes
+                                if (npNode.type == div) return true        // Always skip divs
+                                let npIsBlockquoteOrDiv = (npNode.type == blockquote);
+                                if (!npIsBlockquoteOrDiv) return false     // We are only skipping blockquotes
                                 // And only blockquotes outside of the original selection
                                 return (np.start < $from.pos) && (np.end > $to.pos)
                             });
@@ -21923,7 +21932,7 @@ class ImageItem extends DialogItem {
   /** Tell the delegate to select an image to insert, because we don't know how to do that */
   selectImage(state, dispatch, view) {
     this.closeDialog();
-    if (this.config.delegate?.markupSelectImage) this.config.delegate?.markupSelectImage(view);
+    if (this.config.delegate?.markupSelectImage) this.config.delegate?.markupSelectImage(state, dispatch, view);
   }
 
   /**
@@ -23013,31 +23022,27 @@ const undoInputRule = (state, dispatch) => {
 /**
 Converts double dashes to an emdash.
 */
-const emDash = new InputRule(/--$/, "—", { inCodeMark: false });
+new InputRule(/--$/, "—", { inCodeMark: false });
 /**
 Converts three dots to an ellipsis character.
 */
-const ellipsis = new InputRule(/\.\.\.$/, "…", { inCodeMark: false });
+new InputRule(/\.\.\.$/, "…", { inCodeMark: false });
 /**
 “Smart” opening double quotes.
 */
-const openDoubleQuote = new InputRule(/(?:^|[\s\{\[\(\<'"\u2018\u201C])(")$/, "“", { inCodeMark: false });
+new InputRule(/(?:^|[\s\{\[\(\<'"\u2018\u201C])(")$/, "“", { inCodeMark: false });
 /**
 “Smart” closing double quotes.
 */
-const closeDoubleQuote = new InputRule(/"$/, "”", { inCodeMark: false });
+new InputRule(/"$/, "”", { inCodeMark: false });
 /**
 “Smart” opening single quotes.
 */
-const openSingleQuote = new InputRule(/(?:^|[\s\{\[\(\<'"\u2018\u201C])(')$/, "‘", { inCodeMark: false });
+new InputRule(/(?:^|[\s\{\[\(\<'"\u2018\u201C])(')$/, "‘", { inCodeMark: false });
 /**
 “Smart” closing single quotes.
 */
-const closeSingleQuote = new InputRule(/'$/, "’", { inCodeMark: false });
-/**
-Smart-quote related input rules.
-*/
-const smartQuotes = [openDoubleQuote, closeDoubleQuote, openSingleQuote, closeSingleQuote];
+new InputRule(/'$/, "’", { inCodeMark: false });
 
 /**
 Build an input rule for automatically wrapping a textblock when a
@@ -23335,7 +23340,7 @@ function headingRule(nodeType, maxLevel) {
 // A set of input rules for creating the basic block quotes, lists,
 // code blocks, and heading.
 function buildInputRules(schema) {
-  let rules = smartQuotes.concat(ellipsis, emDash), type;
+  let rules = [], type;
   if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
   if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
   if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
@@ -24191,7 +24196,7 @@ class MessageHandler {
             // if it exists, and return. Input happens with every keystroke and editing operation, 
             // so generally delegate should be doing very little, except perhaps noting that the 
             // document has changed. However, what your delegate does is very application-specific.
-            delegate?.markupInput && delegate?.markupInput(this.editor);
+            delegate?.markupInput && delegate?.markupInput();
             return
         }
         switch (message) {
@@ -24206,18 +24211,18 @@ class MessageHandler {
                 delegate?.markupDidFocus && delegate?.markupDidFocus();
                 return
             case 'blur':
-                delegate?.markupDidFocus && delegate?.markupDidBlur();
+                delegate?.markupDidBlur && delegate?.markupDidBlur();
                 return
-            case "updateHeight":
+            case 'updateHeight':
                 delegate?.markupUpdateHeight && delegate?.markupUpdateHeight(getHeight());
                 return
-            case "selectionChanged":
+            case 'selectionChanged':
                 delegate?.markupSelectionChanged && delegate?.markupSelectionChanged();
                 return
-            case "clicked":
+            case 'clicked':
                 delegate?.markupClicked && delegate?.markupClicked();
                 return
-            case "searched":
+            case 'searched':
                 delegate?.markupSearched && delegate?.markupSearched();
                 return
             default:
@@ -24231,7 +24236,7 @@ class MessageHandler {
                     const messageData = JSON.parse(message);
                     this.receivedMessageData(messageData);
                 } catch {
-                    console.log("Unhandled message: " + message);
+                    console.log('Unhandled message: ' + message);
                 }
         }
     }
@@ -24247,44 +24252,44 @@ class MessageHandler {
         let delegate = config.delegate;
         let messageType = messageData.messageType;
         switch (messageType) {
-            case "log":
+            case 'log':
                 console.log(messageData.log);
                 return
-            case "error": {
+            case 'error': {
                 let code = messageData.code;
                 let message = messageData.message;
                 if (!code || !message) {
-                    console.log("Bad error message.");
+                    console.log('Bad error message.');
                     return
                 }
                 let info = messageData.info;
                 let alert = messageData.alert ?? true;
-                delegate?.markupError && delegate?.markupError(code, message, info, alert);
+                delegate?.markupError && delegate?.markupError(code, message, info, alert, this.editor);
                 return
             }
-            case "copyImage":
-                console.log("fix copyImage " + messageData.src);
+            case 'copyImage':
+                console.log('fix copyImage ' + messageData.src);
                 return
-            case "addedImage": {
+            case 'addedImage': {
                 if (!delegate?.markupImageAdded) return;
                 let divId = messageData.divId;
                 // Even if divid is identified, if it's empty or the editor element, then
                 // use the old call without divid to maintain compatibility with earlier versions
                 // that did not support multi-contenteditable divs.
-                if ((divId.length == 0) || (divId == "editor")) {
-                    delegate.markupImageAdded(messageData.src);
+                if ((divId.length == 0) || (divId == 'editor')) {
+                    delegate.markupImageAdded(messageData.src, 'editor');
                 } else if (!divId.length == 0) {
                     delegate.markupImageAdded(messageData.src, divId);
                 } else {
-                    console.log("Error: The div id for the image could not be decoded.");
+                    console.log('Error: The div id for the image could not be decoded.');
                 }
                 return
             }
-            case "deletedImage":
-                console.log("fix deletedImage " + messageData.src);
+            case 'deletedImage':
+                console.log('fix deletedImage ' + messageData.src);
                 return
-            case "buttonClicked":
-                console.log("fix deletedImage " + messageData.src);
+            case 'buttonClicked':
+                console.log('fix buttonClicked ' + messageData.src);
                 return
             default:
                 console.log(`Unknown message of type ${messageType}: ${messageData}.`);
@@ -24756,6 +24761,7 @@ const MU = {
     resetSelection,
     savedDataImage,
     searchFor,
+    setActiveView,
     setHTML,
     setStyle,
     setTestHTML,
