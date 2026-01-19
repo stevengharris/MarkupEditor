@@ -17584,7 +17584,6 @@ function indentCommand() {
         let li = state.schema.nodes.list_item;
         let ul = state.schema.nodes.bullet_list;
         let ol = state.schema.nodes.ordered_list;
-        let div = state.schema.nodes.div;
         const { $from, $to } = state.selection;
         let tr = state.tr;
         let willWrap = false;
@@ -17640,8 +17639,7 @@ function indentCommand() {
                             // Find the parents to skip as we try to indent ones above us
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                if (npNode.type == div) return true         // Always skip divs
-                                let npIsList = (npNode.type == ul) || (npNode.type == ol);
+                                let npIsList = (npNode.type == ul) || (npNode.type == ol); 
                                 if (!npIsList) return false                 // We are only skipping lists
                                 if (npNode.type != node.type) return false  // We are only skipping parent lists of same type
                                 // And only lists outside of the original selection
@@ -17651,9 +17649,8 @@ function indentCommand() {
                         } else {
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                if (npNode.type == div) return true        // Always skip divs
-                                let npIsBlockquoteOrDiv = (npNode.type == blockquote);
-                                if (!npIsBlockquoteOrDiv) return false     // We are only skipping blockquotes
+                                let npIsBlockquote = (npNode.type == blockquote);
+                                if (!npIsBlockquote) return false                 // We are only skipping blockquotes
                                 // And only blockquotes outside of the original selection
                                 return (np.start < $from.pos) && (np.end > $to.pos)
                             });
