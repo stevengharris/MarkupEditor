@@ -485,22 +485,20 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// MarkupWKWebView becomeFirstResponder and trigger a SelectionState
     /// update to refresh the MarkupToolbar as each one loads its HTML.
     public func loadInitialHtml() {
-        setPlaceholder {
-            self.markupDelegate?.markupWillLoad(self)
-            self.setHtml(self.html ?? "") {
-                //Logger.webview.debug("isReady: \(self.id)")
-                self.updateHeight() {
-                    self.isReady = true
-                    if let delegate = self.markupDelegate {
-                        delegate.markupDidLoad(self) {
-                            if self.selectAfterLoad {
-                                self.becomeFirstResponderIfReady()
-                            }
-                        }
-                    } else {
+        self.markupDelegate?.markupWillLoad(self)
+        self.setHtml(self.html ?? "") {
+            //Logger.webview.debug("isReady: \(self.id)")
+            self.updateHeight() {
+                self.isReady = true
+                if let delegate = self.markupDelegate {
+                    delegate.markupDidLoad(self) {
                         if self.selectAfterLoad {
                             self.becomeFirstResponderIfReady()
                         }
+                    }
+                } else {
+                    if self.selectAfterLoad {
+                        self.becomeFirstResponderIfReady()
                     }
                 }
             }

@@ -206,11 +206,6 @@ extension DivsContentView: MarkupDelegate {
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         MarkupEditor.selectedWebView = view
         resetDivs(handler: handler)
-        // Only set the placeholder after the divs are set; otherwise, it will flash briefly
-        // before they show up because the initial content is empty. Not setting a placeholder
-        // is fine, too, of course. It's only relevant in this demo because it includes the
-        // FileToolbar, which can clear the entire document.
-        view.setPlaceholder(text: "Add document content...")
     }
     
     /// The user clicked/touched in some div, whether it's contenteditable or not.
