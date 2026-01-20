@@ -6,6 +6,7 @@ import PackageDescription
 let package = Package(
     name: "MarkupEditor",
     platforms: [
+        .macOS(.v12),
         .macCatalyst(.v15),
         .iOS(.v15)
     ],
