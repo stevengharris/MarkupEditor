@@ -12,6 +12,12 @@ import Combine
 import OSLog
 import UniformTypeIdentifiers
 
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
+
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
 /// All init methods invoke setupForEditing, which loads markup.html that in turn loads

@@ -6,8 +6,14 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import UIKit
+import Foundation
 import OSLog
+
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
 
 /// MarkupDelegate defines app-specific functionality that will be invoked as the MarkupWKWebView state changes.
 ///
