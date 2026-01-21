@@ -345,6 +345,21 @@ extension MarkupDelegate {
     public func markupShowTablePopover(_ view: MarkupWKWebView) {
         view.showTablePopover()
     }
+    #else
+    /// macOS placeholder for markupShowLinkPopover
+    public func markupShowLinkPopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
+
+    /// macOS placeholder for markupShowImagePopover
+    public func markupShowImagePopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
+
+    /// macOS placeholder for markupShowTablePopover
+    public func markupShowTablePopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
     #endif
     
     public func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {

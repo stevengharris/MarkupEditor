@@ -1123,8 +1123,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
+    #else
+    public func makeSelectionVisible(handler: (()->Void)? = nil) {
+        // Not supported on macOS yet
+        handler?()
+    }
     #endif
-    
+
     //MARK: Undo/redo
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.
