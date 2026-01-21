@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 /// A square button typically used with a system image in the toolbar.
@@ -133,3 +135,5 @@ public struct ToolbarButtonStyle: ButtonStyle {
             )
     }
 }
+
+#endif

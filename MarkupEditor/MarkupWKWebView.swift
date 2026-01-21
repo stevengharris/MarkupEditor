@@ -523,7 +523,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Keyboard handling and accessoryView setup
-    
+
+    #if canImport(UIKit)
     /// Respond to keyboardWillShow event.
     ///
     /// We adjust toolbar height constraint so it shows properly and scroll the selection so it is not obscured by
@@ -541,7 +542,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             guard let userInfo = notification.userInfo else { return }
             // In iOS 16.1 and later, the keyboard notification object is the screen the keyboard appears on.
             guard let screen = notification.object as? UIScreen,
-                  // Get the keyboard’s frame at the end of its animation
+                  // Get the keyboard's frame at the end of its animation
                   let keyboardFrameEnd = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             // Use the screen to get the coordinate space to convert from
             let fromCoordinateSpace = screen.coordinateSpace
@@ -565,7 +566,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
+
     /// Respond to the keyboardDidHide event.
     ///
     /// Adjust the height contstraint on the MarkupToolbar and reset the contentOffset.
@@ -575,9 +576,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         scrollView.setContentOffset(oldContentOffset ?? CGPoint.zero, animated: true)
         oldContentOffset = nil
     }
+    #endif
     
     //MARK: Overrides
     
+    #if canImport(UIKit)
     /// Override hitTest to enable drop events.
     ///
     /// The view receives UIDragEvents, which appear to be a private type of
@@ -612,6 +615,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return self
         }
     }
+    #endif
     
     //MARK: Responder Handling
     
@@ -626,11 +630,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //    return !hasFocus
     //}
     
+    #if canImport(UIKit)
     public override var inputAccessoryView: UIView? {
         get { accessoryView }
         set { accessoryView = newValue }
     }
-    
+
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         guard selectionState.isValid else { return false }
@@ -658,6 +663,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return false
         }
     }
+    #endif
     
     @available(*, deprecated, message: "No longer needed for modal input operations.")
     public func startModalInput(_ handler: (() -> Void)? = nil) {
@@ -1611,10 +1617,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Styling
-    
+
+    #if canImport(UIKit)
     @objc public func pStyle(sender: UICommand) {
         replaceStyle(selectionState.style, with: .P)
     }
+    #else
+    @objc public func pStyle() {
+        replaceStyle(selectionState.style, with: .P)
+    }
+    #endif
     
     @objc public func h1Style() {
         replaceStyle(selectionState.style, with: .H1)
@@ -1734,33 +1746,34 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
 //MARK: UIResponderStandardEditActions overrides
 
+#if canImport(UIKit)
 extension MarkupWKWebView {
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleBoldface(_ sender: Any?) {
         bold()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleItalics(_ sender: Any?) {
         italic()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleUnderline(_ sender: Any?) {
         underline()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func increaseSize(_ sender: Any?) {
         // Do nothing
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func decreaseSize(_ sender: Any?) {
         // Do nothing
     }
-    
+
     @objc public override func copy(_ sender: Any?) {
         if selectionState.isInImage {
             copyImage(src: selectionState.src!, alt: selectionState.alt, width: selectionState.width, height: selectionState.height)
@@ -1768,7 +1781,7 @@ extension MarkupWKWebView {
             super.copy(sender)
         }
     }
-    
+
     @objc public override func cut(_ sender: Any?) {
         if selectionState.isInImage {
             executeJavaScript("MU.cutImage()") { result, error in }
@@ -1926,11 +1939,13 @@ extension MarkupWKWebView {
         }
         #endif
     }
-    
+
 }
+#endif
 
 //MARK: Drop support
 
+#if canImport(UIKit)
 extension MarkupWKWebView: UIDropInteractionDelegate {
     
     /// Delegate the handling decision for DropInteraction to the markupDelegate.
@@ -1947,14 +1962,17 @@ extension MarkupWKWebView: UIDropInteractionDelegate {
     public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
         markupDelegate?.markupDropInteraction(interaction, performDrop: session)
     }
-    
+
 }
+#endif
 
 //MARK: Popover support
 
+#if canImport(UIKit)
 extension MarkupWKWebView: UIPopoverPresentationControllerDelegate {
-    
+
     public func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         .none
     }
 }
+#endif

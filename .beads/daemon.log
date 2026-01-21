@@ -55,3 +55,15 @@ time=2026-01-20T13:30:38.969-08:00 level=INFO msg="JSONL file created: %s" !BADK
 time=2026-01-20T13:30:39.971-08:00 level=INFO msg="Import triggered by file change"
 time=2026-01-20T13:30:39.971-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
 time=2026-01-20T13:30:39.972-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-21T09:36:25.812-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-21T09:36:25.863-08:00 level=INFO msg="Successfully re-established JSONL watch after %v" !BADKEY=50ms
+time=2026-01-21T09:36:25.863-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-21T09:36:26.865-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T09:36:26.865-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T09:36:26.866-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-21T09:40:31.650-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-21T09:40:31.701-08:00 level=INFO msg="Successfully re-established JSONL watch after %v" !BADKEY=50ms
+time=2026-01-21T09:40:31.701-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-21T09:40:32.703-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T09:40:32.704-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T09:40:32.704-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import

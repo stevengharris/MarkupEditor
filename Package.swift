@@ -31,7 +31,8 @@ let package = Package(
         .testTarget(
             name: "BasicTests",
             dependencies: ["MarkupEditor"],
-            path: "MarkupEditorTests/BasicTests"),
+            path: "MarkupEditorTests",
+            exclude: ["BaseTests/data"]),
     ]
 )
 
