@@ -83,6 +83,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
     var pastedAsync = false
+
+    #if canImport(UIKit)
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView? {
         didSet {
@@ -100,8 +102,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
         }
     }
+    #else
+    public var accessoryView: PlatformView? = nil
+    #endif
+
     private var oldContentOffset: CGPoint?
+
+    #if canImport(UIKit)
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
+    #else
+    private var markupToolbarHeightConstraint: NSLayoutConstraint? = nil
+    #endif
     private var firstResponder: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
@@ -985,8 +996,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if !url.isFileURL {
             items["public.html"] = htmlData     // And for external images, load up the html
         }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         pasteboard.setItems([items])
+        #else
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        // For macOS, we'll set the HTML data if available
+        if let htmlData = items["public.html"] as? Data, let htmlString = String(data: htmlData, encoding: .utf8) {
+            pasteboard.setString(htmlString, forType: .html)
+        }
+        #endif
     }
     
     private func getHeight(_ handler: @escaping ((Int)->Void)) {
@@ -1265,6 +1285,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// where it will show up full size. However, if we have "markup.image" populated, then
     /// we prioritize it for pasting, because it retains the sizing of the original.
     public func pasteableType() -> PasteableType? {
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         if pasteboard.contains(pasteboardTypes: ["markup.image"]) {
             return .LocalImage
@@ -1283,6 +1304,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // We have a string that we can paste
             return .Text
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        if let _ = pasteboard.availableType(from: [.tiff, .png]) {
+            return .ExternalImage
+        } else if let _ = pasteboard.availableType(from: [.html]) {
+            return .Html
+        } else if pasteboard.availableType(from: [.string]) != nil {
+            return .Text
+        }
+        #endif
         return nil
     }
     
@@ -1312,8 +1343,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func pasteImage(_ image: UIImage?, handler: (()->Void)? = nil) {
-        guard let image = image, let contents = image.pngData(), !pastedAsync else { return }
+    public func pasteImage(_ image: PlatformImage?, handler: (()->Void)? = nil) {
+        guard let image = image, !pastedAsync else { return }
+
+        #if canImport(UIKit)
+        guard let contents = image.pngData() else { return }
+        #else
+        guard let tiffRepresentation = image.tiffRepresentation,
+              let bitmapImage = NSBitmapImageRep(data: tiffRepresentation),
+              let contents = bitmapImage.representation(using: .png, properties: [:]) else { return }
+        #endif
+
         // Make a new unique ID for the image to save in the cacheUrl directory
         pastedAsync = true
         var path = "\(UUID().uuidString).png"
@@ -1338,8 +1378,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
-    
-    public func pasteImage(_ image: UIImage?) async {
+
+    public func pasteImage(_ image: PlatformImage?) async {
         await withCheckedContinuation { continuation in
             pasteImage(image) {
                 continuation.resume()
@@ -1744,6 +1784,7 @@ extension MarkupWKWebView {
     /// of data available in UIPasteboard.general.
     public override func paste(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1780,6 +1821,27 @@ extension MarkupWKWebView {
         case .Url:
             pasteUrl(url: pasteboard.url)
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteHtml(html)
+            }
+        case .ExternalImage:
+            if let tiffData = pasteboard.data(forType: .tiff) ?? pasteboard.data(forType: .png) {
+                if let nsImage = NSImage(data: tiffData) {
+                    pasteImage(nsImage)
+                }
+            }
+        default:
+            break
+        }
+        #endif
     }
     
     /// Paste the url as an img or as a link depending on its content.
@@ -1836,6 +1898,7 @@ extension MarkupWKWebView {
     /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
     public override func pasteAndMatchStyle(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text, .Rtf:
@@ -1847,6 +1910,21 @@ extension MarkupWKWebView {
         default:
             break
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteText(html)
+            }
+        default:
+            break
+        }
+        #endif
     }
     
 }
