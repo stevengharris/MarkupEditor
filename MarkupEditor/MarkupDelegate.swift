@@ -318,6 +318,7 @@ extension MarkupDelegate {
         if let info { Logger.script.info("\(info)") }
     }
 
+    #if canImport(UIKit)
     /// By default, the insert link popover is kicked off in the MarkupWKWebView using the LinkViewController.
     ///
     /// By overriding the `markupShowLinkPopover` method you can plug-in
@@ -325,7 +326,7 @@ extension MarkupDelegate {
     public func markupShowLinkPopover(_ view: MarkupWKWebView) {
         view.showLinkPopover()
     }
-    
+
     /// By default, the insert image popover is kicked off in the MarkupWKWebView using the ImageViewController.
     ///
     /// By overriding the `markupShowImagePopover` method you can plug-in
@@ -333,7 +334,7 @@ extension MarkupDelegate {
     public func markupShowImagePopover(_ view: MarkupWKWebView) {
         view.showImagePopover()
     }
-    
+
     /// By default, the insert table popover is kicked off using the MarkupWKWebView using
     /// the SwiftUI TableSizer and TableToolbar which are presented from the InsertToolbar when
     /// `MarkupEditor.showInsertPopover.type` changes to `.table`.
@@ -344,6 +345,7 @@ extension MarkupDelegate {
     public func markupShowTablePopover(_ view: MarkupWKWebView) {
         view.showTablePopover()
     }
+    #endif
     
     public func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
         Logger.webview.warning("You should handle markupButtonClicked in your MarkupDelegate.")

@@ -163,8 +163,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
     private func initForEditing() {
+        #if canImport(UIKit)
         isOpaque = false                        // Eliminate flash in dark mode
         backgroundColor = .systemBackground     // Eliminate flash in dark mode
+        #endif
         initRootFiles()
         markupDelegate?.markupSetup(self)
         // Enable drop interaction
@@ -173,6 +175,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
         loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+        #if canImport(UIKit)
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
@@ -180,6 +183,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if MarkupEditor.toolbarLocation == .keyboard {
             inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
         }
+        #endif
         observeFirstResponder()
     }
     
@@ -679,21 +683,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    #if canImport(UIKit)
     /// Indirect the presentation of the link popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableLinkPopover() {
         markupDelegate?.markupShowLinkPopover(self)
     }
-    
+
     /// Indirect the presentation of the image popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableImagePopover() {
         markupDelegate?.markupShowImagePopover(self)
     }
-    
+
     /// Indirect the presentation of the table popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableTablePopover() {
         markupDelegate?.markupShowTablePopover(self)
     }
-    
+
     /// Show the default link popover using the LinkViewController.
     @objc public func showLinkPopover() {
         MarkupEditor.showInsertPopover.type = .link     // Does nothing by default
@@ -708,7 +713,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(linkVC, animated: true)
     }
-    
+
     /// Show the default link popover using the ImageViewController.
     @objc public func showImagePopover() {
         MarkupEditor.showInsertPopover.type = .image    // Does nothing by default
@@ -723,13 +728,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(imageVC, animated: true)
     }
-    
+
     /// Show the default table popover by setting the state of `MarkupEditor.showInsertPopover` to `.table`,
     /// which will in turn `forcePopover` of either the TableSizer or TableToolbar.
     @objc public func showTablePopover() {
         guard selectionState.canInsert else { return }
         MarkupEditor.showInsertPopover.type = .table    // Triggers default SwiftUI TableSizer or TableToolbar
     }
+    #endif
     
     //MARK: Testing support
     
@@ -889,6 +895,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func updateHeight(handler: (()->Void)? = nil) {
         self.getHeight() { clientHeight in
             let paddedHeight = clientHeight + self.clientHeightPad
+            #if canImport(UIKit)
             if self.markupConfiguration?.padBottom ?? false {
                 self.padBottom() {
                     self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
@@ -898,6 +905,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
                 handler?()
             }
+            #else
+            self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
+            handler?()
+            #endif
         }
     }
     
@@ -1082,6 +1093,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// We use the selrect found in selection state, pad it by 8 vertically, and scroll a minimum
     /// amount to keep put that padded rectangle fully in the view. Scrolling never moves the
     /// top below 0 or the bottom above the scrollView.contentHeight.
+    #if canImport(UIKit)
     public func makeSelectionVisible(handler: (()->Void)? = nil) {
         getSelectionState() { state in
             guard let selrect = state.selrect else {
@@ -1111,6 +1123,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
+    #endif
     
     //MARK: Undo/redo
     
