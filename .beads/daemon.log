@@ -1,0 +1,57 @@
+time=2026-01-20T13:17:37.846-08:00 level=INFO msg="Daemon started (interval: %v, auto-commit: %v, auto-push: %v)" !BADKEY=5s !BADKEY=false !BADKEY=false
+time=2026-01-20T13:17:37.847-08:00 level=INFO msg="using database" path=/Users/steve/XCodeProjects/markupeditor-mac/.beads/beads.db
+time=2026-01-20T13:17:37.852-08:00 level=INFO msg="database opened" path=/Users/steve/XCodeProjects/markupeditor-mac/.beads/beads.db backend=sqlite freshness_checking=true
+time=2026-01-20T13:17:37.852-08:00 level=INFO msg="upgrading .beads/.gitignore"
+time=2026-01-20T13:17:37.852-08:00 level=WARN msg="failed to upgrade .gitignore" error="open .beads/.gitignore: no such file or directory"
+time=2026-01-20T13:17:37.856-08:00 level=INFO msg="Repository fingerprint validated: %s" !BADKEY=ef613b68
+time=2026-01-20T13:17:37.856-08:00 level=INFO msg="starting RPC server" socket=/Users/steve/XCodeProjects/markupeditor-mac/.beads/bd.sock
+time=2026-01-20T13:17:37.857-08:00 level=INFO msg="RPC server ready (socket listening)"
+time=2026-01-20T13:17:37.863-08:00 level=INFO msg="registered in global registry"
+time=2026-01-20T13:17:37.863-08:00 level=INFO msg="Starting %s..." !BADKEY="sync cycle"
+time=2026-01-20T13:17:37.864-08:00 level=INFO msg="Exported to JSONL"
+time=2026-01-20T13:17:38.361-08:00 level=INFO msg="Pull failed: %v" !BADKEY="git pull failed: exit status 128\nFrom https://github.com/stevengharris/MarkupEditor\n * branch            main       -> FETCH_HEAD\nwarning: fetch updated the current branch head.\nfast-forwarding your working tree from\ncommit fb8822353188af4dbd2993a19408c8709029acb1.\nerror: The following untracked working tree files would be overwritten by merge:\n\t.beads/issues.jsonl\nPlease move or remove them before you merge.\nAborting\nfatal: Cannot fast-forward your working tree.\nAfter making sure that you saved anything precious from\n$ git diff fb8822353188af4dbd2993a19408c8709029acb1\noutput, run\n$ git reset --hard\nto recover.\n"
+time=2026-01-20T13:17:38.361-08:00 level=INFO msg="monitoring parent process" pid=0
+time=2026-01-20T13:17:38.361-08:00 level=INFO msg="using event-driven mode"
+time=2026-01-20T13:17:38.362-08:00 level=INFO msg="Auto-pull disabled: use 'git pull' manually to sync remote changes"
+time=2026-01-20T13:17:45.698-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-20T13:17:45.750-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=50ms
+time=2026-01-20T13:17:45.851-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=100ms
+time=2026-01-20T13:17:46.052-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=200ms
+time=2026-01-20T13:17:46.453-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=400ms
+time=2026-01-20T13:17:46.454-08:00 level=INFO msg="Failed to re-establish JSONL watch after all retries"
+time=2026-01-20T13:17:46.454-08:00 level=INFO msg="Git HEAD change detected: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.git/HEAD
+time=2026-01-20T13:17:47.456-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:17:47.456-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:17:47.456-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-20T13:17:48.233-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-20T13:17:48.235-08:00 level=INFO msg="Git HEAD change detected: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.git/HEAD
+time=2026-01-20T13:17:49.238-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:17:49.239-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:17:49.240-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-20T13:19:34.877-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-20T13:19:34.928-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=50ms
+time=2026-01-20T13:19:35.029-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=100ms
+time=2026-01-20T13:19:35.230-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=200ms
+time=2026-01-20T13:19:35.631-08:00 level=INFO msg="JSONL still missing after %v, retrying..." !BADKEY=400ms
+time=2026-01-20T13:19:35.632-08:00 level=INFO msg="Failed to re-establish JSONL watch after all retries"
+time=2026-01-20T13:19:35.632-08:00 level=INFO msg="Git HEAD change detected: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.git/HEAD
+time=2026-01-20T13:19:36.634-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:19:36.634-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:19:36.635-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-20T13:23:16.643-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-20T13:23:16.656-08:00 level=INFO msg="Git ref change detected: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.git/refs/heads/macosphase1.lock
+time=2026-01-20T13:23:17.658-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:23:17.658-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:23:17.659-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-20T13:26:08.022-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-20T13:26:08.073-08:00 level=INFO msg="Successfully re-established JSONL watch after %v" !BADKEY=50ms
+time=2026-01-20T13:26:08.073-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-20T13:26:09.074-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:26:09.075-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:26:09.076-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-20T13:30:38.918-08:00 level=INFO msg="JSONL removed/renamed, re-establishing watch"
+time=2026-01-20T13:30:38.969-08:00 level=INFO msg="Successfully re-established JSONL watch after %v" !BADKEY=50ms
+time=2026-01-20T13:30:38.969-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/Users/steve/XCodeProjects/markupeditor-mac/.beads/issues.jsonl
+time=2026-01-20T13:30:39.971-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-20T13:30:39.971-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-20T13:30:39.972-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import

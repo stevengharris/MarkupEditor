@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 9/2/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 
 class ImageViewController: UIViewController {
@@ -392,5 +394,7 @@ extension ImageViewController: UIDocumentPickerDelegate {
         MarkupEditor.selectImage.value = false
         controller.dismiss(animated: true, completion: nil)
     }
-    
+
 }
+
+#endif
