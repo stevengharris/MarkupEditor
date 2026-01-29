@@ -29,8 +29,8 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
     public var endHtml: String
     public var undoHtml: String
     public var pasteString: String?
-    public var action: (() async throws -> Void)?
-    public var stringAction: (() async throws -> String?)?
+    public var action: ((_: MarkupWKWebView) async throws -> Void)?
+    public var stringAction: ((_: MarkupWKWebView) async throws -> String?)?
     
     public var testDescription: String
     
@@ -57,8 +57,8 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         undoHtml: String? = nil,
         pasteString: String? = nil
     ) {
-        self.description = description
         self.skipTest = skipTest
+        self.description = skipTest == nil ? description : "SKIPPED... \(description)"
         self.skipSet = skipSet
         self.skipUndoRedo = skipUndoRedo
         self.sel = sel
@@ -71,8 +71,9 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
 
     required public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        description = try values.decode(String.self, forKey: .description)
         skipTest = try values.decodeIfPresent(String.self, forKey: .skipTest)
+        let desc = try values.decode(String.self, forKey: .description)
+        description = skipTest == nil ? desc : "SKIPPED... \(desc)"
         skipSet = try values.decodeIfPresent(Bool.self, forKey: .skipSet) ?? false
         skipUndoRedo = try values.decodeIfPresent(Bool.self, forKey: .skipUndoRedo) ?? false
         sel = try values.decodeIfPresent(String.self, forKey: .sel) ?? "|"
@@ -83,7 +84,6 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         testDescription = description
     }
     
-    @MainActor
     public func run(in view: MarkupWKWebView) async {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
@@ -98,7 +98,7 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         // and make sure it produces `endHtml`.
         if let action {
             do {
-                try await action()
+                try await action(view)
             } catch {
                 print("Error: \(error)")
                 return
@@ -108,7 +108,7 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         } else if let stringAction {
             let html: String?
             do {
-                html = try await stringAction()
+                html = try await stringAction(view)
             } catch {
                 print("Error: \(error)")
                 return

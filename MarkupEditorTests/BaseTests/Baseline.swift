@@ -1,24 +1,36 @@
 //
-//  Baseline.swift
+//  AnotherBaseline.swift
 //  MarkupEditor
 //
-//  Created by Steven Harris on 10/6/25.
+//  Created by Steven Harris on 1/28/26.
 //
 
 import Testing
 import MarkupEditor
 import WebKit
+internal import Combine
 
-@Suite(.serialized)
-class Baseline: MarkupDelegate {
+fileprivate class BaselineSuite {
+    // Avoid instiantating the test suite for every @Test, because Swift Testing has no
+    // built-in support for once-per-Suite initialization.
     static let tests = HtmlTestSuite.from("baseline.json").tests
+}
+fileprivate typealias Suite = BaselineSuite
+
+@Suite()
+class Baseline: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
-    var loaded = false
+    var continuation: CheckedContinuation<Bool, Never>?
 
     /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization
     init() async throws {
-        try await waitForReady()
+        _ = await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            webView = MarkupWKWebView(markupDelegate: self)
+            coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
+            webView.setCoordinatorConfiguration(coordinator)
+        }
     }
     
     deinit {
@@ -26,43 +38,17 @@ class Baseline: MarkupDelegate {
         coordinator = nil
     }
     
-    func waitForReady() async throws {
-        try await confirmation() { confirmation in
-            webView = MarkupWKWebView(markupDelegate: self)
-            coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
-            // The coordinator will receive callbacks from markup.js
-            // using window.webkit.messageHandlers.test.postMessage(<message>);
-            webView.setCoordinatorConfiguration(coordinator)
-            _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
-        }
-    }
-    
-    /// Just yield until `loaded` has been set in the `markupDidLoad` callback. Somewhat adapted from
-    /// https://gist.github.com/janodev/32217b09f307da8c96e2cf629c31a8eb
-    func ready(timeout: Duration, confirm: Confirmation) async throws {
-        let startTime = ContinuousClock.now
-        while ContinuousClock.now - startTime < timeout {
-            if loaded {
-                confirm()
-                break
-            }
-            await Task.yield()
-        }
-        if !loaded {
-            throw TestError.timeout("Load did not succeed within \(timeout) seconds")
-        }
-    }
-    
     /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
-        loaded = true
-        handler?()
+        continuation?.resume(returning: true)
+        continuation = nil
     }
     
     /// Run all the HtmlTests
-    @Test(.serialized, arguments: Self.tests)
-    func run(htmlTest: HtmlTest) async throws {
-        await htmlTest.run(in: webView)
+    @Test(arguments: 1..<Suite.tests.count)
+    func run(index: Int) async throws {
+        let htmlTest = Suite.tests[index]
+        await htmlTest.run(action: nil, in: webView)
     }
 
 }
