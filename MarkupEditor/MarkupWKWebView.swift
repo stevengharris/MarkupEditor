@@ -1368,14 +1368,23 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func pasteImage(_ image: PlatformImage?, handler: (()->Void)? = nil) {
-        guard let image = image, !pastedAsync else { return }
+        guard let image = image, !pastedAsync else {
+            handler?()
+            return
+        }
 
         #if canImport(UIKit)
-        guard let contents = image.pngData() else { return }
+        guard let contents = image.pngData() else {
+            handler?()
+            return
+        }
         #else
         guard let tiffRepresentation = image.tiffRepresentation,
               let bitmapImage = NSBitmapImageRep(data: tiffRepresentation),
-              let contents = bitmapImage.representation(using: .png, properties: [:]) else { return }
+              let contents = bitmapImage.representation(using: .png, properties: [:]) else {
+            handler?()
+            return
+        }
         #endif
 
         // Make a new unique ID for the image to save in the cacheUrl directory
