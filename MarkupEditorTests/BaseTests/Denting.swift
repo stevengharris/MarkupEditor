@@ -9,34 +9,40 @@ import MarkupEditor
 import Testing
 import WebKit
 
-@Suite(.serialized)
-class Denting: MarkupDelegate {
-    // Avoid instantating the test suite for every @Test, because Swift Testing has no
+fileprivate class DentingSuite {
+    // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
     static let tests = HtmlTestSuite.from("denting.json").tests
+    static let actions: [(MarkupWKWebView) -> Void] = [
+        { webview in webview.indent() },
+        { webview in webview.indent() },
+        { webview in webview.outdent() },
+        { webview in webview.outdent() },
+        { webview in webview.indent() },
+    ]
+}
+fileprivate typealias Suite = DentingSuite
+
+@Suite()
+class Denting: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
     var loaded = false
-    
-    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization.
+    var continuation: CheckedContinuation<Bool, Never>?
+
+    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization
     init() async throws {
-        try await waitForReady()
-        setActions()
+        _ = await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            webView = MarkupWKWebView(markupDelegate: self)
+            coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
+            webView.setCoordinatorConfiguration(coordinator)
+        }
     }
     
     deinit {
         webView = nil
         coordinator = nil
-    }
-
-    /// Again, ridiculous to set these for every test, but since they need access to `webView`, I don't see
-    /// any way around it.
-    func setActions() {
-        Self.tests[0].action = webView.indent
-        Self.tests[1].action = webView.indent
-        Self.tests[2].action = webView.outdent
-        Self.tests[3].action = webView.outdent
-        Self.tests[4].action = webView.indent
     }
 
     /// Set up the `webView` and `coordinator` and then wait for them to be ready.
@@ -73,15 +79,15 @@ class Denting: MarkupDelegate {
     }
 
     /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
-    func markupDidLoad(_ view: MarkupWKWebView, handler: (() -> Void)?) {
-        loaded = true
-        handler?()
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        continuation?.resume(returning: true)
+        continuation = nil
     }
 
     /// Run all the HtmlTests
-    @Test(.serialized, arguments: Self.tests)
-    func run(htmlTest: HtmlTest) async throws {
-        await htmlTest.run(in: webView)
+    @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    func run(htmlTest: HtmlTest, index: Int) async throws {
+        await htmlTest.run(action: Suite.actions[index], in: webView)
     }
 
 }

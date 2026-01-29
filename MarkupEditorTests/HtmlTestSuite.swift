@@ -19,11 +19,7 @@ public class HtmlTestSuite: Codable {
         self.tests = tests
     }
     
-    static func from(
-        _ filename: String,
-        actions: [(MarkupWKWebView) -> Void] = [],
-        stringActions: [(MarkupWKWebView) -> String] = [],
-    ) -> HtmlTestSuite {
+    static func from(_ filename: String) -> HtmlTestSuite {
         let empty = HtmlTestSuite(description: "Empty suite", tests: [])
         guard
             let url = Bundle(identifier: "com.stevengharris.BaseTests")?.resourceURL?.appendingPathComponent(filename)
@@ -36,44 +32,6 @@ public class HtmlTestSuite: Codable {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
             let suite = try decoder.decode(HtmlTestSuite.self, from: data)
-            // DO NOT MIX actions and stringActions in a test suite!!!
-            for i in actions.indices {
-                suite.tests[i].action = actions[i]
-            }
-            for i in stringActions.indices {
-                suite.tests[i].stringAction = stringActions[i]
-            }
-            return suite
-        } catch {
-            print("Could not decode JSON: \(error)")
-            return empty
-        }
-    }
-    
-    static func from(
-        _ filename: String,
-        action: ((MarkupWKWebView) -> Void)?,
-        stringAction: ((MarkupWKWebView) -> String)?
-    ) -> HtmlTestSuite {
-        let empty = HtmlTestSuite(description: "Empty suite", tests: [])
-        guard
-            let url = Bundle(identifier: "com.stevengharris.BaseTests")?.resourceURL?.appendingPathComponent(filename)
-        else {
-            print("Couldn't find \(filename) in app bundle.")
-            return empty
-        }
-
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            let suite = try decoder.decode(HtmlTestSuite.self, from: data)
-            // DO NOT MIX actions and stringActions in a test suite!!!
-            for i in suite.tests.indices {
-                suite.tests[i].action = action
-            }
-            for i in suite.tests.indices {
-                suite.tests[i].stringAction = stringAction
-            }
             return suite
         } catch {
             print("Could not decode JSON: \(error)")

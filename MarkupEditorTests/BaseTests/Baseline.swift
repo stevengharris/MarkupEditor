@@ -45,9 +45,8 @@ class Baseline: MarkupDelegate {
     }
     
     /// Run all the HtmlTests
-    @Test(arguments: 1..<Suite.tests.count)
-    func run(index: Int) async throws {
-        let htmlTest = Suite.tests[index]
+    @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    func run(htmlTest: HtmlTest, index: Int) async throws {
         await htmlTest.run(action: nil, in: webView)
     }
 

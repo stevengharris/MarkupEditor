@@ -9,84 +9,56 @@ import MarkupEditor
 import Testing
 import WebKit
 
-@Suite(.serialized)
-class List: MarkupDelegate {
-    // Avoid instantating the test suite for every @Test, because Swift Testing has no
+fileprivate class ListSuite {
+    // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
     static let tests = HtmlTestSuite.from("list.json").tests
+    static let actions: [(MarkupWKWebView) -> Void] = [
+        { webview in webview.toggleListItem(type: .OL) },
+        { webview in webview.toggleListItem(type: .UL) },
+        { webview in webview.toggleListItem(type: .UL) },
+        { webview in webview.toggleListItem(type: .OL) },
+        { webview in webview.toggleListItem(type: .UL) },
+        { webview in webview.toggleListItem(type: .OL) },
+        { webview in webview.toggleListItem(type: .OL) },
+        { webview in webview.toggleListItem(type: .UL) },
+        { webview in webview.outdent() },
+        { webview in webview.outdent() },
+    ]
+}
+fileprivate typealias Suite = ListSuite
+
+@Suite()
+class List: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
-    var loaded = false
+    var continuation: CheckedContinuation<Bool, Never>?
 
-    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization.
+    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization
     init() async throws {
-        try await waitForReady()
-        setActions()
+        _ = await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            webView = MarkupWKWebView(markupDelegate: self)
+            coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
+            webView.setCoordinatorConfiguration(coordinator)
+        }
     }
     
     deinit {
         webView = nil
         coordinator = nil
     }
-
-    /// Again, ridiculous to set these for every test, but since they need access to `webView`, I don't see
-    /// any way around it.
-    func setActions() {
-        Self.tests[0].action = { self.webView.toggleListItem(type: .OL) }
-        Self.tests[1].action = { self.webView.toggleListItem(type: .UL) }
-        Self.tests[2].action = { self.webView.toggleListItem(type: .UL) }
-        Self.tests[3].action = { self.webView.toggleListItem(type: .OL) }
-        Self.tests[4].action = { self.webView.toggleListItem(type: .UL) }
-        Self.tests[5].action = { self.webView.toggleListItem(type: .OL) }
-        Self.tests[6].action = { self.webView.toggleListItem(type: .OL) }
-        Self.tests[7].action = { self.webView.toggleListItem(type: .UL) }
-        Self.tests[8].action = webView.outdent
-        Self.tests[9].action = webView.outdent
-    }
-
-    /// Set up the `webView` and `coordinator` and then wait for them to be ready.
-    func waitForReady() async throws {
-        try await confirmation { confirmation in
-            webView = MarkupWKWebView(markupDelegate: self)
-            coordinator = MarkupCoordinator(
-                markupDelegate: self,
-                webView: webView
-            )
-            // The coordinator will receive callbacks from markup.js
-            // using window.webkit.messageHandlers.test.postMessage(<message>)
-            webView.setCoordinatorConfiguration(coordinator)
-            _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
-        }
-    }
-
-    /// Just yield until `loaded` has been set in the `markupDidLoad` callback. Somewhat adapted from
-    /// https://gist.github.com/janodev/32217b09f307da8c96e2cf629c31a8eb
-    func ready(timeout: Duration, confirm: Confirmation) async throws {
-        let startTime = ContinuousClock.now
-        while ContinuousClock.now - startTime < timeout {
-            if loaded {
-                confirm()
-                break
-            }
-            await Task.yield()
-        }
-        if !loaded {
-            throw TestError.timeout(
-                "Load did not succeed within \(timeout) seconds"
-            )
-        }
-    }
-
+    
     /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
-    func markupDidLoad(_ view: MarkupWKWebView, handler: (() -> Void)?) {
-        loaded = true
-        handler?()
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        continuation?.resume(returning: true)
+        continuation = nil
     }
-
+    
     /// Run all the HtmlTests
-    @Test(.serialized, arguments: Self.tests)
-    func run(htmlTest: HtmlTest) async throws {
-        await htmlTest.run(in: webView)
+    @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    func run(htmlTest: HtmlTest, index: Int) async throws {
+        await htmlTest.run(action: Suite.actions[index], in: webView)
     }
 
 }
