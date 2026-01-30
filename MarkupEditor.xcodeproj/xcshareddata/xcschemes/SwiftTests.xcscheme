@@ -19,9 +19,9 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA2D21442F2C210C005D085C"
-               BuildableName = "BaseTests.xctest"
-               BlueprintName = "BaseTests"
+               BlueprintIdentifier = "AA2D21312F2C2020005D085C"
+               BuildableName = "SwiftTests."
+               BlueprintName = "SwiftTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </TestableReference>
