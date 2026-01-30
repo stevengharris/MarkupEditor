@@ -35,10 +35,5 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        # NOTE: Specify -destination 'platform=macOS,variant=Mac Catalyst' for Catalyst build
-
-        # hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
-        # swift package dump-pif > /dev/null
-        # xcodebuild clean -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' > /dev/null
-
-        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+        # Build and test on Mac Catalyst and MacOS
+        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' -destination 'platform=macOS'
