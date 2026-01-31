@@ -6,6 +6,9 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+
+#if !os(macOS)
+
 import SwiftUI
 
 public struct FormatToolbar: View {
@@ -87,3 +90,6 @@ struct FormatToolbar_Previews: PreviewProvider {
         }
     }
 }
+
+
+#endif

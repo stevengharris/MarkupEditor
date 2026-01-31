@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 9/1/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 
 class LinkViewController: UIViewController {
@@ -276,5 +278,7 @@ extension LinkViewController: UITextViewDelegate {
         }
         return true
     }
-    
+
 }
+
+#endif

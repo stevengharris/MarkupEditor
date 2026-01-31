@@ -6,6 +6,8 @@
 //  Modified by Steven G. Harris
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 @MainActor
@@ -76,3 +78,5 @@ struct ForcePopoverModifier<PopoverContent>: ViewModifier where PopoverContent: 
         func updateUIView(_ uiView: Self.UIViewType, context: Self.Context) { }
     }
 }
+
+#endif

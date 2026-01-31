@@ -20,19 +20,34 @@
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA2D21442F2C210C005D085C"
+               BuildableName = "BaseTests.xctest"
+               BlueprintName = "BaseTests"
+               ReferencedContainer = "container:MarkupEditor.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      systemAttachmentLifetime = "keepNever">
       <Testables>
          <TestableReference
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA2FA6122E94626E00485CDF"
+               BlueprintIdentifier = "AA2D21442F2C210C005D085C"
                BuildableName = "BaseTests.xctest"
                BlueprintName = "BaseTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
@@ -42,8 +57,8 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA2FA6CC2E9EFE5600485CDF"
-               BuildableName = "SwiftTests.xctest"
+               BlueprintIdentifier = "AA2D21312F2C2020005D085C"
+               BuildableName = "SwiftTests."
                BlueprintName = "SwiftTests"
                ReferencedContainer = "container:MarkupEditor.xcodeproj">
             </BuildableReference>
@@ -64,7 +79,7 @@
          <EnvironmentVariable
             key = "OS_ACTIVITY_MODE"
             value = "disable"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>

@@ -7,17 +7,35 @@
 
 import SwiftUI
 
+#if os(iOS) && !targetEnvironment(macCatalyst)
 extension View {
-    
+
     @MainActor public func forcePopover<Content>(
         isPresented: Binding<Bool>,
         at rect: CGRect? = nil,
         arrowEdge: Edge? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View where Content : View {
-        #if targetEnvironment(macCatalyst)
-        // On macCatalyst, the standard .popover works properly, and the ForcePopoverModifier presents
-        // across the entire screen.
+        modifier(
+            ForcePopoverModifier(
+                isPresented: isPresented,
+                at: rect,
+                arrowEdge: arrowEdge,
+                content: content)
+        )
+    }
+
+}
+#else
+extension View {
+
+    @MainActor public func forcePopover<Content>(
+        isPresented: Binding<Bool>,
+        at rect: CGRect? = nil,
+        arrowEdge: Edge? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View where Content : View {
+        // On macCatalyst and macOS, the standard .popover works properly
         guard let rect else {
             // If we don't have rect, just use all defaults
             return popover(
@@ -40,15 +58,7 @@ extension View {
             arrowEdge: arrowEdge,
             content: content
         )
-        #else
-        modifier(
-            ForcePopoverModifier(
-                isPresented: isPresented,
-                at: rect,
-                arrowEdge: arrowEdge,
-                content: content)
-        )
-        #endif
     }
 
 }
+#endif

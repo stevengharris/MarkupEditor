@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 //MARK: Table Icons
@@ -426,3 +428,5 @@ struct TableIcon_Previews: PreviewProvider {
         }
     }
 }
+
+#endif

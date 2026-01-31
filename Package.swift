@@ -6,8 +6,9 @@ import PackageDescription
 let package = Package(
     name: "MarkupEditor",
     platforms: [
-        .macCatalyst(.v15),
-        .iOS(.v15)
+        .macOS(.v13),
+        .macCatalyst(.v16),
+        .iOS(.v16)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -25,12 +26,15 @@ let package = Package(
             name: "MarkupEditor",
             dependencies: [],
             path: "MarkupEditor",
-            exclude: ["rollup"],
             resources: [.process("Resources")]),
         .testTarget(
-            name: "BasicTests",
+            name: "BaseTests",
             dependencies: ["MarkupEditor"],
-            path: "MarkupEditorTests/BasicTests"),
+            path: "MarkupEditorTests/BaseTests"),
+        .testTarget(
+            name: "SwiftTests",
+            dependencies: ["MarkupEditor"],
+            path: "MarkupEditorTests/SwiftTests"),
     ]
 )
 

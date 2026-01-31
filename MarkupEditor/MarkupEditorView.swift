@@ -9,6 +9,7 @@
 import SwiftUI
 import WebKit
 
+#if !os(macOS)
 /// MarkupEditorView is a SwiftUI view that holds a MarkupWKWebView and (optionally) a MarkupToolbar. The MarkupWKWebView is
 /// held in the MarkupWKWebViewRepresentable for SwiftUI usage.
 ///
@@ -19,6 +20,7 @@ import WebKit
 ///
 /// In general, we don't want WebKit abstractions to leak into the MarkupEditor world. When the MarkupEditorView is instantiated, you can optionally
 /// specify the WKUIDelegate and WKNavigationDelegate if needed, which will be assigned to the underlying MarkupWKWebView.
+#endif
 public struct MarkupEditorView: View, MarkupDelegate {
     private var markupDelegate: MarkupDelegate?
     private var wkNavigationDelegate: WKNavigationDelegate?
@@ -33,6 +35,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
     public var placeholder: String?
     
     public var body: some View {
+        #if !os(macOS)
         VStack(spacing: 0) {
             if MarkupEditor.toolbarLocation == .top {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
@@ -44,6 +47,9 @@ public struct MarkupEditorView: View, MarkupDelegate {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
             }
         }
+        #else
+        Text("MarkupEditorView is not available on macOS yet").padding()
+        #endif
     }
     
     public init(

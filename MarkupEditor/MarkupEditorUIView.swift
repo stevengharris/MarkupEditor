@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 8/18/22.
 //
 
+#if !os(macOS)
+
 import WebKit
 import Combine
 
@@ -117,3 +119,5 @@ public class MarkupEditorUIView: UIView, MarkupDelegate {
     }
 
 }
+
+#endif

@@ -6,7 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import UIKit
+import Combine
+import CoreGraphics
 
 /// HTML tags treated as styles in the StyleToolbar. The names are displayed to the user, but the html trucks in tags
 public class StyleContext: @unchecked Sendable, ObservableObject, Identifiable, Hashable, Equatable, CustomStringConvertible {

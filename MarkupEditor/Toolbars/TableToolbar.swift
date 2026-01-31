@@ -6,6 +6,9 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+
+#if !os(macOS)
+
 import SwiftUI
 
 /// The toolbar used for creating and editing a table.
@@ -160,3 +163,6 @@ struct TableToolbar_Previews: PreviewProvider {
         }
     }
 }
+
+
+#endif

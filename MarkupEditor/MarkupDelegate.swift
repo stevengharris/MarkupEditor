@@ -6,8 +6,14 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import UIKit
+import Foundation
 import OSLog
+
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
 
 /// MarkupDelegate defines app-specific functionality that will be invoked as the MarkupWKWebView state changes.
 ///
@@ -94,6 +100,7 @@ public protocol MarkupDelegate {
     /// A local image has been identified to add to the view.
     func markupImageToAdd(_ view: MarkupWKWebView, url: URL)
     
+    #if canImport(UIKit)
     /// Respond whether a drop interaction can be handled.
     ///
     /// *Note:* Drop interaction is currently disabled.
@@ -108,12 +115,13 @@ public protocol MarkupDelegate {
     /// the markupDropInteraction(\_, sessionDidUpdate) and the markupDropInteraction(\_, performDrop)
     /// methods.
     func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool
-    
+
     /// Respond with a DropProposal
     func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal
-    
+
     /// Perform the drop
     func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession)
+    #endif
     
     /// An error occurred on the JavaScript side
     func markupError(code: String, message: String, info: String?, alert: Bool)
@@ -197,15 +205,14 @@ extension MarkupDelegate {
     
     /// A link was selected, and selectionState contains information about it.
     ///
-    /// This function is used by UIKit and SwiftUI apps, but we just use the UIApplication.shared here for simplicity.
-    /// This does, however, force us to import UIKit.
+    /// This function is used by UIKit and SwiftUI apps, using platform-specific APIs to open URLs.
     public func markupLinkSelected(_ view: MarkupWKWebView?, selectionState: SelectionState) {
         // If no handler is provided, the default action is to open the url at href if it can be opened
         guard
             let href = selectionState.href,
             let url = URL(string: href),
-            UIApplication.shared.canOpenURL(url) else { return }
-        UIApplication.shared.open(url)
+            URLHelper.canOpen(url) else { return }
+        URLHelper.open(url)
     }
     
     /// An image was selected, and selectionState contains information about it.
@@ -280,20 +287,22 @@ extension MarkupDelegate {
         view.insertLocalImage(url: url)
     }
     
+    #if canImport(UIKit)
     /// See important comments in the protocol. By default, DropInteraction is not supported; however, in SwiftUI you
     /// can use .onDrop on MarkupEditorView without reimplementing this default method.
     public func markupDropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
         // An override might be something like: session.canLoadObjects(ofClass: <your model class>.self)
         false
     }
-    
+
     /// Supply a copy proposal by default.
     public func markupDropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
         UIDropProposal(operation: .copy)
     }
-    
+
     /// Override this method to perform the drop.
     public func markupDropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {}
+    #endif
     
     /// By default, log when an error occurs on the JavaScript side of the MarkupEditor.
     ///
@@ -309,6 +318,7 @@ extension MarkupDelegate {
         if let info { Logger.script.info("\(info)") }
     }
 
+    #if canImport(UIKit)
     /// By default, the insert link popover is kicked off in the MarkupWKWebView using the LinkViewController.
     ///
     /// By overriding the `markupShowLinkPopover` method you can plug-in
@@ -316,7 +326,7 @@ extension MarkupDelegate {
     public func markupShowLinkPopover(_ view: MarkupWKWebView) {
         view.showLinkPopover()
     }
-    
+
     /// By default, the insert image popover is kicked off in the MarkupWKWebView using the ImageViewController.
     ///
     /// By overriding the `markupShowImagePopover` method you can plug-in
@@ -324,7 +334,7 @@ extension MarkupDelegate {
     public func markupShowImagePopover(_ view: MarkupWKWebView) {
         view.showImagePopover()
     }
-    
+
     /// By default, the insert table popover is kicked off using the MarkupWKWebView using
     /// the SwiftUI TableSizer and TableToolbar which are presented from the InsertToolbar when
     /// `MarkupEditor.showInsertPopover.type` changes to `.table`.
@@ -335,6 +345,22 @@ extension MarkupDelegate {
     public func markupShowTablePopover(_ view: MarkupWKWebView) {
         view.showTablePopover()
     }
+    #else
+    /// macOS placeholder for markupShowLinkPopover
+    public func markupShowLinkPopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
+
+    /// macOS placeholder for markupShowImagePopover
+    public func markupShowImagePopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
+
+    /// macOS placeholder for markupShowTablePopover
+    public func markupShowTablePopover(_ view: MarkupWKWebView) {
+        // Not implemented on macOS
+    }
+    #endif
     
     public func markupButtonClicked(_ view: MarkupWKWebView, id: String, rect: CGRect) {
         Logger.webview.warning("You should handle markupButtonClicked in your MarkupDelegate.")

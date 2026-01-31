@@ -6,6 +6,9 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+
+#if !os(macOS)
+
 import SwiftUI
 
 /// The standard way to display one of the toolbars with a label above. Typically ToobarImageButtons are provided as its content.
@@ -80,3 +83,6 @@ struct LabeledToolbar_Previews: PreviewProvider {
         }
     }
 }
+
+
+#endif
