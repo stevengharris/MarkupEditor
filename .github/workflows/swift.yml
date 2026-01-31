@@ -11,6 +11,13 @@ jobs:
 
     runs-on: macos-15
 
+    strategy:
+      matrix:
+        destination:
+          - 'platform=macOS,variant=Mac Catalyst'
+          - 'platform=iOS Simulator,name=iPhone 17 Pro'
+          - 'platform=macOS'
+
     steps:
     - uses: actions/checkout@v3
     - name: Build and Test
@@ -36,4 +43,4 @@ jobs:
         security list-keychain -d user -s $KEYCHAIN_PATH
 
         # Build and test on Mac Catalyst and MacOS
-        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS'
+        xcodebuild test -scheme MarkupEditor -destination '${{ matrix.destination }}'
