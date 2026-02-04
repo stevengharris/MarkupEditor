@@ -25,7 +25,7 @@ fileprivate typealias Suite = StyleMultiSuite
 class StyleMulti: MarkupDelegate {
     static let page: HtmlTestPage = HtmlTestPage()
     
-    @Test(.serialized, arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
         let webView = try await Self.page.start()
         await htmlTest.run(action: Suite.actions[index], in: webView)

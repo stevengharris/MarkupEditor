@@ -93,7 +93,7 @@ class PasteImage: MarkupDelegate {
     }
 
     /// Run the HtmlTest
-    @Test
+    @Test(.timeLimit(.minutes(HtmlTest.timeLimit)), )
     func run() async throws {
         await htmlTest.run(stringAction: action, in: webView)
     }

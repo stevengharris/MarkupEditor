@@ -102,7 +102,6 @@
 				SharedTest/HtmlTest.swift,
 				SharedTest/HtmlTestPage.swift,
 				SharedTest/HtmlTestSuite.swift,
-				SharedTest/TestError.swift,
 				SwiftTests/PasteImage.swift,
 			);
 			target = AA2FA6CC2E9EFE5600485CDF /* SwiftTests */;
