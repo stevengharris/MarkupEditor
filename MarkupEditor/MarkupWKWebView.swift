@@ -1290,10 +1290,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func pasteHtml(_ html: String?, handler: (()->Void)? = nil) {
-        guard let html = html, !pastedAsync else { return }
-        pastedAsync = true
+        guard let html else { return }
+        //pastedAsync = true
         executeJavaScript("MU.pasteHTML('\(html.escaped)')") { result, error in
-            self.pastedAsync = false
+            //self.pastedAsync = false
             handler?()
         }
     }
