@@ -13,7 +13,7 @@ import UIKit
 /// name that was exists in the document directory. The test is Swift MarkupEditor specific. This functionality is not available in
 /// markupeditor-base. In the markupeditor-desktop app, a roughly analogous approach is used wherein the data for the image is
 /// embedded in the src, and that data is saved into a file in the document directory at save time for the document.
-@Suite()
+@Suite
 class PasteImage: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
