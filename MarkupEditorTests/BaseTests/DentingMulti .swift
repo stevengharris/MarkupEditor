@@ -1,5 +1,5 @@
 //
-//  Denting.swift
+//  DentingMulti.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 10/11/25.
@@ -8,22 +8,30 @@
 import MarkupEditor
 import Testing
 
-fileprivate class DentingSuite {
+fileprivate class DentingMultiSuite {
     // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("denting.json").tests
+    static let tests = HtmlTestSuite.from("denting-multi.json").tests
     static let actions: [(MarkupWKWebView) -> Void] = [
         { webview in webview.indent() },
+        { webview in webview.outdent() },
+        { webview in webview.indent() },
+        { webview in webview.outdent() },
+        { webview in webview.indent() },
+        { webview in webview.outdent() },
+        { webview in webview.indent() },
+        { webview in webview.outdent() },
+        { webview in webview.indent() },
+        { webview in webview.outdent() },
         { webview in webview.indent() },
         { webview in webview.outdent() },
         { webview in webview.outdent() },
-        { webview in webview.indent() },
     ]
 }
-fileprivate typealias Suite = DentingSuite
+fileprivate typealias Suite = DentingMultiSuite
 
 @Suite()
-class Denting: MarkupDelegate {
+class DentingMulti: MarkupDelegate {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, arguments: zip(Suite.tests, 0..<Suite.tests.count))

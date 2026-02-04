@@ -7,83 +7,31 @@
 
 import MarkupEditor
 import Testing
-import WebKit
 
-@Suite(.serialized)
-class FormatSelection: MarkupDelegate {
-    // Avoid instantating the test suite for every @Test, because Swift Testing has no
+fileprivate class FormatSelectionSuite {
+    // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
     static let tests = HtmlTestSuite.from("format-selection.json").tests
-    var webView: MarkupWKWebView!
-    var coordinator: MarkupCoordinator!
-    var loaded = false
+    static let actions: [(MarkupWKWebView) -> Void] = [
+        { webview in webview.getSelectionState() { state in #expect(state.bold == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.italic == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.underline == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.strike == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.sup == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.sub == true) } },
+        { webview in webview.getSelectionState() { state in #expect(state.code == true) } },
+    ]
+}
+fileprivate typealias Suite = FormatSelectionSuite
 
-    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization.
-    init() async throws {
-        try await waitForReady()
-        setActions()
-    }
+@Suite()
+class FormatSelection: MarkupDelegate {
+    static let page: HtmlTestPage = HtmlTestPage()
     
-    deinit {
-        webView = nil
-        coordinator = nil
-    }
-
-    /// Again, ridiculous to set these for every test, but since they need access to `webView`, I don't see
-    /// any way around it.
-    func setActions() {
-        Self.tests[0].action = { let state = await self.webView.getSelectionState(); #expect(state.bold == true) }
-        Self.tests[1].action = { let state = await self.webView.getSelectionState(); #expect(state.italic == true) }
-        Self.tests[2].action = { let state = await self.webView.getSelectionState(); #expect(state.underline == true) }
-        Self.tests[3].action = { let state = await self.webView.getSelectionState(); #expect(state.strike == true) }
-        Self.tests[4].action = { let state = await self.webView.getSelectionState(); #expect(state.sup == true) }
-        Self.tests[5].action = { let state = await self.webView.getSelectionState(); #expect(state.sub == true) }
-        Self.tests[6].action = { let state = await self.webView.getSelectionState(); #expect(state.code == true) }
-    }
-
-    /// Set up the `webView` and `coordinator` and then wait for them to be ready.
-    func waitForReady() async throws {
-        try await confirmation { confirmation in
-            webView = MarkupWKWebView(markupDelegate: self)
-            coordinator = MarkupCoordinator(
-                markupDelegate: self,
-                webView: webView
-            )
-            // The coordinator will receive callbacks from markup.js
-            // using window.webkit.messageHandlers.test.postMessage(<message>)
-            webView.setCoordinatorConfiguration(coordinator)
-            _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
-        }
-    }
-
-    /// Just yield until `loaded` has been set in the `markupDidLoad` callback. Somewhat adapted from
-    /// https://gist.github.com/janodev/32217b09f307da8c96e2cf629c31a8eb
-    func ready(timeout: Duration, confirm: Confirmation) async throws {
-        let startTime = ContinuousClock.now
-        while ContinuousClock.now - startTime < timeout {
-            if loaded {
-                confirm()
-                break
-            }
-            await Task.yield()
-        }
-        if !loaded {
-            throw TestError.timeout(
-                "Load did not succeed within \(timeout) seconds"
-            )
-        }
-    }
-
-    /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
-    func markupDidLoad(_ view: MarkupWKWebView, handler: (() -> Void)?) {
-        loaded = true
-        handler?()
-    }
-
-    /// Run all the HtmlTests
-    @Test(.serialized, arguments: Self.tests)
-    func run(htmlTest: HtmlTest) async throws {
-        await htmlTest.run(in: webView)
+    @Test(.serialized, arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    func run(htmlTest: HtmlTest, index: Int) async throws {
+        let webView = try await Self.page.start()
+        await htmlTest.run(action: Suite.actions[index], in: webView)
     }
 
 }

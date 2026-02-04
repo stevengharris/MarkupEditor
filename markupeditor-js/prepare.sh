@@ -22,7 +22,7 @@ if [ ! -e "$TEST" ]; then
   echo "Warning: $TEST does not exist."
   echo "To run tests, you must install using a local markupeditor dev-dependency."
 else
-    echo " Copying test data ${TEST}/*.json\n  to ../MarkupEditorTests/BaseTests/"
+    echo " Copying test data ${TEST}/*.json\n  to ../MarkupEditorTests/BaseTests/Data"
     # The simple cp with wildcarded "${TEST}*.json" fails, so used find + exec cp
-    find $TEST -name "*.json" -exec cp {} "../MarkupEditorTests/BaseTests/" \;
+    find $TEST -name "*.json" -exec cp {} "../MarkupEditorTests/BaseTests/Data/" \;
 fi

@@ -96,20 +96,14 @@
 			);
 			target = AA65299A260E8450000674B7 /* UIKitDemo */;
 		};
-		AA16EFF72F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				SwiftTests/PasteImage.swift,
-			);
-			target = AA2FA6122E94626E00485CDF /* BaseTests */;
-		};
 		AA16EFF82F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				HtmlTest.swift,
-				HtmlTestSuite.swift,
+				SharedTest/HtmlTest.swift,
+				SharedTest/HtmlTestPage.swift,
+				SharedTest/HtmlTestSuite.swift,
+				SharedTest/TestError.swift,
 				SwiftTests/PasteImage.swift,
-				TestError.swift,
 			);
 			target = AA2FA6CC2E9EFE5600485CDF /* SwiftTests */;
 		};
@@ -123,6 +117,13 @@
 			);
 			target = AA408AFA261666D200CAE8B9 /* MarkupEditor */;
 		};
+		AA2D24BA2F32A28F005D085C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				SwiftTests/PasteImage.swift,
+			);
+			target = AA2FA6122E94626E00485CDF /* BaseTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -130,7 +131,7 @@
 		AA16EF522F1EE2300071C027 /* SharedDemo */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SharedDemo; sourceTree = "<group>"; };
 		AA16EF762F1EE2AA0071C027 /* SwiftUIDemo */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EF822F1EE2AA0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = SwiftUIDemo; sourceTree = "<group>"; };
 		AA16EF892F1EE2E10071C027 /* UIKitDemo */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EF8F2F1EE2E10071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UIKitDemo; sourceTree = "<group>"; };
-		AA16EFC22F1EE2ED0071C027 /* MarkupEditorTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EFF72F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, AA16EFF82F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MarkupEditorTests; sourceTree = "<group>"; };
+		AA16EFC22F1EE2ED0071C027 /* MarkupEditorTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA2D24BA2F32A28F005D085C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, AA16EFF82F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MarkupEditorTests; sourceTree = "<group>"; };
 		AA16EFFB2F1EE32F0071C027 /* MarkupEditorFramework */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EFFD2F1EE32F0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MarkupEditorFramework; sourceTree = "<group>"; };
 		AA16F0012F1EE4260071C027 /* markupeditor-js */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "markupeditor-js"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -493,7 +494,7 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -522,7 +523,7 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -550,7 +551,7 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -579,7 +580,7 @@
 				DEVELOPMENT_TEAM = 7XXG4VJQ59;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -612,7 +613,7 @@
 				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -651,7 +652,7 @@
 				ENABLE_MODULE_VERIFIER = YES;
 				INFOPLIST_FILE = MarkupEditorFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -813,7 +814,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -847,7 +848,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = SwiftUIDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -879,7 +880,7 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -910,7 +911,7 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = UIKitDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

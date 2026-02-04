@@ -15,24 +15,22 @@ import Testing
 ///
 /// The JSON file for each suite also contains `action` items for each test, which produces a function in JavaScript using the
 /// Function constructor. Since we can't do that in Swift, we specify the `action` var as an async function, and then in each
-/// test suite, we populate the `action` for each test. Occasionally (e.g., in `baseline`), no action is needed). Here we also
+/// test, we get the `action` for each test held onto by the suite. Occasionally (e.g., in `baseline`), no action is needed). Here we also
 /// use `stringAction` in the case where the action returns a `String`. In JavaScript, we can just test if the return is null, but in
 /// Swift we have to type the return properly, and all of the existing MU methods execute a handler with argument if needed.
-public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvertible {
-    public static var timeout: Double = 7
-    public var description: String
-    public var skipTest: String?
-    public var skipSet: Bool
-    public var skipUndoRedo: Bool
-    public var sel: String
-    public var startHtml: String
-    public var endHtml: String
-    public var undoHtml: String
-    public var pasteString: String?
-    public var action: (() async throws -> Void)?
-    public var stringAction: (() async throws -> String?)?
+final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomTestStringConvertible {
+    public static let timeout: Double = 20     // Needs to be large for GitHub actions
+    public let description: String
+    public let skipTest: String?
+    public let skipSet: Bool
+    public let skipUndoRedo: Bool
+    public let sel: String
+    public let startHtml: String
+    public let endHtml: String
+    public let undoHtml: String
+    public let pasteString: String?
     
-    public var testDescription: String
+    public var testDescription: String {description}
     
     enum CodingKeys: String, CodingKey {
         case description = "description"
@@ -57,8 +55,8 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         undoHtml: String? = nil,
         pasteString: String? = nil
     ) {
-        self.description = description
         self.skipTest = skipTest
+        self.description = skipTest == nil ? description : "SKIPPED... \(description)"
         self.skipSet = skipSet
         self.skipUndoRedo = skipUndoRedo
         self.sel = sel
@@ -66,13 +64,13 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         self.endHtml = endHtml ?? startHtml
         self.undoHtml = undoHtml ?? startHtml
         self.pasteString = pasteString
-        self.testDescription = description
     }
 
     required public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        description = try values.decode(String.self, forKey: .description)
         skipTest = try values.decodeIfPresent(String.self, forKey: .skipTest)
+        let desc = try values.decode(String.self, forKey: .description)
+        description = skipTest == nil ? desc : "SKIPPED... \(desc)"
         skipSet = try values.decodeIfPresent(Bool.self, forKey: .skipSet) ?? false
         skipUndoRedo = try values.decodeIfPresent(Bool.self, forKey: .skipUndoRedo) ?? false
         sel = try values.decodeIfPresent(String.self, forKey: .sel) ?? "|"
@@ -80,11 +78,9 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         endHtml = try values.decodeIfPresent(String.self, forKey: .endHtml) ?? startHtml
         undoHtml = try values.decodeIfPresent(String.self, forKey: .undoHtml) ?? startHtml
         pasteString = try values.decodeIfPresent(String.self, forKey: .pasteString)
-        testDescription = description
     }
     
-    @MainActor
-    public func run(in view: MarkupWKWebView) async {
+    public func run(action: ((_: MarkupWKWebView) async throws -> Void)?, in view: MarkupWKWebView) async {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }
@@ -98,27 +94,49 @@ public class HtmlTest: Codable, CustomStringConvertible, CustomTestStringConvert
         // and make sure it produces `endHtml`.
         if let action {
             do {
-                try await action()
+                try await action(view)
             } catch {
                 print("Error: \(error)")
                 return
             }
             let html = await view.getTestHtml(sel: sel)
             #expect(html == endHtml)
-        } else if let stringAction {
-            let html: String?
-            do {
-                html = try await stringAction()
-            } catch {
-                print("Error: \(error)")
-                return
-            }
-            #expect(html == endHtml)
         }
         // If not skipping the undo/redo step, then to each one, comparing
         // the result with `undoHtml` and `endHtml` respectively. The `undoHtml`
         // is the same as `startHtml` unless otherwise specified.
-        if (action != nil || stringAction != nil) && !skipUndoRedo {
+        if (action != nil && !skipUndoRedo) {
+            await view.undo()
+            let undoResult = await view.getTestHtml(sel: sel)
+            #expect(undoResult == undoHtml)
+            await view.redo()
+            let redoResult = await view.getTestHtml(sel: sel)
+            #expect(redoResult == endHtml)
+        }
+    }
+    
+    public func run(stringAction: ((_: MarkupWKWebView) async throws -> String?), in view: MarkupWKWebView) async {
+        // The `description` of skipped tests is modified to flag them, but
+        // by simply returning, they will show up as successful tests.
+        if skipTest != nil { return }
+        // In some cases (e.g., checking HTML and text preprocessing), we don't
+        // want to set the initial HTML.
+        if !skipSet {
+            let html = await view.setTestHtml(startHtml, sel: sel)
+            #expect(html == startHtml)
+        }
+        let html: String?
+        do {
+            html = try await stringAction(view)
+        } catch {
+            print("Error: \(error)")
+            return
+        }
+        #expect(html == endHtml)
+        // If not skipping the undo/redo step, then to each one, comparing
+        // the result with `undoHtml` and `endHtml` respectively. The `undoHtml`
+        // is the same as `startHtml` unless otherwise specified.
+        if (!skipUndoRedo) {
             await view.undo()
             let undoResult = await view.getTestHtml(sel: sel)
             #expect(undoResult == undoHtml)
