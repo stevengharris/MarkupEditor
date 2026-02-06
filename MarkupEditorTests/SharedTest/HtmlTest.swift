@@ -80,7 +80,7 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
         pasteString = try values.decodeIfPresent(String.self, forKey: .pasteString)
     }
     
-    public func run(action: ((_: MarkupWKWebView) async throws -> Void)?, in view: MarkupWKWebView) async {
+    public func run(action: ((_: MarkupWKWebView) async throws -> Void)?, in view: MarkupWKWebView) async throws {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }
@@ -93,12 +93,7 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
         // Execute either the `action` or `stringAction` if one if defined,
         // and make sure it produces `endHtml`.
         if let action {
-            do {
-                try await action(view)
-            } catch {
-                print("Error: \(error)")
-                return
-            }
+            try await action(view)
             let html = await view.getTestHtml(sel: sel)
             #expect(html == endHtml)
         }
@@ -115,7 +110,7 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
         }
     }
     
-    public func run(stringAction: ((_: MarkupWKWebView) async throws -> String?), in view: MarkupWKWebView) async {
+    public func run(action: ((_: MarkupWKWebView) async throws -> String?), in view: MarkupWKWebView) async throws {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }
@@ -125,13 +120,7 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
             let html = await view.setTestHtml(startHtml, sel: sel)
             #expect(html == startHtml)
         }
-        let html: String?
-        do {
-            html = try await stringAction(view)
-        } catch {
-            print("Error: \(error)")
-            return
-        }
+        let html = try await action(view)
         #expect(html == endHtml)
         // If not skipping the undo/redo step, then to each one, comparing
         // the result with `undoHtml` and `endHtml` respectively. The `undoHtml`

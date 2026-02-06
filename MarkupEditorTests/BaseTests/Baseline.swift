@@ -22,7 +22,7 @@ class Baseline: MarkupDelegate {
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
         let webView = try await Self.page.start()
-        await htmlTest.run(action: nil, in: webView)
+        try await htmlTest.run(action: nil, in: webView)
     }
 
 }

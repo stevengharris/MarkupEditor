@@ -52,7 +52,7 @@ class Search: MarkupDelegate {
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
         let webView = try await Self.page.start()
-        await htmlTest.run(stringAction: Suite.actions[index], in: webView)
+        try await htmlTest.run(action: Suite.actions[index], in: webView)
     }
 
 }
