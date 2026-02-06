@@ -37,4 +37,4 @@ jobs:
 
         # NOTE: Specify -destination 'platform=macOS,variant=Mac Catalyst' for Catalyst build
 
-        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst'
+        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst'
