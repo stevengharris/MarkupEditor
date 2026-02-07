@@ -9,10 +9,10 @@ on:
 jobs:
   build:
 
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build and Test
       env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
@@ -37,8 +37,4 @@ jobs:
 
         # NOTE: Specify -destination 'platform=macOS,variant=Mac Catalyst' for Catalyst build
 
-        # hack from https://github.com/apple/swift-package-manager/issues/5767 to avoid "could not generate PIF" error
-        # swift package dump-pif > /dev/null
-        # xcodebuild clean -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst' > /dev/null
-
-        xcodebuild test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst'

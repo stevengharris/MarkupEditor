@@ -5,32 +5,37 @@
 //  Created by Steven Harris on 10/14/25.
 //
 
-import Testing
-
 import MarkupEditor
 import Testing
-import WebKit
+import UIKit
 
 /// This test ensures that when an image is pasted into a document in the Swift MarkupEditor, the image src points at a UUID string
 /// name that was exists in the document directory. The test is Swift MarkupEditor specific. This functionality is not available in
 /// markupeditor-base. In the markupeditor-desktop app, a roughly analogous approach is used wherein the data for the image is
 /// embedded in the src, and that data is saved into a file in the document directory at save time for the document.
-@Suite(.serialized)
+@Suite
 class PasteImage: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
-    var loaded = false
-    var imageLoaded = false
     var htmlTest: HtmlTest!
+    var action: ((MarkupWKWebView) async throws -> String?)!
+    var continuation: CheckedContinuation<Bool, Never>?
+    var imageLoadedContinuation: CheckedContinuation<Bool, Never>?
 
-    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization.
+    /// Once-per test initialization, which is frankly ridiculous, but there is no way to do a once-per-suite initialization
     init() async throws {
-        try await waitForReady()
-        htmlTest = HtmlTest(
-            description: "Image in P - Paste image at insertion point in a word",
-            startHtml: "<p>This is ju|st a simple paragraph.</p>"
-        )
-        htmlTest.stringAction = paste()
+        _ = await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            webView = MarkupWKWebView(markupDelegate: self)
+            coordinator = MarkupCoordinator(markupDelegate: self, webView: webView)
+            webView.setCoordinatorConfiguration(coordinator)
+            htmlTest = HtmlTest(
+                description: "Image in P - Paste image at insertion point in a word",
+                skipUndoRedo: true, // TODO: Won't work with the flow of HtmlTest.run
+                startHtml: "<p>This is ju|st a simple paragraph.</p>"
+            )
+            action = paste
+        }
     }
     
     deinit {
@@ -45,78 +50,32 @@ class PasteImage: MarkupDelegate {
     /// uniquely generated, so the test just makes sure it is in an expected form and actually exists. When we
     /// paste an image this way, we have to wait for the MarkupDelegate markupImageAdded callback, because
     /// the addition of image size is done async based on the actual image size.
-    func paste() -> () async throws -> String? {
-        return {
-            await self.webView.pasteImage(UIImage(systemName: "calendar"))
-            try await self.imageAdded(timeout: .milliseconds(1000))
-            let html = await self.webView.getTestHtml(sel: "|")
-            if let imageFileName = self.imageFilename(in: html) {
-                #expect(self.webView.resourceExists(imageFileName))
+    func paste(webview: MarkupWKWebView) async throws -> String? {
+        await webview.pasteImage(UIImage(systemName: "calendar"))
+        _ = await withCheckedContinuation { continuation in
+            self.imageLoadedContinuation = continuation
+            webview.getTestHtml(sel: "|") { html in
+                if let imageFileName = self.imageFilename(in: html) {
+                    #expect(webview.resourceExists(imageFileName))
+                } else {
+                    #expect(Bool(false))
+                }
+                // For undo/redo to work, we need to reassign, but this makes HtmlTest non-sendable
+                //self.htmlTest.endHtml = html ?? self.htmlTest.startHtml
             }
-            self.htmlTest.endHtml = html!
-            return html
         }
-    }
-
-    /// Set up the `webView` and `coordinator` and then wait for them to be ready.
-    func waitForReady() async throws {
-        try await confirmation { confirmation in
-            webView = MarkupWKWebView(markupDelegate: self)
-            coordinator = MarkupCoordinator(
-                markupDelegate: self,
-                webView: webView
-            )
-            // The coordinator will receive callbacks from markup.js
-            // using window.webkit.messageHandlers.test.postMessage(<message>)
-            webView.setCoordinatorConfiguration(coordinator)
-            _ = try await ready(timeout: .seconds(HtmlTest.timeout), confirm: confirmation)
-        }
-    }
-
-    /// Just yield until `loaded` has been set in the `markupDidLoad` callback. Somewhat adapted from
-    /// https://gist.github.com/janodev/32217b09f307da8c96e2cf629c31a8eb
-    func ready(timeout: Duration, confirm: Confirmation) async throws {
-        let startTime = ContinuousClock.now
-        while ContinuousClock.now - startTime < timeout {
-            if loaded {
-                confirm()
-                break
-            }
-            await Task.yield()
-        }
-        if !loaded {
-            throw TestError.timeout(
-                "Load did not succeed within \(timeout) seconds"
-            )
-        }
+        return htmlTest.endHtml
     }
 
     /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
-    func markupDidLoad(_ view: MarkupWKWebView, handler: (() -> Void)?) {
-        loaded = true
-        handler?()
-    }
-
-    func imageAdded(timeout: Duration) async throws {
-        try await confirmation { confirm in
-            let startTime = ContinuousClock.now
-            while ContinuousClock.now - startTime < timeout {
-                if imageLoaded {
-                    confirm()
-                    break
-                }
-                await Task.yield()
-            }
-            if !imageLoaded {
-                throw TestError.timeout(
-                    "Image did not load within \(timeout) seconds"
-                )
-            }
-        }
+    func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+        continuation?.resume(returning: true)
+        continuation = nil
     }
 
     func markupImageAdded(url: URL) {
-        imageLoaded = true
+        imageLoadedContinuation?.resume(returning: true)
+        imageLoadedContinuation = nil
     }
     
     func imageFilename(in tag: String?) -> String? {
@@ -134,9 +93,9 @@ class PasteImage: MarkupDelegate {
     }
 
     /// Run the HtmlTest
-    @Test
+    @Test(.timeLimit(.minutes(HtmlTest.timeLimit)), )
     func run() async throws {
-        await htmlTest.run(in: webView)
+        try await htmlTest.run(action: action, in: webView)
     }
 
 }
