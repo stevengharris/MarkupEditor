@@ -79,6 +79,7 @@
 		AA5A5B4A2E7363D6008DFDBA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA652942260E8114000674B7 /* SwiftUIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA65299B260E8450000674B7 /* UIKitDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UIKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAFFF66E2F43D2CA00C0E52E /* markupeditor-js */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "markupeditor-js"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -132,7 +133,6 @@
 		AA16EF892F1EE2E10071C027 /* UIKitDemo */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EF8F2F1EE2E10071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UIKitDemo; sourceTree = "<group>"; };
 		AA16EFC22F1EE2ED0071C027 /* MarkupEditorTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA2D24BA2F32A28F005D085C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, AA16EFF82F1EE2ED0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MarkupEditorTests; sourceTree = "<group>"; };
 		AA16EFFB2F1EE32F0071C027 /* MarkupEditorFramework */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AA16EFFD2F1EE32F0071C027 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MarkupEditorFramework; sourceTree = "<group>"; };
-		AA16F0012F1EE4260071C027 /* markupeditor-js */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "markupeditor-js"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,7 +182,7 @@
 				AA5A5B4A2E7363D6008DFDBA /* README.md */,
 				AA5A55302E7346D4008DFDBA /* CHANGELOG.md */,
 				AA2FA60E2E9461D800485CDF /* LICENSE */,
-				AA16F0012F1EE4260071C027 /* markupeditor-js */,
+				AAFFF66E2F43D2CA00C0E52E /* markupeditor-js */,
 				AA1B80C82620B62000891FFB /* Package.swift */,
 				AA16EF1A2F1EE21A0071C027 /* MarkupEditor */,
 				AA16EF522F1EE2300071C027 /* SharedDemo */,
