@@ -12,6 +12,12 @@ import Combine
 import OSLog
 import UniformTypeIdentifiers
 
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
+
 /// A specialized WKWebView used to support WYSIWYG editing in Swift.
 ///
 /// All init methods invoke setupForEditing, which loads markup.html that in turn loads
@@ -77,6 +83,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private var markupDelegate: MarkupDelegate?
     /// Track whether a paste action has been invoked so as to avoid double-invocation per https://developer.apple.com/forums/thread/696525
     var pastedAsync = false
+
+    #if canImport(UIKit)
     /// An accessoryView to override the inputAccessoryView of UIResponder.
     public var accessoryView: UIView? {
         didSet {
@@ -94,8 +102,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide), name: UIResponder.keyboardDidHideNotification, object: nil)
         }
     }
+    #else
+    public var accessoryView: PlatformView? = nil
+    #endif
+
     private var oldContentOffset: CGPoint?
+
+    #if canImport(UIKit)
     private var markupToolbarHeightConstraint: NSLayoutConstraint!
+    #else
+    private var markupToolbarHeightConstraint: NSLayoutConstraint? = nil
+    #endif
     private var firstResponder: AnyCancellable?
     
     /// Types of content that can be pasted in a MarkupWKWebView
@@ -146,8 +163,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// which in turn loads the css and js scripts itself. The markup.html defines the "editor" element, which
     /// is later populated with html.
     private func initForEditing() {
+        #if canImport(UIKit)
         isOpaque = false                        // Eliminate flash in dark mode
         backgroundColor = .systemBackground     // Eliminate flash in dark mode
+        #endif
         initRootFiles()
         markupDelegate?.markupSetup(self)
         // Enable drop interaction
@@ -156,6 +175,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
         loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+        #if canImport(UIKit)
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = tintColor.resolvedColor(with: .current)
@@ -163,6 +183,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if MarkupEditor.toolbarLocation == .keyboard {
             inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
         }
+        #endif
         observeFirstResponder()
     }
     
@@ -506,7 +527,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Keyboard handling and accessoryView setup
-    
+
+    #if canImport(UIKit)
     /// Respond to keyboardWillShow event.
     ///
     /// We adjust toolbar height constraint so it shows properly and scroll the selection so it is not obscured by
@@ -524,7 +546,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             guard let userInfo = notification.userInfo else { return }
             // In iOS 16.1 and later, the keyboard notification object is the screen the keyboard appears on.
             guard let screen = notification.object as? UIScreen,
-                  // Get the keyboard’s frame at the end of its animation
+                  // Get the keyboard's frame at the end of its animation
                   let keyboardFrameEnd = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             // Use the screen to get the coordinate space to convert from
             let fromCoordinateSpace = screen.coordinateSpace
@@ -548,7 +570,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
+
     /// Respond to the keyboardDidHide event.
     ///
     /// Adjust the height contstraint on the MarkupToolbar and reset the contentOffset.
@@ -558,9 +580,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         scrollView.setContentOffset(oldContentOffset ?? CGPoint.zero, animated: true)
         oldContentOffset = nil
     }
+    #endif
     
     //MARK: Overrides
     
+    #if canImport(UIKit)
     /// Override hitTest to enable drop events.
     ///
     /// The view receives UIDragEvents, which appear to be a private type of
@@ -595,6 +619,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return self
         }
     }
+    #endif
     
     //MARK: Responder Handling
     
@@ -609,11 +634,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     //    return !hasFocus
     //}
     
+    #if canImport(UIKit)
     public override var inputAccessoryView: UIView? {
         get { accessoryView }
         set { accessoryView = newValue }
     }
-    
+
     /// Return false to disable various menu items depending on selectionState
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         guard selectionState.isValid else { return false }
@@ -641,6 +667,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return false
         }
     }
+    #endif
     
     @available(*, deprecated, message: "No longer needed for modal input operations.")
     public func startModalInput(_ handler: (() -> Void)? = nil) {
@@ -656,21 +683,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    #if canImport(UIKit)
     /// Indirect the presentation of the link popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableLinkPopover() {
         markupDelegate?.markupShowLinkPopover(self)
     }
-    
+
     /// Indirect the presentation of the image popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableImagePopover() {
         markupDelegate?.markupShowImagePopover(self)
     }
-    
+
     /// Indirect the presentation of the table popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableTablePopover() {
         markupDelegate?.markupShowTablePopover(self)
     }
-    
+
     /// Show the default link popover using the LinkViewController.
     @objc public func showLinkPopover() {
         MarkupEditor.showInsertPopover.type = .link     // Does nothing by default
@@ -685,7 +713,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(linkVC, animated: true)
     }
-    
+
     /// Show the default link popover using the ImageViewController.
     @objc public func showImagePopover() {
         MarkupEditor.showInsertPopover.type = .image    // Does nothing by default
@@ -700,13 +728,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         popover.sourceRect = MarkupEditor.selectionState.sourceRect ?? bounds
         closestVC()?.present(imageVC, animated: true)
     }
-    
+
     /// Show the default table popover by setting the state of `MarkupEditor.showInsertPopover` to `.table`,
     /// which will in turn `forcePopover` of either the TableSizer or TableToolbar.
     @objc public func showTablePopover() {
         guard selectionState.canInsert else { return }
         MarkupEditor.showInsertPopover.type = .table    // Triggers default SwiftUI TableSizer or TableToolbar
     }
+    #endif
     
     //MARK: Testing support
     
@@ -866,6 +895,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func updateHeight(handler: (()->Void)? = nil) {
         self.getHeight() { clientHeight in
             let paddedHeight = clientHeight + self.clientHeightPad
+            #if canImport(UIKit)
             if self.markupConfiguration?.padBottom ?? false {
                 self.padBottom() {
                     self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
@@ -875,6 +905,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
                 handler?()
             }
+            #else
+            self.markupDelegate?.markup(self, heightDidChange: paddedHeight)
+            handler?()
+            #endif
         }
     }
     
@@ -979,8 +1013,17 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         if !url.isFileURL {
             items["public.html"] = htmlData     // And for external images, load up the html
         }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         pasteboard.setItems([items])
+        #else
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        // For macOS, we'll set the HTML data if available
+        if let htmlData = items["public.html"] as? Data, let htmlString = String(data: htmlData, encoding: .utf8) {
+            pasteboard.setString(htmlString, forType: .html)
+        }
+        #endif
     }
     
     private func getHeight(_ handler: @escaping ((Int)->Void)) {
@@ -1050,6 +1093,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// We use the selrect found in selection state, pad it by 8 vertically, and scroll a minimum
     /// amount to keep put that padded rectangle fully in the view. Scrolling never moves the
     /// top below 0 or the bottom above the scrollView.contentHeight.
+    #if canImport(UIKit)
     public func makeSelectionVisible(handler: (()->Void)? = nil) {
         getSelectionState() { state in
             guard let selrect = state.selrect else {
@@ -1079,7 +1123,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
-    
+    #else
+    public func makeSelectionVisible(handler: (()->Void)? = nil) {
+        // Not supported on macOS yet
+        handler?()
+    }
+    #endif
+
     //MARK: Undo/redo
     
     /// Invoke the undo function from the undo button, same as occurs with Command-S.
@@ -1259,6 +1309,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// where it will show up full size. However, if we have "markup.image" populated, then
     /// we prioritize it for pasting, because it retains the sizing of the original.
     public func pasteableType() -> PasteableType? {
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         if pasteboard.contains(pasteboardTypes: ["markup.image"]) {
             return .LocalImage
@@ -1277,6 +1328,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             // We have a string that we can paste
             return .Text
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        if let _ = pasteboard.availableType(from: [.tiff, .png]) {
+            return .ExternalImage
+        } else if let _ = pasteboard.availableType(from: [.html]) {
+            return .Html
+        } else if pasteboard.availableType(from: [.string]) != nil {
+            return .Text
+        }
+        #endif
         return nil
     }
     
@@ -1290,10 +1351,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func pasteHtml(_ html: String?, handler: (()->Void)? = nil) {
-        guard let html else { return }
-        //pastedAsync = true
+        guard let html = html, !pastedAsync else { return }
+        pastedAsync = true
         executeJavaScript("MU.pasteHTML('\(html.escaped)')") { result, error in
-            //self.pastedAsync = false
+            self.pastedAsync = false
             handler?()
         }
     }
@@ -1306,8 +1367,26 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    public func pasteImage(_ image: UIImage?, handler: (()->Void)? = nil) {
-        guard let image = image, let contents = image.pngData(), !pastedAsync else { return }
+    public func pasteImage(_ image: PlatformImage?, handler: (()->Void)? = nil) {
+        guard let image = image, !pastedAsync else {
+            handler?()
+            return
+        }
+
+        #if canImport(UIKit)
+        guard let contents = image.pngData() else {
+            handler?()
+            return
+        }
+        #else
+        guard let tiffRepresentation = image.tiffRepresentation,
+              let bitmapImage = NSBitmapImageRep(data: tiffRepresentation),
+              let contents = bitmapImage.representation(using: .png, properties: [:]) else {
+            handler?()
+            return
+        }
+        #endif
+
         // Make a new unique ID for the image to save in the cacheUrl directory
         pastedAsync = true
         var path = "\(UUID().uuidString).png"
@@ -1332,8 +1411,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
-    
-    public func pasteImage(_ image: UIImage?) async {
+
+    public func pasteImage(_ image: PlatformImage?) async {
         await withCheckedContinuation { continuation in
             pasteImage(image) {
                 continuation.resume()
@@ -1565,10 +1644,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     //MARK: Styling
-    
+
+    #if canImport(UIKit)
     @objc public func pStyle(sender: UICommand) {
         replaceStyle(selectionState.style, with: .P)
     }
+    #else
+    @objc public func pStyle() {
+        replaceStyle(selectionState.style, with: .P)
+    }
+    #endif
     
     @objc public func h1Style() {
         replaceStyle(selectionState.style, with: .H1)
@@ -1688,33 +1773,34 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
 //MARK: UIResponderStandardEditActions overrides
 
+#if canImport(UIKit)
 extension MarkupWKWebView {
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleBoldface(_ sender: Any?) {
         bold()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleItalics(_ sender: Any?) {
         italic()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func toggleUnderline(_ sender: Any?) {
         underline()
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func increaseSize(_ sender: Any?) {
         // Do nothing
     }
-    
+
     /// Replace standard action with the MarkupWKWebView implementation.
     public override func decreaseSize(_ sender: Any?) {
         // Do nothing
     }
-    
+
     @objc public override func copy(_ sender: Any?) {
         if selectionState.isInImage {
             copyImage(src: selectionState.src!, alt: selectionState.alt, width: selectionState.width, height: selectionState.height)
@@ -1722,7 +1808,7 @@ extension MarkupWKWebView {
             super.copy(sender)
         }
     }
-    
+
     @objc public override func cut(_ sender: Any?) {
         if selectionState.isInImage {
             executeJavaScript("MU.cutImage()") { result, error in }
@@ -1738,6 +1824,7 @@ extension MarkupWKWebView {
     /// of data available in UIPasteboard.general.
     public override func paste(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1774,6 +1861,27 @@ extension MarkupWKWebView {
         case .Url:
             pasteUrl(url: pasteboard.url)
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteHtml(html)
+            }
+        case .ExternalImage:
+            if let tiffData = pasteboard.data(forType: .tiff) ?? pasteboard.data(forType: .png) {
+                if let nsImage = NSImage(data: tiffData) {
+                    pasteImage(nsImage)
+                }
+            }
+        default:
+            break
+        }
+        #endif
     }
     
     /// Paste the url as an img or as a link depending on its content.
@@ -1830,6 +1938,7 @@ extension MarkupWKWebView {
     /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
     public override func pasteAndMatchStyle(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
+        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text, .Rtf:
@@ -1841,12 +1950,29 @@ extension MarkupWKWebView {
         default:
             break
         }
+        #else
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteText(html)
+            }
+        default:
+            break
+        }
+        #endif
     }
-    
+
 }
+#endif
 
 //MARK: Drop support
 
+#if canImport(UIKit)
 extension MarkupWKWebView: UIDropInteractionDelegate {
     
     /// Delegate the handling decision for DropInteraction to the markupDelegate.
@@ -1863,14 +1989,17 @@ extension MarkupWKWebView: UIDropInteractionDelegate {
     public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
         markupDelegate?.markupDropInteraction(interaction, performDrop: session)
     }
-    
+
 }
+#endif
 
 //MARK: Popover support
 
+#if canImport(UIKit)
 extension MarkupWKWebView: UIPopoverPresentationControllerDelegate {
-    
+
     public func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         .none
     }
 }
+#endif

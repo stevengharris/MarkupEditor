@@ -6,6 +6,8 @@
 //  Modified by Steven G. Harris
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 class PopoverHostingController<V>: UIHostingController<V>, UIPopoverPresentationControllerDelegate where V:View {
@@ -35,3 +37,5 @@ class PopoverHostingController<V>: UIHostingController<V>, UIPopoverPresentation
         isPresented.wrappedValue = false
     }
 }
+
+#endif

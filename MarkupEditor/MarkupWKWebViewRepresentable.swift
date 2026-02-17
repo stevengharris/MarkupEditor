@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 8/18/22.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 import WebKit
 
@@ -119,3 +121,5 @@ public struct MarkupWKWebViewRepresentable: UIViewRepresentable {
     }
     
 }
+
+#endif

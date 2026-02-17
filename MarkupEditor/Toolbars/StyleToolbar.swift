@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 /// The toolbar for setting the paragraph style.
@@ -140,3 +142,5 @@ struct StyleToolbar_Previews: PreviewProvider {
         }
     }
 }
+
+#endif

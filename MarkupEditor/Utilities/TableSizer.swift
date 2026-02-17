@@ -6,6 +6,8 @@
 //  Copyright © 2021, 2022 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 /// The TableSizer shows a grid for the user to choose a table size to create.
@@ -145,3 +147,4 @@ struct TableSizer_Previews: PreviewProvider {
     }
 }
 
+#endif

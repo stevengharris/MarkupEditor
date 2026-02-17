@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 /// The toolbar for undo and redo.
@@ -47,3 +49,5 @@ struct CorrectionToolbar_Previews: PreviewProvider {
         }
     }
 }
+
+#endif

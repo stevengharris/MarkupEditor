@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 8/8/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 
 @MainActor
@@ -64,3 +66,5 @@ public class ToolbarStyle: @unchecked Sendable, ObservableObject {
     }
     
 }
+
+#endif

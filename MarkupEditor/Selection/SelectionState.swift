@@ -6,7 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
-import UIKit
+import Combine
+import CoreGraphics
 
 /// The state of the selection in a MarkupWKWebView
 public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {

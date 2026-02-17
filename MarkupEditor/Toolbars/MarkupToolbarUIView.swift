@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 8/13/22.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 import Combine
 
@@ -83,3 +85,5 @@ public class MarkupToolbarUIView: UIView {
     }
     
 }
+
+#endif
