@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 9/2/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 
 class ImageViewController: UIViewController {
@@ -394,3 +396,5 @@ extension ImageViewController: UIDocumentPickerDelegate {
     }
     
 }
+
+#endif

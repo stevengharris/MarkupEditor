@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 /// The MarkupToolbar shows the current selectionState and acts on the selectedWebView held
@@ -115,4 +117,4 @@ struct MarkupToolbar_Previews: PreviewProvider {
     }
 }
 
-
+#endif

@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 7/11/21.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 
 struct Blur: UIViewRepresentable {
@@ -18,3 +20,5 @@ struct Blur: UIViewRepresentable {
         uiView.effect = UIBlurEffect(style: style)
     }
 }
+
+#endif

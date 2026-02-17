@@ -7,7 +7,11 @@
 
 import MarkupEditor
 import Testing
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 /// This test ensures that when an image is pasted into a document in the Swift MarkupEditor, the image src points at a UUID string
 /// name that was exists in the document directory. The test is Swift MarkupEditor specific. This functionality is not available in
@@ -51,7 +55,11 @@ class PasteImage: MarkupDelegate {
     /// paste an image this way, we have to wait for the MarkupDelegate markupImageAdded callback, because
     /// the addition of image size is done async based on the actual image size.
     func paste(webview: MarkupWKWebView) async throws -> String? {
+#if os(iOS) || targetEnvironment(macCatalyst)
         await webview.pasteImage(UIImage(systemName: "calendar"))
+#else
+        await webview.pasteImage(NSImage(systemSymbolName: "calendar", accessibilityDescription: "calendar"))
+#endif
         _ = await withCheckedContinuation { continuation in
             self.imageLoadedContinuation = continuation
             webview.getTestHtml(sel: "|") { html in

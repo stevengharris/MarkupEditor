@@ -33,6 +33,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
     public var placeholder: String?
     
     public var body: some View {
+        #if !os(macOS)
         VStack(spacing: 0) {
             if MarkupEditor.toolbarLocation == .top {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
@@ -44,6 +45,9 @@ public struct MarkupEditorView: View, MarkupDelegate {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
             }
         }
+        #else
+        Text("MarkupEditorView is not available on macOS yet").padding()
+        #endif
     }
     
     public init(

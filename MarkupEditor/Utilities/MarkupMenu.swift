@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 8/3/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 
 /// The MarkupMenu creates the UIMenu content for an environment that supports a menu bar.
@@ -111,3 +113,4 @@ public class MarkupMenu {
     
 }
 
+#endif
