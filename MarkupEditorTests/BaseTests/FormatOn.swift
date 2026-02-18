@@ -33,12 +33,12 @@ fileprivate class FormatOnSuite {
 }
 fileprivate typealias Suite = FormatOnSuite
 
-@Suite()
+@Suite(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)))
 @MainActor
 class FormatOn {
     static let page: HtmlTestPage = HtmlTestPage()
     
-    @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))
+    @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
         let webView = try await Self.page.start()
         try await htmlTest.run(action: Suite.actions[index], in: webView)
