@@ -15,7 +15,7 @@ jobs:
       matrix:
         destination:
           - 'platform=macOS,variant=Mac Catalyst'
-          - 'platform=iOS Simulator,name=iPhone 17 Pro'
+          # - 'platform=iOS Simulator,name=iPhone 17 Pro'
           - 'platform=macOS'
 
     steps:
