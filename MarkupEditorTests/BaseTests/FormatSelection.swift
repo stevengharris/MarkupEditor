@@ -5,13 +5,22 @@
 //  Created by Steven Harris on 10/12/25.
 //
 
+import Foundation
 import MarkupEditor
 import Testing
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 
 fileprivate class FormatSelectionSuite {
     // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("format-selection.json").tests
+#if SWIFT_PACKAGE
+    static let bundle = Bundle.module
+#else
+    static let bundle = Bundle(for: HtmlTestSuite.self)
+#endif
+    static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "format-selection", ofType: "json")).tests
     static let actions: [(MarkupWKWebView) -> Void] = [
         { webview in webview.getSelectionState() { state in #expect(state.bold == true) } },
         { webview in webview.getSelectionState() { state in #expect(state.italic == true) } },
@@ -25,7 +34,8 @@ fileprivate class FormatSelectionSuite {
 fileprivate typealias Suite = FormatSelectionSuite
 
 @Suite()
-class FormatSelection: MarkupDelegate {
+@MainActor
+class FormatSelection {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))

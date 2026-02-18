@@ -5,13 +5,22 @@
 //  Created by Steven Harris on 10/13/25.
 //
 
+import Foundation
 import MarkupEditor
 import Testing
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 
 fileprivate class TableActionsSuite {
     // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("table-actions.json").tests
+#if SWIFT_PACKAGE
+    static let bundle = Bundle.module
+#else
+    static let bundle = Bundle(for: HtmlTestSuite.self)
+#endif
+    static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "table-actions", ofType: "json")).tests
     static let actions: [(MarkupWKWebView) -> Void] = [
         { webview in webview.deleteRow() },
         { webview in webview.deleteCol() },
@@ -30,7 +39,8 @@ fileprivate class TableActionsSuite {
 fileprivate typealias Suite = TableActionsSuite
 
 @Suite()
-class TableActions: MarkupDelegate {
+@MainActor
+class TableActions {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))

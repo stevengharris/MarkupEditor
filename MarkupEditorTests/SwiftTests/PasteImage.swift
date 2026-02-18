@@ -7,6 +7,9 @@
 
 import MarkupEditor
 import Testing
+#if canImport(SharedTest)
+import SharedTest
+#endif
 #if canImport(UIKit)
 import UIKit
 #else

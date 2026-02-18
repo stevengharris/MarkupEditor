@@ -5,13 +5,22 @@
 //  Created by Steven Harris on 10/13/25.
 //
 
+import Foundation
 import MarkupEditor
 import Testing
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 
 fileprivate class PasteTextPreprocessingSuite {
     // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("paste-text-preprocessing.json").tests
+#if SWIFT_PACKAGE
+    static let bundle = Bundle.module
+#else
+    static let bundle = Bundle(for: HtmlTestSuite.self)
+#endif
+    static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "paste-text-preprocessing", ofType: "json")).tests
     static var actions: Array<((MarkupWKWebView) async -> String?)> {
         var actions: Array<((MarkupWKWebView) async -> String?)> = []
         for test in tests {
@@ -23,7 +32,8 @@ fileprivate class PasteTextPreprocessingSuite {
 fileprivate typealias Suite = PasteTextPreprocessingSuite
 
 @Suite()
-class PasteTextPreprocessing: MarkupDelegate {
+@MainActor
+class PasteTextPreprocessing {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))

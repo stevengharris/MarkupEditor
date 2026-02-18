@@ -5,18 +5,27 @@
 //  Created by Steven Harris on 1/28/26.
 //
 
+import Foundation
 import Testing
-import MarkupEditor
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 
 fileprivate class BaselineSuite {
     // Avoid instiantating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("baseline.json").tests
+#if SWIFT_PACKAGE
+    static let bundle = Bundle.module
+#else
+    static let bundle = Bundle(for: HtmlTestSuite.self)
+#endif
+    static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "baseline", ofType: "json")).tests
 }
 fileprivate typealias Suite = BaselineSuite
 
 @Suite()
-class Baseline: MarkupDelegate {
+@MainActor
+class Baseline {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))

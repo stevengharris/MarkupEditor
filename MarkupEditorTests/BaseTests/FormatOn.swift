@@ -5,13 +5,22 @@
 //  Created by Steven Harris on 10/9/25.
 //
 
+import Foundation
 import MarkupEditor
 import Testing
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 
 fileprivate class FormatOnSuite {
     // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
-    static let tests = HtmlTestSuite.from("format-on.json").tests
+#if SWIFT_PACKAGE
+    static let bundle = Bundle.module
+#else
+    static let bundle = Bundle(for: HtmlTestSuite.self)
+#endif
+    static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "format-on", ofType: "json")).tests
     static let actions: [(MarkupWKWebView) -> Void] = [
         { webview in webview.bold() },
         { webview in webview.italic() },
@@ -25,7 +34,8 @@ fileprivate class FormatOnSuite {
 fileprivate typealias Suite = FormatOnSuite
 
 @Suite()
-class FormatOn: MarkupDelegate {
+@MainActor
+class FormatOn {
     static let page: HtmlTestPage = HtmlTestPage()
     
     @Test(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)), arguments: zip(Suite.tests, 0..<Suite.tests.count))

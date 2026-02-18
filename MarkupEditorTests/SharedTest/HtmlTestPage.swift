@@ -8,13 +8,13 @@
 import MarkupEditor
 
 /// A class to hold onto a MarkupWKWebView instance that is in the "ready" state.
-class HtmlTestPage: MarkupDelegate {
+public class HtmlTestPage: MarkupDelegate {
     var webView: MarkupWKWebView!
     private var coordinator: MarkupCoordinator!
     private var continuation: CheckedContinuation<MarkupWKWebView, Never>?
     var isReady: Bool = false
     
-    init() {}
+    public init() {}
     
     deinit {
         webView = nil
@@ -22,7 +22,7 @@ class HtmlTestPage: MarkupDelegate {
     }
 
     /// Return the `webView` after `markupDidLoad` is received.
-    func start(delegate: MarkupDelegate? = nil) async throws -> MarkupWKWebView {
+    public func start(delegate: MarkupDelegate? = nil) async throws -> MarkupWKWebView {
         return await withCheckedContinuation { continuation in
             if isReady {
                 continuation.resume(with: .success(self.webView!))
@@ -36,7 +36,7 @@ class HtmlTestPage: MarkupDelegate {
     }
 
     /// Since we marked self as the `markupDelegate`, we receive the `markupDidLoad` message
-    internal func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
+    public func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?) {
         continuation?.resume(with: .success(view))
         isReady = true
         continuation = nil
