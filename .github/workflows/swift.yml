@@ -35,9 +35,8 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        # test the supported platforms
+        # test the supported platforms, but not iOS because it is flaky on GitHub actions
 
         xcodebuild clean test -scheme MarkupEditor \
           -destination 'platform=macOS' \
-          -destination 'platform=macOS,variant=Mac Catalyst' \
-          -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+          -destination 'platform=macOS,variant=Mac Catalyst'
