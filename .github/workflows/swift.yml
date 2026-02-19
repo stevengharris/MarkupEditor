@@ -40,4 +40,4 @@ jobs:
         xcodebuild clean test -scheme MarkupEditor \
           -destination 'platform=macOS' \
           -destination 'platform=macOS,variant=Mac Catalyst' \
-          -destinition 'platform=iOS Simulator,name=iPhone 17 Pro'
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
