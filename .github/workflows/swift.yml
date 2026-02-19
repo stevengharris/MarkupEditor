@@ -11,13 +11,6 @@ jobs:
 
     runs-on: macos-26
 
-    strategy:
-      matrix:
-        destination:
-          - 'platform=macOS,variant=Mac Catalyst'
-          # - 'platform=iOS Simulator,name=iPhone 17 Pro'
-          - 'platform=macOS'
-
     steps:
     - uses: actions/checkout@v4
     - name: Build and Test
@@ -42,6 +35,9 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        # test the matrix defined in strategy
+        # test the supported platforms
 
-        xcodebuild clean test -scheme MarkupEditor -destination '${{ matrix.destination }}'
+        xcodebuild clean test -scheme MarkupEditor \
+          -destination 'platform=macOS' \
+          -destination 'platform=macOS,variant=Mac Catalyst' \
+          -destinition 'platform=iOS Simulator,name=iPhone 17 Pro'
