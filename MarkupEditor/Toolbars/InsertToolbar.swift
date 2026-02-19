@@ -78,8 +78,8 @@ public struct InsertToolbar: View {
                 }
             }
         }
-        .onChange(of: showPopoverType.type) { type in
-            switch type {
+        .onChange(of: showPopoverType.type) { oldType, newType in
+            switch newType {
             case .table:
                 showTablePopover = true
             case .link, .image, .none:
