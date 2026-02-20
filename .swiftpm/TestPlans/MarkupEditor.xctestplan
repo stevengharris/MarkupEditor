@@ -1,0 +1,43 @@
+{
+  "configurations" : [
+    {
+      "id" : "250C1658-38BA-437C-98D7-F5CF91ABB6C4",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "-com.apple.CoreData.Logging.stderr 0"
+      }
+    ],
+    "environmentVariableEntries" : [
+      {
+        "key" : "OS_ACTIVITY_MODE",
+        "value" : "disable"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "BaseTests",
+        "name" : "BaseTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SwiftTests",
+        "name" : "SwiftTests"
+      }
+    }
+  ],
+  "version" : 1
+}
