@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -39,5 +39,6 @@ let package = Package(
             name: "SwiftTests",
             dependencies: ["MarkupEditor", "SharedTest"],
             path: "MarkupEditorTests/SwiftTests"),
-    ]
+    ],
+    swiftLanguageModes: [.v5, .v6]
 )
