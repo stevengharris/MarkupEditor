@@ -7,6 +7,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -89,5 +91,5 @@ struct DocumentPicker<Content: View>: UIViewControllerRepresentable {
     
 }
 
-
+#endif
 
