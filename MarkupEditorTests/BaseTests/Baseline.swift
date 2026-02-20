@@ -12,10 +12,10 @@ import SharedTest
 #endif
 
 fileprivate class BaselineSuite {
-    // Avoid instiantating the test suite for every @Test, because Swift Testing has no
+    // Avoid instantiating the test suite for every @Test, because Swift Testing has no
     // built-in support for once-per-Suite initialization.
 #if SWIFT_PACKAGE
-    static let bundle = Bundle.module
+    static let bundle = Bundle.module   // Bundle.module is only accessible within BaseTests
 #else
     static let bundle = Bundle(for: HtmlTestSuite.self)
 #endif

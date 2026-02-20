@@ -70,6 +70,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA085C772F47C9F400E17D3A /* MarkupEditor.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = MarkupEditor.xctestplan; sourceTree = "<group>"; };
 		AA1B80C82620B62000891FFB /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		AA2FA60E2E9461D800485CDF /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		AA2FA6132E94626E00485CDF /* BaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -179,6 +180,7 @@
 		AA652922260E80EE000674B7 = {
 			isa = PBXGroup;
 			children = (
+				AA085C772F47C9F400E17D3A /* MarkupEditor.xctestplan */,
 				AA5A5B4A2E7363D6008DFDBA /* README.md */,
 				AA5A55302E7346D4008DFDBA /* CHANGELOG.md */,
 				AA2FA60E2E9461D800485CDF /* LICENSE */,
