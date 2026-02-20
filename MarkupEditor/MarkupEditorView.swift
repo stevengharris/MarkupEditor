@@ -46,7 +46,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
             }
         }
         #else
-        Text("MarkupEditorView is not available on macOS yet").padding()
+            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
         #endif
     }
     
