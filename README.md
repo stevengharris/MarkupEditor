@@ -1,10 +1,11 @@
 <p align="center">
     <img src="https://github.com/stevengharris/MarkupEditor/actions/workflows/swift.yml/badge.svg">
     <img src="https://img.shields.io/badge/Swift-5.7+-blue.svg">
-    <img src="https://img.shields.io/badge/iOS-15+-blue.svg" alt="iOS 14.5+">
-    <img src="https://img.shields.io/badge/MacCatalyst-15+-blue" alt="MacCatalyst 14.5+">
-    <a href="https://twitter.com/stevengharris">
-        <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Twitter: @stevengharris">
+    <img src="https://img.shields.io/badge/iOS-17+-blue.svg" alt="iOS 17+">
+    <img src="https://img.shields.io/badge/MacCatalyst-17+-blue" alt="MacCatalyst 17+">
+    <img src="https://img.shields.io/badge/MacOS-17+-blue" alt="MacOS 17+">
+    <a href="https://mastodon.social/@stevengharris">
+        <img src="https://img.shields.io/badge/Contact-@stevengharris-lightgrey.svg?style=flat" alt="Mastodon: @stevengharris">
     </a>
 </p>
 
@@ -22,7 +23,7 @@ Jealous of those JavaScript coders with their WYSIWYG text editors, but unwillin
 
 ## MarkupEditor Goals and Non-Goals
 
-I am working on a larger project that requires embedded support for "rich text" editing. WYSIWYG editing is a must-have requirement for me. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen? Sure, it's a lot better than editing raw HTML; but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of "preview mode" to make sure that what you are writing will be presented like you expect feels like CI/CD for writing. 
+I work on several projects that require embedded support for "rich text" editing. WYSIWYG editing is a must-have requirement for me. I could have forced my developer-users to use Markdown, but I find it to be annoying both to write and to look at while writing. Who wants to have to mentally filter all that cruft on the screen? Sure, it's a lot better than editing raw HTML; but come on, this is the 21st century. Having to deal with an editing experience where you use some kind of "preview mode" to make sure that what you are writing will be presented like you expect feels like CI/CD for writing. 
 
 Still, I wanted an editing experience that didn't get in the way. I wanted something with the feature-simplicity of Markdown, but presented in a clean, what-you-see-is-what-you-get manner that supported the basics people expect:
 
