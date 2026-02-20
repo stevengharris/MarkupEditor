@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import MarkupEditor
 
 /// A class that knows how to decode and return a set of HtmlTest instances from the .json file used in markupeditor-base.
 /// The array of HtmlTests is used to drive parameterized tests for the suite.
@@ -20,53 +19,29 @@ public class HtmlTestSuite: Codable {
     }
     
     public static func from(path: String?) -> HtmlTestSuite {
-        let empty = HtmlTestSuite(description: "Empty suite", tests: [])
-        guard let path else { return empty }
-        let url = URL(filePath: path)
-        guard FileManager.default.fileExists(atPath: url.path()) else {
-            print("Could not find data file \(path).")
-            return empty
+        guard let path else {
+            return dataFileProblem(error: "Data file could not be located in bundle resources.")
         }
+        let url = URL(filePath: path)
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
             let suite = try decoder.decode(HtmlTestSuite.self, from: data)
             return suite
         } catch {
-            print("Could not decode JSON: \(error)")
-            return empty
+            return dataFileProblem(error: "Could not decode JSON: \(error)")
         }
     }
     
-    public static func from(_ filename: String, for anyClass: AnyClass? = nil) -> HtmlTestSuite {
-        let empty = HtmlTestSuite(description: "Empty suite", tests: [])
-        let bundle = anyClass == nil ? Bundle(identifier: "com.stevengharris.BaseTests") : Bundle(for: anyClass!)
-        if bundle == nil {
-            print("Could not find bundle for suite.")
-            return empty
-        }
-        let resourceURL = bundle!.resourceURL
-        if (resourceURL == nil) {
-            print("Could not find resourceURL for bundle.")
-            return empty
-        }
-        let url = resourceURL!.appendingPathComponent(filename)
-        if !FileManager.default.fileExists(atPath: url.path()) {
-            print("Bundle url: \(bundle!.bundleURL)")
-            print("Could not find data file \(url.path()).")
-            return empty
-        } else {
-            print("Data file at: \(url.path()).")
-        }
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            let suite = try decoder.decode(HtmlTestSuite.self, from: data)
-            return suite
-        } catch {
-            print("Could not decode JSON: \(error)")
-            return empty
-        }
+    /// Return an HtmlSuite with one test that fails.
+    /// Rather than test an empty suite (which is not an error), test one that has a failing test.
+    static func dataFileProblem(error: String) -> HtmlTestSuite {
+        let test = HtmlTest(
+            description: "Data file problem.",
+            startHtml: "<p>\(error)</p>",
+            endHtml: "<p></p>"
+        )
+        return HtmlTestSuite(description: "Data file problem.", tests: [test])
     }
 
 }
