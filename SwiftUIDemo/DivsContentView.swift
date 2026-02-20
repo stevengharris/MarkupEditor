@@ -9,11 +9,20 @@ import SwiftUI
 import MarkupEditor
 
 struct DivsContentView: View {
+    
+    var compatibleSystemGray5: Color {
+        #if os(macOS)
+        return Color(nsColor: NSColor.systemGray)
+        #else
+        // This is for iOS, iPadOS, tvOS
+        return Color(uiColor: UIColor.systemGray5)
+        #endif
+    }
 
     private var markupConfiguration: MarkupWKWebViewConfiguration
     private let divStructure = MarkupDivStructure()
     @ObservedObject var selectImage = MarkupEditor.selectImage
-    @State private var rawText = NSAttributedString(string: "")
+    @State private var rawText = ""
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
@@ -29,19 +38,22 @@ struct DivsContentView: View {
                         Spacer()
                         Text("Document HTML")
                         Spacer()
-                    }.background(Color(UIColor.systemGray5))
-                    TextView(text: $rawText, isEditable: false)
-                        .font(Font.system(size: StyleContext.P.fontSize))
-                        .padding([.top, .bottom, .leading, .trailing], 8)
+                    }.background(compatibleSystemGray5)
+                    ScrollView {
+                        Text(rawText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .font(Font.system(size: StyleContext.P.fontSize))
+                            .padding([.top, .bottom, .leading, .trailing], 8)
+                    }
                 }
             }
         }
+        #if !os(macOS)
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
-        .onAppear {
-            MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self))
-        }
+        .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
+        #endif
         .onDisappear { MarkupEditor.selectedWebView = nil }
     }
     
@@ -129,17 +141,9 @@ struct DivsContentView: View {
     
     private func setRawText(_ handler: (()->Void)? = nil) {
         MarkupEditor.selectedWebView?.getHtml(clean: false, divID: selectedDivID) { html in
-            rawText = attributedString(from: html ?? "")
+            rawText = html ?? ""
             handler?()
         }
-    }
-    
-    private func attributedString(from string: String) -> NSAttributedString {
-        // Return a monospaced attributed string for the rawText that is expecting to be a good dark/light mode citizen
-        var attributes = [NSAttributedString.Key: AnyObject]()
-        attributes[.foregroundColor] = UIColor.label
-        attributes[.font] = UIFont.monospacedSystemFont(ofSize: StyleContext.P.fontSize, weight: .regular)
-        return NSAttributedString(string: string, attributes: attributes)
     }
     
     private func openExistingDocument(url: URL) {
