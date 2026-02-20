@@ -151,6 +151,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
+    deinit {
+        stopLoading()
+        configuration.userContentController.removeScriptMessageHandler(forName: "markup")
+        uiDelegate = nil
+        navigationDelegate = nil
+    }
+    
     /// Set things up properly for editing.
     ///
     /// Setting things up means populating a cache directory with the "root" files: markup.html,
