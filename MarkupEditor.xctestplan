@@ -1,0 +1,41 @@
+{
+  "configurations" : [
+    {
+      "id" : "13912C18-B86A-4E93-9617-58CF502047D2",
+      "name" : "Configuration",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "-com.apple.CoreData.Logging.stderr 0"
+      }
+    ],
+    "environmentVariableEntries" : [
+      {
+        "key" : "OS_ACTIVITY_MODE",
+        "value" : "disable"
+      }
+    ]
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:MarkupEditor.xcodeproj",
+        "identifier" : "AA4A90912F4A2A9D00437C7C",
+        "name" : "BaseTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:MarkupEditor.xcodeproj",
+        "identifier" : "AAF142B72F4A29F9006A0241",
+        "name" : "SwiftTests"
+      }
+    }
+  ],
+  "version" : 1
+}
