@@ -45,14 +45,14 @@ jobs:
 
     - name: Test Mac Catalyst
       run: |
-        xcodebuild test \
+        xcodebuild clean test \
           -scheme MarkupEditor \
           -destination 'platform=macOS,variant=Mac Catalyst' \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Test MacOS
       run: |
-        xcodebuild test \
+        xcodebuild clean test \
           -scheme MarkupEditor \
           -destination 'platform=macOS' \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
