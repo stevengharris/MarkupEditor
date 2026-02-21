@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Test Mac Catalyst
+    - name: Install certificate
       env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -36,29 +36,17 @@ jobs:
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-        # test the supported platforms, but not iOS because it is flaky on GitHub actions
-
-        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+    - name: Test Mac Catalyst
+      run: xcodebuild test -scheme MarkupEditor \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Test MacOS
-      env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: xcodebuild test -scheme MarkupEditor \
+            -destination 'platform=macOS' \
+            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
+
+    - name: Clean up keychain
+      if: always()  # runs even if previous steps fail
       run: |
-
-        # import certificate from secrets
-        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
-
-        # create temporary keychain
-        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-        # import certificate to keychain
-        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-        security list-keychain -d user -s $KEYCHAIN_PATH
-
-        # test the supported platforms, but not iOS because it is flaky on GitHub actions
-
-        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS'
+        security delete-keychain $RUNNER_TEMP/build.keychain
