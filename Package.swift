@@ -40,5 +40,5 @@ let package = Package(
             dependencies: ["MarkupEditor", "SharedTest"],
             path: "MarkupEditorTests/SwiftTests"),
     ],
-    swiftLanguageModes: [.v5, .v6]
+    swiftLanguageModes: [.v5]
 )
