@@ -13,7 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build and Test
+
+    - name: Test Mac Catalyst
       env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -37,6 +38,30 @@ jobs:
 
         # test the supported platforms, but not iOS because it is flaky on GitHub actions
 
-        xcodebuild clean test -scheme MarkupEditor \
-          -destination 'platform=macOS' \
-          -destination 'platform=macOS,variant=Mac Catalyst'
+        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS,variant=Mac Catalyst'
+
+    - name: Test MacOS
+      env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: |
+        # create variables
+        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+        # import certificate from secrets
+        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+
+        # create temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+        # import certificate to keychain
+        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+
+        # test the supported platforms, but not iOS because it is flaky on GitHub actions
+
+        xcodebuild clean test -scheme MarkupEditor -destination 'platform=macOS'
