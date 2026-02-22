@@ -151,6 +151,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
+    deinit {
+        stopLoading()
+        configuration.userContentController.removeScriptMessageHandler(forName: "markup")
+        uiDelegate = nil
+        navigationDelegate = nil
+    }
+    
     /// Set things up properly for editing.
     ///
     /// Setting things up means populating a cache directory with the "root" files: markup.html,
@@ -382,6 +389,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     func populateMarkupHtml(cacheUrl: URL) {
         let componentscript = cacheUrl.appendingPathComponent("markup-editor.js").path
         let dstUrl = cacheUrl.appendingPathComponent("markup.html")
+        #if !os(macOS)
+        let toolbar: String? = "none"
+        #else
+        let toolbar: String? = nil
+        #endif
         let html = """
         <!DOCTYPE html>
         <html>
@@ -397,8 +409,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(resourcesUrl != nil ? "base=\"\(resourcesUrl!.path)\"" : "")
                     \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
                     \(userCssFile != nil ? "userstyle=\"\(userCssFile!)\"" : "")
-                    selectafterload="\"\(selectAfterLoad)\"")
-                    toolbar="none"
+                    \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
+                    selectafterload="\(selectAfterLoad)"
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")
                 </markup-editor>

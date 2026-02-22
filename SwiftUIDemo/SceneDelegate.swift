@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 1/24/22.
 //
 
+#if !os(macOS)
+
 import UIKit
 import SwiftUI
 import MarkupEditor
@@ -39,3 +41,5 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Created by Steven Harris on 10/6/23.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 import MarkupEditor
 
@@ -95,3 +97,5 @@ struct SearchBar: View {
     }
     
 }
+
+#endif

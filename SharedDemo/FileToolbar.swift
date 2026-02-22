@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import SwiftUI
 import MarkupEditor
 
@@ -45,4 +47,6 @@ struct FileToolbar_Previews: PreviewProvider {
         FileToolbar()
     }
 }
+
+#endif
 

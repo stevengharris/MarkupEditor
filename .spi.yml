@@ -3,3 +3,13 @@ builder:
   configs:
   - platform: ios
     scheme: MarkupEditor
+  - platform: macos-xcodebuild
+    scheme: MarkupEditor
+  - platform: macos-xcodebuild-arm
+    scheme: MarkupEditor
+  - platform: tvos
+    scheme: MarkupEditor
+    skip: true
+  - platform: watchos
+    scheme: MarkupEditor
+    skip: true

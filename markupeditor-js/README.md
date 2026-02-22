@@ -6,7 +6,7 @@ This directory contains an npm project with a single dependency - _markupeditor-
 
 The MarkupEditor has some reasonable built-in mechanisms for customization. These mechanisms are intended to help avoid forking the repository just to get the presentation or behavior you need within your Swift app. For example, you can modify the contents and presentation in the MarkupToolbar, and you can override the callbacks made to your MarkupDelegate to customize behavior. You can add your own CSS and control the styling of the MarkupWKWebView, and you can load your own JavaScript scripts into it that you can invoke from Swift. These mechanisms are documented in the [README](https://github.com/stevengharris/MarkupEditor/blob/main/README.md) in the expectation that many users will need them at some point.
 
-Some users will want to dig deeper or will need to change the JavaScript code that is modifying the document in the MarkupWKWebView as you edit. In earlier versions of the MarkupEditor, the answer was basically: fork the project and edit `Resources/markup.js`. The answer is no longer that simple because `Resources/markup.js` is now an artifact produced by building the [markupeditor-base](https://github.com/stevengharris/markupeditor-base) project. That project in turn uses the excellent [ProseMirror](https://prosemirror.net) for the heavy lifting of WYSIWYG editing behind the scenes.
+Some users will want to dig deeper or will need to change the JavaScript code that is modifying the document in the MarkupWKWebView as you edit. In earlier versions of the MarkupEditor, the answer was basically: fork the project and edit `Resources/markup.js`. The answer is no longer that simple because its replacement - `Resources/markup-editor.js` - is now an artifact produced by building the [markupeditor-base](https://github.com/stevengharris/markupeditor-base) project. That project in turn uses the excellent [ProseMirror](https://prosemirror.net) for the heavy lifting of WYSIWYG editing behind the scenes.
 
 ## Learn More About markupeditor-base
 
@@ -20,11 +20,7 @@ The formalization of [markupeditor-base](https://github.com/stevengharris/markup
 
 Working with the markupeditor-base JavaScript code requires you to have node.js/npm installed. You can of course use whatever development tools you're comfortable with. I use VSCode for the markupeditor-base development and Xcode for Swift development.
 
-There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the runtime dependency only involves the following files in the `MarkupEditor/Resources` directory:
-
-* markup.js - A copy of `dist/markupeditor.umd.js` that was built using markupeditor-base.
-* markup.css - Styling needed to support basic MarkupEditor editing.
-* mirror.css - Styling needed to support basic ProseMirror editing.
+There isn't any way to express directly in the MarkupEditor's `package.swift` file that it depends on markupeditor-base. However, the runtime dependency only involves the web component file in the `MarkupEditor/Resources` directory, `markup-editor.js`.
 
 These files are present in the Swift MarkupEditor's `Resources` directory and are part of the Swift MarkupEditor's source control. This way, you don't need to build markupeditor-base to install and build the Swift MarkupEditor as outlined in its [README](https://github.com/stevengharris/MarkupEditor).
 
@@ -40,23 +36,24 @@ $ npm install
 > markupeditor@0.8.6 prepare
 > sh prepare.sh
 
-Updating dependencies from markupeditor-base...
- Copying ./node_modules/markupeditor-base/dist/markupeditor.umd.js
-  to ../MarkupEditor/Resources/markup.js
- Copying ./node_modules/markupeditor-base/styles/markup.css
-  to ../MarkupEditor/Resources/markup.css
- Copying ./node_modules/markupeditor-base/styles/mirror.css
-  to ../MarkupEditor/Resources/mirror.css
- Copying ./node_modules/markupeditor-base/test/*.json
-  to ../MarkupEditorTests/BaseTests/
+Updating dependencies from markupeditor base project...
+ Copying ./node_modules/markupeditor/dist/markup-editor.js
+  to ../MarkupEditor/Resources/markup-editor.js
+Warning: ./node_modules/markupeditor/test does not exist.
+To run tests, you must install using a local markupeditor dev-dependency.
 
-added 19 packages, and audited 20 packages in 887ms
+added 84 packages, and audited 85 packages in 2s
+
+22 packages are looking for funding
+  run `npm fund` for details
 
 found 0 vulnerabilities
 $
 ```
 
 The `npm install` step populates `node_modules`. The `prepare` script makes sure the required files are present in `node_modules` and then copies them into the `MarkupEditor/Resources` directory.
+
+As the script tells you, "To run tests, you must install using a local markupeditor dev-dependency."
 
 ### Using a Local markupeditor-base Dependency
 
@@ -70,6 +67,18 @@ Replace the default registry dev-dependency:
 
 ```
 npm install <path to your cloned markupeditor-base> --save-dev
+```
+
+Now if you rerun the prepare step, you will see:
+
+```
+$ sh prepare.sh
+Updating dependencies from markupeditor base project...
+ Copying ./node_modules/markupeditor/dist/markup-editor.js
+  to ../MarkupEditor/Resources/markup-editor.js
+ Copying test data ./node_modules/markupeditor/test/*.json
+  to ../MarkupEditorTests/BaseTests/Data
+$
 ```
 
 ### Workflow
@@ -101,15 +110,11 @@ $ npm run prepare
 > markupeditor@0.8.6 prepare
 > sh prepare.sh
 
-Updating dependencies from markupeditor-base...
- Copying ./node_modules/markupeditor-base/dist/markupeditor.umd.js
-  to ../MarkupEditor/Resources/markup.js
- Copying ./node_modules/markupeditor-base/styles/markup.css
-  to ../MarkupEditor/Resources/markup.css
- Copying ./node_modules/markupeditor-base/styles/mirror.css
-  to ../MarkupEditor/Resources/mirror.css
- Copying ./node_modules/markupeditor-base/test/*.json
-  to ../MarkupEditorTests/BaseTests/
+Updating dependencies from markupeditor base project...
+ Copying ./node_modules/markupeditor/dist/markup-editor.js
+  to ../MarkupEditor/Resources/markup-editor.js
+ Copying test data ./node_modules/markupeditor/test/*.json
+  to ../MarkupEditorTests/BaseTests/Data
 $
 ```
 
@@ -127,13 +132,11 @@ A debugging cycle often consists of:
 
 * Launch the app.
 * Open the Safari Web Inspector on the app from the Safari Develop menu.
-* Set a breakpoint in `markup.js` from within the Safari Web Inspector. Note that `markup.js` in the Web Inspector is what you see in XCode in `MarkupEditor/Resources/markup.js`.
+* Set a breakpoint in `markup-editor.js` from within the Safari Web Inspector. Note that `markup-editor.js` in the Web Inspector is what you see in XCode in `MarkupEditor/Resources/markup-editor.js`.
 * Do whatever you need to in the app to cause it to hit the breakpoint. Step, step-in, etc to debug.
-* Once you identify some JavaScript code to change, you need to make changes to the file it was created-in in the markupeditor-base project. The `markup.js` file you're debugging was produced by [rollup](https://rollupjs.org) within the markupeditor-base project. The _MarkupEditor Project Structure_ section of the [Developer's Guide](https://stevengharris.github.io/markupeditor-base/guide/index.html) offers some information, or just use your development tools to identify the original source file that was rolled-up into `markupeditor.umd.js` and then copied to `Resources/markup.js` in the Swift MarkupEditor project.
-* Execute `npm run build` from the markupeditor-base project directory in the terminal window to rebuild `markupeditor.umd.js`.
+* Once you identify some JavaScript code to change, you need to make changes to the file it was created-in in the markupeditor-base project. The `markup-editor.js` file you're debugging was produced by [rollup](https://rollupjs.org) within the markupeditor-base project. The _MarkupEditor Project Structure_ section of the [Developer's Guide](https://stevengharris.github.io/markupeditor-base/guide/index.html) offers some information, or just use your development tools to identify the original source file that was rolled-up into `markup-editor.js` and then copied to `Resources` in the Swift MarkupEditor project.
+* Execute `npm run build` from the markupeditor-base project directory in the terminal window to rebuild `markup-editor.js`.
 * Execute `npm run prepare` from the `markupeditor-js` directory of the Swift MarkupEditor project to copy the markupeditor-base files to their proper location in the Swift MarkupEditor project structure.
 * Relaunch the app to check that the fix/change worked.
-
-Note that if you are just making CSS changes, you don't need to rebuild, and `npm run prepare` will copy those changes to the `MarkupEditor/Resources` directory.
 
 It can be helpful to do as much debugging as possible directly in markupeditor-base. The [demo](https://stevengharris.github.io/markupeditor-base/demo/index.html) often provides a straightforward way to test your changes and avoid a Swift app rebuild. If you are encountering a MarkupEditor bug and can reproduce it in markupeditor-base, it makes it easier to address any issues you file.

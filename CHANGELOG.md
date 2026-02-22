@@ -1,5 +1,19 @@
 # Change Log
 
+## Version 0.9.0 (Beta 8.0)
+
+This release introduces MacOS support. The MarkupEditor library now builds and tests properly in MacOS in addition to iOS and Mac Catalyst. The SwiftUIDemo now has a MacOS target and is functional. However, the integration with the MacOS menubar and context menu are missing, as is any ability within the demo to create a new file, open an existing one, or to view the underlying HTML. These problems will be present in issues on GitHub to track progress and closure.
+
+* Build library and pass tests on MacOS [Issue 1 (!!!)](https://github.com/stevengharris/MarkupEditor/issues/1).
+* Initial pass at demos, [issue](https://github.com/stevengharris/MarkupEditor/issues/261) will be left open.
+* Improve test speed by sharing a singleton HtmlTestPage for a test suite, created for the first (serialized) test case in the suite.
+* Improve(?) the GitHub actions build/test to include multiple steps, build on MacOS and Mac Catalyst.
+* Modify the Package.swift to support the MacOS target and tests. Set platform versions to .iOS(.v17), .macCatalyst(.v17), .macOS(.v14)
+
+## Version 0.8.7 (Beta 7.4.1)
+
+This was a minor release to sync with a newer version of markupeditor-base and tofix a hotkey crash when using CTRL-B, I, etc.
+
 ## Version 0.8.6 (Beta 7.4)
 
 This release replaces the old MarkupEditor XCTest-based `BasicTests` with two new Swift Testing targets. The first, `BaseTests`, uses the test data from markupeditor-base to drive 22 new Swift Testing suites comprising a total of 226 tests. Sharing the test data between markupeditor-base and the Swift MarkupEditor is a significant milestone to ensuring they remain in sync and that changes in the base project don't introduce regressions in the Swift version. The second target, `SwiftTests`, although currently consisting of a single test, is meant to contain all tests that are specific to the Swift version of the MarkupEditor. The suite currently tests that pasting of an image results in a local file in the document directory, an operation not supported in markupeditor-base, but which was part of `BasicTests` before.

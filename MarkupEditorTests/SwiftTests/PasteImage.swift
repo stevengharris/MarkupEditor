@@ -7,6 +7,9 @@
 
 import MarkupEditor
 import Testing
+#if SWIFT_PACKAGE
+import SharedTest
+#endif
 #if canImport(UIKit)
 import UIKit
 #else
@@ -40,12 +43,6 @@ class PasteImage: MarkupDelegate {
             )
             action = paste
         }
-    }
-    
-    deinit {
-        webView = nil
-        coordinator = nil
-        htmlTest = nil
     }
     
     /// Paste a UIImage at the selection point. Paste is handled on the Swift side, where the clipboard contents
@@ -101,9 +98,12 @@ class PasteImage: MarkupDelegate {
     }
 
     /// Run the HtmlTest
-    @Test(.timeLimit(.minutes(HtmlTest.timeLimit)), )
+    @Test(.timeLimit(.minutes(HtmlTest.timeLimit)))
     func run() async throws {
         try await htmlTest.run(action: action, in: webView)
+        webView = nil
+        coordinator = nil
+        htmlTest = nil
     }
 
 }

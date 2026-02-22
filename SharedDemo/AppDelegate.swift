@@ -6,6 +6,8 @@
 //  Copyright © 2021 Steven Harris. All rights reserved.
 //
 
+#if !os(macOS)
+
 import UIKit
 import MarkupEditor
 
@@ -47,3 +49,4 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
 }
 
+#endif
