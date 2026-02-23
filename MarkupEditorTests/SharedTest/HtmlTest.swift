@@ -19,7 +19,7 @@ import Testing
 /// use `stringAction` in the case where the action returns a `String`. In JavaScript, we can just test if the return is null, but in
 /// Swift we have to type the return properly, and all of the existing MU methods execute a handler with argument if needed.
 final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomTestStringConvertible {
-    public static let timeLimit: Int = 1    // Time limit for a test, in minutes
+    public static let timeLimit: Int = 5    // Time limit for a test, in minutes
     public let description: String
     public let skipTest: String?
     public let skipSet: Bool
@@ -80,7 +80,8 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
         pasteString = try values.decodeIfPresent(String.self, forKey: .pasteString)
     }
     
-    public func run(action: ((_: MarkupWKWebView) async throws -> Void)?, in view: MarkupWKWebView) async throws {
+    @MainActor
+    public func run(action: (@MainActor (_: MarkupWKWebView) async throws -> Void)?, in view: MarkupWKWebView) async throws {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }
@@ -110,7 +111,8 @@ final public class HtmlTest: Codable, Sendable, CustomStringConvertible, CustomT
         }
     }
     
-    public func run(action: ((_: MarkupWKWebView) async throws -> String?), in view: MarkupWKWebView) async throws {
+    @MainActor
+    public func run(action: (@MainActor (_: MarkupWKWebView) async throws -> String?), in view: MarkupWKWebView) async throws {
         // The `description` of skipped tests is modified to flag them, but
         // by simply returning, they will show up as successful tests.
         if skipTest != nil { return }

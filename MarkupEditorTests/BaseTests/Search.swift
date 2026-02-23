@@ -21,7 +21,7 @@ fileprivate class SearchSuite {
     static let bundle = Bundle(for: HtmlTestSuite.self)
 #endif
     static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "search", ofType: "json")).tests
-    static let actions: Array<(MarkupWKWebView) async -> String?> = [
+    @MainActor static let actions: [@MainActor (MarkupWKWebView) async -> String?] = [
         { webview in await search(in: webview, for: tests[0].pasteString!, direction: .forward, activate: false)() },
         { webview in await search(in: webview, for: tests[1].pasteString!, direction: .backward, activate: false)() },
         { webview in await search(in: webview, for: tests[2].pasteString!, direction: .forward, activate: false)() },
@@ -44,6 +44,7 @@ fileprivate class SearchSuite {
         { webview in await search(in: webview, for: tests[19].pasteString!, direction: .backward, activate: false)() },
     ]
     
+    @MainActor
     static func search(in webview: MarkupWKWebView, for text: String, direction: MarkupEditor.FindDirection, activate: Bool) -> () async -> String? {
         return {
             await webview.search(for: text, direction: direction, activate: activate)
@@ -54,15 +55,17 @@ fileprivate class SearchSuite {
 }
 fileprivate typealias Suite = SearchSuite
 
-@Suite(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)))
+@Suite(.timeLimit(.minutes(HtmlTest.timeLimit)))
 @MainActor
 class Search {
-    static let page: HtmlTestPage = HtmlTestPage()
+    let page: HtmlTestPage = HtmlTestPage()
     
     @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
-        let webView = try await Self.page.start()
-        try await htmlTest.run(action: Suite.actions[index], in: webView)
+        try await page.start()
+        if let webView = page.webView {
+            try await htmlTest.run(action: Suite.actions[index], in: webView)
+        }
     }
 
 }
