@@ -21,8 +21,8 @@ fileprivate class PasteTextSuite {
     static let bundle = Bundle(for: HtmlTestSuite.self)
 #endif
     static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "paste-text", ofType: "json")).tests
-    static var actions: Array<(MarkupWKWebView) -> Void> {
-        var actions: Array<(MarkupWKWebView) -> Void> = []
+    @MainActor static var actions: [@MainActor (MarkupWKWebView) -> Void] {
+        var actions: [@MainActor (MarkupWKWebView) -> Void] = []
         for test in tests {
             actions.append({ webview in webview.pasteText(test.pasteString) })
         }
@@ -31,15 +31,17 @@ fileprivate class PasteTextSuite {
 }
 fileprivate typealias Suite = PasteTextSuite
 
-@Suite(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)))
+@Suite(.timeLimit(.minutes(HtmlTest.timeLimit)))
 @MainActor
 class PasteText {
-    static let page: HtmlTestPage = HtmlTestPage()
+    let page: HtmlTestPage = HtmlTestPage()
     
     @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
-        let webView = try await Self.page.start()
-        try await htmlTest.run(action: Suite.actions[index], in: webView)
+        try await page.start()
+        if let webView = page.webView {
+            try await htmlTest.run(action: Suite.actions[index], in: webView)
+        }
     }
 
 }

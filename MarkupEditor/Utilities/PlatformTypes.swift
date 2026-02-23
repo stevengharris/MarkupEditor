@@ -125,6 +125,7 @@ public struct PasteboardHelper {
 public struct URLHelper {
 
     /// Check if URL can be opened
+    @MainActor
     public static func canOpen(_ url: URL) -> Bool {
         #if canImport(UIKit)
         return UIApplication.shared.canOpenURL(url)
@@ -134,6 +135,7 @@ public struct URLHelper {
     }
 
     /// Open URL with completion handler
+    @MainActor
     public static func open(_ url: URL, completion: ((Bool) -> Void)? = nil) {
         #if canImport(UIKit)
         UIApplication.shared.open(url) { success in

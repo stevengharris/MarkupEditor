@@ -10,7 +10,7 @@ import Combine
 import CoreGraphics
 
 /// The state of the selection in a MarkupWKWebView
-public class SelectionState: ObservableObject, Identifiable, CustomStringConvertible {
+public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable, CustomStringConvertible {
     // Validity
     @Published public var valid: Bool = false
     // ID of the contenteditable of the selection or of the enclosing div

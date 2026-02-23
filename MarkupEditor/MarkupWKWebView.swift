@@ -151,6 +151,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
+    @MainActor
     deinit {
         stopLoading()
         configuration.userContentController.removeScriptMessageHandler(forName: "markup")

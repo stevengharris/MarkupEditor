@@ -73,7 +73,7 @@ public struct MarkupEditor {
     #endif
     
     /// Enum to identify search direction
-    public enum FindDirection {
+    public enum FindDirection: Sendable {
         case forward
         case backward
     }

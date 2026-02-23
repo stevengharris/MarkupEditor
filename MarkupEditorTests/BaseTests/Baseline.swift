@@ -23,15 +23,17 @@ fileprivate class BaselineSuite {
 }
 fileprivate typealias Suite = BaselineSuite
 
-@Suite(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)))
+@Suite(.timeLimit(.minutes(HtmlTest.timeLimit)))
 @MainActor
 class Baseline {
-    static let page: HtmlTestPage = HtmlTestPage()
+    let page: HtmlTestPage = HtmlTestPage()
     
     @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
-        let webView = try await Self.page.start()
-        try await htmlTest.run(action: nil, in: webView)
+        try await page.start()
+        if let webView = page.webView {
+            try await htmlTest.run(action: nil, in: webView)
+        }
     }
 
 }

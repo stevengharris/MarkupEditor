@@ -21,7 +21,7 @@ fileprivate class InsertTableSuite {
     static let bundle = Bundle(for: HtmlTestSuite.self)
 #endif
     static let tests = HtmlTestSuite.from(path: bundle.path(forResource: "insert-table", ofType: "json")).tests
-    static let actions: [(MarkupWKWebView) -> Void] = [
+    @MainActor static let actions: [@MainActor (MarkupWKWebView) -> Void] = [
         { webview in webview.insertTable(rows: 2, cols: 2) },
         { webview in webview.insertTable(rows: 2, cols: 2) },
         { webview in webview.insertTable(rows: 2, cols: 2) },
@@ -29,15 +29,17 @@ fileprivate class InsertTableSuite {
 }
 fileprivate typealias Suite = InsertTableSuite
 
-@Suite(.serialized, .timeLimit(.minutes(HtmlTest.timeLimit)))
+@Suite(.timeLimit(.minutes(HtmlTest.timeLimit)))
 @MainActor
 class InsertTable {
-    static let page: HtmlTestPage = HtmlTestPage()
+    let page: HtmlTestPage = HtmlTestPage()
     
     @Test(arguments: zip(Suite.tests, 0..<Suite.tests.count))
     func run(htmlTest: HtmlTest, index: Int) async throws {
-        let webView = try await Self.page.start()
-        try await htmlTest.run(action: Suite.actions[index], in: webView)
+        try await page.start()
+        if let webView = page.webView {
+            try await htmlTest.run(action: Suite.actions[index], in: webView)
+        }
     }
 
 }

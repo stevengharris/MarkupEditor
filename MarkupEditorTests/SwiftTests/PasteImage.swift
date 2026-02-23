@@ -25,7 +25,7 @@ class PasteImage: MarkupDelegate {
     var webView: MarkupWKWebView!
     var coordinator: MarkupCoordinator!
     var htmlTest: HtmlTest!
-    var action: ((MarkupWKWebView) async throws -> String?)!
+    var action: (@MainActor (MarkupWKWebView) async throws -> String?)!
     var continuation: CheckedContinuation<Bool, Never>?
     var imageLoadedContinuation: CheckedContinuation<Bool, Never>?
 
@@ -98,6 +98,7 @@ class PasteImage: MarkupDelegate {
     }
 
     /// Run the HtmlTest
+    @MainActor
     @Test(.timeLimit(.minutes(HtmlTest.timeLimit)))
     func run() async throws {
         try await htmlTest.run(action: action, in: webView)
