@@ -13023,7 +13023,7 @@ for (var i = 65; i <= 90; i++) {
 }
 
 // For each code that doesn't have a shift-equivalent, copy the base name
-for (var code in base) if (!shift.hasOwnProperty(code)) shift[code] = base[code];
+for (var code$1 in base) if (!shift.hasOwnProperty(code$1)) shift[code$1] = base[code$1];
 
 function keyName(event) {
   // On macOS, keys held with Shift and Cmd don't reflect the effect of Shift in `.key`.
@@ -16118,7 +16118,7 @@ function history(config = {}) {
             handleDOMEvents: {
                 beforeinput(view, e) {
                     let inputType = e.inputType;
-                    let command = inputType == "historyUndo" ? undo : inputType == "historyRedo" ? redo : null;
+                    let command = inputType == "historyUndo" ? undo$1 : inputType == "historyRedo" ? redo$1 : null;
                     if (!command || !view.editable)
                         return false;
                     e.preventDefault();
@@ -16144,11 +16144,11 @@ function buildCommand(redo, scroll) {
 /**
 A command function that undoes the last change, if any.
 */
-const undo = buildCommand(false, true);
+const undo$1 = buildCommand(false, true);
 /**
 A command function that redoes the last undone change, if any.
 */
-const redo = buildCommand(true, true);
+const redo$1 = buildCommand(true, true);
 
 /**
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
@@ -17572,7 +17572,7 @@ function updateNode(node, targetListType, targetListItemType, listTypes, listIte
  * Else, put into a blockquote to indent.
  *
  */
-function indent() {
+function indent$1() {
     const view = activeView();
     let command = indentCommand();
     return command(view.state, view.dispatch, view)
@@ -17584,6 +17584,7 @@ function indentCommand() {
         let li = state.schema.nodes.list_item;
         let ul = state.schema.nodes.bullet_list;
         let ol = state.schema.nodes.ordered_list;
+        let div = state.schema.nodes.div;
         const { $from, $to } = state.selection;
         let tr = state.tr;
         let willWrap = false;
@@ -17639,7 +17640,8 @@ function indentCommand() {
                             // Find the parents to skip as we try to indent ones above us
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsList = (npNode.type == ul) || (npNode.type == ol); 
+                                if (npNode.type == div) return true         // Always skip divs
+                                let npIsList = (npNode.type == ul) || (npNode.type == ol);
                                 if (!npIsList) return false                 // We are only skipping lists
                                 if (npNode.type != node.type) return false  // We are only skipping parent lists of same type
                                 // And only lists outside of the original selection
@@ -17649,8 +17651,9 @@ function indentCommand() {
                         } else {
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsBlockquote = (npNode.type == blockquote);
-                                if (!npIsBlockquote) return false                 // We are only skipping blockquotes
+                                if (npNode.type == div) return true        // Always skip divs
+                                let npIsBlockquoteOrDiv = (npNode.type == blockquote);
+                                if (!npIsBlockquoteOrDiv) return false     // We are only skipping blockquotes
                                 // And only blockquotes outside of the original selection
                                 return (np.start < $from.pos) && (np.end > $to.pos)
                             });
@@ -17684,7 +17687,7 @@ function indentCommand() {
  * happens, we should probably just do the equivalent of toggleListType.
  *
  */
-function outdent() {
+function outdent$1() {
     const view = activeView();
     let command = outdentCommand();
     return command(view.state, view.dispatch, view)
@@ -18394,7 +18397,7 @@ function doUndo() {
  */
 function undoCommand() {
     let commandAdapter = (state, dispatch, view) => {
-        let result = undo(state, dispatch);
+        let result = undo$1(state, dispatch);
         if (result && dispatch) {
             stateChanged(view);
         }
@@ -18417,7 +18420,7 @@ function doRedo() {
  */
 function redoCommand() {
     let commandAdapter = (state, dispatch, view) => {
-        let result = redo(state, dispatch, view);
+        let result = redo$1(state, dispatch, view);
         if (result && dispatch) {
             stateChanged(view);
         }
@@ -18488,7 +18491,7 @@ function testPasteTextPreprocessing(html) {
  *
  * @param {string}  url             The url/href to use for the link
  */
-function insertLink(url) {
+function insertLink$1(url) {
     const view = activeView();
     let command = insertLinkCommand(url);
     let result = command(view.state, view.dispatch, view);
@@ -18735,7 +18738,7 @@ function selectFullLink(view) {
  * @param {string}              src         The url of the image.
  * @param {string}              alt         The alt text describing the image.
  */
-function insertImage(src, alt) {
+function insertImage$1(src, alt) {
     const view = activeView();
     let command = insertImageCommand(src, alt);
     return command(view.state, view.dispatch, view)
@@ -19385,6 +19388,95 @@ function consoleLog(string) {
     _callback(JSON.stringify(messageDict));
 }
 
+var visibility = {
+	toolbar: true,
+	correctionBar: true,
+	insertBar: true,
+	styleMenu: true,
+	styleBar: true,
+	formatBar: true,
+	search: true
+};
+var ordering = {
+	correctionBar: 10,
+	insertBar: 20,
+	styleMenu: 30,
+	styleBar: 40,
+	formatBar: 50,
+	search: 60
+};
+var insertBar = {
+	link: true,
+	image: true,
+	tableMenu: true
+};
+var formatBar = {
+	bold: true,
+	italic: true,
+	underline: true,
+	code: true,
+	strikethrough: true,
+	subscript: true,
+	superscript: true
+};
+var styleMenu = {
+	p: "Body",
+	h1: "H1",
+	h2: "H2",
+	h3: "H3",
+	h4: "H4",
+	h5: "H5",
+	h6: "H6",
+	pre: "Code"
+};
+var styleBar = {
+	list: true,
+	dent: true
+};
+var tableMenu = {
+	header: true,
+	border: true
+};
+var augmentation = {
+	prepend: null,
+	append: null
+};
+var icons = {
+	undo: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z\"/></svg>",
+	redo: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z\"/></svg>",
+	strong: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z\"/></svg>",
+	em: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z\"/></svg>",
+	u: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z\"/></svg>",
+	s: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z\"/></svg>",
+	code: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z\"/></svg>",
+	sub: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z\"/></svg>",
+	sup: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z\"/></svg>",
+	link: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z\"/></svg>",
+	image: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z\"/></svg>",
+	table: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z\"/></svg>",
+	bulletList: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z\"/></svg>",
+	orderedList: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z\"/></svg>",
+	blockquote: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z\"/></svg>",
+	lift: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z\"/></svg>",
+	search: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z\"/></svg>",
+	searchForward: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z\"/></svg>",
+	searchBackward: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z\"/></svg>",
+	matchCase: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z\"/></svg>",
+	paragraphStyle: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
+	more: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
+};
+var toolbarConfig = {
+	visibility: visibility,
+	ordering: ordering,
+	insertBar: insertBar,
+	formatBar: formatBar,
+	styleMenu: styleMenu,
+	styleBar: styleBar,
+	tableMenu: tableMenu,
+	augmentation: augmentation,
+	icons: icons
+};
+
 /**
  * ToolbarConfig contains static utility methods to obtain a JavaScript object with properties 
  * that define the configuration of the MarkupEditor toolbar. The class makes it convenient 
@@ -19472,169 +19564,56 @@ function consoleLog(string) {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
  *     "append": null            // Name of a registered array of cmdItems to append
  *   },
- *   "icons": {
- *     // <span class="material-icons-outlined">undo</span>
- *     "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
- *     // <span class="material-icons-outlined">redo</span>
- *     "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
- *     // <span class="material-icons-outlined">format_bold</span>
- *     "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
- *     // <span class="material-icons-outlined">format_italic</span>
- *     "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
- *     // <span class="material-icons-outlined">format_underlined</span>
- *     "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
- *     // <span class="material-icons-outlined">strikethrough_s</span>
- *     "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
- *     // <span class="material-icons-outlined">data_object</span>
- *     "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
- *     // <span class="material-icons-outlined">subscript</span>
- *     "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
- *     // <span class="material-icons-outlined">superscript</span>
- *     "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
- *     // <span class="material-icons-outlined">link</span>
- *     "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
- *     // <span class="material-icons-outlined">image</span>
- *     "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
- *     // <span class="material-icons-outlined">table</span>
- *     "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
- *     // <span class="material-icons-outlined">format_list_bulleted</span>
- *     "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
- *     // <span class="material-icons-outlined">format_list_numbered</span>
- *     "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
- *     // <span class="material-icons-outlined">format_indent_increase</span>
- *     "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
- *     // <span class="material-icons-outlined">format_indent_decrease</span>
- *     "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
- *     // <span class="material-symbols-outlined">search</span>
- *     "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
- *     // <span class="material-symbols-outlined">chevron_forward</span>
- *     "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
- *     // <span class="material-symbols-outlined">chevron_backward</span>
- *     "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
- *     // <span class="material-symbols-outlined">match_case</span>
- *     "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
- *     // <span class="material-symbols-outlined">format_paragraph</span>
- *     "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
- *     // <span class="material-symbols-outlined">more_horiz</span>
- *     "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
+ *   "icons": {                  // Outlined 400 weight versions from https://fonts.google.com/icons
+ *     // undo
+ *     "undo": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z\"/></svg>",
+ *     // redo
+ *     "redo": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z\"/></svg>",
+ *     // format_bold
+ *     "strong": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z\"/></svg>",
+ *     // format_italic
+ *     "em": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z\"/></svg>",
+ *     // format_underlined
+ *     "u": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z\"/></svg>",
+ *     // strikethrough_s
+ *     "s": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z\"/></svg>",
+ *     // data_object
+ *     "code": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z\"/></svg>",
+ *     // subscript
+ *     "sub": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z\"/></svg>",
+ *     // superscript
+ *     "sup": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z\"/></svg>",
+ *     // link
+ *     "link": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z\"/></svg>",
+ *     // image
+ *     "image": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z\"/></svg>",
+ *     // table
+ *     "table": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z\"/></svg>",
+ *     // format_list_bulleted
+ *     "bulletList": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z\"/></svg>",
+ *     // format_list_numbered
+ *     "orderedList": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z\"/></svg>",
+ *     // format_indent_increase
+ *     "blockquote": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z\"/></svg>",
+ *     // format_indent_decrease
+ *     "lift": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z\"/></svg>",
+ *     // search
+ *     "search": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z\"/></svg>",
+ *     // chevron_forward
+ *     "searchForward": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z\"/></svg>",
+ *     // chevron_backward
+ *     "searchBackward": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z\"/></svg>",
+ *     // match_case
+ *     "matchCase": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z\"/></svg>",
+ *     // format_paragraph
+ *     "paragraphStyle": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
+ *     // more_horiz
+ *     "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
  *   }
  * }
  * ```
  */
 class ToolbarConfig {
-
-    /**
-     * The private definition of all toolbar config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {                 // Needs to be a function not property for multiple editors
-        return {
-            "visibility": {             // Control the visibility of toolbars, etc
-                "toolbar": true,          // Whether the toolbar is visible at all
-                "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
-                "insertBar": true,        // Whether the insert bar (link, image, table) is visible
-                "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
-                "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
-                "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
-                "search": true,           // Whether the search item (hide/show search bar) is visible
-            },
-            "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
-                "correctionBar": 10,      // Correction bar order if it is visible
-                "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
-                "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
-                "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
-                "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
-                "search": 60,             // Search item (hide/show search bar) order if it is visible
-            },
-            "insertBar": {
-                "link": true,             // Whether the link menu item is visible
-                "image": true,            // Whether the image menu item is visible
-                "tableMenu": true,        // Whether the table menu is visible
-            },
-            "formatBar": {
-                "bold": true,             // Whether the bold menu item is visible
-                "italic": true,           // Whether the italic menu item is visible
-                "underline": true,        // Whether the underline menu item is visible
-                "code": true,             // Whether the code menu item is visible
-                "strikethrough": true,    // Whether the strikethrough menu item is visible
-                "subscript": true,        // Whether the subscript menu item is visible
-                "superscript": true,      // Whether the superscript menu item is visible
-            },
-            "styleMenu": {
-                "p": "Body",              // The label in the menu for "P" style
-                "h1": "H1",               // The label in the menu for "H1" style
-                "h2": "H2",               // The label in the menu for "H2" style
-                "h3": "H3",               // The label in the menu for "H3" style
-                "h4": "H4",               // The label in the menu for "H4" style
-                "h5": "H5",               // The label in the menu for "H5" style
-                "h6": "H6",               // The label in the menu for "H6" style
-                "pre": "Code",            // The label in the menu for "PRE" aka code_block style
-            },
-            "styleBar": {
-                "list": true,             // Whether bullet and numbered list items are visible
-                "dent": true,             // Whether indent and outdent items are visible
-            },
-            "tableMenu": {
-                "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
-                "border": true,           // Whether the "Border" item is visible in the "Table" menu
-            },
-            "augmentation": {
-                "prepend": null,          // Name of a registered array of cmdItems to prepend
-                "append": null            // Name of a registered array of cmdItems to append
-            },
-            "icons": {
-                // <span class="material-icons-outlined">undo</span>
-                "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
-                // <span class="material-icons-outlined">redo</span>
-                "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
-                // <span class="material-icons-outlined">format_bold</span>
-                "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
-                // <span class="material-icons-outlined">format_italic</span>
-                "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
-                // <span class="material-icons-outlined">format_underlined</span>
-                "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
-                // <span class="material-icons-outlined">strikethrough_s</span>
-                "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
-                // <span class="material-icons-outlined">data_object</span>
-                "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
-                // <span class="material-icons-outlined">subscript</span>
-                "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
-                // <span class="material-icons-outlined">superscript</span>
-                "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
-                // <span class="material-icons-outlined">link</span>
-                "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
-                // <span class="material-icons-outlined">image</span>
-                "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
-                // <span class="material-icons-outlined">table</span>
-                "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
-                // <span class="material-icons-outlined">format_list_bulleted</span>
-                "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
-                // <span class="material-icons-outlined">format_list_numbered</span>
-                "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
-                // <span class="material-icons-outlined">format_indent_increase</span>
-                "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
-                // <span class="material-icons-outlined">format_indent_decrease</span>
-                "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
-                // <span class="material-symbols-outlined">search</span>
-                "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
-                // <span class="material-symbols-outlined">chevron_forward</span>
-                "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
-                // <span class="material-symbols-outlined">chevron_backward</span>
-                "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
-                // <span class="material-symbols-outlined">match_case</span>
-                "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
-                // <span class="material-symbols-outlined">format_paragraph</span>
-                "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
-                // <span class="material-symbols-outlined">more_horiz</span>
-                "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
-            }
-        }
-    }
 
     /**
      * Return a toolbar configuration object, but defined from a stringified JSON object.
@@ -19657,7 +19636,7 @@ class ToolbarConfig {
      * @returns {string | null}   The SVG definition of the icon if found
      */
     static iconFor(string) {
-        return this._all().icons[string]
+        return toolbarConfig.icons[string]
     }
 
     /**
@@ -19667,7 +19646,7 @@ class ToolbarConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full(correction = false) {
-        let full = this._all();
+        let full = structuredClone(toolbarConfig);
         full.visibility.correctionBar = correction;
         return full
     }
@@ -19698,7 +19677,7 @@ class ToolbarConfig {
      * @returns {object} A toolbar configuration object with `visibility.toolbar` set to `false`
      */
     static none() {
-        let none = this._all();
+        let none = structuredClone(toolbarConfig);
         none.visibility.toolbar = false;
         return none
     }
@@ -19717,11 +19696,94 @@ class ToolbarConfig {
         markdown.formatBar.superscript = false;
         return markdown
     }
+
 }
+
+var undo = "Mod-z";
+var redo = "Shift-Mod-z";
+var link = [
+	"Mod-K",
+	"Mod-k"
+];
+var image = [
+	"Mod-G",
+	"Mod-g"
+];
+var p = "Ctrl-Shift-0";
+var h1 = "Ctrl-Shift-1";
+var h2 = "Ctrl-Shift-2";
+var h3 = "Ctrl-Shift-3";
+var h4 = "Ctrl-Shift-4";
+var h5 = "Ctrl-Shift-5";
+var h6 = "Ctrl-Shift-6";
+var bullet = [
+	"Ctrl-U",
+	"Ctrl-u"
+];
+var number = [
+	"Ctrl-O",
+	"Ctrl-o"
+];
+var indent = [
+	"Mod-]",
+	"Ctrl-q"
+];
+var outdent = [
+	"Mod-[",
+	"Shift-Ctrl-q"
+];
+var bold = [
+	"Mod-B",
+	"Mod-b"
+];
+var italic = [
+	"Mod-I",
+	"Mod-i"
+];
+var underline = [
+	"Mod-U",
+	"Mod-u"
+];
+var strikethrough = [
+	"Ctrl-S",
+	"Ctrl-s"
+];
+var code = "Mod-`";
+var subscript = "Ctrl-Mod--";
+var superscript = "Ctrl-Mod-+";
+var search$1 = [
+	"Ctrl-F",
+	"Ctrl-f"
+];
+var keymapConfig = {
+	undo: undo,
+	redo: redo,
+	link: link,
+	image: image,
+	p: p,
+	h1: h1,
+	h2: h2,
+	h3: h3,
+	h4: h4,
+	h5: h5,
+	h6: h6,
+	bullet: bullet,
+	number: number,
+	indent: indent,
+	outdent: outdent,
+	bold: bold,
+	italic: italic,
+	underline: underline,
+	strikethrough: strikethrough,
+	code: code,
+	subscript: subscript,
+	superscript: superscript,
+	search: search$1
+};
 
 /**
  * KeymapConfig contains static utility methods to obtain a JavaScript object with properties 
- * that define the key mappingconfiguration of the MarkupEditor toolbar. The class makes it convenient 
+ * that define the key mapping configuration of the MarkupEditor toolbar. The class makes it convenient 
  * to write and use the utility methods, but an instance of KeymapConfig itself is not meaningful.
  * 
  * `KeymapConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
@@ -19789,50 +19851,6 @@ class ToolbarConfig {
 class KeymapConfig {
 
     /**
-     * The private definition of all keymap config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {
-        return {
-            // Correction
-            "undo": "Mod-z",
-            "redo": "Shift-Mod-z",
-            // Insert
-            "link": ["Mod-K", "Mod-k"],
-            "image": ["Mod-G", "Mod-g"],
-            //"table": ["Mod-T", "Mod-t"],  // Does not work
-            // Stylemenu
-            "p": "Ctrl-Shift-0",
-            "h1": "Ctrl-Shift-1",
-            "h2": "Ctrl-Shift-2",
-            "h3": "Ctrl-Shift-3",
-            "h4": "Ctrl-Shift-4",
-            "h5": "Ctrl-Shift-5",
-            "h6": "Ctrl-Shift-6",
-            // Stylebar
-            "bullet": ["Ctrl-U", "Ctrl-u"],
-            "number": ["Ctrl-O", "Ctrl-o"],
-            "indent": ["Mod-]", "Ctrl-q"],
-            "outdent": ["Mod-[", "Shift-Ctrl-q"],
-            // Format
-            "bold": ["Mod-B", "Mod-b"],
-            "italic": ["Mod-I", "Mod-i"],
-            "underline": ["Mod-U", "Mod-u"],
-            "strikethrough": ["Ctrl-S", "Ctrl-s"],
-            "code": "Mod-`",
-            "subscript": "Ctrl-Mod--",
-            "superscript": "Ctrl-Mod-+",
-            // Search
-            "search": ["Ctrl-F", "Ctrl-f"],
-        }
-    }
-
-    /**
      * Return a keymap configuration object, but defined from a stringified JSON object.
      * 
      * @param {string} string A stringified object, perhaps used as an external definition of a keymap configuration
@@ -19852,7 +19870,7 @@ class KeymapConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full() {
-        return this._all()
+        return structuredClone(keymapConfig)
     }
 
     /**
@@ -19887,6 +19905,17 @@ class KeymapConfig {
         return markdown
     }
 }
+
+var focusAfterLoad = true;
+var selectImage = false;
+var insertLink = false;
+var insertImage = false;
+var behaviorConfig = {
+	focusAfterLoad: focusAfterLoad,
+	selectImage: selectImage,
+	insertLink: insertLink,
+	insertImage: insertImage
+};
 
 /**
  * BehaviorConfig contains static utility methods to obtain a JavaScript object with properties 
@@ -19930,24 +19959,6 @@ class KeymapConfig {
 class BehaviorConfig {
 
     /**
-     * The private definition of all behavior config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {
-        return {
-            "focusAfterLoad": true,     // Whether the editor should take focus after loading
-            "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
-            "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
-            "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
-        }
-    }
-
-    /**
      * Return a behavior configuration object, but defined from a stringified JSON object.
      * 
      * @param {string} string A stringified object, perhaps used as an external definition of a behavior configuration
@@ -19967,7 +19978,7 @@ class BehaviorConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full() {
-        return this._all()
+        return structuredClone(behaviorConfig)
     }
 
     /**
@@ -19976,7 +19987,7 @@ class BehaviorConfig {
      * @returns {object}     A JavaScript object with all settings.
      */
     static standard() { 
-        return this._all()
+        return this.full()
     }
 
     /**
@@ -24740,15 +24751,15 @@ const MU = {
     getLinkAttributes,
     getSelectionState,
     getTestHTML,
-    indent,
-    insertImage,
-    insertLink,
+    indent: indent$1,
+    insertImage: insertImage$1,
+    insertLink: insertLink$1,
     insertTable,
     loadUserFiles,
     modifyImage,
     openImageDialog,
     openLinkDialog,
-    outdent,
+    outdent: outdent$1,
     padBottom,
     pasteHTML,
     pasteText,

@@ -74,8 +74,8 @@ public class MarkupMenu {
     
     private func dentMenu() -> UIMenu {
         let children: [UICommand] = [
-            UIKeyCommand(title: "Indent", action: #selector(MarkupWKWebView.indent), input: "]", modifierFlags: .command),
-            UIKeyCommand(title: "Outdent", action: #selector(MarkupWKWebView.outdent), input: "[", modifierFlags: .command)
+            UIKeyCommand(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), input: "]", modifierFlags: .command),
+            UIKeyCommand(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), input: "[", modifierFlags: .command)
         ]
         return UIMenu(title: "Dent", options: .displayInline, children: children)
     }

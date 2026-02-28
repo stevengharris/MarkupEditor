@@ -391,9 +391,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let componentscript = cacheUrl.appendingPathComponent("markup-editor.js").path
         let dstUrl = cacheUrl.appendingPathComponent("markup.html")
         #if !os(macOS)
-        let toolbar: String? = "none"
+        let toolbar = "none"
         #else
-        let toolbar: String? = nil
+        let toolbar = ToolbarConfig.markdown().asJSON().replacingOccurrences(of: "\"", with: "&quot;")
         #endif
         let html = """
         <!DOCTYPE html>
@@ -410,7 +410,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(resourcesUrl != nil ? "base=\"\(resourcesUrl!.path)\"" : "")
                     \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
                     \(userCssFile != nil ? "userstyle=\"\(userCssFile!)\"" : "")
-                    \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
+                    toolbar="\(toolbar)\"
                     selectafterload="\(selectAfterLoad)"
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")
@@ -665,7 +665,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return selectionState.canCopyCut
         case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
             return pasteableType() != nil
-        case #selector(indent), #selector(outdent):
+        case #selector(indentFromMenu), #selector(outdentFromMenu):
             return selectionState.canDent
         case #selector(bullets), #selector(numbers):
             return selectionState.canList
@@ -1722,7 +1722,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     // Required for menu support
-    @objc public func indent() {
+    @objc public func indentFromMenu() {
         indent(handler: nil)
     }
     
@@ -1737,11 +1737,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func indent() async throws {
-        try await executeJavaScript("MU.indent()")
+        await withCheckedContinuation { continuation in
+            indent() {
+                continuation.resume()
+            }
+        }
     }
 
     // Required for menu support
-    @objc public func outdent() {
+    @objc public func outdentFromMenu() {
         outdent(handler: nil)
     }
     
@@ -1756,7 +1760,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func outdent() async throws {
-        try await executeJavaScript("MU.outdent()")
+        await withCheckedContinuation { continuation in
+            outdent() {
+                continuation.resume()
+            }
+        }
     }
     
     @objc public func bullets() {
@@ -1980,6 +1988,27 @@ extension MarkupWKWebView {
         #endif
     }
 
+}
+#endif
+
+//MARK: Zoom support (macOS)
+
+#if os(macOS)
+extension MarkupWKWebView {
+
+    private static let zoomStep: CGFloat = 0.1
+
+    @objc public func zoomIn(_ sender: Any?) {
+        pageZoom += Self.zoomStep
+    }
+
+    @objc public func zoomOut(_ sender: Any?) {
+        pageZoom = max(Self.zoomStep, pageZoom - Self.zoomStep)
+    }
+
+    @objc public func zoomToActualSize(_ sender: Any?) {
+        pageZoom = 1.0
+    }
 }
 #endif
 
