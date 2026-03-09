@@ -77,7 +77,7 @@ public class MarkupMenu {
             UIKeyCommand(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), input: "]", modifierFlags: .command),
             UIKeyCommand(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), input: "[", modifierFlags: .command)
         ]
-        return UIMenu(title: "Dent", options: .displayInline, children: children)
+        return UIMenu(title: "", options: .displayInline, children: children)
     }
     
     private func listMenu() -> UIMenu {
@@ -90,7 +90,7 @@ public class MarkupMenu {
             }
         }
 
-        return UIMenu(title: "List", options: .displayInline, children: children)
+        return UIMenu(title: "", options: .displayInline, children: children)
     }
     
     private func formatMenu() -> UIMenu {
@@ -108,7 +108,7 @@ public class MarkupMenu {
             children.append(UIKeyCommand(title: "Subscript", action: #selector(MarkupWKWebView.subscriptText), input: "=", modifierFlags: [.alternate, .command]))
             children.append(UIKeyCommand(title: "Superscript", action: #selector(MarkupWKWebView.superscript), input: "=", modifierFlags: [.shift, .alternate, .command]))
         }
-        return UIMenu(title: "Format", options: .displayInline, children: children)
+        return UIMenu(title: "", options: .displayInline, children: children)
     }
     
 }
