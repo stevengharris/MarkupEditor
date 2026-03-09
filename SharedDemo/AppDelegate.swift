@@ -118,7 +118,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         editMenuItem.submenu = editMenu
 
         // Format menu driven by toolbarconfig.json
-        let config = ToolbarConfig.markdown()
+        var config = ToolbarConfig.markdown()
+        // For consistency with the original Mac Catalyst demo, add underscore back in,
+        // altho strictly speaking it ain't Markdown.
+        config.formatBar["underline"] = true
         if let formatMenu = buildFormatMenu(from: config) {
             let formatMenuItem = NSMenuItem()
             formatMenuItem.submenu = formatMenu

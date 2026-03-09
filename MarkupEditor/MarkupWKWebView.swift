@@ -393,7 +393,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         #if !os(macOS)
         let toolbar = "none"
         #else
-        let toolbar = ToolbarConfig.markdown().asJSON().replacingOccurrences(of: "\"", with: "&quot;")
+        var config = ToolbarConfig.markdown()
+        config.formatBar["underline"] = true
+        // For consistency with the Mac Catalyst demo, add back in the underline element.
+        let toolbar = config.asJSON().replacingOccurrences(of: "\"", with: "&quot;")
         #endif
         let html = """
         <!DOCTYPE html>
