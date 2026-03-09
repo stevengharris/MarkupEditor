@@ -60,11 +60,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
         keymap = KeymapConfig.load()
-        let mainMenu = buildMenu()
-        DispatchQueue.main.async {
-            NSApplication.shared.mainMenu = mainMenu
-        }
+        NSApplication.shared.mainMenu = buildMenu()
     }
     
     private func buildMenu() -> NSMenu {
