@@ -45,6 +45,57 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         builder.remove(menu: .toolbar)
         // Initialize the MarkupMenu as the Format menu
         MarkupEditor.initMenu(with: builder)
+        // Customize View and Window menus to match macOS version.
+        // Insert our View menu before the system .window (while it still exists),
+        // then replace .window with our simplified version.
+        buildViewMenu(with: builder)
+        buildWindowMenu(with: builder)
+    }
+    
+    private func buildViewMenu(with builder: UIMenuBuilder) {
+        // Strip the View menu down to just our zoom items and the system full screen item.
+        // First, remove everything except .fullscreen from the system View menu.
+        builder.replaceChildren(ofMenu: .view) { elements in
+            elements.filter { element in
+                guard let menu = element as? UIMenu else { return false }
+                return menu.identifier == .fullscreen
+            }
+        }
+        // Then add our zoom items at the start of the View menu.
+        let zoomActual = UIKeyCommand(
+            title: "Actual Size",
+            action: Selector(("zoomToActualSize:")),
+            input: "0",
+            modifierFlags: .command
+        )
+        let zoomIn = UIKeyCommand(
+            title: "Zoom In",
+            action: Selector(("zoomIn:")),
+            input: "+",
+            modifierFlags: .command
+        )
+        let zoomOut = UIKeyCommand(
+            title: "Zoom Out",
+            action: Selector(("zoomOut:")),
+            input: "-",
+            modifierFlags: .command
+        )
+        let zoomMenu = UIMenu(title: "", options: .displayInline, children: [zoomActual, zoomIn, zoomOut])
+        builder.insertChild(zoomMenu, atStartOfMenu: .view)
+    }
+    
+    private func buildWindowMenu(with builder: UIMenuBuilder) {
+        // Keep the system Window menu but strip it down to just
+        // Minimize, Zoom, and Bring All to Front (matching macOS version).
+        // Remove everything except the standard minimizeAndZoom and bringAllToFront groups.
+        builder.replaceChildren(ofMenu: .window) { elements in
+            // The system provides .minimizeAndZoom and .bringAllToFront as child menus.
+            // Filter to keep only those, removing tab-related and other items.
+            return elements.filter { element in
+                guard let menu = element as? UIMenu else { return false }
+                return menu.identifier == .minimizeAndZoom || menu.identifier == .bringAllToFront
+            }
+        }
     }
     
 }

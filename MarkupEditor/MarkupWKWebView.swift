@@ -656,12 +656,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         set { accessoryView = newValue }
     }
 
-    /// Return false to disable various menu items depending on selectionState
+    /// Return false to disable various menu items depending on selectionState.
+    /// Actions not owned by MarkupWKWebView are forwarded to super so they can
+    /// propagate up the responder chain (e.g., toggleFullScreen to the window).
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        guard selectionState.isValid else { return false }
+        // First, handle actions that are always available regardless of selectionState
         switch action {
         case #selector(getter: undoManager):
             return true
+        #if targetEnvironment(macCatalyst)
+        case #selector(zoomIn(_:)), #selector(zoomOut(_:)), #selector(zoomToActualSize(_:)):
+            return true
+        #endif
+        default:
+            break
+        }
+        // For MarkupEditor-specific actions, require valid selectionState
+        guard selectionState.isValid else { return super.canPerformAction(action, withSender: sender) }
+        switch action {
         case #selector(UIResponderStandardEditActions.select(_:)), #selector(UIResponderStandardEditActions.selectAll(_:)):
             return super.canPerformAction(action, withSender: sender)
         case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
@@ -679,8 +691,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
-            //Logger.webview.debug("Unknown action: \(action)")
-            return false
+            return super.canPerformAction(action, withSender: sender)
         }
     }
     #endif
@@ -1994,9 +2005,9 @@ extension MarkupWKWebView {
 }
 #endif
 
-//MARK: Zoom support (macOS)
+//MARK: Zoom support (macOS and Mac Catalyst)
 
-#if os(macOS)
+#if os(macOS) || targetEnvironment(macCatalyst)
 extension MarkupWKWebView {
 
     private static let zoomStep: CGFloat = 0.1
