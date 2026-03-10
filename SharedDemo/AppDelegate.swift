@@ -111,10 +111,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
+        // Set the menu early so it's available before SwiftUI creates its window.
+        // Note: SwiftUI's WindowGroup mutates this NSMenu in-place between
+        // willFinishLaunching and didFinishLaunching, stripping items it doesn't
+        // manage (File, Edit, and any custom menus like Format). It keeps only
+        // the menus it recognizes (app menu, View, Window, Help).
+        keymap = KeymapConfig.load()
+        NSApplication.shared.mainMenu = buildMenu()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        keymap = KeymapConfig.load()
+        // Rebuild and reassign the full menu after SwiftUI has finished its
+        // mutation pass. A fresh NSMenu is required because SwiftUI removed
+        // items from the original — those NSMenuItems can't simply be re-added
+        // since their parent reference was cleared during removal.
         NSApplication.shared.mainMenu = buildMenu()
     }
     
