@@ -127,7 +127,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // since their parent reference was cleared during removal.
         NSApplication.shared.mainMenu = buildMenu()
     }
-    
+
+    // MARK: - File menu actions
+    //
+    // Menu items post notifications that DemoContentView handles, so the view
+    // owns document state (hasChanges, currentFileURL) and file I/O logic.
+
+    @objc private func newDocument(_ sender: Any?) {
+        NotificationCenter.default.post(name: .menuNewDocument, object: nil)
+    }
+
+    @objc private func openDocument(_ sender: Any?) {
+        NotificationCenter.default.post(name: .menuOpenDocument, object: nil)
+    }
+
+    @objc private func saveDocument(_ sender: Any?) {
+        NotificationCenter.default.post(name: .menuSaveDocument, object: nil)
+    }
+
     private func buildMenu() -> NSMenu {
         let mainMenu = NSMenu()
 
@@ -152,15 +169,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         appMenuItem.submenu = appMenu
 
-        // Standard file menu
+        // File menu
         let fileMenuItem = NSMenuItem()
         mainMenu.addItem(fileMenuItem)
         let fileMenu = NSMenu(title: "File")
-        fileMenu.addItem(NSMenuItem(title: "New", action: #selector(NSDocumentController.newDocument(_:)), keyEquivalent: "n"))
-        fileMenu.addItem(NSMenuItem(title: "Open…", action: #selector(NSDocumentController.openDocument(_:)), keyEquivalent: "o"))
+        fileMenu.addItem(NSMenuItem(title: "New", action: #selector(newDocument(_:)), keyEquivalent: "n"))
+        fileMenu.addItem(NSMenuItem(title: "Open…", action: #selector(openDocument(_:)), keyEquivalent: "o"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
-        fileMenu.addItem(NSMenuItem(title: "Save…", action: #selector(NSDocument.save(_:)), keyEquivalent: "s"))
+        fileMenu.addItem(NSMenuItem(title: "Save…", action: #selector(saveDocument(_:)), keyEquivalent: "s"))
         fileMenuItem.submenu = fileMenu
 
         // Standard edit menu
@@ -472,6 +489,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         return children
     }
+}
+
+extension Notification.Name {
+    static let menuNewDocument = Notification.Name("menuNewDocument")
+    static let menuOpenDocument = Notification.Name("menuOpenDocument")
+    static let menuSaveDocument = Notification.Name("menuSaveDocument")
 }
 
 #endif
