@@ -295,24 +295,114 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return formatMenu
     }
 
+    // MARK: - Insert menu via executeJavaScript
+
+    /// Execute a JavaScript command on the selected MarkupWKWebView.
+    /// Menu items store their JS command string in representedObject.
+    @MainActor @objc private func executeMenuJS(_ sender: NSMenuItem) {
+        guard let js = sender.representedObject as? String else { return }
+        MarkupEditor.selectedWebView?.executeJavaScript(js)
+    }
+
+    /// Create an NSMenuItem whose action calls executeJavaScript with the given JS command.
+    private func jsMenuItem(title: String, js: String, keyEquivalent: String = "", modifierMask: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: #selector(executeMenuJS(_:)), keyEquivalent: keyEquivalent)
+        item.keyEquivalentModifierMask = modifierMask
+        item.representedObject = js
+        item.target = self
+        return item
+    }
+
+    /// Create a JS menu item with key binding from the keymap config.
+    private func jsMenuItem(title: String, js: String, keymapAction: String) -> NSMenuItem {
+        if let binding = keymap?.binding(for: keymapAction) {
+            let item = NSMenuItem(title: title, action: #selector(executeMenuJS(_:)), keyEquivalent: binding.keyEquivalent)
+            item.keyEquivalentModifierMask = binding.modifierMask
+            item.representedObject = js
+            item.target = self
+            return item
+        }
+        let item = NSMenuItem(title: title, action: #selector(executeMenuJS(_:)), keyEquivalent: "")
+        item.representedObject = js
+        item.target = self
+        return item
+    }
+
     private func buildInsertSubmenuItem(from config: ToolbarConfig) -> NSMenuItem? {
         let items = config.insertBar
         let submenu = NSMenu(title: "Insert")
 
         if items["link"] == true {
-            submenu.addItem(menuItem(title: "Link", action: Selector(("showPluggableLinkPopover")), keymapAction: "link"))
+            submenu.addItem(jsMenuItem(title: "Link", js: "MU.openLinkDialog()", keymapAction: "link"))
         }
         if items["image"] == true {
-            submenu.addItem(menuItem(title: "Image", action: Selector(("showPluggableImagePopover")), keymapAction: "image"))
+            submenu.addItem(jsMenuItem(title: "Image", js: "MU.openImageDialog()", keymapAction: "image"))
         }
         if items["tableMenu"] == true {
-            submenu.addItem(NSMenuItem(title: "Table", action: Selector(("showPluggableTablePopover")), keyEquivalent: ""))
+            submenu.addItem(buildTableSubmenuItem(from: config))
         }
 
         guard submenu.numberOfItems > 0 else { return nil }
         let item = NSMenuItem(title: "Insert", action: nil, keyEquivalent: "")
         item.submenu = submenu
         return item
+    }
+
+    private func buildTableSubmenuItem(from config: ToolbarConfig) -> NSMenuItem {
+        let tableItem = NSMenuItem(title: "Table", action: nil, keyEquivalent: "")
+        let tableMenu = NSMenu(title: "Table")
+
+        // Create submenu — rows x cols grid
+        let createItem = NSMenuItem(title: "Create", action: nil, keyEquivalent: "")
+        let createMenu = NSMenu(title: "Create")
+        for rows in 1...4 {
+            let rowItem = NSMenuItem(title: "\(rows) Row\(rows > 1 ? "s" : "")", action: nil, keyEquivalent: "")
+            let rowMenu = NSMenu(title: "\(rows) Row\(rows > 1 ? "s" : "")")
+            for cols in 1...4 {
+                rowMenu.addItem(jsMenuItem(title: "\(cols) Col\(cols > 1 ? "s" : "")", js: "MU.insertTable(\(rows), \(cols))"))
+            }
+            rowItem.submenu = rowMenu
+            createMenu.addItem(rowItem)
+        }
+        createItem.submenu = createMenu
+        tableMenu.addItem(createItem)
+
+        // Add submenu
+        let addItem = NSMenuItem(title: "Add", action: nil, keyEquivalent: "")
+        let addMenu = NSMenu(title: "Add")
+        addMenu.addItem(jsMenuItem(title: "Row Above", js: "MU.addRow(\"BEFORE\")"))
+        addMenu.addItem(jsMenuItem(title: "Row Below", js: "MU.addRow(\"AFTER\")"))
+        addMenu.addItem(jsMenuItem(title: "Column Before", js: "MU.addCol(\"BEFORE\")"))
+        addMenu.addItem(jsMenuItem(title: "Column After", js: "MU.addCol(\"AFTER\")"))
+        if config.tableMenu["header"] == true {
+            addMenu.addItem(jsMenuItem(title: "Header", js: "MU.addHeader()"))
+        }
+        addItem.submenu = addMenu
+        tableMenu.addItem(addItem)
+
+        // Delete submenu
+        let deleteItem = NSMenuItem(title: "Delete", action: nil, keyEquivalent: "")
+        let deleteMenu = NSMenu(title: "Delete")
+        deleteMenu.addItem(jsMenuItem(title: "Row", js: "MU.deleteTableArea(\"ROW\")"))
+        deleteMenu.addItem(jsMenuItem(title: "Column", js: "MU.deleteTableArea(\"COL\")"))
+        deleteMenu.addItem(jsMenuItem(title: "Table", js: "MU.deleteTableArea(\"TABLE\")"))
+        deleteItem.submenu = deleteMenu
+        tableMenu.addItem(deleteItem)
+
+        // Border submenu
+        if config.tableMenu["border"] == true {
+            let borderItem = NSMenuItem(title: "Border", action: nil, keyEquivalent: "")
+            let borderMenu = NSMenu(title: "Border")
+            borderMenu.addItem(jsMenuItem(title: "All", js: "MU.borderTable(\"cell\")"))
+            borderMenu.addItem(jsMenuItem(title: "Outer", js: "MU.borderTable(\"outer\")"))
+            borderMenu.addItem(jsMenuItem(title: "Header", js: "MU.borderTable(\"header\")"))
+            borderMenu.addItem(jsMenuItem(title: "None", js: "MU.borderTable(\"none\")"))
+            borderItem.submenu = borderMenu
+            tableMenu.addItem(borderItem)
+        }
+
+        tableItem.submenu = tableMenu
+        return tableItem
     }
 
     private func buildStyleSubmenuItem(from config: ToolbarConfig) -> NSMenuItem? {
