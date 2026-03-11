@@ -48,13 +48,13 @@ public class MarkupMenu {
     private func insertMenu() -> UIMenu {
         var children = [UICommand]()
         if contents.insertContents.link {
-            children.append(UIKeyCommand(title: "Link", action: #selector(MarkupWKWebView.showPluggableLinkPopover), input: "K", modifierFlags: .command))
+            children.append(UIKeyCommand(title: "Link", image: UIImage(systemName: "link"), action: #selector(MarkupWKWebView.showPluggableLinkPopover), input: "K", modifierFlags: .command))
         }
         if contents.insertContents.image {
-            children.append(UICommand(title: "Image", action: #selector(MarkupWKWebView.showPluggableImagePopover)))
+            children.append(UICommand(title: "Image", image: UIImage(systemName: "photo"), action: #selector(MarkupWKWebView.showPluggableImagePopover)))
         }
         if contents.insertContents.table {
-            children.append(UICommand(title: "Table", action: #selector(MarkupWKWebView.showPluggableTablePopover)))
+            children.append(UICommand(title: "Table", image: UIImage(systemName: "squareshape.split.3x3"), action: #selector(MarkupWKWebView.showPluggableTablePopover)))
         }
         return UIMenu(title: "Insert", children: children)
     }
@@ -74,8 +74,8 @@ public class MarkupMenu {
     
     private func dentMenu() -> UIMenu {
         let children: [UICommand] = [
-            UIKeyCommand(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), input: "]", modifierFlags: .command),
-            UIKeyCommand(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), input: "[", modifierFlags: .command)
+            UIKeyCommand(title: "Indent", image: UIImage(systemName: "increase.quotelevel"), action: #selector(MarkupWKWebView.indentFromMenu), input: "]", modifierFlags: .command),
+            UIKeyCommand(title: "Outdent", image: UIImage(systemName: "decrease.quotelevel"), action: #selector(MarkupWKWebView.outdentFromMenu), input: "[", modifierFlags: .command)
         ]
         return UIMenu(title: "", options: .displayInline, children: children)
     }
@@ -84,9 +84,9 @@ public class MarkupMenu {
         let children: [UICommand] = contents.styleContents.listType.map { type in
             switch type {
             case .bullet:
-                return UIKeyCommand(title: "Bullets", action: #selector(MarkupWKWebView.bullets), input: ".", modifierFlags: .command)
+                return UIKeyCommand(title: "Bullets", image: UIImage(systemName: "list.bullet"), action: #selector(MarkupWKWebView.bullets), input: ".", modifierFlags: .command)
             case .number:
-                return UIKeyCommand(title: "Numbers", action: #selector(MarkupWKWebView.numbers), input: "/", modifierFlags: .command)
+                return UIKeyCommand(title: "Numbers", image: UIImage(systemName: "list.number"), action: #selector(MarkupWKWebView.numbers), input: "/", modifierFlags: .command)
             }
         }
 
@@ -95,18 +95,18 @@ public class MarkupMenu {
     
     private func formatMenu() -> UIMenu {
         var children: [UICommand] = []
-        children.append(UIKeyCommand(title: "Bold", action: #selector(MarkupWKWebView.bold), input: "B", modifierFlags: .command))
-        children.append(UIKeyCommand(title: "Italic", action: #selector(MarkupWKWebView.italic), input: "I", modifierFlags: .command))
-        children.append(UIKeyCommand(title: "Underline", action: #selector(MarkupWKWebView.underline), input: "U", modifierFlags: .command))
+        children.append(UIKeyCommand(title: "Bold", image: UIImage(systemName: "bold"), action: #selector(MarkupWKWebView.bold), input: "B", modifierFlags: .command))
+        children.append(UIKeyCommand(title: "Italic", image: UIImage(systemName: "italic"), action: #selector(MarkupWKWebView.italic), input: "I", modifierFlags: .command))
+        children.append(UIKeyCommand(title: "Underline", image: UIImage(systemName: "underline"), action: #selector(MarkupWKWebView.underline), input: "U", modifierFlags: .command))
         if contents.formatContents.code {
-            children.append(UIKeyCommand(title: "Code", action: #selector(MarkupWKWebView.code), input: "`", modifierFlags: .command))
+            children.append(UIKeyCommand(title: "Code", image: UIImage(systemName: "curlybraces"), action: #selector(MarkupWKWebView.code), input: "`", modifierFlags: .command))
         }
         if contents.formatContents.strike {
-            children.append(UIKeyCommand(title: "Strikethrough", action: #selector(MarkupWKWebView.strike), input: "-", modifierFlags: [.control, .command]))
+            children.append(UIKeyCommand(title: "Strikethrough", image: UIImage(systemName: "strikethrough"), action: #selector(MarkupWKWebView.strike), input: "-", modifierFlags: [.control, .command]))
         }
         if contents.formatContents.subSuper {
-            children.append(UIKeyCommand(title: "Subscript", action: #selector(MarkupWKWebView.subscriptText), input: "=", modifierFlags: [.alternate, .command]))
-            children.append(UIKeyCommand(title: "Superscript", action: #selector(MarkupWKWebView.superscript), input: "=", modifierFlags: [.shift, .alternate, .command]))
+            children.append(UIKeyCommand(title: "Subscript", image: UIImage(systemName: "textformat.subscript"), action: #selector(MarkupWKWebView.subscriptText), input: "=", modifierFlags: [.alternate, .command]))
+            children.append(UIKeyCommand(title: "Superscript", image: UIImage(systemName: "textformat.superscript"), action: #selector(MarkupWKWebView.superscript), input: "=", modifierFlags: [.shift, .alternate, .command]))
         }
         return UIMenu(title: "", options: .displayInline, children: children)
     }

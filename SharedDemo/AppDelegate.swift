@@ -45,9 +45,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         builder.remove(menu: .toolbar)
         // Initialize the MarkupMenu as the Format menu
         MarkupEditor.initMenu(with: builder)
+        // Add File menu items (New, Open, Save, Save As) matching the macOS version
+        buildFileMenu(with: builder)
         // Customize View and Window menus to match macOS version.
-        // Insert our View menu before the system .window (while it still exists),
-        // then replace .window with our simplified version.
         buildViewMenu(with: builder)
         buildWindowMenu(with: builder)
     }
@@ -84,6 +84,69 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         builder.insertChild(zoomMenu, atStartOfMenu: .view)
     }
     
+    private func buildFileMenu(with builder: UIMenuBuilder) {
+        let newDoc = UIKeyCommand(
+            title: "New",
+            image: UIImage(systemName: "plus"),
+            action: #selector(menuNewDocument),
+            input: "N",
+            modifierFlags: .command
+        )
+        let openDoc = UIKeyCommand(
+            title: "Open…",
+            image: UIImage(systemName: "folder"),
+            action: #selector(menuOpenDocument),
+            input: "O",
+            modifierFlags: .command
+        )
+        let saveDoc = UIKeyCommand(
+            title: "Save",
+            image: UIImage(systemName: "square.and.arrow.down"),
+            action: #selector(menuSaveDocument),
+            input: "S",
+            modifierFlags: .command
+        )
+        let saveAsDoc = UIKeyCommand(
+            title: "Save As…",
+            image: UIImage(systemName: "square.and.arrow.down.on.square"),
+            action: #selector(menuSaveAsDocument),
+            input: "S",
+            modifierFlags: [.command, .shift]
+        )
+        // The system .file menu may not exist in Catalyst. Remove it if present
+        // and insert our own File menu after the app menu.
+        builder.remove(menu: .file)
+        let closeWindow = UIKeyCommand(
+            title: "Close",
+            image: UIImage(systemName: "xmark"),
+            action: Selector(("performClose:")),
+            input: "W",
+            modifierFlags: .command
+        )
+        let fileMenu = UIMenu(
+            title: "File",
+            identifier: .file,
+            children: [newDoc, openDoc, closeWindow, saveDoc, saveAsDoc]
+        )
+        builder.insertSibling(fileMenu, afterMenu: .application)
+    }
+
+    @objc private func menuNewDocument() {
+        NotificationCenter.default.post(name: .menuNewDocument, object: nil)
+    }
+
+    @objc private func menuOpenDocument() {
+        NotificationCenter.default.post(name: .menuOpenDocument, object: nil)
+    }
+
+    @objc private func menuSaveDocument() {
+        NotificationCenter.default.post(name: .menuSaveDocument, object: nil)
+    }
+
+    @objc private func menuSaveAsDocument() {
+        NotificationCenter.default.post(name: .menuSaveAsDocument, object: nil)
+    }
+
     private func buildWindowMenu(with builder: UIMenuBuilder) {
         // Keep the system Window menu but strip it down to just
         // Minimize, Zoom, and Bring All to Front (matching macOS version).
@@ -145,6 +208,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.post(name: .menuSaveDocument, object: nil)
     }
 
+    @objc private func saveAsDocument(_ sender: Any?) {
+        NotificationCenter.default.post(name: .menuSaveAsDocument, object: nil)
+    }
+
     private func buildMenu() -> NSMenu {
         let mainMenu = NSMenu()
 
@@ -177,7 +244,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         fileMenu.addItem(NSMenuItem(title: "Open…", action: #selector(openDocument(_:)), keyEquivalent: "o"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
-        fileMenu.addItem(NSMenuItem(title: "Save…", action: #selector(saveDocument(_:)), keyEquivalent: "s"))
+        fileMenu.addItem(NSMenuItem(title: "Save", action: #selector(saveDocument(_:)), keyEquivalent: "s"))
+        let saveAsItem = NSMenuItem(title: "Save As…", action: #selector(saveAsDocument(_:)), keyEquivalent: "s")
+        saveAsItem.keyEquivalentModifierMask = [.command, .shift]
+        saveAsItem.image = NSImage(systemSymbolName: "square.and.arrow.down.on.square", accessibilityDescription: "Save As")
+        fileMenu.addItem(saveAsItem)
         fileMenuItem.submenu = fileMenu
 
         // Standard edit menu
@@ -350,13 +421,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let submenu = NSMenu(title: "Insert")
 
         if items["link"] == true {
-            submenu.addItem(jsMenuItem(title: "Link", js: "MU.openLinkDialog()", keymapAction: "link"))
+            let linkItem = jsMenuItem(title: "Link", js: "MU.openLinkDialog()", keymapAction: "link")
+            linkItem.image = NSImage(systemSymbolName: "link", accessibilityDescription: "Link")
+            submenu.addItem(linkItem)
         }
         if items["image"] == true {
-            submenu.addItem(jsMenuItem(title: "Image", js: "MU.openImageDialog()", keymapAction: "image"))
+            let imageItem = jsMenuItem(title: "Image", js: "MU.openImageDialog()", keymapAction: "image")
+            imageItem.image = NSImage(systemSymbolName: "photo", accessibilityDescription: "Image")
+            submenu.addItem(imageItem)
         }
         if items["tableMenu"] == true {
-            submenu.addItem(buildTableSubmenuItem(from: config))
+            let tableItem = buildTableSubmenuItem(from: config)
+            tableItem.image = NSImage(systemSymbolName: "squareshape.split.3x3", accessibilityDescription: "Table")
+            submenu.addItem(tableItem)
         }
 
         guard submenu.numberOfItems > 0 else { return nil }
@@ -448,17 +525,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func buildListItems() -> [NSMenuItem] {
-        [
-            menuItem(title: "Bullets", action: #selector(MarkupWKWebView.bullets), keymapAction: "bullet"),
-            menuItem(title: "Numbers", action: #selector(MarkupWKWebView.numbers), keymapAction: "number"),
-        ]
+        let bullets = menuItem(title: "Bullets", action: #selector(MarkupWKWebView.bullets), keymapAction: "bullet")
+        bullets.image = NSImage(systemSymbolName: "list.bullet", accessibilityDescription: "Bullets")
+        let numbers = menuItem(title: "Numbers", action: #selector(MarkupWKWebView.numbers), keymapAction: "number")
+        numbers.image = NSImage(systemSymbolName: "list.number", accessibilityDescription: "Numbers")
+        return [bullets, numbers]
     }
 
     private func buildDentItems() -> [NSMenuItem] {
-        [
-            menuItem(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), keymapAction: "indent"),
-            menuItem(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), keymapAction: "outdent"),
-        ]
+        let indent = menuItem(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), keymapAction: "indent")
+        indent.image = NSImage(systemSymbolName: "increase.quotelevel", accessibilityDescription: "Indent")
+        let outdent = menuItem(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), keymapAction: "outdent")
+        outdent.image = NSImage(systemSymbolName: "decrease.quotelevel", accessibilityDescription: "Outdent")
+        return [indent, outdent]
     }
 
     private func buildFormatItems(from config: ToolbarConfig) -> [NSMenuItem] {
@@ -466,35 +545,50 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         var children = [NSMenuItem]()
 
         if items["bold"] == true {
-            children.append(menuItem(title: "Bold", action: #selector(MarkupWKWebView.bold), keymapAction: "bold"))
+            let item = menuItem(title: "Bold", action: #selector(MarkupWKWebView.bold), keymapAction: "bold")
+            item.image = NSImage(systemSymbolName: "bold", accessibilityDescription: "Bold")
+            children.append(item)
         }
         if items["italic"] == true {
-            children.append(menuItem(title: "Italic", action: #selector(MarkupWKWebView.italic), keymapAction: "italic"))
+            let item = menuItem(title: "Italic", action: #selector(MarkupWKWebView.italic), keymapAction: "italic")
+            item.image = NSImage(systemSymbolName: "italic", accessibilityDescription: "Italic")
+            children.append(item)
         }
         if items["underline"] == true {
-            children.append(menuItem(title: "Underline", action: #selector(MarkupWKWebView.underline), keymapAction: "underline"))
+            let item = menuItem(title: "Underline", action: #selector(MarkupWKWebView.underline), keymapAction: "underline")
+            item.image = NSImage(systemSymbolName: "underline", accessibilityDescription: "Underline")
+            children.append(item)
         }
         if items["code"] == true {
-            children.append(menuItem(title: "Code", action: #selector(MarkupWKWebView.code), keymapAction: "code"))
+            let item = menuItem(title: "Code", action: #selector(MarkupWKWebView.code), keymapAction: "code")
+            item.image = NSImage(systemSymbolName: "curlybraces", accessibilityDescription: "Code")
+            children.append(item)
         }
         if items["strikethrough"] == true {
-            children.append(menuItem(title: "Strikethrough", action: #selector(MarkupWKWebView.strike), keymapAction: "strikethrough"))
+            let item = menuItem(title: "Strikethrough", action: #selector(MarkupWKWebView.strike), keymapAction: "strikethrough")
+            item.image = NSImage(systemSymbolName: "strikethrough", accessibilityDescription: "Strikethrough")
+            children.append(item)
         }
         if items["subscript"] == true {
-            children.append(menuItem(title: "Subscript", action: #selector(MarkupWKWebView.subscriptText), keymapAction: "subscript"))
+            let item = menuItem(title: "Subscript", action: #selector(MarkupWKWebView.subscriptText), keymapAction: "subscript")
+            item.image = NSImage(systemSymbolName: "textformat.subscript", accessibilityDescription: "Subscript")
+            children.append(item)
         }
         if items["superscript"] == true {
-            children.append(menuItem(title: "Superscript", action: #selector(MarkupWKWebView.superscript), keymapAction: "superscript"))
+            let item = menuItem(title: "Superscript", action: #selector(MarkupWKWebView.superscript), keymapAction: "superscript")
+            item.image = NSImage(systemSymbolName: "textformat.superscript", accessibilityDescription: "Superscript")
+            children.append(item)
         }
 
         return children
     }
 }
 
+#endif
+
 extension Notification.Name {
     static let menuNewDocument = Notification.Name("menuNewDocument")
     static let menuOpenDocument = Notification.Name("menuOpenDocument")
     static let menuSaveDocument = Notification.Name("menuSaveDocument")
+    static let menuSaveAsDocument = Notification.Name("menuSaveAsDocument")
 }
-
-#endif
