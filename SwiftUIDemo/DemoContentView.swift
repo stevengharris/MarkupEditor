@@ -27,7 +27,7 @@ struct DemoContentView: View {
 
     var compatibleSystemGray5: Color {
         #if os(macOS)
-        return Color(nsColor: NSColor.systemGray)
+        return Color(nsColor: NSColor.unemphasizedSelectedContentBackgroundColor)
         #else
         // This is for iOS, iPadOS, tvOS
         return Color(uiColor: UIColor.systemGray5)
@@ -75,6 +75,9 @@ struct DemoContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .menuSaveAsDocument)) { _ in
             handleSaveAs()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .menuShowHtml)) { _ in
+            rawDocument()
         }
 #if !os(macOS)
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
@@ -358,7 +361,7 @@ extension DemoContentView: FileToolbarDelegate {
     }
 
     func rawDocument() {
-        withAnimation { rawShowing.toggle()}
+        withAnimation(.easeInOut(duration: 0.25)) { rawShowing.toggle() }
     }
 
 }

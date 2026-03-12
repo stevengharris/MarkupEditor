@@ -47,6 +47,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         MarkupEditor.initMenu(with: builder)
         // Add File menu items (New, Open, Save, Save As) matching the macOS version
         buildFileMenu(with: builder)
+
         // Customize View and Window menus to match macOS version.
         buildViewMenu(with: builder)
         buildWindowMenu(with: builder)
@@ -82,6 +83,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         )
         let zoomMenu = UIMenu(title: "", options: .displayInline, children: [zoomActual, zoomIn, zoomOut])
         builder.insertChild(zoomMenu, atStartOfMenu: .view)
+        // Add Show HTML at the end of the View menu
+        let showHtml = UIKeyCommand(
+            title: "Show HTML",
+            image: UIImage(systemName: "chevron.left.slash.chevron.right"),
+            action: #selector(menuShowHtml),
+            input: "U",
+            modifierFlags: [.command, .shift]
+        )
+        let showHtmlMenu = UIMenu(title: "", options: .displayInline, children: [showHtml])
+        builder.insertChild(showHtmlMenu, atEndOfMenu: .view)
     }
     
     private func buildFileMenu(with builder: UIMenuBuilder) {
@@ -145,6 +156,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     @objc private func menuSaveAsDocument() {
         NotificationCenter.default.post(name: .menuSaveAsDocument, object: nil)
+    }
+
+    @objc private func menuShowHtml() {
+        NotificationCenter.default.post(name: .menuShowHtml, object: nil)
     }
 
     private func buildWindowMenu(with builder: UIMenuBuilder) {
@@ -212,6 +227,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.post(name: .menuSaveAsDocument, object: nil)
     }
 
+    @objc private func showHtml(_ sender: Any?) {
+        NotificationCenter.default.post(name: .menuShowHtml, object: nil)
+    }
+
     private func buildMenu() -> NSMenu {
         let mainMenu = NSMenu()
 
@@ -264,6 +283,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         editMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
         editMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
         editMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        editMenu.addItem(.separator())
+        let findItem = jsMenuItem(title: "Find", js: "MU.toggleSearch()", keyEquivalent: "f", modifierMask: .command)
+        findItem.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: "Find")
+        editMenu.addItem(findItem)
         editMenuItem.submenu = editMenu
 
         // Format menu driven by toolbarconfig.json
@@ -292,6 +315,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let toggleFullScreen = NSMenuItem(title: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
         toggleFullScreen.keyEquivalentModifierMask = [.command, .control]
         viewMenu.addItem(toggleFullScreen)
+        viewMenu.addItem(.separator())
+        let showHtmlItem = NSMenuItem(title: "Show HTML", action: #selector(showHtml(_:)), keyEquivalent: "u")
+        showHtmlItem.keyEquivalentModifierMask = [.command, .shift]
+        showHtmlItem.image = NSImage(systemSymbolName: "chevron.left.slash.chevron.right", accessibilityDescription: "Show HTML")
+        showHtmlItem.target = self
+        viewMenu.addItem(showHtmlItem)
         viewMenuItem.submenu = viewMenu
 
         // Standard window menu
@@ -438,6 +467,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard submenu.numberOfItems > 0 else { return nil }
         let item = NSMenuItem(title: "Insert", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "text.insert", accessibilityDescription: "Insert")
         item.submenu = submenu
         return item
     }
@@ -520,6 +550,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard submenu.numberOfItems > 0 else { return nil }
         let item = NSMenuItem(title: "Style", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "paragraphsign", accessibilityDescription: "Style")
         item.submenu = submenu
         return item
     }
@@ -591,4 +622,5 @@ extension Notification.Name {
     static let menuOpenDocument = Notification.Name("menuOpenDocument")
     static let menuSaveDocument = Notification.Name("menuSaveDocument")
     static let menuSaveAsDocument = Notification.Name("menuSaveAsDocument")
+    static let menuShowHtml = Notification.Name("menuShowHtml")
 }

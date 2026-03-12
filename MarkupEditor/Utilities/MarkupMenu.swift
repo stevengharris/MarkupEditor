@@ -56,7 +56,7 @@ public class MarkupMenu {
         if contents.insertContents.table {
             children.append(UICommand(title: "Table", image: UIImage(systemName: "squareshape.split.3x3"), action: #selector(MarkupWKWebView.showPluggableTablePopover)))
         }
-        return UIMenu(title: "Insert", children: children)
+        return UIMenu(title: "Insert", image: UIImage(systemName: "text.insert"), children: children)
     }
     
     private func styleMenu() -> UIMenu {
@@ -69,7 +69,7 @@ public class MarkupMenu {
             UICommand(title: "Header 5", action: #selector(MarkupWKWebView.h5Style)),
             UICommand(title: "Header 6", action: #selector(MarkupWKWebView.h6Style))
         ]
-        return UIMenu(title: "Style", children: children)
+        return UIMenu(title: "Style", image: UIImage(systemName: "paragraphsign"), children: children)
     }
     
     private func dentMenu() -> UIMenu {
