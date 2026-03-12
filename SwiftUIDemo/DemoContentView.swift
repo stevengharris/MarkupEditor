@@ -82,6 +82,10 @@ struct DemoContentView: View {
 #if !os(macOS)
         .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
         .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
+#endif
+#if os(iOS) && !targetEnvironment(macCatalyst)
+        // Only add the FileToolbar in for iOS, because the New, Open, Save, SaveAs, and Show HTML are available in the menu
+        // on MacOS and Mac Catalyst.
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
         .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
 #endif
