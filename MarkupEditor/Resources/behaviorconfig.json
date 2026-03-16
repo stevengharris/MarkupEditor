@@ -2,5 +2,6 @@
     "focusAfterLoad": true,
     "selectImage": false,
     "insertLink": false,
-    "insertImage": false
+    "insertImage": false,
+    "showStyle": true
 }

@@ -12,6 +12,7 @@ public struct BehaviorConfig: Codable {
     public let selectImage: Bool
     public let insertLink: Bool
     public let insertImage: Bool
+    public let showStyle: Bool
 
     private static func all() throws -> BehaviorConfig {
         #if SWIFT_PACKAGE
@@ -36,7 +37,8 @@ public struct BehaviorConfig: Codable {
             focusAfterLoad: false,
             selectImage: false,
             insertLink: false,
-            insertImage: false
+            insertImage: false,
+            showStyle: false
         )
     }
 }
