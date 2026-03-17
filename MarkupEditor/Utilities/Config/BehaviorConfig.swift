@@ -6,30 +6,49 @@
 //
 
 import Foundation
+import OSLog
 
-public struct BehaviorConfig: Codable {
-    public let focusAfterLoad: Bool
-    public let selectImage: Bool
-    public let insertLink: Bool
-    public let insertImage: Bool
-    public let showStyle: Bool
+/// A struct that is populated from Resources/behaviorconfig.json and provides easy access to its settings. The json file
+/// is the source of truth, and its settings will be used by the MarkupWKWebView unless overridden. The settings can
+/// be conveniently modified using the various static methods, such as `desktop`.
+public struct BehaviorConfig: JSONConfigurable {
+    public var focusAfterLoad: Bool
+    public var selectImage: Bool
+    public var insertLink: Bool
+    public var insertImage: Bool
+    public var showStyle: Bool
 
-    private static func all() throws -> BehaviorConfig {
-        #if SWIFT_PACKAGE
-        let bundle = Bundle.module
-        #else
+    private static func load() -> BehaviorConfig {
+    #if SWIFT_PACKAGE
+        let bundle = Bundle.module   // Bundle.module is only accessible within BaseTests
+    #else
         let bundle = Bundle(for: MarkupWKWebView.self)
-        #endif
-        guard let path = bundle.path(forResource: "behaviorconfig", ofType: "json") else {
-            fatalError("Behavior config could not be found in bundle")
+    #endif
+        do {
+            guard let path = bundle.path(forResource: "behaviorconfig", ofType: "json") else {
+                fatalError("The behaviorconfig.json resource could not be found in bundle")
+            }
+            let url = URL(filePath: path, directoryHint: .notDirectory)
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(BehaviorConfig.self, from: data)
+        } catch let error {
+            Logger.config.error("\(error.localizedDescription)")
+            return none()
         }
-        let url = URL(filePath: path, directoryHint: .notDirectory)
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(BehaviorConfig.self, from: data)
     }
-
-    public static func load() -> BehaviorConfig? {
-        return try? all()
+    
+    public static func standard() -> BehaviorConfig {
+        load()
+    }
+    
+    public static func desktop() -> BehaviorConfig {
+        BehaviorConfig(
+            focusAfterLoad: true,
+            selectImage: true,
+            insertLink: false,
+            insertImage: false,
+            showStyle: true
+        )
     }
 
     public static func none() -> BehaviorConfig {
@@ -41,4 +60,10 @@ public struct BehaviorConfig: Codable {
             showStyle: false
         )
     }
+    
+    /// Override the protocol default to return `none()` on decode failure instead of nil.
+    public static func fromJSON(_ string: String) -> BehaviorConfig {
+        (self as JSONConfigurable.Type).fromJSON(string) as? BehaviorConfig ?? none()
+    }
+
 }
