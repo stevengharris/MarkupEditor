@@ -18395,6 +18395,16 @@ function doUndo() {
     return result
 }
 
+function canUndo() {
+    const view = activeView();
+    return undoCommand()(view.state)
+}
+
+function canRedo() {
+    const view = activeView();
+    return redoCommand()(view.state)
+}
+
 /**
  * Return a command to undo and do the proper callbacks.
  * 
@@ -19710,10 +19720,6 @@ var link = [
 	"Mod-K",
 	"Mod-k"
 ];
-var image = [
-	"Mod-G",
-	"Mod-g"
-];
 var p = "Ctrl-Shift-0";
 var h1 = "Ctrl-Shift-1";
 var h2 = "Ctrl-Shift-2";
@@ -19764,7 +19770,6 @@ var keymapConfig = {
 	undo: undo,
 	redo: redo,
 	link: link,
-	image: image,
 	p: p,
 	h1: h1,
 	h2: h2,
@@ -19823,10 +19828,8 @@ var keymapConfig = {
  *    // Correction
  *    "undo": "Mod-z",
  *    "redo": "Shift-Mod-z",
- *    // Insert
+ *    // Insert (no hotkeys for image or table)
  *    "link": ["Mod-K", "Mod-k"],
- *    "image": ["Mod-G", "Mod-g"],
- *    //"table": ["Mod-T", "Mod-t"],  // Does not work
  *    // Stylemenu
  *    "p": "Ctrl-Shift-0",
  *    "h1": "Ctrl-Shift-1",
@@ -24753,6 +24756,8 @@ const MU = {
     addRow,
     borderTable,
     cancelSearch,
+    canUndo,
+    canRedo,
     consoleLog,
     cutImage,
     deactivateSearch,

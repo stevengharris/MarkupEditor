@@ -2,7 +2,6 @@
     "undo": "Mod-z",
     "redo": "Shift-Mod-z",
     "link": ["Mod-K", "Mod-k"],
-    "image": ["Mod-G", "Mod-g"],
     "p": "Ctrl-Shift-0",
     "h1": "Ctrl-Shift-1",
     "h2": "Ctrl-Shift-2",
