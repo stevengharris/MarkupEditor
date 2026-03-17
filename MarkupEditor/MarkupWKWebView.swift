@@ -391,12 +391,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let componentscript = cacheUrl.appendingPathComponent("markup-editor.js").path
         let dstUrl = cacheUrl.appendingPathComponent("markup.html")
         #if !os(macOS)
-        let toolbar = "none"
+        let toolbar: String? = "none"
+        let behavior: String? = nil
+        let keymap: String? = nil
         #else
-        var config = ToolbarConfig.markdown()
-        config.formatBar["underline"] = true
+        var toolbarConfig = ToolbarConfig.markdown()
+        toolbarConfig.formatBar["underline"] = true
         // For consistency with the Mac Catalyst demo, add back in the underline element.
-        let toolbar = config.asJSON().replacingOccurrences(of: "\"", with: "&quot;")
+        let toolbar = toolbarConfig.asAttribute()
+        let behavior = BehaviorConfig.desktop().asAttribute()   // Enables selectImage
+        let keymap = KeymapConfig.standard().asAttribute()
         #endif
         let html = """
         <!DOCTYPE html>
@@ -413,8 +417,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(resourcesUrl != nil ? "base=\"\(resourcesUrl!.path)\"" : "")
                     \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
                     \(userCssFile != nil ? "userstyle=\"\(userCssFile!)\"" : "")
-                    toolbar="\(toolbar)\"
-                    selectafterload="\(selectAfterLoad)"
+                    \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
+                    \(keymap != nil ? "keymap=\"\(keymap!)\"" : "")
+                    \(behavior != nil ? "behavior=\"\(behavior!)\"" : "")
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")
                 </markup-editor>
@@ -663,6 +668,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // First, handle actions that are always available regardless of selectionState
         switch action {
         case #selector(getter: undoManager):
+            return true
+        case #selector(undoFromMenu(_:)), #selector(redoFromMenu(_:)),
+             NSSelectorFromString("undo:"), NSSelectorFromString("redo:"):
             return true
         #if targetEnvironment(macCatalyst)
         case #selector(zoomIn(_:)), #selector(zoomOut(_:)), #selector(zoomToActualSize(_:)):
@@ -1159,7 +1167,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
     //MARK: Undo/redo
     
-    /// Invoke the undo function from the undo button, same as occurs with Command-S.
+    /// Invoke the undo function from the undo button, same as occurs with Command-Z.
     public func undo(handler: (()->Void)? = nil) {
         executeJavaScript("MU.doUndo()") { result, error in handler?() }
     }
@@ -1172,7 +1180,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
+    /// Menu-targeted undo action matching the `undo:` selector.
+    @objc public func undoFromMenu(_ sender: Any?) {
+        undo(handler: nil)
+    }
+    
+    /// Invoke the redo function from the redo button, same as occurs with Command-Shift-Z.
     public func redo(handler: (()->Void)? = nil) {
         executeJavaScript("MU.doRedo()") { result, error in handler?() }
     }
@@ -1183,6 +1196,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 continuation.resume()
             }
         }
+    }
+    
+    /// Menu-targeted redo action matching the `redo:` selector.
+    @objc public func redoFromMenu(_ sender: Any?) {
+        redo(handler: nil)
     }
     
     //MARK: Table editing
@@ -1301,6 +1319,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+
+    //MARK: Table menu actions (@objc wrappers for UICommand/NSMenuItem)
+    
+#if !os(macOS)
+    /// Insert a table with rows/cols from the UICommand propertyList (e.g. [2, 3] for 2 rows × 3 cols).
+    @objc public func insertTableFromMenu(_ sender: UICommand) {
+        guard let dims = sender.propertyList as? [Int], dims.count == 2 else { return }
+        insertTable(rows: dims[0], cols: dims[1])
+    }
+#endif
+    @objc public func addRowBefore() { addRow(.before) }
+    @objc public func addRowAfter() { addRow(.after) }
+    @objc public func addColBefore() { addCol(.before) }
+    @objc public func addColAfter() { addCol(.after) }
+    @objc public func addTableHeader() { addHeader() }
+    @objc public func deleteTableRow() { deleteRow() }
+    @objc public func deleteTableCol() { deleteCol() }
+    @objc public func deleteEntireTable() { deleteTable() }
+    @objc public func borderTableAll() { borderTable(.cell) }
+    @objc public func borderTableOuter() { borderTable(.outer) }
+    @objc public func borderTableHeader() { borderTable(.header) }
+    @objc public func borderTableNone() { borderTable(.none) }
+
     //MARK: Image editing
     
     public func modifyImage(src: String?, alt: String?, handler: (()->Void)?) {
