@@ -18395,11 +18395,13 @@ function doUndo() {
     return result
 }
 
+/** Return true if we can undo in the current state; else false. */
 function canUndo() {
     const view = activeView();
     return undoCommand()(view.state)
 }
 
+/** Return true if we can redo in the current state; else false. */
 function canRedo() {
     const view = activeView();
     return redoCommand()(view.state)
