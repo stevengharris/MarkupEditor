@@ -47,12 +47,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         MarkupEditor.initMenu(with: builder)
         // Add File menu items (New, Open, Save, Save As) matching the macOS version
         buildFileMenu(with: builder)
+        // Replace system undo/redo with MarkupEditor's JavaScript-based undo/redo
+        buildEditMenu(with: builder)
 
         // Customize View and Window menus to match macOS version.
         buildViewMenu(with: builder)
         buildWindowMenu(with: builder)
     }
     
+    private func buildEditMenu(with builder: UIMenuBuilder) {
+        // Replace the system undo/redo group with MarkupEditor's own undo/redo,
+        // which uses JavaScript-based undo/redo rather than UIKit's UndoManager.
+        let undo = UIKeyCommand(
+            title: "Undo",
+            action: #selector(MarkupWKWebView.undoFromMenu(_:)),
+            input: "Z",
+            modifierFlags: .command
+        )
+        let redo = UIKeyCommand(
+            title: "Redo",
+            action: #selector(MarkupWKWebView.redoFromMenu(_:)),
+            input: "Z",
+            modifierFlags: [.command, .shift]
+        )
+        let undoRedoMenu = UIMenu(title: "", identifier: .undoRedo, options: .displayInline, children: [undo, redo])
+        builder.replace(menu: .undoRedo, with: undoRedoMenu)
+        // Add Search (Find) at the end of Edit menu
+        let find = UIKeyCommand(
+            title: "Find",
+            image: UIImage(systemName: "magnifyingglass"),
+            action: #selector(menuFind),
+            input: "F",
+            modifierFlags: .command
+        )
+        let findMenu = UIMenu(title: "", options: .displayInline, children: [find])
+        builder.insertChild(findMenu, atEndOfMenu: .edit)
+    }
+
+    @objc private func menuFind() {
+        MarkupEditor.selectedWebView?.executeJavaScript("MU.toggleSearch()")
+    }
+
     private func buildViewMenu(with builder: UIMenuBuilder) {
         // Strip the View menu down to just our zoom items and the system full screen item.
         // First, remove everything except .fullscreen from the system View menu.
@@ -65,19 +100,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Then add our zoom items at the start of the View menu.
         let zoomActual = UIKeyCommand(
             title: "Actual Size",
-            action: Selector(("zoomToActualSize:")),
+            action: #selector(MarkupWKWebView.zoomToActualSize(_:)),
             input: "0",
             modifierFlags: .command
         )
         let zoomIn = UIKeyCommand(
             title: "Zoom In",
-            action: Selector(("zoomIn:")),
+            action: #selector(MarkupWKWebView.zoomIn(_:)),
             input: "+",
             modifierFlags: .command
         )
         let zoomOut = UIKeyCommand(
             title: "Zoom Out",
-            action: Selector(("zoomOut:")),
+            action: #selector(MarkupWKWebView.zoomOut(_:)),
             input: "-",
             modifierFlags: .command
         )
@@ -130,7 +165,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let closeWindow = UIKeyCommand(
             title: "Close",
             image: UIImage(systemName: "xmark"),
-            action: Selector(("performClose:")),
+            action: NSSelectorFromString("performClose:"),
             input: "W",
             modifierFlags: .command
         )
@@ -187,6 +222,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var keymap: KeymapConfig?
 
+    /// Quit the app when the window is closed. Without this, SwiftUI keeps the
+    /// process alive and `applicationDidFinishLaunching` won't fire on the next
+    /// Xcode run, which prevents the custom menu from being rebuilt.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
         // Set the menu early so it's available before SwiftUI creates its window.
@@ -194,7 +236,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // willFinishLaunching and didFinishLaunching, stripping items it doesn't
         // manage (File, Edit, and any custom menus like Format). It keeps only
         // the menus it recognizes (app menu, View, Window, Help).
-        keymap = KeymapConfig.load()
+        keymap = KeymapConfig.standard()
         NSApplication.shared.mainMenu = buildMenu()
     }
 
@@ -203,7 +245,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // mutation pass. A fresh NSMenu is required because SwiftUI removed
         // items from the original — those NSMenuItems can't simply be re-added
         // since their parent reference was cleared during removal.
-        NSApplication.shared.mainMenu = buildMenu()
+        // Defer to the next run loop iteration so SwiftUI's window setup is
+        // fully complete before we replace the menu.
+        DispatchQueue.main.async { [self] in
+            NSApplication.shared.mainMenu = buildMenu()
+        }
     }
 
     // MARK: - File menu actions
@@ -274,8 +320,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let editMenuItem = NSMenuItem()
         mainMenu.addItem(editMenuItem)
         let editMenu = NSMenu(title: "Edit")
-        editMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
-        let redoItem = NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        editMenu.addItem(NSMenuItem(title: "Undo", action: #selector(MarkupWKWebView.undoFromMenu(_:)), keyEquivalent: "z"))
+        let redoItem = NSMenuItem(title: "Redo", action: #selector(MarkupWKWebView.redoFromMenu(_:)), keyEquivalent: "z")
         redoItem.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(redoItem)
         editMenu.addItem(.separator())
