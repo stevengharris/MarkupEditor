@@ -669,9 +669,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         switch action {
         case #selector(getter: undoManager):
             return true
-        case #selector(undoFromMenu(_:)), #selector(redoFromMenu(_:)),
-             NSSelectorFromString("undo:"), NSSelectorFromString("redo:"):
-            return true
+        case #selector(undoFromMenu(_:)), NSSelectorFromString("undo:"):
+            return selectionState.canUndo
+        case #selector(redoFromMenu(_:)), NSSelectorFromString("redo:"):
+            return selectionState.canRedo
         #if targetEnvironment(macCatalyst)
         case #selector(zoomIn(_:)), #selector(zoomOut(_:)), #selector(zoomToActualSize(_:)):
             return true
@@ -1700,6 +1701,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.cols = stateDictionary["cols"] as? Int ?? 0
         selectionState.row = stateDictionary["row"] as? Int ?? 0
         selectionState.col = stateDictionary["col"] as? Int ?? 0
+        // Undo/redo
+        selectionState.canUndo = stateDictionary["canundo"] as? Bool ?? false
+        selectionState.canRedo = stateDictionary["canredo"] as? Bool ?? false
         if let rawValue = stateDictionary["border"] as? String {
             selectionState.border = TableBorder(rawValue: rawValue) ?? .cell
         } else {
@@ -2091,6 +2095,24 @@ extension MarkupWKWebView {
 
     @objc public func zoomToActualSize(_ sender: Any?) {
         pageZoom = 1.0
+    }
+}
+#endif
+
+//MARK: Menu validation (macOS)
+
+#if os(macOS)
+extension MarkupWKWebView: NSMenuItemValidation {
+
+    public func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(undoFromMenu(_:)):
+            return selectionState.canUndo
+        case #selector(redoFromMenu(_:)):
+            return selectionState.canRedo
+        default:
+            return true
+        }
     }
 }
 #endif

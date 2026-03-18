@@ -43,7 +43,10 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
     @Published public var list: ListContext = ListContext.Undefined
     @Published public var li: Bool = false
     @Published public var quote: Bool = false
-    // Formates
+    // Undo/redo
+    @Published public var canUndo: Bool = false
+    @Published public var canRedo: Bool = false
+    // Formats
     @Published public var bold: Bool = false
     @Published public var italic: Bool = false
     @Published public var underline: Bool = false
@@ -152,6 +155,8 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
         row = selectionState?.row ?? 0                  // Row number selected in body (0 if header)
         col = selectionState?.col ?? 0                  // Col number selected in body or header
         border = selectionState?.border ?? .cell        // TableBorder for selected table
+        canUndo = selectionState?.canUndo ?? false      // Whether undo is available
+        canRedo = selectionState?.canRedo ?? false      // Whether redo is available
         style = selectionState?.style ?? StyleContext.Undefined
         list = selectionState?.list ?? ListContext.Undefined
         li = selectionState?.li ?? false
