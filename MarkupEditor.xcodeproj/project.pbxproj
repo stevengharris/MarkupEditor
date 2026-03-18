@@ -112,7 +112,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				BaseTests/Baseline.swift,
+				BaseTests/Correction.swift,
 				BaseTests/Data/baseline.json,
+				BaseTests/Data/correction.json,
 				"BaseTests/Data/denting-multi.json",
 				BaseTests/Data/denting.json,
 				"BaseTests/Data/format-multi.json",

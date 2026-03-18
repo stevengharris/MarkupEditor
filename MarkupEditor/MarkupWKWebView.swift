@@ -1167,6 +1167,34 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
     //MARK: Undo/redo
     
+    public func canUndo(handler: ((Bool)->Void)? = nil) {
+        executeJavaScript("MU.canUndo()") { result, error in
+            handler?(result as? Bool ?? false)
+        }
+    }
+    
+    public func canUndo() async -> Bool {
+        await withCheckedContinuation { continuation in
+            canUndo { canUndoState in
+                continuation.resume(with: .success(canUndoState))
+            }
+        }
+    }
+    
+    public func canRedo(handler: ((Bool)->Void)? = nil) {
+        executeJavaScript("MU.canRedo()") { result, error in
+            handler?(result as? Bool ?? false)
+        }
+    }
+    
+    public func canRedo() async -> Bool {
+        await withCheckedContinuation { continuation in
+            canRedo { canRedoState in
+                continuation.resume(with: .success(canRedoState))
+            }
+        }
+    }
+    
     /// Invoke the undo function from the undo button, same as occurs with Command-Z.
     public func undo(handler: (()->Void)? = nil) {
         executeJavaScript("MU.doUndo()") { result, error in handler?() }

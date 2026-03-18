@@ -17920,6 +17920,9 @@ function _getSelectionState() {
     state['sub'] = markTypes.has(schema.marks.sub);
     state['sup'] = markTypes.has(schema.marks.sup);
     state['code'] = markTypes.has(schema.marks.code);
+    // Undo/redo availability
+    state['canundo'] = canUndo();
+    state['canredo'] = canRedo();
     return state;
 }
 /**
