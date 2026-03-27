@@ -10,6 +10,9 @@ import OSLog
 /// A struct that is populated from Resources/toolbarconfig.json and provides easy access to its settings. The json file
 /// is the source of truth, and its settings will be used by the MarkupWKWebView unless overridden. The settings can
 /// be conveniently modified using the various static methods, such as `markdown`.
+///
+/// Note that toolbarconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base)
+/// but is modified locally to conform more with the original MarkupEditor and Mac user expectations of SFSymbols icons.
 public struct ToolbarConfig: JSONConfigurable {
     public var visibility: [String: Bool]
     public var ordering: [String: Int]
@@ -20,7 +23,6 @@ public struct ToolbarConfig: JSONConfigurable {
     public var tableMenu: [String: Bool]
     public var augmentation: [String: Bool?]
     public var icons: [String: String]
-    
     
     private static func load() -> ToolbarConfig {
     #if SWIFT_PACKAGE
@@ -71,6 +73,11 @@ public struct ToolbarConfig: JSONConfigurable {
     /// Override the protocol default to return `none()` on decode failure instead of nil.
     public static func fromJSON(_ string: String) -> ToolbarConfig {
         (self as JSONConfigurable.Type).fromJSON(string) as? ToolbarConfig ?? none()
+    }
+    
+    /// A nil value for `styleMenu[tag.lowerCased()]` means the tag should not be in the menu
+    public func name(forTag tag: String) -> String? {
+        styleMenu[tag.lowercased()]!
     }
     
 }

@@ -20,16 +20,43 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Set to true to allow the MarkupWKWebView to be inspectable from the Safari Development
         // menu in iOS/macCatalyst 16.4 or higher.
         MarkupEditor.isInspectable = true
+        
+        // A note on toolbar configuration illustrated here in the demo...
         //
-        // Here is an example that adds in the CorrectionToolbar and some
-        // of the FormatToolbar contents. Note that the MarkupEditor adjusts
-        // the MarkupMenu properly to correspond to ToolbarContents.custom
-        //          let myToolbarContents = ToolbarContents(
-        //              correction: true,  // Put the undo/redo buttons in
-        //              // Remove code, strikethrough, subscript, and superscript as formatting options
-        //              formatContents: FormatContents(code: false, strike: false, subSuper: false)
-        //          )
-        //          ToolbarContents.custom = myToolbarContents
+        // The source of truth for toolbar configuration is ToolbarConfig, which takes its data from
+        // Resources/toolbarconfig.json and Resources/keymapconfig.json. This approach lets the base
+        // configuration be defined in markupeditor-base, not in the Swift MarkupEditor. However, the
+        // Swift MarkupEditor predates markupeditor-base and had hardcoded things, like the names of
+        // paragraph styles that are displayed in the toolbar. The markupeditor-base toolbarconfig.json
+        // and keymapconfig.json provide a lot more flexibility in configuration. For example, the
+        // paragraph style names and icons are configurable. To preserve compatibility and avoid
+        // surprising existing MarkupEditor users, we specify the Swift MarkupEditor paragraph style
+        // names and the icons in Resources/toolbarconfig.json. These values are different from
+        // markupeditor-base.json, but that's the entire point of externalizing the configuration! Thus,
+        // for example, the name for an HTML "P" is "Normal" for Swift apps but "Body" when using
+        // markupeditor-base directly in, say, a JavaScript app. Similarly, the icons in the toolbar
+        // come from SFSymbols for Swift apps, but when using markupeditor-base, the default icons
+        // come from Material Design.
+        
+        // Because the Swift MarkupEditor predates markupeditor-base, it has its own definition and way to
+        // control the the MarkupToolbar's contents: ToolbarContents. Thus, for demo purposes and in your own
+        // app to customize ToolbarContents, you should 1) start with ToolbarConfig; 2) make any changes you
+        // want, 3) create a custom ToolbarContents instance from your ToolbarConfig; and finally, assign
+        // that ToolbarContents instance to ToolbarContents.custom. That is what we are doing below for
+        // iOS and Mac Catalyst demo versions so that they have the same presentation in the Demo's
+        // MarkupToolbar as they always have had. Namely, `underline` is a format option, whereas the
+        // default `markdown()` formatting options don't include it.
+        //
+        // The MacOS version uses the html/css toolbar that comes with markupeditor-base, rather than the
+        // SwiftUI toolbar used for iOS and Mac Catalyst. Its contents and functionality are the same, but
+        // the MacOS toolbar has a few differences in behavior from the SwiftUI toolbar.
+        //
+        // Refer to https://stevengharris.github.io/markupeditor-base/guide/index.html#configuration for more
+        // details about configuration.
+        var toolbarConfig = ToolbarConfig.markdown()
+        toolbarConfig.formatBar["underline"] = true
+        let myToolbarContents = ToolbarContents(toolbarConfig: toolbarConfig)
+        ToolbarContents.custom = myToolbarContents
     }
     
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -38,6 +65,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     //MARK: Menu and hotkey support
     
+    #if !os(iOS)
     override func buildMenu(with builder: UIMenuBuilder) {
         super.buildMenu(with: builder)
         // Clean up some unused menus
@@ -210,6 +238,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
     }
+    #endif
     
 }
 
@@ -576,15 +605,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func buildStyleSubmenuItem(from config: ToolbarConfig) -> NSMenuItem? {
-        let styleEntries: [(key: String, selector: Selector, defaultTitle: String)] = [
-            ("p", #selector(MarkupWKWebView.pStyle), "Normal"),
-            ("h1", #selector(MarkupWKWebView.h1Style), "Header 1"),
-            ("h2", #selector(MarkupWKWebView.h2Style), "Header 2"),
-            ("h3", #selector(MarkupWKWebView.h3Style), "Header 3"),
-            ("h4", #selector(MarkupWKWebView.h4Style), "Header 4"),
-            ("h5", #selector(MarkupWKWebView.h5Style), "Header 5"),
-            ("h6", #selector(MarkupWKWebView.h6Style), "Header 6"),
-        ]
+        var styleEntries: [(key: String, selector: Selector, defaultTitle: String)] = []
+        if let pTitle = config.name(forTag: "p") { styleEntries.append(("p", #selector(MarkupWKWebView.pStyle), pTitle)) }
+        if let h1Title = config.name(forTag: "h1") { styleEntries.append(("h1", #selector(MarkupWKWebView.h1Style), h1Title)) }
+        if let h2Title = config.name(forTag: "h2") { styleEntries.append(("h2", #selector(MarkupWKWebView.h2Style), h2Title)) }
+        if let h3Title = config.name(forTag: "h3") { styleEntries.append(("h3", #selector(MarkupWKWebView.h3Style), h3Title)) }
+        if let h4Title = config.name(forTag: "h4") { styleEntries.append(("h4", #selector(MarkupWKWebView.h4Style), h4Title)) }
+        if let h5Title = config.name(forTag: "h5") { styleEntries.append(("h5", #selector(MarkupWKWebView.h5Style), h5Title)) }
+        if let h6Title = config.name(forTag: "h6") { styleEntries.append(("h6", #selector(MarkupWKWebView.h6Style), h6Title)) }
+        if let preTitle = config.name(forTag: "pre") { styleEntries.append(("pre", #selector(MarkupWKWebView.preStyle), preTitle)) }
 
         let submenu = NSMenu(title: "Style")
         for entry in styleEntries {
@@ -611,9 +640,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func buildDentItems() -> [NSMenuItem] {
         let indent = menuItem(title: "Indent", action: #selector(MarkupWKWebView.indentFromMenu), keymapAction: "indent")
-        indent.image = NSImage(systemSymbolName: "increase.quotelevel", accessibilityDescription: "Indent")
+        indent.image = NSImage(systemSymbolName: "increase.indent", accessibilityDescription: "Indent")
         let outdent = menuItem(title: "Outdent", action: #selector(MarkupWKWebView.outdentFromMenu), keymapAction: "outdent")
-        outdent.image = NSImage(systemSymbolName: "decrease.quotelevel", accessibilityDescription: "Outdent")
+        outdent.image = NSImage(systemSymbolName: "decrease.indent", accessibilityDescription: "Outdent")
         return [indent, outdent]
     }
 

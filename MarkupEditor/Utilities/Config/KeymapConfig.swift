@@ -24,6 +24,8 @@ import UIKit
 /// - `Shift-` maps to Shift
 ///
 /// Values can be a single string or an array of strings; only the first binding is used for menus.
+///
+/// Note that keymapconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base).
 public struct KeymapConfig: JSONConfigurable {
     public let bindings: [String: [KeyBinding]]
     

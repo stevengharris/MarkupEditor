@@ -125,7 +125,6 @@ public struct MarkupEditor {
     }
 
     #if canImport(UIKit)
-    @MainActor
     public static func userInterfaceIdiom(is idiom: UIUserInterfaceIdiom) -> Bool {
         UIDevice.current.userInterfaceIdiom == idiom
     }

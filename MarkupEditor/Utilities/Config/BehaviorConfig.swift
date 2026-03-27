@@ -11,6 +11,8 @@ import OSLog
 /// A struct that is populated from Resources/behaviorconfig.json and provides easy access to its settings. The json file
 /// is the source of truth, and its settings will be used by the MarkupWKWebView unless overridden. The settings can
 /// be conveniently modified using the various static methods, such as `desktop`.
+///
+/// Note that behaviorconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base).
 public struct BehaviorConfig: JSONConfigurable {
     public var focusAfterLoad: Bool
     public var selectImage: Bool

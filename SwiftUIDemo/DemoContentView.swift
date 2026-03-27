@@ -100,7 +100,7 @@ struct DemoContentView: View {
         }
         // Identify any resources coming from the app bundle that need to be co-located with
         // the document. In this case, we have an image that we load from within demo.html.
-        markupConfiguration.userResourceFiles = ["steve.png"]
+        markupConfiguration.userResourceFiles = ["steve.png", "toolbar.png", "filetoolbar.png", "internallinks.png"]
     }
     
     

@@ -114,22 +114,22 @@ public class MarkupMenu {
     }
     
     private func styleMenu() -> UIMenu {
-        let children: [UICommand] = [
-            command(title: "Normal", image: nil, action: #selector(MarkupWKWebView.pStyle), keymapAction: "p"),
-            command(title: "Header 1", image: nil, action: #selector(MarkupWKWebView.h1Style), keymapAction: "h1"),
-            command(title: "Header 2", image: nil, action: #selector(MarkupWKWebView.h2Style), keymapAction: "h2"),
-            command(title: "Header 3", image: nil, action: #selector(MarkupWKWebView.h3Style), keymapAction: "h3"),
-            command(title: "Header 4", image: nil, action: #selector(MarkupWKWebView.h4Style), keymapAction: "h4"),
-            command(title: "Header 5", image: nil, action: #selector(MarkupWKWebView.h5Style), keymapAction: "h5"),
-            command(title: "Header 6", image: nil, action: #selector(MarkupWKWebView.h6Style), keymapAction: "h6")
-        ]
+        var children: [UICommand] = []
+        if let pTitle = contents.name(forTag: "p") { children.append(command(title: pTitle, image: nil, action: #selector(MarkupWKWebView.pStyle), keymapAction: "p")) }
+        if let h1Title = contents.name(forTag: "h1") { children.append(command(title: h1Title, image: nil, action: #selector(MarkupWKWebView.h1Style), keymapAction: "h1")) }
+        if let h2Title = contents.name(forTag: "h2") { children.append(command(title: h2Title, image: nil, action: #selector(MarkupWKWebView.h2Style), keymapAction: "h2")) }
+        if let h3Title = contents.name(forTag: "h3") { children.append(command(title: h3Title, image: nil, action: #selector(MarkupWKWebView.h3Style), keymapAction: "h3")) }
+        if let h4Title = contents.name(forTag: "h4") { children.append(command(title: h4Title, image: nil, action: #selector(MarkupWKWebView.h4Style), keymapAction: "h4")) }
+        if let h5Title = contents.name(forTag: "h5") { children.append(command(title: h5Title, image: nil, action: #selector(MarkupWKWebView.h5Style), keymapAction: "h5")) }
+        if let h6Title = contents.name(forTag: "h6") { children.append(command(title: h6Title, image: nil, action: #selector(MarkupWKWebView.h6Style), keymapAction: "h6")) }
+        if let preTitle = contents.name(forTag: "pre") { children.append(command(title: preTitle, image: nil, action: #selector(MarkupWKWebView.preStyle), keymapAction: "pre")) }
         return UIMenu(title: "Style", image: UIImage(systemName: "paragraphsign"), children: children)
     }
     
     private func dentMenu() -> UIMenu {
         let children: [UICommand] = [
-            command(title: "Indent", image: UIImage(systemName: "increase.quotelevel"), action: #selector(MarkupWKWebView.indentFromMenu), keymapAction: "indent"),
-            command(title: "Outdent", image: UIImage(systemName: "decrease.quotelevel"), action: #selector(MarkupWKWebView.outdentFromMenu), keymapAction: "outdent")
+            command(title: "Indent", image: UIImage(systemName: "increase.indent"), action: #selector(MarkupWKWebView.indentFromMenu), keymapAction: "indent"),
+            command(title: "Outdent", image: UIImage(systemName: "decrease.indent"), action: #selector(MarkupWKWebView.outdentFromMenu), keymapAction: "outdent")
         ]
         return UIMenu(title: "", options: .displayInline, children: children)
     }

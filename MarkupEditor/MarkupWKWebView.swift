@@ -396,8 +396,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let keymap: String? = nil
         #else
         var toolbarConfig = ToolbarConfig.markdown()
-        toolbarConfig.formatBar["underline"] = true
         // For consistency with the Mac Catalyst demo, add back in the underline element.
+        toolbarConfig.formatBar["underline"] = true
         let toolbar = toolbarConfig.asAttribute()
         let behavior = BehaviorConfig.desktop().asAttribute()   // Enables selectImage
         let keymap = KeymapConfig.standard().asAttribute()
@@ -1777,6 +1777,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     @objc public func h6Style() {
         replaceStyle(selectionState.style, with: .H6)
+    }
+    
+    @objc public func preStyle() {
+        replaceStyle(selectionState.style, with: .PRE)
     }
     
     /// Set the selection style to newStyle (e.g., <h3>)

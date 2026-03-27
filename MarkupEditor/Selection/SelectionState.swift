@@ -10,7 +10,8 @@ import Combine
 import CoreGraphics
 
 /// The state of the selection in a MarkupWKWebView
-public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable, CustomStringConvertible {
+@MainActor
+public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable, @preconcurrency CustomStringConvertible {
     // Validity
     @Published public var valid: Bool = false
     // ID of the contenteditable of the selection or of the enclosing div
@@ -54,7 +55,7 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
     @Published public var sub: Bool = false
     @Published public var sup: Bool = false
     @Published public var code: Bool = false
-    
+
     //MARK: Source rect for popovers
     public var sourceRect: CGRect? {
         guard let selrect else {
@@ -63,7 +64,7 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
         // Popover source rect must have non-zero width/height
         return CGRect(origin: selrect.origin, size: CGSize(width: max(selrect.width, 1), height: max(selrect.height, 1)))
     }
-    
+
     //MARK: Selection state queries
     public var isValid: Bool { valid }
     public var isEditable: Bool {
@@ -104,9 +105,9 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
     public var isInTable: Bool {
         table
     }
-    
+
     //MARK: Enable/disable menu options and buttons
-    
+
     public var canDent: Bool { true }
     public var canStyle: Bool { style != .Undefined }
     public var canList: Bool { true }
@@ -114,7 +115,7 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
     public var canLink: Bool { !isInLink }
     public var canFormat: Bool { true }
     public var canCopyCut: Bool { selection != nil || isInImage }
-    
+
     // CustomStringConvertible conformance
     public var description: String {
         valid ?
@@ -130,9 +131,9 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
           table: \(tableString())
         """ : "invalid, divid: \(divid ?? "none")"
     }
-    
+
     public init() {}
-    
+
     public func reset(from selectionState: SelectionState?) {
         selection = selectionState?.selection
         selrect = selectionState?.selrect               // rect containing the selection if selected
@@ -169,7 +170,7 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
         sup = selectionState?.sup ?? false
         code = selectionState?.code ?? false
     }
-    
+
     func formatString() -> String {
         let formatValues = [bold, italic, underline, strike, sub, sup, code]
         let formats = FormatContext.AllCases
@@ -177,7 +178,7 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
         for index in formatValues.indices { if formatValues[index] { tags.append("\(formats[index])")} }
         return tags.isEmpty ? "none" : tags.joined(separator: ", ")
     }
-    
+
     func listString() -> String {
         if li {
             return "Inside of <LI> in \(list.tag) list"   // This is an error
@@ -189,19 +190,19 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
             }
         }
     }
-    
+
     func linkString() -> String {
         guard let href = href, let link = link else { return "none" }
         return "\(href) linksTo: \(link)"
     }
-    
+
     func imageString() -> String {
         guard let src = src else { return "none" }
         let width = width == nil ? "undefined" : "\(width!)"
         let height = height == nil ? "undefined" : "\(height!)"
         return "\(src), alt: \(alt ?? "none"), width: \(width), height: \(height), scale: \(scale ?? 100)%"
     }
-    
+
     func tableString() -> String {
         guard table else { return "none" }
         let tableSize = "\(rows)x\(cols)"
@@ -218,5 +219,5 @@ public class SelectionState: @unchecked Sendable, ObservableObject, Identifiable
             return "Error: in \(tableSize) table, but in neither tbody nor thead"
         }
     }
-    
+
 }
