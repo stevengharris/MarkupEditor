@@ -30,12 +30,11 @@ if [ "$READY" = false ]; then
 fi
 echo " Copying $COMPONENT\n  to ../MarkupEditor/Resources/"
 cp -f "$COMPONENT" ../MarkupEditor/Resources/
-echo " Copying $TOOLBARCONFIG\n  to ../MarkupEditor/Resources/"
-cp -f "$TOOLBARCONFIG" ../MarkupEditor/Resources/
-echo " Copying $KEYMAPCONFIG\n  to ../MarkupEditor/Resources/"
-cp -f "$KEYMAPCONFIG" ../MarkupEditor/Resources/
-echo " Copying $BEHAVIORCONFIG\n  to ../MarkupEditor/Resources/"
-cp -f "$BEHAVIORCONFIG" ../MarkupEditor/Resources/
+echo " You can copy the config files to resources if needed. For example..."
+echo "   cp -f $TOOLBARCONFIG ../MarkupEditor/Resources/"
+echo "   cp -f $KEYMAPCONFIG ../MarkupEditor/Resources/"
+echo "   cp -f $BEHAVIORCONFIG ../MarkupEditor/Resources/"
+echo " Be careful, because the Resources files may have been locally modified for MarkupEditor."
 
 # Determine whether the test dependencies are available
 TEST="./node_modules/markupeditor/test"
