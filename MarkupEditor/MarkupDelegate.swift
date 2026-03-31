@@ -81,6 +81,9 @@ public protocol MarkupDelegate {
     /// Take action when the MarkupWKWebView is no longer needed.
     func markupTeardown(_ view: MarkupWKWebView?)
     
+    /// The user indicated they want to insert an image. Bring up a document picker to identify it.
+    func markupSelectImage(_ view: MarkupWKWebView?)
+    
     /// A image/resource was added at the url. The url is derived from the image/resource
     /// src parameter in the document.
     func markupImageAdded(url: URL)
@@ -237,6 +240,14 @@ extension MarkupDelegate {
     /// markupSetup.
     public func markupTeardown(_ view: MarkupWKWebView?) {
         view?.teardown()
+    }
+    
+    /// Override this method to bring up an image selection dialog. After identifying the image file, invoke
+    /// insertImage with it. You will need to implement this method when using the markupeditor-base
+    /// toolbar, which just calls back to the messageHandler (i.e., the MarkupCoordinator) so that the
+    /// image identification can be done from Swift.
+    public func markupSelectImage(_ view: MarkupWKWebView?) {
+        print("Open an image selection dialog")
     }
     
     /// Take action after an image had been added, if needed; default is to do nothing.

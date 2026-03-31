@@ -41,6 +41,7 @@ struct DemoContentView: View {
     @State private var demoHtml: String
     @State private var hasChanges = false
     @State private var currentFileURL: URL?
+
     /// The `markupConfiguration` holds onto the name of any userResourceFiles we set in init.
     private let markupConfiguration = MarkupWKWebViewConfiguration()
     
@@ -79,10 +80,18 @@ struct DemoContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .menuShowHtml)) { _ in
             rawDocument()
         }
-#if !os(macOS)
-        .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
-#endif
+        .fileImporter(isPresented: $documentPickerShowing, allowedContentTypes: [.html], allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                loadHtml(from: url)
+            }
+        }
+        .fileImporter(isPresented: $selectImage.value, allowedContentTypes: MarkupEditor.supportedImageTypes, allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                imageSelected(url: url)
+            }
+        }
 #if os(iOS) && !targetEnvironment(macCatalyst)
         // Only add the FileToolbar in for iOS, because the New, Open, Save, SaveAs, and Show HTML are available in the menu
         // on MacOS and Mac Catalyst.
@@ -110,10 +119,6 @@ struct DemoContentView: View {
             rawText = html ?? ""
             handler?()
         }
-    }
-    
-    private func openExistingDocument(url: URL) {
-        demoHtml = (try? String(contentsOf: url)) ?? ""
     }
     
     private func imageSelected(url: URL) {
@@ -190,7 +195,7 @@ struct DemoContentView: View {
     }
 
     private func handleOpen() {
-        checkSave { [self] shouldProceed in
+        checkSave { shouldProceed in
             guard shouldProceed else { return }
             #if os(macOS)
             let panel = NSOpenPanel()
@@ -259,8 +264,6 @@ struct DemoContentView: View {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = scene.windows.first,
               let rootVC = window.rootViewController else { return }
-        // On Catalyst, write to a temporary file then present a document export picker
-        // so the user chooses the destination.
         MarkupEditor.selectedWebView?.getHtml { [self] html in
             guard let html else { return }
             let fileName = currentFileURL?.lastPathComponent ?? "Untitled.html"
@@ -338,6 +341,14 @@ extension DemoContentView: MarkupDelegate {
             MarkupEditor.selectionState.reset(from: selectionState)
             setRawText()
         }
+    }
+
+    /// In the MacOS version, which uses the markupeditor-base toolbar, pressing the Select... button in the insert
+    /// image dialog calls back to the messageHandler (i.e., the MarkupCoordinator) with `selectImage`, which
+    /// in turn invokes the delegate's `markupSelectImage` method. We trigger the dialog by toggling the
+    /// value of   selectImage .
+    func markupSelectImage(_ view: MarkupWKWebView?) {
+        selectImage.value.toggle()
     }
     
     /// Callback received after a local image has been added to the document.

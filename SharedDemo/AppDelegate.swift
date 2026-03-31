@@ -65,7 +65,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     //MARK: Menu and hotkey support
     
-    #if !os(iOS)
+    #if targetEnvironment(macCatalyst)
     override func buildMenu(with builder: UIMenuBuilder) {
         super.buildMenu(with: builder)
         // Clean up some unused menus

@@ -10,6 +10,7 @@
 import SwiftUI
 import MarkupEditor
 
+/// The main entry point only for MacOS.
 @main
 struct DemoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
