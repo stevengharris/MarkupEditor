@@ -18199,6 +18199,17 @@ function callbackInput(element) {
     _callback('input' + (selectedID() ?? ''), element);
 }
 /**
+ * Callback to signal that the user wants to select an image from a file.
+ * 
+ * The messageHandler will need to do something like bring up a file picker
+ * and in turn execute insertImage.
+ */
+function callbackSelectImage() {
+    let messageDict = { 'messageType' : 'selectImage' };
+    _callback(JSON.stringify(messageDict));
+}
+
+/**
  * Callback to signal that user-provided CSS and/or script files have
  * been loaded.
  * 
@@ -21866,10 +21877,10 @@ class ImageItem extends DialogItem {
     this.dialog.appendChild(buttonsDiv);
 
     // When local images are allowed, we insert a "Select..." button that will bring up a 
-    // file chooser. However, the MarkupEditor can't do that itself, so it invokes the 
-    // delegate's `markupSelectImage` method if it exists. Thus, when `selectImage` is 
-    // true in BehaviorConfig, that method should exist. It should bring up a file chooser
-    // and then invoke `MU.insertImage`.
+    // file chooser. However, the MarkupEditor can't do that itself, so it calls back to 
+    // the messageHandler, which in turn should invoke the delegate's `markupSelectImage` 
+    // method if it exists. Thus, when `selectImage` is true in BehaviorConfig, that method 
+    // should exist. It should bring up a file chooser and then invoke `MU.insertImage`.
     if (this.config.behavior.selectImage) {
       this.preview = null;
       let selectItem = cmdItem(this.selectImage.bind(this), {
@@ -21967,10 +21978,13 @@ class ImageItem extends DialogItem {
     return this.altArea.value
   }
 
-  /** Tell the delegate to select an image to insert, because we don't know how to do that */
-  selectImage(state, dispatch, view) {
+  /** 
+   * Call back to the messageHandler after closing the dialog. The message handler should 
+   * let the delegate deal with bringing up a file picker of some kind.
+  */
+  selectImage() {
     this.closeDialog();
-    if (this.config.delegate?.markupSelectImage) this.config.delegate?.markupSelectImage(state, dispatch, view);
+    callbackSelectImage();
   }
 
   /**
@@ -24340,6 +24354,9 @@ class MessageHandler {
             case 'copyImage':
                 console.log('fix copyImage ' + messageData.src);
                 return
+            case 'selectImage':
+                delegate?.markupSelectImage && delegate?.markupSelectImage();
+                return
             case 'addedImage': {
                 if (!delegate?.markupImageAdded) return;
                 let divId = messageData.divId;
@@ -24794,6 +24811,7 @@ const MU = {
     addHeader,
     addRow,
     borderTable,
+    callbackSelectImage,
     cancelSearch,
     canUndo,
     canRedo,
