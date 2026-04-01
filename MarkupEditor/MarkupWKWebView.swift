@@ -1053,10 +1053,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let pasteboard = UIPasteboard.general
         pasteboard.setItems([items])
         #else
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        // For macOS, we'll set the HTML data if available
+        // Always write the custom markup.image type so local image round-trips preserve dimensions
+        if let markupData = items["markup.image"] as? Data {
+            pasteboard.addTypes([markupImageType], owner: nil)
+            pasteboard.setData(markupData, forType: markupImageType)
+        }
+        // Write actual image data for local images so they can be pasted into other apps
+        if let pngData = items["public.png"] as? Data {
+            pasteboard.addTypes([.png], owner: nil)
+            pasteboard.setData(pngData, forType: .png)
+        }
+        // Write HTML for external images
         if let htmlData = items["public.html"] as? Data, let htmlString = String(data: htmlData, encoding: .utf8) {
+            pasteboard.addTypes([.html], owner: nil)
             pasteboard.setString(htmlString, forType: .html)
         }
         #endif
@@ -1426,11 +1438,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return .Text
         }
         #else
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
-        if let _ = pasteboard.availableType(from: [.tiff, .png]) {
+        if pasteboard.availableType(from: [markupImageType]) != nil {
+            return .LocalImage
+        } else if pasteboard.availableType(from: [.tiff, .png]) != nil {
             return .ExternalImage
-        } else if let _ = pasteboard.availableType(from: [.html]) {
+        } else if pasteboard.availableType(from: [.URL, .fileURL]) != nil {
+            return .Url
+        } else if pasteboard.availableType(from: [.html]) != nil {
             return .Html
+        } else if pasteboard.availableType(from: [.rtf]) != nil {
+            return .Rtf
         } else if pasteboard.availableType(from: [.string]) != nil {
             return .Text
         }
@@ -1936,7 +1955,6 @@ extension MarkupWKWebView {
     /// of data available in UIPasteboard.general.
     public override func paste(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
-        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1973,7 +1991,65 @@ extension MarkupWKWebView {
         case .Url:
             pasteUrl(url: pasteboard.url)
         }
-        #else
+    }
+    
+    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
+    public override func pasteAndMatchStyle(_ sender: Any?) {
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = UIPasteboard.general
+        switch pasteableType {
+        case .Text, .Rtf:
+            pasteText(pasteboard.string)
+        case .Html:
+            if let data = pasteboard.data(forPasteboardType: "public.html") {
+                pasteText(String(data: data, encoding: .utf8))
+            }
+        default:
+            break
+        }
+    }
+
+}
+#else
+extension MarkupWKWebView {
+
+    /// Call the superclass (WKWebView) implementation of the given action selector.
+    ///
+    /// On macOS, NSResponder's standard edit actions like copy: and cut: are not declared
+    /// as open methods in Swift, so we can't use `override` and `super`. Instead, we use
+    /// the Objective-C runtime to look up and invoke the superclass implementation directly.
+    private func performSuperAction(_ action: String, with sender: Any?) {
+        let selector = NSSelectorFromString(action)
+        guard let superclass = class_getSuperclass(type(of: self)),
+              let method = class_getInstanceMethod(superclass, selector) else { return }
+        typealias ActionFn = @convention(c) (AnyObject, Selector, Any?) -> Void
+        unsafeBitCast(method_getImplementation(method), to: ActionFn.self)(self, selector, sender)
+    }
+
+    @objc public func copy(_ sender: Any?) {
+        if selectionState.isInImage {
+            copyImage(src: selectionState.src!, alt: selectionState.alt, width: selectionState.width, height: selectionState.height)
+        } else {
+            performSuperAction("copy:", with: sender)
+        }
+    }
+
+    @objc public func cut(_ sender: Any?) {
+        if selectionState.isInImage {
+            executeJavaScript("MU.cutImage()") { result, error in }
+        } else {
+            performSuperAction("cut:", with: sender)
+        }
+    }
+
+    /// Invoke the paste method in the editor directly, passing the clipboard contents
+    /// that would otherwise be obtained via the JavaScript event.
+    ///
+    /// Customize the type of paste operation on the JavaScript side based on the type
+    /// of data available in NSPasteboard.general.
+    @objc public func paste(_ sender: Any?) {
+        guard let pasteableType = pasteableType() else { return }
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1984,18 +2060,65 @@ extension MarkupWKWebView {
             if let html = pasteboard.string(forType: .html) {
                 pasteHtml(html)
             }
+        case .Rtf:
+            if let rtfData = pasteboard.data(forType: .rtf) {
+                do {
+                    let attrString = try NSAttributedString(
+                        data: rtfData,
+                        options: [.documentType: NSAttributedString.DocumentType.rtf],
+                        documentAttributes: nil)
+                    let htmlData = try attrString.data(
+                        from: NSRange(location: 0, length: attrString.length),
+                        documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
+                    let html = String(data: htmlData, encoding: .utf8)
+                    pasteHtml(html)
+                } catch let error {
+                    Logger.webview.error("Error getting html from rtf: \(error.localizedDescription)")
+                }
+            }
         case .ExternalImage:
             if let tiffData = pasteboard.data(forType: .tiff) ?? pasteboard.data(forType: .png) {
                 if let nsImage = NSImage(data: tiffData) {
                     pasteImage(nsImage)
                 }
             }
+        case .LocalImage:
+            if let data = pasteboard.data(forType: markupImageType) {
+                pasteHtml(String(data: data, encoding: .utf8))
+            }
+        case .Url:
+            if let urlString = pasteboard.string(forType: .URL) ?? pasteboard.string(forType: .fileURL),
+               let url = URL(string: urlString) {
+                pasteUrl(url: url)
+            }
+        }
+    }
+
+    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
+    @objc public func pasteAsPlainText(_ sender: Any?) {
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text, .Rtf:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteText(html)
+            }
         default:
             break
         }
-        #endif
     }
-    
+
+}
+#endif
+
+//MARK: Paste helpers
+
+extension MarkupWKWebView {
+
     /// Paste the url as an img or as a link depending on its content.
     ///
     /// This method is public so it can be used from tests and the tests can ensure the
@@ -2016,7 +2139,7 @@ extension MarkupWKWebView {
             }
         }
     }
-    
+
     /// Return true if the url points to an image or movie that can be inserted into the document
     private func isImageUrl(url: URL?) -> Bool {
         guard let url else { return false }
@@ -2026,7 +2149,7 @@ extension MarkupWKWebView {
             return isRemoteImage(url: url)
         }
     }
-    
+
     /// Return true if the url points to an image in a local file.
     ///
     /// We can use `resourceValues(forKeys:)` on local files, whereas we have to infer whether the file is an image
@@ -2040,47 +2163,14 @@ extension MarkupWKWebView {
             return false
         }
     }
-    
+
     /// Return true if the url points to a remote image file, based only on the file extension.
     private func isRemoteImage(url: URL) -> Bool {
         guard let utType = UTType(tag: url.pathExtension, tagClass: .filenameExtension, conformingTo: nil) else { return false }
         return utType.conforms(to: .image) || utType.conforms(to: .movie)
     }
-    
-    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
-    public override func pasteAndMatchStyle(_ sender: Any?) {
-        guard let pasteableType = pasteableType() else { return }
-        #if canImport(UIKit)
-        let pasteboard = UIPasteboard.general
-        switch pasteableType {
-        case .Text, .Rtf:
-            pasteText(pasteboard.string)
-        case .Html:
-            if let data = pasteboard.data(forPasteboardType: "public.html") {
-                pasteText(String(data: data, encoding: .utf8))
-            }
-        default:
-            break
-        }
-        #else
-        let pasteboard = NSPasteboard.general
-        switch pasteableType {
-        case .Text:
-            if let text = pasteboard.string(forType: .string) {
-                pasteText(text)
-            }
-        case .Html:
-            if let html = pasteboard.string(forType: .html) {
-                pasteText(html)
-            }
-        default:
-            break
-        }
-        #endif
-    }
 
 }
-#endif
 
 //MARK: Zoom support (macOS and Mac Catalyst)
 
