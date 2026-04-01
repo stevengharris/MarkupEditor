@@ -36,6 +36,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
         #if !os(macOS)
         VStack(spacing: 0) {
             if MarkupEditor.toolbarLocation == .top {
+                Spacer()    // Liquid Glass introduced some fuzzing we now have to avoid at the top?
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
                 Divider()
             }
