@@ -2027,6 +2027,10 @@ extension MarkupWKWebView {
     }
 
     @objc public func copy(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("copy:", with: sender)
+            return
+        }
         if selectionState.isInImage {
             copyImage(src: selectionState.src!, alt: selectionState.alt, width: selectionState.width, height: selectionState.height)
         } else {
@@ -2035,6 +2039,10 @@ extension MarkupWKWebView {
     }
 
     @objc public func cut(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("cut:", with: sender)
+            return
+        }
         if selectionState.isInImage {
             executeJavaScript("MU.cutImage()") { result, error in }
         } else {
@@ -2048,6 +2056,10 @@ extension MarkupWKWebView {
     /// Customize the type of paste operation on the JavaScript side based on the type
     /// of data available in NSPasteboard.general.
     @objc public func paste(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("paste:", with: sender)
+            return
+        }
         guard let pasteableType = pasteableType() else { return }
         let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
@@ -2096,6 +2108,10 @@ extension MarkupWKWebView {
 
     /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
     @objc public func pasteAsPlainText(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("pasteAsPlainText:", with: sender)
+            return
+        }
         guard let pasteableType = pasteableType() else { return }
         let pasteboard = NSPasteboard.general
         switch pasteableType {

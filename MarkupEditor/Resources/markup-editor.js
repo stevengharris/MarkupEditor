@@ -16151,6 +16151,112 @@ A command function that redoes the last undone change, if any.
 const redo$1 = buildCommand(true, true);
 
 /**
+ * 
+ * @param {EditorView}  view
+ * @param {string} text Text to be translated
+ * @returns {string}    The translated text if the view supports it
+ */
+function translate(view, text) {
+    return view._props.translate ? view._props.translate(text) : text;
+}
+/**
+ * Add or remove a class from the element.
+ * 
+ * Apparently a workaround for classList.toggle being broken in IE11
+ * 
+ * @param {HTMLElement}  dom 
+ * @param {string}          cls The class name to add or remove
+ * @param {boolean}         on  True to add the class name to the `classList`
+ */
+function setClass(dom, cls, on) {
+    if (on)
+        dom.classList.add(cls);
+    else
+        dom.classList.remove(cls);
+}
+
+/**
+ * DOMAccess provides access to the MarkupToolbar and other well-known elements.
+ */
+class DOMAccess {
+
+    constructor(prefix) {
+        this.prefix = prefix ?? 'Markup';
+    }
+
+    setPrefix(prefix) {
+        this.prefix = prefix;
+    }
+
+    /**
+     * Return the toolbar div in `view`
+     * @param {EditorView} view 
+     * @returns {HTMLDivElement}  The toolbar div in the view
+     */
+    getToolbar(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar")
+    }
+
+    getSearchItem(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + '-searchitem')
+    }
+
+    getSearchbar(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-searchbar")
+    }
+
+    getSearchInput(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-searchinput")
+    }
+
+    getToolbarMore(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar-more")
+    }
+
+    getWrapper(view) {
+        return this.getToolbar(view).parentElement;
+    }
+
+    /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
+    addPromptShowing(view) {
+        setClass(getWrapper(view), promptShowing(), true);
+    }
+
+    /** Removing promptShowing class on wrapper lets wrapper scroll again */
+    removePromptShowing(view) {
+        setClass(getWrapper(view), promptShowing(), false);
+    }
+
+    promptShowing() {
+        return this.prefix + "-prompt-showing"
+    }
+
+    searchbarShowing() {
+        return this.prefix + "-searchbar-showing"
+    }
+
+    searchbarHidden() {
+        return this.prefix + "-searchbar-hidden"
+    }
+
+}
+
+const _domAccess = new DOMAccess();
+const prefix = _domAccess.prefix;
+const setPrefix = _domAccess.setPrefix.bind(_domAccess);
+const getToolbar = _domAccess.getToolbar.bind(_domAccess);
+_domAccess.getSearchItem.bind(_domAccess);
+const getSearchbar = _domAccess.getSearchbar.bind(_domAccess);
+const getSearchInput = _domAccess.getSearchInput.bind(_domAccess);
+const getToolbarMore = _domAccess.getToolbarMore.bind(_domAccess);
+const getWrapper = _domAccess.getWrapper.bind(_domAccess);
+const addPromptShowing = _domAccess.addPromptShowing.bind(_domAccess);
+const removePromptShowing = _domAccess.removePromptShowing.bind(_domAccess);
+const promptShowing = _domAccess.promptShowing.bind(_domAccess);
+const searchbarShowing = _domAccess.searchbarShowing.bind(_domAccess);
+const searchbarHidden = _domAccess.searchbarHidden.bind(_domAccess);
+
+/**
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
  *
  * For example, "Paragraph Style" is a MarkupEditor concept that doesn't map directly to HTML or CSS.
@@ -17868,9 +17974,11 @@ function _getSelectionState() {
     // absolutely reflects the selection state at the time of the call regardless
     // of whether it is editable or not.
     const contentEditable = _getContentEditable();
+    const view = activeView();
     state['divid'] = contentEditable.id;            // Will be 'editor' or a div ID
-    state['valid'] = contentEditable.editable;      // Valid means the selection is in something editable
-    if (!contentEditable.editable) return state;    // No need to do more with state if it's not editable
+    // Valid means the selection is in something editable and not in the searchbar input field
+    state['valid'] = contentEditable.editable && view && !getSearchInput(view)?.matches(':focus');
+    if (!state['valid']) return state;    // No need to do more with state if it's not editable
 
     // Selected text
     state['selection'] = _getSelectionText();
@@ -20817,107 +20925,6 @@ function add(elt, child) {
   }
 }
 
-/**
- * 
- * @param {EditorView}  view
- * @param {string} text Text to be translated
- * @returns {string}    The translated text if the view supports it
- */
-function translate(view, text) {
-    return view._props.translate ? view._props.translate(text) : text;
-}
-/**
- * Add or remove a class from the element.
- * 
- * Apparently a workaround for classList.toggle being broken in IE11
- * 
- * @param {HTMLElement}  dom 
- * @param {string}          cls The class name to add or remove
- * @param {boolean}         on  True to add the class name to the `classList`
- */
-function setClass(dom, cls, on) {
-    if (on)
-        dom.classList.add(cls);
-    else
-        dom.classList.remove(cls);
-}
-
-/**
- * DOMAccess provides access to the MarkupToolbar and other well-known elements.
- */
-class DOMAccess {
-
-    constructor(prefix) {
-        this.prefix = prefix ?? 'Markup';
-    }
-
-    setPrefix(prefix) {
-        this.prefix = prefix;
-    }
-
-    /**
-     * Return the toolbar div in `view`
-     * @param {EditorView} view 
-     * @returns {HTMLDivElement}  The toolbar div in the view
-     */
-    getToolbar(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar");
-    }
-
-    getSearchItem(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + '-searchitem')
-    }
-
-    getSearchbar(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-searchbar");
-    }
-
-    getToolbarMore(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar-more")
-    }
-
-    getWrapper(view) {
-        return this.getToolbar(view).parentElement;
-    }
-
-    /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
-    addPromptShowing(view) {
-        setClass(getWrapper(view), promptShowing(), true);
-    }
-
-    /** Removing promptShowing class on wrapper lets wrapper scroll again */
-    removePromptShowing(view) {
-        setClass(getWrapper(view), promptShowing(), false);
-    }
-
-    promptShowing() {
-        return this.prefix + "-prompt-showing"
-    }
-
-    searchbarShowing() {
-        return this.prefix + "-searchbar-showing"
-    }
-
-    searchbarHidden() {
-        return this.prefix + "-searchbar-hidden"
-    }
-
-}
-
-const _domAccess = new DOMAccess();
-const prefix = _domAccess.prefix;
-const setPrefix = _domAccess.setPrefix.bind(_domAccess);
-const getToolbar = _domAccess.getToolbar.bind(_domAccess);
-_domAccess.getSearchItem.bind(_domAccess);
-const getSearchbar = _domAccess.getSearchbar.bind(_domAccess);
-const getToolbarMore = _domAccess.getToolbarMore.bind(_domAccess);
-const getWrapper = _domAccess.getWrapper.bind(_domAccess);
-const addPromptShowing = _domAccess.addPromptShowing.bind(_domAccess);
-const removePromptShowing = _domAccess.removePromptShowing.bind(_domAccess);
-const promptShowing = _domAccess.promptShowing.bind(_domAccess);
-const searchbarShowing = _domAccess.searchbarShowing.bind(_domAccess);
-const searchbarHidden = _domAccess.searchbarHidden.bind(_domAccess);
-
 function getIcon(root, icon) {
     let doc = (root.nodeType == 9 ? root : root.ownerDocument) || document;
     let node = doc.createElement("span");
@@ -22220,7 +22227,8 @@ class SearchItem {
   showSearchbar(state, dispatch, view) {
     let toolbar = getToolbar(view);
     if (!toolbar) return;
-    let input = crelt('input', { type: 'search', placeholder: 'Search document...' });
+    let inputId = prefix + "-searchinput";
+    let input = crelt('input', { id: inputId, type: 'search', placeholder: 'Search document...' });
     input.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
       if (e.key === 'Enter') {
         let direction = (e.shiftKey) ? 'backward' : 'forward';
@@ -22237,6 +22245,12 @@ class SearchItem {
     input.addEventListener('input', e => {    // Use input so e.target.value contains what was typed
       this.text = e.target.value;
       this.stopSearching(false);              // Stop searching but leave focus in the input field
+    });
+    input.addEventListener('focus', () => {
+      selectionChanged();
+    });
+    input.addEventListener('blur', () => {
+      selectionChanged();
     });
     let idClass = prefix + "-searchbar";
     let searchbar = crelt("div", { class: idClass, id: idClass }, input);
