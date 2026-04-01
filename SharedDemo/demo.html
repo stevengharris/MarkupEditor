@@ -10,9 +10,9 @@
 
 <p><img src="toolbar.png" alt="The default toolbar" width="503" height="30"></p>
 
-<p>As you select items in the document, the toolbar highlights what is active within the selection. The default toolbar is built to support the kind of editing you would do with Markdown, but it’s also extensible. On iOS, the default toolbar has a “file toolbar” prepended to it, like this:</p>
+<p>As you select items in the document, the toolbar highlights what is active within the selection. The default toolbar is built to support the kind of editing you would do with Markdown, but it's also extensible. On iOS, the default toolbar has a “file toolbar” prepended to it, like this:</p>
 
-<p><img src="filetoolbar.png" alt="The FileToolbar" width="91" height="3"></p>
+<p><img src="filetoolbar.png" alt="The FileToolbar" width="87" height="60"></p>
 
 <p>The file toolbar buttons on the left let you:</p>
 
@@ -32,13 +32,13 @@
 
 <p>The key bindings are visible when you hover over a button. The toolbar is customizable and extensible, and the key bindings can be reassigned, without modifying the code of the MarkupEditor itself. Beyond the Markdown-scoped capabilities of the default toolbar, the MarkupEditor also supports <sub>subscript</sub> and <sup>superscript</sup> text formatting.</p>
 
-<p>The toolbar is just a convenience - you don’t need to use it at all. You can control whether it’s visible and what it contains. To find out more information, take a look at the README.</p>
+<p>The toolbar is just a convenience - you don't need to use it at all. You can control whether it's visible and what it contains. To find out more information, take a look at the README.</p>
 
 <h2>Styles</h2>
 
 <h4>Overall Document Styling</h4>
 
-<p>When you load an HTML document into the MarkupEditor, the document is styled using CSS that you can override. In the demo, you can use <em>View -&gt; Show HTML</em> (or the file toolbar) to examine the raw HTML of the <code>demo.html</code> document you’re editing. You will see it is "clean" in the sense that it contains no embedded attributes like style, font, or sizing. The overall document styling is up to you as a developer.</p>
+<p>When you load an HTML document into the MarkupEditor, the document is styled using CSS that you can override. In the demo, you can use <em>View -&gt; Show HTML</em> (or the file toolbar) to examine the raw HTML of the <code>demo.html</code> document you're editing. You will see it is "clean" in the sense that it contains no embedded attributes like style, font, or sizing. The overall document styling is up to you as a developer.</p>
 
 <h4>Paragraph Style</h4>
 
@@ -46,7 +46,7 @@
 
 <p>A style applies to a block of text. The MarkupEditor supports the standard HTML styles of <em>P</em>, <em>H1</em>, <em>H2</em>, <em>H3</em>, <em>H4</em>, <em>H5</em>, <em>H6</em>, and <code>CODE</code>. Styles cannot contain other styles. So, for example, you can't embed an <em>H3</em> style header in an <em>H1</em> style header.</p>
 
-<p>The <em>Paragraph Style</em> menu refers to <em>P</em> style as "Normal". You can configure the names that are shown for the HTML styles and which ones are allowed. The notion of a paragraph style is pretty well understood by every person who has ever used a word processor, spreadsheet, or even the most primitive text editing tool these days. Your users don't need to know anything about HTML or CSS just to use the MarkupEditor. </p>
+<p>The <em>Paragraph Style</em> menu refers to <em>P</em> style as "Normal". You can configure the names that are shown for the HTML styles and which ones are allowed. The notion of a paragraph style is pretty well understood by every person who has ever used a word processor, spreadsheet, or even the most primitive text editing tool these days. Your users don't need to know anything about HTML or CSS just to use the MarkupEditor.</p>
 
 <p>When you are editing text within a code block (the Code paragraph style), and you want to exit from the Code style, hold the Command (⌘) key and press Enter. The “hard return” creates a new Normal style element.</p>
 
@@ -163,4 +163,4 @@ print("Hello, world!")</code></pre>
 
 <h2>Undo/Redo</h2>
 
-<p>If they’re included in the toolbar (which they are not, by default), the <em>undo</em> and <em>redo</em> buttons should do what you expect and are also accessible via the menu and hot-keys (i.e., ⌘Z for undo and ⇧⌘Z for redo). For example, if you add a row to a table, undo will remove it. If you added a row, typed some text in a cell, and then added a column, three undos should get you back to where you started.</p>
+<p>If they're included in the toolbar (which they are not, by default), the <em>undo</em> and <em>redo</em> buttons should do what you expect and are also accessible via the menu and hot-keys (i.e., ⌘Z for undo and ⇧⌘Z for redo). For example, if you add a row to a table, undo will remove it. If you added a row, typed some text in a cell, and then added a column, three undos should get you back to where you started.</p>
