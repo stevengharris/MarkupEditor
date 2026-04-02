@@ -1,22 +1,54 @@
-<h1>Standard MarkupEditor Demo</h1>
+<h1>MarkupEditor Demo</h1>
 
-<h6>Version 0.6</h6>
+<h6>Version 1.0 for Swift</h6>
 
-<p>The file you're looking at is just a simple HTML file that includes all the kinds of elements supported by the MarkupEditor by default. This document also serves as a brief tutorial on using the MarkupEditor as an end-user, along with some information for developers.</p>
+<p>The file you're looking at is just a simple HTML file that includes all the kinds of elements supported by the MarkupEditor by default. The file was created and edited using this demo!</p>
+
+<h2>The Toolbar</h2>
+
+<p>The MarkupEditor comes with a default toolbar that looks like this:</p>
+
+<p><img src="toolbar.png" alt="The default toolbar" width="503" height="30"></p>
+
+<p>As you select items in the document, the toolbar highlights what is active within the selection. The default toolbar is built to support the kind of editing you would do with Markdown, but it's also extensible. On iOS, the default toolbar has a “file toolbar” prepended to it, like this:</p>
+
+<p><img src="filetoolbar.png" alt="The FileToolbar" width="87" height="60"></p>
+
+<p>The file toolbar buttons on the left let you:</p>
+
+<ul>
+    <li>
+        <p>Start over with an empty document.</p>
+    </li>
+    <li>
+        <p>Open a local file for editing.</p>
+    </li>
+    <li>
+        <p>View the HTML in the document. For demo purposes, the read-only HTML updates as you type.</p>
+    </li>
+</ul>
+
+<p>The same functionality is available from the Mac menubar under "Edit" and "View", so the Mac demos do not include the file toolbar. On the Mac, you can also "Save as...". The MacOS toolbar includes a "Search" button on the right by default.</p>
+
+<p>The key bindings are visible when you hover over a button. The toolbar is customizable and extensible, and the key bindings can be reassigned, without modifying the code of the MarkupEditor itself. Beyond the Markdown-scoped capabilities of the default toolbar, the MarkupEditor also supports <sub>subscript</sub> and <sup>superscript</sup> text formatting.</p>
+
+<p>The toolbar is just a convenience - you don't need to use it at all. You can control whether it's visible and what it contains. To find out more information, take a look at the README.</p>
 
 <h2>Styles</h2>
 
 <h4>Overall Document Styling</h4>
 
-<p>When you load an HTML document into the MarkupEditor, the document is styled using <code>markup.css</code>. In this demo, you can use the <em>File</em> toolbar above to examine the raw HTML of this <code>demo.html</code> document. You will see it is "clean" in the sense that it contains no embedded attributes like style, font, or sizing. The overall document styling is up to you as a developer (and it's my intent to have it easily customizable).</p>
+<p>When you load an HTML document into the MarkupEditor, the document is styled using CSS that you can override. In the demo, you can use <em>View -&gt; Show HTML</em> (or the file toolbar) to examine the raw HTML of the <code>demo.html</code> document you're editing. You will see it is "clean" in the sense that it contains no embedded attributes like style, font, or sizing. The overall document styling is up to you as a developer.</p>
 
 <h4>Paragraph Style</h4>
 
-<p>This is a <em>Normal</em> style paragraph. The title above this paragraph uses an <em>H4</em> style. As you select in the text, the toolbar indicates the paragraph style of the element you selected.</p>
+<p>This is a <em>Normal</em> style paragraph. The title above this paragraph uses an <em>Header 4</em> style. You can change the paragraph style for a single paragraph or across a selection of paragraphs using the <em>Paragraph Style</em> menu.</p>
 
-<p>A style applies to a block of text. The MarkupEditor supports the standard HTML styles of <em>P</em>, <em>H1</em>, <em>H2</em>, <em>H3</em>, <em>H4</em>, <em>H5</em>, <em>H6</em>, and <code>CODE</code>. Styles cannot contain other styles. So, for example, you can't embed an <em>H3</em> style in an <em>H1</em> style header.</p>
+<p>A style applies to a block of text. The MarkupEditor supports the standard HTML styles of <em>P</em>, <em>H1</em>, <em>H2</em>, <em>H3</em>, <em>H4</em>, <em>H5</em>, <em>H6</em>, and <code>CODE</code>. Styles cannot contain other styles. So, for example, you can't embed an <em>H3</em> style header in an <em>H1</em> style header.</p>
 
-<p>The toolbar refers to <em>P</em> style as "Normal". The notion of a paragraph style is pretty well understood by every person who has ever used a word processor, spreadsheet, or even the most primitive text editing tool these days. Your users don't need to know anything about HTML or CSS just to use the MarkupEditor.</p>
+<p>The <em>Paragraph Style</em> menu refers to <em>P</em> style as "Normal". You can configure the names that are shown for the HTML styles and which ones are allowed. The notion of a paragraph style is pretty well understood by every person who has ever used a word processor, spreadsheet, or even the most primitive text editing tool these days. Your users don't need to know anything about HTML or CSS just to use the MarkupEditor.</p>
+
+<p>When you are editing text within a code block (the Code paragraph style), and you want to exit from the Code style, hold the Command (⌘) key and press Enter. The “hard return” creates a new Normal style element.</p>
 
 <h4>Lists</h4>
 
@@ -26,8 +58,12 @@
     <li>
         <h5>Here is a bulleted list with an item in <em>H5</em> paragraph style.</h5>
         <ol>
-            <li><p>Here is a numbered sublist.</p></li>
-            <li><p>With two items.</p></li>
+            <li>
+                <p>Here is a numbered sublist.</p>
+            </li>
+            <li>
+                <p>With two items.</p>
+            </li>
         </ol>
     </li>
     <li>
@@ -40,68 +76,91 @@
 <p>Like the other styles, indenting applies to a block of text, although you can indent both normal paragraphs and headers. Once you indent, the toolbar enables the outdent button. You can indent multiple times, and you can outdent until there is no more indenting to outdent. The hot-key combo ⌘] indents and ⌘[ outdents.</p>
 
 <blockquote>
-    <blockquote>
-        <pre><code>
-// Here is an example of code that has been indented twice.
-print("Hello, world!")
-        </code></pre>
-    </blockquote>
+    <pre><code>// Here is an example of code that has been indented.
+print("Hello, world!")</code></pre>
 </blockquote>
+
+<h3>Markdown Style Typing Shortcuts</h3>
+
+<p>In addition to the hotkey support with the toolbar, the MarkupEditor also supports some Markdown-style typing shortcuts. In Markdown, an <em>H1</em> header is preceded by a single hash symbol, <code>#</code>, an <em>H2</em> by two hash symbols, <code>##</code>, and so on. By typing <code>#</code> at the beginning of a paragraph, the MarkupEditor will set the paragraph style to <em>H1</em>. Similarly for <code>##</code> and <em>H2</em>, and so on. Like Markdown, you can also indent a paragraph by typing <code>&gt;</code> at the beginning of a paragraph. You can start a bullet list using <code>*</code> at the beginning of a paragraph, or a numbered list using <code>1.</code>. Also like Markdown, you can use a <em>Code</em> paragraph style by starting a paragraph with <code>```</code>. These typing shortcuts will no doubt help Markdown users take advantage of their muscle memory.</p>
 
 <h2>Formats</h2>
 
-<p>Text can be formatted to present as <strong>bold</strong>, <em>italic</em>, <u>underline</u>, <code>code</code>, and <s>strikethrough</s>. Unlike styles, formats can be combined; so for example, a <em><u><strong>bold, italic, underlined</strong></u></em> section of text works just fine.</p>
+<p>Text can be formatted to present as <strong>bold</strong>, <em>italic</em>, <code>code</code>, and 
+    <s>strikethrough</s>. Unlike styles, formats can be combined; so for example, a <em><u><strong>bold, italic, underlined</strong></u></em> section of text works just fine.</p>
 
-<p>Note that by default, the buttons to produce <sub>subscript</sub> and <sup>superscript</sup> formats are not shown in the toolbar and are not part of the Format menu on Mac. (This is also true of the undo and redo buttons, but they are always available via the Edit menu and the standard hot keys when you have a keyboard.) You can adjust the contents of the toolbar by specifying a custom <code>ToolbarContents</code>, as discussed in the MarkupEditor project's README.</p>
+<p>Note that by default, the buttons to produce <sub>subscript</sub> and <sup>superscript</sup> formats are not shown in the toolbar. (This is also true of the undo and redo buttons, but they are always available via the Edit menu and the standard hot keys when you have a keyboard.) You can adjust the contents of the toolbar by specifying a custom <code>ToolbarContents</code>, as discussed in the README.</p>
 
 <h2>Inserted Elements</h2>
 
-<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor presents either a popover at the selection location, or in the case of tables, a sub-toolbar at the MarkupEditor toolbar.</p>
+<p>You can insert and edit links, images, and tables in the document. Each of these elements requires some kind of user input to create them. The MarkupEditor presents either a modal popover at the selection location, or in the case of tables, a dropdown menu at the MarkupEditor toolbar.</p>
 
-<h4>Links</h4>
+<h3>Links</h3>
 
-<p>To insert a <a href="https://github.com/stevengharris/MarkupEditor">link</a>, start by selecting some text to link-to. When you select the <em>Insert Link</em> button, a popover is presented at the selection location. Enter a URL and <em>Save</em> (or just hit Enter). <em>Cancel</em> closes the popover, leaving the original text/element unchanged. To delete an existing link, use the <em>Remove Link</em>.</p>
+<p>To insert a <a href="https://github.com/stevengharris/MarkupEditor">link</a>, start by selecting some text to link-to or just select at a location to insert a URL within the text. When you select the <em>Insert/edit link</em> button (or use the ⌘K hot key), a popover is presented at the selection location. Enter a URL and <em>OK</em> (or just hit Enter). <em>Cancel</em> closes the popover, leaving the original text/element unchanged. To delete an existing link, use the <em>Remove</em> button.</p>
 
-<h4>Images</h4>
+<h4>Internal Links [MacOS only]</h4>
 
-<p>Images have to be inserted at a point in some text, or at the beginning or end of some text. You can paste-in an image using the usual Ctrl+V or the menu. You can also select an image from the file system or provide an URL. To do that, press the <em>Insert Image</em> button to bring up the image popover. Specify the URL or use the <em>Select</em> button for a standard file picker to select an image to insert. Specify additional descriptive text to go along with it (which is the right thing to do for people with visual impairment). As you tab between the URL and alt text fields, the MarkupEditor shows you the image in the document. Press OK when you are happy with the image, or Cancel to revert the document to its original state before you started inserting an image. Once you have the image in your document, you can resize it using the handles that show up when you select it, or using a pinch gesture on a touch device.</p>
+<p>You can easily insert links to headers within your document using the <code>H1-6</code> dropdown in the default link dialog. From the dropdown, you can select a header by name.</p>
 
-<p>Here is an inline image sourced from the Internet: <img src="https://en.gravatar.com/userimage/34783542/290b5fe4078e031aef18e02c7bd9103f.png" alt="Linked image">. Select it and then press the image button to see its URL and alt text. Here is the same image, but sourced from the local file system relative in the same location as this document:</p>
+<blockquote>
+    <p><img src="internallinks.png" alt="The H1-6 Dropdown" width="244" height="229"></p>
+</blockquote>
 
-<p><img src="steve.png" alt="Local image"></p>
+<p>When you select a header, in identifier is created for that header (or the existing header identifier is used if it exists). The identifier is the same as the header contents, except a) it starts with a <code>#</code>; b) it is all lowercase, and c) words are separated with <code>-</code> rather than spaces. Selecting OK (or just pressing Enter) will insert the link and identifier. Note that if your selection is empty (i.e., no text is selected, just the cursor is showing), then the text of the header itself is inserted at the cursor location and linked-to the header you selected. This makes creating a table of contents pretty easy!</p>
+
+<h4>Editing vs. Following Links</h4>
+
+<p>When your mouse hovers over a link, it shows “⌥+Click to follow”, followed by the URL you will be taken to. When editing, you may want to edit the link, which you can by pressing the <em>Insert/Edit link</em> button in the toolbar (or use the ⌘K hot key). If you want to follow the link, hold the Option button (⌥) and click anywhere in the link.</p>
+
+<h3>Images</h3>
+
+<p>Images have to be inserted at a point in some text, or at the beginning or end of some text. You can paste-in an image using the usual ⌘V or the menu. You can also select an image from the file system or provide an URL. To do that, press the <em>Insert Image</em> button to bring up the image popover. Specify the URL (or use the <em>Select…</em> button for a standard file picker to select an image to insert). Specify additional descriptive text to go along with it (which is the right thing to do for people with visual impairment). Press OK when you are happy with the image, or Cancel to revert the document to its original state before you started inserting an image.</p>
+
+<h4>Editing Images</h4>
+
+<p>Once you have an image in your document, you can resize it using the handles that show up when you select it, or using a pinch gesture on a touch device.</p>
+
+<p>Here is an inline image sourced from the Internet: <img src="https://en.gravatar.com/userimage/34783542/290b5fe4078e031aef18e02c7bd9103f.png" alt="Linked image" width="80" height="80">. Select it and then press the image button to see its URL and alt text. Here is the same image, but sourced from the local file system relative to the document location:</p>
+
+<p><img src="steve.png" alt="Local image" width="80" height="80"></p>
 
 <p>To delete an image, use the keyboard to delete it like text.</p>
 
-<h4>Tables</h4>
+<h3>Tables</h3>
 
-<p>Tables have to be inserted between paragraphs, not inline with text. If you insert an image while you have selected a point inside of a paragraph, the table will be inserted after that paragraph. When you have the cursor at a point in text, press the <em>Insert Table</em> button to expose the table toolbar. The <em>Create</em> button on the left side lets you create a table with the number of rows and columns you want. Once you have created the table, or when you select a table in the document you're editing, the <em>Create</em> button is disabled. In other words, you cannot insert a table into a table.</p>
+<p>Tables have to be inserted between paragraphs, not inline with text. If you insert a table while you have selected a point inside of a paragraph, the table will be inserted after that paragraph. When you have the cursor at a point in text, press the <em>Insert Table</em> button to expose the table dropdown menu. The <em>Create</em> item lets you create a table with the number of rows and columns you want. Once you have created the table, or when you select a table in the document you're editing, the <em>Create</em> button is disabled. In other words, you cannot insert a table into a table.</p>
 
-<p>The Add buttons in the table toolbar let you add a header at the top of the table or add rows/columns above/below the point you have selected in the table. The delete buttons remove the row/header you have selected in the table. To delete the header, select inside of it and press the delete row button. You can delete the table by backspacing over it, or using the <em>Delete</em> button in the toolbar.</p>
+<p>The Add item in the table dropdown let you add a header at the top of the table or add rows/columns above/below the point you have selected in the table. The Delete item lets you remove the row/header or column you have selected in the table. To delete the header, select inside of it and press the delete row button. You can delete the table by backspacing over it, or using the <em>Table</em> item in the Delete submenu.</p>
 
-<p>Below is a simple two column table with a header. You can navigate forward using Tab (⇥) and backward using ⇧⇥. The header always spans across the table, with any text centered within it.</p>
+<p>Below is a simple two column table with a header. You can navigate forward using Tab (⇥) and backward using Shift+Tab (⇧⇥). The header always spans across the table, with any text centered within it.</p>
 
 <table>
     <tr>
-        <th colspan="2"><p>The table header</p></th>
+        <th colspan="2">
+            <p>The table header</p>
+        </th>
     </tr>
     <tr>
-        <td><p>A row</p></td>
-        <td><p>with two columns</p></td>
+        <td>
+            <p>A row</p>
+        </td>
+        <td>
+            <p>with two columns</p>
+        </td>
     </tr>
     <tr>
-        <td><p>Another row</p></td>
-        <td><p>with two columns</p></td>
+        <td>
+            <p>Another row</p>
+        </td>
+        <td>
+            <p>with two columns</p>
+        </td>
     </tr>
 </table>
 
-<p>You can change the table bordering using the buttons on the right side of the table toolbar. The default option is to put a border around all the individual cells, but you can just apply a border around the body and header (if there is one), or just to the outside of the entire table, or turn off bordering completely.</p>
+<p>You can change the table bordering using the Border submenu in the Table dropdown. The default option is to put a border around all the individual cells, but you can just apply a border around the body and header (if there is one), or just to the outside of the entire table, or turn off bordering completely.</p>
 
-<h2>Correction</h2>
+<h2>Undo/Redo</h2>
 
-<p>The <em>undo</em> and <em>redo</em> buttons should do what you expect and are also accessible via the menu and hot-keys (i.e., ⌘Z for undo and ⇧⌘Z for redo). For example, if you add a row to a table, undo will remove it. If you added a row, typed some text in a cell, and then added a column, three undos should get you back to where you started.</p>
-
-<h2>Extending the MarkupEditor</h2>
-
-<p>The File toolbar is part of the demo, but the <code>MarkupToolbar</code> itself does not include the <code>FileToolbar</code>. Check out the <code>DemoContentView</code> in <code>SwiftUIDemo</code> and <code>DemoViewController</code> in the <code>UIKitDemo</code> to see details of how it was done. The demo starts with some initial HTML taken from <code>demo.html</code>, which you are looking at and editing. You can open a different HTML file to see how it behaves. You can also toggle a view of the raw HTML off-and-on from the File toolbar. The raw HTML updates as you edit the document, to show what the MarkupEditor is doing behind the scenes. Note that normally (i.e., when using the MarkupEditor outside of the demo), typing is a very lightweight operation. Because the demo is set up to update the raw HTML as you type, it's a bit more heavyweight than usual.</p>
-
-<p>The demo makes use of the <code>leftToolbar</code> option in the <code>MarkupEditor</code>, which makes it simple to add your own toolbar to the left (and/or with <code>rightToolbar</code> for the other side) of the standard <code>MarkupToolbar</code>. You can just as easily construct your own toolbar in SwiftUI using the toolbar-level views like <code>StyleToolbar</code> and <code>FormatToolbar</code>, or with the <code>LabeledToolbar</code> and <code>ToolbarButton</code> used within them.</p>
+<p>If they're included in the toolbar (which they are not, by default), the <em>undo</em> and <em>redo</em> buttons should do what you expect and are also accessible via the menu and hot-keys (i.e., ⌘Z for undo and ⇧⌘Z for redo). For example, if you add a row to a table, undo will remove it. If you added a row, typed some text in a cell, and then added a column, three undos should get you back to where you started.</p>

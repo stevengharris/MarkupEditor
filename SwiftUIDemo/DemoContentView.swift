@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 import MarkupEditor
 
 /// The main view for the SwiftUIDemo.
@@ -26,7 +27,7 @@ struct DemoContentView: View {
 
     var compatibleSystemGray5: Color {
         #if os(macOS)
-        return Color(nsColor: NSColor.systemGray)
+        return Color(nsColor: NSColor.unemphasizedSelectedContentBackgroundColor)
         #else
         // This is for iOS, iPadOS, tvOS
         return Color(uiColor: UIColor.systemGray5)
@@ -38,6 +39,9 @@ struct DemoContentView: View {
     @State private var documentPickerShowing: Bool = false
     @State private var rawShowing: Bool = false
     @State private var demoHtml: String
+    @State private var hasChanges = false
+    @State private var currentFileURL: URL?
+
     /// The `markupConfiguration` holds onto the name of any userResourceFiles we set in init.
     private let markupConfiguration = MarkupWKWebViewConfiguration()
     
@@ -61,9 +65,36 @@ struct DemoContentView: View {
                 }
             }
         }
-#if !os(macOS)
-        .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
+        .onReceive(NotificationCenter.default.publisher(for: .menuNewDocument)) { _ in
+            handleNew()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .menuOpenDocument)) { _ in
+            handleOpen()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .menuSaveDocument)) { _ in
+            handleSave()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .menuSaveAsDocument)) { _ in
+            handleSaveAs()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .menuShowHtml)) { _ in
+            rawDocument()
+        }
+        .fileImporter(isPresented: $documentPickerShowing, allowedContentTypes: [.html], allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                loadHtml(from: url)
+            }
+        }
+        .fileImporter(isPresented: $selectImage.value, allowedContentTypes: MarkupEditor.supportedImageTypes, allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                imageSelected(url: url)
+            }
+        }
+#if os(iOS) && !targetEnvironment(macCatalyst)
+        // Only add the FileToolbar in for iOS, because the New, Open, Save, SaveAs, and Show HTML are available in the menu
+        // on MacOS and Mac Catalyst.
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
         .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
 #endif
@@ -78,7 +109,7 @@ struct DemoContentView: View {
         }
         // Identify any resources coming from the app bundle that need to be co-located with
         // the document. In this case, we have an image that we load from within demo.html.
-        markupConfiguration.userResourceFiles = ["steve.png"]
+        markupConfiguration.userResourceFiles = ["steve.png", "toolbar.png", "filetoolbar.png", "internallinks.png"]
     }
     
     
@@ -90,16 +121,210 @@ struct DemoContentView: View {
         }
     }
     
-    private func openExistingDocument(url: URL) {
-        demoHtml = (try? String(contentsOf: url)) ?? ""
-    }
-    
     private func imageSelected(url: URL) {
         guard let view = MarkupEditor.selectedWebView else { return }
         markupImageToAdd(view, url: url)
     }
-    
+
+    // MARK: - File operations (driven by menu notifications on macOS)
+
+    /// Present a save/discard/cancel alert if the document has unsaved changes.
+    /// Calls the completion with true to proceed, false to cancel.
+    /// On macOS, runs modally and calls completion synchronously.
+    /// On Catalyst, presents a UIAlertController and calls completion asynchronously.
+    private func checkSave(then proceed: @escaping (Bool) -> Void) {
+        guard hasChanges else {
+            proceed(true)
+            return
+        }
+        #if os(macOS)
+        let alert = NSAlert()
+        alert.messageText = "Do you want to save the changes to this document?"
+        alert.informativeText = "Your changes will be lost if you don't save them."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Don't Save")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .warning
+        let response = alert.runModal()
+        switch response {
+        case .alertFirstButtonReturn:
+            handleSave()
+            proceed(true)
+        case .alertSecondButtonReturn:
+            hasChanges = false
+            proceed(true)
+        default:
+            proceed(false)
+        }
+        #else
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first,
+              let rootVC = window.rootViewController else {
+            proceed(true)
+            return
+        }
+        let alert = UIAlertController(
+            title: "Do you want to save the changes to this document?",
+            message: "Your changes will be lost if you don't save them.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [self] _ in
+            handleSave()
+            proceed(true)
+        })
+        alert.addAction(UIAlertAction(title: "Don't Save", style: .destructive) { [self] _ in
+            hasChanges = false
+            proceed(true)
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            proceed(false)
+        })
+        rootVC.present(alert, animated: true)
+        #endif
+    }
+
+    private func handleNew() {
+        checkSave { [self] shouldProceed in
+            guard shouldProceed else { return }
+            MarkupEditor.selectedWebView?.emptyDocument {
+                setRawText()
+            }
+            currentFileURL = nil
+            hasChanges = false
+        }
+    }
+
+    private func handleOpen() {
+        checkSave { shouldProceed in
+            guard shouldProceed else { return }
+            #if os(macOS)
+            let panel = NSOpenPanel()
+            panel.allowedContentTypes = [.html]
+            panel.allowsMultipleSelection = false
+            panel.canChooseDirectories = false
+            guard panel.runModal() == .OK, let url = panel.url else { return }
+            loadHtml(from: url)
+            #else
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = scene.windows.first,
+                  let rootVC = window.rootViewController else { return }
+            let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.html])
+            picker.allowsMultipleSelection = false
+            picker.delegate = OpenPickerDelegate.shared
+            OpenPickerDelegate.shared.onPick = { urls in
+                guard let url = urls.first else { return }
+                self.loadHtml(from: url)
+            }
+            rootVC.present(picker, animated: true)
+            #endif
+        }
+    }
+
+    private func loadHtml(from url: URL) {
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let html = try String(contentsOf: url, encoding: .utf8)
+            MarkupEditor.selectedWebView?.setHtml(html)
+            currentFileURL = url
+            hasChanges = false
+            setRawText()
+        } catch {
+            #if os(macOS)
+            let alert = NSAlert(error: error)
+            alert.runModal()
+            #endif
+        }
+    }
+
+    private func handleSave() {
+        if let url = currentFileURL {
+            saveHtml(to: url)
+        } else {
+            showSavePanel()
+        }
+    }
+
+    private func handleSaveAs() {
+        showSavePanel()
+    }
+
+    private func showSavePanel() {
+        #if os(macOS)
+        guard let window = NSApplication.shared.keyWindow else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.html]
+        panel.nameFieldStringValue = currentFileURL?.lastPathComponent ?? "Untitled.html"
+        panel.beginSheetModal(for: window) { response in
+            guard response == .OK, let url = panel.url else { return }
+            saveHtml(to: url)
+            currentFileURL = url
+        }
+        #else
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first,
+              let rootVC = window.rootViewController else { return }
+        MarkupEditor.selectedWebView?.getHtml { [self] html in
+            guard let html else { return }
+            let fileName = currentFileURL?.lastPathComponent ?? "Untitled.html"
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            do {
+                try html.write(to: tempURL, atomically: true, encoding: .utf8)
+                let picker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
+                picker.delegate = SavePickerDelegate.shared
+                SavePickerDelegate.shared.onPick = { urls in
+                    guard let url = urls.first else { return }
+                    self.currentFileURL = url
+                    self.hasChanges = false
+                }
+                rootVC.present(picker, animated: true)
+            } catch {
+                // Temp file write failed
+            }
+        }
+        #endif
+    }
+
+    private func saveHtml(to url: URL) {
+        MarkupEditor.selectedWebView?.getHtml { html in
+            guard let html else { return }
+            do {
+                try html.write(to: url, atomically: true, encoding: .utf8)
+                hasChanges = false
+            } catch {
+                #if os(macOS)
+                let alert = NSAlert(error: error)
+                alert.runModal()
+                #endif
+            }
+        }
+    }
+
 }
+
+#if !os(macOS)
+/// Lightweight delegate for UIDocumentPickerViewController used by Open.
+private class OpenPickerDelegate: NSObject, UIDocumentPickerDelegate {
+    static let shared = OpenPickerDelegate()
+    var onPick: (([URL]) -> Void)?
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        onPick?(urls)
+        onPick = nil
+    }
+}
+
+/// Lightweight delegate for UIDocumentPickerViewController used by Save/Save As.
+private class SavePickerDelegate: NSObject, UIDocumentPickerDelegate {
+    static let shared = SavePickerDelegate()
+    var onPick: (([URL]) -> Void)?
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        onPick?(urls)
+        onPick = nil
+    }
+}
+#endif
 
 extension DemoContentView: MarkupDelegate {
     
@@ -109,12 +334,21 @@ extension DemoContentView: MarkupDelegate {
     }
     
     func markupInput(_ view: MarkupWKWebView) {
+        hasChanges = true
         // This is way too heavyweight, but it suits the purposes of the demo
         view.getSelectionState() { selectionState in
             //Logger.coordinator.debug("* selectionChange")
             MarkupEditor.selectionState.reset(from: selectionState)
             setRawText()
         }
+    }
+
+    /// In the MacOS version, which uses the markupeditor-base toolbar, pressing the Select... button in the insert
+    /// image dialog calls back to the messageHandler (i.e., the MarkupCoordinator) with `selectImage`, which
+    /// in turn invokes the delegate's `markupSelectImage` method. We trigger the dialog by toggling the
+    /// value of   selectImage .
+    func markupSelectImage(_ view: MarkupWKWebView?) {
+        selectImage.value.toggle()
     }
     
     /// Callback received after a local image has been added to the document.
@@ -142,7 +376,7 @@ extension DemoContentView: FileToolbarDelegate {
     }
 
     func rawDocument() {
-        withAnimation { rawShowing.toggle()}
+        withAnimation(.easeInOut(duration: 0.25)) { rawShowing.toggle() }
     }
 
 }

@@ -1,5 +1,15 @@
 # Change Log
 
+## Version 0.9.1 (Beta 8.1)
+
+This release includes full support for MacOS SwiftUI apps. The SwiftUIDemo is properly integrated with the MacOS menubar on both MacOS and Mac Catalyst.
+
+* [Fixed] [Demo needs to support the FileToolbar functionality](https://github.com/stevengharris/MarkupEditor/issues/265). The SwiftUI demo now uses the Mac menubar rather than the FileToolbar in the SwiftUIDemo for MacOS and Mac Catalyst. The FileToolbar no longer appears in those demo targets, but is still used for iOS.
+* [Fixed] [Menubar and context menu needs to be properly populated for MarkupEditor](https://github.com/stevengharris/MarkupEditor/issues/264). The `Resources/*config.json` files are now the source of truth for configuration of the MarkupEditor. The existing ToolbarContents approach still works, but it is populated based on the toolbarconfig.json and keymapconfig.json. The toolbarconfig.json used in the Swift MarkupEditor is a modified version from [markupeditor-base](https://github.com/stevengharris/markupeditor-base) that uses the same paragraph style titles ("Normal", "Header 1", etc) as were previously hardcoded. It also uses SF-Symbols icons in place of the Material Design icons of markupeditor-base to better match MacOS/iOS user expectations. For the MarkupEditor on MacOS, which uses the markupeditor-base toolbar with this modified toolbarconfig.json, this means the toolbar is more configurable than the SwiftUI MarkupToolbar. In that case, refer to https://stevengharris.github.io/markupeditor-base/guide/index.html#configuration for more details about configuration.
+* [Fixed] [Support paste into dialog input fields](https://github.com/stevengharris/MarkupEditor/issues/269). The MacOS version uses the markupeditor-base toolbar, but copy/cut/paste are intercepted on the Swift side to do some Swift-specific modifications and to deal with local images properly. The markupeditor-base toolbar presents dialogs for user input, and the interception of copy/cut/paste on the Swift side prevents those interactions within the dialogs. (This is not a problem from the SwiftUI MarkupToolbar dialogs). A similar problem existed with the search bar on MacOS, which was fixed by checking if the SelectionState was valid, and if not, then just letting the base WKWebView superclass handle the paste. This fix added a check for `isPromptShowing()` in `_getSelectionState` to determine if state is valid.
+
+There were other menu cleanups done, including specifying icons for menu items that match the toolbar icons and proper enable/disable behavior based on the selection state.
+
 ## Version 0.9.0 (Beta 8.0)
 
 This release introduces MacOS support. The MarkupEditor library now builds and tests properly in MacOS in addition to iOS and Mac Catalyst. The SwiftUIDemo now has a MacOS target and is functional. However, the integration with the MacOS menubar and context menu are missing, as is any ability within the demo to create a new file, open an existing one, or to view the underlying HTML. These problems will be present in issues on GitHub to track progress and closure.

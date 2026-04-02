@@ -1,0 +1,61 @@
+{
+    "description": "Verify canUndo/canRedo state.",
+    "tests": [
+        {
+            "description": "No change, canUndo=false",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canUndo: false</p>",
+            "action": "if (MU.canUndo()) { MU.setHTML(\"<p>canUndo: true</p>\") } else { MU.setHTML(\"<p>canUndo: false</p>\") }"
+        },
+        {
+            "description": "No change, canRedo=false",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canRedo: false</p>",
+            "action": "if (MU.canRedo()) { MU.setHTML(\"<p>canRedo: true</p>\") } else { MU.setHTML(\"<p>canRedo: false</p>\") }"
+        },
+        {
+            "description": "Make change, canUndo=true",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canUndo: true</p>",
+            "action": "MU.toggleBold(); if (MU.canUndo()) { MU.setHTML(\"<p>canUndo: true</p>\") } else { MU.setHTML(\"<p>canUndo: false</p>\") }"
+        },
+        {
+            "description": "Make change, canRedo=false",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canRedo: false</p>",
+            "action": "MU.toggleBold(); if (MU.canRedo()) { MU.setHTML(\"<p>canRedo: true</p>\") } else { MU.setHTML(\"<p>canRedo: false</p>\") }"
+        },
+        {
+            "description": "Make change, undo, canRedo=true",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canRedo: true</p>",
+            "action": "MU.toggleBold(); MU.doUndo(); if (MU.canRedo()) { MU.setHTML(\"<p>canRedo: true</p>\") } else { MU.setHTML(\"<p>canRedo: false</p>\") }"
+        },
+        {
+            "description": "Make change, undo, canUndo=false",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canUndo: false</p>",
+            "action": "MU.toggleBold(); MU.doUndo(); if (MU.canUndo()) { MU.setHTML(\"<p>canUndo: true</p>\") } else { MU.setHTML(\"<p>canUndo: false</p>\") }"
+        },
+        {
+            "description": "Make change, undo, redo, canUndo=true",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canUndo: true</p>",
+            "action": "MU.toggleBold(); MU.doUndo(); MU.doRedo(); if (MU.canUndo()) { MU.setHTML(\"<p>canUndo: true</p>\") } else { MU.setHTML(\"<p>canUndo: false</p>\") }"
+        },
+        {
+            "description": "Make change, undo, redo, canRedo=false",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This |is| a start</p>",
+            "endHtml": "<p>|canRedo: false</p>",
+            "action": "MU.toggleBold(); MU.doUndo(); MU.doRedo(); if (MU.canRedo()) { MU.setHTML(\"<p>canRedo: true</p>\") } else { MU.setHTML(\"<p>canRedo: false</p>\") }"
+        }
+    ]
+}

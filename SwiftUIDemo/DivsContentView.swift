@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 import MarkupEditor
 
 struct DivsContentView: View {
@@ -48,9 +49,21 @@ struct DivsContentView: View {
                 }
             }
         }
+        .fileImporter(isPresented: $documentPickerShowing, allowedContentTypes: [.html], allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                openExistingDocument(url: url)
+            }
+        }
+        .fileImporter(isPresented: $selectImage.value, allowedContentTypes: MarkupEditor.supportedImageTypes, allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                imageSelected(url: url)
+            }
+        }
         #if !os(macOS)
-        .pick(isPresented: $documentPickerShowing, documentTypes: [.html], onPicked: openExistingDocument(url:), onCancel: nil)
-        .pick(isPresented: $selectImage.value, documentTypes: MarkupEditor.supportedImageTypes, onPicked: imageSelected(url:), onCancel: nil)
         // If we want actions in the leftToolbar to cause this view to update, then we need to set it up in onAppear, not init
         .onAppear { MarkupEditor.leftToolbar = AnyView(FileToolbar(fileToolbarDelegate: self)) }
         #endif
@@ -264,6 +277,14 @@ extension DivsContentView: MarkupDelegate {
         }
         // This is way too heavyweight, but it suits the purposes of the demo
         setRawText()
+    }
+    
+    /// In the MacOS version, which uses the markupeditor-base toolbar, pressing the Select... button in the insert
+    /// image dialog calls back to the messageHandler (i.e., the MarkupCoordinator) with `selectImage`, which
+    /// in turn invokes the delegate's `markupSelectImage` method. We trigger the dialog by toggling the
+    /// value of   selectImage .
+    func markupSelectImage(_ view: MarkupWKWebView?) {
+        selectImage.value.toggle()
     }
     
     /// Callback received after a local image has been added to the document.

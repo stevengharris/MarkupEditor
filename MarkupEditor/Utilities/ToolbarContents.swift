@@ -22,25 +22,26 @@ import Foundation
 public class ToolbarContents {
     public static var custom: ToolbarContents?
     public static let shared = custom ?? ToolbarContents()
-    
+
     public var leftToolbar: Bool
     public var correction: Bool
     public var insert: Bool
     public var style: Bool
     public var format: Bool
     public var rightToolbar: Bool
-    
+
     public var insertContents: InsertContents
     public var styleContents: StyleContents
+    public var styleMenu: StyleMenu
     public var formatContents: FormatContents
     public var tableContents: TableContents
-    
+
     public enum PopoverType: String, CaseIterable {
         case link
         case image
         case table
     }
-    
+
     public init(
         leftToolbar: Bool = false,
         correction: Bool = false,
@@ -50,6 +51,7 @@ public class ToolbarContents {
         rightToolbar: Bool = false,
         insertContents: InsertContents = InsertContents(),
         styleContents: StyleContents = StyleContents(),
+        styleMenu: StyleMenu = StyleMenu(),
         formatContents: FormatContents = FormatContents(),
         tableContents: TableContents = TableContents()
     ) {
@@ -61,10 +63,37 @@ public class ToolbarContents {
         self.rightToolbar = rightToolbar ? MarkupEditor.rightToolbar != nil : false
         self.insertContents = insertContents
         self.styleContents = styleContents
+        self.styleMenu = styleMenu
         self.formatContents = formatContents
         self.tableContents = tableContents
     }
-    
+
+    public init(toolbarConfig: ToolbarConfig, leftToolbar: Bool = false, rightToolbar: Bool = false) {
+        self.leftToolbar = leftToolbar
+        correction = toolbarConfig.visibility["correctionBar"] ?? false
+        insert = toolbarConfig.visibility["insertBar"] ?? true
+        style = toolbarConfig.visibility["styleBar"] ?? true
+        format = toolbarConfig.visibility["formatBar"] ?? true
+        self.rightToolbar = rightToolbar
+        insertContents = InsertContents(
+            link: toolbarConfig.insertBar["link"] ?? true,
+            image: toolbarConfig.insertBar["image"] ?? true,
+            table: toolbarConfig.insertBar["table"] ?? true,
+        )
+        styleContents = StyleContents(
+            paragraph: toolbarConfig.visibility["styleMenu"] ?? true,
+            list: toolbarConfig.styleBar["list"] ?? true,
+            dent: toolbarConfig.styleBar["dent"] ?? true
+        )
+        styleMenu = StyleMenu(toolbarConfig: toolbarConfig)
+        formatContents = FormatContents(
+            code: toolbarConfig.formatBar["code"] ?? true,
+            strike: toolbarConfig.formatBar["strikethrough"] ?? true,
+            subSuper: (toolbarConfig.formatBar["subscript"] ?? false) || (toolbarConfig.formatBar["superscript"] ?? false)
+        )
+        tableContents = TableContents(border: toolbarConfig.tableMenu["border"] ?? true)
+    }
+
     public static func from(_ toolbarContents: ToolbarContents) -> ToolbarContents{
         ToolbarContents(
             leftToolbar: toolbarContents.leftToolbar,
@@ -75,9 +104,15 @@ public class ToolbarContents {
             rightToolbar: toolbarContents.rightToolbar,
             insertContents: toolbarContents.insertContents,
             styleContents: toolbarContents.styleContents,
+            styleMenu: toolbarContents.styleMenu,
             formatContents: toolbarContents.formatContents,
             tableContents: toolbarContents.tableContents
         )
+    }
+
+    /// A nil value for `styleMenu.items[tag.lowerCased()]` means the tag should not be in the menu
+    public func name(forTag tag: String) -> String? {
+        styleMenu.items[tag.lowercased()]!
     }
 
 }
@@ -87,7 +122,7 @@ public struct InsertContents {
     public var link: Bool
     public var image: Bool
     public var table: Bool
-    
+
     public init(link: Bool = true, image: Bool = true, table: Bool = true) {
         self.link = link
         self.image = image
@@ -98,7 +133,7 @@ public struct InsertContents {
 /// Identify whether the list and indent/outdent items will show up
 public struct StyleContents {
 
-    /// Determin which kind of list format we want
+    /// Determine which kind of list format we want
     public enum ListType {
         case bullet, number
     }
@@ -120,12 +155,20 @@ public struct StyleContents {
     }
 }
 
+public struct StyleMenu {
+    public var items: [String: String?]
+
+    public init(toolbarConfig: ToolbarConfig = ToolbarConfig.markdown()) {
+        items = toolbarConfig.styleMenu
+    }
+}
+
 /// Identify whether the code, strikethrough, and sub/superscript items will show up
 public struct FormatContents {
     public var code: Bool
     public var strike: Bool
     public var subSuper: Bool
-    
+
     public init(code: Bool = true, strike: Bool = true, subSuper: Bool = false) {
         self.code = code
         self.strike = strike
@@ -136,7 +179,7 @@ public struct FormatContents {
 /// Identify whether to allow table borders to be specified
 public struct TableContents {
     public var border: Bool
-    
+
     public init(border: Bool = true) {
         self.border = border
     }

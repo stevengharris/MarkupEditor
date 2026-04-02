@@ -9,7 +9,6 @@
 
 import UIKit
 
-@MainActor
 public class ToolbarStyle: @unchecked Sendable, ObservableObject {
     
     static let compact = ToolbarStyle(.compact)

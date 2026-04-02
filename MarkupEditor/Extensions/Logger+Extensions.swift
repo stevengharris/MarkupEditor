@@ -15,5 +15,6 @@ extension Logger {
     public static let coordinator = Logger(subsystem: subsystem, category: "coordinator")
     public static let webview = Logger(subsystem: subsystem, category: "webview")
     public static let test = Logger(subsystem: subsystem, category: "test")
+    public static let config = Logger(subsystem: subsystem, category: "config")
     
 }

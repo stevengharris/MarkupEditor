@@ -163,6 +163,8 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             let info = messageData["info"] as? String
             let alert = (messageData["alert"] as? Bool) ?? true
             markupDelegate?.markupError(code: code, message: message, info: info, alert: alert)
+        case "selectImage":
+            markupDelegate?.markupSelectImage(webView)
         case "copyImage":
             guard
                 let src = messageData["src"] as? String,

@@ -392,8 +392,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let dstUrl = cacheUrl.appendingPathComponent("markup.html")
         #if !os(macOS)
         let toolbar: String? = "none"
+        let behavior: String? = nil
+        let keymap: String? = nil
         #else
-        let toolbar: String? = nil
+        var toolbarConfig = ToolbarConfig.markdown()
+        // For consistency with the Mac Catalyst demo, add back in the underline element.
+        toolbarConfig.formatBar["underline"] = true
+        let toolbar = toolbarConfig.asAttribute()
+        let behavior = BehaviorConfig.desktop().asAttribute()   // Enables selectImage
+        let keymap = KeymapConfig.standard().asAttribute()
         #endif
         let html = """
         <!DOCTYPE html>
@@ -411,7 +418,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(userScriptFile != nil ? "userscript=\"\(userScriptFile!)\"" : "")
                     \(userCssFile != nil ? "userstyle=\"\(userCssFile!)\"" : "")
                     \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
-                    selectafterload="\(selectAfterLoad)"
+                    \(keymap != nil ? "keymap=\"\(keymap!)\"" : "")
+                    \(behavior != nil ? "behavior=\"\(behavior!)\"" : "")
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")
                 </markup-editor>
@@ -653,19 +661,35 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         set { accessoryView = newValue }
     }
 
-    /// Return false to disable various menu items depending on selectionState
+    /// Return false to disable various menu items depending on selectionState.
+    /// Actions not owned by MarkupWKWebView are forwarded to super so they can
+    /// propagate up the responder chain (e.g., toggleFullScreen to the window).
     @objc override public func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        guard selectionState.isValid else { return false }
+        // First, handle actions that are always available regardless of selectionState
         switch action {
         case #selector(getter: undoManager):
             return true
+        case #selector(undoFromMenu(_:)), NSSelectorFromString("undo:"):
+            return selectionState.canUndo
+        case #selector(redoFromMenu(_:)), NSSelectorFromString("redo:"):
+            return selectionState.canRedo
+        #if targetEnvironment(macCatalyst)
+        case #selector(zoomIn(_:)), #selector(zoomOut(_:)), #selector(zoomToActualSize(_:)):
+            return true
+        #endif
+        default:
+            break
+        }
+        // For MarkupEditor-specific actions, require valid selectionState
+        guard selectionState.isValid else { return super.canPerformAction(action, withSender: sender) }
+        switch action {
         case #selector(UIResponderStandardEditActions.select(_:)), #selector(UIResponderStandardEditActions.selectAll(_:)):
             return super.canPerformAction(action, withSender: sender)
         case #selector(UIResponderStandardEditActions.copy(_:)), #selector(UIResponderStandardEditActions.cut(_:)):
             return selectionState.canCopyCut
         case #selector(UIResponderStandardEditActions.paste(_:)), #selector(UIResponderStandardEditActions.pasteAndMatchStyle(_:)):
             return pasteableType() != nil
-        case #selector(indent), #selector(outdent):
+        case #selector(indentFromMenu), #selector(outdentFromMenu):
             return selectionState.canDent
         case #selector(bullets), #selector(numbers):
             return selectionState.canList
@@ -676,8 +700,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
-            //Logger.webview.debug("Unknown action: \(action)")
-            return false
+            return super.canPerformAction(action, withSender: sender)
         }
     }
     #endif
@@ -1030,10 +1053,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let pasteboard = UIPasteboard.general
         pasteboard.setItems([items])
         #else
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        // For macOS, we'll set the HTML data if available
+        // Always write the custom markup.image type so local image round-trips preserve dimensions
+        if let markupData = items["markup.image"] as? Data {
+            pasteboard.addTypes([markupImageType], owner: nil)
+            pasteboard.setData(markupData, forType: markupImageType)
+        }
+        // Write actual image data for local images so they can be pasted into other apps
+        if let pngData = items["public.png"] as? Data {
+            pasteboard.addTypes([.png], owner: nil)
+            pasteboard.setData(pngData, forType: .png)
+        }
+        // Write HTML for external images
         if let htmlData = items["public.html"] as? Data, let htmlString = String(data: htmlData, encoding: .utf8) {
+            pasteboard.addTypes([.html], owner: nil)
             pasteboard.setString(htmlString, forType: .html)
         }
         #endif
@@ -1145,7 +1180,35 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
 
     //MARK: Undo/redo
     
-    /// Invoke the undo function from the undo button, same as occurs with Command-S.
+    public func canUndo(handler: ((Bool)->Void)? = nil) {
+        executeJavaScript("MU.canUndo()") { result, error in
+            handler?(result as? Bool ?? false)
+        }
+    }
+    
+    public func canUndo() async -> Bool {
+        await withCheckedContinuation { continuation in
+            canUndo { canUndoState in
+                continuation.resume(with: .success(canUndoState))
+            }
+        }
+    }
+    
+    public func canRedo(handler: ((Bool)->Void)? = nil) {
+        executeJavaScript("MU.canRedo()") { result, error in
+            handler?(result as? Bool ?? false)
+        }
+    }
+    
+    public func canRedo() async -> Bool {
+        await withCheckedContinuation { continuation in
+            canRedo { canRedoState in
+                continuation.resume(with: .success(canRedoState))
+            }
+        }
+    }
+    
+    /// Invoke the undo function from the undo button, same as occurs with Command-Z.
     public func undo(handler: (()->Void)? = nil) {
         executeJavaScript("MU.doUndo()") { result, error in handler?() }
     }
@@ -1158,7 +1221,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
-    /// Invoke the undo function from the undo button, same as occurs with Command-Shift-S.
+    /// Menu-targeted undo action matching the `undo:` selector.
+    @objc public func undoFromMenu(_ sender: Any?) {
+        undo(handler: nil)
+    }
+    
+    /// Invoke the redo function from the redo button, same as occurs with Command-Shift-Z.
     public func redo(handler: (()->Void)? = nil) {
         executeJavaScript("MU.doRedo()") { result, error in handler?() }
     }
@@ -1169,6 +1237,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 continuation.resume()
             }
         }
+    }
+    
+    /// Menu-targeted redo action matching the `redo:` selector.
+    @objc public func redoFromMenu(_ sender: Any?) {
+        redo(handler: nil)
     }
     
     //MARK: Table editing
@@ -1287,6 +1360,29 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+
+    //MARK: Table menu actions (@objc wrappers for UICommand/NSMenuItem)
+    
+#if !os(macOS)
+    /// Insert a table with rows/cols from the UICommand propertyList (e.g. [2, 3] for 2 rows × 3 cols).
+    @objc public func insertTableFromMenu(_ sender: UICommand) {
+        guard let dims = sender.propertyList as? [Int], dims.count == 2 else { return }
+        insertTable(rows: dims[0], cols: dims[1])
+    }
+#endif
+    @objc public func addRowBefore() { addRow(.before) }
+    @objc public func addRowAfter() { addRow(.after) }
+    @objc public func addColBefore() { addCol(.before) }
+    @objc public func addColAfter() { addCol(.after) }
+    @objc public func addTableHeader() { addHeader() }
+    @objc public func deleteTableRow() { deleteRow() }
+    @objc public func deleteTableCol() { deleteCol() }
+    @objc public func deleteEntireTable() { deleteTable() }
+    @objc public func borderTableAll() { borderTable(.cell) }
+    @objc public func borderTableOuter() { borderTable(.outer) }
+    @objc public func borderTableHeader() { borderTable(.header) }
+    @objc public func borderTableNone() { borderTable(.none) }
+
     //MARK: Image editing
     
     public func modifyImage(src: String?, alt: String?, handler: (()->Void)?) {
@@ -1342,11 +1438,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return .Text
         }
         #else
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
-        if let _ = pasteboard.availableType(from: [.tiff, .png]) {
+        if pasteboard.availableType(from: [markupImageType]) != nil {
+            return .LocalImage
+        } else if pasteboard.availableType(from: [.tiff, .png]) != nil {
             return .ExternalImage
-        } else if let _ = pasteboard.availableType(from: [.html]) {
+        } else if pasteboard.availableType(from: [.URL, .fileURL]) != nil {
+            return .Url
+        } else if pasteboard.availableType(from: [.html]) != nil {
             return .Html
+        } else if pasteboard.availableType(from: [.rtf]) != nil {
+            return .Rtf
         } else if pasteboard.availableType(from: [.string]) != nil {
             return .Text
         }
@@ -1617,6 +1720,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         selectionState.cols = stateDictionary["cols"] as? Int ?? 0
         selectionState.row = stateDictionary["row"] as? Int ?? 0
         selectionState.col = stateDictionary["col"] as? Int ?? 0
+        // Undo/redo
+        selectionState.canUndo = stateDictionary["canundo"] as? Bool ?? false
+        selectionState.canRedo = stateDictionary["canredo"] as? Bool ?? false
         if let rawValue = stateDictionary["border"] as? String {
             selectionState.border = TableBorder(rawValue: rawValue) ?? .cell
         } else {
@@ -1692,6 +1798,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         replaceStyle(selectionState.style, with: .H6)
     }
     
+    @objc public func preStyle() {
+        replaceStyle(selectionState.style, with: .PRE)
+    }
+    
     /// Set the selection style to newStyle (e.g., <h3>)
     public func setStyle(to newStyle: StyleContext, handler: (()->Void)? = nil) {
         executeJavaScript("MU.setStyle('\(newStyle)')") { result, error in
@@ -1722,7 +1832,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     // Required for menu support
-    @objc public func indent() {
+    @objc public func indentFromMenu() {
         indent(handler: nil)
     }
     
@@ -1737,11 +1847,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func indent() async throws {
-        try await executeJavaScript("MU.indent()")
+        await withCheckedContinuation { continuation in
+            indent() {
+                continuation.resume()
+            }
+        }
     }
 
     // Required for menu support
-    @objc public func outdent() {
+    @objc public func outdentFromMenu() {
         outdent(handler: nil)
     }
     
@@ -1756,7 +1870,11 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public func outdent() async throws {
-        try await executeJavaScript("MU.outdent()")
+        await withCheckedContinuation { continuation in
+            outdent() {
+                continuation.resume()
+            }
+        }
     }
     
     @objc public func bullets() {
@@ -1837,7 +1955,6 @@ extension MarkupWKWebView {
     /// of data available in UIPasteboard.general.
     public override func paste(_ sender: Any?) {
         guard let pasteableType = pasteableType() else { return }
-        #if canImport(UIKit)
         let pasteboard = UIPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1874,7 +1991,77 @@ extension MarkupWKWebView {
         case .Url:
             pasteUrl(url: pasteboard.url)
         }
-        #else
+    }
+    
+    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
+    public override func pasteAndMatchStyle(_ sender: Any?) {
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = UIPasteboard.general
+        switch pasteableType {
+        case .Text, .Rtf:
+            pasteText(pasteboard.string)
+        case .Html:
+            if let data = pasteboard.data(forPasteboardType: "public.html") {
+                pasteText(String(data: data, encoding: .utf8))
+            }
+        default:
+            break
+        }
+    }
+
+}
+#else
+extension MarkupWKWebView {
+
+    /// Call the superclass (WKWebView) implementation of the given action selector.
+    ///
+    /// On macOS, NSResponder's standard edit actions like copy: and cut: are not declared
+    /// as open methods in Swift, so we can't use `override` and `super`. Instead, we use
+    /// the Objective-C runtime to look up and invoke the superclass implementation directly.
+    private func performSuperAction(_ action: String, with sender: Any?) {
+        let selector = NSSelectorFromString(action)
+        guard let superclass = class_getSuperclass(type(of: self)),
+              let method = class_getInstanceMethod(superclass, selector) else { return }
+        typealias ActionFn = @convention(c) (AnyObject, Selector, Any?) -> Void
+        unsafeBitCast(method_getImplementation(method), to: ActionFn.self)(self, selector, sender)
+    }
+
+    @objc public func copy(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("copy:", with: sender)
+            return
+        }
+        if selectionState.isInImage {
+            copyImage(src: selectionState.src!, alt: selectionState.alt, width: selectionState.width, height: selectionState.height)
+        } else {
+            performSuperAction("copy:", with: sender)
+        }
+    }
+
+    @objc public func cut(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("cut:", with: sender)
+            return
+        }
+        if selectionState.isInImage {
+            executeJavaScript("MU.cutImage()") { result, error in }
+        } else {
+            performSuperAction("cut:", with: sender)
+        }
+    }
+
+    /// Invoke the paste method in the editor directly, passing the clipboard contents
+    /// that would otherwise be obtained via the JavaScript event.
+    ///
+    /// Customize the type of paste operation on the JavaScript side based on the type
+    /// of data available in NSPasteboard.general.
+    @objc public func paste(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("paste:", with: sender)
+            return
+        }
+        guard let pasteableType = pasteableType() else { return }
+        let markupImageType = NSPasteboard.PasteboardType("markup.image")
         let pasteboard = NSPasteboard.general
         switch pasteableType {
         case .Text:
@@ -1885,18 +2072,69 @@ extension MarkupWKWebView {
             if let html = pasteboard.string(forType: .html) {
                 pasteHtml(html)
             }
+        case .Rtf:
+            if let rtfData = pasteboard.data(forType: .rtf) {
+                do {
+                    let attrString = try NSAttributedString(
+                        data: rtfData,
+                        options: [.documentType: NSAttributedString.DocumentType.rtf],
+                        documentAttributes: nil)
+                    let htmlData = try attrString.data(
+                        from: NSRange(location: 0, length: attrString.length),
+                        documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
+                    let html = String(data: htmlData, encoding: .utf8)
+                    pasteHtml(html)
+                } catch let error {
+                    Logger.webview.error("Error getting html from rtf: \(error.localizedDescription)")
+                }
+            }
         case .ExternalImage:
             if let tiffData = pasteboard.data(forType: .tiff) ?? pasteboard.data(forType: .png) {
                 if let nsImage = NSImage(data: tiffData) {
                     pasteImage(nsImage)
                 }
             }
+        case .LocalImage:
+            if let data = pasteboard.data(forType: markupImageType) {
+                pasteHtml(String(data: data, encoding: .utf8))
+            }
+        case .Url:
+            if let urlString = pasteboard.string(forType: .URL) ?? pasteboard.string(forType: .fileURL),
+               let url = URL(string: urlString) {
+                pasteUrl(url: url)
+            }
+        }
+    }
+
+    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
+    @objc public func pasteAsPlainText(_ sender: Any?) {
+        guard selectionState.valid else {
+            performSuperAction("pasteAsPlainText:", with: sender)
+            return
+        }
+        guard let pasteableType = pasteableType() else { return }
+        let pasteboard = NSPasteboard.general
+        switch pasteableType {
+        case .Text, .Rtf:
+            if let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            }
+        case .Html:
+            if let html = pasteboard.string(forType: .html) {
+                pasteText(html)
+            }
         default:
             break
         }
-        #endif
     }
-    
+
+}
+#endif
+
+//MARK: Paste helpers
+
+extension MarkupWKWebView {
+
     /// Paste the url as an img or as a link depending on its content.
     ///
     /// This method is public so it can be used from tests and the tests can ensure the
@@ -1917,7 +2155,7 @@ extension MarkupWKWebView {
             }
         }
     }
-    
+
     /// Return true if the url points to an image or movie that can be inserted into the document
     private func isImageUrl(url: URL?) -> Bool {
         guard let url else { return false }
@@ -1927,7 +2165,7 @@ extension MarkupWKWebView {
             return isRemoteImage(url: url)
         }
     }
-    
+
     /// Return true if the url points to an image in a local file.
     ///
     /// We can use `resourceValues(forKeys:)` on local files, whereas we have to infer whether the file is an image
@@ -1941,45 +2179,51 @@ extension MarkupWKWebView {
             return false
         }
     }
-    
+
     /// Return true if the url points to a remote image file, based only on the file extension.
     private func isRemoteImage(url: URL) -> Bool {
         guard let utType = UTType(tag: url.pathExtension, tagClass: .filenameExtension, conformingTo: nil) else { return false }
         return utType.conforms(to: .image) || utType.conforms(to: .movie)
     }
-    
-    /// Paste the HTML or text only from the clipboard, but in a minimal "unformatted" manner
-    public override func pasteAndMatchStyle(_ sender: Any?) {
-        guard let pasteableType = pasteableType() else { return }
-        #if canImport(UIKit)
-        let pasteboard = UIPasteboard.general
-        switch pasteableType {
-        case .Text, .Rtf:
-            pasteText(pasteboard.string)
-        case .Html:
-            if let data = pasteboard.data(forPasteboardType: "public.html") {
-                pasteText(String(data: data, encoding: .utf8))
-            }
-        default:
-            break
-        }
-        #else
-        let pasteboard = NSPasteboard.general
-        switch pasteableType {
-        case .Text:
-            if let text = pasteboard.string(forType: .string) {
-                pasteText(text)
-            }
-        case .Html:
-            if let html = pasteboard.string(forType: .html) {
-                pasteText(html)
-            }
-        default:
-            break
-        }
-        #endif
+
+}
+
+//MARK: Zoom support (macOS and Mac Catalyst)
+
+#if os(macOS) || targetEnvironment(macCatalyst)
+extension MarkupWKWebView {
+
+    private static let zoomStep: CGFloat = 0.1
+
+    @objc public func zoomIn(_ sender: Any?) {
+        pageZoom += Self.zoomStep
     }
 
+    @objc public func zoomOut(_ sender: Any?) {
+        pageZoom = max(Self.zoomStep, pageZoom - Self.zoomStep)
+    }
+
+    @objc public func zoomToActualSize(_ sender: Any?) {
+        pageZoom = 1.0
+    }
+}
+#endif
+
+//MARK: Menu validation (macOS)
+
+#if os(macOS)
+extension MarkupWKWebView: NSMenuItemValidation {
+
+    public func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(undoFromMenu(_:)):
+            return selectionState.canUndo
+        case #selector(redoFromMenu(_:)):
+            return selectionState.canRedo
+        default:
+            return true
+        }
+    }
 }
 #endif
 

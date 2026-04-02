@@ -35,7 +35,7 @@ public struct StyleToolbar: View {
             if contents.paragraph {
                 if #available(iOS 16, macCatalyst 16, *) {
                     Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                        ForEach(StyleContext.styleCases(), id: \.self) { styleContext in
                             Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
                                 Text(styleContext.name)
                                     .font(.system(size: styleContext.fontSize))
@@ -60,7 +60,7 @@ public struct StyleToolbar: View {
                     .disabled(!selectionState.canStyle)
                 } else {
                     Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                        ForEach(StyleContext.styleCases(), id: \.self) { styleContext in
                             Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
                                 Text(styleContext.name)
                                     .font(.system(size: styleContext.fontSize))
@@ -107,13 +107,13 @@ public struct StyleToolbar: View {
 
             if contents.dent {
                 ToolbarImageButton(
-                    systemName: "increase.quotelevel",
+                    systemName: "increase.indent",
                     action: { observedWebView.selectedWebView?.indent() },
                     active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                     onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
                 )
                 ToolbarImageButton(
-                    systemName: "decrease.quotelevel",
+                    systemName: "decrease.indent",
                     action: { observedWebView.selectedWebView?.outdent() },
                     active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
                     onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }

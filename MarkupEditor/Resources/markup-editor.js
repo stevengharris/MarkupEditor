@@ -2,7 +2,7 @@ const sheet$2 = new CSSStyleSheet();sheet$2.replaceSync("/**\n The CSS here was 
 
 const sheet$1 = new CSSStyleSheet();sheet$1.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
 
-const sheet = new CSSStyleSheet();sheet.replaceSync("/* Spacing at the top */\n/* Note that toolbar-overlay below  is also set to these values */\n\n.Markup-searchbar-showing {\n  height: 38px;\n  top: 76px;\n}\n\n/* The wrapper lets us automatically embed a toolbar and scroll under it */\n.Markup-toolbar-wrapper {\n  margin-right: -12px;    /* Prevent side scroll even when menu fits */\n  height: inherit;\n  overflow-y: scroll;\n  position: relative; \n}\n\n/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */\n.Markup-prompt-showing {\n  overflow-y: hidden;\n}\n\n/* Z-indexes in one place */\n\n.body-content { \n  z-index: 1; \n}\n\n.Markup-prompt-overlay { \n  z-index: 2; \n}\n\n.Markup-prompt, .Markup-selection {\n  z-index: 3;\n}\n\n.Markup-searchbar {\n  z-index: 4;\n}\n\n.Markup-toolbar, .Markup-toolbar-more {\n  z-index: 5;\n}\n\n.Markup-toolbar-overlay { \n  z-index: 6; \n}\n\n.Markup-menu-dropdown-menu {\n  z-index: 7;\n}\n\n/* Toolbar, menu item, and dropdown styling */\n\n.Markup-toolbar {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 0;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-menuitem {\n  display: inline-block;\n  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */\n  overflow-y: visible;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  cursor: pointer;\n  margin-right: 4px;\n  border-radius: 4px;\n  color: blue;\n  border: 1px solid blue;\n  background: white;\n  fill: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem {\n    color: lightblue;\n    border: 1px solid lightblue; \n    /* border: 1px solid #4183c4; */\n    background: black;\n    fill: lightblue;\n  }\n}\n\n.Markup-menuitem-active {\n  fill: white;\n  color: white;\n  background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}\n\n.Markup-menuitem-disabled {\n  cursor: default;\n  opacity: .3;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-disabled {\n    opacity: .6;\n  }\n}\n\n.Markup-icon {\n  display: inline-block;\n  width: 28px;\n  height: 28px;\n  border: 0;\n}\n\n.Markup-icon span {\n  vertical-align: middle;\n}\n\n.Markup-icon svg {\n  padding: 2px;\n  border: 0;\n  fill: inherit;\n}\n\n.Markup-menuseparator {\n  display: inline-block;\n  vertical-align: middle;\n  height: 28px;\n  border-right: 1px solid lightgray;\n  margin-right: 4px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuseparator {\n    border-right: 1px solid gray;\n  }\n}\n\n.Markup-menu-disabled .Markup-icon {\n  cursor: default;\n}\n\n.Markup-menu-dropdown, .Markup-menu-dropdown-menu {\n  background: inherit;\n  text-align: left;\n  white-space: nowrap;\n}\n\n.Markup-menu-dropdown span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-icon span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-wrap {\n  display: inline-block;\n  padding: 0 4px;\n  min-width: 3.0em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap {\n  display: inline-block;\n  padding-right: 4px;\n  width: 1.8em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap-noindicator {\n  display: inline-flex;\n  padding-right: 4px;\n  width: 1em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown {\n  display: inline-flex;\n  justify-content: space-between;\n  min-width: 3.0em;\n  height: inherit;\n  background: inherit;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-icon {\n  display: inline-flex;\n  justify-content: space-between;\n  width: 1.8em;\n  cursor: pointer;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-indicator, .Markup-menu-dropdown-icon-indicator{\n  opacity: .6;\n}\n\n.Markup-tooltip .Markup-menu {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-submenu {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-dropdown-menu {\n  margin-top: calc(1em + 6px);\n  min-width: 4em;\n}\n\n.Markup-menu-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */\n.Markup-menuitem-clipped {\n  white-space: nowrap;  /* Required for text-overflow */\n  overflow-x: hidden;   /* Required for text-overflow */\n  max-width: 30em;\n  text-overflow: ellipsis;\n}\n\n.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n  background: #f2f2f2;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n    background: rgb(80, 80, 80);\n  }\n}\n\n.Markup-menu-dropdown-item p, \n.Markup-menu-dropdown-item h1, \n.Markup-menu-dropdown-item h2, \n.Markup-menu-dropdown-item h3, \n.Markup-menu-dropdown-item h4, \n.Markup-menu-dropdown-item h5, \n.Markup-menu-dropdown-item h6, \n.Markup-menu-dropdown-item pre {\n  padding: 0;\n  margin: 0;\n  min-height: 24px;\n}\n\n.Markup-stylelabel {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  white-space: pre;\n  width: 100%;\n}\n\n.Markup-stylelabel-keymap {\n  display: flex;\n  justify-content: flex-end;\n  font-size: 1.0rem;\n  font-weight: normal;\n  color: gray;\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {\n  display: block;\n}\n\n.Markup-menu-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n  background: inherit;\n}\n\n.Markup-menu-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-submenu {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n.Markup-selection {\n  position: absolute;\n  border: 1px solid blue;\n  background: transparent;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-selection {\n    border: 1px solid lightblue;\n  }\n}\n\n/* Toolbar-more styling */\n\n.Markup-toolbar-more {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 35px;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-more {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n/* Searchbar styling */\n\n.Markup-searchbar {\n  display: inline-block;\n  font-size: 24px;\n  vertical-align: middle;\n  position: sticky;\n  top: 35px;\n  width: 100%;\n  line-height: 30px;\n  height: 37px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-searchbar input {\n  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */\n  position: relative;\n  font-size: 18px;\n  line-height: 30px;\n  height: 30px;\n  width: calc(100% - 128px);\n  margin: 0 8px;\n  padding: 0 4px;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar input {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-searchbar .Markup-searchbar-status {\n  position: absolute;\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  white-space: nowrap;\n  font-size: 12px;\n  overflow-x: visible;\n  height: 28px;\n  top: 5px;\n  left: calc(100% - 13em);\n  width: 1px;\n  color: gray;\n  user-select: none;\n}\n\n/* Dialog/prompt styling for insert/edit actions */\n\n.Markup-prompt-overlay {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt-overlay {\n    background-color: rgba(255, 255, 255, 0.2);\n  }\n}\n\n.Markup-toolbar-overlay {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-overlay {\n    background-color: rgba(255, 255, 255, 0.1);\n  }\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-hidden {\n  height: 38px;\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-showing {\n  height: 76px;\n}\n\n.Markup-prompt {\n  margin: 0;\n  font-size: 18px;\n  background: white;\n  padding: 8px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt {\n    background: black;\n    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);\n  }\n}\n\n.Markup-prompt-link {\n  height: 96px;\n  width: 300px;\n}\n\n.Markup-prompt-image {\n  height: 130px;\n  width: 300px;\n}\n\n.Markup-prompt img {\n  display: inline-block;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  margin-right: 4px;\n}\n\n.Markup-prompt p {\n  margin: 0 0 4px 0;\n  font-weight: normal;\n  color: black;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt p {\n    color: white;\n  }\n}\n\n.Markup-prompt input[type=\"text\"] {\n  font-size: 100%;\n  line-height: 28px;\n  margin-top: 2px;\n  padding: 1px 4px;\n  width: 100%;\n  appearance: none;\n  background: #eee;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input[type=\"text\"] {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-prompt input.invalid {\n  color: red;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input.invalid {\n    color: pink;\n  }\n}\n\n.Markup-prompt-buttons {\n  display: flex;\n  vertical-align: middle;\n  justify-content: space-between;\n  justify-items: center;\n  line-height: 28px;\n  height: 28px;\n  margin-top: 8px;\n  margin-bottom: 8px;\n}\n\n.Markup-prompt-buttongroup {\n  flex-shrink: 0;\n}\n\n.Markup-prompt-buttons img {\n  aspect-ratio: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n.Markup-prompt-buttons .Markup-menuitem {\n  display: inline-flex;\n  padding-right: 4px;\n  padding-left: 4px;\n}\n\n/* The buttongroup contains OK and Cancel menuitems on the right */\n.Markup-prompt-buttongroup .Markup-menuitem {\n  margin-right: 0;\n  margin-left: 4px;\n}\n\n/* .Markup-menu-tablesizer is a specialized submenu */\n.Markup-menu-tablesizer {\n  display: none;\n  grid-template-columns: repeat(4, 1fr);\n  grid-auto-rows: 18px;\n  row-gap: 1px;\n  column-gap: 1px;\n  padding: 0;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {\n  display: grid;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menu-dropdown-item {\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid blue;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 13px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menu-dropdown-item {\n    border: 1px solid lightblue;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menuitem-active {\n    height: 13px;\n    padding-top: 3px;\n    fill: black;\n    color: black;\n    background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}");
+const sheet = new CSSStyleSheet();sheet.replaceSync("/* Spacing at the top */\n/* Note that toolbar-overlay below  is also set to these values */\n\n.Markup-searchbar-showing {\n  height: 38px;\n  top: 76px;\n}\n\n/* The wrapper lets us automatically embed a toolbar and scroll under it */\n.Markup-toolbar-wrapper {\n  margin-right: -12px;    /* Prevent side scroll even when menu fits */\n  height: inherit;\n  overflow-y: scroll;\n  position: relative; \n}\n\n/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */\n.Markup-prompt-showing {\n  overflow-y: hidden;\n}\n\n/* Z-indexes in one place */\n\n.body-content { \n  z-index: 1; \n}\n\n.Markup-prompt-overlay { \n  z-index: 2; \n}\n\n.Markup-prompt, .Markup-selection {\n  z-index: 3;\n}\n\n.Markup-searchbar {\n  z-index: 4;\n}\n\n.Markup-toolbar, .Markup-toolbar-more {\n  z-index: 5;\n}\n\n.Markup-toolbar-overlay { \n  z-index: 6; \n}\n\n.Markup-menu-dropdown-menu {\n  z-index: 7;\n}\n\n/* Toolbar, menu item, and dropdown styling */\n\n.Markup-toolbar {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 0;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-menuitem {\n  display: inline-block;\n  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */\n  overflow-y: visible;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  cursor: pointer;\n  margin-right: 4px;\n  border-radius: 4px;\n  color: blue;\n  border: 1px solid blue;\n  background: white;\n  fill: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem {\n    color: lightblue;\n    border: 1px solid lightblue; \n    /* border: 1px solid #4183c4; */\n    background: black;\n    fill: lightblue;\n  }\n}\n\n.Markup-menuitem-active {\n  fill: white;\n  color: white;\n  background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}\n\n.Markup-menuitem-disabled {\n  cursor: default;\n  opacity: .3;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-disabled {\n    opacity: .6;\n  }\n}\n\n.Markup-icon {\n  display: inline-block;\n  width: 28px;\n  height: 28px;\n  border: 0;\n}\n\n.Markup-icon span {\n  vertical-align: middle;\n}\n\n.Markup-icon svg {\n  padding: 2px;\n  border: 0;\n  fill: inherit;\n}\n\n.Markup-menuseparator {\n  display: inline-block;\n  vertical-align: middle;\n  height: 28px;\n  border-right: 1px solid lightgray;\n  margin-right: 4px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuseparator {\n    border-right: 1px solid gray;\n  }\n}\n\n.Markup-menu-disabled .Markup-icon {\n  cursor: default;\n}\n\n.Markup-menu-dropdown, .Markup-menu-dropdown-menu {\n  background: inherit;\n  text-align: left;\n  white-space: nowrap;\n}\n\n.Markup-menu-dropdown span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-icon span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding: 0 4px;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding-right: 4px;\n  width: 1.8em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap-noindicator {\n  display: inline-flex;\n  padding-right: 4px;\n  width: 1em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n/* For the paragraph style dropdown with a label, make the font smaller */\n.Markup-menu-dropdown {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  box-sizing: border-box;\n  font-size: 0.8em;\n  width: inherit;\n  height: inherit;\n  background: inherit;\n  position: absolute;\n}\n\n/* But for the indicator, bump size up to match the icon-style dropdown */\n.Markup-menu-dropdown .Markup-menu-dropdown-indicator {\n  font-size: 1.25em;\n}\n\n.Markup-menu-dropdown-icon {\n  display: inline-flex;\n  justify-content: space-between;\n  font-size: inherit;\n  width: inherit;\n  cursor: pointer;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-indicator {\n  opacity: .6;\n}\n\n.Markup-tooltip .Markup-menu {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-submenu {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-dropdown-menu {\n  margin-top: calc(1em + 6px);\n  min-width: 4em;\n}\n\n.Markup-menu-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */\n.Markup-menuitem-clipped {\n  white-space: nowrap;  /* Required for text-overflow */\n  overflow-x: hidden;   /* Required for text-overflow */\n  max-width: 30em;\n  text-overflow: ellipsis;\n}\n\n.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n  background: #f2f2f2;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n    background: rgb(80, 80, 80);\n  }\n}\n\n.Markup-menu-dropdown-item p, \n.Markup-menu-dropdown-item h1, \n.Markup-menu-dropdown-item h2, \n.Markup-menu-dropdown-item h3, \n.Markup-menu-dropdown-item h4, \n.Markup-menu-dropdown-item h5, \n.Markup-menu-dropdown-item h6, \n.Markup-menu-dropdown-item pre {\n  padding: 0;\n  margin: 0;\n  min-height: 24px;\n}\n\n.Markup-stylelabel {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  white-space: pre;\n  width: 100%;\n}\n\n.Markup-stylelabel-keymap {\n  display: flex;\n  justify-content: flex-end;\n  font-size: 1.0rem;\n  font-weight: normal;\n  color: gray;\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {\n  display: block;\n}\n\n.Markup-menu-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n  background: inherit;\n}\n\n.Markup-menu-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-submenu {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n.Markup-selection {\n  position: absolute;\n  border: 1px solid blue;\n  background: transparent;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-selection {\n    border: 1px solid lightblue;\n  }\n}\n\n/* Toolbar-more styling */\n\n.Markup-toolbar-more {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: 24px;\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 35px;\n  max-height: 38px;\n  padding: 2px 8px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-more {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n/* Searchbar styling */\n\n.Markup-searchbar {\n  display: inline-block;\n  font-size: 24px;\n  vertical-align: middle;\n  position: sticky;\n  top: 35px;\n  width: 100%;\n  line-height: 30px;\n  height: 37px;\n  color: blue;\n  background: rgba(250, 249, 246, 0.95);\n  border-bottom: 1px solid lightgray;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar {\n    color: rgb(250, 249, 246);\n    background: rgba(40, 40, 43, 0.9);\n    border-bottom: 1px solid gray;\n  }\n}\n\n.Markup-searchbar input {\n  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */\n  position: relative;\n  font-size: 18px;\n  line-height: 30px;\n  height: 30px;\n  width: calc(100% - 128px);\n  margin: 0 8px;\n  padding: 0 4px;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar input {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-searchbar .Markup-searchbar-status {\n  position: absolute;\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  white-space: nowrap;\n  font-size: 12px;\n  overflow-x: visible;\n  height: 28px;\n  top: 5px;\n  left: calc(100% - 13em);\n  width: 1px;\n  color: gray;\n  user-select: none;\n}\n\n/* Dialog/prompt styling for insert/edit actions */\n\n.Markup-prompt-overlay {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt-overlay {\n    background-color: rgba(255, 255, 255, 0.2);\n  }\n}\n\n.Markup-toolbar-overlay {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-overlay {\n    background-color: rgba(255, 255, 255, 0.1);\n  }\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-hidden {\n  height: 38px;\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-showing {\n  height: 76px;\n}\n\n.Markup-prompt {\n  margin: 0;\n  font-size: 18px;\n  background: white;\n  padding: 8px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt {\n    background: black;\n    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);\n  }\n}\n\n.Markup-prompt-link {\n  height: 96px;\n  width: 300px;\n}\n\n.Markup-prompt-image {\n  height: 130px;\n  width: 300px;\n}\n\n.Markup-prompt img {\n  display: inline-block;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  margin-right: 4px;\n}\n\n.Markup-prompt p {\n  margin: 0 0 4px 0;\n  font-weight: normal;\n  color: black;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt p {\n    color: white;\n  }\n}\n\n.Markup-prompt input[type=\"text\"] {\n  font-size: 100%;\n  line-height: 28px;\n  margin-top: 2px;\n  padding: 1px 4px;\n  width: 100%;\n  appearance: none;\n  background: #eee;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input[type=\"text\"] {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-prompt input.invalid {\n  color: red;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input.invalid {\n    color: pink;\n  }\n}\n\n.Markup-prompt-buttons {\n  display: flex;\n  vertical-align: middle;\n  justify-content: space-between;\n  justify-items: center;\n  line-height: 28px;\n  height: 28px;\n  margin-top: 8px;\n  margin-bottom: 8px;\n}\n\n.Markup-prompt-buttongroup {\n  flex-shrink: 0;\n}\n\n.Markup-prompt-buttons img {\n  aspect-ratio: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n.Markup-prompt-buttons .Markup-menuitem {\n  display: inline-flex;\n  padding-right: 4px;\n  padding-left: 4px;\n}\n\n/* The buttongroup contains OK and Cancel menuitems on the right */\n.Markup-prompt-buttongroup .Markup-menuitem {\n  margin-right: 0;\n  margin-left: 4px;\n}\n\n/* .Markup-menu-tablesizer is a specialized submenu */\n.Markup-menu-tablesizer {\n  display: none;\n  grid-template-columns: repeat(4, 1fr);\n  grid-auto-rows: 18px;\n  row-gap: 1px;\n  column-gap: 1px;\n  padding: 0;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: white;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: black;\n  }\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {\n  display: grid;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid gray;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid lightgray;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menu-dropdown-item {\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid blue;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 13px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menu-dropdown-item {\n    border: 1px solid lightblue;\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menuitem-active {\n    height: 13px;\n    padding-top: 3px;\n    fill: black;\n    color: black;\n    background: blue;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: lightblue;\n  }\n}");
 
 /**
  * The registry used to hold delegates, configs, handlers, and
@@ -13023,7 +13023,7 @@ for (var i = 65; i <= 90; i++) {
 }
 
 // For each code that doesn't have a shift-equivalent, copy the base name
-for (var code in base) if (!shift.hasOwnProperty(code)) shift[code] = base[code];
+for (var code$1 in base) if (!shift.hasOwnProperty(code$1)) shift[code$1] = base[code$1];
 
 function keyName(event) {
   // On macOS, keys held with Shift and Cmd don't reflect the effect of Shift in `.key`.
@@ -16118,7 +16118,7 @@ function history(config = {}) {
             handleDOMEvents: {
                 beforeinput(view, e) {
                     let inputType = e.inputType;
-                    let command = inputType == "historyUndo" ? undo : inputType == "historyRedo" ? redo : null;
+                    let command = inputType == "historyUndo" ? undo$1 : inputType == "historyRedo" ? redo$1 : null;
                     if (!command || !view.editable)
                         return false;
                     e.preventDefault();
@@ -16144,11 +16144,126 @@ function buildCommand(redo, scroll) {
 /**
 A command function that undoes the last change, if any.
 */
-const undo = buildCommand(false, true);
+const undo$1 = buildCommand(false, true);
 /**
 A command function that redoes the last undone change, if any.
 */
-const redo = buildCommand(true, true);
+const redo$1 = buildCommand(true, true);
+
+/**
+ * 
+ * @param {EditorView}  view
+ * @param {string} text Text to be translated
+ * @returns {string}    The translated text if the view supports it
+ */
+function translate(view, text) {
+    return view._props.translate ? view._props.translate(text) : text;
+}
+/**
+ * Add or remove a class from the element.
+ * 
+ * Apparently a workaround for classList.toggle being broken in IE11
+ * 
+ * @param {HTMLElement}  dom 
+ * @param {string}          cls The class name to add or remove
+ * @param {boolean}         on  True to add the class name to the `classList`
+ */
+function setClass(dom, cls, on) {
+    if (on)
+        dom.classList.add(cls);
+    else
+        dom.classList.remove(cls);
+}
+
+/**
+ * DOMAccess provides access to the MarkupToolbar and other well-known elements.
+ */
+class DOMAccess {
+
+    constructor(prefix) {
+        this.prefix = prefix ?? 'Markup';
+    }
+
+    setPrefix(prefix) {
+        this.prefix = prefix;
+    }
+
+    /**
+     * Return the toolbar div in `view`
+     * @param {EditorView} view 
+     * @returns {HTMLDivElement}  The toolbar div in the view
+     */
+    getToolbar(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar")
+    }
+
+    getSearchItem(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + '-searchitem')
+    }
+
+    getSearchbar(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-searchbar")
+    }
+
+    getToolbarMore(view) {
+        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar-more")
+    }
+
+    getWrapper(view) {
+        return this.getToolbar(view)?.parentElement
+    }
+
+    /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
+    addPromptShowing(view) {
+        setClass(getWrapper(view), promptShowing(), true);
+    }
+
+    /** Removing promptShowing class on wrapper lets wrapper scroll again */
+    removePromptShowing(view) {
+        setClass(getWrapper(view), promptShowing(), false);
+    }
+
+    promptShowing() {
+        return this.prefix + "-prompt-showing"
+    }
+
+    searchInput() {
+        return this.prefix + "-searchinput"
+    }
+
+    searchbarShowing() {
+        return this.prefix + "-searchbar-showing"
+    }
+
+    searchbarHidden() {
+        return this.prefix + "-searchbar-hidden"
+    }
+
+    isSearchFocused(view) {
+        return view?.dom.getRootNode().getElementById(this.searchInput())?.matches(':focus') ?? false
+    }
+
+    isPromptShowing(view) {
+        return (view) ? this.getWrapper(view)?.classList.contains(this.promptShowing()) ?? false : false
+    }
+
+}
+
+const _domAccess = new DOMAccess();
+const prefix = _domAccess.prefix;
+const setPrefix = _domAccess.setPrefix.bind(_domAccess);
+const getToolbar = _domAccess.getToolbar.bind(_domAccess);
+_domAccess.getSearchItem.bind(_domAccess);
+const getSearchbar = _domAccess.getSearchbar.bind(_domAccess);
+const getToolbarMore = _domAccess.getToolbarMore.bind(_domAccess);
+const getWrapper = _domAccess.getWrapper.bind(_domAccess);
+const addPromptShowing = _domAccess.addPromptShowing.bind(_domAccess);
+const removePromptShowing = _domAccess.removePromptShowing.bind(_domAccess);
+const promptShowing = _domAccess.promptShowing.bind(_domAccess);
+const searchbarShowing = _domAccess.searchbarShowing.bind(_domAccess);
+const searchbarHidden = _domAccess.searchbarHidden.bind(_domAccess);
+const isSearchFocused = _domAccess.isSearchFocused.bind(_domAccess);
+const isPromptShowing = _domAccess.isPromptShowing.bind(_domAccess);
 
 /**
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
@@ -17572,7 +17687,7 @@ function updateNode(node, targetListType, targetListItemType, listTypes, listIte
  * Else, put into a blockquote to indent.
  *
  */
-function indent() {
+function indent$1() {
     const view = activeView();
     let command = indentCommand();
     return command(view.state, view.dispatch, view)
@@ -17584,6 +17699,7 @@ function indentCommand() {
         let li = state.schema.nodes.list_item;
         let ul = state.schema.nodes.bullet_list;
         let ol = state.schema.nodes.ordered_list;
+        let div = state.schema.nodes.div;
         const { $from, $to } = state.selection;
         let tr = state.tr;
         let willWrap = false;
@@ -17639,7 +17755,8 @@ function indentCommand() {
                             // Find the parents to skip as we try to indent ones above us
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsList = (npNode.type == ul) || (npNode.type == ol); 
+                                if (npNode.type == div) return true         // Always skip divs
+                                let npIsList = (npNode.type == ul) || (npNode.type == ol);
                                 if (!npIsList) return false                 // We are only skipping lists
                                 if (npNode.type != node.type) return false  // We are only skipping parent lists of same type
                                 // And only lists outside of the original selection
@@ -17649,8 +17766,9 @@ function indentCommand() {
                         } else {
                             parentsInSelection = allParents.filter((np) => {
                                 let npNode = np.node;
-                                let npIsBlockquote = (npNode.type == blockquote);
-                                if (!npIsBlockquote) return false                 // We are only skipping blockquotes
+                                if (npNode.type == div) return true        // Always skip divs
+                                let npIsBlockquoteOrDiv = (npNode.type == blockquote);
+                                if (!npIsBlockquoteOrDiv) return false     // We are only skipping blockquotes
                                 // And only blockquotes outside of the original selection
                                 return (np.start < $from.pos) && (np.end > $to.pos)
                             });
@@ -17684,7 +17802,7 @@ function indentCommand() {
  * happens, we should probably just do the equivalent of toggleListType.
  *
  */
-function outdent() {
+function outdent$1() {
     const view = activeView();
     let command = outdentCommand();
     return command(view.state, view.dispatch, view)
@@ -17865,9 +17983,12 @@ function _getSelectionState() {
     // absolutely reflects the selection state at the time of the call regardless
     // of whether it is editable or not.
     const contentEditable = _getContentEditable();
+    const view = activeView();
     state['divid'] = contentEditable.id;            // Will be 'editor' or a div ID
-    state['valid'] = contentEditable.editable;      // Valid means the selection is in something editable
-    if (!contentEditable.editable) return state;    // No need to do more with state if it's not editable
+    // Valid means the selection is in something editable and 
+    // neither search is focused nor is a prompt showing
+    state['valid'] = contentEditable.editable && !(isSearchFocused(view) || isPromptShowing(view));
+    if (!state['valid']) return state;    // No need to do more with state if it's not editable
 
     // Selected text
     state['selection'] = _getSelectionText();
@@ -17917,6 +18038,9 @@ function _getSelectionState() {
     state['sub'] = markTypes.has(schema.marks.sub);
     state['sup'] = markTypes.has(schema.marks.sup);
     state['code'] = markTypes.has(schema.marks.code);
+    // Undo/redo availability
+    state['canundo'] = canUndo();
+    state['canredo'] = canRedo();
     return state;
 }
 /**
@@ -18112,10 +18236,11 @@ function _getTableAttributes(state) {
 }
 
 /**
- * Return the paragraph style at the selection.
+ * Return the paragraph style at the selection. 
+ * If the selection contains multiple styles, return the first one with a "+" after it.
  * 
  * @ignore
- * @returns {string}   {Tag name | 'Multiple'} that represents the selected paragraph style.
+ * @returns {string}   {Tag name} that represents the selected paragraph style.
  */
 function _getParagraphStyle() {
     const view = activeView();
@@ -18125,11 +18250,15 @@ function paragraphStyle(state) {
     const selection = state.selection;
     const nodeTypes = new Set();
     state.doc.nodesBetween(selection.from, selection.to, node => {
-        if (node.isBlock) { 
+        if (_paragraphStyleFor(node)) { 
             nodeTypes.add(node.type);
-        }        return false;   // We only need top-level nodes
+            return false
+        } else {
+            return node.isBlock   // Keep traversing if we are in a block
+        }
     });
-    return (nodeTypes.size <= 1) ? _paragraphStyleFor(selection.$anchor.parent) : 'Multiple';
+    let firstStyle = _paragraphStyleFor(selection.$anchor.parent);
+    return (nodeTypes.size <= 1) ? firstStyle : firstStyle + '+'
 }
 
 /**
@@ -18187,6 +18316,17 @@ function _getIndented(state) {
 function callbackInput(element) {
     _callback('input' + (selectedID() ?? ''), element);
 }
+/**
+ * Callback to signal that the user wants to select an image from a file.
+ * 
+ * The messageHandler will need to do something like bring up a file picker
+ * and in turn execute insertImage.
+ */
+function callbackSelectImage() {
+    let messageDict = { 'messageType' : 'selectImage' };
+    _callback(JSON.stringify(messageDict));
+}
+
 /**
  * Callback to signal that user-provided CSS and/or script files have
  * been loaded.
@@ -18387,6 +18527,18 @@ function doUndo() {
     return result
 }
 
+/** Return true if we can undo in the current state; else false. */
+function canUndo() {
+    const view = activeView();
+    return undoCommand()(view.state)
+}
+
+/** Return true if we can redo in the current state; else false. */
+function canRedo() {
+    const view = activeView();
+    return redoCommand()(view.state)
+}
+
 /**
  * Return a command to undo and do the proper callbacks.
  * 
@@ -18394,7 +18546,7 @@ function doUndo() {
  */
 function undoCommand() {
     let commandAdapter = (state, dispatch, view) => {
-        let result = undo(state, dispatch);
+        let result = undo$1(state, dispatch);
         if (result && dispatch) {
             stateChanged(view);
         }
@@ -18417,7 +18569,7 @@ function doRedo() {
  */
 function redoCommand() {
     let commandAdapter = (state, dispatch, view) => {
-        let result = redo(state, dispatch, view);
+        let result = redo$1(state, dispatch, view);
         if (result && dispatch) {
             stateChanged(view);
         }
@@ -18488,7 +18640,7 @@ function testPasteTextPreprocessing(html) {
  *
  * @param {string}  url             The url/href to use for the link
  */
-function insertLink(url) {
+function insertLink$1(url) {
     const view = activeView();
     let command = insertLinkCommand(url);
     let result = command(view.state, view.dispatch, view);
@@ -18735,7 +18887,7 @@ function selectFullLink(view) {
  * @param {string}              src         The url of the image.
  * @param {string}              alt         The alt text describing the image.
  */
-function insertImage(src, alt) {
+function insertImage$1(src, alt) {
     const view = activeView();
     let command = insertImageCommand(src, alt);
     return command(view.state, view.dispatch, view)
@@ -19385,6 +19537,95 @@ function consoleLog(string) {
     _callback(JSON.stringify(messageDict));
 }
 
+var visibility = {
+	toolbar: true,
+	correctionBar: true,
+	insertBar: true,
+	styleMenu: true,
+	styleBar: true,
+	formatBar: true,
+	search: true
+};
+var ordering = {
+	correctionBar: 10,
+	insertBar: 20,
+	styleMenu: 30,
+	styleBar: 40,
+	formatBar: 50,
+	search: 60
+};
+var insertBar = {
+	link: true,
+	image: true,
+	tableMenu: true
+};
+var formatBar = {
+	bold: true,
+	italic: true,
+	underline: true,
+	code: true,
+	strikethrough: true,
+	subscript: true,
+	superscript: true
+};
+var styleMenu = {
+	p: "Body",
+	h1: "H1",
+	h2: "H2",
+	h3: "H3",
+	h4: "H4",
+	h5: "H5",
+	h6: "H6",
+	pre: "Code"
+};
+var styleBar = {
+	list: true,
+	dent: true
+};
+var tableMenu = {
+	header: true,
+	border: true
+};
+var augmentation = {
+	prepend: null,
+	append: null
+};
+var icons = {
+	undo: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z\"/></svg>",
+	redo: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z\"/></svg>",
+	strong: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z\"/></svg>",
+	em: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z\"/></svg>",
+	u: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z\"/></svg>",
+	s: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z\"/></svg>",
+	code: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z\"/></svg>",
+	sub: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z\"/></svg>",
+	sup: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z\"/></svg>",
+	link: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z\"/></svg>",
+	image: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z\"/></svg>",
+	table: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z\"/></svg>",
+	bulletList: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z\"/></svg>",
+	orderedList: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z\"/></svg>",
+	blockquote: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z\"/></svg>",
+	lift: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z\"/></svg>",
+	search: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z\"/></svg>",
+	searchForward: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z\"/></svg>",
+	searchBackward: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z\"/></svg>",
+	matchCase: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z\"/></svg>",
+	paragraphStyle: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
+	more: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
+};
+var toolbarConfig = {
+	visibility: visibility,
+	ordering: ordering,
+	insertBar: insertBar,
+	formatBar: formatBar,
+	styleMenu: styleMenu,
+	styleBar: styleBar,
+	tableMenu: tableMenu,
+	augmentation: augmentation,
+	icons: icons
+};
+
 /**
  * ToolbarConfig contains static utility methods to obtain a JavaScript object with properties 
  * that define the configuration of the MarkupEditor toolbar. The class makes it convenient 
@@ -19472,169 +19713,56 @@ function consoleLog(string) {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
  *     "append": null            // Name of a registered array of cmdItems to append
  *   },
- *   "icons": {
- *     // <span class="material-icons-outlined">undo</span>
- *     "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
- *     // <span class="material-icons-outlined">redo</span>
- *     "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
- *     // <span class="material-icons-outlined">format_bold</span>
- *     "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
- *     // <span class="material-icons-outlined">format_italic</span>
- *     "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
- *     // <span class="material-icons-outlined">format_underlined</span>
- *     "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
- *     // <span class="material-icons-outlined">strikethrough_s</span>
- *     "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
- *     // <span class="material-icons-outlined">data_object</span>
- *     "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
- *     // <span class="material-icons-outlined">subscript</span>
- *     "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
- *     // <span class="material-icons-outlined">superscript</span>
- *     "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
- *     // <span class="material-icons-outlined">link</span>
- *     "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
- *     // <span class="material-icons-outlined">image</span>
- *     "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
- *     // <span class="material-icons-outlined">table</span>
- *     "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
- *     // <span class="material-icons-outlined">format_list_bulleted</span>
- *     "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
- *     // <span class="material-icons-outlined">format_list_numbered</span>
- *     "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
- *     // <span class="material-icons-outlined">format_indent_increase</span>
- *     "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
- *     // <span class="material-icons-outlined">format_indent_decrease</span>
- *     "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
- *     // <span class="material-symbols-outlined">search</span>
- *     "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
- *     // <span class="material-symbols-outlined">chevron_forward</span>
- *     "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
- *     // <span class="material-symbols-outlined">chevron_backward</span>
- *     "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
- *     // <span class="material-symbols-outlined">match_case</span>
- *     "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
- *     // <span class="material-symbols-outlined">format_paragraph</span>
- *     "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
- *     // <span class="material-symbols-outlined">more_horiz</span>
- *     "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
+ *   "icons": {                  // Outlined 400 weight versions from https://fonts.google.com/icons
+ *     // undo
+ *     "undo": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z\"/></svg>",
+ *     // redo
+ *     "redo": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z\"/></svg>",
+ *     // format_bold
+ *     "strong": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z\"/></svg>",
+ *     // format_italic
+ *     "em": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z\"/></svg>",
+ *     // format_underlined
+ *     "u": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z\"/></svg>",
+ *     // strikethrough_s
+ *     "s": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z\"/></svg>",
+ *     // data_object
+ *     "code": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z\"/></svg>",
+ *     // subscript
+ *     "sub": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z\"/></svg>",
+ *     // superscript
+ *     "sup": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z\"/></svg>",
+ *     // link
+ *     "link": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z\"/></svg>",
+ *     // image
+ *     "image": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z\"/></svg>",
+ *     // table
+ *     "table": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z\"/></svg>",
+ *     // format_list_bulleted
+ *     "bulletList": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z\"/></svg>",
+ *     // format_list_numbered
+ *     "orderedList": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z\"/></svg>",
+ *     // format_indent_increase
+ *     "blockquote": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z\"/></svg>",
+ *     // format_indent_decrease
+ *     "lift": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"><path d=\"M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z\"/></svg>",
+ *     // search
+ *     "search": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z\"/></svg>",
+ *     // chevron_forward
+ *     "searchForward": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z\"/></svg>",
+ *     // chevron_backward
+ *     "searchBackward": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z\"/></svg>",
+ *     // match_case
+ *     "matchCase": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z\"/></svg>",
+ *     // format_paragraph
+ *     "paragraphStyle": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
+ *     // more_horiz
+ *     "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
  *   }
  * }
  * ```
  */
 class ToolbarConfig {
-
-    /**
-     * The private definition of all toolbar config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {                 // Needs to be a function not property for multiple editors
-        return {
-            "visibility": {             // Control the visibility of toolbars, etc
-                "toolbar": true,          // Whether the toolbar is visible at all
-                "correctionBar": true,    // Whether the correction bar (undo/redo) is visible
-                "insertBar": true,        // Whether the insert bar (link, image, table) is visible
-                "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
-                "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
-                "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
-                "search": true,           // Whether the search item (hide/show search bar) is visible
-            },
-            "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
-                "correctionBar": 10,      // Correction bar order if it is visible
-                "insertBar": 20,          // Insert bar (link, image, table) order if it is visible
-                "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
-                "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
-                "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
-                "search": 60,             // Search item (hide/show search bar) order if it is visible
-            },
-            "insertBar": {
-                "link": true,             // Whether the link menu item is visible
-                "image": true,            // Whether the image menu item is visible
-                "tableMenu": true,        // Whether the table menu is visible
-            },
-            "formatBar": {
-                "bold": true,             // Whether the bold menu item is visible
-                "italic": true,           // Whether the italic menu item is visible
-                "underline": true,        // Whether the underline menu item is visible
-                "code": true,             // Whether the code menu item is visible
-                "strikethrough": true,    // Whether the strikethrough menu item is visible
-                "subscript": true,        // Whether the subscript menu item is visible
-                "superscript": true,      // Whether the superscript menu item is visible
-            },
-            "styleMenu": {
-                "p": "Body",              // The label in the menu for "P" style
-                "h1": "H1",               // The label in the menu for "H1" style
-                "h2": "H2",               // The label in the menu for "H2" style
-                "h3": "H3",               // The label in the menu for "H3" style
-                "h4": "H4",               // The label in the menu for "H4" style
-                "h5": "H5",               // The label in the menu for "H5" style
-                "h6": "H6",               // The label in the menu for "H6" style
-                "pre": "Code",            // The label in the menu for "PRE" aka code_block style
-            },
-            "styleBar": {
-                "list": true,             // Whether bullet and numbered list items are visible
-                "dent": true,             // Whether indent and outdent items are visible
-            },
-            "tableMenu": {
-                "header": true,           // Whether the "Header" item is visible in the "Table->Add" menu
-                "border": true,           // Whether the "Border" item is visible in the "Table" menu
-            },
-            "augmentation": {
-                "prepend": null,          // Name of a registered array of cmdItems to prepend
-                "append": null            // Name of a registered array of cmdItems to append
-            },
-            "icons": {
-                // <span class="material-icons-outlined">undo</span>
-                "undo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
-                // <span class="material-icons-outlined">redo</span>
-                "redo": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
-                // <span class="material-icons-outlined">format_bold</span>
-                "strong": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>',
-                // <span class="material-icons-outlined">format_italic</span>
-                "em": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>',
-                // <span class="material-icons-outlined">format_underlined</span>
-                "u": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120v-80h560v80H200Zm280-160q-101 0-157-63t-56-167v-330h103v336q0 56 28 91t82 35q54 0 82-35t28-91v-336h103v330q0 104-56 167t-157 63Z"/></svg>',
-                // <span class="material-icons-outlined">strikethrough_s</span>
-                "s": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"/></svg>',
-                // <span class="material-icons-outlined">data_object</span>
-                "code": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z"/></svg>',
-                // <span class="material-icons-outlined">subscript</span>
-                "sub": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-160v-80q0-17 11.5-28.5T800-280h80v-40H760v-40h120q17 0 28.5 11.5T920-320v40q0 17-11.5 28.5T880-240h-80v40h120v40H760Zm-525-80 185-291-172-269h106l124 200h4l123-200h107L539-531l186 291H618L482-457h-4L342-240H235Z"/></svg>',
-                // <span class="material-icons-outlined">superscript</span>
-                "sup": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M760-600v-80q0-17 11.5-28.5T800-720h80v-40H760v-40h120q17 0 28.5 11.5T920-760v40q0 17-11.5 28.5T880-680h-80v40h120v40H760ZM235-160l185-291-172-269h106l124 200h4l123-200h107L539-451l186 291H618L482-377h-4L342-160H235Z"/></svg>',
-                // <span class="material-icons-outlined">link</span>
-                "link": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>',
-                // <span class="material-icons-outlined">image</span>
-                "image": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg>',
-                // <span class="material-icons-outlined">table</span>
-                "table": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-240H200v160h240v-160Zm80 0v160h240v-160H520Zm-80-80v-160H200v160h240Zm80 0h240v-160H520v160ZM200-680h560v-80H200v80Z"/></svg>',
-                // <span class="material-icons-outlined">format_list_bulleted</span>
-                "bulletList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm0-240q-33 0-56.5-23.5T120-720q0-33 23.5-56.5T200-800q33 0 56.5 23.5T280-720q0 33-23.5 56.5T200-640Z"/></svg>',
-                // <span class="material-icons-outlined">format_list_numbered</span>
-                "orderedList": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>',
-                // <span class="material-icons-outlined">format_indent_increase</span>
-                "blockquote": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>',
-                // <span class="material-icons-outlined">format_indent_decrease</span>
-                "lift": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm160 440L120-480l160-160v320Z"/></svg>',
-                // <span class="material-symbols-outlined">search</span>
-                "search": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
-                // <span class="material-symbols-outlined">chevron_forward</span>
-                "searchForward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>',
-                // <span class="material-symbols-outlined">chevron_backward</span>
-                "searchBackward": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>',
-                // <span class="material-symbols-outlined">match_case</span>
-                "matchCase": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z"/></svg>',
-                // <span class="material-symbols-outlined">format_paragraph</span>
-                "paragraphStyle": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z"/></svg>',
-                // <span class="material-symbols-outlined">more_horiz</span>
-                "more": '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>'
-            }
-        }
-    }
 
     /**
      * Return a toolbar configuration object, but defined from a stringified JSON object.
@@ -19657,7 +19785,7 @@ class ToolbarConfig {
      * @returns {string | null}   The SVG definition of the icon if found
      */
     static iconFor(string) {
-        return this._all().icons[string]
+        return toolbarConfig.icons[string]
     }
 
     /**
@@ -19667,7 +19795,7 @@ class ToolbarConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full(correction = false) {
-        let full = this._all();
+        let full = structuredClone(toolbarConfig);
         full.visibility.correctionBar = correction;
         return full
     }
@@ -19698,7 +19826,7 @@ class ToolbarConfig {
      * @returns {object} A toolbar configuration object with `visibility.toolbar` set to `false`
      */
     static none() {
-        let none = this._all();
+        let none = structuredClone(toolbarConfig);
         none.visibility.toolbar = false;
         return none
     }
@@ -19717,11 +19845,89 @@ class ToolbarConfig {
         markdown.formatBar.superscript = false;
         return markdown
     }
+
 }
+
+var undo = "Mod-z";
+var redo = "Shift-Mod-z";
+var link = [
+	"Mod-K",
+	"Mod-k"
+];
+var p = "Ctrl-Shift-0";
+var h1 = "Ctrl-Shift-1";
+var h2 = "Ctrl-Shift-2";
+var h3 = "Ctrl-Shift-3";
+var h4 = "Ctrl-Shift-4";
+var h5 = "Ctrl-Shift-5";
+var h6 = "Ctrl-Shift-6";
+var bullet = [
+	"Ctrl-U",
+	"Ctrl-u"
+];
+var number = [
+	"Ctrl-O",
+	"Ctrl-o"
+];
+var indent = [
+	"Mod-]",
+	"Ctrl-q"
+];
+var outdent = [
+	"Mod-[",
+	"Shift-Ctrl-q"
+];
+var bold = [
+	"Mod-B",
+	"Mod-b"
+];
+var italic = [
+	"Mod-I",
+	"Mod-i"
+];
+var underline = [
+	"Mod-U",
+	"Mod-u"
+];
+var strikethrough = [
+	"Ctrl-S",
+	"Ctrl-s"
+];
+var code = "Mod-`";
+var subscript = "Ctrl-Mod--";
+var superscript = "Ctrl-Mod-+";
+var search$1 = [
+	"Ctrl-F",
+	"Ctrl-f"
+];
+var keymapConfig = {
+	undo: undo,
+	redo: redo,
+	link: link,
+	p: p,
+	h1: h1,
+	h2: h2,
+	h3: h3,
+	h4: h4,
+	h5: h5,
+	h6: h6,
+	bullet: bullet,
+	number: number,
+	indent: indent,
+	outdent: outdent,
+	bold: bold,
+	italic: italic,
+	underline: underline,
+	strikethrough: strikethrough,
+	code: code,
+	subscript: subscript,
+	superscript: superscript,
+	search: search$1
+};
 
 /**
  * KeymapConfig contains static utility methods to obtain a JavaScript object with properties 
- * that define the key mappingconfiguration of the MarkupEditor toolbar. The class makes it convenient 
+ * that define the key mapping configuration of the MarkupEditor toolbar. The class makes it convenient 
  * to write and use the utility methods, but an instance of KeymapConfig itself is not meaningful.
  * 
  * `KeymapConfig.standard()` is the default for the MarkupEditor. It can be overridden by 
@@ -19756,10 +19962,8 @@ class ToolbarConfig {
  *    // Correction
  *    "undo": "Mod-z",
  *    "redo": "Shift-Mod-z",
- *    // Insert
+ *    // Insert (no hotkeys for image or table)
  *    "link": ["Mod-K", "Mod-k"],
- *    "image": ["Mod-G", "Mod-g"],
- *    //"table": ["Mod-T", "Mod-t"],  // Does not work
  *    // Stylemenu
  *    "p": "Ctrl-Shift-0",
  *    "h1": "Ctrl-Shift-1",
@@ -19789,50 +19993,6 @@ class ToolbarConfig {
 class KeymapConfig {
 
     /**
-     * The private definition of all keymap config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {
-        return {
-            // Correction
-            "undo": "Mod-z",
-            "redo": "Shift-Mod-z",
-            // Insert
-            "link": ["Mod-K", "Mod-k"],
-            "image": ["Mod-G", "Mod-g"],
-            //"table": ["Mod-T", "Mod-t"],  // Does not work
-            // Stylemenu
-            "p": "Ctrl-Shift-0",
-            "h1": "Ctrl-Shift-1",
-            "h2": "Ctrl-Shift-2",
-            "h3": "Ctrl-Shift-3",
-            "h4": "Ctrl-Shift-4",
-            "h5": "Ctrl-Shift-5",
-            "h6": "Ctrl-Shift-6",
-            // Stylebar
-            "bullet": ["Ctrl-U", "Ctrl-u"],
-            "number": ["Ctrl-O", "Ctrl-o"],
-            "indent": ["Mod-]", "Ctrl-q"],
-            "outdent": ["Mod-[", "Shift-Ctrl-q"],
-            // Format
-            "bold": ["Mod-B", "Mod-b"],
-            "italic": ["Mod-I", "Mod-i"],
-            "underline": ["Mod-U", "Mod-u"],
-            "strikethrough": ["Ctrl-S", "Ctrl-s"],
-            "code": "Mod-`",
-            "subscript": "Ctrl-Mod--",
-            "superscript": "Ctrl-Mod-+",
-            // Search
-            "search": ["Ctrl-F", "Ctrl-f"],
-        }
-    }
-
-    /**
      * Return a keymap configuration object, but defined from a stringified JSON object.
      * 
      * @param {string} string A stringified object, perhaps used as an external definition of a keymap configuration
@@ -19852,7 +20012,7 @@ class KeymapConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full() {
-        return this._all()
+        return structuredClone(keymapConfig)
     }
 
     /**
@@ -19887,6 +20047,19 @@ class KeymapConfig {
         return markdown
     }
 }
+
+var focusAfterLoad = true;
+var selectImage = false;
+var insertLink = false;
+var insertImage = false;
+var showStyle = true;
+var behaviorConfig = {
+	focusAfterLoad: focusAfterLoad,
+	selectImage: selectImage,
+	insertLink: insertLink,
+	insertImage: insertImage,
+	showStyle: showStyle
+};
 
 /**
  * BehaviorConfig contains static utility methods to obtain a JavaScript object with properties 
@@ -19924,28 +20097,11 @@ class KeymapConfig {
  *    "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
  *    "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
  *    "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
+ *    "showStyle": true           // Whether to show the selected style in a labeled drop-down rather than a (smaller) icon
  * }
  * ```
  */
 class BehaviorConfig {
-
-    /**
-     * The private definition of all behavior config options used by the public static methods.
-     * Needs to be a function not property for multiple editors.
-     * 
-     * If you add or modify these options, include those changes in the class doc above.
-     * 
-     * @ignore
-     * @returns {object} A JavaScript object with all options enabled.
-     */
-    static _all() {
-        return {
-            "focusAfterLoad": true,     // Whether the editor should take focus after loading
-            "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
-            "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
-            "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
-        }
-    }
 
     /**
      * Return a behavior configuration object, but defined from a stringified JSON object.
@@ -19967,7 +20123,7 @@ class BehaviorConfig {
      * @returns {object}     A JavaScript object with all options enabled.
      */
     static full() {
-        return this._all()
+        return structuredClone(behaviorConfig)
     }
 
     /**
@@ -19976,7 +20132,7 @@ class BehaviorConfig {
      * @returns {object}     A JavaScript object with all settings.
      */
     static standard() { 
-        return this._all()
+        return this.full()
     }
 
     /**
@@ -20779,107 +20935,6 @@ function add(elt, child) {
   }
 }
 
-/**
- * 
- * @param {EditorView}  view
- * @param {string} text Text to be translated
- * @returns {string}    The translated text if the view supports it
- */
-function translate(view, text) {
-    return view._props.translate ? view._props.translate(text) : text;
-}
-/**
- * Add or remove a class from the element.
- * 
- * Apparently a workaround for classList.toggle being broken in IE11
- * 
- * @param {HTMLElement}  dom 
- * @param {string}          cls The class name to add or remove
- * @param {boolean}         on  True to add the class name to the `classList`
- */
-function setClass(dom, cls, on) {
-    if (on)
-        dom.classList.add(cls);
-    else
-        dom.classList.remove(cls);
-}
-
-/**
- * DOMAccess provides access to the MarkupToolbar and other well-known elements.
- */
-class DOMAccess {
-
-    constructor(prefix) {
-        this.prefix = prefix ?? 'Markup';
-    }
-
-    setPrefix(prefix) {
-        this.prefix = prefix;
-    }
-
-    /**
-     * Return the toolbar div in `view`
-     * @param {EditorView} view 
-     * @returns {HTMLDivElement}  The toolbar div in the view
-     */
-    getToolbar(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar");
-    }
-
-    getSearchItem(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + '-searchitem')
-    }
-
-    getSearchbar(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-searchbar");
-    }
-
-    getToolbarMore(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-toolbar-more")
-    }
-
-    getWrapper(view) {
-        return this.getToolbar(view).parentElement;
-    }
-
-    /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
-    addPromptShowing(view) {
-        setClass(getWrapper(view), promptShowing(), true);
-    }
-
-    /** Removing promptShowing class on wrapper lets wrapper scroll again */
-    removePromptShowing(view) {
-        setClass(getWrapper(view), promptShowing(), false);
-    }
-
-    promptShowing() {
-        return this.prefix + "-prompt-showing"
-    }
-
-    searchbarShowing() {
-        return this.prefix + "-searchbar-showing"
-    }
-
-    searchbarHidden() {
-        return this.prefix + "-searchbar-hidden"
-    }
-
-}
-
-const _domAccess = new DOMAccess();
-const prefix = _domAccess.prefix;
-const setPrefix = _domAccess.setPrefix.bind(_domAccess);
-const getToolbar = _domAccess.getToolbar.bind(_domAccess);
-_domAccess.getSearchItem.bind(_domAccess);
-const getSearchbar = _domAccess.getSearchbar.bind(_domAccess);
-const getToolbarMore = _domAccess.getToolbarMore.bind(_domAccess);
-const getWrapper = _domAccess.getWrapper.bind(_domAccess);
-const addPromptShowing = _domAccess.addPromptShowing.bind(_domAccess);
-const removePromptShowing = _domAccess.removePromptShowing.bind(_domAccess);
-const promptShowing = _domAccess.promptShowing.bind(_domAccess);
-const searchbarShowing = _domAccess.searchbarShowing.bind(_domAccess);
-const searchbarHidden = _domAccess.searchbarHidden.bind(_domAccess);
-
 function getIcon(root, icon) {
     let doc = (root.nodeType == 9 ? root : root.ownerDocument) || document;
     let node = doc.createElement("span");
@@ -21017,6 +21072,7 @@ class Dropdown {
    * | `Function(EditorState): string`  | `titleUpdate` | Function to execute that returns a label based on `state`. |
    * | `Function(): boolean`            | `enable`      | Function to return true if MenuItem is enabled, else false |
    * | `string`                         | `label`       | The string to show in the MenuItem |
+   * | `string[]`                       | `labels`      | All possible label strings; used to size the dropdown to the widest label at render time. |
    * | `KeymapConfig`                   | `keymap`      | The KeymapConfig to use for the MenuItem |
    * | `Command`                        | `run`         | The Command to run when the item is pressed |
    * | `Function(): boolean`            | `active`      | Function to return true if MenuItem is active, else false. |
@@ -21060,6 +21116,18 @@ class Dropdown {
     let iconWrapClass = this.options.indicator ? "-dropdown-icon-wrap" : "-dropdown-icon-wrap-noindicator";
     let wrapClass = (this.options.icon) ? this.prefix + iconWrapClass : this.prefix + "-dropdown-wrap";
     let wrap = crelt("span", { class: wrapClass }, label);
+    if (!this.options.icon && options.labels && options.labels.length > 0) {
+      let container = getToolbar(view) || view.dom.parentNode || document.body;
+      let sizer = crelt("span", { style: "visibility:hidden;position:absolute;white-space:nowrap;font-size:0.8em" });
+      container.appendChild(sizer);
+      let maxWidth = 0;
+      for (let lbl of options.labels) {
+        sizer.textContent = lbl + "\u25BE";
+        maxWidth = Math.max(maxWidth, sizer.getBoundingClientRect().width);
+      }
+      container.removeChild(sizer);
+      wrap.style.width = Math.ceil(maxWidth) + "px";
+    }
     let open = null;
     let listeningOnClose = null;
     let close = () => {
@@ -21243,8 +21311,9 @@ class DialogItem {
      * @param {EditorView} view 
      */
     openDialog(state, dispatch, view) {
-      setActiveView(view);
+        setActiveView(view);
         this.createDialog(view);
+        selectionChanged();    // Since it's pseudo modal, we can do it once
         this.dialog.show();
     }
 
@@ -21331,6 +21400,7 @@ class DialogItem {
      */
     closeDialog() {
         removePromptShowing(activeView());
+        selectionChanged();    // Since it's pseudo modal, we can do it once
         this.toolbarOverlay?.parentElement?.removeChild(this.toolbarOverlay);
         this.overlay?.parentElement?.removeChild(this.overlay);
         this.selectionDiv?.parentElement?.removeChild(this.selectionDiv);
@@ -21552,7 +21622,8 @@ class LinkItem extends DialogItem {
     if (localRefItems.length == 0) { return null }
     return new Dropdown(localRefItems, {
       title: 'Insert link to header',
-      label: 'H1-6'
+      label: 'H1-6',
+      labels: ['H1-6']
       // Note: enable doesn't work for Dropdown
     })
   }
@@ -21825,10 +21896,10 @@ class ImageItem extends DialogItem {
     this.dialog.appendChild(buttonsDiv);
 
     // When local images are allowed, we insert a "Select..." button that will bring up a 
-    // file chooser. However, the MarkupEditor can't do that itself, so it invokes the 
-    // delegate's `markupSelectImage` method if it exists. Thus, when `selectImage` is 
-    // true in BehaviorConfig, that method should exist. It should bring up a file chooser
-    // and then invoke `MU.insertImage`.
+    // file chooser. However, the MarkupEditor can't do that itself, so it calls back to 
+    // the messageHandler, which in turn should invoke the delegate's `markupSelectImage` 
+    // method if it exists. Thus, when `selectImage` is true in BehaviorConfig, that method 
+    // should exist. It should bring up a file chooser and then invoke `MU.insertImage`.
     if (this.config.behavior.selectImage) {
       this.preview = null;
       let selectItem = cmdItem(this.selectImage.bind(this), {
@@ -21926,10 +21997,13 @@ class ImageItem extends DialogItem {
     return this.altArea.value
   }
 
-  /** Tell the delegate to select an image to insert, because we don't know how to do that */
-  selectImage(state, dispatch, view) {
+  /** 
+   * Call back to the messageHandler after closing the dialog. The message handler should 
+   * let the delegate deal with bringing up a file picker of some kind.
+  */
+  selectImage() {
     this.closeDialog();
-    if (this.config.delegate?.markupSelectImage) this.config.delegate?.markupSelectImage(state, dispatch, view);
+    callbackSelectImage();
   }
 
   /**
@@ -22103,6 +22177,22 @@ class SearchItem {
     this.item = cmdItem(this.command, options);
     this.text = '';
     this.caseSensitive = false;
+    this.keymap = keymap;
+  }
+
+  matchesKey(event, keyStrings) {
+    let keys = keyStrings instanceof Array ? keyStrings : (keyStrings ? [keyStrings] : []);
+    return keys.some(ks => {
+      let parts = ks.split('-');
+      let key = parts[parts.length - 1];
+      let modifiers = parts.slice(0, -1);
+      if (event.key !== key) return false
+      if (modifiers.includes('Ctrl') && !event.ctrlKey) return false
+      if (modifiers.includes('Mod') && !(event.metaKey || event.ctrlKey)) return false
+      if (modifiers.includes('Shift') && !event.shiftKey) return false
+      if (modifiers.includes('Alt') && !event.altKey) return false
+      return true
+    })
   }
 
   showing() {
@@ -22123,15 +22213,14 @@ class SearchItem {
   toggleSearch(state, dispatch, view) {
     setActiveView(view);
     if (this.showing()) {
-      this.hideSearchbar();
+      this.hideSearchbar(state, dispatch, view);
     } else {
       this.showSearchbar(state, dispatch, view);
     }
     this.update && this.update(state);
   }
 
-  hideSearchbar() {
-    let view = activeView();
+  hideSearchbar(state, dispatch, view) {
     if (view) {
       let searchbar = getSearchbar(view);
       searchbar.parentElement.removeChild(searchbar);
@@ -22150,7 +22239,8 @@ class SearchItem {
   showSearchbar(state, dispatch, view) {
     let toolbar = getToolbar(view);
     if (!toolbar) return;
-    let input = crelt('input', { type: 'search', placeholder: 'Search document...' });
+    let inputId = prefix + "-searchinput";
+    let input = crelt('input', { id: inputId, type: 'search', placeholder: 'Search document...' });
     input.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
       if (e.key === 'Enter') {
         let direction = (e.shiftKey) ? 'backward' : 'forward';
@@ -22159,17 +22249,27 @@ class SearchItem {
         } else {
           this.searchBackwardCommand(view.state, view.dispatch, view);
         }
+      } else if (this.matchesKey(e, this.keymap.search)) {
+        e.preventDefault();
+        this.hideSearchbar(view.state, view.dispatch, view);
       }
     });
     input.addEventListener('input', e => {    // Use input so e.target.value contains what was typed
       this.text = e.target.value;
       this.stopSearching(false);              // Stop searching but leave focus in the input field
     });
+    input.addEventListener('focus', () => {
+      selectionChanged();
+    });
+    input.addEventListener('blur', () => {
+      selectionChanged();
+    });
     let idClass = prefix + "-searchbar";
     let searchbar = crelt("div", { class: idClass, id: idClass }, input);
     this.addSearchButtons(view, searchbar);
     let beforeTarget = getToolbarMore(view) ? getToolbarMore(view).nextSibling : toolbar.nextSibling;
     toolbar.parentElement.insertBefore(searchbar, beforeTarget);
+    input.focus();
   }
 
   setStatus() {
@@ -22848,7 +22948,6 @@ function formatItem(markType, markName, options) {
  */
 function styleMenuItems(config, schema) {
   let keymap = config.keymap;
-  let icons = config.toolbar.icons;
   let items = [];
   let { p, h1, h2, h3, h4, h5, h6, pre } = config.toolbar.styleMenu;
   if (p) items.push(new ParagraphStyleItem(schema.nodes.paragraph, 'P', { label: p, keymap: baseKeyString('p', keymap) }));
@@ -22858,8 +22957,22 @@ function styleMenuItems(config, schema) {
   if (h4) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H4', { label: h4, keymap: baseKeyString('h4', keymap), attrs: { level: 4 }}));
   if (h5) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H5', { label: h5, keymap: baseKeyString('h5', keymap), attrs: { level: 5 }}));
   if (h6) items.push(new ParagraphStyleItem(schema.nodes.heading, 'H6', { label: h6, keymap: baseKeyString('h6', keymap), attrs: { level: 6 }}));
-  if (pre) items.push(new ParagraphStyleItem(schema.nodes.code_block, 'PRE', { label: pre }));
-  return [new Dropdown(items, { title: 'Set paragraph style', icon: icons.paragraphStyle })]
+  if (pre) items.push(new ParagraphStyleItem(schema.nodes.code_block, 'PRE', { label: pre, keymap: baseKeyString('pre', keymap) }));
+  if (config.behavior.showStyle) {
+    let titleUpdate = (state) => {
+      let styleElement = paragraphStyle(state).toLowerCase();
+      // The paragraphStyle comes back with a trailing "+"" when across multiple styles
+      let multiple = styleElement[styleElement.length - 1] == '+';
+      let singleElement = multiple ? styleElement.slice(0, -1) : styleElement;
+      let label = config.toolbar.styleMenu[singleElement];
+      return label ? (multiple ? label + '+' : label) : styleElement
+    };
+    let allLabels = [p, h1, h2, h3, h4, h5, h6, pre].filter(Boolean).flatMap(l => [l, l + '+']);
+    return [new Dropdown(items, { title: 'Set paragraph style', label: 'Style', titleUpdate: titleUpdate, labels: allLabels})]
+  } else {
+    let icons = config.toolbar.icons;
+    return [new Dropdown(items, { title: 'Set paragraph style', icon: icons.paragraphStyle })]
+  }
 }
 
 /**
@@ -24267,6 +24380,9 @@ class MessageHandler {
             case 'copyImage':
                 console.log('fix copyImage ' + messageData.src);
                 return
+            case 'selectImage':
+                delegate?.markupSelectImage && delegate?.markupSelectImage();
+                return
             case 'addedImage': {
                 if (!delegate?.markupImageAdded) return;
                 let divId = messageData.divId;
@@ -24721,7 +24837,10 @@ const MU = {
     addHeader,
     addRow,
     borderTable,
+    callbackSelectImage,
     cancelSearch,
+    canUndo,
+    canRedo,
     consoleLog,
     cutImage,
     deactivateSearch,
@@ -24740,15 +24859,15 @@ const MU = {
     getLinkAttributes,
     getSelectionState,
     getTestHTML,
-    indent,
-    insertImage,
-    insertLink,
+    indent: indent$1,
+    insertImage: insertImage$1,
+    insertLink: insertLink$1,
     insertTable,
     loadUserFiles,
     modifyImage,
     openImageDialog,
     openLinkDialog,
-    outdent,
+    outdent: outdent$1,
     padBottom,
     pasteHTML,
     pasteText,
