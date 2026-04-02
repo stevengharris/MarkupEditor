@@ -16205,16 +16205,12 @@ class DOMAccess {
         return view.dom.getRootNode().getElementById(this.prefix + "-searchbar")
     }
 
-    getSearchInput(view) {
-        return view.dom.getRootNode().getElementById(this.prefix + "-searchinput")
-    }
-
     getToolbarMore(view) {
         return view.dom.getRootNode().getElementById(this.prefix + "-toolbar-more")
     }
 
     getWrapper(view) {
-        return this.getToolbar(view).parentElement;
+        return this.getToolbar(view)?.parentElement
     }
 
     /** Adding promptShowing class on wrapper lets us suppress scroll while the prompt is showing */
@@ -16231,12 +16227,24 @@ class DOMAccess {
         return this.prefix + "-prompt-showing"
     }
 
+    searchInput() {
+        return this.prefix + "-searchinput"
+    }
+
     searchbarShowing() {
         return this.prefix + "-searchbar-showing"
     }
 
     searchbarHidden() {
         return this.prefix + "-searchbar-hidden"
+    }
+
+    isSearchFocused(view) {
+        return view?.dom.getRootNode().getElementById(this.searchInput())?.matches(':focus') ?? false
+    }
+
+    isPromptShowing(view) {
+        return (view) ? this.getWrapper(view)?.classList.contains(this.promptShowing()) ?? false : false
     }
 
 }
@@ -16247,7 +16255,6 @@ const setPrefix = _domAccess.setPrefix.bind(_domAccess);
 const getToolbar = _domAccess.getToolbar.bind(_domAccess);
 _domAccess.getSearchItem.bind(_domAccess);
 const getSearchbar = _domAccess.getSearchbar.bind(_domAccess);
-const getSearchInput = _domAccess.getSearchInput.bind(_domAccess);
 const getToolbarMore = _domAccess.getToolbarMore.bind(_domAccess);
 const getWrapper = _domAccess.getWrapper.bind(_domAccess);
 const addPromptShowing = _domAccess.addPromptShowing.bind(_domAccess);
@@ -16255,6 +16262,8 @@ const removePromptShowing = _domAccess.removePromptShowing.bind(_domAccess);
 const promptShowing = _domAccess.promptShowing.bind(_domAccess);
 const searchbarShowing = _domAccess.searchbarShowing.bind(_domAccess);
 const searchbarHidden = _domAccess.searchbarHidden.bind(_domAccess);
+const isSearchFocused = _domAccess.isSearchFocused.bind(_domAccess);
+const isPromptShowing = _domAccess.isPromptShowing.bind(_domAccess);
 
 /**
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
@@ -17976,8 +17985,9 @@ function _getSelectionState() {
     const contentEditable = _getContentEditable();
     const view = activeView();
     state['divid'] = contentEditable.id;            // Will be 'editor' or a div ID
-    // Valid means the selection is in something editable and not in the searchbar input field
-    state['valid'] = contentEditable.editable && view && !getSearchInput(view)?.matches(':focus');
+    // Valid means the selection is in something editable and 
+    // neither search is focused nor is a prompt showing
+    state['valid'] = contentEditable.editable && !(isSearchFocused(view) || isPromptShowing(view));
     if (!state['valid']) return state;    // No need to do more with state if it's not editable
 
     // Selected text
@@ -21301,8 +21311,9 @@ class DialogItem {
      * @param {EditorView} view 
      */
     openDialog(state, dispatch, view) {
-      setActiveView(view);
+        setActiveView(view);
         this.createDialog(view);
+        selectionChanged();    // Since it's pseudo modal, we can do it once
         this.dialog.show();
     }
 
@@ -21389,6 +21400,7 @@ class DialogItem {
      */
     closeDialog() {
         removePromptShowing(activeView());
+        selectionChanged();    // Since it's pseudo modal, we can do it once
         this.toolbarOverlay?.parentElement?.removeChild(this.toolbarOverlay);
         this.overlay?.parentElement?.removeChild(this.overlay);
         this.selectionDiv?.parentElement?.removeChild(this.selectionDiv);
