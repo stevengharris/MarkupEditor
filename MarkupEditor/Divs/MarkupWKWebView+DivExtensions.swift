@@ -165,7 +165,8 @@ extension MarkupWKWebView {
         let htmlContents = div.htmlContents
         var argString: String
         if let buttonGroup = div.buttonGroup?.json() {
-            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(buttonGroup)', '\(htmlContents)'"
+            let escapedButtonGroup = buttonGroup.replacingOccurrences(of: "\\", with: "\\\\")
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(escapedButtonGroup)', '\(htmlContents)'"
         } else {
             argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', null, '\(htmlContents)'"
         }
@@ -199,7 +200,8 @@ extension MarkupWKWebView {
         let attributes = buttonGroup.attributes.json ?? "{}"
         var argString: String
         if let json = buttonGroup.json(force: true) {
-            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(json)'"
+            let escapedJson = json.replacingOccurrences(of: "\\", with: "\\\\")
+            argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)', '\(escapedJson)'"
         } else {
             argString = "'\(id)', '\(parentId)', '\(cssClass)', '\(attributes)'"
         }
