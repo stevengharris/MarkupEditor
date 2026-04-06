@@ -14841,9 +14841,14 @@ let baseNodes = OrderedMap.from({
         }
       }
     }],
-    toDOM(node) { 
-      let {id, cssClass} = node.attrs; 
-      return ["button", { id: id, class: cssClass }, 0]
+    toDOM(node) {
+      let {id, cssClass, label} = node.attrs;
+      const button = document.createElement("button");
+      if (id) button.setAttribute("id", id);
+      if (cssClass) button.setAttribute("class", cssClass);
+      button.setAttribute("type", "button");
+      if (label) button.innerHTML = label;
+      return button;
     }
   }
 
@@ -17069,7 +17074,7 @@ function _buttonGroupDiv(buttonGroupJSON) {
             buttonGroupDiv.setAttribute('editable', "false");   // Hardcode
             buttonGroup.buttons.forEach( buttonAttributes => {
                 let button = document.createElement('button');
-                button.appendChild(document.createTextNode(buttonAttributes.label));
+                button.innerHTML = buttonAttributes.label;
                 button.setAttribute('label', buttonAttributes.label);
                 button.setAttribute('type', 'button');
                 button.setAttribute('id', buttonAttributes.id);
@@ -17126,7 +17131,7 @@ function addButton(id, parentId, cssClass, label) {
     button.setAttribute('parentId', parentId);
     button.setAttribute('class', cssClass);
     button.setAttribute('type', 'button');
-    button.appendChild(document.createTextNode(label));
+    button.innerHTML = label;
     const buttonSlice = _sliceFromElement(button);
     const buttonNode = buttonNodeType.create({id, parentId, cssClass, label}, buttonSlice.content);
     const transaction = view.state.tr;
