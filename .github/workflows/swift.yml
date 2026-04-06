@@ -48,7 +48,7 @@ jobs:
         xcodebuild clean test \
           -scheme MarkupEditor \
           -destination 'platform=macOS,variant=Mac Catalyst,arch=arm64' \
-          -parallel-testing-worker-count 3 \
+          -parallel-testing-worker-count 2 \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Test MacOS
@@ -56,7 +56,7 @@ jobs:
         xcodebuild clean test \
           -scheme MarkupEditor \
           -destination 'platform=macOS,arch=arm64' \
-          -parallel-testing-worker-count 3 \
+          -parallel-testing-worker-count 2 \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Clean up keychain
