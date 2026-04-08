@@ -54,8 +54,7 @@ jobs:
         xcodebuild clean test \
           -scheme MarkupEditor \
           -destination '${{ matrix.destination }}' \
-          -parallel-testing-enabled YES \
-          -parallel-testing-worker-count 2 \
+          -parallel-testing-enabled NO \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Clean up keychain
