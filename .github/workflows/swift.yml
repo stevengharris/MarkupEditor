@@ -7,12 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  test:
     runs-on: macos-26
+    strategy:
+      matrix:
+        include:
+          - name: Mac Catalyst
+            destination: 'platform=macOS,variant=Mac Catalyst,arch=arm64'
+          - name: macOS
+            destination: 'platform=macOS,arch=arm64'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install certificate
       env:
@@ -34,7 +40,7 @@ jobs:
         # Import certificate into the keychain
         security import $CERTIFICATE_PATH -P "$P12_PASSWORD" \
           -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          
+
         # Allow codesign to access the keychain without UI prompts
         security set-key-partition-list \
           -S apple-tool:,apple:,codesign: \
@@ -43,23 +49,15 @@ jobs:
         # Make it available to the build tools
         security list-keychain -d user -s $KEYCHAIN_PATH
 
-    - name: Test Mac Catalyst
+    - name: Test ${{ matrix.name }}
       run: |
         xcodebuild clean test \
           -scheme MarkupEditor \
-          -destination 'platform=macOS,variant=Mac Catalyst,arch=arm64' \
-          -parallel-testing-worker-count 2 \
-          OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
-
-    - name: Test MacOS
-      run: |
-        xcodebuild clean test \
-          -scheme MarkupEditor \
-          -destination 'platform=macOS,arch=arm64' \
-          -parallel-testing-worker-count 2 \
+          -destination '${{ matrix.destination }}' \
+          -parallel-testing-enabled NO \
           OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/build.keychain"
 
     - name: Clean up keychain
-      if: always()  # runs even if previous steps fail
+      if: always()
       run: |
         security delete-keychain $RUNNER_TEMP/build.keychain
