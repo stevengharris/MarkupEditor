@@ -38,14 +38,12 @@ public struct MarkupEditorView: View, MarkupDelegate {
             if MarkupEditor.toolbarLocation == .top {
                 Spacer()    // Liquid Glass introduced some fuzzing we now have to avoid at the top?
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
-                    .zIndex(999)
                 Divider()
             }
             MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
-                    .zIndex(999)
             }
         }
         #else

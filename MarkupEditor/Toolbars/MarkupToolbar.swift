@@ -30,56 +30,58 @@ public struct MarkupToolbar: View {
     public var markupDelegate: MarkupDelegate?
     
     public var body: some View {
-        HStack {
-            ScrollView(.horizontal) {
-                HStack {
-                    if contents.leftToolbar {
-                        MarkupEditor.leftToolbar!
+        ZStack(alignment: .topLeading) {
+            HStack {
+                ScrollView(.horizontal) {
+                    HStack {
+                        if contents.leftToolbar {
+                            MarkupEditor.leftToolbar!
+                        }
+                        if contents.correction {
+                            if contents.leftToolbar { Divider() }
+                            CorrectionToolbar()
+                        }
+                        if contents.insert {
+                            if contents.leftToolbar || contents.correction { Divider() }
+                            InsertToolbar()
+                        }
+                        if contents.style {
+                            if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
+                            StyleToolbar()
+                        }
+                        if contents.format {
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
+                            FormatToolbar()
+                        }
+                        if contents.rightToolbar {
+                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
+                            MarkupEditor.rightToolbar!
+                        }
+                        Spacer()                // Push everything to the left
                     }
-                    if contents.correction {
-                        if contents.leftToolbar { Divider() }
-                        CorrectionToolbar()
-                    }
-                    if contents.insert {
-                        if contents.leftToolbar || contents.correction { Divider() }
-                        InsertToolbar()
-                    }
-                    if contents.style {
-                        if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
-                        StyleToolbar()
-                    }
-                    if contents.format {
-                        if contents.leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
-                        FormatToolbar()
-                    }
-                    if contents.rightToolbar {
-                        if contents.leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
-                        MarkupEditor.rightToolbar!
-                    }
-                    Spacer()                // Push everything to the left
+                    .environmentObject(toolbarStyle)
+                    .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                    .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid || searchActive.value)
                 }
-                .environmentObject(toolbarStyle)
-                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid || searchActive.value)
-            }
-            .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
-            if withKeyboardButton {
-                Spacer()
-                Divider()
-                ToolbarImageButton(
-                    systemName: "keyboard.chevron.compact.down",
-                    action: {
-                        _ = MarkupEditor.selectedWebView?.resignFirstResponder()
-                    }
-                )
-                Spacer()
+                .onTapGesture {}    // To make the buttons responsive inside of the ScrollView
+                if withKeyboardButton {
+                    Spacer()
+                    Divider()
+                    ToolbarImageButton(
+                        systemName: "keyboard.chevron.compact.down",
+                        action: {
+                            _ = MarkupEditor.selectedWebView?.resignFirstResponder()
+                        }
+                    )
+                    Spacer()
+                }
             }
         }
         // Because the icons in toolbars are sized based on font, we need to limit their dynamicTypeSize
         // or they become illegible at very large sizes.
         .dynamicTypeSize(.small ... .xLarge)
         .frame(height: MarkupEditor.toolbarStyle.height())
-        .contentShape(Rectangle())
+        .zIndex(999)
     }
     
     public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false) {
