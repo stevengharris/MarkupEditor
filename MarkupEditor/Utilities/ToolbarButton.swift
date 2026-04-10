@@ -133,10 +133,11 @@ public struct ToolbarButtonStyle: ButtonStyle {
                 )
                 .fill(active ? activeColor: Color.clear)
             )
-            // On Mac Catalyst, contentShape must be applied inside the ButtonStyle's makeBody
-            // to ensure UIKit hit-testing uses the full button frame rather than the image's
-            // natural bounding box. The outer contentShape on Button alone is not inherited
-            // by the style layer on Catalyst.
+            // On Mac Catalyst, a non-transparent background is required so UIKit/AppKit has
+            // a rendered layer to hit-test against. Without it, hits fall through to whatever
+            // is behind the toolbar when hosted in a UIKit navigation bar ToolbarItem.
+            // systemBackground adapts to light/dark mode and is visually invisible here.
+            .background(Color(UIColor.systemBackground))
             .contentShape(Rectangle())
     }
 }
