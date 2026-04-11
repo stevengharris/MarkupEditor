@@ -133,6 +133,12 @@ public struct ToolbarButtonStyle: ButtonStyle {
                 )
                 .fill(active ? activeColor: Color.clear)
             )
+            // On Mac Catalyst, a non-transparent background is required so UIKit/AppKit has
+            // a rendered layer to hit-test against. Without it, hits fall through to whatever
+            // is behind the toolbar when hosted in a UIKit navigation bar ToolbarItem.
+            // systemBackground adapts to light/dark mode and is visually invisible here.
+            .background(Color(UIColor.systemBackground))
+            .contentShape(Rectangle())
     }
 }
 
