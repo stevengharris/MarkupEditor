@@ -35,6 +35,7 @@ public struct InsertToolbar: View {
                     systemName: "link",
                     action: { MarkupEditor.selectedWebView?.showPluggableLinkPopover() },
                     active: Binding<Bool>(get: { selectionState.isInLink }, set: { _ = $0 }),
+                    help: ToolbarContents.shared.helpContents.link,
                     onHover: { over in if over { hoverLabel = Text("Insert Link") } else { hoverLabel = Text("Insert") } }
                 )
             }
@@ -43,6 +44,7 @@ public struct InsertToolbar: View {
                     systemName: "photo",
                     action: { MarkupEditor.selectedWebView?.showPluggableImagePopover() },
                     active: Binding<Bool>(get: { selectionState.isInImage }, set: { _ = $0 }),
+                    help: ToolbarContents.shared.helpContents.image,
                     onHover: { over in if over { hoverLabel = Text("Insert Image") } else { hoverLabel = Text("Insert") } }
                 )
             }
@@ -51,6 +53,7 @@ public struct InsertToolbar: View {
                     systemName: "squareshape.split.3x3",
                     action: { MarkupEditor.selectedWebView?.showPluggableTablePopover() },
                     active: Binding<Bool>(get: { selectionState.isInTable }, set: { _ = $0 }),
+                    help: ToolbarContents.shared.helpContents.table,
                     onHover: { over in if over { hoverLabel = Text(selectionState.isInTable ? "Edit Table" : "Insert Table") } else { hoverLabel = Text("Insert") } }
                 )
                 .forcePopover(isPresented: $showTablePopover) {

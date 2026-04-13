@@ -20,11 +20,13 @@ public struct CorrectionToolbar: View {
             ToolbarImageButton(
                 systemName: "arrow.uturn.backward",
                 action: { observedWebView.selectedWebView?.undo() },
+                help: ToolbarContents.shared.helpContents.undo,
                 onHover: { over in hoverLabel = Text(over ? "Undo" : "Correction") }
             )
             ToolbarImageButton(
                 systemName: "arrow.uturn.forward",
                 action: { observedWebView.selectedWebView?.redo() },
+                help: ToolbarContents.shared.helpContents.redo,
                 onHover: { over in hoverLabel = Text(over ? "Redo" : "Correction") }
             )
         }
