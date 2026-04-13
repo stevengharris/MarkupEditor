@@ -19592,6 +19592,29 @@ var tableMenu = {
 	header: true,
 	border: true
 };
+var help = {
+	style: "Set paragraph style",
+	bold: "Toggle bold",
+	italic: "Toggle italic",
+	underline: "Toggle underline",
+	code: "Toggle code",
+	strikethrough: "Toggle strikethrough",
+	subscript: "Toggle subscript",
+	superscript: "Toggle superscript",
+	bullet: "Toggle bulleted list",
+	number: "Toggle numbered list",
+	indent: "Increase indent",
+	outdent: "Decrease indent",
+	link: "Insert/edit link",
+	image: "Insert/edit image",
+	table: "Insert/edit table",
+	search: "Toggle search",
+	searchForward: "Search forward",
+	searchBackward: "Search backward",
+	matchCase: "Match case",
+	undo: "Undo",
+	redo: "Redo"
+};
 var augmentation = {
 	prepend: null,
 	append: null
@@ -19628,6 +19651,7 @@ var toolbarConfig = {
 	styleMenu: styleMenu,
 	styleBar: styleBar,
 	tableMenu: tableMenu,
+	help: help,
 	augmentation: augmentation,
 	icons: icons
 };
@@ -21440,10 +21464,11 @@ class LinkItem extends DialogItem {
     super(config);
     let keymap = this.config.keymap;
     let icons = config.toolbar.icons;
+    let help = config.toolbar.help;
     let options = {
       enable: () => { return true }, // Always enabled because it is presented modally
       active: (state) => { return markActive(state, state.schema.marks.link) },
-      title: 'Insert/edit link' + keyString('link', keymap),
+      title: help.link + keyString('link', keymap),
       icon: icons.link
     };
 
@@ -21755,10 +21780,11 @@ class ImageItem extends DialogItem {
   constructor(config) {
     super(config);
     let icons = config.toolbar.icons;
+    let help = config.toolbar.help;
     let options = {
       enable: () => { return true }, // Always enabled because it is presented modally
       active: (state) => { return getImageAttributes(state).src  },
-      title: 'Insert/edit image' + keyString('image', config.keymap),
+      title: help.image + keyString('image', config.keymap),
       icon: icons.image
     };
 
@@ -22172,10 +22198,11 @@ class SearchItem {
   constructor(config) {
     let keymap = config.keymap;
     this.icons = config.toolbar.icons;
+    this.help = config.toolbar.help;
     let options = {
       enable: () => { return true },
       active: () => { return this.showing() },
-      title: 'Toggle search' + keyString('search', keymap),
+      title: this.help.search + keyString('search', keymap),
       icon: this.icons.search,
       id: prefix + '-searchitem'
     };
@@ -22299,11 +22326,11 @@ class SearchItem {
 
     // The searchBackward and searchForward buttons don't need updating
     let searchBackward = this.searchBackwardCommand.bind(this);
-    let searchBackwardItem = cmdItem(searchBackward, {title: "Search backward", icon: this.icons.searchBackward});
+    let searchBackwardItem = cmdItem(searchBackward, {title: this.help.searchBackward, icon: this.icons.searchBackward});
     let searchBackwardDom = searchBackwardItem.render(view).dom;
     let searchBackwardSpan = crelt("span", {class: prefix + "-menuitem"}, searchBackwardDom);
     let searchForward = this.searchForwardCommand.bind(this);
-    let searchForwardItem = cmdItem(searchForward, {title: "Search forward", icon: this.icons.searchForward});
+    let searchForwardItem = cmdItem(searchForward, {title: this.help.searchForward, icon: this.icons.searchForward});
     let searchForwardDom = searchForwardItem.render(view).dom;
     let searchForwardSpan = crelt("span", {class: prefix + "-menuitem"}, searchForwardDom);
     let separator = crelt("span", {class: prefix + "-menuseparator"});
@@ -22315,7 +22342,7 @@ class SearchItem {
     let toggleMatchCase = this.toggleMatchCaseCommand.bind(this);
     this.matchCaseItem = cmdItem(
       toggleMatchCase, {
-        title: "Match case", 
+        title: this.help.matchCase, 
         icon: this.icons.matchCase,
         enable: () => {return true},
         active: () => {return this.caseSensitive}
@@ -22499,7 +22526,8 @@ function markActive(state, type) {
  * @returns string
  */
 function keyString(itemName, keymap) {
-  return ' (' + baseKeyString(itemName, keymap) + ')'
+  let base = baseKeyString(itemName, keymap);
+  return (base.length > 0) ? ' (' + base + ')' : ''
 }
 
 function baseKeyString(itemName, keymap) {
@@ -22775,6 +22803,7 @@ function insertBarItems(config) {
 
 function tableMenuItems(config) {
   let icons = config.toolbar.icons;
+  let help = config.toolbar.help;
   let items = [];
   let { header, border } = config.toolbar.tableMenu;
   items.push(new TableCreateSubmenu({title: 'Insert table', label: 'Insert'}));
@@ -22818,7 +22847,7 @@ function tableMenuItems(config) {
         enable: (state) => { return isTableSelected(state) }
       }));
   }
-  return new Dropdown(items, { title: 'Insert/edit table', icon: icons.table })
+  return new Dropdown(items, { title: help.table, icon: icons.table })
 }
 
 function tableEditItem(command, options) {
@@ -22854,25 +22883,26 @@ function tableBorderItem(command, options) {
 function styleBarItems(config, schema) {
   let keymap = config.keymap;
   let icons = config.toolbar.icons;
+  let help = config.toolbar.help;
   let items = [];
   let { list, dent } = config.toolbar.styleBar;
   if (list) {
     let bullet = toggleListItem(
       schema,
       schema.nodes.bullet_list,
-      { title: 'Toggle bulleted list' + keyString('bullet', keymap), icon: icons.bulletList }
+      { title: help.bullet + keyString('bullet', keymap), icon: icons.bulletList }
     );
     let number = toggleListItem(
       schema,
       schema.nodes.ordered_list,
-      { title: 'Toggle numbered list' + keyString('number', keymap), icon: icons.orderedList }
+      { title: help.number + keyString('number', keymap), icon: icons.orderedList }
     );
     items.push(bullet);
     items.push(number);
   }
   if (dent) {
-    let indent = indentItem({ title: 'Increase indent' + keyString('indent', keymap), icon: icons.blockquote });
-    let outdent = outdentItem({ title: 'Decrease indent' + keyString('outdent', keymap), icon: icons.lift });
+    let indent = indentItem({ title: help.indent + keyString('indent', keymap), icon: icons.blockquote });
+    let outdent = outdentItem({ title: help.outdent + keyString('outdent', keymap), icon: icons.lift });
     items.push(indent);
     items.push(outdent);
   }
@@ -22922,15 +22952,16 @@ function outdentItem(options) {
 function formatItems(config, schema) {
   let keymap = config.keymap;
   let icons = config.toolbar.icons;
+  let help = config.toolbar.help;
   let items = [];
   let { bold, italic, underline, code, strikethrough, subscript, superscript } = config.toolbar.formatBar;
-  if (bold) items.push(formatItem(schema.marks.strong, 'B', { title: 'Toggle bold' + keyString('bold', keymap), icon: icons.strong }));
-  if (italic) items.push(formatItem(schema.marks.em, 'I', { title: 'Toggle italic' + keyString('italic', keymap), icon: icons.em }));
-  if (underline) items.push(formatItem(schema.marks.u, 'U', { title: 'Toggle underline' + keyString('underline', keymap), icon: icons.u }));
-  if (code) items.push(formatItem(schema.marks.code, 'CODE', { title: 'Toggle code' + keyString('code', keymap), icon: icons.code }));
-  if (strikethrough) items.push(formatItem(schema.marks.s, 'DEL', { title: 'Toggle strikethrough' + keyString('strikethrough', keymap), icon: icons.s }));
-  if (subscript) items.push(formatItem(schema.marks.sub, 'SUB', { title: 'Toggle subscript' + keyString('subscript', keymap), icon: icons.sub }));
-  if (superscript) items.push(formatItem(schema.marks.sup, 'SUP', { title: 'Toggle superscript' + keyString('superscript', keymap), icon: icons.sup }));
+  if (bold) items.push(formatItem(schema.marks.strong, 'B', { title: help.bold + keyString('bold', keymap), icon: icons.strong }));
+  if (italic) items.push(formatItem(schema.marks.em, 'I', { title: help.italic + keyString('italic', keymap), icon: icons.em }));
+  if (underline) items.push(formatItem(schema.marks.u, 'U', { title: help.underline + keyString('underline', keymap), icon: icons.u }));
+  if (code) items.push(formatItem(schema.marks.code, 'CODE', { title: help.code + keyString('code', keymap), icon: icons.code }));
+  if (strikethrough) items.push(formatItem(schema.marks.s, 'DEL', { title: help.strikethrough + keyString('strikethrough', keymap), icon: icons.s }));
+  if (subscript) items.push(formatItem(schema.marks.sub, 'SUB', { title: help.subscript + keyString('subscript', keymap), icon: icons.sub }));
+  if (superscript) items.push(formatItem(schema.marks.sup, 'SUP', { title: help.superscript + keyString('superscript', keymap), icon: icons.sup }));
   return items;
 }
 
@@ -22954,6 +22985,7 @@ function formatItem(markType, markName, options) {
  */
 function styleMenuItems(config, schema) {
   let keymap = config.keymap;
+  let help = config.toolbar.help;
   let items = [];
   let { p, h1, h2, h3, h4, h5, h6, pre } = config.toolbar.styleMenu;
   if (p) items.push(new ParagraphStyleItem(schema.nodes.paragraph, 'P', { label: p, keymap: baseKeyString('p', keymap) }));
@@ -22974,10 +23006,10 @@ function styleMenuItems(config, schema) {
       return label ? (multiple ? label + '+' : label) : styleElement
     };
     let allLabels = [p, h1, h2, h3, h4, h5, h6, pre].filter(Boolean).flatMap(l => [l, l + '+']);
-    return [new Dropdown(items, { title: 'Set paragraph style', label: 'Style', titleUpdate: titleUpdate, labels: allLabels})]
+    return [new Dropdown(items, { title: help.style, label: 'Style', titleUpdate: titleUpdate, labels: allLabels})]
   } else {
     let icons = config.toolbar.icons;
-    return [new Dropdown(items, { title: 'Set paragraph style', icon: icons.paragraphStyle })]
+    return [new Dropdown(items, { title: help.style, icon: icons.paragraphStyle })]
   }
 }
 
