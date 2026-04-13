@@ -35,6 +35,7 @@ public class ToolbarContents {
     public var styleMenu: StyleMenu
     public var formatContents: FormatContents
     public var tableContents: TableContents
+    public var helpContents: HelpContents
 
     public enum PopoverType: String, CaseIterable {
         case link
@@ -53,7 +54,8 @@ public class ToolbarContents {
         styleContents: StyleContents = StyleContents(),
         styleMenu: StyleMenu = StyleMenu(),
         formatContents: FormatContents = FormatContents(),
-        tableContents: TableContents = TableContents()
+        tableContents: TableContents = TableContents(),
+        helpContents: HelpContents = HelpContents()
     ) {
         self.leftToolbar = leftToolbar ? MarkupEditor.leftToolbar != nil : false
         self.correction = correction
@@ -66,6 +68,8 @@ public class ToolbarContents {
         self.styleMenu = styleMenu
         self.formatContents = formatContents
         self.tableContents = tableContents
+        self.helpContents = helpContents
+        
     }
 
     public init(toolbarConfig: ToolbarConfig, leftToolbar: Bool = false, rightToolbar: Bool = false) {
@@ -92,6 +96,7 @@ public class ToolbarContents {
             subSuper: (toolbarConfig.formatBar["subscript"] ?? false) || (toolbarConfig.formatBar["superscript"] ?? false)
         )
         tableContents = TableContents(border: toolbarConfig.tableMenu["border"] ?? true)
+        helpContents = HelpContents(toolbarConfig.help)
     }
 
     public static func from(_ toolbarContents: ToolbarContents) -> ToolbarContents{
@@ -182,5 +187,54 @@ public struct TableContents {
 
     public init(border: Bool = true) {
         self.border = border
+    }
+}
+
+/// The help/hover labels for ToolbarImageButtons
+public struct HelpContents {
+    public var style: String
+    public var bold: String
+    public var italic: String
+    public var underline: String
+    public var code: String
+    public var strikethrough: String
+    public var `subscript`: String
+    public var superscript: String
+    public var bullet: String
+    public var number: String
+    public var indent: String
+    public var outdent: String
+    public var link: String
+    public var image: String
+    public var table: String
+    public var search: String
+    public var searchForward: String
+    public var searchBackward: String
+    public var matchCase: String
+    public var undo: String
+    public var redo: String
+    
+    public init(_ help: [String : String] = [:]) {
+        style = help["style"] ?? ""
+        bold = help["bold"] ?? ""
+        italic = help["italic"] ?? ""
+        underline = help["underline"] ?? ""
+        code = help["code"] ?? ""
+        strikethrough = help["strikethrough"] ?? ""
+        `subscript` = help["subscript"] ?? ""
+        superscript = help["superscript"] ?? ""
+        bullet = help["bullet"] ?? ""
+        number = help["number"] ?? ""
+        indent = help["indent"] ?? ""
+        outdent = help["outdent"] ?? ""
+        link = help["link"] ?? ""
+        image = help["image"] ?? ""
+        table = help["table"] ?? ""
+        search = help["search"] ?? ""
+        searchForward = help["searchForward"] ?? ""
+        searchBackward = help["searchBackward"] ?? ""
+        matchCase = help["matchCase"] ?? ""
+        undo = help["undo"] ?? ""
+        redo = help["redo"] ?? ""
     }
 }

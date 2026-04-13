@@ -24,18 +24,21 @@ public struct FormatToolbar: View {
                 systemName: "bold",
                 action: { observedWebView.selectedWebView?.bold() },
                 active: $selectionState.bold,
-                onHover: { over in hoverLabel = Text(over ? "Bold" : "Text Format") }
+                help: ToolbarContents.shared.helpContents.bold,
+                onHover: onHover(over:)
             )
             ToolbarImageButton (
                 systemName: "italic",
                 action: { observedWebView.selectedWebView?.italic() },
                 active: $selectionState.italic,
+                help: ToolbarContents.shared.helpContents.italic,
                 onHover: { over in hoverLabel = Text(over ? "Italic" : "Text Format") }
             )
             ToolbarImageButton(
                 systemName: "underline",
                 action: { observedWebView.selectedWebView?.underline() },
                 active: $selectionState.underline,
+                help: ToolbarContents.shared.helpContents.underline,
                 onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
             )
             if contents.code {
@@ -43,6 +46,7 @@ public struct FormatToolbar: View {
                     systemName: "curlybraces",
                     action: { observedWebView.selectedWebView?.code() },
                     active: $selectionState.code,
+                    help: ToolbarContents.shared.helpContents.code,
                     onHover: { over in hoverLabel = Text(over ? "Code" : "Text Format") }
                 )
             }
@@ -51,6 +55,7 @@ public struct FormatToolbar: View {
                     systemName: "strikethrough",
                     action: { observedWebView.selectedWebView?.strike() },
                     active: $selectionState.strike,
+                    help: ToolbarContents.shared.helpContents.strikethrough,
                     onHover: { over in hoverLabel = Text(over ? "Strikethrough" : "Text Format") }
                 )
             }
@@ -59,16 +64,22 @@ public struct FormatToolbar: View {
                     systemName: "textformat.subscript",
                     action: { observedWebView.selectedWebView?.subscriptText() },
                     active: $selectionState.sub,
+                    help: ToolbarContents.shared.helpContents.subscript,
                     onHover: { over in hoverLabel = Text(over ? "Subscript" : "Text Format") }
                 )
                 ToolbarImageButton(
                     systemName: "textformat.superscript",
                     action: { observedWebView.selectedWebView?.superscript() },
                     active: $selectionState.sup,
+                    help: ToolbarContents.shared.helpContents.superscript,
                     onHover: { over in hoverLabel = Text(over ? "Superscript" : "Text Format") }
                 )
             }
         }
+    }
+    
+    func onHover(over: Bool) {
+        hoverLabel = Text(over ? "Bold" : "Text Format")
     }
 }
 

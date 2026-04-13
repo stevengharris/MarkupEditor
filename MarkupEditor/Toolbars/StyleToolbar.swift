@@ -47,6 +47,7 @@ public struct StyleToolbar: View {
                         Text(selectionState.style.name)
                             .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
                     }
+                    .help(ToolbarContents.shared.helpContents.style)
                     .buttonStyle(.borderless)
                     .menuStyle(.button)         // Not available until iOS 16
                     .frame(width: 88, height: toolbarStyle.buttonHeight())
@@ -70,6 +71,7 @@ public struct StyleToolbar: View {
                         Text(selectionState.style.name)
                             .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
                     }
+                    .help(ToolbarContents.shared.helpContents.style)
                     .menuStyle(.borderlessButton)   // Deprecated as of iOS14
                     .frame(width: 88, height: toolbarStyle.buttonHeight())
                     .overlay(
@@ -93,6 +95,7 @@ public struct StyleToolbar: View {
                         systemName: "list.bullet",
                         action: { observedWebView.selectedWebView?.toggleListItem(type: .UL) },
                         active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .UL }, set: { _ = $0 }),
+                        help: ToolbarContents.shared.helpContents.bullet,
                         onHover: { over in hoverLabel = Text(over ? "Bullets" : "Paragraph Style") }
                     )
                 case .number:
@@ -100,6 +103,7 @@ public struct StyleToolbar: View {
                         systemName: "list.number",
                         action: { observedWebView.selectedWebView?.toggleListItem(type: .OL) },
                         active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
+                        help: ToolbarContents.shared.helpContents.number,
                         onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
                     )
                 }
@@ -110,12 +114,14 @@ public struct StyleToolbar: View {
                     systemName: "increase.indent",
                     action: { observedWebView.selectedWebView?.indent() },
                     active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                    help: ToolbarContents.shared.helpContents.indent,
                     onHover: { over in hoverLabel = Text(over ? "Indent" : "Paragraph Style") }
                 )
                 ToolbarImageButton(
                     systemName: "decrease.indent",
                     action: { observedWebView.selectedWebView?.outdent() },
                     active: Binding<Bool>(get: { selectionState.quote }, set: { _ = $0 }),
+                    help: ToolbarContents.shared.helpContents.outdent,
                     onHover: { over in hoverLabel = Text(over ? "Outdent" : "Paragraph Style") }
                 )
             }

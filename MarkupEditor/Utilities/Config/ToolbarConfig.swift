@@ -21,6 +21,7 @@ public struct ToolbarConfig: JSONConfigurable {
     public var styleMenu: [String: String?]
     public var styleBar: [String: Bool]
     public var tableMenu: [String: Bool]
+    public var help: [String : String]
     public var augmentation: [String: Bool?]
     public var icons: [String: String]
     
@@ -65,6 +66,7 @@ public struct ToolbarConfig: JSONConfigurable {
             styleMenu: [:],
             styleBar: [:],
             tableMenu: [:],
+            help: [:],
             augmentation: [:],
             icons: [:]
         )
