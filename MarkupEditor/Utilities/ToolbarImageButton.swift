@@ -1,5 +1,5 @@
 //
-//  ToolbarButton.swift
+//  ToolbarImageButton.swift
 //  MarkupEditor
 //
 //  Created by Steven Harris on 4/5/21.
