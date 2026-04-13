@@ -48,6 +48,29 @@
         "header": true,
         "border": true
     },
+    "help": {
+        "style": "Set paragraph style",
+        "bold": "Toggle bold",
+        "italic": "Toggle italic",
+        "underline": "Toggle underline",
+        "code": "Toggle code",
+        "strikethrough": "Toggle strikethrough",
+        "subscript": "Toggle subscript",
+        "superscript": "Toggle superscript",
+        "bullet": "Toggle bulleted list",
+        "number": "Toggle numbered list",
+        "indent": "Increase indent",
+        "outdent": "Decrease indent",
+        "link": "Insert/edit link",
+        "image": "Insert/edit image",
+        "table": "Insert/edit table",
+        "search": "Toggle search",
+        "searchForward": "Search forward",
+        "searchBackward": "Search backward",
+        "matchCase": "Match case",
+        "undo": "Undo",
+        "redo": "Redo"
+    },
     "augmentation": {
         "prepend": null,
         "append": null
