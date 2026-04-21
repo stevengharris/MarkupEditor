@@ -16726,6 +16726,20 @@ function getDataImages() {
 }
 
 /**
+ * Return an array of `src` attributes for images that contain relative references, empty if there are none.
+ * 
+ * @returns {Array<string>}
+ */
+function getLocalImages() {
+    const isAbsoluteURL = src => { try { return !!new URL(src) } catch { return false } };
+    const isRelative = src =>
+        !!src && !isAbsoluteURL(src) && !src.startsWith('data:') && !src.startsWith('/');
+    return Array.from(activeEditorElement().getElementsByTagName('img'))
+        .map(img => img.getAttribute('src'))
+        .filter(isRelative)
+}
+
+/**
  * We saved an image at a new location or translated it from data to a file reference, 
  * so we need to update the document to reflect it.
  * 
@@ -24891,6 +24905,7 @@ const MU = {
     focusOn,
     focused,
     getDataImages,
+    getLocalImages,
     getHTML,
     getHeight,
     getImageAttributes,

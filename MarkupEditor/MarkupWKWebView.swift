@@ -1002,6 +1002,20 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    public func getLocalImages(handler: (([String])->Void)?) {
+        executeJavaScript("MU.getLocalImages()") { result, error in
+            if let error {
+                Logger.webview.error("Error: \(error)")
+            }
+            if let srcArray = result as? [String] {
+                handler?(srcArray)
+            } else {
+                Logger.webview.error("Error: Could not getLocalImages.")
+                handler?([])
+            }
+        }
+    }
+    
     /// Copy both the html for the image and the image itself to the clipboard.
     ///
     /// Why copy both? For copy/paste within the document itself, we always want to paste the HTML. The html

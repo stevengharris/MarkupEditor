@@ -1,4 +1,5 @@
 .DS_Store
+.nexus.yml
 .build/
 .swiftpm/xcode/
 xcuserdata/
