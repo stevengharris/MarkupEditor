@@ -1557,7 +1557,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         bold(handler: nil)
     }
     
@@ -1577,7 +1579,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         italic(handler: nil)
     }
     
@@ -1596,7 +1600,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         underline(handler: nil)
     }
     
@@ -1615,7 +1621,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         code(handler: nil)
     }
     
@@ -1634,7 +1642,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         strike(handler: nil)
     }
     
@@ -1653,7 +1663,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         subscriptText(handler: nil)
     }
     
@@ -1672,7 +1684,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // This is bit of a hack to avoid doing executeJavaScript for the hotkey
         // when invoked from Swift when it is handled in the web view itself. This way,
         // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        #if os(macOS) && !targetEnvironment(macCatalyst)
         guard NSApp.currentEvent?.type != .keyDown else { return }
+        #endif
         superscript(handler: nil)
     }
     
