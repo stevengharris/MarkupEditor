@@ -1554,6 +1554,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func bold() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         bold(handler: nil)
     }
     
@@ -1570,6 +1574,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func italic() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         italic(handler: nil)
     }
     
@@ -1585,6 +1593,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func underline() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         underline(handler: nil)
     }
     
@@ -1600,6 +1612,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func code() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         code(handler: nil)
     }
     
@@ -1615,6 +1631,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func strike() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         strike(handler: nil)
     }
     
@@ -1630,6 +1650,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func subscriptText() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         subscriptText(handler: nil)
     }
     
@@ -1645,6 +1669,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     
     // Required for menu support
     @objc public func superscript() {
+        // This is bit of a hack to avoid doing executeJavaScript for the hotkey
+        // when invoked from Swift when it is handled in the web view itself. This way,
+        // the hotkey shows in the menu, and it works, but the action doesn't happen twice.
+        guard NSApp.currentEvent?.type != .keyDown else { return }
         superscript(handler: nil)
     }
     
