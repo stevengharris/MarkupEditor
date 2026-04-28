@@ -15,8 +15,11 @@ import AppKit
 import UIKit
 #endif
 
-/// A struct that is populated from Resources/keymapconfig.json and provides easy access to its settings.
-/// The json file is the source of truth, and its settings will be used by the MarkupWKWebView unless overridden.
+/// A struct that is loaded from keymapconfig.json and provides easy access to its settings. The loading operation
+/// first looks for the json file in the `main` bundle, and if it is not present, falls back to the json file provided
+/// in the Resources directory of the MarkupEditor package. This provides a simple mechanism for applications
+/// to change the defaults, by providing their own version of the json file in their application. The json file
+/// is the source of truth, and its settings will be used by the MarkupWKWebView.
 ///
 /// The keymap format uses modifier prefixes:
 /// - `Mod-` maps to Command
@@ -27,10 +30,11 @@ import UIKit
 ///
 /// Note that keymapconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base).
 public struct KeymapConfig: JSONConfigurable {
-    public let bindings: [String: [KeyBinding]]
+    public var bindings: [String: [KeyBinding]]
     
-    public init(bindings: [String: [KeyBinding]]) {
-        self.bindings = bindings
+    public init() {
+        let config = KeymapConfig.load()
+        bindings = config.bindings
     }
     
     public init(from decoder: Decoder) throws {
@@ -43,7 +47,11 @@ public struct KeymapConfig: JSONConfigurable {
                 result[key.stringValue] = [single]
             }
         }
-        self.bindings = result
+        bindings = result
+    }
+    
+    private init(bindings: [String: [KeyBinding]]) {
+        self.bindings = bindings
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -57,38 +65,42 @@ public struct KeymapConfig: JSONConfigurable {
             }
         }
     }
-
-    /// Load from the bundled keymapconfig.json resource.
+    
     private static func load() -> KeymapConfig {
+        let mainBundle = Bundle.main
         #if SWIFT_PACKAGE
-        let bundle = Bundle.module
+                let packageBundle = Bundle.module   // Bundle.module is only accessible within BaseTests
         #else
-        let bundle = Bundle(for: MarkupWKWebView.self)
+                let packageBundle = Bundle(for: MarkupWKWebView.self)
         #endif
+        guard let path =
+                mainBundle.path(forResource: "keymapconfig", ofType: "json") ??
+                packageBundle.path(forResource: "keymapconfig", ofType: "json") else {
+            Logger.config.error("The keymapconfig.json resource could not be found in bundle")
+            return KeymapConfig.empty()
+        }
+        let url = URL(filePath: path, directoryHint: .notDirectory)
         do {
-            guard let path = bundle.path(forResource: "keymapconfig", ofType: "json") else {
-                fatalError("The keymapconfig.json resource could not be found in bundle")
-            }
-            let url = URL(filePath: path, directoryHint: .notDirectory)
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode(KeymapConfig.self, from: data)
         } catch let error {
-            Logger.config.error("\(error.localizedDescription)")
-            return none()
+            Logger.config.error("Error decoding KeymapConfig from \(path): \(error.localizedDescription)")
+            return KeymapConfig.empty()
         }
     }
     
-    public static func standard() -> KeymapConfig {
-        load()
-    }
-    
-    public static func none() -> KeymapConfig {
+    private static func empty() -> KeymapConfig {
         KeymapConfig(bindings: [:])
     }
     
     /// Look up a binding by action name. Returns nil if no binding exists.
     public func binding(for action: String) -> KeyBinding? {
         bindings[action]?.first
+    }
+    
+    /// Override the protocol default to return `none()` on decode failure instead of nil.
+    public static func fromJSON(_ string: String) -> KeymapConfig {
+        (self as JSONConfigurable.Type).fromJSON(string) as? KeymapConfig ?? empty()
     }
 }
 
@@ -196,6 +208,3 @@ public struct KeyBinding: Codable {
         return KeyBinding(keyEquivalent: remaining.lowercased(), modifierString: modifierParts)
     }
 }
-
-
-

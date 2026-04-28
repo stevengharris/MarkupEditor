@@ -1,7 +1,7 @@
 {
     "visibility": {
         "toolbar": true,
-        "correctionBar": true,
+        "correctionBar": false,
         "insertBar": true,
         "styleMenu": true,
         "styleBar": true,
@@ -27,8 +27,8 @@
         "underline": true,
         "code": true,
         "strikethrough": true,
-        "subscript": true,
-        "superscript": true
+        "subscript": false,
+        "superscript": false
     },
     "styleMenu": {
         "p": "Normal",

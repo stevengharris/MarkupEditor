@@ -14,6 +14,29 @@ import MarkupEditor
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
+    // A note on toolbar configuration illustrated here in the demo for Mac Catalyst and iOS...
+    //
+    // On MacOS, the source of truth for toolbar configuration and general behavior of the
+    // MarkupEditor is contained in the toolbarconfig.json, keymapconfig.json, and
+    // behaviorconfig.json. The Swift MarkupEditor default configuration is provided with
+    // the MarkupEditor package and can be overridden by supplying your own versions of these
+    // files with your application package. Refer to the note in the MacOS section below
+    // for more information about configuration on MacOS.
+    //
+    // The Swift MarkupEditor on Mac Catalyst and iOS predates the MacOS version. It has
+    // pre-existing mechanisms for configuration. For the toolbar, that is principally
+    // ToolbarContents. Mac Catalyst and iOS users should continue to use ToolbarContents
+    // as the mechanism to customize the MarkupToolbar. (The MacOS version does not use
+    // the Swift MarkupToolbar.) See the example embedded in the init() below for how to
+    // customize the MarkupToolbar contents.
+    //
+    // Note that ToolbarContents has less flexibility to configure the Swift MarkupToolbar than
+    // is used for MacOS in toolbarconfig.json. For example, while you can control the contents of
+    // the Swift InsertToolbar via ToolbarContents, you cannot control the contents of the Swift
+    // FormatToolbar, and you cannot control the ordering of elements in the Swift MarkupToolbar.
+    // This mismatch between Swift MarkupToolbar configurability on Mac Catalyst and iOS vs the
+    // markupeditor-base toolbar configurability used for MacOS will likely continue.
+    
     override init() {
         MarkupEditor.style = .compact
         MarkupEditor.allowLocalImages = true
@@ -21,42 +44,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // menu in iOS/macCatalyst 16.4 or higher.
         MarkupEditor.isInspectable = true
         
-        // A note on toolbar configuration illustrated here in the demo...
+        // Here is an example that adds in the CorrectionToolbar and modifies some of the
+        // FormatToolbar contents. Note that the MarkupEditor adjusts the MarkupMenu properly to
+        // correspond to ToolbarContents.custom...
         //
-        // The source of truth for toolbar configuration is ToolbarConfig, which takes its data from
-        // Resources/toolbarconfig.json and Resources/keymapconfig.json. This approach lets the base
-        // configuration be defined in markupeditor-base, not in the Swift MarkupEditor. However, the
-        // Swift MarkupEditor predates markupeditor-base and had hardcoded things, like the names of
-        // paragraph styles that are displayed in the toolbar. The markupeditor-base toolbarconfig.json
-        // and keymapconfig.json provide a lot more flexibility in configuration. For example, the
-        // paragraph style names and icons are configurable. To preserve compatibility and avoid
-        // surprising existing MarkupEditor users, we specify the Swift MarkupEditor paragraph style
-        // names and the icons in Resources/toolbarconfig.json. These values are different from
-        // markupeditor-base.json, but that's the entire point of externalizing the configuration! Thus,
-        // for example, the name for an HTML "P" is "Normal" for Swift apps but "Body" when using
-        // markupeditor-base directly in, say, a JavaScript app. Similarly, the icons in the toolbar
-        // come from SFSymbols for Swift apps, but when using markupeditor-base, the default icons
-        // come from Material Design.
-        
-        // Because the Swift MarkupEditor predates markupeditor-base, it has its own definition and way to
-        // control the the MarkupToolbar's contents: ToolbarContents. Thus, for demo purposes and in your own
-        // app to customize ToolbarContents, you should 1) start with ToolbarConfig; 2) make any changes you
-        // want, 3) create a custom ToolbarContents instance from your ToolbarConfig; and finally, assign
-        // that ToolbarContents instance to ToolbarContents.custom. That is what we are doing below for
-        // iOS and Mac Catalyst demo versions so that they have the same presentation in the Demo's
-        // MarkupToolbar as they always have had. Namely, `underline` is a format option, whereas the
-        // default `markdown()` formatting options don't include it.
+        //          let myToolbarContents = ToolbarContents(
+        //              correction: true,  // Put the undo/redo buttons in
+        //              // Remove code, strikethrough, subscript, and superscript as formatting options
+        //              formatContents: FormatContents(code: false, strike: false, subSuper: false)
+        //          )
+        //          ToolbarContents.custom = myToolbarContents
         //
-        // The MacOS version uses the html/css toolbar that comes with markupeditor-base, rather than the
-        // SwiftUI toolbar used for iOS and Mac Catalyst. Its contents and functionality are the same, but
-        // the MacOS toolbar has a few differences in behavior from the SwiftUI toolbar.
-        //
-        // Refer to https://stevengharris.github.io/markupeditor-base/guide/index.html#configuration for more
-        // details about configuration.
-        var toolbarConfig = ToolbarConfig.markdown()
-        toolbarConfig.formatBar["underline"] = true
-        let myToolbarContents = ToolbarContents(toolbarConfig: toolbarConfig)
-        ToolbarContents.custom = myToolbarContents
     }
     
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -248,6 +246,39 @@ import AppKit
 import MarkupEditor
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    
+    // A note on toolbar configuration for MacOS...
+    //
+    // The source of truth for toolbar configuration is ToolbarConfig, which takes its data from
+    // Resources/toolbarconfig.json and Resources/keymapconfig.json. This approach lets the base
+    // configuration be defined in markupeditor-base, not in the Swift MarkupEditor. However, the
+    // Swift MarkupEditor predates markupeditor-base and had hardcoded things, like the names of
+    // paragraph styles that are displayed in the toolbar. The markupeditor-base toolbarconfig.json
+    // and keymapconfig.json provide a lot more flexibility in configuration. For example, the
+    // paragraph style names and icons are configurable. To preserve compatibility and avoid
+    // surprising existing MarkupEditor users, we specify the Swift MarkupEditor paragraph style
+    // names and the icons in Resources/toolbarconfig.json. These values are different from
+    // markupeditor-base.json, but that's the entire point of externalizing the configuration! Thus,
+    // for example, the name for an HTML "P" is "Normal" for Swift apps but "Body" when using
+    // markupeditor-base directly in, say, a JavaScript app. Similarly, the icons in the toolbar
+    // come from SFSymbols for Swift apps, but when using markupeditor-base, the default icons
+    // come from Material Design. Similarly, because the original Swift MarkupEditor included
+    // underline formatting by default (which is not really supported in Markdown), the
+    // Resources/toolbarconfig.json file also sets underline to show by default, and specifies
+    // the hotkey to use for it in Resources/keymapconfig.json.
+    //
+    // You can override the default MarkupEditor configurations for toolbar, keymap, and behavior
+    // by packaging your own toolbarconfig.json, keymapconfig.json, and/or behaviorconfig.json
+    // into your application bundle. On MacOS, the MarkupWKWebView gets ToolbarConfig,
+    // KeymapConfig, and BehaviorConfig instances, which are then passed as attributes to the
+    // markup-editor web component. These configurations are taken from the toolbarconfig.json,
+    // keymapconfig.json, and behaviorconfig.json in your app's bundle. If you don't provide a
+    // json file for a config in your app's bundle, then it uses the json file that is provided
+    // with the MarkupEditor in Resources directory. You can see this approach in action in the
+    // demos, where a behaviorconfig.json that is bundled in the demos sets `selectImage` to
+    // `true`, enabling local images to be inserted from files on disk by surfacing a `Select...`
+    // button in the insert dialog. Otherwise, by default the MarkupEditor does not allow local
+    // images to be inserted, and no `Select...` button shows in the dialog.
 
     private var keymap: KeymapConfig?
 
@@ -260,13 +291,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
-        // Set the menu early so it's available before SwiftUI creates its window.
-        // Note: SwiftUI's WindowGroup mutates this NSMenu in-place between
-        // willFinishLaunching and didFinishLaunching, stripping items it doesn't
-        // manage (File, Edit, and any custom menus like Format). It keeps only
-        // the menus it recognizes (app menu, View, Window, Help).
-        keymap = KeymapConfig.standard()
-        NSApplication.shared.mainMenu = buildMenu()
+        keymap = KeymapConfig()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -364,11 +389,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         editMenu.addItem(findItem)
         editMenuItem.submenu = editMenu
 
-        // Format menu driven by toolbarconfig.json
-        var config = ToolbarConfig.markdown()
-        // For consistency with the original Mac Catalyst demo, add underscore back in,
-        // altho strictly speaking it ain't Markdown.
-        config.formatBar["underline"] = true
+        // Format menu driven by toolbarconfig.json in this app's bundle, not the MarkupEditor's bundle
+        let config = ToolbarConfig()
         if let formatMenu = buildFormatMenu(from: config) {
             let formatMenuItem = NSMenuItem()
             formatMenuItem.submenu = formatMenu

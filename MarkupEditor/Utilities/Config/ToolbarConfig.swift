@@ -7,9 +7,11 @@
 
 import OSLog
 
-/// A struct that is populated from Resources/toolbarconfig.json and provides easy access to its settings. The json file
-/// is the source of truth, and its settings will be used by the MarkupWKWebView unless overridden. The settings can
-/// be conveniently modified using the various static methods, such as `markdown`.
+/// A struct that is loaded from toolbarconfig.json and provides easy access to its settings. The loading operation
+/// first looks for the json file in the `main` bundle, and if it is not present, falls back to the json file provided
+/// in the Resources directory of the MarkupEditor package. This provides a simple mechanism for applications
+/// to change the defaults, by providing their own version of the json file in their application. The json file
+/// is the source of truth, and its settings will be used by the MarkupWKWebView.
 ///
 /// Note that toolbarconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base)
 /// but is modified locally to conform more with the original MarkupEditor and Mac user expectations of SFSymbols icons.
@@ -25,39 +27,68 @@ public struct ToolbarConfig: JSONConfigurable {
     public var augmentation: [String: Bool?]
     public var icons: [String: String]
     
+    public init(
+        visibility: [String: Bool],
+        ordering: [String: Int],
+        insertBar: [String: Bool],
+        formatBar: [String: Bool],
+        styleMenu: [String: String?],
+        styleBar: [String: Bool],
+        tableMenu: [String: Bool],
+        help: [String : String],
+        augmentation: [String: Bool?],
+        icons: [String: String]
+    ) {
+        self.visibility = visibility
+        self.ordering = ordering
+        self.insertBar = insertBar
+        self.formatBar = formatBar
+        self.styleMenu = styleMenu
+        self.styleBar = styleBar
+        self.tableMenu = tableMenu
+        self.help = help
+        self.augmentation = augmentation
+        self.icons = icons
+    }
+    
+    public init() {
+        let config = ToolbarConfig.load()
+        visibility = config.visibility
+        ordering = config.ordering
+        insertBar = config.insertBar
+        formatBar = config.formatBar
+        styleMenu = config.styleMenu
+        styleBar = config.styleBar
+        tableMenu = config.tableMenu
+        help = config.help
+        augmentation = config.augmentation
+        icons = config.icons
+    }
+    
     private static func load() -> ToolbarConfig {
-    #if SWIFT_PACKAGE
-        let bundle = Bundle.module   // Bundle.module is only accessible within BaseTests
-    #else
-        let bundle = Bundle(for: MarkupWKWebView.self)
-    #endif
+        let mainBundle = Bundle.main
+        #if SWIFT_PACKAGE
+                let packageBundle = Bundle.module   // Bundle.module is only accessible within BaseTests
+        #else
+                let packageBundle = Bundle(for: MarkupWKWebView.self)
+        #endif
+        guard let path =
+                mainBundle.path(forResource: "toolbarconfig", ofType: "json") ??
+                packageBundle.path(forResource: "toolbarconfig", ofType: "json") else {
+            Logger.config.error("The toolbarconfig.json resource could not be found in bundle")
+            return ToolbarConfig.empty()
+        }
+        let url = URL(filePath: path, directoryHint: .notDirectory)
         do {
-            guard let path = bundle.path(forResource: "toolbarconfig", ofType: "json") else {
-                fatalError("The toolbarconfig.json resource could not be found in bundle")
-            }
-            let url = URL(filePath: path, directoryHint: .notDirectory)
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode(ToolbarConfig.self, from: data)
         } catch let error {
-            Logger.config.error("\(error.localizedDescription)")
-            return none()
+            Logger.config.error("Error decoding ToolbarConfig from \(path): \(error.localizedDescription)")
+            return ToolbarConfig.empty()
         }
     }
     
-    public static func full() -> ToolbarConfig {
-        load()
-    }
-    
-    public static func markdown(_ correction: Bool = false) -> ToolbarConfig {
-        var markdown = load()
-        markdown.visibility["correctionBar"] = correction
-        markdown.formatBar["underline"] = false
-        markdown.formatBar["subscript"] = false
-        markdown.formatBar["superscript"] = false
-        return markdown
-    }
-    
-    public static func none() -> ToolbarConfig {
+    private static func empty() -> ToolbarConfig {
         ToolbarConfig(
             visibility: [:],
             ordering: [:],
@@ -74,7 +105,7 @@ public struct ToolbarConfig: JSONConfigurable {
     
     /// Override the protocol default to return `none()` on decode failure instead of nil.
     public static func fromJSON(_ string: String) -> ToolbarConfig {
-        (self as JSONConfigurable.Type).fromJSON(string) as? ToolbarConfig ?? none()
+        (self as JSONConfigurable.Type).fromJSON(string) as? ToolbarConfig ?? ToolbarConfig.empty()
     }
     
     /// A nil value for `styleMenu[tag.lowerCased()]` means the tag should not be in the menu
