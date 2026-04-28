@@ -18,7 +18,7 @@
     "underline": ["Mod-U", "Mod-u"],
     "strikethrough": ["Ctrl-S", "Ctrl-s"],
     "code": "Mod-`",
-    "subscript": "Ctrl-Mod--",
-    "superscript": "Ctrl-Mod-+",
+    "subscript": "",
+    "superscript": "",
     "search": ["Ctrl-F", "Ctrl-f"]
 }

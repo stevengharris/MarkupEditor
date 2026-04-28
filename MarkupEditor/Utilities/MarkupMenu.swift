@@ -26,7 +26,7 @@ import UIKit
 @MainActor
 public class MarkupMenu {
     let contents = MarkupEditor.toolbarContents
-    let keymap = KeymapConfig.standard()
+    let keymap = KeymapConfig()
     
     public init() {}
     

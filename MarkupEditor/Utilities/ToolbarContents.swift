@@ -82,7 +82,7 @@ public class ToolbarContents {
         insertContents = InsertContents(
             link: toolbarConfig.insertBar["link"] ?? true,
             image: toolbarConfig.insertBar["image"] ?? true,
-            table: toolbarConfig.insertBar["table"] ?? true,
+            table: toolbarConfig.insertBar["tableMenu"] ?? true,
         )
         styleContents = StyleContents(
             paragraph: toolbarConfig.visibility["styleMenu"] ?? true,
@@ -163,7 +163,7 @@ public struct StyleContents {
 public struct StyleMenu {
     public var items: [String: String?]
 
-    public init(toolbarConfig: ToolbarConfig = ToolbarConfig.markdown()) {
+    public init(toolbarConfig: ToolbarConfig = ToolbarConfig()) {
         items = toolbarConfig.styleMenu
     }
 }

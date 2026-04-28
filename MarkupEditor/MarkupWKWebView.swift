@@ -395,12 +395,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let behavior: String? = nil
         let keymap: String? = nil
         #else
-        var toolbarConfig = ToolbarConfig.markdown()
-        // For consistency with the Mac Catalyst demo, add back in the underline element.
-        toolbarConfig.formatBar["underline"] = true
-        let toolbar = toolbarConfig.asAttribute()
-        let behavior = BehaviorConfig.desktop().asAttribute()   // Enables selectImage
-        let keymap = KeymapConfig.standard().asAttribute()
+        var toolbar = ToolbarConfig().asAttribute()
+        let behavior = BehaviorConfig().asAttribute()
+        let keymap = KeymapConfig().asAttribute()
         #endif
         let html = """
         <!DOCTYPE html>
