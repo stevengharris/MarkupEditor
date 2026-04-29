@@ -395,9 +395,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let behavior: String? = nil
         let keymap: String? = nil
         #else
-        var toolbar = ToolbarConfig().asAttribute()
-        let behavior = BehaviorConfig().asAttribute()
-        let keymap = KeymapConfig().asAttribute()
+        let toolbar = (markupConfiguration?.toolbarConfig ?? ToolbarConfig()).asAttribute()
+        let behavior = (markupConfiguration?.behaviorConfig ?? BehaviorConfig()).asAttribute()
+        let keymap = (markupConfiguration?.keymapConfig ?? KeymapConfig()).asAttribute()
         #endif
         let html = """
         <!DOCTYPE html>
