@@ -24879,7 +24879,7 @@ class MarkupEditor {
 
 function setToolbarVisible(visible) {
     if (toolbarView) {
-        toolbarView.wrapper.style.display = visible ? '' : 'none';
+        toolbarView.toolbar.style.display = visible ? '' : 'none';
     }
 }
 
