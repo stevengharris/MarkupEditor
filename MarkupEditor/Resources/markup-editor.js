@@ -24877,6 +24877,12 @@ class MarkupEditor {
     }
 }
 
+function setToolbarVisible(visible) {
+    if (toolbarView) {
+        toolbarView.wrapper.style.display = visible ? '' : 'none';
+    }
+}
+
 /**
  * The object whose methods comprise the MarkupEditor API.
  */
@@ -24934,6 +24940,7 @@ const MU = {
     setHTML,
     setStyle,
     setTestHTML,
+    setToolbarVisible,
     setTopLevelAttributes,
     testBlockquoteEnter,
     testExtractContents,

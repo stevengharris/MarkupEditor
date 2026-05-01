@@ -912,6 +912,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
+
+    public func setToolbarVisible(_ visible: Bool) {
+        executeJavaScript("MU.setToolbarVisible(\(visible ? "true" : "false"))")
+    }
     
     /// Set the CSS padding-block bottom so that the padding fills the frame height. We do this based on markupConfiguration,
     /// which is set to true for iOS, else false.
