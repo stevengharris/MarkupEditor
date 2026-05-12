@@ -595,7 +595,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         addMenu.addItem(jsMenuItem(title: "Row Below", js: "MU.addRow(\"AFTER\")"))
         addMenu.addItem(jsMenuItem(title: "Column Before", js: "MU.addCol(\"BEFORE\")"))
         addMenu.addItem(jsMenuItem(title: "Column After", js: "MU.addCol(\"AFTER\")"))
-        if config.tableMenu["header"] == true {
+        if config.menus["tableHeader"] == true {
             addMenu.addItem(jsMenuItem(title: "Header", js: "MU.addHeader()"))
         }
         addItem.submenu = addMenu
@@ -611,7 +611,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         tableMenu.addItem(deleteItem)
 
         // Border submenu
-        if config.tableMenu["border"] == true {
+        if config.menus["tableBorder"] == true {
             let borderItem = NSMenuItem(title: "Border", action: nil, keyEquivalent: "")
             let borderMenu = NSMenu(title: "Border")
             borderMenu.addItem(jsMenuItem(title: "All", js: "MU.borderTable(\"cell\")"))

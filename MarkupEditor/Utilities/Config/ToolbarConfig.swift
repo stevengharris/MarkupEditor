@@ -18,11 +18,11 @@ import OSLog
 public struct ToolbarConfig: JSONConfigurable {
     public var visibility: [String: Bool]
     public var ordering: [String: Int]
+    public var menus: [String: Bool]
     public var insertBar: [String: Bool]
     public var formatBar: [String: Bool]
     public var styleMenu: [String: String?]
     public var styleBar: [String: Bool]
-    public var tableMenu: [String: Bool]
     public var help: [String : String]
     public var augmentation: [String: Bool?]
     public var icons: [String: String]
@@ -30,22 +30,22 @@ public struct ToolbarConfig: JSONConfigurable {
     public init(
         visibility: [String: Bool],
         ordering: [String: Int],
+        menus: [String: Bool],
         insertBar: [String: Bool],
         formatBar: [String: Bool],
         styleMenu: [String: String?],
         styleBar: [String: Bool],
-        tableMenu: [String: Bool],
         help: [String : String],
         augmentation: [String: Bool?],
         icons: [String: String]
     ) {
         self.visibility = visibility
         self.ordering = ordering
+        self.menus = menus
         self.insertBar = insertBar
         self.formatBar = formatBar
         self.styleMenu = styleMenu
         self.styleBar = styleBar
-        self.tableMenu = tableMenu
         self.help = help
         self.augmentation = augmentation
         self.icons = icons
@@ -55,11 +55,11 @@ public struct ToolbarConfig: JSONConfigurable {
         let config = ToolbarConfig.load()
         visibility = config.visibility
         ordering = config.ordering
+        menus = config.menus
         insertBar = config.insertBar
         formatBar = config.formatBar
         styleMenu = config.styleMenu
         styleBar = config.styleBar
-        tableMenu = config.tableMenu
         help = config.help
         augmentation = config.augmentation
         icons = config.icons
@@ -92,11 +92,11 @@ public struct ToolbarConfig: JSONConfigurable {
         ToolbarConfig(
             visibility: [:],
             ordering: [:],
+            menus: [:],
             insertBar: [:],
             formatBar: [:],
             styleMenu: [:],
             styleBar: [:],
-            tableMenu: [:],
             help: [:],
             augmentation: [:],
             icons: [:]
@@ -111,6 +111,10 @@ public struct ToolbarConfig: JSONConfigurable {
     /// A nil value for `styleMenu[tag.lowerCased()]` means the tag should not be in the menu
     public func name(forTag tag: String) -> String? {
         styleMenu[tag.lowercased()]!
+    }
+    
+    public func barsInOrder() -> [String] {
+        ordering.keys.sorted { ordering[$0]! < ordering[$1]! }
     }
     
 }

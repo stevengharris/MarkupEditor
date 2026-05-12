@@ -16,6 +16,11 @@
         "formatBar": 50,
         "search": 60
     },
+    "menus": {
+        "styleName": true,
+        "tableHeader": true,
+        "tableBorder": true
+    },
     "insertBar": {
         "link": true,
         "image": true,
@@ -43,10 +48,6 @@
     "styleBar": {
         "list": true,
         "dent": true
-    },
-    "tableMenu": {
-        "header": true,
-        "border": true
     },
     "help": {
         "style": "Set paragraph style",
