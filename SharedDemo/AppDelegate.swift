@@ -145,12 +145,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let zoomMenu = UIMenu(title: "", options: .displayInline, children: [zoomActual, zoomIn, zoomOut])
         builder.insertChild(zoomMenu, atStartOfMenu: .view)
         // Add Show HTML at the end of the View menu
-        let showHtml = UIKeyCommand(
+        let showHtml = UICommand(
             title: "Show HTML",
             image: UIImage(systemName: "chevron.left.slash.chevron.right"),
-            action: #selector(menuShowHtml),
-            input: "U",
-            modifierFlags: [.command, .shift]
+            action: #selector(menuShowHtml)
         )
         let showHtmlMenu = UIMenu(title: "", options: .displayInline, children: [showHtml])
         builder.insertChild(showHtmlMenu, atEndOfMenu: .view)
