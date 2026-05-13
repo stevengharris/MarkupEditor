@@ -1,6 +1,6 @@
 {
     "undo": "Mod-z",
-    "redo": "Shift-Mod-z",
+    "redo": "Mod-Shift-z",
     "link": ["Mod-K", "Mod-k"],
     "p": "Ctrl-Shift-0",
     "h1": "Ctrl-Shift-1",
@@ -11,8 +11,8 @@
     "h6": "Ctrl-Shift-6",
     "bullet": ["Ctrl-U", "Ctrl-u"],
     "number": ["Ctrl-O", "Ctrl-o"],
-    "indent": ["Mod-]", "Ctrl-q"],
-    "outdent": ["Mod-[", "Shift-Ctrl-q"],
+    "indent": ["Mod->", "Mod-]"],
+    "outdent": ["Mod-<", "Mod-["],
     "bold": ["Mod-B", "Mod-b"],
     "italic": ["Mod-I", "Mod-i"],
     "underline": ["Mod-U", "Mod-u"],

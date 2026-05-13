@@ -19895,7 +19895,7 @@ class ToolbarConfig {
 }
 
 var undo = "Mod-z";
-var redo = "Shift-Mod-z";
+var redo = "Mod-Shift-z";
 var link = [
 	"Mod-K",
 	"Mod-k"
@@ -19917,11 +19917,11 @@ var number = [
 ];
 var indent = [
 	"Mod-]",
-	"Ctrl-q"
+	"Alt->"
 ];
 var outdent = [
 	"Mod-[",
-	"Shift-Ctrl-q"
+	"Alt-<"
 ];
 var bold = [
 	"Mod-B",
