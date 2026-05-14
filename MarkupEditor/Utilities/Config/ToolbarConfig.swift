@@ -15,6 +15,44 @@ import OSLog
 ///
 /// Note that toolbarconfig.json originates in [markupeditor-base](https://github.com/stevengharris/markupeditor-base)
 /// but is modified locally to conform more with the original MarkupEditor and Mac user expectations of SFSymbols icons.
+public struct ColorPair: Codable {
+    public var light: String
+    public var dark: String
+    
+    public init(light: String, dark: String) {
+        self.light = light
+        self.dark = dark
+    }
+}
+
+public struct AppearanceConfig: Codable {
+    public var accentColor: ColorPair?
+    public var toolbarBg: ColorPair?
+    public var buttonBg: ColorPair?
+    public var borderColor: ColorPair?
+    public var hoverBg: ColorPair?
+    public var buttonSize: String?
+    public var fontSize: String?
+    
+    public init(
+        accentColor: ColorPair? = nil,
+        toolbarBg: ColorPair? = nil,
+        buttonBg: ColorPair? = nil,
+        borderColor: ColorPair? = nil,
+        hoverBg: ColorPair? = nil,
+        buttonSize: String? = nil,
+        fontSize: String? = nil
+    ) {
+        self.accentColor = accentColor
+        self.toolbarBg = toolbarBg
+        self.buttonBg = buttonBg
+        self.borderColor = borderColor
+        self.hoverBg = hoverBg
+        self.buttonSize = buttonSize
+        self.fontSize = fontSize
+    }
+}
+
 public struct ToolbarConfig: JSONConfigurable {
     public var visibility: [String: Bool]
     public var ordering: [String: Int]
@@ -26,6 +64,7 @@ public struct ToolbarConfig: JSONConfigurable {
     public var help: [String : String]
     public var augmentation: [String: Bool?]
     public var icons: [String: String]
+    public var appearance: AppearanceConfig?
     
     public init(
         visibility: [String: Bool],
@@ -37,7 +76,8 @@ public struct ToolbarConfig: JSONConfigurable {
         styleBar: [String: Bool],
         help: [String : String],
         augmentation: [String: Bool?],
-        icons: [String: String]
+        icons: [String: String],
+        appearance: AppearanceConfig? = nil
     ) {
         self.visibility = visibility
         self.ordering = ordering
@@ -49,6 +89,7 @@ public struct ToolbarConfig: JSONConfigurable {
         self.help = help
         self.augmentation = augmentation
         self.icons = icons
+        self.appearance = appearance
     }
     
     public init() {
@@ -63,6 +104,7 @@ public struct ToolbarConfig: JSONConfigurable {
         help = config.help
         augmentation = config.augmentation
         icons = config.icons
+        appearance = config.appearance
     }
     
     private static func load() -> ToolbarConfig {
@@ -99,7 +141,8 @@ public struct ToolbarConfig: JSONConfigurable {
             styleBar: [:],
             help: [:],
             augmentation: [:],
-            icons: [:]
+            icons: [:],
+            appearance: nil
         )
     }
     
