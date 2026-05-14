@@ -95,7 +95,7 @@ public class ToolbarContents {
             strike: toolbarConfig.formatBar["strikethrough"] ?? true,
             subSuper: (toolbarConfig.formatBar["subscript"] ?? false) || (toolbarConfig.formatBar["superscript"] ?? false)
         )
-        tableContents = TableContents(border: toolbarConfig.tableMenu["border"] ?? true)
+        tableContents = TableContents(border: toolbarConfig.menus["tableBorder"] ?? true)
         helpContents = HelpContents(toolbarConfig.help)
     }
 

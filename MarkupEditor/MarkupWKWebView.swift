@@ -395,9 +395,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let behavior: String? = nil
         let keymap: String? = nil
         #else
-        var toolbar = ToolbarConfig().asAttribute()
-        let behavior = BehaviorConfig().asAttribute()
-        let keymap = KeymapConfig().asAttribute()
+        let toolbar = (markupConfiguration?.toolbarConfig ?? ToolbarConfig()).asAttribute()
+        let behavior = (markupConfiguration?.behaviorConfig ?? BehaviorConfig()).asAttribute()
+        let keymap = (markupConfiguration?.keymapConfig ?? KeymapConfig()).asAttribute()
         #endif
         let html = """
         <!DOCTYPE html>
@@ -911,6 +911,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         } else {
             handler?()
         }
+    }
+
+    public func setToolbarVisible(_ visible: Bool) {
+        executeJavaScript("MU.setToolbarVisible(\(visible ? "true" : "false"))")
     }
     
     /// Set the CSS padding-block bottom so that the padding fills the frame height. We do this based on markupConfiguration,

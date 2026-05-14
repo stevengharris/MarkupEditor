@@ -23,6 +23,7 @@ import UIKit
 ///
 /// The keymap format uses modifier prefixes:
 /// - `Mod-` maps to Command
+/// - `Alt-` maps to Option
 /// - `Ctrl-` maps to Control
 /// - `Shift-` maps to Shift
 ///
@@ -116,7 +117,7 @@ private struct AnyCodingKey: CodingKey {
 /// Represents a parsed key binding with its key equivalent and modifier string.
 ///
 /// The modifier string uses the same prefix format as the JSON config:
-/// `Mod-` for Command, `Ctrl-` for Control, `Shift-` for Shift.
+/// `Mod-` for Command, `Alt-` for Option, `Ctrl-`for Control, `Shift-` for Shift.
 /// Use the `modifierMask` computed property to get platform-appropriate modifier flags.
 public struct KeyBinding: Codable {
     public let keyEquivalent: String
@@ -152,6 +153,9 @@ public struct KeyBinding: Codable {
             if remaining.hasPrefix("Mod-") {
                 flags.insert(.command)
                 remaining = String(remaining.dropFirst(4))
+            } else if remaining.hasPrefix("Alt-") {
+                flags.insert(.option)
+                remaining = String(remaining.dropFirst(4))
             } else if remaining.hasPrefix("Ctrl-") {
                 flags.insert(.control)
                 remaining = String(remaining.dropFirst(5))
@@ -172,6 +176,9 @@ public struct KeyBinding: Codable {
         while true {
             if remaining.hasPrefix("Mod-") {
                 flags.insert(.command)
+                remaining = String(remaining.dropFirst(4))
+            } else if remaining.hasPrefix("Alt-") {
+                flags.insert(.alternate)
                 remaining = String(remaining.dropFirst(4))
             } else if remaining.hasPrefix("Ctrl-") {
                 flags.insert(.control)
@@ -195,6 +202,9 @@ public struct KeyBinding: Codable {
             if remaining.hasPrefix("Mod-") {
                 modifierParts += "Mod-"
                 remaining = String(remaining.dropFirst(4))
+            } else if remaining.hasPrefix("Alt-") {
+                modifierParts += "Alt-"
+                remaining = String(remaining.dropFirst(4))
             } else if remaining.hasPrefix("Ctrl-") {
                 modifierParts += "Ctrl-"
                 remaining = String(remaining.dropFirst(5))
@@ -205,6 +215,6 @@ public struct KeyBinding: Codable {
                 break
             }
         }
-        return KeyBinding(keyEquivalent: remaining.lowercased(), modifierString: modifierParts)
+        return KeyBinding(keyEquivalent: remaining, modifierString: modifierParts)
     }
 }

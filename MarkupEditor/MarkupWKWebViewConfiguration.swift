@@ -31,6 +31,9 @@ public class MarkupWKWebViewConfiguration {
     public var userCssFile: String? = nil
     public var userResourceFiles: [String]? = nil
     public var topLevelAttributes = EditableAttributes.standard
+    public var toolbarConfig: ToolbarConfig? = nil
+    public var keymapConfig: KeymapConfig? = nil
+    public var behaviorConfig: BehaviorConfig? = nil
     #if targetEnvironment(macCatalyst)
     public var padBottom = false
     #elseif os(iOS)
