@@ -19784,6 +19784,15 @@ var toolbarConfig = {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
  *     "append": null            // Name of a registered array of cmdItems to append
  *   },
+ *   "appearance": {             // Colors (light and dark mode) and sizes, vars in toolbar.css
+ *     "accentColor": { "light": "blue", "dark": "lightblue" },
+ *     "toolbarBg":   { "light": "rgba(250, 249, 246, 0.95)", "dark": "rgba(40, 40, 43, 0.9)" },
+ *     "buttonBg":    { "light": "white", "dark": "black" },
+ *     "borderColor": { "light": "lightgray", "dark": "gray" },
+ *     "hoverBg":     { "light": "#f2f2f2", "dark": "rgb(80, 80, 80)" },
+ *     "buttonSize":  "28px",
+ *     "buttonFontSize":    "24px"
+ *   },
  *   "icons": {                  // Outlined 400 weight versions from https://fonts.google.com/icons
  *     // undo
  *     "undo": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 0 24 24\" width=\"24px\"><path d=\"M0 0h24v24H0V0z\" fill=\"none\"/><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z\"/></svg>",
@@ -25197,7 +25206,6 @@ class MarkupEditorElement extends HTMLElement {
     // Apply toolbar appearance CSS custom properties if an appearance section is present
     const appearance = this.editor.config?.toolbar?.appearance;
     if (appearance) {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const colorPairs = {
         accentColor: '--Markup-accent-color',
         toolbarBg:   '--Markup-toolbar-bg',
@@ -25209,15 +25217,24 @@ class MarkupEditorElement extends HTMLElement {
         buttonSize: '--Markup-button-size',
         buttonFontSize: '--Markup-button-font-size',
       };
-      for (const [field, varName] of Object.entries(colorPairs)) {
-        if (appearance[field] != null) {
-          this.style.setProperty(varName, isDark ? appearance[field].dark : appearance[field].light);
+      const applyColors = (isDark) => {
+        for (const [field, varName] of Object.entries(colorPairs)) {
+          if (appearance[field] != null) {
+            this.style.setProperty(varName, isDark ? appearance[field].dark : appearance[field].light);
+          }
         }
-      }
+      };
       for (const [field, varName] of Object.entries(singleValues)) {
         if (appearance[field] != null) {
           this.style.setProperty(varName, appearance[field]);
         }
+      }
+      if (typeof window.matchMedia === 'function') {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        applyColors(mq.matches);
+        mq.addEventListener('change', (e) => applyColors(e.matches));
+      } else {
+        applyColors(false);
       }
     }
 
