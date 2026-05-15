@@ -32,7 +32,7 @@ public struct AppearanceConfig: Codable {
     public var borderColor: ColorPair?
     public var hoverBg: ColorPair?
     public var buttonSize: String?
-    public var fontSize: String?
+    public var buttonFontSize: String?
     
     public init(
         accentColor: ColorPair? = nil,
@@ -41,7 +41,7 @@ public struct AppearanceConfig: Codable {
         borderColor: ColorPair? = nil,
         hoverBg: ColorPair? = nil,
         buttonSize: String? = nil,
-        fontSize: String? = nil
+        buttonFontSize: String? = nil
     ) {
         self.accentColor = accentColor
         self.toolbarBg = toolbarBg
@@ -49,7 +49,7 @@ public struct AppearanceConfig: Codable {
         self.borderColor = borderColor
         self.hoverBg = hoverBg
         self.buttonSize = buttonSize
-        self.fontSize = fontSize
+        self.buttonFontSize = buttonFontSize
     }
 }
 
