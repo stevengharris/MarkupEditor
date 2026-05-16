@@ -2126,11 +2126,15 @@ extension MarkupWKWebView {
                 pasteText(text)
             }
         case .Html:
-            if let html = pasteboard.string(forType: .html) {
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            } else if let html = pasteboard.string(forType: .html) {
                 pasteHtml(html)
             }
         case .Rtf:
-            if let rtfData = pasteboard.data(forType: .rtf) {
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteText(text)
+            } else if let rtfData = pasteboard.data(forType: .rtf) {
                 do {
                     let attrString = try NSAttributedString(
                         data: rtfData,
