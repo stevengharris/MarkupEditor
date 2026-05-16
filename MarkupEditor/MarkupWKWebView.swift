@@ -1480,7 +1480,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
-    
+
+    public func pasteCode(_ text: String?, handler: (()->Void)? = nil) {
+        guard let text = text, !pastedAsync else { return }
+        let normalized = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        pastedAsync = true
+        executeJavaScript("MU.pasteCode('\(normalized.escaped)')") { result, error in
+            self.pastedAsync = false
+            handler?()
+        }
+    }
+
     public func pasteHtml(_ html: String?, handler: (()->Void)? = nil) {
         guard let html = html, !pastedAsync else { return }
         pastedAsync = true
@@ -2017,11 +2029,15 @@ extension MarkupWKWebView {
         case .Text:
             pasteText(pasteboard.string)
         case .Html:
-            if let data = pasteboard.data(forPasteboardType: "public.html") {
+            if selectionState.style == .PRE {
+                pasteCode(pasteboard.string)
+            } else if let data = pasteboard.data(forPasteboardType: "public.html") {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
         case .Rtf:
-            if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
+            if selectionState.style == .PRE {
+                pasteCode(pasteboard.string)
+            } else if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
                 do {
                     let attrString = try NSAttributedString(
                         data: rtfData,
@@ -2127,13 +2143,13 @@ extension MarkupWKWebView {
             }
         case .Html:
             if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
-                pasteText(text)
+                pasteCode(text)
             } else if let html = pasteboard.string(forType: .html) {
                 pasteHtml(html)
             }
         case .Rtf:
             if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
-                pasteText(text)
+                pasteCode(text)
             } else if let rtfData = pasteboard.data(forType: .rtf) {
                 do {
                     let attrString = try NSAttributedString(
