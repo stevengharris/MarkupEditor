@@ -545,7 +545,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let submenu = NSMenu(title: "Insert")
 
         if items["link"] == true {
-            let linkItem = jsMenuItem(title: "Link", js: "MU.openLinkDialog()", keymapAction: "link")
+            let linkItem = menuItem(title: "Link", action: #selector(MarkupWKWebView.openLinkDialogFromMenu), keymapAction: "link")
             linkItem.image = NSImage(systemSymbolName: "link", accessibilityDescription: "Link")
             submenu.addItem(linkItem)
         }

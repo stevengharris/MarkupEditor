@@ -716,6 +716,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    #if os(macOS) && !targetEnvironment(macCatalyst)
+    @objc public func openLinkDialogFromMenu() {
+        guard NSApp.currentEvent?.type != .keyDown else { return }
+        executeJavaScript("MU.openLinkDialog()")
+    }
+    #endif
+
     #if canImport(UIKit)
     /// Indirect the presentation of the link popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableLinkPopover() {
@@ -1480,7 +1487,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?()
         }
     }
-    
+
+    public func pasteCode(_ text: String?, handler: (()->Void)? = nil) {
+        guard let text = text, !pastedAsync else { return }
+        let normalized = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        pastedAsync = true
+        executeJavaScript("MU.pasteCode('\(normalized.escaped)')") { result, error in
+            self.pastedAsync = false
+            handler?()
+        }
+    }
+
     public func pasteHtml(_ html: String?, handler: (()->Void)? = nil) {
         guard let html = html, !pastedAsync else { return }
         pastedAsync = true
@@ -2017,11 +2036,15 @@ extension MarkupWKWebView {
         case .Text:
             pasteText(pasteboard.string)
         case .Html:
-            if let data = pasteboard.data(forPasteboardType: "public.html") {
+            if selectionState.style == .PRE {
+                pasteCode(pasteboard.string)
+            } else if let data = pasteboard.data(forPasteboardType: "public.html") {
                 pasteHtml(String(data: data, encoding: .utf8))
             }
         case .Rtf:
-            if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
+            if selectionState.style == .PRE {
+                pasteCode(pasteboard.string)
+            } else if let rtfData = pasteboard.data(forPasteboardType: "public.rtf") {
                 do {
                     let attrString = try NSAttributedString(
                         data: rtfData,
@@ -2126,11 +2149,15 @@ extension MarkupWKWebView {
                 pasteText(text)
             }
         case .Html:
-            if let html = pasteboard.string(forType: .html) {
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteCode(text)
+            } else if let html = pasteboard.string(forType: .html) {
                 pasteHtml(html)
             }
         case .Rtf:
-            if let rtfData = pasteboard.data(forType: .rtf) {
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteCode(text)
+            } else if let rtfData = pasteboard.data(forType: .rtf) {
                 do {
                     let attrString = try NSAttributedString(
                         data: rtfData,
