@@ -716,6 +716,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
     
+    #if os(macOS) && !targetEnvironment(macCatalyst)
+    @objc public func openLinkDialogFromMenu() {
+        guard NSApp.currentEvent?.type != .keyDown else { return }
+        executeJavaScript("MU.openLinkDialog()")
+    }
+    #endif
+
     #if canImport(UIKit)
     /// Indirect the presentation of the link popover thru the markupDelegate to allow overriding.
     @objc public func showPluggableLinkPopover() {
