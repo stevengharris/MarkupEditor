@@ -18296,10 +18296,11 @@ function paragraphStyle(state) {
 
 /**
  * Given a ProseMirror Node, return the HTML tag it corresponds to in the MarkupEditor.
+ * Default is "P" if node.type.name is not recognized (e.g., for HR).
  * 
  * @ignore
  * @param {Node} node The node we want the paragraph style for
- * @returns { "P" | "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | "PRE" | null }
+ * @returns { "P" | "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | "PRE" }
  */
 function _paragraphStyleFor(node) {
     var style;
@@ -18313,6 +18314,8 @@ function _paragraphStyleFor(node) {
         case 'code_block':
             style = "PRE";
             break;
+        default:
+            style = "P";
     }    return style;
 }
 function isIndented(activeState) {
@@ -18909,6 +18912,31 @@ function selectFullLink(view) {
 }
 
 /********************************************************************************
+ * Horizontal rule
+ */
+//MARK: Horizontal rile
+
+/**
+ * Insert the horizontal rule at the selection.
+ */
+function insertHRule() {
+    const view = activeView();
+    let command = insertHRuleCommand();
+    return command(view.state, view.dispatch, view)
+}
+function insertHRuleCommand() {
+    const commandAdapter = (state, dispatch, view) => {
+        const hRuleNode = view.state.schema.nodes.horizontal_rule.create();
+        const transaction = view.state.tr.replaceSelectionWith(hRuleNode, true);
+        view.dispatch(transaction);
+        stateChanged(view);
+        return true;
+    };
+
+    return commandAdapter
+}
+
+/********************************************************************************
  * Images
  */
 //MARK: Images
@@ -19323,6 +19351,17 @@ function _mergeHeaders(state, dispatch) {
         const newState = state.apply(transaction);
         mergeCells(newState, dispatch);
     }}
+function isHRuleSelected(state) {
+    let hRuleSelected = false;
+    state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
+        if (node.type === state.schema.nodes.horizontal_rule) {
+            hRuleSelected = true;
+            return false;
+        }        return false;
+    });
+    return hRuleSelected
+}
+
 function isTableSelected(state) {
     let tableSelected = false;
     state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
@@ -19595,7 +19634,8 @@ var menus = {
 var insertBar = {
 	link: true,
 	image: true,
-	tableMenu: true
+	tableMenu: true,
+	hRule: true
 };
 var formatBar = {
 	bold: true,
@@ -19636,6 +19676,7 @@ var help = {
 	link: "Insert/edit link",
 	image: "Insert/edit image",
 	table: "Insert/edit table",
+	hRule: "Insert horizontal rule",
 	search: "Toggle search",
 	searchForward: "Search forward",
 	searchBackward: "Search backward",
@@ -19693,7 +19734,8 @@ var icons = {
 	searchBackward: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z\"/></svg>",
 	matchCase: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"m131-252 165-440h79l165 440h-76l-39-112H247l-40 112h-76Zm139-176h131l-64-182h-4l-63 182Zm395 186q-51 0-81-27.5T554-342q0-44 34.5-72.5T677-443q23 0 45 4t38 11v-12q0-29-20.5-47T685-505q-23 0-42 9.5T610-468l-47-35q24-29 54.5-43t68.5-14q69 0 103 32.5t34 97.5v178h-63v-37h-4q-14 23-38 35t-53 12Zm12-54q35 0 59.5-24t24.5-56q-14-8-33.5-12.5T689-393q-32 0-50 14t-18 37q0 20 16 33t40 13Z\"/></svg>",
 	paragraphStyle: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
-	more: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
+	more: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>",
+	hRule: "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"> <path d=\"M160-440v-80h640v80H160Z\" fill=\"currentColor\"></svg>"
 };
 var toolbarConfig = {
 	visibility: visibility,
@@ -19750,7 +19792,7 @@ var toolbarConfig = {
  *     "styleMenu": true,        // Whether the style menu (p, h1-h6, code) is visible
  *     "styleBar": true,         // Whether the style bar (bullet/numbered lists) is visible
  *     "formatBar": true,        // Whether the format bar (b, i, u, etc) is visible
- *     "search": true,           // Whether the search item (hide/show search bar) is visible
+ *     "search": true            // Whether the search item (hide/show search bar) is visible
  *   },
  *   "ordering": {               // Control the ordering of toolbars, etc, ascending left-to-right
  *     "correctionBar": 10,      // Correction bar order if it is visible
@@ -19758,17 +19800,18 @@ var toolbarConfig = {
  *     "styleMenu": 30,          // Style menu (p, h1-h6, code) order if it is visible
  *     "styleBar": 40,           // Style bar (bullet/numbered lists) order if it is visible
  *     "formatBar": 50,          // Format bar (b, i, u, etc) order if it is visible
- *     "search": 60,             // Search item (hide/show search bar) order if it is visible
+ *     "search": 60              // Search item (hide/show search bar) order if it is visible
  *   },
  *   "menus": {
  *     "styleName": true         // Whether to show the style name or just use a paragraph symbol
  *     "tableHeader": true,      // Whether the "Header" item is visible in the "Table->Add" menu
- *     "tableBorder": true,      // Whether the "Border" item is visible in the "Table" menu
+ *     "tableBorder": true       // Whether the "Border" item is visible in the "Table" menu
  *   },
  *   "insertBar": {
  *     "link": true,             // Whether the link menu item is visible
  *     "image": true,            // Whether the image menu item is visible
  *     "tableMenu": true,        // Whether the table menu is visible
+ *     "hRule": true             // Whether the horizontal rule menu item is visible
  *   },
  *   "formatBar": {
  *     "bold": true,             // Whether the bold menu item is visible
@@ -19777,7 +19820,7 @@ var toolbarConfig = {
  *     "code": true,             // Whether the code menu item is visible
  *     "strikethrough": true,    // Whether the strikethrough menu item is visible
  *     "subscript": true,        // Whether the subscript menu item is visible
- *     "superscript": true,      // Whether the superscript menu item is visible
+ *     "superscript": true       // Whether the superscript menu item is visible
  *   },
  *   "styleMenu": {
  *     "p": "Body",              // The label in the menu for "P" style
@@ -19787,11 +19830,11 @@ var toolbarConfig = {
  *     "h4": "H4",               // The label in the menu for "H4" style
  *     "h5": "H5",               // The label in the menu for "H5" style
  *     "h6": "H6",               // The label in the menu for "H6" style
- *     "pre": "Code",            // The label in the menu for "PRE" aka code_block style
+ *     "pre": "Code"             // The label in the menu for "PRE" aka code_block style
  *   },
  *   "styleBar": {
  *     "list": true,             // Whether bullet and numbered list items are visible
- *     "dent": true,             // Whether indent and outdent items are visible
+ *     "dent": true              // Whether indent and outdent items are visible
  *   },
  *   "augmentation": {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
@@ -19850,7 +19893,9 @@ var toolbarConfig = {
  *     // format_paragraph
  *     "paragraphStyle": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M360-160v-240q-83 0-141.5-58.5T160-600q0-83 58.5-141.5T360-800h360v80h-80v560h-80v-560H440v560h-80Z\"/></svg>",
  *     // more_horiz
- *     "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>"
+ *     "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\" fill=\"#1f1f1f\"><path d=\"M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z\"/></svg>",
+ *     // horizontal_rule
+ *     "hRule": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\" width=\"24px\"> <path d=\"M160-440v-80h640v80H160Z\" fill=\"currentColor\"></svg>"
  *   }
  * }
  * ```
@@ -22851,7 +22896,7 @@ function redoItem(options) {
  */
 function insertBarItems(config) {
   let items = [];
-  let { link, image, tableMenu } = config.toolbar.insertBar;
+  let { link, image, tableMenu, hRule } = config.toolbar.insertBar;
   if (link) {
     items.push(new LinkItem(config));
   }
@@ -22860,7 +22905,20 @@ function insertBarItems(config) {
     items.push(new ImageItem(config, imageCommands));
   }
   if (tableMenu) items.push(tableMenuItems(config));
+  if (hRule) items.push(hRuleItem(config));
   return items;
+}
+
+function hRuleItem(config) {
+  let icon = config.toolbar.icons.hRule;
+  let title = config.toolbar.help.hRule + keyString('hRule', config.keymap);
+  let options = {
+    icon: icon,
+    title: title,
+    active: (state) => { return isHRuleSelected(state) },
+    enable: () => { return true }  // TODO: should be conditional?
+  };
+  return cmdItem(insertHRuleCommand(), options)
 }
 
 function tableMenuItems(config) {
@@ -24985,6 +25043,7 @@ const MU = {
     insertImage: insertImage$1,
     insertLink: insertLink$1,
     insertTable,
+    insertHRule,
     loadUserFiles,
     modifyImage,
     openImageDialog,
