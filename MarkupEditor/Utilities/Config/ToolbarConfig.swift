@@ -114,9 +114,9 @@ public struct ToolbarConfig: JSONConfigurable {
         #else
                 let packageBundle = Bundle(for: MarkupWKWebView.self)
         #endif
-        guard let path =
-                mainBundle.path(forResource: "toolbarconfig", ofType: "json") ??
-                packageBundle.path(forResource: "toolbarconfig", ofType: "json") else {
+        let mainPath = mainBundle.path(forResource: "toolbarconfig", ofType: "json")
+        let packagePath = packageBundle.path(forResource: "toolbarconfig", ofType: "json")
+        guard let path = mainPath ?? packagePath else {
             Logger.config.error("The toolbarconfig.json resource could not be found in bundle")
             return ToolbarConfig.empty()
         }
