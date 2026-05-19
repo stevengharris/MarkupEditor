@@ -127,11 +127,13 @@ public struct InsertContents {
     public var link: Bool
     public var image: Bool
     public var table: Bool
+    public var hRule: Bool
 
-    public init(link: Bool = true, image: Bool = true, table: Bool = true) {
+    public init(link: Bool = true, image: Bool = true, table: Bool = true, hRule: Bool = false) {
         self.link = link
         self.image = image
         self.table = table
+        self.hRule = hRule
     }
 }
 

@@ -1266,6 +1266,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         redo(handler: nil)
     }
     
+    //MARK: Horizontal rule support
+    public func insertHRule(handler: (()->Void)? = nil) {
+        executeJavaScript("MU.insertHRule()") { result, error in handler?() }
+    }
+    
+    @objc public func insertHRuleFromMenu(_ sender: Any?) {
+        insertHRule()
+    }
+    
     //MARK: Table editing
     
     public func nextCell(handler: (()->Void)? = nil) {

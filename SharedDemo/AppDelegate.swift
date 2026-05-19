@@ -559,6 +559,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             tableItem.image = NSImage(systemSymbolName: "squareshape.split.3x3", accessibilityDescription: "Table")
             submenu.addItem(tableItem)
         }
+        if items["hRule"] == true {
+            let hRuleItem = menuItem(title: "Horizontal Rule", action: #selector(MarkupWKWebView.insertHRuleFromMenu), keymapAction: "hRule")
+            hRuleItem.image = NSImage(systemSymbolName: "square.split.1x2", accessibilityDescription: "Horizontal Rule")
+            submenu.addItem(hRuleItem)
+        }
 
         guard submenu.numberOfItems > 0 else { return nil }
         let item = NSMenuItem(title: "Insert", action: nil, keyEquivalent: "")
