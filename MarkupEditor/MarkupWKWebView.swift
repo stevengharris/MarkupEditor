@@ -368,6 +368,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
             }
+            // Copy plugin files from their absolute paths into cacheUrl so that
+            // ES module relative imports resolve correctly alongside markup-editor.js.
+            if let pluginFiles = markupConfiguration?.pluginFiles {
+                for entry in pluginFiles {
+                    let srcUrl = URL(fileURLWithPath: entry.path)
+                    guard fileManager.fileExists(atPath: entry.path) else {
+                        Logger.webview.warning("Plugin file not found, skipping: \(entry.path)")
+                        continue
+                    }
+                    let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
+                    try? fileManager.removeItem(at: dstUrl)
+                    do {
+                        try fileManager.copyItem(at: srcUrl, to: dstUrl)
+                    } catch let copyError {
+                        Logger.webview.warning("Failed to copy plugin file \(entry.path): \(copyError.localizedDescription)")
+                    }
+                }
+            }
             populateMarkupHtml(cacheUrl: cacheUrl)
         } catch let error {
             assertionFailure("Failed to set up cacheDir with root resource files: \(error.localizedDescription)")
@@ -384,6 +402,19 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     ///
     /// * The Swift value for `delegate` is not useful to pass as an attribute, since the "swift" message
     /// handler (i.e., the MarkupCoordinator) does all the calls to the Swift-native delegate.
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
+    /// Only the last path component of each entry is used because the files are copied into `cacheUrl`.
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
+    static func pluginsAttribute(for pluginFiles: [PluginFileEntry]?) -> String? {
+        guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
+        let names = pluginFiles.map { URL(fileURLWithPath: $0.path).lastPathComponent }
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
+              let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
+        return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
     /// * The JavaScript-created toolbar available from the MarkupEditor is turned off for the Swift
     /// MarkupEditor, which has its own SwiftUI MarkupToolbar.
     /// * The initial HTML is inserted as the content of the web component.
@@ -399,6 +430,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let behavior = (markupConfiguration?.behaviorConfig ?? BehaviorConfig()).asAttribute()
         let keymap = (markupConfiguration?.keymapConfig ?? KeymapConfig()).asAttribute()
         #endif
+        let plugins = MarkupWKWebView.pluginsAttribute(for: markupConfiguration?.pluginFiles)
         let html = """
         <!DOCTYPE html>
         <html>
@@ -417,6 +449,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
                     \(keymap != nil ? "keymap=\"\(keymap!)\"" : "")
                     \(behavior != nil ? "behavior=\"\(behavior!)\"" : "")
+                    \(plugins != nil ? "plugins=\"\(plugins!)\"" : "")
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")
                 </markup-editor>
@@ -1021,6 +1054,40 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 Logger.webview.error("Error: Could not getLocalImages.")
                 handler?([])
             }
+        }
+    }
+
+    /// Return the array of plugin manifests registered with the editor.
+    ///
+    /// Each manifest is a dictionary of string keys and string values as defined by the plugin.
+    /// Delivers nil to the handler if the JavaScript call fails or returns no result.
+    public func getPluginManifest(_ handler: (([[String: String]]?) -> Void)?) {
+        executeJavaScript("MU.getPluginManifest()") { result, error in
+            if let error {
+                Logger.webview.error("Error getting plugin manifest: \(error)")
+                handler?(nil)
+                return
+            }
+            handler?(result as? [[String: String]])
+        }
+    }
+
+    /// Invoke a named action on a registered plugin, optionally passing a content string.
+    ///
+    /// - Parameters:
+    ///   - id: The plugin identifier (name used when registering the plugin).
+    ///   - action: The action to invoke on the plugin.
+    ///   - content: Optional string content to pass to the plugin action; nil passes null to JavaScript.
+    ///   - handler: Called with the string result, or nil on error or null result.
+    public func invokePlugin(id: String, action: String, content: String?, _ handler: ((String?) -> Void)?) {
+        let contentArg = content.map { "'\($0.escaped)'" } ?? "null"
+        executeJavaScript("MU.invokePlugin('\(id.escaped)', '\(action.escaped)', \(contentArg))") { result, error in
+            if let error {
+                Logger.webview.error("Error invoking plugin '\(id)' action '\(action)': \(error)")
+                handler?(nil)
+                return
+            }
+            handler?(result as? String)
         }
     }
     

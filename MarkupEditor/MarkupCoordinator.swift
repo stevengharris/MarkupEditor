@@ -225,6 +225,9 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
                 return
             }
             markupDelegate?.markupButtonClicked(webView, id: id, rect: rect)
+        case "markupPluginsDidLoad":
+            let plugins = (messageData["plugins"] as? [[String: String]]) ?? []
+            markupDelegate?.markupPluginsDidLoad(webView, plugins: plugins)
         default:
             Logger.coordinator.error("Unknown message of type \(messageType): \(messageData).")
         }

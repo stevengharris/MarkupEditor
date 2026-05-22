@@ -25252,6 +25252,12 @@ class MarkupEditorElement extends HTMLElement {
         const pluginPaths = pluginsAttr ? JSON.parse(pluginsAttr) : [];
         const delegate = this.editor.config?.delegate;
         await loadPlugins(pluginPaths, delegate);
+        const manifests = MU.getPluginManifest();
+        if (manifests.length > 0) {
+          this.editor.messageHandler.postMessage(
+            JSON.stringify({ messageType: 'markupPluginsDidLoad', plugins: manifests })
+          );
+        }
       }
       this.editor.messageHandler.postMessage(e.message);
     });
