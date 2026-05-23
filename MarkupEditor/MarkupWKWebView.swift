@@ -404,12 +404,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// handler (i.e., the MarkupCoordinator) does all the calls to the Swift-native delegate.
     /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
     /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
-    /// Only the last path component of each entry is used because the files are copied into `cacheUrl`.
+    /// Each entry uses `./filename` (relative specifier) so WebKit resolves it alongside `markup-editor.js` in `cacheUrl`.
     /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
     /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
     static func pluginsAttribute(for pluginFiles: [PluginFileEntry]?) -> String? {
         guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
-        let names = pluginFiles.map { URL(fileURLWithPath: $0.path).lastPathComponent }
+        let names = pluginFiles.map { "./" + URL(fileURLWithPath: $0.path).lastPathComponent }
         guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
               let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
         return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
