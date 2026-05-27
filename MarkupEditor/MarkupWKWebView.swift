@@ -1075,15 +1075,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Invoke a named action on a registered plugin, optionally passing a content string.
     ///
     /// - Parameters:
-    ///   - id: The plugin identifier (name used when registering the plugin).
+    ///   - name: The plugin name used when registering the plugin.
     ///   - action: The action to invoke on the plugin.
-    ///   - content: Optional string content to pass to the plugin action; nil passes null to JavaScript.
+    ///   - content: Optional string content to pass to the plugin action.
     ///   - handler: Called with the string result, or nil on error or null result.
-    public func invokePlugin(id: String, action: String, content: String?, _ handler: ((String?) -> Void)?) {
-        let contentArg = content.map { "'\($0.escaped)'" } ?? "null"
-        executeJavaScript("MU.invokePlugin('\(id.escaped)', '\(action.escaped)', \(contentArg))") { result, error in
+    public func invokePlugin(name: String, action: String, content: String?, _ handler: ((String?) -> Void)?) {
+        var args = "'\(name.escaped)', '\(action.escaped)'"
+        if let content { args += ", '\(content.escaped)'" }
+        executeJavaScript("MU.invokePlugin(\(args))") { result, error in
             if let error {
-                Logger.webview.error("Error invoking plugin '\(id)' action '\(action)': \(error)")
+                Logger.webview.error("Error invoking plugin '\(name)' action '\(action)': \(error)")
                 handler?(nil)
                 return
             }
