@@ -25,6 +25,20 @@ import Foundation
 /// You create a MarkupWKWebViewConfiguration object in your code, configure its properties, and pass it to the initializer
 /// of your WKWebView object. The web view incorporates your configuration settings only at creation time; you cannot change
 /// those settings dynamically later.
+/// A plugin file to be loaded by the MarkupEditor web view.
+///
+/// A `PluginFileEntry` identifies a JavaScript plugin by name and file-system path.
+/// The `name` is used as a stable key for registry lookup; the `path` is the absolute
+/// path to the plugin's `.js` file that will be dynamically imported by the editor.
+public struct PluginFileEntry: Codable {
+    public var name: String
+    public var path: String
+    public init(name: String, path: String) {
+        self.name = name
+        self.path = path
+    }
+}
+
 public class MarkupWKWebViewConfiguration {
     
     public var userScriptFile: String? = nil
@@ -34,6 +48,7 @@ public class MarkupWKWebViewConfiguration {
     public var toolbarConfig: ToolbarConfig? = nil
     public var keymapConfig: KeymapConfig? = nil
     public var behaviorConfig: BehaviorConfig? = nil
+    public var pluginFiles: [PluginFileEntry]? = nil
     #if targetEnvironment(macCatalyst)
     public var padBottom = false
     #elseif os(iOS)

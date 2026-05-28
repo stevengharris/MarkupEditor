@@ -1,0 +1,17 @@
+{
+    "description": "Plugin registry — registerPlugin and getPluginManifest.",
+    "tests": [
+        {
+            "description": "registerPlugin stores a plugin and getPluginManifest returns its public surface",
+            "startHtml": "<p>|</p>",
+            "skipUndoRedo": true,
+            "action": "MU.registerPlugin({name: 'Reg Test', extension: 'rt', export: async (c) => c, import: async (c) => c}, 'Reg Test'); const entry = MU.getPluginManifest().find(m => m.name === 'Reg Test'); expect(entry).toBeDefined(); expect(entry.name).toBe('Reg Test'); expect(entry.extension).toBe('rt'); expect(entry.export).toBeUndefined(); expect(entry.import).toBeUndefined()"
+        },
+        {
+            "description": "getPluginManifest returns only { name, extension } — no function references",
+            "startHtml": "<p>|</p>",
+            "skipUndoRedo": true,
+            "action": "for (const entry of MU.getPluginManifest()) { expect(Object.keys(entry).sort()).toEqual(['extension', 'name']) }"
+        }
+    ]
+}

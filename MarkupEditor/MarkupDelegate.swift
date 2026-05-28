@@ -50,6 +50,12 @@ public protocol MarkupDelegate {
     /// The default behavior is to set the selectedWebView and execute the handler.
     func markupDidLoad(_ view: MarkupWKWebView, handler: (()->Void)?)
     
+    /// Called after plugins have been loaded, before markupDidLoad.
+    ///
+    /// Each element in `plugins` is a manifest dictionary with string keys and values
+    /// (e.g. `id`, `name`, `extension`) as reported by the plugin's registration call.
+    func markupPluginsDidLoad(_ view: MarkupWKWebView, plugins: [[String: String]])
+    
     /// Called when custom actions are called by callbacks in the JS.
     /// By default, this method is not used unless called by some custom JS that you add.
     func markup(_ view: MarkupWKWebView, handle action: String)
@@ -174,6 +180,9 @@ extension MarkupDelegate {
         MarkupEditor.selectedWebView = view
         handler?()
     }
+    
+    /// Plugins were loaded before markupDidLoad; no action taken by default.
+    public func markupPluginsDidLoad(_ view: MarkupWKWebView, plugins: [[String: String]]) {}
     
     public func markup(_ view: MarkupWKWebView, handle action: String) {}
     public func markupSelectionChanged(_ view: MarkupWKWebView) {}
