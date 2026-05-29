@@ -10,13 +10,16 @@ import Foundation
 
 extension String {
     
-    /// A string with the ' characters in it escaped.
-    /// Used when passing a string into JavaScript, so the string is not completed too soon
+    /// A string with characters escaped for safe embedding in a JavaScript single-quoted string.
+    /// Escapes single quotes, backslashes, and ASCII control characters.
+    /// Backslash must be escaped so that sequences like `\<` in content
+    /// are not silently consumed by JS string parsing.
     public var escaped: String {
         let unicode = self.unicodeScalars
         var newString = ""
         for char in unicode {
             if char.value == 39 || // 39 == ' in ASCII
+                char.value == 92 || // 92 == \ in ASCII
                 char.value < 9 ||  // 9 == horizontal tab in ASCII
                 (char.value > 9 && char.value < 32) // < 32 == special characters in ASCII
             {
