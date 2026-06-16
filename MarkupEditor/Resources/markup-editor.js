@@ -19754,8 +19754,8 @@ var augmentation = {
 };
 var appearance = {
 	accentColor: {
-		light: "blue",
-		dark: "lightblue"
+		light: "AccentColor",
+		dark: "AccentColor"
 	},
 	toolbarBg: {
 		light: "rgba(250, 249, 246, 0.95)",
@@ -19904,14 +19904,14 @@ var toolbarConfig = {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
  *     "append": null            // Name of a registered array of cmdItems to append
  *   },
- *   "appearance": {             // Colors (light and dark mode) and sizes, vars in toolbar.css
- *     "accentColor": { "light": "blue", "dark": "lightblue" },
- *     "toolbarBg":   { "light": "rgba(250, 249, 246, 0.95)", "dark": "rgba(40, 40, 43, 0.9)" },
- *     "buttonBg":    { "light": "white", "dark": "black" },
- *     "borderColor": { "light": "lightgray", "dark": "gray" },
- *     "hoverBg":     { "light": "#f2f2f2", "dark": "rgb(80, 80, 80)" },
- *     "buttonSize":  "28px",
- *     "buttonFontSize":    "24px"
+ *   "appearance": {                                                                                    // AccentColor adapts to light and dark
+ *     "accentColor": { "light": "AccentColor", "dark": "AccentColor" },                                // System accent color for button icons, infill, and borders
+ *     "toolbarBg":   { "light": "rgba(250, 249, 246, 0.95)", "dark": "rgba(40, 40, 43, 0.9)" },        // Toolbar background
+ *     "buttonBg":    { "light": "white", "dark": "black" },                                            // Button background
+ *     "borderColor": { "light": "lightgray", "dark": "gray" },                                         // Border at bottom of toolbar, around menus
+ *     "hoverBg":     { "light": "#f2f2f2", "dark": "rgb(80, 80, 80)" },                                // Highlight menu item on hover
+ *     "buttonSize": "28px",                                                                            // Side length of rounded square buttons, height otherwise
+ *     "buttonFontSize": "24px"                                                                         // Font size inside of buttons/menus
  *   },
  *   "icons": {                  // Outlined 400 weight versions from https://fonts.google.com/icons
  *     // undo
