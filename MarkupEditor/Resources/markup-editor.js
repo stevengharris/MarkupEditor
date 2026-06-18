@@ -25429,4 +25429,4 @@ class MarkupEditorElement extends HTMLElement {
 // Let the browser know about the custom element
 customElements.define('markup-editor', MarkupEditorElement);
 
-export { MU, loadPlugins };
+export { ContentMatch, DOMParser, DOMSerializer, Fragment, MU, Mark, MarkType, Node$1 as Node, NodeRange, NodeType$1 as NodeType, ReplaceError, ResolvedPos, Schema, Slice, loadPlugins };
