@@ -19754,8 +19754,8 @@ var augmentation = {
 };
 var appearance = {
 	accentColor: {
-		light: "AccentColor",
-		dark: "AccentColor"
+		light: "#007AFF",
+		dark: "#409CFF"
 	},
 	toolbarBg: {
 		light: "rgba(250, 249, 246, 0.95)",
@@ -19904,8 +19904,8 @@ var toolbarConfig = {
  *     "prepend": null,          // Name of a registered array of cmdItems to prepend
  *     "append": null            // Name of a registered array of cmdItems to append
  *   },
- *   "appearance": {                                                                                    // AccentColor adapts to light and dark
- *     "accentColor": { "light": "AccentColor", "dark": "AccentColor" },                                // System accent color for button icons, infill, and borders
+ *   "appearance": {
+ *     "accentColor": { "light": "#007AFF", "dark": "#409CFF" },                                        // Accent color for button icons, infill, and borders
  *     "toolbarBg":   { "light": "rgba(250, 249, 246, 0.95)", "dark": "rgba(40, 40, 43, 0.9)" },        // Toolbar background
  *     "buttonBg":    { "light": "white", "dark": "black" },                                            // Button background
  *     "borderColor": { "light": "lightgray", "dark": "gray" },                                         // Border at bottom of toolbar, around menus
