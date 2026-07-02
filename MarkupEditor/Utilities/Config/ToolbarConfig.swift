@@ -160,9 +160,13 @@ public struct ToolbarConfig: JSONConfigurable {
         ordering.keys.sorted { ordering[$0]! < ordering[$1]! }
     }
     
-    public func toolbarHeight() -> Int {
+    public func buttonHeight() -> Int {
         let buttonHeight = appearance?.buttonSize ?? "24px"
-        return (Int(buttonHeight.prefix(while: { $0.isNumber })) ?? 24) + 7
+        return Int(buttonHeight.prefix(while: { $0.isNumber })) ?? 24
+    }
+    
+    public func toolbarHeight() -> Int {
+        buttonHeight() + 7
     }
     
 }
