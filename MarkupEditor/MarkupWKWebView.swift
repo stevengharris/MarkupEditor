@@ -920,10 +920,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             handler?(result as? String)
         }
     }
-    
+
+    public func getHtml(pretty: Bool = true, clean: Bool = true, divID: String? = nil) async -> String? {
+        await withCheckedContinuation { continuation in
+            getHtml(pretty: pretty, clean: clean, divID: divID) { html in
+                continuation.resume(returning: html)
+            }
+        }
+    }
+
     public func emptyDocument(handler: (()->Void)? = nil) {
         executeJavaScript("MU.emptyDocument()") { result, error in
             handler?()
+        }
+    }
+
+    public func emptyDocument() async {
+        await withCheckedContinuation { continuation in
+            emptyDocument { continuation.resume() }
         }
     }
     
@@ -1057,6 +1071,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
+    public func getLocalImages() async -> [String] {
+        await withCheckedContinuation { continuation in
+            getLocalImages { srcs in
+                continuation.resume(returning: srcs)
+            }
+        }
+    }
+
     /// Return the array of plugin manifests registered with the editor.
     ///
     /// Each manifest is a dictionary of string keys and string values as defined by the plugin.
@@ -1069,6 +1091,14 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 return
             }
             handler?(result as? [[String: String]])
+        }
+    }
+    
+    public func invokePlugin(name: String, action: String, content: String?) async -> String? {
+        await withCheckedContinuation { continuation in
+            invokePlugin(name: name, action: action, content: content) { result in
+                continuation.resume(with: .success(result))
+            }
         }
     }
 
