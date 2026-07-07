@@ -1,0 +1,36 @@
+
+{
+    "description": "Recognize and preserve a language attribute on code_block (pre>code).",
+    "tests": [
+        {
+            "description": "Single language class round-trips through parse and serialize",
+            "startHtml": "<pre><code class=\"language-swift\">le|t x = |1</code></pre>",
+            "endHtml": "<pre><code class=\"language-swift\">le|t x = |1</code></pre>"
+        },
+        {
+            "description": "Multi-class (hljs then language-xxx) parses language, re-serializes as single class",
+            "comment": "Parse-only case: toDOM only ever emits the single language-xxx class, so the hljs token does not survive serialization.",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "startHtml": "<pre><code class=\"hljs language-swift\">le|t x = |1</code></pre>",
+            "endHtml": "<pre><code class=\"language-swift\">le|t x = |1</code></pre>",
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getTestHTML('|')",
+            "arg": "startHtml"
+        },
+        {
+            "description": "Multi-class, reversed token order (language-xxx then hljs) parses language, re-serializes as single class",
+            "comment": "Parse-only case: token order in the source class list must not matter.",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "startHtml": "<pre><code class=\"language-swift hljs\">le|t x = |1</code></pre>",
+            "endHtml": "<pre><code class=\"language-swift\">le|t x = |1</code></pre>",
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getTestHTML('|')",
+            "arg": "startHtml"
+        },
+        {
+            "description": "No language class means no language attribute and no stray class",
+            "startHtml": "<pre><code>le|t x = |1</code></pre>",
+            "endHtml": "<pre><code>le|t x = |1</code></pre>"
+        }
+    ]
+}
