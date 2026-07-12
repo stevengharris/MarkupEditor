@@ -882,7 +882,57 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
+
+    /// Invoke isRecognizedLanguage directly.
+    public func testIsRecognizedLanguage(_ name: String, handler: ((Bool) -> Void)? = nil) {
+        executeJavaScript("MU.testIsRecognizedLanguage('\(name.escaped)')") { result, error in
+            handler?(result as? Bool ?? false)
+        }
+    }
+
+    public func testIsRecognizedLanguage(_ name: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            testIsRecognizedLanguage(name) { recognized in
+                continuation.resume(with: .success(recognized))
+            }
+        }
+    }
+
+    /// Invoke presentCodeLanguages on the active document directly.
+    public func testPresentCodeLanguages(handler: (([String]) -> Void)? = nil) {
+        executeJavaScript("MU.testPresentCodeLanguages()") { result, error in
+            handler?(result as? [String] ?? [])
+        }
+    }
+
+    public func testPresentCodeLanguages() async -> [String] {
+        await withCheckedContinuation { continuation in
+            testPresentCodeLanguages { languages in
+                continuation.resume(with: .success(languages))
+            }
+        }
+    }
+
+    /// Invoke codeLanguageOverlayInfo on the active document's current selection directly.
+    /// Returns nil when the selection is not in a code_block, matching the JS-side null.
+    public func testCodeLanguageOverlayInfo(handler: (((pos: Int, label: String)?) -> Void)? = nil) {
+        executeJavaScript("MU.testCodeLanguageOverlayInfo()") { result, error in
+            guard let dict = result as? [String: Any], let pos = dict["pos"] as? Int, let label = dict["label"] as? String else {
+                handler?(nil)
+                return
+            }
+            handler?((pos: pos, label: label))
+        }
+    }
+
+    public func testCodeLanguageOverlayInfo() async -> (pos: Int, label: String)? {
+        await withCheckedContinuation { continuation in
+            testCodeLanguageOverlayInfo { info in
+                continuation.resume(with: .success(info))
+            }
+        }
+    }
+
     /// Invoke the \_doBlockquoteEnter operation directly.
     public func testBlockquoteEnter(handler: (()->Void)? = nil) {
         executeJavaScript("MU.testBlockquoteEnter()") { result, error in handler?() }

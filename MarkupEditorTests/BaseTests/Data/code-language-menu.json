@@ -1,0 +1,25 @@
+{
+    "description": "presentCodeLanguages: distinct language values present among a doc's code_block nodes.",
+    "tests": [
+        {
+            "description": "deduplicates and alphabetically sorts languages present in the document",
+            "html": "<pre><code class=\"language-python\">a</code></pre><pre><code class=\"language-python\">b</code></pre><pre><code class=\"language-javascript\">c</code></pre>",
+            "expected": ["javascript", "python"]
+        },
+        {
+            "description": "deduplicates case-insensitively, returning the lowercased form",
+            "html": "<pre><code class=\"language-Python\">a</code></pre><pre><code class=\"language-python\">b</code></pre><pre><code class=\"language-PYTHON\">c</code></pre>",
+            "expected": ["python"]
+        },
+        {
+            "description": "omits code blocks with no language",
+            "html": "<pre><code>a</code></pre><pre><code class=\"language-swift\">b</code></pre>",
+            "expected": ["swift"]
+        },
+        {
+            "description": "returns an empty list when there are no code blocks with a language",
+            "html": "<p>Just a paragraph</p><pre><code>no language</code></pre>",
+            "expected": []
+        }
+    ]
+}

@@ -20,17 +20,20 @@ public struct BehaviorConfig: JSONConfigurable {
     public var selectImage: Bool
     public var insertLink: Bool
     public var insertImage: Bool
+    public var highlightCode: Bool
     
     public init(
         focusAfterLoad: Bool,
         selectImage: Bool,
         insertLink: Bool,
-        insertImage: Bool
+        insertImage: Bool,
+        highlightCode: Bool
     ) {
         self.focusAfterLoad = focusAfterLoad
         self.selectImage = selectImage
         self.insertLink = insertLink
         self.insertImage = insertImage
+        self.highlightCode = highlightCode
     }
     
     public init() {
@@ -39,6 +42,7 @@ public struct BehaviorConfig: JSONConfigurable {
         selectImage = config.selectImage
         insertLink = config.insertLink
         insertImage = config.insertImage
+        highlightCode = config.highlightCode
     }
     
     private static func load() -> BehaviorConfig {
@@ -69,7 +73,8 @@ public struct BehaviorConfig: JSONConfigurable {
             focusAfterLoad: false,
             selectImage: false,
             insertLink: false,
-            insertImage: false
+            insertImage: false,
+            highlightCode: true
         )
     }
     

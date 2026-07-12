@@ -3,5 +3,6 @@
     "selectImage": true,
     "insertLink": false,
     "insertImage": false,
-    "showStyle": true
+    "showStyle": true,
+    "highlightCode": true
 }
