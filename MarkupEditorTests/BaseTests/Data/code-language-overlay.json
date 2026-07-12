@@ -1,0 +1,25 @@
+{
+    "description": "codeLanguageOverlayInfo: label reported for the code_block at the selection.",
+    "tests": [
+        {
+            "description": "reports a capitalized label for a code_block with a language set",
+            "html": "<pre><code class=\"language-swift\">let x = 1</code></pre>",
+            "expectedLabel": "Language: Swift"
+        },
+        {
+            "description": "only capitalizes the first character, leaving the rest of the name as-is",
+            "html": "<pre><code class=\"language-weirdLanguage\">x</code></pre>",
+            "expectedLabel": "Language: WeirdLanguage"
+        },
+        {
+            "description": "reports \"Language: None\" for a code_block with no language",
+            "html": "<pre><code>let x = 1</code></pre>",
+            "expectedLabel": "Language: None"
+        },
+        {
+            "description": "returns null when the selection is not in a code_block",
+            "html": "<p>Just a paragraph</p>",
+            "expectedLabel": null
+        }
+    ]
+}
