@@ -2,19 +2,19 @@
     "description": "codeLanguageOverlayInfo: label reported for the code_block at the selection.",
     "tests": [
         {
-            "description": "reports a capitalized label for a code_block with a language set",
+            "description": "reports a lowercased label for a code_block with a language set",
             "html": "<pre><code class=\"language-swift\">let x = 1</code></pre>",
-            "expectedLabel": "Language: Swift"
+            "expectedLabel": "Language: swift"
         },
         {
-            "description": "only capitalizes the first character, leaving the rest of the name as-is",
+            "description": "lowercases the whole name, not just the first character",
             "html": "<pre><code class=\"language-weirdLanguage\">x</code></pre>",
-            "expectedLabel": "Language: WeirdLanguage"
+            "expectedLabel": "Language: weirdlanguage"
         },
         {
-            "description": "reports \"Language: None\" for a code_block with no language",
+            "description": "reports \"Language: none\" for a code_block with no language",
             "html": "<pre><code>let x = 1</code></pre>",
-            "expectedLabel": "Language: None"
+            "expectedLabel": "Language: none"
         },
         {
             "description": "returns null when the selection is not in a code_block",
