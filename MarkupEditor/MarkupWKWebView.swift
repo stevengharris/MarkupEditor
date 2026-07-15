@@ -356,6 +356,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 }
             }
         }
+        if let pluginFiles = markupConfiguration?.pluginFiles {
+            for file in pluginFiles {
+                if let plugin = url(forResource: file, withExtension: nil) {
+                    srcUrls.append(plugin)
+                }
+            }
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
@@ -368,30 +375,26 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
             }
-            // Copy plugin files from their absolute paths into cacheUrl so that
-            // ES module relative imports resolve correctly alongside markup-editor.js.
-            if let pluginFiles = markupConfiguration?.pluginFiles {
-                for entry in pluginFiles {
-                    let srcUrl = URL(fileURLWithPath: entry.path)
-                    guard fileManager.fileExists(atPath: entry.path) else {
-                        Logger.webview.warning("Plugin file not found, skipping: \(entry.path)")
-                        continue
-                    }
-                    let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
-                    try? fileManager.removeItem(at: dstUrl)
-                    do {
-                        try fileManager.copyItem(at: srcUrl, to: dstUrl)
-                    } catch let copyError {
-                        Logger.webview.warning("Failed to copy plugin file \(entry.path): \(copyError.localizedDescription)")
-                    }
-                }
-            }
             populateMarkupHtml(cacheUrl: cacheUrl)
         } catch let error {
             assertionFailure("Failed to set up cacheDir with root resource files: \(error.localizedDescription)")
         }
     }
     
+
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
+    /// Each entry uses `./filename` (relative specifier) so WebKit resolves it alongside `markup-editor.js` in `cacheUrl`.
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
+    static func pluginsAttribute(for pluginFiles: [String]?) -> String? {
+        guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
+        let names = pluginFiles.map { "./" + $0 }
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
+              let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
+        return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
     /// Create markup.html in the cache directory. By loading this file, everything else is kicked off.
     ///
     /// We use  the `<markup-editor>` web component, and because we copy the standard
@@ -402,19 +405,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     ///
     /// * The Swift value for `delegate` is not useful to pass as an attribute, since the "swift" message
     /// handler (i.e., the MarkupCoordinator) does all the calls to the Swift-native delegate.
-    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
-    /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
-    /// Each entry uses `./filename` (relative specifier) so WebKit resolves it alongside `markup-editor.js` in `cacheUrl`.
-    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
-    /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
-    static func pluginsAttribute(for pluginFiles: [PluginFileEntry]?) -> String? {
-        guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
-        let names = pluginFiles.map { "./" + URL(fileURLWithPath: $0.path).lastPathComponent }
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
-              let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
-        return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
-    }
-
     /// * The JavaScript-created toolbar available from the MarkupEditor is turned off for the Swift
     /// MarkupEditor, which has its own SwiftUI MarkupToolbar.
     /// * The initial HTML is inserted as the content of the web component.
