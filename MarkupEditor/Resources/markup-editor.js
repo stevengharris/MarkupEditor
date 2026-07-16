@@ -12417,6 +12417,15 @@ function isSurrogatePair(str) {
     let a = str.charCodeAt(0), b = str.charCodeAt(1);
     return a >= 0xDC00 && a <= 0xDFFF && b >= 0xD800 && b <= 0xDBFF;
 }
+
+/**
+@internal
+*/
+const __parseFromClipboard = parseFromClipboard;
+/**
+@internal
+*/
+const __endComposition = endComposition;
 /**
 An editor view manages the DOM structure that represents an
 editable document. Its state and behavior are determined by its
@@ -42544,4 +42553,4 @@ class MarkupEditorElement extends HTMLElement {
 // Let the browser know about the custom element
 customElements.define('markup-editor', MarkupEditorElement);
 
-export { ContentMatch, DOMParser, DOMSerializer, Fragment, MU, Mark, MarkType, Node$1 as Node, NodeRange, NodeType$1 as NodeType, ReplaceError, ResolvedPos, Schema, Slice, loadPlugins };
+export { AllSelection, ContentMatch, DOMParser, DOMSerializer, Decoration, DecorationSet, EditorState, EditorView, Fragment, MU, Mark, MarkType, Node$1 as Node, NodeRange, NodeSelection, NodeType$1 as NodeType, Plugin, PluginKey, ReplaceError, ResolvedPos, Schema, Selection, SelectionRange, Slice, TextSelection, Transaction, __endComposition, __parseFromClipboard, loadPlugins };
