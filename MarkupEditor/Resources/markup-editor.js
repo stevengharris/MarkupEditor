@@ -1,6 +1,6 @@
 const sheet$4 = new CSSStyleSheet();sheet$4.replaceSync("/**\n The CSS here was adapted from the ProseMirror example.\n The adaptations mainly consisted of removing styling when it interfered with\n markup.css in some way. These changes were commented-out and moved to the end of\n this file. Top-level Prosemirror styling was brought to the top of the file.\n Styling from search.css in prosemirror-search were added and modified.\n */\n\n .ProseMirror {\n    position: relative;\n    padding: 4px 8px 4px 8px;\n    line-height: 1.2;\n    outline: none;\n    word-wrap: break-word;\n    white-space: pre-wrap;\n    white-space: break-spaces;\n    font-variant-ligatures: none;\n  }\n  \n  .ProseMirror pre {\n    white-space: pre-wrap;\n  }\n  \n  .ProseMirror li {\n    position: relative;\n  }\n  \n  .ProseMirror-hideselection *::selection { background: transparent; }\n  .ProseMirror-hideselection *::-moz-selection { background: transparent; }\n  .ProseMirror-hideselection { caret-color: transparent; }\n  \n  /* See https://github.com/ProseMirror/prosemirror/issues/1421#issuecomment-1759320191 */\n  .ProseMirror [draggable][contenteditable=false] { user-select: text }\n  \n  .ProseMirror-selectednode {\n    outline: 2px solid #8cf;\n  }\n  \n  /* Make sure li selections wrap around markers */\n  \n  li.ProseMirror-selectednode {\n    outline: none;\n  }\n  \n  li.ProseMirror-selectednode:after {\n    content: \"\";\n    position: absolute;\n    left: -32px;\n    right: -2px; top: -2px; bottom: -2px;\n    border: 2px solid #8cf;\n    pointer-events: none;\n  }\n  \n  /* Protect against generic img rules */\n  \n  img.ProseMirror-separator {\n    display: inline !important;\n    border: none !important;\n    margin: 0 !important;\n  }\n  .ProseMirror-textblock-dropdown {\n    min-width: 3em;\n  }\n  \n  .ProseMirror-icon svg {\n    fill: currentColor;\n    height: 1em;\n  }\n  \n  .ProseMirror-icon span {\n    vertical-align: text-top;\n  }\n  .ProseMirror-gapcursor {\n    display: none;\n    pointer-events: none;\n    position: absolute;\n  }\n  \n  .ProseMirror-gapcursor:after {\n    content: \"\";\n    display: block;\n    position: absolute;\n    top: -2px;\n    width: 20px;\n    border-top: 1px solid black;\n    animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;\n  }\n  \n  @keyframes ProseMirror-cursor-blink {\n    to {\n      visibility: hidden;\n    }\n  }\n  \n  .ProseMirror-focused .ProseMirror-gapcursor {\n    display: block;\n  }\n  \n  .ProseMirror-prompt {\n    background: white;\n    padding: 5px 10px 5px 15px;\n    border: 1px solid silver;\n    position: fixed;\n    border-radius: 3px;\n    z-index: 11;\n    box-shadow: -.5px 2px 5px rgba(0, 0, 0, .2);\n  }\n  \n  .ProseMirror-prompt h5 {\n    margin: 0;\n    font-weight: normal;\n    font-size: 100%;\n    color: #444;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"],\n  .ProseMirror-prompt textarea {\n    background: #eee;\n    border: none;\n    outline: none;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"] {\n    padding: 0 4px;\n  }\n  \n  .ProseMirror-prompt-close {\n    position: absolute;\n    left: 2px; top: 1px;\n    color: #666;\n    border: none; background: transparent; padding: 0;\n  }\n  \n  .ProseMirror-prompt-close:after {\n    content: \"âœ•\";\n    font-size: 12px;\n  }\n  \n  .ProseMirror-invalid {\n    background: #ffc;\n    border: 1px solid #cc7;\n    border-radius: 4px;\n    padding: 5px 10px;\n    position: absolute;\n    min-width: 10em;\n  }\n  \n  .ProseMirror-prompt-buttons {\n    margin-top: 5px;\n    /* display: none; */\n  }\n  \n  /*\n   \n  #editor, .editor {\n    border-radius: 4px;\n    border: 2px solid rgba(0, 0, 0, 0.2);\n  }\n  \n  .ProseMirror-example-setup-style hr {\n    padding: 2px 10px;\n    border: none;\n    margin: 1em 0;\n  }\n  \n  .ProseMirror-example-setup-style hr:after {\n    content: \"\";\n    display: block;\n    height: 1px;\n    background-color: silver;\n    line-height: 2px;\n  }\n  \n  .ProseMirror ul, .ProseMirror ol {\n    padding-left: 30px;\n  }\n  \n  .ProseMirror blockquote {\n    padding-left: 1em;\n    border-left: 3px solid #eee;\n    margin-left: 0; margin-right: 0;\n  }\n  \n  .ProseMirror-example-setup-style img {\n    cursor: default;\n  }\n  \n  .ProseMirror p { margin-bottom: 1em }\n  */\n  ");
 
-const sheet$3 = new CSSStyleSheet();sheet$3.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nli > ul, li > ol {\n    margin-bottom: 0;\n}\n\nli > h1, li > h2, li > h3, li > h4, li > h5, li > h6 {\n    margin-bottom: 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Scoped to :has() rather than styling pre unconditionally, since a code_block's\n   <pre> should only become a positioning context when it's actually carrying the\n   language overlay (highlightCode on, block selected) — not for every code block. */\npre:has(.Markup-code-language-overlay) {\n    position: relative;\n}\n\n.Markup-code-language-overlay {\n    position: absolute;\n    bottom: 100%;\n    right: 0;\n    font-size: 0.75rem;\n    padding: 2px 6px;\n    border: none;\n    border-radius: 4px 4px 0 0;\n    cursor: pointer;\n    opacity: 0.6;\n    color: white;\n    background: var(--Markup-accent-color, blue);\n}\n\n.Markup-code-language-overlay:hover {\n    opacity: 0.9;\n}\n\n/* Applied (setup/index.js, hasRoomAboveOverlay) when the code_block is too close to\n   the top of the view for the label to fit above it — attach to the bottom instead. */\n.Markup-code-language-overlay-below {\n    bottom: auto;\n    top: 100%;\n    border-radius: 0 0 4px 4px;\n}\n\n@media (prefers-color-scheme: dark) {\n  .Markup-code-language-overlay {\n    background: var(--Markup-accent-color, lightblue);\n    color: black;\n  }\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
+const sheet$3 = new CSSStyleSheet();sheet$3.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nli > ul, li > ol {\n    margin-bottom: 0;\n}\n\nli > h1, li > h2, li > h3, li > h4, li > h5, li > h6 {\n    margin-bottom: 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Scoped to :has() rather than styling pre unconditionally, since a code_block's\n   <pre> should only become a positioning context when it's actually carrying the\n   language overlay (highlightCode on, block selected) — not for every code block. */\npre:has(.Markup-code-language-overlay) {\n    position: relative;\n}\n\n.Markup-code-language-overlay {\n    position: absolute;\n    bottom: 100%;\n    right: 0;\n    font-size: 0.75rem;\n    padding: 2px 6px;\n    border: none;\n    border-radius: 4px 4px 0 0;\n    cursor: pointer;\n    opacity: 0.6;\n    color: white;\n    background: var(--Markup-accent-color, blue);\n}\n\n.Markup-code-language-overlay:hover {\n    opacity: 0.9;\n}\n\n/* Applied (setup/index.js, hasRoomAboveOverlay) when the code_block is too close to\n   the top of the view for the label to fit above it — attach to the bottom instead. */\n.Markup-code-language-overlay-below {\n    bottom: auto;\n    top: 100%;\n    border-radius: 0 0 4px 4px;\n}\n\n/* Matches .Markup-menuitem-active's selected-button color scheme (toolbar.css)\n   exactly: light mode is white lettering on the accent-blue fill (the base\n   rule above), dark mode flips to black lettering on the accent-lightblue\n   fill. */\n@media (prefers-color-scheme: dark) {\n  .Markup-code-language-overlay {\n    background: var(--Markup-accent-color, lightblue);\n    color: black;\n  }\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
 
 const sheet$2 = new CSSStyleSheet();sheet$2.replaceSync("/* Spacing at the top */\n/* Note that toolbar-overlay below  is also set to these values */\n\n.Markup-searchbar-showing {\n  height: 38px;\n  top: 76px;\n}\n\n/* The wrapper lets us automatically embed a toolbar and scroll under it */\n.Markup-toolbar-wrapper {\n  margin-right: -12px;    /* Prevent side scroll even when menu fits */\n  height: inherit;\n  overflow-y: scroll;\n  position: relative; \n}\n\n/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */\n.Markup-prompt-showing {\n  overflow-y: hidden;\n}\n\n/* Z-indexes in one place */\n\n.body-content { \n  z-index: 1; \n}\n\n.Markup-prompt-overlay { \n  z-index: 2; \n}\n\n.Markup-prompt, .Markup-selection {\n  z-index: 3;\n}\n\n.Markup-searchbar {\n  z-index: 4;\n}\n\n.Markup-toolbar, .Markup-toolbar-more {\n  z-index: 5;\n}\n\n.Markup-toolbar-overlay { \n  z-index: 6; \n}\n\n.Markup-menu-dropdown-menu {\n  z-index: 7;\n}\n\n/* Toolbar, menu item, and dropdown styling */\n\n.Markup-toolbar {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 0;\n  max-height: calc(var(--Markup-button-size, 28px) + 10px);\n  padding: 2px 8px;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-toolbar-hidden {\n  display: none;\n}\n\n.Markup-menuitem {\n  display: inline-block;\n  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */\n  overflow-y: visible;\n  vertical-align: middle;\n  min-width: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  cursor: pointer;\n  margin-right: 4px;\n  border-radius: 4px;\n  color: var(--Markup-accent-color, blue);\n  border: 1px solid var(--Markup-accent-color, blue);\n  background: var(--Markup-button-bg, white);\n  fill: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem {\n    color: var(--Markup-accent-color, lightblue);\n    border: 1px solid var(--Markup-accent-color, lightblue);\n    /* border: 1px solid #4183c4; */\n    background: var(--Markup-button-bg, black);\n    fill: var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menuitem-active {\n  fill: white;\n  color: white;\n  background: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menuitem-disabled {\n  cursor: default;\n  opacity: .3;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-disabled {\n    opacity: .6;\n  }\n}\n\n.Markup-icon {\n  display: inline-block;\n  width: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  border: 0;\n}\n\n.Markup-icon span {\n  vertical-align: middle;\n}\n\n.Markup-icon svg {\n  width: var(--Markup-button-font-size, 24px);\n  height: var(--Markup-button-font-size, 24px);\n  padding: 2px;\n  border: 0;\n  fill: inherit;\n}\n\n.Markup-menuseparator {\n  display: inline-block;\n  vertical-align: middle;\n  height: var(--Markup-button-size, 28px);\n  border-right: 1px solid var(--Markup-border-color, lightgray);\n  margin-right: 4px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuseparator {\n    border-right: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-menu-disabled .Markup-icon {\n  cursor: default;\n}\n\n.Markup-menu-dropdown, .Markup-menu-dropdown-menu {\n  background: inherit;\n  text-align: left;\n  white-space: nowrap;\n}\n\n.Markup-menu-dropdown span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-icon span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding: 0 4px;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding-right: 4px;\n  width: 1.8em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap-noindicator {\n  display: inline-flex;\n  padding-right: 4px;\n  width: 1em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n/* For the paragraph style dropdown with a label, make the font smaller */\n.Markup-menu-dropdown {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  box-sizing: border-box;\n  font-size: 0.8em;\n  width: inherit;\n  height: inherit;\n  background: inherit;\n  position: absolute;\n}\n\n/* But for the indicator, bump size up to match the icon-style dropdown */\n.Markup-menu-dropdown .Markup-menu-dropdown-indicator {\n  font-size: 1.25em;\n}\n\n.Markup-menu-dropdown-icon {\n  display: inline-flex;\n  justify-content: space-between;\n  font-size: inherit;\n  width: inherit;\n  cursor: pointer;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-indicator {\n  opacity: .6;\n}\n\n.Markup-tooltip .Markup-menu {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-submenu {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid var(--Markup-border-color, gray);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid var(--Markup-border-color, lightgray);\n  }\n}\n\n.Markup-menu-dropdown-menu {\n  margin-top: calc(1em + 6px);\n  min-width: 4em;\n}\n\n.Markup-menu-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n.Markup-menu-dropdown-separator {\n  border-top: 1px solid var(--Markup-border-color, lightgray);\n  margin: 4px 0;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-separator {\n    border-top: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */\n.Markup-menuitem-clipped {\n  white-space: nowrap;  /* Required for text-overflow */\n  overflow-x: hidden;   /* Required for text-overflow */\n  max-width: 30em;\n  text-overflow: ellipsis;\n}\n\n.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n  background: var(--Markup-hover-bg, #f2f2f2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n    background: var(--Markup-hover-bg, rgb(80, 80, 80));\n  }\n}\n\n.Markup-menu-dropdown-item p, \n.Markup-menu-dropdown-item h1, \n.Markup-menu-dropdown-item h2, \n.Markup-menu-dropdown-item h3, \n.Markup-menu-dropdown-item h4, \n.Markup-menu-dropdown-item h5, \n.Markup-menu-dropdown-item h6, \n.Markup-menu-dropdown-item pre {\n  padding: 0;\n  margin: 0;\n  min-height: 24px;\n}\n\n.Markup-stylelabel {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  white-space: pre;\n  width: 100%;\n}\n\n.Markup-stylelabel-keymap {\n  display: flex;\n  justify-content: flex-end;\n  font-size: 1.0rem;\n  font-weight: normal;\n  color: gray;\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {\n  display: block;\n}\n\n.Markup-menu-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n  background: inherit;\n}\n\n.Markup-menu-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -5px;\n  max-height: 80vh;\n  overflow-y: auto;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: var(--Markup-button-bg, white);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-submenu {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: var(--Markup-button-bg, black);\n  }\n}\n\n.Markup-menu-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n.Markup-selection {\n  position: absolute;\n  border: 1px solid var(--Markup-accent-color, blue);\n  background: transparent;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-selection {\n    border: 1px solid var(--Markup-accent-color, lightblue);\n  }\n}\n\n/* Toolbar-more styling */\n\n.Markup-toolbar-more {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: calc(var(--Markup-button-size, 28px) + 7px);\n  max-height: calc(var(--Markup-button-size, 28px) + 10px);\n  padding: 2px 8px;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-more {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n/* Searchbar styling */\n\n.Markup-searchbar {\n  display: inline-block;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  position: sticky;\n  top: calc(var(--Markup-button-size, 28px) + 7px);\n  width: 100%;\n  line-height: 30px;\n  height: 37px;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-searchbar input {\n  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */\n  position: relative;\n  font-size: 18px;\n  line-height: 30px;\n  height: 30px;\n  width: calc(100% - 128px);\n  margin: 0 8px;\n  padding: 0 4px;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar input {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-searchbar .Markup-searchbar-status {\n  position: absolute;\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  white-space: nowrap;\n  font-size: 12px;\n  overflow-x: visible;\n  height: 28px;\n  top: 5px;\n  left: calc(100% - 13em);\n  width: 1px;\n  color: gray;\n  user-select: none;\n}\n\n/* Dialog/prompt styling for insert/edit actions */\n\n.Markup-prompt-overlay {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt-overlay {\n    background-color: rgba(255, 255, 255, 0.2);\n  }\n}\n\n.Markup-toolbar-overlay {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-overlay {\n    background-color: rgba(255, 255, 255, 0.1);\n  }\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-hidden {\n  height: 38px;\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-showing {\n  height: 76px;\n}\n\n.Markup-prompt {\n  margin: 0;\n  font-size: 18px;\n  background: white;\n  padding: 8px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt {\n    background: black;\n    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);\n  }\n}\n\n.Markup-prompt-link {\n  height: 96px;\n  width: 300px;\n}\n\n.Markup-prompt-image {\n  height: 130px;\n  width: 300px;\n}\n\n.Markup-prompt-language {\n  height: 96px;\n  width: 300px;\n}\n\n.Markup-prompt img {\n  display: inline-block;\n  vertical-align: middle;\n  min-width: 28px;\n  height: 28px;\n  margin-right: 4px;\n}\n\n.Markup-prompt p {\n  margin: 0 0 4px 0;\n  font-weight: normal;\n  color: black;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt p {\n    color: white;\n  }\n}\n\n.Markup-prompt input[type=\"text\"] {\n  font-size: 100%;\n  line-height: 28px;\n  margin-top: 2px;\n  padding: 1px 4px;\n  width: 100%;\n  appearance: none;\n  background: #eee;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input[type=\"text\"] {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-prompt input.invalid {\n  color: red;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input.invalid {\n    color: pink;\n  }\n}\n\n.Markup-prompt-buttons {\n  display: flex;\n  vertical-align: middle;\n  justify-content: space-between;\n  justify-items: center;\n  line-height: 28px;\n  height: 28px;\n  margin-top: 8px;\n  margin-bottom: 8px;\n}\n\n.Markup-prompt-buttongroup {\n  flex-shrink: 0;\n}\n\n.Markup-prompt-buttons img {\n  aspect-ratio: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n.Markup-prompt-buttons .Markup-menuitem {\n  display: inline-flex;\n  padding-right: 4px;\n  padding-left: 4px;\n}\n\n/* The buttongroup contains OK and Cancel menuitems on the right */\n.Markup-prompt-buttongroup .Markup-menuitem {\n  margin-right: 0;\n  margin-left: 4px;\n}\n\n/* .Markup-menu-tablesizer is a specialized submenu */\n.Markup-menu-tablesizer {\n  display: none;\n  grid-template-columns: repeat(4, 1fr);\n  grid-auto-rows: 18px;\n  row-gap: 1px;\n  column-gap: 1px;\n  padding: 0;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: var(--Markup-button-bg, white);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: var(--Markup-button-bg, black);\n  }\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {\n  display: grid;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid var(--Markup-border-color, gray);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid var(--Markup-border-color, lightgray);\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menu-dropdown-item {\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid var(--Markup-accent-color, blue);\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 13px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menu-dropdown-item {\n    border: 1px solid var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menuitem-active {\n    height: 13px;\n    padding-top: 3px;\n    fill: black;\n    color: black;\n    background: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: var(--Markup-accent-color, lightblue);\n  }\n}");
 
@@ -32638,6 +32638,61 @@ function presentCodeLanguages(doc) {
     return Array.from(languages).sort()
 }
 
+// hljs never has classPrefix reconfigured elsewhere in this codebase, so this
+// matches its own default. No public getter exists to read it back instead.
+const HLJS_CLASS_PREFIX = 'hljs-';
+
+// Mirrors hljs's internal (unexported) scopeToCSSClass so class strings here
+// match what hljs's own HTML renderer would produce for the same scope name.
+function scopeToClass(name, prefix) {
+    if (name.startsWith('language:')) return name.replace('language:', 'language-')
+    if (name.includes('.')) {
+        const pieces = name.split('.');
+        return [`${prefix}${pieces.shift()}`, ...pieces.map((piece, i) => `${piece}${'_'.repeat(i + 1)}`)].join(' ')
+    }
+    return `${prefix}${name}`
+}
+
+// Implements hljs's documented Renderer contract (addText/openNode/closeNode)
+// for TokenTree.walk, tracking span positions instead of building HTML.
+class SpanWalker {
+    constructor(prefix) {
+        this.prefix = prefix;
+        this.position = 0;
+        this.stack = [];
+        this.spans = [];
+    }
+
+    addText(text) {
+        this.position += text.length;
+    }
+
+    openNode(node) {
+        if (node.scope) this.stack.push({ scope: node.scope, from: this.position });
+    }
+
+    closeNode(node) {
+        if (!node.scope) return
+        const { scope, from } = this.stack.pop();
+        this.spans.push({ from, to: this.position, class: scopeToClass(scope, this.prefix) });
+    }
+}
+
+/**
+ * {from, to, class} spans for `code` highlighted as `language`, via hljs's
+ * own already-built token tree (result._emitter.walk) — no DOM involved.
+ */
+function highlightSpans(code, language) {
+    try {
+        const result = HighlightJS.highlight(code, { language, ignoreIllegals: true });
+        const walker = new SpanWalker(HLJS_CLASS_PREFIX);
+        result._emitter.walk(walker);
+        return walker.spans
+    } catch {
+        return []
+    }
+}
+
 /**
  * Define various arrays of tags used to represent MarkupEditor-specific concepts.
  *
@@ -32971,20 +33026,60 @@ function pasteCode(text) {
 
 /**
  * Do a custom paste operation of "text only", which we will extract from the html
- * ourselves. First we get a node that conforms to the schema, which by definition 
+ * ourselves. First we get a node that conforms to the schema, which by definition
  * only includes elements in a form we recognize, no spans, styles, etc.
  * The trick here is that we want to use the same code to paste text as we do for
  * HTML, but we want to paste something that is the MarkupEditor-equivalent of
  * unformatted text.
- *  
+ *
  * @param   {string}                html    The HTML to be pasted
  * @param   {ClipboardEvent | null} event   A mocked ClipboardEvent for testing
  */
 function pasteText(html, event) {
-    const node = _nodeFromHTML(html);
+    const node = _nodeFromHTML(_preprocessPasteText(html));
     const htmlFragment = fragmentFromNode(node);
     const minimalHTML = _minimalHTML(htmlFragment); // Reduce to MarkupEditor-equivalent of "plain" text
     pasteHTML(minimalHTML, event);
+}
+/**
+ * Preprocess raw text before it's parsed as HTML by _nodeFromHTML, converting
+ * meaningful line structure into real markup so it survives.
+ *
+ * Only applied when there's an actual newline AND no real markup at all: that
+ * combination means genuinely plain text (e.g., from a clipboard with no text/html
+ * flavor available, or a plain-text-only source app) whose line structure is
+ * meaningful — not HTML, where a run of whitespace (including newlines) collapses to
+ * nothing meaningful once parsed. Gating on '\n' presence too, not just the absence
+ * of '<', matters: some callers intentionally pass single-line text containing
+ * literal HTML entities (e.g. "Hello &lt;b&gt;bold&lt;/b&gt; world", meant to render
+ * as that literal text, not a tag) with no '<' character anywhere in it either —
+ * without the '\n' check, that would be misidentified as bare plain text needing
+ * escaping and get double-escaped (&lt; -> &amp;lt;). No newline means there's
+ * nothing this preprocessing could improve regardless, so it only ever applies to
+ * input _nodeFromHTML couldn't already have handled correctly as HTML on its own.
+ * @ignore
+ */
+function _preprocessPasteText(html) {
+    return (html.includes('\n') && !html.includes('<')) ? _linebreaksToHTML(html) : html;
+}
+/**
+ * Convert bare plain text (no HTML markup at all) into minimal paragraph/br-structured
+ * HTML: a blank line (a run of two or more newlines) starts a new paragraph; a single
+ * newline within a paragraph becomes a <br>. Text is HTML-escaped first via a detached
+ * element's textContent/innerHTML round-trip, the standard safe way to escape arbitrary
+ * text for insertion into an HTML string, so literal &, <, > in the source can't be
+ * misinterpreted once this result is parsed as HTML by the caller.
+ * @ignore
+ */
+function _linebreaksToHTML(text) {
+    return text
+        .split(/\n[ \t]*\n+/)
+        .map(paragraph => {
+            const div = document.createElement('div');
+            div.textContent = paragraph;
+            return `<p>${div.innerHTML.split('\n').join('<br>')}</p>`;
+        })
+        .join('');
 }
 /**
  * Return a minimal "unformatted equivalent" version of the HTML that is in fragment.
@@ -34842,7 +34937,7 @@ function _loadedUserFiles(target) {
  * @param {MUError} error 
  */
 function _callbackError(error) {
-    _callback(error.messageDict());
+    _callback(JSON.stringify(error.messageDict()));
 }
 
 /**
@@ -35121,7 +35216,7 @@ function testPasteHTMLPreprocessing(html) {
  * @param {string}  html    The HTML to paste
  */
 function testPasteTextPreprocessing(html) {
-    const node = _nodeFromHTML(html);
+    const node = _nodeFromHTML(_preprocessPasteText(html));
     const fragment = fragmentFromNode(node);
     const minimalHTML = _minimalHTML(fragment);
     return minimalHTML;
@@ -36093,6 +36188,20 @@ function consoleLog(string) {
         'log' : string
     };
     _callback(JSON.stringify(messageDict));
+}
+/**
+ * Report an error to the delegate's markupError method, the same path internal
+ * MUErrors use. For external plugins that have their own error conditions
+ * (e.g., a failed render) but no access to the internal MUError/_callbackError
+ * machinery directly.
+ *
+ * @param {string}  code     A short identifier for the error.
+ * @param {string}  message  The error message.
+ * @param {string}  [info]   Optional additional detail.
+ * @param {boolean} [alert]  Whether the host app should treat this as alert-worthy. Defaults to true.
+ */
+function reportError(code, message, info, alert=true) {
+    _callbackError(new MUError(code, message, info, alert));
 }
 
 var visibility = {
@@ -38500,15 +38609,11 @@ class LanguageDialogItem extends DialogItem {
     this.languageArea.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
       if (e.key === 'Enter') {
         e.preventDefault();
-        // Enter activates whichever button is currently the default (matches LinkItem's
-        // isValid()-gated Enter handling) — Cancel when empty/unrecognized, OK once a
-        // recognized language is entered. An unsupported language can still be submitted
-        // explicitly via the OK button, which stays enabled regardless.
-        if (this.hasRecognizedLanguage()) {
-          this.submit();
-        } else {
-          this.closeDialog();
-        }
+        // OK is always the default action, even for an empty or unrecognized
+        // language — entering something not yet in the recognized set (e.g. a
+        // new fenced-code language) must work on Enter alone, without first
+        // having to click OK to override Cancel as the default.
+        this.submit();
       } else if (e.key === 'Tab') {
         e.preventDefault();
       } else if (e.key === 'Escape') {
@@ -38520,23 +38625,10 @@ class LanguageDialogItem extends DialogItem {
 
   /**
    * Whether the input currently has any language name entered, recognized or
-   * not. An empty field means "no language" — never colored invalid — but it's
-   * also not something recognized, so it alone doesn't make OK the default
-   * button; see hasRecognizedLanguage().
+   * not. An empty field means "no language" — never colored invalid.
    */
   hasContent() {
     return this.languageArea.value.trim().length > 0
-  }
-
-  /**
-   * Whether the input currently holds a recognized language name. Drives which
-   * of OK/Cancel looks like the default button — Cancel is default when the
-   * field is empty OR holds an unsupported name, OK only once a supported
-   * language is entered. Submission itself is never blocked either way (OK
-   * stays enabled always); this only changes which button LOOKS default.
-   */
-  hasRecognizedLanguage() {
-    return this.hasContent() && isRecognizedLanguage(this.languageArea.value)
   }
 
   /**
@@ -38553,10 +38645,11 @@ class LanguageDialogItem extends DialogItem {
   /**
    * Create and append the OK/Cancel buttons, positioned and styled like LinkItem's:
    * a left-side spacer so buttonsDiv's space-between pushes the OK/Cancel group to
-   * the right, and Cancel as the default (active-styled) button until the field has
-   * a language entered, at which point OK becomes the default. OK is always enabled
-   * regardless — an unrecognized language is a valid, deliberate choice, not an
-   * error to block on — only which button LOOKS like the default one changes.
+   * the right, and OK always the default (active-styled) button, regardless of
+   * whether the field is empty or holds an unrecognized language — an unrecognized
+   * language is a valid, deliberate choice (e.g. a new fenced-code language), not
+   * an error to block submission on. Both buttons stay enabled always; only OK's
+   * active styling is a fixed constant, not state-dependent.
    *
    * @param {EditorView} view
    */
@@ -38571,7 +38664,7 @@ class LanguageDialogItem extends DialogItem {
     let okItem = cmdItem(() => this.submit(), {
       class: prefix + '-menuitem',
       title: 'OK',
-      active: () => { return this.hasRecognizedLanguage() },
+      active: () => { return true },
       enable: () => { return true }
     });
     let {dom: okDom, update: okUpdate} = okItem.render(view);
@@ -38582,7 +38675,7 @@ class LanguageDialogItem extends DialogItem {
     let cancelItem = cmdItem(() => this.closeDialog(), {
       class: prefix + '-menuitem',
       title: 'Cancel',
-      active: () => { return !this.hasRecognizedLanguage() },
+      active: () => { return false },
       enable: () => { return true }
     });
     let {dom: cancelDom, update: cancelUpdate} = cancelItem.render(view);
@@ -40588,78 +40681,37 @@ const tablePlugin = new Plugin({
   }
 });
 
-const codeHighlightCache = new WeakMap();
-
-/**
- * Convert an hljs-highlighted HTML string into a list of {from, to, class}
- * ranges relative to the start of the original plain-text code, by building
- * a detached element via innerHTML (not the global DOMParser class, whose
- * separate parseFromString implementation is less consistently supported
- * across environments than innerHTML) and walking its child nodes.
- *
- * @ignore
- */
-function highlightSpecs(code, language) {
-  let html;
-  try {
-    html = HighlightJS.highlight(code, {language, ignoreIllegals: true}).value;
-  } catch {
-    return []
-  }
-  const container = document.createElement('div');
-  container.innerHTML = html;
-  const specs = [];
-  let offset = 0;
-  function walk(parent) {
-    parent.childNodes.forEach((child) => {
-      if (child.nodeType === Node.TEXT_NODE) {
-        offset += child.textContent.length;
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        const start = offset;
-        walk(child);
-        const cls = child.getAttribute('class');
-        if (cls) specs.push({from: start, to: offset, class: cls});
-      }
-    });
-  }
-  walk(container);
-  return specs
+function decorationsForSpans(pos, spans) {
+  return spans.map(({from, to, class: cls}) => Decoration.inline(pos + 1 + from, pos + 1 + to, {class: cls}))
 }
 
-/**
- * Walk doc for code_block nodes with a registered language and build a
- * DecorationSet highlighting each one, using a WeakMap cache keyed by node
- * identity so unchanged blocks (same node reference across transactions,
- * per ProseMirror's persistent-tree structural sharing) are never re-run
- * through hljs.highlight().
- *
- * @ignore
- */
-function computeCodeHighlightDecorations(doc) {
+// null for anything that isn't a highlightable code_block, so callers can
+// skip it (no cache entry, no decorations) with a single check.
+function highlightEntryFor(node) {
+  const language = node.attrs.language;
+  if (!language || !isRecognizedLanguage(language)) return null
+  return {node, spans: highlightSpans(node.textContent, language)}
+}
+
+function computeAllHighlights(doc) {
+  const cache = new Map();
   const decorations = [];
   doc.descendants((node, pos) => {
     if (node.type.name !== 'code_block') return
-    const language = node.attrs.language;
-    if (!language || !HighlightJS.getLanguage(language)) return
-    let specs = codeHighlightCache.get(node);
-    if (!specs) {
-      specs = highlightSpecs(node.textContent, language);
-      codeHighlightCache.set(node, specs);
+    const entry = highlightEntryFor(node);
+    if (entry) {
+      cache.set(pos, entry);
+      decorations.push(...decorationsForSpans(pos, entry.spans));
     }
-    specs.forEach(({from, to, class: cls}) => {
-      decorations.push(Decoration.inline(pos + 1 + from, pos + 1 + to, {class: cls}));
-    });
     return false
   });
-  return DecorationSet.create(doc, decorations)
+  return {cache, decorations: DecorationSet.create(doc, decorations)}
 }
 
 /**
  * Walk cur's children, comparing against old's, skipping any subtree that's
- * the same node object as before (ProseMirror's persistent-tree structural
- * sharing means an unchanged subtree is reference-identical). Only visits
- * nodes in the changed region, so cost is bounded by how much of the doc
- * actually changed rather than the whole document.
+ * the same node object as before. Bounds cost to the changed region rather
+ * than the whole document.
  *
  * @ignore
  */
@@ -40679,149 +40731,80 @@ function changedDescendants(old, cur, offset, f) {
   }
 }
 
-/**
- * The codeHighlightPlugin applies syntax-highlighting decorations to
- * code_block nodes whose language is registered in highlighting.js's hljs
- * instance. Only registered via markupSetup() when the highlightCode
- * behavior setting is on.
- *
- * @ignore
- */
+// Carries cache entries forward by position + Node.eq, not object identity;
+// changedDescendants then fills in anything new or actually changed.
+function updateHighlights(tr, {cache}) {
+  const nextCache = new Map();
+  const decorations = [];
+  const carryForward = (pos, entry) => {
+    nextCache.set(pos, entry);
+    decorations.push(...decorationsForSpans(pos, entry.spans));
+  };
+
+  cache.forEach(({node, spans}, pos) => {
+    const mapped = tr.mapping.mapResult(pos);
+    if (mapped.deleted) return
+    const newNode = tr.doc.nodeAt(mapped.pos);
+    if (newNode && newNode.eq(node)) carryForward(mapped.pos, {node: newNode, spans});
+  });
+
+  changedDescendants(tr.before, tr.doc, 0, (node, pos) => {
+    if (node.type.name !== 'code_block' || nextCache.has(pos)) return
+    const entry = highlightEntryFor(node);
+    if (entry) carryForward(pos, entry);
+  });
+
+  return {cache: nextCache, decorations: DecorationSet.create(tr.doc, decorations)}
+}
+
+// Syntax-highlighting decorations for code_block nodes with a registered
+// language. Only registered via markupSetup() when highlightCode is on.
 const codeHighlightPlugin = new Plugin({
   state: {
     init(_, {doc}) {
-      return computeCodeHighlightDecorations(doc)
+      return computeAllHighlights(doc)
     },
-    apply(tr, set) {
-      if (!tr.docChanged) return set
-      let touchedCodeBlock = false;
-      const checkCodeBlock = (node) => {
-        if (node.type.name === 'code_block') touchedCodeBlock = true;
-      };
-      // Check both directions: a code_block added/changed in the new doc, and one
-      // removed (e.g. by undoing a paragraph->code_block conversion) from the old
-      // doc. changedDescendants(old, cur, ...) only ever visits cur's children, so
-      // catching removal requires calling it again with old/new swapped.
-      changedDescendants(tr.before, tr.doc, 0, checkCodeBlock);
-      if (!touchedCodeBlock) changedDescendants(tr.doc, tr.before, 0, checkCodeBlock);
-      if (!touchedCodeBlock) return set.map(tr.mapping, tr.doc)
-      return computeCodeHighlightDecorations(tr.doc)
+    apply(tr, value) {
+      return tr.docChanged ? updateHighlights(tr, value) : value
     }
   },
   props: {
-    decorations(state) { return codeHighlightPlugin.getState(state) }
+    decorations(state) { return codeHighlightPlugin.getState(state).decorations }
   }
 });
 
 /**
- * Approximate rendered height of the language overlay label (font-size 0.75rem +
- * padding 2px 6px, styles/markup.css). Only used for the room-above check below —
- * doesn't need to be pixel-exact, just enough to decide which side to attach to.
+ * Build the plugin that shows the selected code_block's language overlay tab
+ * (owned by its CodeView NodeView, ../nodeview/codeview.js). A factory for
+ * symmetry with call sites expecting a function, though nothing here is
+ * actually per-instance anymore — the view() hook below gets its own closure
+ * per EditorView regardless of whether this plugin object itself is shared.
  *
  * @ignore
  */
-const CODE_LANGUAGE_OVERLAY_HEIGHT = 24;
-
-/**
- * Whether there's room above `preDOM` (the code_block's own <pre> element) to show
- * the language overlay label there without it being pushed above the toolbar or
- * off-screen — if not, it should attach below instead. `view.nodeDOM` is used
- * read-only here (getBoundingClientRect only); mutating its result is what caused
- * the CPU-loop regression fixed earlier, so this must never write to preDOM.
- *
- * @ignore
- */
-function hasRoomAboveOverlay(view, preDOM) {
-  if (!preDOM) return true
-  const preRect = preDOM.getBoundingClientRect();
-  const toolbarRect = getToolbar(view)?.getBoundingClientRect();
-  const minTop = (toolbarRect?.bottom ?? 0) + CODE_LANGUAGE_OVERLAY_HEIGHT;
-  return preRect.top >= minTop
-}
-
-/**
- * Compute the semi-transparent "Language: <name>" widget Decoration for the
- * selected code_block, if any. Recomputed on every transaction — this is only
- * a selection lookup plus a string, not a doc walk, so unlike
- * computeCodeHighlightDecorations there's no need to cache or gate on
- * tr.docChanged.
- *
- * @ignore
- */
-function computeCodeLanguageOverlayDecorations(state, languageDialog) {
-  const info = codeLanguageOverlayInfo(state);
-  if (!info) return DecorationSet.empty
-  // An empty code_block's only content would become this widget's contentEditable=false
-  // button — the exact "non-editable content alone in a textblock" case prosemirror-view
-  // itself flags as fragile in Safari/Chrome (addTextblockHacks, working around Safari
-  // bug #1165 and Chrome bug #1152). Skip the overlay until there's actual code; there's
-  // nothing useful to show a language badge over yet anyway.
-  const found = codeBlockAtSelection(state);
-  if (!found || found.node.content.size === 0) return DecorationSet.empty
-  const widget = Decoration.widget(info.pos, (view) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = prefix + '-code-language-overlay';
-    if (!hasRoomAboveOverlay(view, view.nodeDOM(found.pos))) {
-      button.classList.add(prefix + '-code-language-overlay-below');
+function codeLanguageOverlayPlugin() {
+  return new Plugin({
+    view(editorView) {
+      let activeCodeView = null;
+      // A pure selection-only transaction never calls a NodeView's own
+      // update(), so this reaches the CodeView directly via view.nodeDOM(pos)
+      // instead. Tracks the CodeView INSTANCE, not its position — a position
+      // captured before a doc-changing transaction is stale after one (the
+      // block may have moved), but the instance itself is stable across an
+      // update() as long as the node stays a code_block, so deactivating it
+      // needs no position lookup at all, stale or otherwise.
+      const sync = (view) => {
+        const found = codeBlockAtSelection(view.state);
+        const nextCodeView = found ? view.nodeDOM(found.pos)?.codeView : null;
+        if (nextCodeView === activeCodeView) return
+        activeCodeView?.setActive(false);
+        nextCodeView?.setActive(true);
+        activeCodeView = nextCodeView;
+      };
+      sync(editorView);
+      return { update: sync }
     }
-    button.textContent = info.label;
-    // Without this, the button is ambiguous to the browser's native cursor placement
-    // as part of the code_block's editable text flow.
-    button.contentEditable = 'false';
-    button.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      const found = codeBlockAtSelection(view.state);
-      languageDialog.open(view, found?.node.attrs.language ?? '', (entered) => {
-        setCodeLanguageCommand(entered ? entered : null)(view.state, view.dispatch, view);
-      });
-    });
-    return button
-  }, {
-    side: 1,
-    // By default the cursor at the widget's position is strictly kept on the
-    // `side` indicated above, and per prosemirror-view's own docs "keyboard
-    // cursor motion will not, without further custom handling, visit both
-    // sides of the widget" — which is what broke placing/moving the cursor to
-    // a code_block's start. relaxedSide lets the DOM selection land on either
-    // side instead of being force-pinned to one.
-    relaxedSide: true,
-    // Keyed so ProseMirror reuses the existing button DOM node (and its click listener)
-    // across transactions unrelated to this block, instead of destroying and rebuilding it
-    // on every single transaction while a code block is selected (WidgetType.eq() only
-    // short-circuits reuse on a spec.key match). The key includes pos and label — not just
-    // a static string — so a genuinely different block or language change still gets a
-    // fresh toDOM call rather than silently reusing stale button text.
-    key: `code-language-overlay-${info.pos}-${info.label}`
-  });
-  return DecorationSet.create(state.doc, [widget])
-}
-
-/**
- * Build the plugin that shows the selected code_block's language overlay.
- * A factory (not a module-level singleton like codeHighlightPlugin) because it
- * owns a LanguageDialogItem bound to this editor instance's `config` — sharing
- * one across multiple `<markup-editor>` instances on the same page would let
- * one instance's dialog state stomp on another's.
- *
- * @ignore
- */
-function codeLanguageOverlayPlugin(config) {
-  const languageDialog = new LanguageDialogItem(config);
-  const thePlugin = new Plugin({
-    state: {
-      init() {
-        return DecorationSet.empty
-      },
-      apply(tr, set, oldState, newState) {
-        return computeCodeLanguageOverlayDecorations(newState, languageDialog)
-      }
-    },
-    props: {
-      decorations(state) { return thePlugin.getState(state) }
-    }
-  });
-  return thePlugin
+  })
 }
 
 const searchModePlugin  = new Plugin({
@@ -40973,7 +40956,7 @@ function markupSetup(config, schema) {
   // language overlay, if enabled in behavior config
   if (config.behavior.highlightCode) {
     plugins.push(codeHighlightPlugin);
-    plugins.push(codeLanguageOverlayPlugin(config));
+    plugins.push(codeLanguageOverlayPlugin());
   }
 
   // Add the plugin that handles placeholder display for an empty document, as passed in config
@@ -41608,6 +41591,116 @@ class DivView {
 
 }
 
+// Approximate rendered height of the language overlay label (font-size 0.75rem +
+// padding 2px 6px, styles/markup.css) — only used for the room-above check below,
+// doesn't need to be pixel-exact.
+const CODE_LANGUAGE_OVERLAY_HEIGHT = 24;
+
+/**
+ * Whether there's room above `preDOM` (a code_block's own <pre> element) to show
+ * the language overlay label there without it being pushed above the toolbar or
+ * off-screen — if not, it should attach below instead. Read-only (getBoundingClientRect
+ * only); must never write to preDOM.
+ */
+function hasRoomAboveOverlay(view, preDOM) {
+    if (!preDOM) return true
+    const preRect = preDOM.getBoundingClientRect();
+    const toolbarRect = getToolbar(view)?.getBoundingClientRect();
+    const minTop = (toolbarRect?.bottom ?? 0) + CODE_LANGUAGE_OVERLAY_HEIGHT;
+    return preRect.top >= minTop
+}
+
+/**
+ * NodeView for code_block. The language tab is a DOM sibling of contentDOM,
+ * appended/removed by setActive. No selectNode/deselectNode — code_block
+ * selection is a TextSelection inside its content, never a NodeSelection.
+ *
+ * Stores `view` directly rather than this codebase's activeView() lookup
+ * (imageview.js): the tab's mousedown only ever fires from this view's own
+ * DOM, so there's no cross-instance ambiguity to resolve.
+ *
+ * node.attrs.language only ever affects the tab's label and contentDOM's
+ * class — never which code_block this applies to or how it's structured.
+ */
+class CodeView {
+    constructor(node, view, getPos, languageDialog) {
+        this.view = view;
+        this.languageDialog = languageDialog;
+        this.dom = document.createElement('pre');
+        this.contentDOM = document.createElement('code');
+        this.dom.appendChild(this.contentDOM);
+        // codeLanguageOverlayPlugin (setup/index.js) reads this via
+        // view.nodeDOM(pos) to call setActive on the right instance — a plain
+        // own-property, not a ProseMirror-internal one.
+        this.dom.codeView = this;
+        this.syncLanguageClass(node);
+        this.tab = this.buildTab();
+        this.setTabLabel(node);
+    }
+
+    update(node) {
+        if (node.type.name !== 'code_block') return false
+        this.syncLanguageClass(node);
+        this.setTabLabel(node);
+        return true
+    }
+
+    // ProseMirror's default ignoreMutation is `!contentDOM && mutation.type !=
+    // "selection"` — since code_block has a real contentDOM, that default
+    // returns false for any mutation, including setActive's own
+    // appendChild/removeChild of the tab (a dom child OUTSIDE contentDOM).
+    // Without this override, that mutation reads as an unexpected external
+    // change: the node gets marked dirty and rebuilt from scratch on the
+    // next flush, destroying the tab it just added.
+    ignoreMutation(mutation) {
+        return mutation.type !== 'selection' && !this.contentDOM.contains(mutation.target)
+    }
+
+    // The tab sits outside contentDOM, a sibling in dom — mirrored by
+    // ResizableImage.select()/deselect() inserting/removing resize-handle
+    // spans in imageview.js. contentDOM's own rendered content is always
+    // just the code text; appending or removing the tab never touches it.
+    setActive(isActive) {
+        if (isActive && !this.tab.isConnected) {
+            this.tab.classList.toggle(prefix + '-code-language-overlay-below', !hasRoomAboveOverlay(this.view, this.dom));
+            this.dom.appendChild(this.tab);
+        } else if (!isActive && this.tab.isConnected) {
+            this.dom.removeChild(this.tab);
+        }
+    }
+
+    destroy() {
+        this.dom.codeView = null;
+    }
+
+    syncLanguageClass(node) {
+        const language = node.attrs.language;
+        this.contentDOM.className = language ? `language-${language}` : '';
+    }
+
+    setTabLabel(node) {
+        const language = node.attrs.language;
+        this.tab.textContent = language ? `Language: ${language.toLowerCase()}` : 'Language: none';
+    }
+
+    buildTab() {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = prefix + '-code-language-overlay';
+        // Without this, the button is ambiguous to the browser's native cursor
+        // placement as part of the code_block's editable text flow.
+        button.contentEditable = 'false';
+        button.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const found = codeBlockAtSelection(this.view.state);
+            this.languageDialog.open(this.view, found?.node.attrs.language ?? '', (entered) => {
+                setCodeLanguageCommand(entered ? entered : null)(this.view.state, this.view.dispatch, this.view);
+            });
+        });
+        return button
+    }
+}
+
 /**
  * The MessageHandler receives `postMessage` from the MarkupEditor as the document state changes.
  * 
@@ -42050,10 +42143,18 @@ class MarkupEditor {
             this.config.delegate = getDelegate(delegate);
         }
 
+        // One dialog per editor instance, not per code_block — sharing one across
+        // multiple <markup-editor> instances on the same page would let one
+        // instance's dialog state stomp on another's. In contrast to the other 
+        // dialogs, like LinkDialog, the languageDialog can be initiated from 
+        // the tab that shows when it is selected, not just the menu item. This 
+        // necessitates creating it here so we can pass it to the CodeView.
+        const languageDialog = new LanguageDialogItem(this.config);
+
         // Create the EditorView for this MarkupEditor
         this.view = new EditorView(this.element, {
             state: EditorState.create({
-                // For the MarkupEditor, we can just use the editor element. 
+                // For the MarkupEditor, we can just use the editor element.
                 // There is no need to use a separate content element.
                 doc: DOMParser.fromSchema(schema).parse(this.element),
                 plugins: markupSetup(this.config, schema)
@@ -42062,6 +42163,7 @@ class MarkupEditor {
                 link(node, view, getPos) { return new LinkView(node, view, getPos) },
                 image(node, view, getPos) { return new ImageView(node, view, getPos) },
                 div(node, view, getPos) { return new DivView(node, view, getPos) },
+                code_block(node, view, getPos) { return new CodeView(node, view, getPos, languageDialog) },
             },
             // All text input makes callbacks to indicate the document state has changed.
             // For history, used handleTextInput, but that fires *before* input happens.
@@ -42239,6 +42341,7 @@ const MU = {
     removeAllDivs,
     removeButton,
     removeDiv,
+    reportError,
     resetSelection,
     savedDataImage,
     searchFor,
