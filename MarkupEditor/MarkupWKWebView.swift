@@ -2292,7 +2292,15 @@ extension MarkupWKWebView {
         let pasteboard = NSPasteboard.general
         switch pasteableType {
         case .Text:
-            if let text = pasteboard.string(forType: .string) {
+            // Matches the .Html/.Rtf cases below: a code_block selection routes to
+            // pasteCode, not pasteText. Without this check, a clipboard with only a
+            // plain-text flavor (no HTML/RTF, e.g. from a plain-text-only source app)
+            // pasting into a code block would go through pasteText's HTML-parsing
+            // path instead of pasteCode's raw insertText, the same class of bug as
+            // pasteText losing bare newlines outside code blocks.
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteCode(text)
+            } else if let text = pasteboard.string(forType: .string) {
                 pasteText(text)
             }
         case .Html:
