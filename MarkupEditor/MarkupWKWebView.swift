@@ -947,8 +947,52 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         executeJavaScript("MU.testExtractContents()") { result, error in handler?() }
     }
     
+    //MARK: Plugins
+
+    /// Register `plugin` with the active editor's plugin registry.
+    public func registerPlugin(_ plugin: Plugin) async throws {
+        let filenameArg = plugin.filename.map { ", filename: '\($0.escaped)'" } ?? ""
+        try await executeJavaScript("MU.registerPlugin({name: '\(plugin.name.escaped)', type: '\(plugin.type.escaped)'\(filenameArg)})")
+    }
+
+    /// Remove `plugin` from the active editor's plugin registry.
+    public func unregisterPlugin(_ plugin: Plugin) async throws {
+        try await executeJavaScript("MU.unregisterPlugin('\(plugin.name.escaped)')")
+    }
+
+    /// Return the registered plugin named `name`, or nil if not found.
+    public func getPlugin(name: String) async -> Plugin? {
+        guard
+            let result = try? await executeJavaScript("MU.getPlugin('\(name.escaped)')"),
+            let dict = result as? [String: Any],
+            let data = try? JSONSerialization.data(withJSONObject: dict)
+        else { return nil }
+        do {
+            return try JSONDecoder().decode(Plugin.self, from: data)
+        } catch {
+            Logger.webview.error("Error decoding plugin \(name): \(error)")
+            return nil
+        }
+    }
+
+    /// Return the registered plugins matching `type`, or all registered plugins if `type` is nil.
+    public func getPlugins(type: String? = nil) async -> [Plugin] {
+        let arg = type.map { "'\($0.escaped)'" } ?? ""
+        guard
+            let result = try? await executeJavaScript("MU.getPlugins(\(arg))"),
+            let array = result as? [[String: Any]],
+            let data = try? JSONSerialization.data(withJSONObject: array)
+        else { return [] }
+        do {
+            return try JSONDecoder().decode([Plugin].self, from: data)
+        } catch {
+            Logger.webview.error("Error decoding plugins: \(error)")
+            return []
+        }
+    }
+
     //MARK: Javascript interactions
-    
+
     /// Return the HTML contained in this MarkupWKWebView.
     ///
     /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
@@ -1120,49 +1164,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    /// Return the array of plugin manifests registered with the editor.
-    ///
-    /// Each manifest is a dictionary of string keys and string values as defined by the plugin.
-    /// Delivers nil to the handler if the JavaScript call fails or returns no result.
-    public func getPluginManifest(_ handler: (([[String: String]]?) -> Void)?) {
-        executeJavaScript("MU.getPluginManifest()") { result, error in
-            if let error {
-                Logger.webview.error("Error getting plugin manifest: \(error)")
-                handler?(nil)
-                return
-            }
-            handler?(result as? [[String: String]])
-        }
-    }
-    
-    public func invokePlugin(name: String, action: String, content: String?) async -> String? {
-        await withCheckedContinuation { continuation in
-            invokePlugin(name: name, action: action, content: content) { result in
-                continuation.resume(with: .success(result))
-            }
-        }
-    }
-
-    /// Invoke a named action on a registered plugin, optionally passing a content string.
-    ///
-    /// - Parameters:
-    ///   - name: The plugin name used when registering the plugin.
-    ///   - action: The action to invoke on the plugin.
-    ///   - content: Optional string content to pass to the plugin action.
-    ///   - handler: Called with the string result, or nil on error or null result.
-    public func invokePlugin(name: String, action: String, content: String?, _ handler: ((String?) -> Void)?) {
-        var args = "'\(name.escaped)', '\(action.escaped)'"
-        if let content { args += ", '\(content.escaped)'" }
-        executeJavaScript("MU.invokePlugin(\(args))") { result, error in
-            if let error {
-                Logger.webview.error("Error invoking plugin '\(name)' action '\(action)': \(error)")
-                handler?(nil)
-                return
-            }
-            handler?(result as? String)
-        }
-    }
-    
     /// Copy both the html for the image and the image itself to the clipboard.
     ///
     /// Why copy both? For copy/paste within the document itself, we always want to paste the HTML. The html
