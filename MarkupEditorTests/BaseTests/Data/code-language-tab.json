@@ -1,5 +1,5 @@
 {
-    "description": "codeLanguageOverlayInfo: label reported for the code_block at the selection.",
+    "description": "codeLanguageTabInfo: label reported for the code_block at the selection.",
     "tests": [
         {
             "description": "reports a lowercased label for a code_block with a language set",

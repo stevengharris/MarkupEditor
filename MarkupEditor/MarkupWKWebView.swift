@@ -904,10 +904,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    /// Invoke codeLanguageOverlayInfo on the active document's current selection directly.
+    /// Invoke codeLanguageTabInfo on the active document's current selection directly.
     /// Returns nil when the selection is not in a code_block, matching the JS-side null.
-    public func testCodeLanguageOverlayInfo(handler: (((pos: Int, label: String)?) -> Void)? = nil) {
-        executeJavaScript("MU.testCodeLanguageOverlayInfo()") { result, error in
+    public func testCodeLanguageTabInfo(handler: (((pos: Int, label: String)?) -> Void)? = nil) {
+        executeJavaScript("MU.testCodeLanguageTabInfo()") { result, error in
             guard let dict = result as? [String: Any], let pos = dict["pos"] as? Int, let label = dict["label"] as? String else {
                 handler?(nil)
                 return
@@ -916,9 +916,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    public func testCodeLanguageOverlayInfo() async -> (pos: Int, label: String)? {
+    public func testCodeLanguageTabInfo() async -> (pos: Int, label: String)? {
         await withCheckedContinuation { continuation in
-            testCodeLanguageOverlayInfo { info in
+            testCodeLanguageTabInfo { info in
                 continuation.resume(with: .success(info))
             }
         }
