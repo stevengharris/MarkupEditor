@@ -32738,17 +32738,17 @@ var HighlightJS = /*@__PURE__*/getDefaultExportFromCjs(commonExports);
  * both registered names and aliases, so this is case-insensitive and
  * alias-aware.
  * 
- * Plugins of type 'renderer' are also recognized languages in the sense 
- * that UI that depends on the return value here needs to know they will 
+ * Plugins of type 'codeview' are also recognized languages in the sense
+ * that UI that depends on the return value here needs to know they will
  * be rendered by the plugin.
  *
  * @param {string} name
  * @returns {boolean}
  */
 function isRecognizedLanguage(name) {
-    let renderers = getPlugins('renderer');
-    let rendersLanguage = renderers.filter(plugin => plugin.name === name).length > 0;
-    if (rendersLanguage) { return true }
+    let codeviews = getPlugins('codeview');
+    let isCodeViewLanguage = codeviews.filter(plugin => plugin.name === name).length > 0;
+    if (isCodeViewLanguage) { return true }
     return !!HighlightJS.getLanguage((name ?? '').trim())
 }
 
