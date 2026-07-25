@@ -16,6 +16,6 @@
     "prepare": "sh prepare.sh"
   },
   "devDependencies": {
-    "markupeditor": "file:/Users/steve/VSCodeProjects/markupeditor-base"
+    "markupeditor": "^0.9.28"
   }
 }
