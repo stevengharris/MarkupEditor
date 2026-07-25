@@ -356,6 +356,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 }
             }
         }
+        if let pluginFiles = markupConfiguration?.pluginFiles {
+            for file in pluginFiles {
+                if let plugin = url(forResource: file, withExtension: nil) {
+                    srcUrls.append(plugin)
+                }
+            }
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
@@ -368,30 +375,26 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 try? fileManager.removeItem(at: dstUrl)
                 try fileManager.copyItem(at: srcUrl, to: dstUrl)
             }
-            // Copy plugin files from their absolute paths into cacheUrl so that
-            // ES module relative imports resolve correctly alongside markup-editor.js.
-            if let pluginFiles = markupConfiguration?.pluginFiles {
-                for entry in pluginFiles {
-                    let srcUrl = URL(fileURLWithPath: entry.path)
-                    guard fileManager.fileExists(atPath: entry.path) else {
-                        Logger.webview.warning("Plugin file not found, skipping: \(entry.path)")
-                        continue
-                    }
-                    let dstUrl = cacheUrl.appendingPathComponent(srcUrl.lastPathComponent)
-                    try? fileManager.removeItem(at: dstUrl)
-                    do {
-                        try fileManager.copyItem(at: srcUrl, to: dstUrl)
-                    } catch let copyError {
-                        Logger.webview.warning("Failed to copy plugin file \(entry.path): \(copyError.localizedDescription)")
-                    }
-                }
-            }
             populateMarkupHtml(cacheUrl: cacheUrl)
         } catch let error {
             assertionFailure("Failed to set up cacheDir with root resource files: \(error.localizedDescription)")
         }
     }
     
+
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
+    /// Each entry uses `./filename` (relative specifier) so WebKit resolves it alongside `markup-editor.js` in `cacheUrl`.
+    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
+    /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
+    static func pluginsAttribute(for pluginFiles: [String]?) -> String? {
+        guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
+        let names = pluginFiles.map { "./" + $0 }
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
+              let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
+        return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
     /// Create markup.html in the cache directory. By loading this file, everything else is kicked off.
     ///
     /// We use  the `<markup-editor>` web component, and because we copy the standard
@@ -402,19 +405,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     ///
     /// * The Swift value for `delegate` is not useful to pass as an attribute, since the "swift" message
     /// handler (i.e., the MarkupCoordinator) does all the calls to the Swift-native delegate.
-    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
-    /// on the `<markup-editor>` element, or `nil` when `pluginFiles` is nil or empty.
-    /// Each entry uses `./filename` (relative specifier) so WebKit resolves it alongside `markup-editor.js` in `cacheUrl`.
-    /// Returns the HTML-attribute-encoded JSON array of plugin filenames for the `plugins` attribute
-    /// on the `<markup-editor>` element. Returns nil when `pluginFiles` is nil or empty.
-    static func pluginsAttribute(for pluginFiles: [PluginFileEntry]?) -> String? {
-        guard let pluginFiles, !pluginFiles.isEmpty else { return nil }
-        let names = pluginFiles.map { "./" + URL(fileURLWithPath: $0.path).lastPathComponent }
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: names),
-              let jsonString = String(data: jsonData, encoding: .utf8) else { return nil }
-        return jsonString.replacingOccurrences(of: "\"", with: "&quot;")
-    }
-
     /// * The JavaScript-created toolbar available from the MarkupEditor is turned off for the Swift
     /// MarkupEditor, which has its own SwiftUI MarkupToolbar.
     /// * The initial HTML is inserted as the content of the web component.
@@ -438,6 +428,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
                 <meta name="supported-color-schemes" content="light dark">
                 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                <style>markup-editor:not(:defined) { visibility: hidden; }</style>
             </head>
             <body>
                 <markup-editor
@@ -913,10 +904,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    /// Invoke codeLanguageOverlayInfo on the active document's current selection directly.
+    /// Invoke codeLanguageTabInfo on the active document's current selection directly.
     /// Returns nil when the selection is not in a code_block, matching the JS-side null.
-    public func testCodeLanguageOverlayInfo(handler: (((pos: Int, label: String)?) -> Void)? = nil) {
-        executeJavaScript("MU.testCodeLanguageOverlayInfo()") { result, error in
+    public func testCodeLanguageTabInfo(handler: (((pos: Int, label: String)?) -> Void)? = nil) {
+        executeJavaScript("MU.testCodeLanguageTabInfo()") { result, error in
             guard let dict = result as? [String: Any], let pos = dict["pos"] as? Int, let label = dict["label"] as? String else {
                 handler?(nil)
                 return
@@ -925,9 +916,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    public func testCodeLanguageOverlayInfo() async -> (pos: Int, label: String)? {
+    public func testCodeLanguageTabInfo() async -> (pos: Int, label: String)? {
         await withCheckedContinuation { continuation in
-            testCodeLanguageOverlayInfo { info in
+            testCodeLanguageTabInfo { info in
                 continuation.resume(with: .success(info))
             }
         }
@@ -956,8 +947,52 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         executeJavaScript("MU.testExtractContents()") { result, error in handler?() }
     }
     
+    //MARK: Plugins
+
+    /// Register `plugin` with the active editor's plugin registry.
+    public func registerPlugin(_ plugin: Plugin) async throws {
+        let filenameArg = plugin.filename.map { ", filename: '\($0.escaped)'" } ?? ""
+        try await executeJavaScript("MU.registerPlugin({name: '\(plugin.name.escaped)', type: '\(plugin.type.escaped)'\(filenameArg)})")
+    }
+
+    /// Remove `plugin` from the active editor's plugin registry.
+    public func unregisterPlugin(_ plugin: Plugin) async throws {
+        try await executeJavaScript("MU.unregisterPlugin('\(plugin.name.escaped)')")
+    }
+
+    /// Return the registered plugin named `name`, or nil if not found.
+    public func getPlugin(name: String) async -> Plugin? {
+        guard
+            let result = try? await executeJavaScript("MU.getPlugin('\(name.escaped)')"),
+            let dict = result as? [String: Any],
+            let data = try? JSONSerialization.data(withJSONObject: dict)
+        else { return nil }
+        do {
+            return try JSONDecoder().decode(Plugin.self, from: data)
+        } catch {
+            Logger.webview.error("Error decoding plugin \(name): \(error)")
+            return nil
+        }
+    }
+
+    /// Return the registered plugins matching `type`, or all registered plugins if `type` is nil.
+    public func getPlugins(type: String? = nil) async -> [Plugin] {
+        let arg = type.map { "'\($0.escaped)'" } ?? ""
+        guard
+            let result = try? await executeJavaScript("MU.getPlugins(\(arg))"),
+            let array = result as? [[String: Any]],
+            let data = try? JSONSerialization.data(withJSONObject: array)
+        else { return [] }
+        do {
+            return try JSONDecoder().decode([Plugin].self, from: data)
+        } catch {
+            Logger.webview.error("Error decoding plugins: \(error)")
+            return []
+        }
+    }
+
     //MARK: Javascript interactions
-    
+
     /// Return the HTML contained in this MarkupWKWebView.
     ///
     /// By default, we return nicely formatted HTML stripped of DIVs, SPANs, and empty text nodes.
@@ -1129,49 +1164,6 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
     }
 
-    /// Return the array of plugin manifests registered with the editor.
-    ///
-    /// Each manifest is a dictionary of string keys and string values as defined by the plugin.
-    /// Delivers nil to the handler if the JavaScript call fails or returns no result.
-    public func getPluginManifest(_ handler: (([[String: String]]?) -> Void)?) {
-        executeJavaScript("MU.getPluginManifest()") { result, error in
-            if let error {
-                Logger.webview.error("Error getting plugin manifest: \(error)")
-                handler?(nil)
-                return
-            }
-            handler?(result as? [[String: String]])
-        }
-    }
-    
-    public func invokePlugin(name: String, action: String, content: String?) async -> String? {
-        await withCheckedContinuation { continuation in
-            invokePlugin(name: name, action: action, content: content) { result in
-                continuation.resume(with: .success(result))
-            }
-        }
-    }
-
-    /// Invoke a named action on a registered plugin, optionally passing a content string.
-    ///
-    /// - Parameters:
-    ///   - name: The plugin name used when registering the plugin.
-    ///   - action: The action to invoke on the plugin.
-    ///   - content: Optional string content to pass to the plugin action.
-    ///   - handler: Called with the string result, or nil on error or null result.
-    public func invokePlugin(name: String, action: String, content: String?, _ handler: ((String?) -> Void)?) {
-        var args = "'\(name.escaped)', '\(action.escaped)'"
-        if let content { args += ", '\(content.escaped)'" }
-        executeJavaScript("MU.invokePlugin(\(args))") { result, error in
-            if let error {
-                Logger.webview.error("Error invoking plugin '\(name)' action '\(action)': \(error)")
-                handler?(nil)
-                return
-            }
-            handler?(result as? String)
-        }
-    }
-    
     /// Copy both the html for the image and the image itself to the clipboard.
     ///
     /// Why copy both? For copy/paste within the document itself, we always want to paste the HTML. The html
@@ -2302,7 +2294,15 @@ extension MarkupWKWebView {
         let pasteboard = NSPasteboard.general
         switch pasteableType {
         case .Text:
-            if let text = pasteboard.string(forType: .string) {
+            // Matches the .Html/.Rtf cases below: a code_block selection routes to
+            // pasteCode, not pasteText. Without this check, a clipboard with only a
+            // plain-text flavor (no HTML/RTF, e.g. from a plain-text-only source app)
+            // pasting into a code block would go through pasteText's HTML-parsing
+            // path instead of pasteCode's raw insertText, the same class of bug as
+            // pasteText losing bare newlines outside code blocks.
+            if selectionState.style == .PRE, let text = pasteboard.string(forType: .string) {
+                pasteCode(text)
+            } else if let text = pasteboard.string(forType: .string) {
                 pasteText(text)
             }
         case .Html:
