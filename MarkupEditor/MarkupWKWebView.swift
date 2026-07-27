@@ -136,7 +136,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     }
     
     public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, configuration: MarkupWKWebViewConfiguration? = nil) {
-        super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
+        let wkConfiguration = WKWebViewConfiguration()
+        wkConfiguration.allowsInlinePredictions = configuration?.allowsInlinePredictions ?? false
+        super.init(frame: CGRect.zero, configuration: wkConfiguration)
         self.html = html
         self.placeholder = placeholder
         self.selectAfterLoad = selectAfterLoad
