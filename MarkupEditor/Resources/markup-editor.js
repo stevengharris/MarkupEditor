@@ -32936,6 +32936,40 @@ function handleDelete() {
 }
 
 /**
+ * Delete a `\n` immediately before (dir -1) or after (dir +1) the cursor inside a code_block's
+ * text, via a direct transaction rather than relying on native contenteditable editing.
+ *
+ * Safari/WebKit never issues a native deleteContentBackward/deleteContentForward `beforeinput`
+ * at all when the adjacent `\n` is the last character in the block (cursor at the start of an
+ * empty trailing line) under `white-space: pre-wrap` — confirmed by instrumenting keydown/
+ * beforeinput/input: keydown fires and is not prevented, but no beforeinput or input event
+ * follows, and neither the ProseMirror doc nor the DOM change. The unhandled key produces the
+ * system beep. This only reproduces with the real `white-space: pre-wrap` styling the editor
+ * ships with; it does not reproduce against an unstyled contenteditable. Newline deletion inside
+ * a code_block is therefore always handled explicitly here so it never depends on native
+ * contenteditable editing for this specific character.
+ *
+ * @ignore
+ */
+function deleteAdjacentNewline(dir) {
+    return (state, dispatch) => {
+        const { $from, empty } = state.selection;
+        if (!empty || $from.parent.type !== state.schema.nodes.code_block) return false
+        const text = $from.parent.textContent;
+        const charOffset = dir < 0 ? $from.parentOffset - 1 : $from.parentOffset;
+        if (charOffset < 0 || charOffset >= text.length || text[charOffset] !== '\n') return false
+        if (dispatch) {
+            const from = $from.pos + (dir < 0 ? -1 : 0);
+            dispatch(state.tr.delete(from, from + 1));
+        }
+        return true
+    }
+}
+
+const deleteNewlineBackward = deleteAdjacentNewline(-1);
+const deleteNewlineForward = deleteAdjacentNewline(1);
+
+/**
  * Called to set attributes to the editor div, typically to ,
  * set spellcheck and autocorrect. Note that contenteditable 
  * should not be set for the editor element, even if it is 
@@ -40591,7 +40625,7 @@ function buildKeymap(config, schema) {
     // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
     bind("Shift-Enter", handleShiftEnter);
     // The MarkupEditor needs to be notified of state changes on Delete, like Backspace
-    bind("Delete", handleDelete);
+    bind("Delete", chainCommands(handleDelete, deleteNewlineForward));
     // Table navigation by Tab/Shift-Tab
     bind('Tab', goToNextCell(1));
     bind('Shift-Tab', goToNextCell(-1));
@@ -40607,7 +40641,7 @@ function buildKeymap(config, schema) {
     // Correction (needs to be chained with stateChanged also)
     bind(keymap.undo, undoCommand());
     bind(keymap.redo, redoCommand());
-    bind("Backspace", chainCommands(handleDelete, undoInputRule));
+    bind("Backspace", chainCommands(handleDelete, deleteNewlineBackward, undoInputRule));
     // List types
     bind(keymap.bullet, wrapInListCommand(schema, schema.nodes.bullet_list));
     bind(keymap.number, wrapInListCommand(schema, schema.nodes.ordered_list));
