@@ -365,6 +365,9 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                 }
             }
         }
+        if let delegate = markupConfiguration?.delegate, let srcUrl = url(forResource: delegate, withExtension: nil) {
+            srcUrls.append(srcUrl)
+        }
         let fileManager = FileManager.default
         // The cacheDir is a "id" subdirectory below the app's cache directory
         // If not supplied, then id will be a UUID().uuidString
@@ -442,6 +445,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
                     \(toolbar != nil ? "toolbar=\"\(toolbar!)\"" : "")
                     \(keymap != nil ? "keymap=\"\(keymap!)\"" : "")
                     \(behavior != nil ? "behavior=\"\(behavior!)\"" : "")
+                    \(markupConfiguration?.delegate != nil ? "delegate=\"\(markupConfiguration!.delegate!)\"" : "")
                     \(plugins != nil ? "plugins=\"\(plugins!)\"" : "")
                     handler="swift">
                 \(html != nil ? html! : "<p></p>")

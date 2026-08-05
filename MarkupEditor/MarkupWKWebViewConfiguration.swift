@@ -36,6 +36,7 @@ public class MarkupWKWebViewConfiguration {
     public var userScriptFile: String? = nil
     public var userCssFile: String? = nil
     public var userResourceFiles: [String]? = nil
+    public var delegate: String? = nil
     public var topLevelAttributes = EditableAttributes.standard
     public var allowsInlinePredictions = false
     public var toolbarConfig: ToolbarConfig? = nil
