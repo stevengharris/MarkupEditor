@@ -165,6 +165,16 @@ public class MarkupCoordinator: NSObject, WKScriptMessageHandler {
             markupDelegate?.markupError(code: code, message: message, info: info, alert: alert)
         case "selectImage":
             markupDelegate?.markupSelectImage(webView)
+        case "insertLink":
+            // For MacOS, if `insertLink` is true and a delegate is defined in the actual webview (not the MarkupDelegate),
+            // then we get this callback so we can invoke a native dialog rather than the one that is part of
+            // markupeditor-base. Those dialogs all work fine, but they don't look native.
+            markupDelegate?.markupInsertLink(webView)
+        case "insertImage":
+            // For MacOS, if `insertImage` is true and a delegate is defined in the actual webview (not the MarkupDelegate),
+            // then we get this callback so we can invoke a native dialog rather than the one that is part of
+            // markupeditor-base. Those dialogs all work fine, but they don't look native.
+            markupDelegate?.markupInsertImage(webView)
         case "copyImage":
             guard
                 let src = messageData["src"] as? String,

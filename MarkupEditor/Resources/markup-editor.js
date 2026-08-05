@@ -35147,6 +35147,28 @@ function callbackSelectImage() {
 }
 
 /**
+ * Callback to signal that the user wants to insert a link.
+ * 
+ * The messageHandler will need to bring up a dialog to identify 
+ * the link and then execute insertLink.
+ */
+function callbackInsertLink() {
+    let messageDict = { 'messageType' : 'insertLink' };
+    _callback(JSON.stringify(messageDict));
+}
+
+/**
+ * Callback to signal that the user wants to insert an image.
+ * 
+ * The messageHandler will need to bring up a dialog to identify 
+ * the image and then execute insertImage.
+ */
+function callbackInsertImage() {
+    let messageDict = { 'messageType' : 'insertImage' };
+    _callback(JSON.stringify(messageDict));
+}
+
+/**
  * Callback to signal that user-provided CSS and/or script files have
  * been loaded.
  * 
@@ -42506,6 +42528,8 @@ const MU = {
     addHeader,
     addRow,
     borderTable,
+    callbackInsertImage,
+    callbackInsertLink,
     callbackSelectImage,
     cancelSearch,
     canUndo,
