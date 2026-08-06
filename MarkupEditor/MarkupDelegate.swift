@@ -87,8 +87,14 @@ public protocol MarkupDelegate {
     /// Take action when the MarkupWKWebView is no longer needed.
     func markupTeardown(_ view: MarkupWKWebView?)
     
-    /// The user indicated they want to insert an image. Bring up a document picker to identify it.
+    /// The user indicated they want to select an image to insert. Bring up a document picker to identify it.
     func markupSelectImage(_ view: MarkupWKWebView?)
+    
+    /// The user indicated they want to insert a link. Bring up a native dialog to do that.
+    func markupInsertLink(_ view: MarkupWKWebView?)
+    
+    /// The user indicated they want to insert an image. Bring up a native dialog to do that.
+    func markupInsertImage(_ view: MarkupWKWebView?)
     
     /// A image/resource was added at the url. The url is derived from the image/resource
     /// src parameter in the document.
@@ -257,6 +263,16 @@ extension MarkupDelegate {
     /// image identification can be done from Swift.
     public func markupSelectImage(_ view: MarkupWKWebView?) {
         print("Open an image selection dialog")
+    }
+    
+    /// Override this method to bring up an "insert link" dialog.
+    public func markupInsertLink(_ view: MarkupWKWebView?) {
+        print("Open a dialog to insert a link")
+    }
+    
+    /// Override this method to bring up an "insert image" dialog.
+    public func markupInsertImage(_ view: MarkupWKWebView?) {
+        print("Open a dialog to insert an image")
     }
     
     /// Take action after an image had been added, if needed; default is to do nothing.
