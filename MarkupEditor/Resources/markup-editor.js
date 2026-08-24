@@ -35477,6 +35477,97 @@ function testIsRecognizedLanguage(name) {
     return isRecognizedLanguage(name);
 }
 /**
+ * For testing purposes, simulate typing `text` one character at a time
+ * through the `handleTextInput` prop, so input rules (setup/inputrules.js)
+ * fire as they do for live typing. Does not fire the DOM `input` event, so
+ * `callbackInput` (markupeditor.js) is not exercised. Skips `\r`/`\n`
+ * characters rather than inserting them, matching real typing, which never
+ * routes a newline through `handleTextInput`.
+ *
+ * @param {string}  text    The text to type, one Unicode code point at a time.
+ */
+function testTypeText(text) {
+    const view = activeView();
+    for (const ch of text) {
+        if (/[\r\n]/.test(ch)) continue
+        const { from, to } = view.state.selection;
+        const deflt = () => view.state.tr.insertText(ch, from, to);
+        const handled = view.someProp('handleTextInput', f => f(view, from, to, ch, deflt));
+        if (!handled) {
+            view.dispatch(deflt());
+        }
+    }
+}
+// Modifier segments testTypeKey recognizes when parsing a keymap-style key
+// name. "Mod" (prosemirror-keymap's platform-dependent Cmd/Ctrl alias) is
+// deliberately excluded: it has no single fixed KeyboardEvent flag, and the
+// one scenario that needed testTypeKey (Backspace, no modifiers) never
+// required it.
+const _testTypeKeyModifiers = new Set(['Shift', 'Ctrl', 'Control', 'Alt', 'Cmd', 'Meta']);
+
+// Reverse lookup from KeyboardEvent.key name to legacy keyCode, built from
+// w3c-keyname's public `base` table (keyCode -> name). Where more than one
+// keyCode maps to the same name (e.g. 10 and 13 both name "Enter"), the
+// higher/later entry wins, matching prosemirror-view's hardcoded
+// convention (its internal key-event helper in src/dom.ts pairs "Enter"
+// with 13 and "Backspace" with 8 at its call sites).
+const _testKeyCodeByName = Object.fromEntries(
+    Object.entries(base).map(([code, name]) => [name, Number(code)])
+);
+
+function _testKeyCodeFor(key) {
+    return _testKeyCodeByName[key] ?? 0
+}
+
+/**
+ * For testing purposes, simulate a single keydown through the `handleKeyDown`
+ * prop, so keymap bindings (setup/keymap.js) fire as they do for a live
+ * keypress. Exercises only handleKeyDown-routed (keymap-bound) behavior: for
+ * anything the browser would otherwise handle natively instead of a
+ * registered binding claiming it (e.g. Backspace when there's no input-rule
+ * state to undo, IME composition), this is a silent no-op — it returns
+ * `false` and does nothing, unlike a real keypress.
+ *
+ * @param {string}  key     A keymap-style key name (e.g., "Backspace",
+ *                          "Shift-Enter"): zero or more modifier prefixes
+ *                          (Shift-, Ctrl-/Control-, Alt-, Cmd-/Meta-)
+ *                          followed by a KeyboardEvent.key value.
+ * @throws {Error}          If `key` contains an unrecognized modifier
+ *                          prefix, including the unsupported "Mod-".
+ * @returns {boolean}       Whether a handler returned `true` for the key.
+ *                          NOT a reliable "the document changed" signal: a
+ *                          command that dispatches but returns `undefined`
+ *                          (a pre-existing bug in some commands here, e.g.
+ *                          setStyleCommand/toggleFormatCommand -- see
+ *                          MarkupEditorApp-4dos) still mutates the document
+ *                          while this returns `false`.
+ */
+function testTypeKey(key) {
+    const view = activeView();
+    // Split like prosemirror-keymap's normalizeKeyName does, so a
+    // trailing "-" (or a bare "-") is recognized as the literal key rather
+    // than an empty string, e.g. "Ctrl--" -> ["Ctrl", "-"].
+    const parts = key.split(/-(?!$)/);
+    const eventKey = parts.pop();
+    const modifiers = new Set(parts);
+    for (const modifier of modifiers) {
+        if (!_testTypeKeyModifiers.has(modifier)) {
+            throw new Error(`testTypeKey: unrecognized modifier "${modifier}" in "${key}"`)
+        }
+    }
+    const event = new KeyboardEvent('keydown', {
+        key: eventKey,
+        keyCode: _testKeyCodeFor(eventKey),
+        shiftKey: modifiers.has('Shift'),
+        ctrlKey: modifiers.has('Ctrl') || modifiers.has('Control'),
+        altKey: modifiers.has('Alt'),
+        metaKey: modifiers.has('Cmd') || modifiers.has('Meta'),
+        bubbles: true,
+        cancelable: true,
+    });
+    return view.someProp('handleKeyDown', f => f(view, event)) ?? false
+}
+/**
  * For testing purposes, invoke presentCodeLanguages on the active document.
  */
 function testPresentCodeLanguages() {
@@ -37009,12 +37100,14 @@ var selectImage = false;
 var insertLink = false;
 var insertImage = false;
 var highlightCode = true;
+var markdownShorthand = true;
 var behaviorConfig = {
 	focusAfterLoad: focusAfterLoad,
 	selectImage: selectImage,
 	insertLink: insertLink,
 	insertImage: insertImage,
-	highlightCode: highlightCode
+	highlightCode: highlightCode,
+	markdownShorthand: markdownShorthand
 };
 
 /**
@@ -37053,7 +37146,9 @@ var behaviorConfig = {
  *    "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
  *    "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
  *    "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
- *    "highlightCode": true       // Whether to highlight code blocks and support language identificaton in UI
+ *    "highlightCode": true,      // Whether to highlight code blocks and support language identificaton in UI
+ *    "markdownShorthand": true   // Whether typing markdown shorthand converts to formatting: block-level
+ *                                 // (`> `, list markers, ``` ``` ```, `#`) and inline (**, *, _, `, ~~)
  * }
  * ```
  */
@@ -40886,16 +40981,122 @@ function headingRule(nodeType, maxLevel) {
                                 nodeType, match => ({level: match[1].length}))
 }
 
-// : (Schema) → Plugin
+// : (RegExp, MarkType, number, number) → InputRule
+// Given a regexp matching a markdown emphasis pattern ending at the
+// cursor, a mark type, and the lengths of the opening and closing
+// delimiters, returns an input rule that deletes only the
+// delimiters -- never the content between them -- and applies the
+// mark over the untouched range. This preserves any marks (links,
+// nested emphasis, etc.) already present in the converted range
+// instead of flattening it to plain text.
+//
+// prosemirror-inputrules invokes this handler from handleTextInput,
+// before the browser's pending keystroke has actually been applied
+// to the document -- match[0] (built from existing text plus the
+// not-yet-inserted text) can therefore be longer than end - start.
+// That trailing slice is inserted first so the full matched range
+// genuinely exists in the document before the delimiter surgery
+// below operates on it. Suppressed when the cursor already sits
+// inside a code mark, since markdown shorthand characters are meant
+// to stay literal there. Clears the mark from stored marks afterward
+// so text typed immediately after the conversion does not inherit
+// it.
+//
+// The leading delimiter is deleted before the trailing one, so the
+// transaction's last content-shifting step is the trailing-delimiter
+// delete, ending at the cursor -- prosemirror-history's grouping
+// heuristic only looks at that step's range when deciding whether
+// the next keystroke belongs to the same undo group (addMark's own
+// step contributes no range there), so ending at the cursor is what
+// keeps immediately-following typing (e.g. "**foo**bar") merged with
+// the conversion into a single undo.
+function markInputRule(regexp, markType, openLen, closeLen) {
+  return new InputRule(regexp, (state, match, start, end) => {
+    const codeType = state.schema.marks.code;
+    if (codeType && state.doc.resolve(start).marks().some(mark => mark.type === codeType)) return null
+    const tr = state.tr;
+    const fullEnd = start + match[0].length;
+    if (fullEnd > end) tr.insertText(match[0].slice(end - start), end);
+    tr.delete(start, start + openLen);
+    const closeStart = fullEnd - openLen - closeLen;
+    tr.delete(closeStart, closeStart + closeLen);
+    tr.addMark(start, closeStart, markType.create());
+    tr.removeStoredMark(markType);
+    return tr
+  })
+}
+
+// : (MarkType) → InputRule
+// Given the strong mark type, returns an input rule that converts
+// `**text**` at the cursor into bold.
+function strongRule(markType) {
+  return markInputRule(/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, markType, 2, 2)
+}
+
+// : (MarkType) → InputRule
+// Given the em mark type, returns an input rule that converts
+// `*text*` at the cursor into italic. The negative lookbehind on the
+// opening `*` defers matching until a preceding, still-unconsumed
+// `*` is no longer in the way, so this rule does not fire on a
+// partially typed `**text**` before bold's closing marker
+// completes.
+function emStarRule(markType) {
+  return markInputRule(/(?<!\*)\*([^*\s](?:[^*]*[^*\s])?)\*$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the em mark type, returns an input rule that converts
+// `_text_` at the cursor into italic. The negative lookbehind on the
+// opening `_` blocks intraword underscores (`\w` includes `_`), per
+// CommonMark's flanking rule for `_` emphasis -- unlike `*`, `_`
+// emphasis must not fire inside a word, so identifiers like
+// `snake_case_name` stay literal.
+function emUnderscoreRule(markType) {
+  return markInputRule(/(?<!\w)_([^_\s](?:[^_]*[^_\s])?)_$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the code mark type, returns an input rule that converts a
+// backtick-delimited `text` at the cursor into inline code.
+function codeRule(markType) {
+  return markInputRule(/(?<!`)`([^`\s](?:[^`]*[^`\s])?)`$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the s (strikethrough) mark type, returns an input rule that
+// converts `~~text~~` at the cursor into strikethrough. No
+// self-referential lookbehind, matching strongRule -- both are
+// double-delimiter patterns with no single-character sibling rule to
+// defer against, unlike emStarRule's genuine need to defer to bold.
+function strikethroughRule(markType) {
+  return markInputRule(/~~([^~\s](?:[^~]*[^~\s])?)~~$/, markType, 2, 2)
+}
+
+// : (Schema, object) → Plugin
 // A set of input rules for creating the basic block quotes, lists,
-// code blocks, and heading.
-function buildInputRules(schema) {
+// code blocks, heading, and markdown formatting shorthand (bold,
+// italic, inline code, strikethrough). All ten rules are gated
+// together by config.behavior.markdownShorthand. config defaults to
+// {}, so markdownShorthand defaults to enabled (only an explicit
+// `false` turns it off) when buildInputRules is called without a
+// config, matching BehaviorConfig's default.
+function buildInputRules(schema, config = {}) {
   let rules = [], type;
-  if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
-  if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
-  if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
-  if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
-  if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
+  const markdownShorthand = config.behavior?.markdownShorthand !== false;
+  if (markdownShorthand) {
+    if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
+    if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
+    if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
+    if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
+    if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
+    if (type = schema.marks.strong) rules.push(strongRule(type));
+    if (type = schema.marks.em) {
+      rules.push(emStarRule(type));
+      rules.push(emUnderscoreRule(type));
+    }
+    if (type = schema.marks.code) rules.push(codeRule(type));
+    if (type = schema.marks.s) rules.push(strikethroughRule(type));
+  }
   return inputRules({rules})
 }
 
@@ -41176,7 +41377,7 @@ function openImageDialog() {
 function markupSetup(config, schema) {
   setPrefix('Markup');
   let plugins = [
-    buildInputRules(schema),
+    buildInputRules(schema, config),
     keymap(buildKeymap(config, schema)),
     keymap(baseKeymap),
     dropCursor(),
@@ -42590,6 +42791,8 @@ const MU = {
     testPasteHTMLPreprocessing,
     testPasteTextPreprocessing,
     testPresentCodeLanguages,
+    testTypeKey,
+    testTypeText,
     toggleBold,
     toggleCode,
     toggleItalic,

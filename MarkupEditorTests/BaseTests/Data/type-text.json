@@ -1,0 +1,61 @@
+{
+    "description": "Simulate typed input via MU.testTypeText, proving input rules fire through the real handleTextInput path.",
+    "tests": [
+        {
+            "description": "Typing '> ' at the start of an empty paragraph wraps it in a blockquote",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<blockquote><p>|</p></blockquote>",
+            "action": "MU.testTypeText('> ')"
+        },
+        {
+            "description": "Typing '## ' at the start of an empty paragraph turns it into an h2 heading",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<h2>|</h2>",
+            "action": "MU.testTypeText('## ')"
+        },
+        {
+            "description": "Typing a multi-character string leaves the cursor after the last typed character",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>abc|</p>",
+            "action": "MU.testTypeText('abc')"
+        },
+        {
+            "description": "Typing at a caret inside existing content inserts at that point, not at the start",
+            "startHtml": "<p>Hello wor|ld</p>",
+            "endHtml": "<p>Hello worXYZ|ld</p>",
+            "action": "MU.testTypeText('XYZ')"
+        },
+        {
+            "description": "Backspace right after a shorthand conversion reverts it via undoInputRule, restoring the literal typed text",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>&gt; |</p>",
+            "action": "MU.testTypeText('> '); MU.testTypeKey('Backspace')"
+        },
+        {
+            "description": "Typing with a non-collapsed selection replaces the selected range",
+            "startHtml": "<p>He|llo wor|ld</p>",
+            "endHtml": "<p>HeXYZ|ld</p>",
+            "action": "MU.testTypeText('XYZ')"
+        },
+        {
+            "description": "testTypeKey throws on an unrecognized modifier segment instead of silently degrading to the unmodified key, including 'Mod-' (unsupported) and this codebase's own 'Ctrl-Mod--' subscript binding",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>|</p>",
+            "skipUndoRedo": true,
+            "action": "expect(() => MU.testTypeKey('Mod-Enter')).toThrow(); expect(() => MU.testTypeKey('Bogus-Enter')).toThrow(); expect(() => MU.testTypeKey('Ctrl-Mod--')).toThrow();"
+        },
+        {
+            "description": "testTypeKey splits like prosemirror-keymap does, so a bare '-' or a trailing '--' identify '-' as the literal key instead of throwing on a spurious empty-string modifier (does not assert the boolean return -- false means no handler returned true, not that nothing happened, since some commands here dispatch without returning true; see MarkupEditorApp-4dos)",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>|</p>",
+            "skipUndoRedo": true,
+            "action": "expect(() => MU.testTypeKey('-')).not.toThrow(); expect(() => MU.testTypeKey('Ctrl--')).not.toThrow();"
+        },
+        {
+            "description": "testTypeText skips \\r/\\n characters instead of inserting them raw, matching what real typing can produce",
+            "startHtml": "<p>ab|</p>",
+            "endHtml": "<p>abcd|</p>",
+            "action": "MU.testTypeText('c\\nd')"
+        }
+    ]
+}

@@ -1,0 +1,107 @@
+{
+    "description": "Markdown formatting shorthand InputRules: bold, italic, inline code, and strikethrough convert live as the closing marker is typed.",
+    "tests": [
+        {
+            "description": "Typing '**foo**' in an empty paragraph converts to bold, no literal asterisks remain",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><strong>foo</strong>|</p>",
+            "action": "MU.testTypeText('**foo**')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '*foo*' in an empty paragraph converts to italic, no literal asterisks remain",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><em>foo</em>|</p>",
+            "action": "MU.testTypeText('*foo*')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '_foo_' converts to italic, same result as '*foo*'",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><em>foo</em>|</p>",
+            "action": "MU.testTypeText('_foo_')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing a backtick-delimited 'foo' in an empty paragraph converts to inline code, no literal backticks remain",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><code>foo</code>|</p>",
+            "action": "MU.testTypeText('`foo`')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '~~foo~~' in an empty paragraph converts to strikethrough, no literal tildes remain",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><s>foo</s>|</p>",
+            "action": "MU.testTypeText('~~foo~~')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '**foo**' straight through never transiently fires the italic rule before bold's closing '**' completes",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><strong>foo</strong>|</p>",
+            "action": "MU.testTypeText('**foo*'); expect(MU.getTestHTML('|')).not.toContain('<em>'); MU.testTypeText('*')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Backspace immediately after a '**foo**' conversion reverts it via undoInputRule, restoring the literal typed text. The intermediate assertion (conversion happened before Backspace) is required, since a bare Backspace-is-a-no-op check would pass even without a conversion to revert.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>**foo**|</p>",
+            "action": "MU.testTypeText('**foo**'); expect(MU.getTestHTML('|')).toBe('<p><strong>foo</strong>|</p>'); MU.testTypeKey('Backspace')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '**foo**bar' immediately continues -- the continuation text 'bar' is not bold (no stored-mark carry-over)",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><strong>foo</strong>bar|</p>",
+            "action": "MU.testTypeText('**foo**bar')"
+        },
+        {
+            "description": "Inside an existing code mark, typing '**bold**', '*em*', and '~~strike~~' converts nothing -- markers stay literal inside the code span. Guards against the code-mark-suppression check being omitted or broken.",
+            "startHtml": "<p><code>abc|</code></p>",
+            "endHtml": "<p><code>abc**bold** *em* ~~strike~~|</code></p>",
+            "action": "MU.testTypeText('**bold** *em* ~~strike~~')"
+        },
+        {
+            "description": "Typing exactly three backticks at the start of an empty paragraph still fires the existing codeBlockRule -- the new inline-code rule does not interfere.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<pre><code>|</code></pre>",
+            "action": "MU.testTypeText('```')"
+        },
+        {
+            "description": "Completing a bold conversion around a range that already contains a link preserves the link and its href -- only the delimiters are deleted, never the content. The link mark outranks strong in the schema, so the DOM serialization splits <strong> around the <a> rather than nesting it inside a single wrapper; both segments plus the link text are bold.",
+            "startHtml": "<p>**a <a href=\"https://example.com\">L</a> b|</p>",
+            "endHtml": "<p><strong>a </strong><a href=\"https://example.com\"><strong>L</strong></a><strong> b</strong>|</p>",
+            "action": "MU.testTypeText('**')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '**bold *it* x**' straight through preserves the inner em mark created mid-type when bold's closing '**' completes (nested cross-delimiter emphasis). Em outranks strong in the schema, so the serialization nests <strong> inside <em> rather than the reverse.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p><strong>bold </strong><em><strong>it</strong></em><strong> x</strong>|</p>",
+            "action": "MU.testTypeText('**bold *it* x**')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing 'snake_case_name' does not italicize 'case' -- the underscore rule must not fire intraword, per CommonMark's flanking rule for '_' emphasis.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>snake_case_name|</p>",
+            "action": "MU.testTypeText('snake_case_name')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing 'a * b * c' (spaced asterisks, e.g. multiplication) does not italicize -- the em rule's flanking requirement (content must not start or end with whitespace) rejects delimiters with a space on the inner side.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>a * b * c|</p>",
+            "action": "MU.testTypeText('a * b * c')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Typing '**foo*' and stopping there (bold's second closing asterisk never arrives) leaves the text fully literal -- an odd, unmatched delimiter count must never convert.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>**foo*|</p>",
+            "action": "MU.testTypeText('**foo*')",
+            "skipUndoRedo": true
+        }
+    ]
+}
