@@ -21,21 +21,24 @@ public struct BehaviorConfig: JSONConfigurable {
     public var insertLink: Bool
     public var insertImage: Bool
     public var highlightCode: Bool
-    
+    public var markdownShorthand: Bool
+
     public init(
         focusAfterLoad: Bool,
         selectImage: Bool,
         insertLink: Bool,
         insertImage: Bool,
-        highlightCode: Bool
+        highlightCode: Bool,
+        markdownShorthand: Bool
     ) {
         self.focusAfterLoad = focusAfterLoad
         self.selectImage = selectImage
         self.insertLink = insertLink
         self.insertImage = insertImage
         self.highlightCode = highlightCode
+        self.markdownShorthand = markdownShorthand
     }
-    
+
     public init() {
         let config = BehaviorConfig.load()
         focusAfterLoad = config.focusAfterLoad
@@ -43,8 +46,26 @@ public struct BehaviorConfig: JSONConfigurable {
         insertLink = config.insertLink
         insertImage = config.insertImage
         highlightCode = config.highlightCode
+        markdownShorthand = config.markdownShorthand
     }
-    
+
+    private enum CodingKeys: String, CodingKey {
+        case focusAfterLoad, selectImage, insertLink, insertImage, highlightCode, markdownShorthand
+    }
+
+    /// Custom decoder so a behaviorconfig.json predating markdownShorthand still decodes successfully
+    /// instead of failing the whole struct (and falling back to `empty()`, discarding every other
+    /// setting in that file) over one missing key.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        focusAfterLoad = try container.decode(Bool.self, forKey: .focusAfterLoad)
+        selectImage = try container.decode(Bool.self, forKey: .selectImage)
+        insertLink = try container.decode(Bool.self, forKey: .insertLink)
+        insertImage = try container.decode(Bool.self, forKey: .insertImage)
+        highlightCode = try container.decode(Bool.self, forKey: .highlightCode)
+        markdownShorthand = try container.decodeIfPresent(Bool.self, forKey: .markdownShorthand) ?? true
+    }
+
     private static func load() -> BehaviorConfig {
         let mainBundle = Bundle.main
         #if SWIFT_PACKAGE
@@ -74,7 +95,8 @@ public struct BehaviorConfig: JSONConfigurable {
             selectImage: false,
             insertLink: false,
             insertImage: false,
-            highlightCode: true
+            highlightCode: true,
+            markdownShorthand: true
         )
     }
     

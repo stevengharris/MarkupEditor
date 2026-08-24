@@ -3,5 +3,6 @@
     "selectImage": false,
     "insertLink": false,
     "insertImage": false,
-    "highlightCode": true
+    "highlightCode": true,
+    "markdownShorthand": true
 }
