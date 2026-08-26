@@ -35535,12 +35535,11 @@ function _testKeyCodeFor(key) {
  * @throws {Error}          If `key` contains an unrecognized modifier
  *                          prefix, including the unsupported "Mod-".
  * @returns {boolean}       Whether a handler returned `true` for the key.
- *                          NOT a reliable "the document changed" signal: a
- *                          command that dispatches but returns `undefined`
- *                          (a pre-existing bug in some commands here, e.g.
- *                          setStyleCommand/toggleFormatCommand -- see
- *                          MarkupEditorApp-4dos) still mutates the document
- *                          while this returns `false`.
+ *                          NOT a reliable "the document changed" signal:
+ *                          some commands (e.g. setStyleCommand,
+ *                          toggleFormatCommand) dispatch without returning
+ *                          `true`, so the document can still mutate while
+ *                          this returns `false`.
  */
 function testTypeKey(key) {
     const view = activeView();
@@ -35624,6 +35623,19 @@ function insertLinkCommand(url) {
     return commandAdapter;
 }
 
+/**
+ * Insert a link to the header identified by hTag ('H1'-'H6') and index (its position among
+ * headers with that tag), assigning the header a unique id if it doesn't already have one.
+ *
+ * @param {string} hTag     One of the strings `H1`-`H6`
+ * @param {number} index    Within existing elements with tag `hTag`, this is the index into them that is identified
+ */
+function insertInternalLink(hTag, index) {
+    const view = activeView();
+    let command = insertInternalLinkCommand(hTag, index);
+    let result = command(view.state, view.dispatch, view);
+    return result
+}
 function insertInternalLinkCommand(hTag, index) {
     const commandAdapter = (state, dispatch, view) => {
         // Find the node matching hTag that is index into the nodes matching hTag
@@ -35739,11 +35751,41 @@ function headerMatching(hTag, index, state) {
 }
 
 /**
+ * Return a JSON-stringified array describing every non-empty header in the document, in document
+ * order within each level. Each entry is `{hTag, index, text, id}`, where `hTag` and `index` identify
+ * the header the same way `insertInternalLink(hTag, index)` and `idForInternalLinkCommand(hTag, index)`
+ * do, and `id` is the header's current id attribute (null if it hasn't been assigned one yet).
+ *
+ * An empty header is omitted -- it can't form a usable id, so there's nothing to link to -- but
+ * `index` still reflects its true position among ALL headers at that level (empty ones included),
+ * matching what `headerMatching` expects; it's only the reported entries that skip empty headers,
+ * not the numbering.
+ *
+ * @returns {string}    JSON-stringified array of `{hTag, index, text, id}`
+ */
+function getHeaders() {
+    const view = activeView();
+    const headersByLevel = headers(view.state);
+    let result = [];
+    for (let level = 1; level < 7; level++) {
+        let hNodes = headersByLevel[level];
+        if (hNodes) {
+            hNodes.forEach((h, index) => {
+                const text = h.node.textContent;
+                if (text.trim().length === 0) return
+                result.push({hTag: 'H' + level.toString(), index: index, text: text, id: h.node.attrs.id ?? null});
+            });
+        }
+    }
+    return JSON.stringify(result)
+}
+
+/**
  * Return all the headers that exist in `state.doc` as arrays keyed by level.
- * 
+ *
  * @ignore
  * @param {EditorState} state   The state of the ProseMirror editor
- */ 
+ */
 function headers(state) {
     let headers = {};
     let hType = state.schema.nodes.heading;
@@ -42750,6 +42792,7 @@ const MU = {
     getDataImages,
     getLocalImages,
     getHTML,
+    getHeaders,
     getHeight,
     getImageAttributes,
     getLinkAttributes,
@@ -42757,6 +42800,7 @@ const MU = {
     getTestHTML,
     indent: indent$1,
     insertImage: insertImage$1,
+    insertInternalLink,
     insertLink: insertLink$1,
     insertTable,
     insertHRule,

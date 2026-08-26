@@ -1,0 +1,50 @@
+{
+    "description": "Get the list of headers in the document, keyed by hTag and index.",
+    "tests": [
+        {
+            "description": "No headers in document",
+            "startHtml": "<p>Some text.</p>",
+            "endHtml": "[]",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getHeaders()",
+            "arg": "startHtml"
+        },
+        {
+            "description": "Mixed header levels in document order, none with an id yet",
+            "startHtml": "<h1>Introduction</h1><p>Some text.</p><h2>First</h2><h2>Second</h2>",
+            "endHtml": "[{\"hTag\":\"H1\",\"index\":0,\"text\":\"Introduction\",\"id\":null},{\"hTag\":\"H2\",\"index\":0,\"text\":\"First\",\"id\":null},{\"hTag\":\"H2\",\"index\":1,\"text\":\"Second\",\"id\":null}]",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getHeaders()",
+            "arg": "startHtml"
+        },
+        {
+            "description": "A header that already has an id reports it",
+            "startHtml": "<h1 id=\"introduction\">Introduction</h1><h2>First</h2>",
+            "endHtml": "[{\"hTag\":\"H1\",\"index\":0,\"text\":\"Introduction\",\"id\":\"introduction\"},{\"hTag\":\"H2\",\"index\":0,\"text\":\"First\",\"id\":null}]",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getHeaders()",
+            "arg": "startHtml"
+        },
+        {
+            "description": "Empty headers are omitted, but the index of a later header at the same level still reflects its true position",
+            "startHtml": "<h2></h2><h2>Real</h2>",
+            "endHtml": "[{\"hTag\":\"H2\",\"index\":1,\"text\":\"Real\",\"id\":null}]",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getHeaders()",
+            "arg": "startHtml"
+        },
+        {
+            "description": "A whitespace-only header is treated as empty too",
+            "startHtml": "<h1>   </h1>",
+            "endHtml": "[]",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "action": "MU.setTestHTML(startHtml, '|'); return MU.getHeaders()",
+            "arg": "startHtml"
+        }
+    ]
+}

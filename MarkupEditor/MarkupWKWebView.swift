@@ -1109,7 +1109,44 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
+
+    /// Insert a link to the header identified by `hTag` ('H1'-'H6') and `index` (its position among
+    /// headers with that tag), assigning the header a unique id if it doesn't already have one.
+    public func insertInternalLink(hTag: String, index: Int, handler: (()->Void)? = nil) {
+        executeJavaScript("MU.insertInternalLink('\(hTag)', \(index))") { result, error in handler?() }
+    }
+
+    public func insertInternalLink(hTag: String, index: Int) async {
+        await withCheckedContinuation { continuation in
+            insertInternalLink(hTag: hTag, index: index) {
+                continuation.resume()
+            }
+        }
+    }
+
+    /// Return every header in the document, in document order within each level.
+    public func getHeaders(handler: (([HeaderInfo])->Void)? = nil) {
+        executeJavaScript("MU.getHeaders()") { result, error in
+            guard
+                error == nil,
+                let jsonString = result as? String,
+                let data = jsonString.data(using: .utf8),
+                let headers = try? JSONDecoder().decode([HeaderInfo].self, from: data) else {
+                handler?([])
+                return
+            }
+            handler?(headers)
+        }
+    }
+
+    public func getHeaders() async -> [HeaderInfo] {
+        await withCheckedContinuation { continuation in
+            getHeaders { headers in
+                continuation.resume(returning: headers)
+            }
+        }
+    }
+
     public func insertImage(src: String?, alt: String?, handler: (()->Void)? = nil) {
         var args = "'\(src!.escaped)'"
         if alt != nil {
