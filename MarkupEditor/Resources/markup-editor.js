@@ -35639,34 +35639,32 @@ function insertInternalLink(hTag, index) {
 function insertInternalLinkCommand(hTag, index) {
     const commandAdapter = (state, dispatch, view) => {
         // Find the node matching hTag that is index into the nodes matching hTag
-        let {node} = headerMatching(hTag, index, state);
+        let {node, pos} = headerMatching(hTag, index, state);
         if (!node) return false
-        // Get the unique id for this header, which is may or may not already have.
+        // Get the unique id for this header, which it may or may not already have.
         let id = idForHeader(node, state);
-        let attrs = node.attrs;
-        attrs.id = id;
-        // Insert the mark (id is always referenced with # at front) and set (or reset) the 
-        // id in the header itself. We don't care if it's the same, but we want these changes 
-        // to be made in a single transaction so we can undo them if needed.
+        // Same transaction as the mark insertion below, so both land as one undo step.
+        let tr = state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, id });
         const selection = state.selection;
         const linkMark = state.schema.marks.link.create({ href: '#' + id });
         if (selection.empty) {
-            // In case of an empty selection, insert the textContent of the header and then use 
+            // In case of an empty selection, insert the textContent of the header and then use
             // that to link-to the header
             const textNode = state.schema.text(node.textContent, [linkMark]);
-            let transaction = state.tr.replaceSelectionWith(textNode, false);
-            dispatch(transaction);
+            tr.replaceSelectionWith(textNode, false);
+            dispatch(tr);
             stateChanged(view);
             return true;
         } else {
-            const toggle = toggleMark(linkMark.type, linkMark.attrs);
-            if (toggle) {
-                toggle(state, dispatch);
-                stateChanged(view);
-                return true;
-            } else {
-                return false;
-            }
+            // Capture toggleMark's steps rather than let it dispatch, then replay them onto
+            // `tr` (setNodeMarkup doesn't shift positions, so they apply cleanly).
+            let captured = null;
+            toggleMark(linkMark.type, linkMark.attrs)(state, t => { captured = t; });
+            if (!captured) return false;
+            for (const step of captured.steps) tr.step(step);
+            dispatch(tr);
+            stateChanged(view);
+            return true;
         }
     };
     return commandAdapter;

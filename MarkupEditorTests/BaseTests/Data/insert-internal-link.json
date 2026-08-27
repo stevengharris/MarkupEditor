@@ -5,28 +5,24 @@
             "description": "Insert link to H1 - collapsed selection inserts header text as link",
             "startHtml": "<h1>Introduction</h1><p>Some text.|</p>",
             "endHtml": "<h1 id=\"introduction\">Introduction</h1><p>Some text.<a href=\"#introduction\">Introduction</a>|</p>",
-            "undoHtml": "<h1 id=\"introduction\">Introduction</h1><p>Some text.|</p>",
             "action": "MU.insertInternalLink('H1', 0)"
         },
         {
             "description": "Insert link to H1 - non-empty selection wraps it as a link",
             "startHtml": "<h1>Introduction</h1><p>|Some text.|</p>",
             "endHtml": "<h1 id=\"introduction\">Introduction</h1><p>|<a href=\"#introduction\">Some text.</a>|</p>",
-            "undoHtml": "<h1 id=\"introduction\">Introduction</h1><p>|Some text.|</p>",
             "action": "MU.insertInternalLink('H1', 0)"
         },
         {
             "description": "Insert link to second H2 - only the targeted header is assigned an id",
             "startHtml": "<h2>First</h2><h2>Second</h2><p>Some text.|</p>",
             "endHtml": "<h2>First</h2><h2 id=\"second\">Second</h2><p>Some text.<a href=\"#second\">Second</a>|</p>",
-            "undoHtml": "<h2>First</h2><h2 id=\"second\">Second</h2><p>Some text.|</p>",
             "action": "MU.insertInternalLink('H2', 1)"
         },
         {
             "description": "Insert link when the preceding same-level header is empty - index 1 still targets the real header, matching what getHeaders() reports for it",
             "startHtml": "<h2></h2><h2>Real</h2><p>Some text.|</p>",
             "endHtml": "<h2></h2><h2 id=\"real\">Real</h2><p>Some text.<a href=\"#real\">Real</a>|</p>",
-            "undoHtml": "<h2></h2><h2 id=\"real\">Real</h2><p>Some text.|</p>",
             "action": "MU.insertInternalLink('H2', 1)"
         }
     ]
