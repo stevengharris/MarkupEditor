@@ -20,6 +20,16 @@
             "description": "returns an empty list when there are no code blocks with a language",
             "html": "<p>Just a paragraph</p><pre><code>no language</code></pre>",
             "expected": []
+        },
+        {
+            "description": "filters out unrecognized language names, keeping recognized ones",
+            "html": "<pre><code class=\"language-python\">a</code></pre><pre><code class=\"language-cobol\">b</code></pre><pre><code class=\"language-metadata\">c</code></pre>",
+            "expected": ["python"]
+        },
+        {
+            "description": "returns an empty list when every present language is unrecognized",
+            "html": "<pre><code class=\"language-cobol\">a</code></pre><pre><code class=\"language-metadata\">b</code></pre>",
+            "expected": []
         }
     ]
 }

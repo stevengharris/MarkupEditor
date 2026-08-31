@@ -20,6 +20,7 @@ public struct BehaviorConfig: JSONConfigurable {
     public var selectImage: Bool
     public var insertLink: Bool
     public var insertImage: Bool
+    public var insertTable: Bool
     public var highlightCode: Bool
     public var markdownShorthand: Bool
 
@@ -28,6 +29,7 @@ public struct BehaviorConfig: JSONConfigurable {
         selectImage: Bool,
         insertLink: Bool,
         insertImage: Bool,
+        insertTable: Bool,
         highlightCode: Bool,
         markdownShorthand: Bool
     ) {
@@ -35,6 +37,7 @@ public struct BehaviorConfig: JSONConfigurable {
         self.selectImage = selectImage
         self.insertLink = insertLink
         self.insertImage = insertImage
+        self.insertTable = insertTable
         self.highlightCode = highlightCode
         self.markdownShorthand = markdownShorthand
     }
@@ -45,23 +48,25 @@ public struct BehaviorConfig: JSONConfigurable {
         selectImage = config.selectImage
         insertLink = config.insertLink
         insertImage = config.insertImage
+        insertTable = config.insertTable
         highlightCode = config.highlightCode
         markdownShorthand = config.markdownShorthand
     }
 
     private enum CodingKeys: String, CodingKey {
-        case focusAfterLoad, selectImage, insertLink, insertImage, highlightCode, markdownShorthand
+        case focusAfterLoad, selectImage, insertLink, insertImage, insertTable, highlightCode, markdownShorthand
     }
 
-    /// Custom decoder so a behaviorconfig.json predating markdownShorthand still decodes successfully
-    /// instead of failing the whole struct (and falling back to `empty()`, discarding every other
-    /// setting in that file) over one missing key.
+    /// Custom decoder so a behaviorconfig.json predating markdownShorthand or insertTable still decodes
+    /// successfully instead of failing the whole struct (and falling back to `empty()`, discarding every
+    /// other setting in that file) over one missing key.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         focusAfterLoad = try container.decode(Bool.self, forKey: .focusAfterLoad)
         selectImage = try container.decode(Bool.self, forKey: .selectImage)
         insertLink = try container.decode(Bool.self, forKey: .insertLink)
         insertImage = try container.decode(Bool.self, forKey: .insertImage)
+        insertTable = try container.decodeIfPresent(Bool.self, forKey: .insertTable) ?? false
         highlightCode = try container.decode(Bool.self, forKey: .highlightCode)
         markdownShorthand = try container.decodeIfPresent(Bool.self, forKey: .markdownShorthand) ?? true
     }
@@ -95,6 +100,7 @@ public struct BehaviorConfig: JSONConfigurable {
             selectImage: false,
             insertLink: false,
             insertImage: false,
+            insertTable: false,
             highlightCode: true,
             markdownShorthand: true
         )

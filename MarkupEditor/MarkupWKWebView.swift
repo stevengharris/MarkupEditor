@@ -724,6 +724,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return selectionState.canStyle
         case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
             return true     // Toggles off and on
+        case #selector(insertTableFromMenu):
+            return !selectionState.isInTable    // Tables cannot be nested
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:

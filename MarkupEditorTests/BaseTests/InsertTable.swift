@@ -25,6 +25,10 @@ fileprivate class InsertTableSuite {
         { webview in webview.insertTable(rows: 2, cols: 2) },
         { webview in webview.insertTable(rows: 2, cols: 2) },
         { webview in webview.insertTable(rows: 2, cols: 2) },
+        { webview in webview.insertTable(rows: 2, cols: 2) },
+        { webview in webview.insertTable(rows: 2, cols: 2) },
+        { webview in webview.insertTable(rows: 2, cols: 2) },
+        { webview in webview.insertTable(rows: 2, cols: 2) },
     ]
 }
 fileprivate typealias Suite = InsertTableSuite

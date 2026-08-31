@@ -35165,12 +35165,23 @@ function callbackInsertLink() {
 
 /**
  * Callback to signal that the user wants to insert an image.
- * 
- * The messageHandler will need to bring up a dialog to identify 
+ *
+ * The messageHandler will need to bring up a dialog to identify
  * the image and then execute insertImage.
  */
 function callbackInsertImage() {
     let messageDict = { 'messageType' : 'insertImage' };
+    _callback(JSON.stringify(messageDict));
+}
+
+/**
+ * Callback to signal that the user wants to insert or edit a table.
+ *
+ * The messageHandler will need to bring up a dialog to size a new table
+ * (and then execute insertTable) or edit the table the selection is in.
+ */
+function callbackInsertTable() {
+    let messageDict = { 'messageType' : 'insertTable' };
     _callback(JSON.stringify(messageDict));
 }
 
@@ -36011,7 +36022,7 @@ function _copyImage(node) {
  * @param   {number}                 rows        The number of rows in the table to be created.
  * @param   {number}                 cols        The number of columns in the table to be created.
  */
-function insertTable(rows, cols) {
+function insertTable$1(rows, cols) {
     const view = activeView();
     if ((rows < 1) || (cols < 1)) return;
     let command = insertTableCommand(rows, cols);
@@ -36021,6 +36032,7 @@ function insertTable(rows, cols) {
 function insertTableCommand(rows, cols) {
     const commandAdapter = (viewState, dispatch, view) => {
         let state = view?.state ?? viewState;
+        if (isTableSelected(state)) return false;      // Tables cannot be nested
         const nodeTypes = state.schema.nodes;
         const table_rows = [];
         for (let j = 0; j < rows; j++) {
@@ -36060,15 +36072,8 @@ function insertTableCommand(rows, cols) {
                     }                    return (pPos == undefined);    // Keep going if pPos hasn't been defined
                 });
             }
-            // Set the selection in the first cell, apply it to the state and the view.
-            // We have to special-case for empty documents to get selection in the 1st cell.
-            let empty = (view.state.doc.textContent.length == 0);
-            let textSelection;
-            if (empty) {
-                textSelection = TextSelection.near(transaction.doc.resolve(pPos), -1);
-            } else {
-                textSelection = TextSelection.near(transaction.doc.resolve(pPos));
-            }
+            // Set the selection in the first cell, applied to the state and the view.
+            let textSelection = TextSelection.near(transaction.doc.resolve(pPos));
             transaction = transaction.setSelection(textSelection);
             state = state.apply(transaction);
             view.updateState(state);
@@ -37145,6 +37150,7 @@ var focusAfterLoad = true;
 var selectImage = false;
 var insertLink = false;
 var insertImage = false;
+var insertTable = false;
 var highlightCode = true;
 var markdownShorthand = true;
 var behaviorConfig = {
@@ -37152,6 +37158,7 @@ var behaviorConfig = {
 	selectImage: selectImage,
 	insertLink: insertLink,
 	insertImage: insertImage,
+	insertTable: insertTable,
 	highlightCode: highlightCode,
 	markdownShorthand: markdownShorthand
 };
@@ -37192,6 +37199,7 @@ var behaviorConfig = {
  *    "selectImage": false,       // Whether to show a "Select..." button in the Insert Image dialog
  *    "insertLink": false,        // Whether to defer to the MarkupDelegate rather than use the default LinkDialog
  *    "insertImage": false,       // Whether to defer to the MarkupDelagate rather than use the default ImageDialog
+ *    "insertTable": false,       // Whether to defer to the MarkupDelegate rather than use the default Table menu
  *    "highlightCode": true,      // Whether to highlight code blocks and support language identificaton in UI
  *    "markdownShorthand": true   // Whether typing markdown shorthand converts to formatting: block-level
  *                                 // (`> `, list markers, ``` ``` ```, `#`) and inline (**, *, _, `, ~~)
@@ -40339,6 +40347,19 @@ function hRuleItem(config) {
 function tableMenuItems(config) {
   let icons = config.toolbar.icons;
   let help = config.toolbar.help;
+  // If `behavior.insertTable` is true, the Table button just invokes the delegate's
+  // `markupInsertTable` method instead of the dropdown below -- same reasoning as
+  // LinkItem/ImageItem. Unlike Link/Image, the delegate decides what to show (an
+  // insert-size picker or a table-editing menu) based on whether the selection is
+  // already in a table, so a single enabled state covers both: "can insert a table
+  // here" or "already in a table" (editing an existing table is always available).
+  if (config.behavior.insertTable && config.delegate?.markupInsertTable) {
+    return cmdItem(config.delegate.markupInsertTable, {
+      enable: (state) => insertTableCommand(1, 1)(state) || isTableSelected(state),
+      title: help.table + keyString('table', config.keymap),
+      icon: icons.table
+    })
+  }
   let items = [];
   let { tableHeader, tableBorder } = config.toolbar.menus;
   items.push(new TableCreateSubmenu({title: 'Insert table', label: 'Insert'}));
@@ -40846,7 +40867,9 @@ function buildKeymap(config, schema) {
     // Insert
     bind(keymap.link, new LinkItem(config).command);
     bind(keymap.image, new ImageItem(config).command);
-    bind(keymap.table, new TableInsertItem().command); // TODO: Doesn't work properly
+    // Defers to the delegate when `behavior.insertTable` is set, same as Link/Image;
+    // otherwise inserts a default-sized table, since there's no dialog to fall back to.
+    bind(keymap.table, (config.behavior.insertTable && config.delegate?.markupInsertTable) ? config.delegate.markupInsertTable : insertTableCommand(2, 2));
     // Styling
     bind(keymap.p, setStyleCommand('P'));
     bind(keymap.h1, setStyleCommand('H1'));
@@ -42777,6 +42800,7 @@ const MU = {
     borderTable,
     callbackInsertImage,
     callbackInsertLink,
+    callbackInsertTable,
     callbackSelectImage,
     cancelSearch,
     canUndo,
@@ -42806,7 +42830,7 @@ const MU = {
     insertImage: insertImage$1,
     insertInternalLink,
     insertLink: insertLink$1,
-    insertTable,
+    insertTable: insertTable$1,
     insertHRule,
     loadUserFiles,
     modifyImage,
