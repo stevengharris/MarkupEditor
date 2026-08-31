@@ -15149,6 +15149,16 @@ const tNodes = tableNodes({
           attrs.style = (attrs.style || '') + `background-color: ${value};`;
       },
     },
+    align: {
+      default: null,
+      getFromDOM(dom) {
+        return dom.style.textAlign || null;
+      },
+      setDOMAttr(value, attrs) {
+        if (value)
+          attrs.style = (attrs.style || '') + `text-align: ${value};`;
+      },
+    },
   }
 });
 tNodes.table.attrs = {class: {default: null}};
@@ -34840,7 +34850,7 @@ function _getSelectionState() {
     state['thead'] = tableAttributes.thead;
     state['tbody'] = tableAttributes.tbody;
     state['header'] = tableAttributes.header;
-    state['colspan'] = tableAttributes.colspan;
+    state['colspan'] = (tableAttributes.colspan ?? 0) > 1;  // A real boolean; Swift's SelectionState.colspan is typed Bool and cannot decode a raw JS number
     state['rows'] = tableAttributes.rows;
     state['cols'] = tableAttributes.cols;
     state['row'] = tableAttributes.row;
@@ -35041,8 +35051,8 @@ function _getTableAttributes(state) {
             case nodeTypes.table_header:
                 attributes.thead = true;                        // We selected the header
                 attributes.tbody = false;
-                attributes.row = $pos.index() + 1;              // The row will be 1 by definition
-                attributes.col = 1;                             // Headers are always colspanned, so col=1
+                attributes.row = 0;                             // Header cells are row 0 by definition, not a body row index
+                attributes.col = $pos.index() + 1;              // A header cell's own column position, whether colspanned or per-column
                 return true;
             case nodeTypes.table_row:
                 attributes.row = $pos.index() + 1;              // We are in some row, but could be the header row
@@ -36103,12 +36113,20 @@ function addRow(direction) {
     return result;
 }
 function addRowCommand(direction) {
-    const commandAdapter = (state, dispatch, view) => {
+    const commandAdapter = (viewState, dispatch, view) => {
+        let state = view?.state ?? viewState;
+        let result;
         if (direction === 'BEFORE') {
-            return addRowBefore(state, dispatch);
+            result = addRowBefore(state, (tr) => { state = state.apply(tr); });
         } else {
-            return addRowAfter(state, dispatch);
-        }    };
+            result = addRowAfter(state, (tr) => { state = state.apply(tr); });
+        }        if (!result) return false;
+        _propagateColumnAlign(state, (tr) => { state = state.apply(tr); });
+        if (dispatch) {
+            view.updateState(state);
+        }
+        return true;
+    };
 
     return commandAdapter;
 }
@@ -36135,14 +36153,18 @@ function addColCommand(direction) {
         let state = view?.state ?? viewState;
         if (!isTableSelected(state)) return false;
         const startSelection = new TextSelection(state.selection.$anchor, state.selection.$head);
+        const wasColspannedHeader = _hasColspannedHeader(state);
         let offset = 0;
         if (direction === 'BEFORE') {
             addColumnBefore(state, (tr) => { state = state.apply(tr); });
             offset = 4;  // An empty cell
         } else {
             addColumnAfter(state, (tr) => { state = state.apply(tr); });
-        }        _mergeHeaders(state, (tr) => { state = state.apply(tr); });
-
+        }        // Re-merge only a colspanned caption header that this add just split into two cells.
+        // A genuine per-column header must not be merged -- it should just gain one more cell.
+        if (wasColspannedHeader) {
+            _mergeHeaders(state, (tr) => { state = state.apply(tr); });
+        }
         if (dispatch) {
             const $anchor = state.tr.doc.resolve(startSelection.from + offset);
             const $head = state.tr.doc.resolve(startSelection.to + offset);
@@ -36185,7 +36207,8 @@ function addHeaderCommand(colspan = true) {
         toggleHeaderRow(state, (tr) => { state = state.apply(tr); });
         if (colspan) {
             _mergeHeaders(state, (tr) => { state = state.apply(tr); });
-        }
+        }        _propagateColumnAlign(state, (tr) => { state = state.apply(tr); });
+
         if (dispatch) {
             // At this point, the state.selection is in the new header row we just added. By definition, 
             // the header is placed before the original selection, so we can add its size to the 
@@ -36321,6 +36344,129 @@ function _mergeHeaders(state, dispatch) {
         const newState = state.apply(transaction);
         mergeCells(newState, dispatch);
     }}
+/**
+ * Return whether the table's header row is currently a single colspanned caption cell
+ * (colspan > 1), as opposed to a genuine per-column header (multiple table_header cells,
+ * each colspan 1) or no header at all. Used by addColCommand to decide whether adding a
+ * column should re-merge the header row (maintaining a caption) or leave it alone (a real
+ * per-column header simply gains one more per-column cell).
+ *
+ * @ignore
+ */
+function _hasColspannedHeader(state) {
+    const nodeTypes = state.schema.nodes;
+    const headers = [];
+    let tableAttributes = _getTableAttributes(state);
+    if (!tableAttributes.table) return false;
+    state.tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+        if (node.type == nodeTypes.table_header) {
+            headers.push(node);
+            return false;
+        }
+        return true;
+    });
+    return (headers.length === 1) && ((headers[0].attrs.colspan ?? 1) > 1);
+}
+/**
+ * Propagate each column's existing alignment onto any cell in that column that doesn't have
+ * one yet -- e.g., a cell in a row addRowCommand or addHeaderCommand just inserted, which
+ * otherwise defaults to align: null and would silently drop the column's alignment on export.
+ *
+ * Columns are identified by a cell's index within its row, which assumes every row has the
+ * same number of cells -- true for any table this editor can produce or import, since this
+ * schema has no colspanned/rowspanned body cells (only a header row can be colspanned, and a
+ * colspanned header cell is skipped here since it doesn't belong to a single column).
+ *
+ * @ignore
+ */
+function _propagateColumnAlign(state, dispatch) {
+    const nodeTypes = state.schema.nodes;
+    let tableAttributes = _getTableAttributes(state);
+    if (!tableAttributes.table) return;
+    const tr = state.tr;
+    const columnAligns = {};
+    tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+        if ((node.type == nodeTypes.table_cell) || (node.type == nodeTypes.table_header)) {
+            if ((node.attrs.colspan ?? 1) > 1) return false;  // A colspanned caption cell doesn't belong to a single column
+            const col = tr.doc.resolve(pos).index();
+            if ((columnAligns[col] === undefined) && node.attrs.align) {
+                columnAligns[col] = node.attrs.align;
+            }
+            return false;
+        }
+        return true;
+    });
+    if (Object.keys(columnAligns).length === 0) return;
+    let changed = false;
+    tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+        if ((node.type == nodeTypes.table_cell) || (node.type == nodeTypes.table_header)) {
+            if ((node.attrs.colspan ?? 1) > 1) return false;
+            const col = tr.doc.resolve(pos).index();
+            const align = columnAligns[col];
+            if (align && !node.attrs.align) {
+                tr.setNodeMarkup(pos, null, {...node.attrs, align});
+                changed = true;
+            }
+            return false;
+        }
+        return true;
+    });
+    if (changed && dispatch) {
+        dispatch(tr);
+    }
+}
+/**
+ * Justify (set text alignment on) the column containing the selection. Applies to every cell
+ * in that column -- header and body alike -- not just the selected cell, since GFM's Markdown
+ * alignment is a per-column, not per-cell, concept. A colspanned (single-cell caption) header
+ * has no single column to target and is left untouched.
+ *
+ * @param {'left' | 'center' | 'right' | null} align   The alignment to set, or null/falsy to clear it.
+ */
+function justifyColumn(align) {
+    if (_tableSelected()) {
+        const view = activeView();
+        let command = justifyColumnCommand(align);
+        let result = command(view.state, view.dispatch, view);
+        stateChanged(view);
+        view.focus();
+        return result;
+    }
+}
+function justifyColumnCommand(align) {
+    // 'left' means "clear", matching an unaligned GFM column having no delimiter-row marker
+    // at all -- an alias here rather than relying on every caller to pass null/undefined.
+    const resolvedAlign = (align && align !== 'left') ? align : null;
+    const commandAdapter = (state, dispatch, view) => {
+        if (!isTableSelected(state)) return false;
+        const nodeTypes = state.schema.nodes;
+        const tableAttributes = _getTableAttributes(state);
+        if (!tableAttributes.table) return false;
+        if (tableAttributes.thead && (tableAttributes.colspan > 1)) return false;  // Colspanned caption header selected; no single column to target
+        const col = tableAttributes.col;
+        if (!col) return false;
+        const tr = state.tr;
+        let changed = false;
+        tr.doc.nodesBetween(tableAttributes.from, tableAttributes.to, (node, pos) => {
+            if ((node.type == nodeTypes.table_cell) || (node.type == nodeTypes.table_header)) {
+                if ((node.attrs.colspan ?? 1) > 1) return false;  // Skip a colspanned caption cell; it doesn't belong to a single column
+                if ((tr.doc.resolve(pos).index() + 1) === col) {
+                    tr.setNodeMarkup(pos, null, {...node.attrs, align: resolvedAlign});
+                    changed = true;
+                }
+                return false;
+            }
+            return true;
+        });
+        if (changed && dispatch) {
+            dispatch(tr);
+        }
+        return changed;
+    };
+
+    return commandAdapter;
+}
+
 function isHRuleSelected(state) {
     let hRuleSelected = false;
     state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
@@ -42832,6 +42978,7 @@ const MU = {
     insertLink: insertLink$1,
     insertTable: insertTable$1,
     insertHRule,
+    justifyColumn,
     loadUserFiles,
     modifyImage,
     openImageDialog,
