@@ -1,0 +1,51 @@
+{
+    "description": "Column justification via justifyColumn.",
+    "tests": [
+        {
+            "description": "Justify column center from body cell",
+            "startHtml": "<table><tr><td><p>A</p></td><td><p>B|</p></td></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></table>",
+            "endHtml": "<table><tr><td><p>A</p></td><td style=\"text-align: center;\"><p>B|</p></td></tr><tr><td><p>1</p></td><td style=\"text-align: center;\"><p>2</p></td></tr></table>",
+            "action": "MU.justifyColumn(\"center\")"
+        },
+        {
+            "description": "Justify column right applies to header and body cells alike",
+            "startHtml": "<table><tr><th><p>A</p></th><th><p>B|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></table>",
+            "endHtml": "<table><tr><th><p>A</p></th><th style=\"text-align: right;\"><p>B|</p></th></tr><tr><td><p>1</p></td><td style=\"text-align: right;\"><p>2</p></td></tr></table>",
+            "action": "MU.justifyColumn(\"right\")"
+        },
+        {
+            "description": "Justify column left clears the align attribute",
+            "skipUndoRedo": true,
+            "startHtml": "<table><tr><td style=\"text-align: center;\"><p>A|</p></td><td><p>B</p></td></tr></table>",
+            "endHtml": "<table><tr><td><p>A|</p></td><td><p>B</p></td></tr></table>",
+            "action": "MU.justifyColumn(\"left\")"
+        },
+        {
+            "description": "Justify targets the actual column from a per-column header cell, not column 1",
+            "comment": "Regression for the _getTableAttributes col fix -- selection starts in the 3rd header cell, only column 3 should be affected.",
+            "startHtml": "<table><tr><th><p>A</p></th><th><p>B</p></th><th><p>C|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td><td><p>3</p></td></tr></table>",
+            "endHtml": "<table><tr><th><p>A</p></th><th><p>B</p></th><th style=\"text-align: center;\"><p>C|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td><td style=\"text-align: center;\"><p>3</p></td></tr></table>",
+            "action": "MU.justifyColumn(\"center\")"
+        },
+        {
+            "description": "Justify no-ops on a colspanned caption header",
+            "startHtml": "<table><tr><th colspan=\"2\"><p>Title|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></table>",
+            "endHtml": "<table><tr><th colspan=\"2\"><p>Title|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></table>",
+            "action": "MU.justifyColumn(\"center\")"
+        },
+        {
+            "description": "Adding a row above preserves an existing column's alignment",
+            "startHtml": "<table><tr><td><p>A</p></td><td style=\"text-align: center;\"><p>B|</p></td></tr></table>",
+            "endHtml": "<table><tr><td><p></p></td><td style=\"text-align: center;\"><p></p></td></tr><tr><td><p>A</p></td><td style=\"text-align: center;\"><p>B|</p></td></tr></table>",
+            "action": "MU.addRow(\"BEFORE\")"
+        },
+        {
+            "description": "Adding a header preserves an existing column's alignment on the body rows",
+            "comment": "skipUndoRedo: table-action undo is pre-existing-buggy per table-actions.json's other //TODO comments, unrelated to this fix.",
+            "skipUndoRedo": true,
+            "startHtml": "<table><tr><td><p>A</p></td><td style=\"text-align: right;\"><p>B|</p></td></tr></table>",
+            "endHtml": "<table><tr><th colspan=\"2\"><p></p></th></tr><tr><td><p>A</p></td><td style=\"text-align: right;\"><p>B|</p></td></tr></table>",
+            "action": "MU.addHeader()"
+        }
+    ]
+}

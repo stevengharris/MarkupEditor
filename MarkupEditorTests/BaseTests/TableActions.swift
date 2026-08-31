@@ -30,6 +30,15 @@ fileprivate class TableActionsSuite {
         { webview in webview.addCol(.before) },
         { webview in webview.addCol(.after) },
         { webview in webview.addHeader() },
+        { webview in webview.addCol(.after) },
+        { webview in webview.addCol(.after) },
+        { webview in webview.addCol(.before) },
+        { webview in webview.getSelectionState() { state in
+            #expect(state.col == 3)
+            #expect(state.row == 0)
+            #expect(state.colspan == false)
+        } },
+        { webview in webview.getSelectionState() { state in #expect(state.colspan == true) } },
         { webview in webview.borderTable(.cell) },
         { webview in webview.borderTable(.header) },
         { webview in webview.borderTable(.outer) },
