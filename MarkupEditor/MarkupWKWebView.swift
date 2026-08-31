@@ -44,6 +44,7 @@ import AppKit
 public class MarkupWKWebView: WKWebView, ObservableObject {
     public typealias TableBorder = MarkupEditor.TableBorder
     public typealias TableDirection = MarkupEditor.TableDirection
+    public typealias TableAlign = MarkupEditor.TableAlign
     public typealias FindDirection = MarkupEditor.FindDirection
     private let selectionState = SelectionState()       // Locally cached, specific to this view
     public var clientHeightPad: Int = 8                 // Value to adjust html clientHeight
@@ -724,6 +725,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             return selectionState.canStyle
         case #selector(showPluggableLinkPopover), #selector(showPluggableImagePopover), #selector(showPluggableTablePopover):
             return true     // Toggles off and on
+        case #selector(insertTableFromMenu):
+            return !selectionState.isInTable    // Tables cannot be nested
         case #selector(bold), #selector(italic), #selector(underline), #selector(code), #selector(strike), #selector(subscriptText), #selector(superscript):
             return selectionState.canFormat
         default:
@@ -1565,7 +1568,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public func borderTable(_ border: TableBorder, handler: (()->Void)? = nil) {
         executeJavaScript("MU.borderTable(\"\(border)\")")  { result, error in handler?() }
     }
-    
+
     public func borderTable(_ border: TableBorder) async {
         await withCheckedContinuation { continuation in
             borderTable(border) {
@@ -1573,7 +1576,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             }
         }
     }
-    
+
+    public func justifyColumn(_ align: TableAlign, handler: (()->Void)? = nil) {
+        executeJavaScript("MU.justifyColumn(\"\(align)\")")  { result, error in handler?() }
+    }
+
+    public func justifyColumn(_ align: TableAlign) async {
+        await withCheckedContinuation { continuation in
+            justifyColumn(align) {
+                continuation.resume()
+            }
+        }
+    }
 
     //MARK: Table menu actions (@objc wrappers for UICommand/NSMenuItem)
     

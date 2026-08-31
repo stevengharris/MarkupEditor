@@ -99,6 +99,17 @@ public struct MarkupEditor {
         case none
     }
 
+    /// Enum to identify text justification for the column containing the selection in a table.
+    ///
+    /// Used by MarkupWKWebView. Case "left" clears alignment entirely rather than setting an
+    /// explicit value, matching justifyColumnCommand's own "left" alias in markup.js -- an
+    /// unaligned GFM table column has no delimiter-row marker at all, not an implicit left.
+    public enum TableAlign: String {
+        case left
+        case center
+        case right
+    }
+
     /// Emum used to control the toolbar location when using the MarkupEditorView and MarkupEditorUIView
     @MainActor
     public enum ToolbarLocation {

@@ -18,6 +18,30 @@
             "startHtml": "<p>This is a simple paragraph|</p>",
             "endHtml": "<p>This is a simple paragraph</p><table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table>",
             "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Insert at the beginning of the 2nd of 3 paragraphs",
+            "startHtml": "<p>First</p><p>|Second</p><p>Third</p>",
+            "endHtml": "<p>First</p><table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p>Second</p><p>Third</p>",
+            "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Insert into a completely empty single paragraph",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table>",
+            "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Insert at the beginning of the 2nd of 3 empty paragraphs",
+            "startHtml": "<p></p><p>|</p><p></p>",
+            "endHtml": "<p></p><table><tr><td><p>|</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></table><p></p>",
+            "action": "MU.insertTable(2,2)"
+        },
+        {
+            "description": "Reject inserting a table when the selection is already inside a table",
+            "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "endHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table><p>Hello</p>",
+            "action": "MU.insertTable(2,2)"
         }
     ]
 }

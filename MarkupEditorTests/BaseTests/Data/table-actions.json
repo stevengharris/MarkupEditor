@@ -52,6 +52,40 @@
             "action": "MU.addHeader()"
         },
         {
+            "description": "Add col to per-column header does not merge it",
+            "startHtml": "<table><tr><th><p>A</p></th><th><p>B</p></th><th><p>C|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td><td><p>3</p></td></tr></table>",
+            "endHtml": "<table><tr><th><p>A</p></th><th><p>B</p></th><th><p>C|</p></th><th><p></p></th></tr><tr><td><p>1</p></td><td><p>2</p></td><td><p>3</p></td><td><p></p></td></tr></table>",
+            "action": "MU.addCol(\"AFTER\")"
+        },
+        {
+            "description": "Add col to 1-column per-column header does not merge it",
+            "comment": "Regression: a 1-column table's per-column header is structurally identical to a colspanned caption (both are a single table_header cell, colspan 1) -- the fix must not mistake one for the other.",
+            "startHtml": "<table><tr><th><p>A|</p></th></tr><tr><td><p>1</p></td></tr></table>",
+            "endHtml": "<table><tr><th><p>A|</p></th><th><p></p></th></tr><tr><td><p>1</p></td><td><p></p></td></tr></table>",
+            "action": "MU.addCol(\"AFTER\")"
+        },
+        {
+            "description": "Add col before a colspanned caption header still merges it",
+            "comment": "Regression: adding a column at the table's edge splits a colspanned header into two cells; this must still be re-merged into one, unlike the per-column cases above. skipUndoRedo: table-action undo is pre-existing-buggy per this file's other //TODO comments, unrelated to this fix.",
+            "skipUndoRedo": true,
+            "startHtml": "<table><tr><th colspan=\"2\"><p>Title</p></th></tr><tr><td><p>1|</p></td><td><p>2</p></td></tr></table>",
+            "endHtml": "<table><tr><th colspan=\"3\"><p>Title</p></th></tr><tr><td><p></p></td><td><p>1|</p></td><td><p>2</p></td></tr></table>",
+            "action": "MU.addCol(\"BEFORE\")"
+        },
+        {
+            "description": "getSelectionState reports the actual column and row 0 for a per-column header cell",
+            "comment": "Regression for _getTableAttributes's col/row fix -- previously col was hardcoded to 1 and row computed from the wrong axis for any header cell.",
+            "skipUndoRedo": true,
+            "startHtml": "<table><tr><th><p>A</p></th><th><p>B</p></th><th><p>C|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td><td><p>3</p></td></tr></table>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.col).toBe(3); expect(s.row).toBe(0); expect(s.colspan).toBe(false)"
+        },
+        {
+            "description": "getSelectionState reports colspan true only for a genuinely colspanned caption header",
+            "skipUndoRedo": true,
+            "startHtml": "<table><tr><th colspan=\"2\"><p>Title|</p></th></tr><tr><td><p>1</p></td><td><p>2</p></td></tr></table>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.colspan).toBe(true)"
+        },
+        {
             "description": "Set cell border",
             "comment": "//TODO: Undo isn't working, undoHtml should not be set here",
             "startHtml": "<table><tr><td><p>Row| 0, Col 0</p></td><td><p>Row 0, Col 1</p></td></tr><tr><td><p>Row 1, Col 0</p></td><td><p>Row 1, Col 1</p></td></tr></table>",

@@ -95,7 +95,10 @@ public protocol MarkupDelegate {
     
     /// The user indicated they want to insert an image. Bring up a native dialog to do that.
     func markupInsertImage(_ view: MarkupWKWebView?)
-    
+
+    /// The user indicated they want to insert or edit a table. Bring up a native dialog to do that.
+    func markupInsertTable(_ view: MarkupWKWebView?)
+
     /// A image/resource was added at the url. The url is derived from the image/resource
     /// src parameter in the document.
     func markupImageAdded(url: URL)
@@ -274,7 +277,12 @@ extension MarkupDelegate {
     public func markupInsertImage(_ view: MarkupWKWebView?) {
         print("Open a dialog to insert an image")
     }
-    
+
+    /// Override this method to bring up an "insert or edit table" dialog.
+    public func markupInsertTable(_ view: MarkupWKWebView?) {
+        print("Open a dialog to insert or edit a table")
+    }
+
     /// Take action after an image had been added, if needed; default is to do nothing.
     ///
     /// You might, for example, want to copy the image to somewhere, since the url passed-in

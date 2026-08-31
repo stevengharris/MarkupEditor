@@ -44,7 +44,7 @@
             "skipUndoRedo": true
         },
         {
-            "description": "Backspace immediately after a '**foo**' conversion reverts it via undoInputRule, restoring the literal typed text. The intermediate assertion (conversion happened before Backspace) is required, since a bare Backspace-is-a-no-op check would pass even without a conversion to revert.",
+            "description": "Backspace right after a '**foo**' conversion reverts it via undoInputRule. The intermediate assertion (conversion happened) guards against a no-op Backspace passing trivially.",
             "startHtml": "<p>|</p>",
             "endHtml": "<p>**foo**|</p>",
             "action": "MU.testTypeText('**foo**'); expect(MU.getTestHTML('|')).toBe('<p><strong>foo</strong>|</p>'); MU.testTypeKey('Backspace')",
@@ -57,7 +57,7 @@
             "action": "MU.testTypeText('**foo**bar')"
         },
         {
-            "description": "Inside an existing code mark, typing '**bold**', '*em*', and '~~strike~~' converts nothing -- markers stay literal inside the code span. Guards against the code-mark-suppression check being omitted or broken.",
+            "description": "Inside an existing code mark, typing '**bold**', '*em*', and '~~strike~~' converts nothing -- markers stay literal, guarding the code-mark-suppression check.",
             "startHtml": "<p><code>abc|</code></p>",
             "endHtml": "<p><code>abc**bold** *em* ~~strike~~|</code></p>",
             "action": "MU.testTypeText('**bold** *em* ~~strike~~')"
@@ -69,14 +69,14 @@
             "action": "MU.testTypeText('```')"
         },
         {
-            "description": "Completing a bold conversion around a range that already contains a link preserves the link and its href -- only the delimiters are deleted, never the content. The link mark outranks strong in the schema, so the DOM serialization splits <strong> around the <a> rather than nesting it inside a single wrapper; both segments plus the link text are bold.",
+            "description": "Completing a bold conversion around a range containing a link preserves the link and href -- only delimiters are deleted. Link outranks strong in the schema, so serialization splits <strong> around the <a> instead of nesting it.",
             "startHtml": "<p>**a <a href=\"https://example.com\">L</a> b|</p>",
             "endHtml": "<p><strong>a </strong><a href=\"https://example.com\"><strong>L</strong></a><strong> b</strong>|</p>",
             "action": "MU.testTypeText('**')",
             "skipUndoRedo": true
         },
         {
-            "description": "Typing '**bold *it* x**' straight through preserves the inner em mark created mid-type when bold's closing '**' completes (nested cross-delimiter emphasis). Em outranks strong in the schema, so the serialization nests <strong> inside <em> rather than the reverse.",
+            "description": "Typing '**bold *it* x**' straight through preserves the inner em mark created mid-type. Em outranks strong in the schema, so serialization nests <strong> inside <em>, not the reverse.",
             "startHtml": "<p>|</p>",
             "endHtml": "<p><strong>bold </strong><em><strong>it</strong></em><strong> x</strong>|</p>",
             "action": "MU.testTypeText('**bold *it* x**')",
@@ -90,7 +90,7 @@
             "skipUndoRedo": true
         },
         {
-            "description": "Typing 'a * b * c' (spaced asterisks, e.g. multiplication) does not italicize -- the em rule's flanking requirement (content must not start or end with whitespace) rejects delimiters with a space on the inner side.",
+            "description": "Typing 'a * b * c' (spaced asterisks, e.g. multiplication) does not italicize -- the em rule's flanking requirement rejects delimiters with a space on the inner side.",
             "startHtml": "<p>|</p>",
             "endHtml": "<p>a * b * c|</p>",
             "action": "MU.testTypeText('a * b * c')",
