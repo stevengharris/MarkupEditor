@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// A protocol for types that can be serialized to/from JSON strings with JSONC (commented JSON) support.
 public protocol JSONConfigurable: Codable {
@@ -16,13 +17,18 @@ public protocol JSONConfigurable: Codable {
 }
 
 public extension JSONConfigurable {
-    
+
     /// Return Self derived by decoding the JSON `string`.
     /// The `string` can contain JSONC because comments are removed if present.
     static func fromJSON(_ string: String) -> Self? {
         let json = removeJSONComments(string)
         let data = Data(json.utf8)
-        return try? JSONDecoder().decode(Self.self, from: data)
+        do {
+            return try JSONDecoder().decode(Self.self, from: data)
+        } catch {
+            Logger.config.error("Error decoding \(Self.self) from JSON: \(error.localizedDescription)")
+            return nil
+        }
     }
     
     /// Return self encoded as a JSON string, or nil if there is an error.
