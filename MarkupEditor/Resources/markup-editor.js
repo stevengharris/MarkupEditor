@@ -769,8 +769,11 @@ function findDiffStart(a, b, pos) {
         if (!childA.sameMarkup(childB))
             return pos;
         if (childA.isText && childA.text != childB.text) {
-            for (let j = 0; childA.text[j] == childB.text[j]; j++)
+            let tA = childA.text, tB = childB.text, j = 0;
+            for (; tA[j] == tB[j]; j++)
                 pos++;
+            if (j && j < tA.length && j < tB.length && surrogateHigh(tA.charCodeAt(j - 1)) && surrogateLow(tA.charCodeAt(j)))
+                pos--;
             return pos;
         }
         if (childA.content.size || childB.content.size) {
@@ -794,11 +797,16 @@ function findDiffEnd(a, b, posA, posB) {
         if (!childA.sameMarkup(childB))
             return { a: posA, b: posB };
         if (childA.isText && childA.text != childB.text) {
-            let same = 0, minSize = Math.min(childA.text.length, childB.text.length);
-            while (same < minSize && childA.text[childA.text.length - same - 1] == childB.text[childB.text.length - same - 1]) {
-                same++;
+            let tA = childA.text, tB = childB.text, iA = tA.length, iB = tB.length;
+            while (iA > 0 && iB > 0 && tA[iA - 1] == tB[iB - 1]) {
+                iA--;
+                iB--;
                 posA--;
                 posB--;
+            }
+            if (iA && iB && iA < tA.length && surrogateHigh(tA.charCodeAt(iA - 1)) && surrogateLow(tA.charCodeAt(iA))) {
+                posA++;
+                posB++;
             }
             return { a: posA, b: posB };
         }
@@ -811,6 +819,8 @@ function findDiffEnd(a, b, posA, posB) {
         posB -= size;
     }
 }
+function surrogateLow(ch) { return ch >= 0xDC00 && ch < 0xE000; }
+function surrogateHigh(ch) { return ch >= 0xD800 && ch < 0xDC00; }
 
 /**
 A fragment represents a node's collection of child nodes.
@@ -1068,7 +1078,7 @@ class Fragment {
             return Fragment.empty;
         if (!Array.isArray(value))
             throw new RangeError("Invalid input for Fragment.fromJSON");
-        return new Fragment(value.map(schema.nodeFromJSON));
+        return Fragment.fromArray(value.map(schema.nodeFromJSON));
     }
     /**
     Build a fragment from an array of nodes. Ensures that adjacent
@@ -1302,17 +1312,6 @@ given an invalid replacement.
 */
 class ReplaceError extends Error {
 }
-/*
-ReplaceError = function(this: any, message: string) {
-  let err = Error.call(this, message)
-  ;(err as any).__proto__ = ReplaceError.prototype
-  return err
-} as any
-
-ReplaceError.prototype = Object.create(Error.prototype)
-ReplaceError.prototype.constructor = ReplaceError
-ReplaceError.prototype.name = "ReplaceError"
-*/
 /**
 A slice represents a piece cut out of a larger document. It
 stores not only a fragment, but also the depth up to which nodes on
@@ -1358,7 +1357,7 @@ class Slice {
     @internal
     */
     insertAt(pos, fragment) {
-        let content = insertInto(this.content, pos + this.openStart, fragment);
+        let content = insertInto(this.content, pos + this.openStart, fragment, this.openStart + 1, this.openEnd + 1);
         return content && new Slice(content, this.openStart, this.openEnd);
     }
     /**
@@ -1432,14 +1431,14 @@ function removeRange(content, from, to) {
         throw new RangeError("Removing non-flat range");
     return content.replaceChild(index, child.copy(removeRange(child.content, from - offset - 1, to - offset - 1)));
 }
-function insertInto(content, dist, insert, parent) {
+function insertInto(content, dist, insert, openStart, openEnd, parent) {
     let { index, offset } = content.findIndex(dist), child = content.maybeChild(index);
     if (offset == dist || child.isText) {
-        if (parent && !parent.canReplace(index, index, insert))
+        if (parent && openStart <= 0 && openEnd <= 0 && !parent.canReplace(index, index, insert))
             return null;
         return content.cut(0, dist).append(insert).append(content.cut(dist));
     }
-    let inner = insertInto(child.content, dist - offset - 1, insert, child);
+    let inner = insertInto(child.content, dist - offset - 1, insert, index == 0 ? openStart - 1 : 0, index == content.childCount - 1 ? openEnd - 1 : 0, child);
     return inner && content.replaceChild(index, child.copy(inner));
 }
 function replace($from, $to, slice) {
@@ -1502,7 +1501,8 @@ function addRange($start, $end, depth, target) {
         addNode($end.nodeBefore, target);
 }
 function close(node, content) {
-    node.type.checkContent(content);
+    if (!node.type.validContent(content))
+        throw new ReplaceError("Invalid content for node " + node.type.name);
     return node.copy(content);
 }
 function replaceThreeWay($from, $start, $end, $to, depth) {
@@ -1969,10 +1969,11 @@ let Node$1 = class Node {
     */
     forEach(f) { this.content.forEach(f); }
     /**
-    Invoke a callback for all descendant nodes recursively between
+    Invoke a callback for all descendant nodes recursively overlapping
     the given two positions that are relative to start of this
-    node's content. The callback is invoked with the node, its
-    position relative to the original node (method receiver),
+    node's content. This includes all ancestors of the nodes
+    containing the two positions. The callback is invoked with the
+    node, its position relative to the original node (method receiver),
     its parent node, and its child index. When the callback returns
     false for a given node, that node's children will not be
     recursed over. The last parameter can be used to specify a
@@ -2812,13 +2813,12 @@ function computeAttrs(attrs, value) {
     return built;
 }
 function checkAttrs(attrs, values, type, name) {
-    for (let name in values)
-        if (!(name in attrs))
-            throw new RangeError(`Unsupported attribute ${name} for ${type} of type ${name}`);
-    for (let name in attrs) {
-        let attr = attrs[name];
-        if (attr.validate)
-            attr.validate(values[name]);
+    for (let attr in values)
+        if (!(attr in attrs))
+            throw new RangeError(`Unsupported attribute ${attr} for ${type} of type ${name}`);
+    for (let attr in attrs) {
+        if (attrs[attr].validate)
+            attrs[attr].validate(values[attr]);
     }
 }
 function initAttrs(typeName, attrs) {
@@ -3438,7 +3438,7 @@ class DOMParser {
     }
 }
 const blockTags = {
-    address: true, article: true, aside: true, blockquote: true, canvas: true,
+    address: true, article: true, aside: true, blockquote: true, body: true, canvas: true,
     dd: true, div: true, dl: true, fieldset: true, figcaption: true, figure: true,
     footer: true, form: true, h1: true, h2: true, h3: true, h4: true, h5: true,
     h6: true, header: true, hgroup: true, hr: true, li: true, noscript: true, ol: true,
@@ -4060,6 +4060,8 @@ class DOMSerializer {
     @internal
     */
     serializeNodeInner(node, options) {
+        if (node.isText)
+            return doc$1(options).createTextNode(node.text);
         let { dom, contentDOM } = renderSpec(doc$1(options), this.nodes[node.type.name](node), null, node.attrs);
         if (contentDOM) {
             if (node.isLeaf)
@@ -4094,6 +4096,9 @@ class DOMSerializer {
         return toDOM && renderSpec(doc$1(options), toDOM(mark, inline), null, mark.attrs);
     }
     static renderSpec(doc, structure, xmlNS = null, blockArraysIn) {
+        // Kludge for backwards-compatibility with accidental original behavious
+        if (typeof structure == "string")
+            return { dom: doc.createTextNode(structure) };
         return renderSpec(doc, structure, xmlNS, blockArraysIn);
     }
     /**
@@ -4165,11 +4170,9 @@ function suspiciousAttributesInner(attrs) {
     return result;
 }
 function renderSpec(doc, structure, xmlNS, blockArraysIn) {
-    if (typeof structure == "string")
-        return { dom: doc.createTextNode(structure) };
-    if (structure.nodeType != null)
+    if (structure.nodeType == 1)
         return { dom: structure };
-    if (structure.dom && structure.dom.nodeType != null)
+    if (structure.dom && structure.dom.nodeType == 1)
         return structure;
     let tagName = structure[0], suspicious;
     if (typeof tagName != "string")
@@ -4204,6 +4207,9 @@ function renderSpec(doc, structure, xmlNS, blockArraysIn) {
             if (i < structure.length - 1 || i > start)
                 throw new RangeError("Content hole must be the only child of its parent node");
             return { dom, contentDOM: dom };
+        }
+        else if (typeof child == "string") {
+            dom.appendChild(doc.createTextNode(child));
         }
         else {
             let { dom: inner, contentDOM: innerContent } = renderSpec(doc, child, xmlNS, blockArraysIn);
@@ -4929,7 +4935,8 @@ class ReplaceStep extends Step {
         return new ReplaceStep(this.from, this.from + this.slice.size, doc.slice(this.from, this.to));
     }
     map(mapping) {
-        let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1);
+        let to = mapping.mapResult(this.to, -1);
+        let from = this.from == this.to && ReplaceStep.MAP_BIAS < 0 ? to : mapping.mapResult(this.from, 1);
         if (from.deletedAcross && to.deletedAcross)
             return null;
         return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice, this.structure);
@@ -4968,6 +4975,15 @@ class ReplaceStep extends Step {
         return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure);
     }
 }
+/**
+By default, for backwards compatibility, an inserting step
+mapped over an insertion at that same position fill move after
+the inserted content. In a collaborative editing situation, that
+can make redone insertions appear in unexpected places. You can
+set this to -1 to make such mapping keep the step before the
+insertion instead.
+*/
+ReplaceStep.MAP_BIAS = 1;
 Step.jsonID("replace", ReplaceStep);
 /**
 Replace a part of the document with a slice of content, but
@@ -5924,6 +5940,26 @@ function replaceRangeWith(tr, from, to, node) {
 }
 function deleteRange(tr, from, to) {
     let $from = tr.doc.resolve(from), $to = tr.doc.resolve(to);
+    // When the deleted range spans from the start of one textblock to
+    // the start of another one, move out of the start of both blocks.
+    if ($from.parent.isTextblock && $to.parent.isTextblock && $from.start() != $to.start() &&
+        $from.parentOffset == 0 && $to.parentOffset == 0) {
+        let shared = $from.sharedDepth(to), isolated = false;
+        for (let d = $from.depth; d > shared; d--)
+            if ($from.node(d).type.spec.isolating)
+                isolated = true;
+        for (let d = $to.depth; d > shared; d--)
+            if ($to.node(d).type.spec.isolating)
+                isolated = true;
+        if (!isolated) {
+            for (let d = $from.depth; d > 0 && from == $from.start(d); d--)
+                from = $from.before(d);
+            for (let d = $to.depth; d > 0 && to == $to.start(d); d--)
+                to = $to.before(d);
+            $from = tr.doc.resolve(from);
+            $to = tr.doc.resolve(to);
+        }
+    }
     let covered = coveredDepths($from, $to);
     for (let i = 0; i < covered.length; i++) {
         let depth = covered[i], last = i == covered.length - 1;
@@ -6132,6 +6168,27 @@ class Transform {
     */
     get docChanged() {
         return this.steps.length > 0;
+    }
+    /**
+    Return a single range, in post-transform document positions,
+    that covers all content changed by this transform. Returns null
+    if no replacements are made. Note that this will ignore changes
+    that add/remove marks without replacing the underlying content.
+    */
+    changedRange() {
+        let from = 1e9, to = -1e9;
+        for (let i = 0; i < this.mapping.maps.length; i++) {
+            let map = this.mapping.maps[i];
+            if (i) {
+                from = map.map(from, 1);
+                to = map.map(to, -1);
+            }
+            map.forEach((_f, _t, fromB, toB) => {
+                from = Math.min(from, fromB);
+                to = Math.max(to, toB);
+            });
+        }
+        return from == 1e9 ? null : { from, to };
     }
     /**
     @internal
@@ -7548,6 +7605,9 @@ function clientRect(node) {
         top: rect.top, bottom: rect.top + node.clientHeight * scaleY };
 }
 function scrollRectIntoView(view, rect, startDOM) {
+    // Skip empty rects with all sides at 0, for example, when the element has no CSS box (display: none)
+    if (!nonZero(rect) && rect.left == 0)
+        return;
     let scrollThreshold = view.someProp("scrollThreshold") || 0, scrollMargin = view.someProp("scrollMargin") || 5;
     let doc = view.dom.ownerDocument;
     for (let parent = startDOM || view.dom;;) {
@@ -8102,7 +8162,7 @@ class ViewDesc {
     // When parsing in-editor content (in domchange.js), we allow
     // descriptions to determine the parse rules that should be used to
     // parse them.
-    parseRule() { return null; }
+    parseRule(addedNodes) { return null; }
     // Used by the editor's event handler to ignore events that come
     // from certain descs.
     stopEvent(event) { return false; }
@@ -8507,7 +8567,8 @@ class WidgetViewDesc extends ViewDesc {
                 wrap.appendChild(dom);
                 dom = wrap;
             }
-            dom.contentEditable = "false";
+            if (!dom.hasAttribute("contenteditable"))
+                dom.contentEditable = "false";
             dom.classList.add("ProseMirror-widget");
         }
         super(parent, [], dom, null);
@@ -8614,7 +8675,7 @@ class MarkViewDesc extends ViewDesc {
 // correspond to an actual node in the document. Unlike mark descs,
 // they populate their child array themselves.
 class NodeViewDesc extends ViewDesc {
-    constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, view, pos) {
+    constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM) {
         super(parent, [], dom, contentDOM);
         this.node = node;
         this.outerDeco = outerDeco;
@@ -8660,13 +8721,13 @@ class NodeViewDesc extends ViewDesc {
         let nodeDOM = dom;
         dom = applyOuterDeco(dom, outerDeco, node);
         if (spec)
-            return descObj = new CustomNodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, spec, view, pos + 1);
+            return descObj = new CustomNodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, spec);
         else if (node.isText)
-            return new TextViewDesc(parent, node, outerDeco, innerDeco, dom, nodeDOM, view);
+            return new TextViewDesc(parent, node, outerDeco, innerDeco, dom, nodeDOM);
         else
-            return new NodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, view, pos + 1);
+            return new NodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM);
     }
-    parseRule() {
+    parseRule(addedNodes) {
         // Experimental kludge to allow opt-in re-parsing of nodes
         if (this.node.type.spec.reparseInView)
             return null;
@@ -8694,8 +8755,14 @@ class NodeViewDesc extends ViewDesc {
                     break;
                 }
             }
-            if (!rule.contentElement)
-                rule.getContent = () => Fragment.empty;
+            if (!rule.contentElement) {
+                let found = addedNodes &&
+                    addedNodes.find(n => n.nodeType == 1 && addedNodes.indexOf(n.parentNode) < 0 && this.dom.contains(n));
+                if (found)
+                    rule.contentElement = found;
+                else
+                    rule.getContent = () => Fragment.empty;
+            }
         }
         return rule;
     }
@@ -8717,15 +8784,15 @@ class NodeViewDesc extends ViewDesc {
         let updater = new ViewTreeUpdater(this, localComposition && localComposition.node, view);
         iterDeco(this.node, this.innerDeco, (widget, i, insideNode) => {
             if (widget.spec.marks)
-                updater.syncToMarks(widget.spec.marks, inline, view);
+                updater.syncToMarks(widget.spec.marks, inline, view, i);
             else if (widget.type.side >= 0 && !insideNode)
-                updater.syncToMarks(i == this.node.childCount ? Mark.none : this.node.child(i).marks, inline, view);
+                updater.syncToMarks(i == this.node.childCount ? Mark.none : this.node.child(i).marks, inline, view, i);
             // If the next node is a desc matching this widget, reuse it,
             // otherwise insert the widget as a new view desc.
             updater.placeWidget(widget, view, off);
         }, (child, outerDeco, innerDeco, i) => {
             // Make sure the wrapping mark descs match the node's marks.
-            updater.syncToMarks(child.marks, inline, view);
+            updater.syncToMarks(child.marks, inline, view, i);
             // Try several strategies for drawing this node
             let compIndex;
             if (updater.findNodeMatch(child, outerDeco, innerDeco, i)) ;
@@ -8741,7 +8808,7 @@ class NodeViewDesc extends ViewDesc {
             off += child.nodeSize;
         });
         // Drop all remaining descs after the current position.
-        updater.syncToMarks([], inline, view);
+        updater.syncToMarks([], inline, view, 0);
         if (this.node.isTextblock)
             updater.addTextblockHacks();
         updater.destroyRest();
@@ -8848,14 +8915,14 @@ class NodeViewDesc extends ViewDesc {
 // and used by the view class.
 function docViewDesc(doc, outerDeco, innerDeco, dom, view) {
     applyOuterDeco(dom, outerDeco, doc);
-    let docView = new NodeViewDesc(undefined, doc, outerDeco, innerDeco, dom, dom, dom, view, 0);
+    let docView = new NodeViewDesc(undefined, doc, outerDeco, innerDeco, dom, dom, dom);
     if (docView.contentDOM)
         docView.updateChildren(view, 0);
     return docView;
 }
 class TextViewDesc extends NodeViewDesc {
-    constructor(parent, node, outerDeco, innerDeco, dom, nodeDOM, view) {
-        super(parent, node, outerDeco, innerDeco, dom, null, nodeDOM, view, 0);
+    constructor(parent, node, outerDeco, innerDeco, dom, nodeDOM) {
+        super(parent, node, outerDeco, innerDeco, dom, null, nodeDOM);
     }
     parseRule() {
         let skip = this.nodeDOM.parentNode;
@@ -8895,9 +8962,9 @@ class TextViewDesc extends NodeViewDesc {
     ignoreMutation(mutation) {
         return mutation.type != "characterData" && mutation.type != "selection";
     }
-    slice(from, to, view) {
+    slice(from, to, _view) {
         let node = this.node.cut(from, to), dom = document.createTextNode(node.text);
-        return new TextViewDesc(this.parent, node, this.outerDeco, this.innerDeco, dom, dom, view);
+        return new TextViewDesc(this.parent, node, this.outerDeco, this.innerDeco, dom, dom);
     }
     markDirty(from, to) {
         super.markDirty(from, to);
@@ -8919,8 +8986,8 @@ class TrailingHackViewDesc extends ViewDesc {
 // extra checks only have to be made for nodes that are actually
 // customized.
 class CustomNodeViewDesc extends NodeViewDesc {
-    constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, spec, view, pos) {
-        super(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, view, pos);
+    constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, spec) {
+        super(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM);
         this.spec = spec;
     }
     // A custom `update` method gets to decide whether the update goes
@@ -9131,7 +9198,7 @@ class ViewTreeUpdater {
     }
     // Sync the current stack of mark descs with the given array of
     // marks, reusing existing mark descs when possible.
-    syncToMarks(marks, inline, view) {
+    syncToMarks(marks, inline, view, parentIndex) {
         let keep = 0, depth = this.stack.length >> 1;
         let maxKeep = Math.min(depth, marks.length);
         while (keep < maxKeep &&
@@ -9147,12 +9214,27 @@ class ViewTreeUpdater {
         }
         while (depth < marks.length) {
             this.stack.push(this.top, this.index + 1);
-            let found = -1;
-            for (let i = this.index; i < Math.min(this.index + 3, this.top.children.length); i++) {
+            let found = -1, scanTo = this.top.children.length;
+            if (parentIndex < this.preMatch.index)
+                scanTo = Math.min(this.index + 3, scanTo);
+            for (let i = this.index; i < scanTo; i++) {
                 let next = this.top.children[i];
                 if (next.matchesMark(marks[depth]) && !this.isLocked(next.dom)) {
                     found = i;
                     break;
+                }
+            }
+            // When nothing matches, try to update the mark view at this position
+            // in place, so a custom mark view can adapt to a changed mark without
+            // re-creating its DOM.
+            if (found < 0 && this.index < this.top.children.length) {
+                let cur = this.top.children[this.index];
+                if (cur instanceof MarkViewDesc && cur.dirty != NODE_DIRTY &&
+                    cur.mark.type == marks[depth].type && cur.spec.update &&
+                    !this.isLocked(cur.dom) && cur.spec.update(marks[depth])) {
+                    cur.mark = marks[depth];
+                    found = this.index;
+                    this.changed = true;
                 }
             }
             if (found > -1) {
@@ -9344,9 +9426,7 @@ class ViewTreeUpdater {
 }
 // Iterate from the end of the fragment and array of descs to find
 // directly matching ones, in order to avoid overeagerly reusing those
-// for other nodes. Returns the fragment index of the first node that
-// is part of the sequence of matched nodes at the end of the
-// fragment.
+// for other nodes.
 function preMatch(frag, parentDesc) {
     let curDesc = parentDesc, descI = curDesc.children.length;
     let fI = frag.childCount, matched = new Map, matches = [];
@@ -9369,7 +9449,6 @@ function preMatch(frag, parentDesc) {
                 break outer;
             }
             else {
-                // FIXME
                 descI = curDesc.parent.children.indexOf(curDesc);
                 curDesc = curDesc.parent;
             }
@@ -9586,14 +9665,14 @@ function selectionToDOM(view, force = false) {
     syncNodeSelection(view, sel);
     if (!editorOwnsSelection(view))
         return;
-    // The delayed drag selection causes issues with Cell Selections
-    // in Safari. And the drag selection delay is to workarond issues
-    // which only present in Chrome.
-    if (!force && view.input.mouseDown && view.input.mouseDown.allowDefault && chrome) {
+    // Need to delay selection normalization during a native selection
+    // drag on Chrome, or it will cause further dragging to glitch.
+    let mouseDown = view.input.mouseDown;
+    if (!force && chrome && mouseDown) {
         let domSel = view.domSelectionRange(), curSel = view.domObserver.currentSelection;
         if (domSel.anchorNode && curSel.anchorNode &&
-            isEquivalentPosition(domSel.anchorNode, domSel.anchorOffset, curSel.anchorNode, curSel.anchorOffset)) {
-            view.input.mouseDown.delayedSelectionSync = true;
+            isEquivalentPosition(domSel.anchorNode, domSel.anchorOffset, curSel.anchorNode, curSel.anchorOffset) &&
+            mouseDown.delaySelUpdate()) {
             view.domObserver.setCurSelection();
             return;
         }
@@ -10326,9 +10405,8 @@ const wrapMap = {
     td: ["table", "tbody", "tr"],
     th: ["table", "tbody", "tr"]
 };
-let _detachedDoc = null;
 function detachedDoc() {
-    return _detachedDoc || (_detachedDoc = document.implementation.createHTMLDocument("title"));
+    return document.implementation.createHTMLDocument("title");
 }
 let _policy = null;
 function maybeWrapTrusted(html) {
@@ -10338,15 +10416,21 @@ function maybeWrapTrusted(html) {
     // With the require-trusted-types-for CSP, Chrome will block
     // innerHTML, even on a detached document. This wraps the string in
     // a way that makes the browser allow us to use its parser again.
-    if (!_policy)
-        _policy = trustedTypes.defaultPolicy || trustedTypes.createPolicy("ProseMirrorClipboard", { createHTML: (s) => s });
+    if (!_policy) {
+        if (_policy = trustedTypes.defaultPolicy)
+            try {
+                return _policy.createHTML(html);
+            }
+            catch (_a) { }
+        _policy = trustedTypes.createPolicy("ProseMirrorClipboard", { createHTML: (s) => s });
+    }
     return _policy.createHTML(html);
 }
 function readHTML(html) {
     let metas = /^(\s*<meta [^>]*>)*/.exec(html);
     if (metas)
         html = html.slice(metas[0].length);
-    let elt = detachedDoc().createElement("div");
+    let doc = detachedDoc(), elt = doc.body;
     let firstTag = /<([a-z][^>\s]+)/i.exec(html), wrap;
     if (wrap = firstTag && wrapMap[firstTag[1].toLowerCase()])
         html = wrap.map(n => "<" + n + ">").join("") + html + wrap.map(n => "</" + n + ">").reverse().join("");
@@ -10354,6 +10438,18 @@ function readHTML(html) {
     if (wrap)
         for (let i = 0; i < wrap.length; i++)
             elt = elt.querySelector(wrap[i]) || elt;
+    // Inline styles defined in the pasted content, so that parse rules pick them up
+    for (let i = 0; i < doc.styleSheets.length; i++) {
+        let style = doc.styleSheets[i];
+        for (let j = 0; j < style.rules.length; j++) {
+            let rule = style.rules[j];
+            if (rule instanceof CSSStyleRule) {
+                let matches = elt.querySelectorAll(rule.selectorText);
+                for (let k = 0; k < matches.length; k++)
+                    matches[k].style.cssText += rule.style.cssText;
+            }
+        }
+    }
     return elt;
 }
 // Webkit browsers do some hard-to-predict replacement of regular
@@ -10384,6 +10480,12 @@ function addContext(slice, context) {
         let type = schema.nodes[array[i]];
         if (!type || type.hasRequiredAttrs())
             break;
+        try {
+            type.checkAttrs(array[i + 1]);
+        }
+        catch (e) {
+            break;
+        }
         content = Fragment.from(type.create(array[i + 1], content));
         openStart++;
         openEnd++;
@@ -10416,6 +10518,7 @@ class InputState {
         this.compositionNodes = [];
         this.compositionEndedAt = -2e8;
         this.compositionID = 1;
+        this.badSafariComposition = false;
         // Set to a composition ID when there are pending changes at compositionend
         this.compositionPendingChanges = 0;
         this.domChangeCount = 0;
@@ -10444,6 +10547,8 @@ function setSelectionOrigin(view, origin) {
     view.input.lastSelectionTime = Date.now();
 }
 function destroyInput(view) {
+    if (view.input.mouseDown)
+        view.input.mouseDown.done();
     view.domObserver.stop();
     for (let type in view.input.eventHandlers)
         view.dom.removeEventListener(type, view.input.eventHandlers[type]);
@@ -10482,7 +10587,7 @@ function dispatchEvent(view, event) {
 editHandlers.keydown = (view, _event) => {
     let event = _event;
     view.input.shiftKey = event.keyCode == 16 || event.shiftKey;
-    if (inOrNearComposition(view, event))
+    if (inOrNearComposition(view))
         return;
     view.input.lastKeyCode = event.keyCode;
     view.input.lastKeyCodeTime = Date.now();
@@ -10520,7 +10625,7 @@ editHandlers.keyup = (view, event) => {
 };
 editHandlers.keypress = (view, _event) => {
     let event = _event;
-    if (inOrNearComposition(view, event) || !event.charCode ||
+    if (inOrNearComposition(view) || !event.charCode ||
         event.ctrlKey && !event.altKey || mac$3 && event.metaKey)
         return;
     if (view.someProp("handleKeyPress", f => f(view, event))) {
@@ -10614,26 +10719,28 @@ function handleTripleClick(view, pos, inside, event) {
 function defaultTripleClick(view, inside, event) {
     if (event.button != 0)
         return false;
-    let doc = view.state.doc;
-    if (inside == -1) {
-        if (doc.inlineContent) {
-            updateSelection(view, TextSelection.create(doc, 0, doc.content.size));
-            return true;
-        }
+    let selection = selectionForTripleClick(view, inside, true), doc = view.state.doc;
+    if (!selection)
         return false;
-    }
+    updateSelection(view, selection);
+    if (selection instanceof TextSelection && doc.eq(view.state.doc))
+        view.input.mouseDown = new TripleClickDrag(view, selection);
+    return true;
+}
+function selectionForTripleClick(view, inside, selectNodes) {
+    let doc = view.state.doc;
+    if (inside == -1)
+        return doc.inlineContent ? TextSelection.create(doc, 0, doc.content.size) : null;
     let $pos = doc.resolve(inside);
     for (let i = $pos.depth + 1; i > 0; i--) {
         let node = i > $pos.depth ? $pos.nodeAfter : $pos.node(i);
         let nodePos = $pos.before(i);
         if (node.inlineContent)
-            updateSelection(view, TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size));
-        else if (NodeSelection.isSelectable(node))
-            updateSelection(view, NodeSelection.create(doc, nodePos));
-        else
-            continue;
-        return true;
+            return TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size);
+        else if (selectNodes && NodeSelection.isSelectable(node))
+            return NodeSelection.create(doc, nodePos);
     }
+    return null;
 }
 function forceDOMFlush(view) {
     return endComposition(view);
@@ -10652,13 +10759,13 @@ handlers.mousedown = (view, _event) => {
             type = "tripleClick";
     }
     view.input.lastClick = { time: now, x: event.clientX, y: event.clientY, type, button: event.button };
+    if (view.input.mouseDown)
+        view.input.mouseDown.done();
     let pos = view.posAtCoords(eventCoords(event));
     if (!pos)
         return;
     if (type == "singleClick") {
-        if (view.input.mouseDown)
-            view.input.mouseDown.done();
-        view.input.mouseDown = new MouseDown(view, pos, event, !!flushed);
+        view.input.mouseDown = new LeftMouseDown(view, pos, event, !!flushed);
     }
     else if ((type == "doubleClick" ? handleDoubleClick : handleTripleClick)(view, pos.pos, pos.inside, event)) {
         event.preventDefault();
@@ -10668,13 +10775,34 @@ handlers.mousedown = (view, _event) => {
     }
 };
 class MouseDown {
-    constructor(view, pos, event, flushed) {
+    constructor(view) {
         this.view = view;
+        this.mightDrag = null;
+        view.root.addEventListener("mouseup", this.up = this.up.bind(this));
+        view.root.addEventListener("mousemove", this.move = this.move.bind(this));
+    }
+    up(event) {
+        this.done();
+    }
+    move(event) {
+        if (event.buttons == 0)
+            this.done();
+    }
+    done() {
+        this.view.root.removeEventListener("mouseup", this.up);
+        this.view.root.removeEventListener("mousemove", this.move);
+        if (this.view.input.mouseDown == this)
+            this.view.input.mouseDown = null;
+    }
+    delaySelUpdate() { return false; }
+}
+class LeftMouseDown extends MouseDown {
+    constructor(view, pos, event, flushed) {
+        super(view);
         this.pos = pos;
         this.event = event;
         this.flushed = flushed;
         this.delayedSelectionSync = false;
-        this.mightDrag = null;
         this.startDoc = view.state.doc;
         this.selectNode = !!event[selectNodeModifier];
         this.allowDefault = event.shiftKey;
@@ -10693,8 +10821,8 @@ class MouseDown {
         this.target = targetDesc && targetDesc.nodeDOM.nodeType == 1 ? targetDesc.nodeDOM : null;
         let { selection } = view.state;
         if (event.button == 0 &&
-            targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false ||
-            selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos)
+            (targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false ||
+                selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos))
             this.mightDrag = {
                 node: targetNode,
                 pos: targetPos,
@@ -10712,13 +10840,10 @@ class MouseDown {
                 }, 20);
             this.view.domObserver.start();
         }
-        view.root.addEventListener("mouseup", this.up = this.up.bind(this));
-        view.root.addEventListener("mousemove", this.move = this.move.bind(this));
         setSelectionOrigin(view, "pointer");
     }
     done() {
-        this.view.root.removeEventListener("mouseup", this.up);
-        this.view.root.removeEventListener("mousemove", this.move);
+        super.done();
         if (this.mightDrag && this.target) {
             this.view.domObserver.stop();
             if (this.mightDrag.addAttr)
@@ -10728,8 +10853,10 @@ class MouseDown {
             this.view.domObserver.start();
         }
         if (this.delayedSelectionSync)
-            setTimeout(() => selectionToDOM(this.view));
-        this.view.input.mouseDown = null;
+            setTimeout(() => {
+                if (!this.view.isDestroyed)
+                    selectionToDOM(this.view);
+            });
     }
     up(event) {
         this.done();
@@ -10768,13 +10895,40 @@ class MouseDown {
     move(event) {
         this.updateAllowDefault(event);
         setSelectionOrigin(this.view, "pointer");
-        if (event.buttons == 0)
-            this.done();
+        super.move(event);
     }
     updateAllowDefault(event) {
         if (!this.allowDefault && (Math.abs(this.event.x - event.clientX) > 4 ||
             Math.abs(this.event.y - event.clientY) > 4))
             this.allowDefault = true;
+    }
+    delaySelUpdate() {
+        if (!this.allowDefault)
+            return false;
+        this.delayedSelectionSync = true;
+        return true;
+    }
+}
+class TripleClickDrag extends MouseDown {
+    constructor(view, startSelection) {
+        super(view);
+        this.startSelection = startSelection;
+        this.startDoc = view.state.doc;
+    }
+    move(event) {
+        if (event.buttons == 0 || this.view.isDestroyed || !this.view.state.doc.eq(this.startDoc)) {
+            this.done();
+            return;
+        }
+        event.preventDefault();
+        setSelectionOrigin(this.view, "pointer");
+        let pos = this.view.posAtCoords(eventCoords(event));
+        let target = pos && selectionForTripleClick(this.view, pos.inside, false);
+        if (!target)
+            return;
+        let { doc } = this.view.state, start = this.startSelection;
+        let [anchor, head] = target.from < start.from ? [start.to, target.from] : [start.from, target.to];
+        updateSelection(this.view, TextSelection.create(doc, anchor, head));
     }
 }
 handlers.touchstart = view => {
@@ -10800,7 +10954,7 @@ function inOrNearComposition(view, event) {
     // This guards against the case where compositionend is triggered without the keyboard
     // (e.g. character confirmation may be done with the mouse), and keydown is triggered
     // afterwards- we wouldn't want to ignore the keydown event in this case.
-    if (safari && Math.abs(event.timeStamp - view.input.compositionEndedAt) < 500) {
+    if (safari && Math.abs(Date.now() - view.input.compositionEndedAt) < 500) {
         view.input.compositionEndedAt = -2e8;
         return true;
     }
@@ -10859,10 +11013,12 @@ function selectionBeforeUneditable(view) {
 editHandlers.compositionend = (view, event) => {
     if (view.composing) {
         view.input.composing = false;
-        view.input.compositionEndedAt = event.timeStamp;
+        view.input.compositionEndedAt = Date.now();
         view.input.compositionPendingChanges = view.domObserver.pendingRecords().length ? view.input.compositionID : 0;
         view.input.compositionNode = null;
-        if (view.input.compositionPendingChanges)
+        if (view.input.badSafariComposition)
+            view.domObserver.forceFlush();
+        else if (view.input.compositionPendingChanges)
             Promise.resolve().then(() => view.domObserver.flush());
         view.input.compositionID++;
         scheduleComposeEnd(view, 20);
@@ -10876,7 +11032,7 @@ function scheduleComposeEnd(view, delay) {
 function clearComposition(view) {
     if (view.composing) {
         view.input.composing = false;
-        view.input.compositionEndedAt = timestampFromCustomEvent();
+        view.input.compositionEndedAt = Date.now();
     }
     while (view.input.compositionNodes.length > 0)
         view.input.compositionNodes.pop().markParentsDirty();
@@ -10901,11 +11057,6 @@ function findCompositionNode(view) {
         }
     }
     return textBefore || textAfter;
-}
-function timestampFromCustomEvent() {
-    let event = document.createEvent("Event");
-    event.initEvent("event", true, true);
-    return event.timeStamp;
 }
 /**
 @internal
@@ -11041,8 +11192,9 @@ class Dragging {
 }
 const dragCopyModifier = mac$3 ? "altKey" : "ctrlKey";
 function dragMoves(view, event) {
-    let moves = view.someProp("dragCopies", test => !test(event));
-    return moves != null ? moves : !event[dragCopyModifier];
+    let copy;
+    view.someProp("dragCopies", test => { copy = copy || test(event); });
+    return copy != null ? !copy : !event[dragCopyModifier];
 }
 handlers.dragstart = (view, _event) => {
     let event = _event;
@@ -11069,7 +11221,7 @@ handlers.dragstart = (view, _event) => {
     if (!event.dataTransfer.files.length || !chrome || chrome_version > 120)
         event.dataTransfer.clearData();
     event.dataTransfer.setData(brokenClipboardAPI ? "Text" : "text/html", dom.innerHTML);
-    // See https://github.com/ProseMirror/prosemirror/issues/1156
+    // See https://code.haverbeke.berlin/prosemirror/prosemirror/issues/1156
     event.dataTransfer.effectAllowed = "copyMove";
     if (!brokenClipboardAPI)
         event.dataTransfer.setData("text/plain", text);
@@ -11175,8 +11327,8 @@ handlers.beforeinput = (view, _event) => {
     // We should probably do more with beforeinput events, but support
     // is so spotty that I'm still waiting to see where they are going.
     // Very specific hack to deal with backspace sometimes failing on
-    // Chrome Android when after an uneditable node.
-    if (chrome && android && event.inputType == "deleteContentBackward") {
+    // Chrome and Firefox Android when after an uneditable node.
+    if (android && event.inputType == "deleteContentBackward") {
         view.domObserver.flushSoon();
         let { domChangeCount } = view.input;
         setTimeout(() => {
@@ -11925,15 +12077,24 @@ class DOMObserver {
             new window.MutationObserver(mutations => {
                 for (let i = 0; i < mutations.length; i++)
                     this.queue.push(mutations[i]);
-                // IE11 will sometimes (on backspacing out a single character
-                // text node after a BR node) call the observer callback
-                // before actually updating the DOM, which will cause
-                // ProseMirror to miss the change (see #930)
                 if (ie$1 && ie_version <= 11 && mutations.some(m => m.type == "childList" && m.removedNodes.length ||
-                    m.type == "characterData" && m.oldValue.length > m.target.nodeValue.length))
+                    m.type == "characterData" && m.oldValue.length > m.target.nodeValue.length)) {
+                    // IE11 will sometimes (on backspacing out a single character
+                    // text node after a BR node) call the observer callback
+                    // before actually updating the DOM, which will cause
+                    // ProseMirror to miss the change (see #930)
                     this.flushSoon();
-                else
+                }
+                else if (safari && view.composing && mutations.some(m => m.type == "childList" && m.target.nodeName == "TR")) {
+                    // Safari does weird stuff when finishing a composition in a
+                    // table cell, which tends to involve inserting inappropriate
+                    // nodes in the table row.
+                    view.input.badSafariComposition = true;
+                    this.flushSoon();
+                }
+                else {
                     this.flush();
+                }
             });
         if (useCharData) {
             this.onCharData = e => {
@@ -12053,7 +12214,25 @@ class DOMObserver {
                 }
             }
         }
-        if (gecko && added.length) {
+        if (added.some(n => n.nodeName == "BR") &&
+            (view.input.lastKeyCode == 8 || view.input.lastKeyCode == 46 ||
+                chrome && (view.composing || view.input.compositionEndedAt > Date.now() - 50) &&
+                    mutations.some(m => m.type == "childList" && m.removedNodes.length))) {
+            // Browsers sometimes insert a bogus break node if you
+            // backspace out the last bit of text before an inline-flex node (#1552)
+            for (let node of added)
+                if (node.nodeName == "BR" && node.parentNode) {
+                    let after = node.nextSibling;
+                    while (after && after.nodeType == 1) {
+                        if (after.contentEditable == "false") {
+                            node.parentNode.removeChild(node);
+                            break;
+                        }
+                        after = after.firstChild;
+                    }
+                }
+        }
+        else if (gecko && added.length) {
             let brs = added.filter(n => n.nodeName == "BR");
             if (brs.length == 2) {
                 let [a, b] = brs;
@@ -12070,17 +12249,6 @@ class DOMObserver {
                         br.remove();
                 }
             }
-        }
-        else if ((chrome || safari) && added.some(n => n.nodeName == "BR") &&
-            (view.input.lastKeyCode == 8 || view.input.lastKeyCode == 46)) {
-            // Chrome/Safari sometimes insert a bogus break node if you
-            // backspace out the last bit of text before an inline-flex node (#1552)
-            for (let node of added)
-                if (node.nodeName == "BR" && node.parentNode) {
-                    let after = node.nextSibling;
-                    if (after && after.nodeType == 1 && after.contentEditable == "false")
-                        node.parentNode.removeChild(node);
-                }
         }
         let readSel = null;
         // If it looks like the browser has reset the selection to the
@@ -12099,6 +12267,10 @@ class DOMObserver {
             if (from > -1) {
                 view.docView.markDirty(from, to);
                 checkCSS(view);
+            }
+            if (view.input.badSafariComposition) {
+                view.input.badSafariComposition = false;
+                fixUpBadSafariComposition(view, added);
             }
             this.handleDOMChange(from, to, typeOver, added);
             if (view.docView && view.docView.dirty)
@@ -12223,13 +12395,44 @@ function blockParent(view, node) {
     }
     return null;
 }
+// Kludge for a Safari bug where, on ending a composition in an
+// otherwise empty table cell, it randomly moves the composed text
+// into the table row around that cell, greatly confusing everything
+// (#188).
+function fixUpBadSafariComposition(view, addedNodes) {
+    var _a;
+    let { focusNode, focusOffset } = view.domSelectionRange();
+    for (let node of addedNodes) {
+        if (((_a = node.parentNode) === null || _a === void 0 ? void 0 : _a.nodeName) == "TR") {
+            let nextCell = node.nextSibling;
+            while (nextCell && (nextCell.nodeName != "TD" && nextCell.nodeName != "TH"))
+                nextCell = nextCell.nextSibling;
+            if (nextCell) {
+                let parent = nextCell;
+                for (;;) {
+                    let first = parent.firstChild;
+                    if (!first || first.nodeType != 1 || first.contentEditable == "false" ||
+                        /^(BR|IMG)$/.test(first.nodeName))
+                        break;
+                    parent = first;
+                }
+                parent.insertBefore(node, parent.firstChild);
+                if (focusNode == node)
+                    view.domSelection().collapse(node, focusOffset);
+            }
+            else {
+                node.parentNode.removeChild(node);
+            }
+        }
+    }
+}
 
 // Note that all referencing and parsing is done with the
 // start-of-operation selection and document, since that's the one
 // that the DOM represents. If any changes came in in the meantime,
 // the modification is mapped over those before it is applied, in
 // readDOMChange.
-function parseBetween(view, from_, to_) {
+function parseBetween(view, from_, to_, addedNodes) {
     let { node: parent, fromOffset, toOffset, from, to } = view.docView.parseRange(from_, to_);
     let domSel = view.domSelectionRange();
     let find;
@@ -12263,7 +12466,7 @@ function parseBetween(view, from_, to_) {
         to: toOffset,
         preserveWhitespace: $from.parent.type.whitespace == "pre" ? "full" : true,
         findPositions: find,
-        ruleFromNode,
+        ruleFromNode: ruleFromNode(addedNodes),
         context: $from
     });
     if (find && find[0].pos != null) {
@@ -12274,10 +12477,10 @@ function parseBetween(view, from_, to_) {
     }
     return { doc, sel, from, to };
 }
-function ruleFromNode(dom) {
+const ruleFromNode = (added) => (dom) => {
     let desc = dom.pmViewDesc;
     if (desc) {
-        return desc.parseRule();
+        return desc.parseRule(added);
     }
     else if (dom.nodeName == "BR" && dom.parentNode) {
         // Safari replaces the list item or table cell with a BR
@@ -12296,7 +12499,7 @@ function ruleFromNode(dom) {
         return { ignore: true };
     }
     return null;
-}
+};
 const isInline = /^(a|abbr|acronym|b|bd[io]|big|br|button|cite|code|data(list)?|del|dfn|em|i|img|ins|kbd|label|map|mark|meter|output|q|ruby|s|samp|small|span|strong|su[bp]|time|u|tt|var)$/i;
 function readDOMChange(view, from, to, typeOver, addedNodes) {
     let compositionID = view.input.compositionPendingChanges || (view.composing ? view.input.compositionID : 0);
@@ -12325,7 +12528,7 @@ function readDOMChange(view, from, to, typeOver, addedNodes) {
     from = $before.before(shared + 1);
     to = view.state.doc.resolve(to).after(shared + 1);
     let sel = view.state.selection;
-    let parse = parseBetween(view, from, to);
+    let parse = parseBetween(view, from, to, addedNodes);
     let doc = view.state.doc, compare = doc.slice(parse.from, parse.to);
     let preferredPos, preferredSide;
     // Prefer anchoring to end when Backspace is pressed
@@ -12570,37 +12773,27 @@ function skipClosingAndOpening($pos, fromEnd, mayOpen) {
     return end;
 }
 function findDiff(a, b, pos, preferredPos, preferredSide) {
-    let start = a.findDiffStart(b, pos);
+    let start = a.findDiffStart(b, pos), lenA = pos + a.size, lenB = pos + b.size;
     if (start == null)
         return null;
-    let { a: endA, b: endB } = a.findDiffEnd(b, pos + a.size, pos + b.size);
+    let { a: endA, b: endB } = a.findDiffEnd(b, lenA, lenB);
     if (preferredSide == "end") {
         let adjust = Math.max(0, start - Math.min(endA, endB));
         preferredPos -= endA + adjust - start;
     }
-    if (endA < start && a.size < b.size) {
+    if (endA < start && lenA < lenB) {
         let move = preferredPos <= start && preferredPos >= endA ? start - preferredPos : 0;
         start -= move;
-        if (start && start < b.size && isSurrogatePair(b.textBetween(start - 1, start + 1)))
-            start += move ? 1 : -1;
         endB = start + (endB - endA);
         endA = start;
     }
     else if (endB < start) {
         let move = preferredPos <= start && preferredPos >= endB ? start - preferredPos : 0;
         start -= move;
-        if (start && start < a.size && isSurrogatePair(a.textBetween(start - 1, start + 1)))
-            start += move ? 1 : -1;
         endA = start + (endA - endB);
         endB = start;
     }
     return { start, endA, endB };
-}
-function isSurrogatePair(str) {
-    if (str.length != 2)
-        return false;
-    let a = str.charCodeAt(0), b = str.charCodeAt(1);
-    return a >= 0xDC00 && a <= 0xDFFF && b >= 0xD800 && b <= 0xDBFF;
 }
 
 /**
@@ -12655,7 +12848,7 @@ class EditorView {
         this.pluginViews = [];
         /**
         Holds `true` when a hack node is needed in Firefox to prevent the
-        [space is eaten issue](https://github.com/ProseMirror/prosemirror/issues/651)
+        [space is eaten issue](https://code.haverbeke.berlin/prosemirror/prosemirror/issues/651)
         @internal
         */
         this.requiresGeckoHackNode = false;
@@ -12795,16 +12988,17 @@ class EditorView {
                     this.docView.destroy();
                     this.docView = docViewDesc(state.doc, outerDeco, innerDeco, this.dom, this);
                 }
-                if (chromeKludge && !this.trackWrites)
+                if (chromeKludge && (!this.trackWrites || !this.dom.contains(this.trackWrites)))
                     forceSelUpdate = true;
             }
             // Work around for an issue where an update arriving right between
             // a DOM selection change and the "selectionchange" event for it
             // can cause a spurious DOM selection update, disrupting mouse
             // drag selection.
+            let mouseDown = this.input.mouseDown;
             if (forceSelUpdate ||
-                !(this.input.mouseDown && this.domObserver.currentSelection.eq(this.domSelectionRange()) &&
-                    anchorInRightPlace(this))) {
+                !(mouseDown && this.domObserver.currentSelection.eq(this.domSelectionRange()) &&
+                    anchorInRightPlace(this) && mouseDown.delaySelUpdate())) {
                 selectionToDOM(this, forceSelUpdate);
             }
             else {
@@ -12873,12 +13067,12 @@ class EditorView {
     }
     updateDraggedNode(dragging, prev) {
         let sel = dragging.node, found = -1;
-        if (this.state.doc.nodeAt(sel.from) == sel.node) {
+        if (sel.from < this.state.doc.content.size && this.state.doc.nodeAt(sel.from) == sel.node) {
             found = sel.from;
         }
         else {
             let movedPos = sel.from + (this.state.doc.content.size - prev.doc.content.size);
-            let moved = movedPos > 0 && this.state.doc.nodeAt(movedPos);
+            let moved = movedPos > 0 && movedPos < this.state.doc.content.size && this.state.doc.nodeAt(movedPos);
             if (moved == sel.node)
                 found = movedPos;
         }
@@ -15545,16 +15739,20 @@ a custom function to determine the type of the newly split off block.
 */
 function splitBlockAs(splitNode) {
     return (state, dispatch) => {
-        let { $from, $to } = state.selection;
         if (state.selection instanceof NodeSelection && state.selection.node.isBlock) {
+            let { $from } = state.selection;
             if (!$from.parentOffset || !canSplit(state.doc, $from.pos))
                 return false;
             if (dispatch)
                 dispatch(state.tr.split($from.pos).scrollIntoView());
             return true;
         }
-        if (!$from.depth)
+        if (!state.selection.$from.depth)
             return false;
+        let tr = state.tr;
+        if (!state.selection.empty && (state.selection instanceof TextSelection || state.selection instanceof AllSelection))
+            tr.deleteSelection();
+        let { $from } = tr.selection, mapFrom = tr.steps.length;
         let types = [];
         let splitDepth, deflt, atEnd = false, atStart = false;
         for (let d = $from.depth;; d--) {
@@ -15573,10 +15771,7 @@ function splitBlockAs(splitNode) {
                 types.unshift(null);
             }
         }
-        let tr = state.tr;
-        if (state.selection instanceof TextSelection || state.selection instanceof AllSelection)
-            tr.deleteSelection();
-        let splitPos = tr.mapping.map($from.pos);
+        let splitPos = $from.pos;
         let can = canSplit(tr.doc, splitPos, types.length, types);
         if (!can) {
             types[0] = deflt ? { type: deflt } : null;
@@ -15586,9 +15781,10 @@ function splitBlockAs(splitNode) {
             return false;
         tr.split(splitPos, types.length, types);
         if (!atEnd && atStart && $from.node(splitDepth).type != deflt) {
-            let first = tr.mapping.map($from.before(splitDepth)), $first = tr.doc.resolve(first);
+            let mapping = tr.mapping.slice(mapFrom);
+            let first = mapping.map($from.before(splitDepth)), $first = tr.doc.resolve(first);
             if (deflt && $from.node(splitDepth - 1).canReplaceWith($first.index(), $first.index() + 1, deflt))
-                tr.setNodeMarkup(tr.mapping.map($from.before(splitDepth)), deflt);
+                tr.setNodeMarkup(mapping.map($from.before(splitDepth)), deflt);
         }
         if (dispatch)
             dispatch(tr.scrollIntoView());
@@ -17035,14 +17231,17 @@ function requireCore () {
 	  return match && match.index === 0;
 	}
 
-	// BACKREF_RE matches an open parenthesis or backreference. To avoid
-	// an incorrect parse, it additionally matches the following:
-	// - [...] elements, where the meaning of parentheses and escapes change
-	// - other escape sequences, so we do not misparse escape sequences as
-	//   interesting elements
-	// - non-matching or lookahead parentheses, which do not capture. These
-	//   follow the '(' with a '?'.
-	const BACKREF_RE = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+	// BACKREF_RE matches an open parenthesis or backreference. To avoid an
+	// incorrect parse, it also matches the constructs where the meaning of
+	// parentheses, escapes, or capture counting changes.
+	const BACKREF_RE = new RegExp(either(
+	  /\[(?:[^\\\]]|\\.)*\]/, // a character class, inside which ( and \ lose their meaning
+	  /\(\?<(?![=!])[^>]+>/, // a named capture group `(?<name>` (not a lookbehind `(?<=` / `(?<!`)
+	  /\(\?'[^']+'/, // a named capture group `(?'name'`
+	  /\(\??/, // an opening parenthesis, capturing or non-capturing / lookahead
+	  /\\([1-9][0-9]*)/, // a backreference like `\1`
+	  /\\./ // any other escape sequence
+	));
 
 	// **INTERNAL** Not intended for outside usage
 	// join logically computes regexps.join(separator), but fixes the
@@ -17077,7 +17276,7 @@ function requireCore () {
 	        out += '\\' + String(Number(match[1]) + offset);
 	      } else {
 	        out += match[0];
-	        if (match[0] === '(') {
+	        if (match[0] === '(' || /^\(\?[<']/.test(match[0])) {
 	          numCaptures++;
 	        }
 	      }
@@ -18119,7 +18318,7 @@ function requireCore () {
 	  return mode;
 	}
 
-	var version = "11.11.1";
+	var version = "11.12.0";
 
 	class HTMLInjectionError extends Error {
 	  constructor(reason, html) {
@@ -18641,12 +18840,15 @@ function requireCore () {
 	        }
 	      }
 
-	      // edge case for when illegal matches $ (end of line) which is technically
+	      // edge case for when illegal matches $ (end of line/text) which is technically
 	      // a 0 width match but not a begin/end match so it's not caught by the
-	      // first handler (when ignoreIllegals is true)
+	      // first handler (when `ignoreIllegals` is true)
 	      if (match.type === "illegal" && lexeme === "") {
-	        // advance so we aren't stuck in an infinite loop
-	        modeBuffer += "\n";
+	        if (match.index === codeToHighlight.length) ; else {
+	          // matched literal `\n` (with `$`) so we must manually add the newline
+	          // itself to the modeBuffer so it is not lost when we advance the cursor
+	          modeBuffer += "\n";
+	        }
 	        return 1;
 	      }
 
@@ -19336,10 +19538,7 @@ function requireXml () {
 	        starts: {
 	          end: /<\/style>/,
 	          returnEnd: true,
-	          subLanguage: [
-	            'css',
-	            'xml'
-	          ]
+	          subLanguage: 'css'
 	        }
 	      },
 	      {
@@ -19352,11 +19551,7 @@ function requireXml () {
 	        starts: {
 	          end: /<\/script>/,
 	          returnEnd: true,
-	          subLanguage: [
-	            'javascript',
-	            'handlebars',
-	            'xml'
-	          ]
+	          subLanguage: 'javascript'
 	        }
 	      },
 	      // we need this for now for jSX
@@ -19864,11 +20059,53 @@ function requireC () {
 	  + ')';
 
 
+	  // C11 <stdatomic.h> atomic type names. This is an explicit whitelist so that
+	  // C11 atomic *functions* (atomic_init, atomic_store, atomic_load,
+	  // atomic_fetch_add, ...) are not mistakenly highlighted as types. See #3837.
+	  const ATOMIC_TYPES = regex.concat(/\batomic_/, regex.either(
+	    'bool',
+	    'char',
+	    'schar',
+	    'uchar',
+	    'short',
+	    'ushort',
+	    'int',
+	    'uint',
+	    'long',
+	    'ulong',
+	    'llong',
+	    'ullong',
+	    'char16_t',
+	    'char32_t',
+	    'wchar_t',
+	    'int_least8_t',
+	    'uint_least8_t',
+	    'int_least16_t',
+	    'uint_least16_t',
+	    'int_least32_t',
+	    'uint_least32_t',
+	    'int_least64_t',
+	    'uint_least64_t',
+	    'int_fast8_t',
+	    'uint_fast8_t',
+	    'int_fast16_t',
+	    'uint_fast16_t',
+	    'int_fast32_t',
+	    'uint_fast32_t',
+	    'int_fast64_t',
+	    'uint_fast64_t',
+	    'intptr_t',
+	    'uintptr_t',
+	    'size_t',
+	    'ptrdiff_t',
+	    'intmax_t',
+	    'uintmax_t'
+	  ), /\b/);
 	  const TYPES = {
 	    className: 'type',
 	    variants: [
 	      { begin: '\\b[a-z\\d_]*_t\\b' },
-	      { match: /\batomic_[a-z]{3,6}\b/ }
+	      { match: ATOMIC_TYPES }
 	    ]
 
 	  };
@@ -19890,9 +20127,13 @@ function requireC () {
 	        end: '\'',
 	        illegal: '.'
 	      },
+	      // https://en.cppreference.com/w/cpp/language/string_literal
+	      // a d-char-sequence never contains parentheses, backslashes or whitespace;
+	      // quotes are excluded as well so the closing delimiter cannot swallow the
+	      // quote that actually terminates the literal
 	      hljs.END_SAME_AS_BEGIN({
-	        begin: /(?:u8?|U|L)?R"([^()\\ ]{0,16})\(/,
-	        end: /\)([^()\\ ]{0,16})"/
+	        begin: /(?:u8?|U|L)?R"([^()\\\s"]{0,16})\(/,
+	        end: /\)([^()\\\s"]{0,16})"/
 	      })
 	    ]
 	  };
@@ -19908,6 +20149,32 @@ function requireC () {
 	    relevance: 0
 	  };  
 	  
+	  // `#include` is the only preprocessor directive that takes an angle-bracket
+	  // quoted header (`#include <header>`). Scoping that rule to `#include` keeps
+	  // the greedy `<...>` match from eating a `>` that belongs to the body of
+	  // another directive (e.g. `#define what do { cout << ">"; } while (0)`),
+	  // which would otherwise leave an unbalanced `"` and break highlighting for
+	  // the rest of the file. See issue #3505.
+	  const PREPROCESSOR_INCLUDE = {
+	    scope: 'meta',
+	    begin: /#\s*include\b/,
+	    end: /$/,
+	    keywords: { keyword: 'include' },
+	    contains: [
+	      {
+	        // the `\` at the end of a line signaling continuation
+	        begin: /\\\n/,
+	      },
+	      STRINGS,
+	      {
+	        scope: 'string',
+	        begin: /<.*?>/
+	      },
+	      C_LINE_COMMENT_MODE,
+	      hljs.C_BLOCK_COMMENT_MODE
+	    ]
+	  };
+
 	  const PREPROCESSOR = {
 	    className: 'meta',
 	    begin: /#\s*[a-z]+\b/,
@@ -19921,14 +20188,15 @@ function requireC () {
 	        relevance: 0
 	      },
 	      hljs.inherit(STRINGS, { className: 'string' }),
-	      {
-	        className: 'string',
-	        begin: /<.*?>/
-	      },
 	      C_LINE_COMMENT_MODE,
 	      hljs.C_BLOCK_COMMENT_MODE
 	    ]
 	  };
+
+	  const PREPROCESSORS = [
+	    PREPROCESSOR_INCLUDE,
+	    PREPROCESSOR
+	  ];
 
 	  const TITLE_MODE = {
 	    className: 'title',
@@ -19937,6 +20205,11 @@ function requireC () {
 	  };
 
 	  const FUNCTION_TITLE = regex.optional(NAMESPACE_RE) + hljs.IDENT_RE + '\\s*\\(';
+	  // Bounded on purpose: an unbounded quantifier here consumes an arbitrarily
+	  // long run of words, and when no function title follows it the engine retries
+	  // the title at every token boundary of that run - quadratic in the size of
+	  // the document.  See #4362.
+	  const MAX_FUNCTION_TYPE_TOKENS = 12;
 
 	  const C_KEYWORDS = [
 	    "asm",
@@ -20037,7 +20310,7 @@ function requireC () {
 	  };
 
 	  const EXPRESSION_CONTAINS = [
-	    PREPROCESSOR,
+	    ...PREPROCESSORS,
 	    TYPES,
 	    C_LINE_COMMENT_MODE,
 	    hljs.C_BLOCK_COMMENT_MODE,
@@ -20077,7 +20350,7 @@ function requireC () {
 	  };
 
 	  const FUNCTION_DECLARATION = {
-	    begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+)+' + FUNCTION_TITLE,
+	    begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+){1,' + MAX_FUNCTION_TYPE_TOKENS + '}' + FUNCTION_TITLE,
 	    returnBegin: true,
 	    end: /[{;=]/,
 	    excludeEnd: true,
@@ -20133,7 +20406,7 @@ function requireC () {
 	      TYPES,
 	      C_LINE_COMMENT_MODE,
 	      hljs.C_BLOCK_COMMENT_MODE,
-	      PREPROCESSOR
+	      ...PREPROCESSORS
 	    ]
 	  };
 
@@ -20150,7 +20423,7 @@ function requireC () {
 	      FUNCTION_DECLARATION,
 	      EXPRESSION_CONTAINS,
 	      [
-	        PREPROCESSOR,
+	        ...PREPROCESSORS,
 	        {
 	          begin: hljs.IDENT_RE + '::',
 	          keywords: KEYWORDS
@@ -20227,9 +20500,13 @@ function requireCpp () {
 	        end: '\'',
 	        illegal: '.'
 	      },
+	      // https://en.cppreference.com/w/cpp/language/string_literal
+	      // a d-char-sequence never contains parentheses, backslashes or whitespace;
+	      // quotes are excluded as well so the closing delimiter cannot swallow the
+	      // quote that actually terminates the literal
 	      hljs.END_SAME_AS_BEGIN({
-	        begin: /(?:u8?|U|L)?R"([^()\\ ]{0,16})\(/,
-	        end: /\)([^()\\ ]{0,16})"/
+	        begin: /(?:u8?|U|L)?R"([^()\\\s"]{0,16})\(/,
+	        end: /\)([^()\\\s"]{0,16})"/
 	      })
 	    ]
 	  };
@@ -20242,12 +20519,12 @@ function requireCpp () {
 	        "[+-]?(?:" // Leading sign.
 	          // Decimal.
 	          + "(?:"
-	            +"[0-9](?:'?[0-9])*\\.(?:[0-9](?:'?[0-9])*)?"
+	            + "\\b[0-9](?:'?[0-9])*\\.(?:[0-9](?:'?[0-9])*)?"
 	            + "|\\.[0-9](?:'?[0-9])*"
 	          + ")(?:[Ee][+-]?[0-9](?:'?[0-9])*)?"
-	          + "|[0-9](?:'?[0-9])*[Ee][+-]?[0-9](?:'?[0-9])*"
+	          + "|\\b[0-9](?:'?[0-9])*[Ee][+-]?[0-9](?:'?[0-9])*"
 	          // Hexadecimal.
-	          + "|0[Xx](?:"
+	          + "|\\b0[Xx](?:"
 	            +"[0-9A-Fa-f](?:'?[0-9A-Fa-f])*(?:\\.(?:[0-9A-Fa-f](?:'?[0-9A-Fa-f])*)?)?"
 	            + "|\\.[0-9A-Fa-f](?:'?[0-9A-Fa-f])*"
 	          + ")[Pp][+-]?[0-9](?:'?[0-9])*"
@@ -20279,6 +20556,32 @@ function requireCpp () {
 	    relevance: 0
 	  };
 
+	  // `#include` is the only preprocessor directive that takes an angle-bracket
+	  // quoted header (`#include <header>`). Scoping that rule to `#include` keeps
+	  // the greedy `<...>` match from eating a `>` that belongs to the body of
+	  // another directive (e.g. `#define what do { cout << ">"; } while (0)`),
+	  // which would otherwise leave an unbalanced `"` and break highlighting for
+	  // the rest of the file. See issue #3505.
+	  const PREPROCESSOR_INCLUDE = {
+	    scope: 'meta',
+	    begin: /#\s*include\b/,
+	    end: /$/,
+	    keywords: { keyword: 'include' },
+	    contains: [
+	      {
+	        // the `\` at the end of a line signaling continuation
+	        begin: /\\\n/,
+	      },
+	      STRINGS,
+	      {
+	        scope: 'string',
+	        begin: /<.*?>/
+	      },
+	      C_LINE_COMMENT_MODE,
+	      hljs.C_BLOCK_COMMENT_MODE
+	    ]
+	  };
+
 	  const PREPROCESSOR = {
 	    className: 'meta',
 	    begin: /#\s*[a-z]+\b/,
@@ -20292,14 +20595,15 @@ function requireCpp () {
 	        relevance: 0
 	      },
 	      hljs.inherit(STRINGS, { className: 'string' }),
-	      {
-	        className: 'string',
-	        begin: /<.*?>/
-	      },
 	      C_LINE_COMMENT_MODE,
 	      hljs.C_BLOCK_COMMENT_MODE
 	    ]
 	  };
+
+	  const PREPROCESSORS = [
+	    PREPROCESSOR_INCLUDE,
+	    PREPROCESSOR
+	  ];
 
 	  const TITLE_MODE = {
 	    className: 'title',
@@ -20308,6 +20612,11 @@ function requireCpp () {
 	  };
 
 	  const FUNCTION_TITLE = regex.optional(NAMESPACE_RE) + hljs.IDENT_RE + '\\s*\\(';
+	  // Bounded on purpose: an unbounded quantifier here consumes an arbitrarily
+	  // long run of words, and when no function title follows it the engine retries
+	  // the title at every token boundary of that run - quadratic in the size of
+	  // the document.  See #4362.
+	  const MAX_FUNCTION_TYPE_TOKENS = 12;
 
 	  // https://en.cppreference.com/w/cpp/keyword
 	  const RESERVED_KEYWORDS = [
@@ -20610,18 +20919,14 @@ function requireCpp () {
 	      _hint: FUNCTION_HINTS },
 	    begin: regex.concat(
 	      /\b/,
-	      /(?!decltype)/,
-	      /(?!if)/,
-	      /(?!for)/,
-	      /(?!switch)/,
-	      /(?!while)/,
+	      `(?!${RESERVED_KEYWORDS.join('|')})`,
 	      hljs.IDENT_RE,
 	      regex.lookahead(/(<[^<>]+>|)\s*\(/))
 	  };
 
 	  const EXPRESSION_CONTAINS = [
 	    FUNCTION_DISPATCH,
-	    PREPROCESSOR,
+	    ...PREPROCESSORS,
 	    CPP_PRIMITIVE_TYPES,
 	    C_LINE_COMMENT_MODE,
 	    hljs.C_BLOCK_COMMENT_MODE,
@@ -20662,7 +20967,7 @@ function requireCpp () {
 
 	  const FUNCTION_DECLARATION = {
 	    className: 'function',
-	    begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+)+' + FUNCTION_TITLE,
+	    begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+){1,' + MAX_FUNCTION_TYPE_TOKENS + '}' + FUNCTION_TITLE,
 	    returnBegin: true,
 	    end: /[{;=]/,
 	    excludeEnd: true,
@@ -20733,7 +21038,7 @@ function requireCpp () {
 	      CPP_PRIMITIVE_TYPES,
 	      C_LINE_COMMENT_MODE,
 	      hljs.C_BLOCK_COMMENT_MODE,
-	      PREPROCESSOR
+	      ...PREPROCESSORS
 	    ]
 	  };
 
@@ -20757,7 +21062,7 @@ function requireCpp () {
 	      FUNCTION_DISPATCH,
 	      EXPRESSION_CONTAINS,
 	      [
-	        PREPROCESSOR,
+	        ...PREPROCESSORS,
 	        { // containers: ie, `vector <int> rooms (9);`
 	          begin: '\\b(deque|list|queue|priority_queue|pair|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array|tuple|optional|variant|function|flat_map|flat_set)\\s*<(?!<)',
 	          end: '>',
@@ -20960,12 +21265,18 @@ function requireCsharp () {
 	    literal: LITERAL_KEYWORDS
 	  };
 	  const TITLE_MODE = hljs.inherit(hljs.TITLE_MODE, { begin: '[a-zA-Z](\\.?\\w)*' });
+	  // https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types
+	  // https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types
+	  // `_` separators sit between digits, and may also follow the `0x`/`0b` prefix
+	  const DIGITS = '\\d(_*\\d)*';
+	  const INTEGER_SUFFIX = '([uU][lL]?|[lL][uU]?)?';
+	  const REAL_SUFFIX = '([fFdDmM]|[uU][lL]?|[lL][uU]?)?';
 	  const NUMBERS = {
 	    className: 'number',
 	    variants: [
-	      { begin: '\\b(0b[01\']+)' },
-	      { begin: '(-?)\\b([\\d\']+(\\.[\\d\']*)?|\\.[\\d\']+)(u|U|l|L|ul|UL|f|F|b|B)' },
-	      { begin: '(-?)(\\b0[xX][a-fA-F0-9\']+|(\\b[\\d\']+(\\.[\\d\']*)?|\\.[\\d\']+)([eE][-+]?[\\d\']+)?)' }
+	      { begin: '\\b0[bB]_*[01](_*[01])*' + INTEGER_SUFFIX },
+	      { begin: '(-?)\\b0[xX]_*[a-fA-F0-9](_*[a-fA-F0-9])*' + INTEGER_SUFFIX },
+	      { begin: '(-?)(\\b' + DIGITS + '(\\.(' + DIGITS + ')?)?|\\.' + DIGITS + ')([eE][-+]?' + DIGITS + ')?' + REAL_SUFFIX }
 	    ],
 	    relevance: 0
 	  };
@@ -21228,6 +21539,10 @@ function requireCss () {
 	    HEXCOLOR: {
 	      scope: 'number',
 	      begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
+	    },
+	    UNICODE_RANGE: {
+	      scope: 'number',
+	      begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
 	    },
 	    FUNCTION_DISPATCH: {
 	      className: "built_in",
@@ -21662,6 +21977,11 @@ function requireCss () {
 	  'container-type',
 	  'content',
 	  'content-visibility',
+	  'corner-bottom-left-shape',
+	  'corner-bottom-right-shape',
+	  'corner-shape',
+	  'corner-top-left-shape',
+	  'corner-top-right-shape',
 	  'counter-increment',
 	  'counter-reset',
 	  'counter-set',
@@ -21997,6 +22317,7 @@ function requireCss () {
 	  'transition-timing-function',
 	  'translate',
 	  'unicode-bidi',
+	  'unicode-range',
 	  'user-modify',
 	  'user-select',
 	  'vector-effect',
@@ -22103,9 +22424,10 @@ function requireCss () {
 	          modes.HEXCOLOR,
 	          modes.IMPORTANT,
 	          modes.CSS_NUMBER_MODE,
+	          modes.UNICODE_RANGE,
 	          ...STRINGS,
 	          // needed to highlight these as strings and to avoid issues with
-	          // illegal characters that might be inside urls that would tigger the
+	          // illegal characters that might be inside urls that would trigger the
 	          // languages illegal stack
 	          {
 	            begin: /(url|data-uri)\(/,
@@ -22192,10 +22514,10 @@ function requireMarkdown () {
 	    subLanguage: 'xml',
 	    relevance: 0
 	  };
-	  const HORIZONTAL_RULE = {
-	    begin: '^[-\\*]{3,}',
-	    end: '$'
-	  };
+	  // https://spec.commonmark.org/0.31.2/#thematic-breaks
+	  // three or more `-`, `*` or `_`, all the same character, optionally
+	  // separated and followed by spaces or tabs, and nothing else on the line
+	  const HORIZONTAL_RULE = { match: /^ {0,3}([-*_])[ \t]*(?:\1[ \t]*){2,}$/ };
 	  const CODE = {
 	    className: 'code',
 	    variants: [
@@ -22411,11 +22733,13 @@ function requireMarkdown () {
 	      HEADER,
 	      INLINE_HTML,
 	      LIST,
+	      // must come before BOLD/ITALIC so that a `***` or `___` thematic break
+	      // isn't mistaken for the start of bold text
+	      HORIZONTAL_RULE,
 	      BOLD,
 	      ITALIC,
 	      BLOCKQUOTE,
 	      CODE,
-	      HORIZONTAL_RULE,
 	      LINK,
 	      LINK_REFERENCE,
 	      ENTITY
@@ -22452,7 +22776,10 @@ function requireDiff () {
 	        className: 'meta',
 	        relevance: 10,
 	        match: regex.either(
-	          /^@@ +-\d+,\d+ +\+\d+,\d+ +@@/,
+	          /^@@ +-\d+,\d+ +\+\d+,\d+ +@@/, // @@ -1,2 +1,2 @@
+	          /^@@ +-\d+ +\+\d+,\d+ +@@/,     // @@ -1 +1,2 @@
+	          /^@@ +-\d+,\d+ +\+\d+ +@@/,     // @@ -1,2 +1 @@
+	          /^@@ +-\d+ +\+\d+ +@@/,         // @@ -1 +1 @@
 	          /^\*\*\* +\d+,\d+ +\*\*\*\*$/,
 	          /^--- +\d+,\d+ +----$/
 	        )
@@ -22831,8 +23158,9 @@ function requireRuby () {
 	    CLASS_REFERENCE,
 	    METHOD_DEFINITION,
 	    {
-	      // swallow namespace qualifiers before symbols
-	      begin: hljs.IDENT_RE + '::' },
+	      // swallow the scope resolution operator so `::` is not read as a symbol
+	      begin: '::'
+	    },
 	    {
 	      className: 'symbol',
 	      begin: hljs.UNDERSCORE_IDENT_RE + '(!|\\?)?:',
@@ -23081,6 +23409,10 @@ function requireGo () {
 	          },
 	          {
 	            match: /-?\b0[oO](_?[0-7])*i?/, // leading 0o octal
+	            relevance: 0
+	          },
+	          {
+	            match: /-?\b0[bB](_?[01])*i?/, // leading 0b binary
 	            relevance: 0
 	          },
 	          {
@@ -23408,9 +23740,27 @@ function requireJava () {
 	/** @type LanguageFn */
 	function java(hljs) {
 	  const regex = hljs.regex;
+
+	  // A Java identifier consisting of letters, digits, underscore or dollar sign, not beginning with a digit
 	  const JAVA_IDENT_RE = '[\u00C0-\u02B8a-zA-Z_$][\u00C0-\u02B8a-zA-Z_$0-9]*';
-	  const GENERIC_IDENT_RE = JAVA_IDENT_RE
-	    + recurRegex('(?:<' + JAVA_IDENT_RE + '~~~(?:\\s*,\\s*' + JAVA_IDENT_RE + '~~~)*>)?', /~~~/g, 2);
+
+	  // Optional 1..n pairs of square brackets identifying an array type
+	  const ARRAY_BRACKETS_OPTIONAL_RE = '(?:(?:\\s*\\[\\s*])+)?';
+
+	  // A simple Java type: a type name, optionally followed by type arguments and/or array brackets
+	  // '<@@@>' is replaced with the pattern for optional type arguments by recurRegex below.
+	  const SIMPLE_TYPE_RE = JAVA_IDENT_RE + '<@@@>' + ARRAY_BRACKETS_OPTIONAL_RE;
+
+	  // A bounded (? extends Number) or unbounded (?) wildcard type
+	  const WILDCARD_TYPE_RE = '\\?(?:\\s+(?:extends|super)\\s+' + SIMPLE_TYPE_RE + ')?';
+
+	  // A Java type argument, consisting of a wildcard or simple type
+	  const TYPE_ARG_RE = '(?:' + WILDCARD_TYPE_RE + '|' + SIMPLE_TYPE_RE + ')';
+
+	  // Pattern for optional generic type arguments in angle brackets with up to 2 levels of nested type arguments
+	  const TYPE_ARGS_OPTIONAL_RE = recurRegex('(?:\\s*<\\s*' + TYPE_ARG_RE + '(?:\\s*,\\s*' + TYPE_ARG_RE + ')*\\s*>)?',
+	                                           /<@@@>/g, 2);
+
 	  const MAIN_KEYWORDS = [
 	    'synchronized',
 	    'abstract',
@@ -23565,17 +23915,24 @@ function requireJava () {
 	        scope: "keyword"
 	      },
 	      {
+	        // Expression keywords prevent keyword-led expressions from being
+	        // recognized as variable or method declarations.
+	        beginKeywords: 'new throw return else yield assert',
+	        relevance: 0
+	      },
+	      {
 	        begin: [
-	          regex.concat(/(?!else)/, JAVA_IDENT_RE),
-	          /\s+/,
 	          JAVA_IDENT_RE,
-	          /\s+/,
+	          regex.concat(TYPE_ARGS_OPTIONAL_RE, ARRAY_BRACKETS_OPTIONAL_RE, /\s+/),
+	          JAVA_IDENT_RE,
+	          ARRAY_BRACKETS_OPTIONAL_RE,
+	          /\s*/,
 	          /=(?!=)/
 	        ],
 	        className: {
 	          1: "type",
 	          3: "variable",
-	          5: "operator"
+	          6: "operator"
 	        }
 	      },
 	      {
@@ -23595,18 +23952,16 @@ function requireJava () {
 	        ]
 	      },
 	      {
-	        // Expression keywords prevent 'keyword Name(...)' from being
-	        // recognized as a function definition
-	        beginKeywords: 'new throw return else',
-	        relevance: 0
-	      },
-	      {
 	        begin: [
-	          '(?:' + GENERIC_IDENT_RE + '\\s+)',
-	          hljs.UNDERSCORE_IDENT_RE,
+	          JAVA_IDENT_RE,
+	          regex.concat(TYPE_ARGS_OPTIONAL_RE, ARRAY_BRACKETS_OPTIONAL_RE, /\s+/),
+	          JAVA_IDENT_RE,
 	          /\s*(?=\()/
 	        ],
-	        className: { 2: "title.function" },
+	        className: {
+	          1: "type",
+	          3: "title.function"
+	        },
 	        keywords: KEYWORDS,
 	        contains: [
 	          {
@@ -23644,6 +23999,7 @@ function requireJavascript () {
 	if (hasRequiredJavascript) return javascript_1;
 	hasRequiredJavascript = 1;
 	const IDENT_RE = '[A-Za-z$_][0-9A-Za-z$_]*';
+
 	const KEYWORDS = [
 	  "as", // for exports
 	  "in",
@@ -23794,6 +24150,7 @@ function requireJavascript () {
 	  "localStorage",
 	  "sessionStorage",
 	  "module",
+	  "self",
 	  "global" // Node.js
 	];
 
@@ -24191,7 +24548,8 @@ function requireJavascript () {
 	      noneOf([
 	        ...BUILT_IN_GLOBALS,
 	        "super",
-	        "import"
+	        "import",
+	        "await",
 	      ].map(x => `${x}\\s*\\(`)),
 	      IDENT_RE$1, regex.lookahead(/\s*\(/)),
 	    className: "title.function",
@@ -24260,7 +24618,7 @@ function requireJavascript () {
 	    keywords: KEYWORDS$1,
 	    // this will be extended by TypeScript
 	    exports: { PARAMS_CONTAINS, CLASS_REFERENCE },
-	    illegal: /#(?![$_A-z])/,
+	    illegal: /#(?![$_A-Za-z])/,
 	    contains: [
 	      hljs.SHEBANG({
 	        label: "shebang",
@@ -24415,24 +24773,32 @@ function requireJavascript () {
 	return javascript_1;
 }
 
-/*
-Language: JSON
-Description: JSON (JavaScript Object Notation) is a lightweight data-interchange format.
-Author: Ivan Sagalaev <maniac@softwaremaniacs.org>
-Website: http://www.json.org
-Category: common, protocols, web
-*/
-
 var json_1;
 var hasRequiredJson;
 
 function requireJson () {
 	if (hasRequiredJson) return json_1;
 	hasRequiredJson = 1;
+	const EXTENDED_NUMBER_RE = '([-+]?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)|NaN|[-+]?Infinity'; // 0x..., 0..., decimal, float
+
+	const EXTENDED_NUMBER_MODE = {
+	  scope: 'number',
+	  match: EXTENDED_NUMBER_RE,
+	  relevance: 0
+	};
+
+	/*
+	Language: JSON
+	Description: JSON (JavaScript Object Notation) is a lightweight data-interchange format.
+	Websites: http://www.json.org, https://www.json5.org
+	Category: common, protocols, web
+	*/
+
+
 	function json(hljs) {
 	  const ATTRIBUTE = {
 	    className: 'attr',
-	    begin: /"(\\.|[^\\"\r\n])*"(?=\s*:)/,
+	    begin: /(("(\\.|[^\\"\r\n])*")|('(\\.|[^\\'\r\n])*'))(?=\s*:)/,
 	    relevance: 1.01
 	  };
 	  const PUNCTUATION = {
@@ -24457,16 +24823,17 @@ function requireJson () {
 
 	  return {
 	    name: 'JSON',
-	    aliases: ['jsonc'],
+	    aliases: ['jsonc', 'json5'],
 	    keywords:{
 	      literal: LITERALS,
 	    },
 	    contains: [
 	      ATTRIBUTE,
 	      PUNCTUATION,
+	      hljs.APOS_STRING_MODE,
 	      hljs.QUOTE_STRING_MODE,
 	      LITERALS_MODE,
-	      hljs.C_NUMBER_MODE,
+	      EXTENDED_NUMBER_MODE,
 	      hljs.C_LINE_COMMENT_MODE,
 	      hljs.C_BLOCK_COMMENT_MODE
 	    ],
@@ -24647,7 +25014,9 @@ function requireKotlin () {
 	    name: 'Kotlin',
 	    aliases: [
 	      'kt',
-	      'kts'
+	      'kts',
+	      'ktm',
+	      'ktx'
 	    ],
 	    keywords: KEYWORDS,
 	    contains: [
@@ -24789,6 +25158,10 @@ function requireLess () {
 	    HEXCOLOR: {
 	      scope: 'number',
 	      begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
+	    },
+	    UNICODE_RANGE: {
+	      scope: 'number',
+	      begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
 	    },
 	    FUNCTION_DISPATCH: {
 	      className: "built_in",
@@ -25223,6 +25596,11 @@ function requireLess () {
 	  'container-type',
 	  'content',
 	  'content-visibility',
+	  'corner-bottom-left-shape',
+	  'corner-bottom-right-shape',
+	  'corner-shape',
+	  'corner-top-left-shape',
+	  'corner-top-right-shape',
 	  'counter-increment',
 	  'counter-reset',
 	  'counter-set',
@@ -25558,6 +25936,7 @@ function requireLess () {
 	  'transition-timing-function',
 	  'translate',
 	  'unicode-bidi',
+	  'unicode-range',
 	  'user-modify',
 	  'user-select',
 	  'vector-effect',
@@ -25662,6 +26041,7 @@ function requireLess () {
 	        excludeEnd: true
 	      }
 	    },
+	    modes.UNICODE_RANGE,
 	    modes.HEXCOLOR,
 	    PARENS_MODE,
 	    IDENT_MODE('variable', '@@?' + IDENT_RE, 10),
@@ -25772,7 +26152,7 @@ function requireLess () {
 	      MIXIN_GUARD_MODE,
 	      IDENT_MODE('keyword', 'all\\b'),
 	      IDENT_MODE('variable', '@\\{' + IDENT_RE + '\\}'), // otherwise it’s identified as tag
-	      
+
 	      {
 	        begin: '\\b(' + TAGS.join('|') + ')\\b',
 	        className: 'selector-tag'
@@ -25871,7 +26251,7 @@ function requireLua () {
 	    keywords: {
 	      $pattern: hljs.UNDERSCORE_IDENT_RE,
 	      literal: "true false nil",
-	      keyword: "and break do else elseif end for goto if in local not or repeat return then until while",
+	      keyword: "and break do else elseif end for goto if in local global not or repeat return then until while",
 	      built_in:
 	        // Metatags and globals:
 	        '_G _ENV _VERSION __index __newindex __mode __call __metatable __tostring __len '
@@ -26800,6 +27180,10 @@ Language: PHP
 Author: Victor Karamzin <Victor.Karamzin@enterra-inc.com>
 Contributors: Evgeny Stepanischev <imbolk@gmail.com>, Ivan Sagalaev <maniac@softwaremaniacs.org>
 Website: https://www.php.net
+Description: Use this for plain PHP code, i.e. code that does not include the
+             surrounding `<?php ... ?>` tags. If your snippet mixes PHP with
+             HTML markup and the opening/closing tags, use `php-template`
+             instead.
 Category: common
 */
 
@@ -27217,6 +27601,8 @@ function requirePhp () {
 	      VARIABLE,
 	      LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON,
 	      hljs.C_BLOCK_COMMENT_MODE,
+	      hljs.C_LINE_COMMENT_MODE,
+	      hljs.HASH_COMMENT_MODE,
 	      STRING,
 	      NUMBER,
 	      CONSTRUCTOR_CALL,
@@ -27241,6 +27627,8 @@ function requirePhp () {
 	    NAMED_ARGUMENT,
 	    LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON,
 	    hljs.C_BLOCK_COMMENT_MODE,
+	    hljs.C_LINE_COMMENT_MODE,
+	    hljs.HASH_COMMENT_MODE,
 	    STRING,
 	    NUMBER,
 	    CONSTRUCTOR_CALL,
@@ -27369,6 +27757,8 @@ function requirePhp () {
 	              VARIABLE,
 	              LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON,
 	              hljs.C_BLOCK_COMMENT_MODE,
+	              hljs.C_LINE_COMMENT_MODE,
+	              hljs.HASH_COMMENT_MODE,
 	              STRING,
 	              NUMBER
 	            ]
@@ -27434,6 +27824,9 @@ Language: PHP Template
 Requires: xml.js, php.js
 Author: Josh Goebel <hello@joshgoebel.com>
 Website: https://www.php.net
+Description: Use this for HTML (or other markup) with embedded PHP, i.e. code
+             that includes the `<?php ... ?>` (or `<?= ... ?>`) tags. For
+             plain PHP code without the surrounding tags, use `php` instead.
 Category: common
 */
 
@@ -27560,6 +27953,7 @@ function requirePython () {
 	    'in',
 	    'is',
 	    'lambda',
+	    'lazy',
 	    'match',
 	    'nonlocal|10',
 	    'not',
@@ -27576,7 +27970,9 @@ function requirePython () {
 	  const BUILT_INS = [
 	    '__import__',
 	    'abs',
+	    'aiter',
 	    'all',
+	    'anext',
 	    'any',
 	    'ascii',
 	    'bin',
@@ -27599,6 +27995,7 @@ function requirePython () {
 	    'filter',
 	    'float',
 	    'format',
+	    'frozendict',
 	    'frozenset',
 	    'getattr',
 	    'globals',
@@ -27631,6 +28028,7 @@ function requirePython () {
 	    'repr',
 	    'reversed',
 	    'round',
+	    'sentinel',
 	    'set',
 	    'setattr',
 	    'slice',
@@ -27722,7 +28120,7 @@ function requirePython () {
 	        relevance: 10
 	      },
 	      {
-	        begin: /([fF][rR]|[rR][fF]|[fF])'''/,
+	        begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])'''/,
 	        end: /'''/,
 	        contains: [
 	          hljs.BACKSLASH_ESCAPE,
@@ -27732,7 +28130,7 @@ function requirePython () {
 	        ]
 	      },
 	      {
-	        begin: /([fF][rR]|[rR][fF]|[fF])"""/,
+	        begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])"""/,
 	        end: /"""/,
 	        contains: [
 	          hljs.BACKSLASH_ESCAPE,
@@ -27760,7 +28158,7 @@ function requirePython () {
 	        end: /"/
 	      },
 	      {
-	        begin: /([fF][rR]|[rR][fF]|[fF])'/,
+	        begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])'/,
 	        end: /'/,
 	        contains: [
 	          hljs.BACKSLASH_ESCAPE,
@@ -27769,7 +28167,7 @@ function requirePython () {
 	        ]
 	      },
 	      {
-	        begin: /([fF][rR]|[rR][fF]|[fF])"/,
+	        begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])"/,
 	        end: /"/,
 	        contains: [
 	          hljs.BACKSLASH_ESCAPE,
@@ -28297,15 +28695,15 @@ function requireRust () {
 	  const IDENT_RE = regex.concat(RAW_IDENTIFIER, hljs.IDENT_RE);
 	  // ============================================
 	  const FUNCTION_INVOKE = {
-	    className: "title.function.invoke",
+	    scope: "title.function.invoke",
 	    relevance: 0,
 	    begin: regex.concat(
 	      /\b/,
-	      /(?!let|for|while|if|else|match\b)/,
+	      /(?!(?:let|for|while|if|else|match)\b)/,
 	      IDENT_RE,
 	      regex.lookahead(/\s*\(/))
 	  };
-	  const NUMBER_SUFFIX = '([ui](8|16|32|64|128|size)|f(32|64))\?';
+	  const NUMBER_SUFFIX = '([ui](8|16|32|64|128|size)|f(16|32|64|128))\?';
 	  const KEYWORDS = [
 	    "abstract",
 	    "as",
@@ -28339,6 +28737,7 @@ function requireRust () {
 	    "override",
 	    "priv",
 	    "pub",
+	    "raw",
 	    "ref",
 	    "return",
 	    "self",
@@ -28449,8 +28848,10 @@ function requireRust () {
 	    "u64",
 	    "u128",
 	    "usize",
+	    "f16",
 	    "f32",
 	    "f64",
+	    "f128",
 	    "str",
 	    "char",
 	    "bool",
@@ -28479,7 +28880,7 @@ function requireRust () {
 	        illegal: null
 	      }),
 	      {
-	        className: 'symbol',
+	        scope: 'symbol',
 	        // negative lookahead to avoid matching `'`
 	        begin: /'[a-zA-Z_][a-zA-Z0-9_]*(?!')/
 	      },
@@ -28493,14 +28894,14 @@ function requireRust () {
 	            contains: [
 	              {
 	                scope: "char.escape",
-	                match: /\\('|\w|x\w{2}|u\w{4}|U\w{8})/
+	                match: /\\('|"|\\|\w|x\w{2}|u\w{4}|U\w{8})/
 	              }
 	            ]
 	          }
 	        ]
 	      },
 	      {
-	        className: 'number',
+	        scope: 'number',
 	        variants: [
 	          { begin: '\\b0b([01_]+)' + NUMBER_SUFFIX },
 	          { begin: '\\b0o([0-7_]+)' + NUMBER_SUFFIX },
@@ -28512,22 +28913,33 @@ function requireRust () {
 	      },
 	      {
 	        begin: [
+	          /\bsafe/,
+	          /\s+/,
+	          /extern/,
+	        ],
+	        scope: {
+	          1: "keyword",
+	          3: "keyword",
+	        }
+	      },
+	      {
+	        begin: [
 	          /fn/,
 	          /\s+/,
 	          UNDERSCORE_IDENT_RE
 	        ],
-	        className: {
+	        scope: {
 	          1: "keyword",
 	          3: "title.function"
 	        }
 	      },
 	      {
-	        className: 'meta',
+	        scope: 'meta',
 	        begin: '#!?\\[',
 	        end: '\\]',
 	        contains: [
 	          {
-	            className: 'string',
+	            scope: 'string',
 	            begin: /"/,
 	            end: /"/,
 	            contains: [
@@ -28543,7 +28955,7 @@ function requireRust () {
 	          /(?:mut\s+)?/,
 	          UNDERSCORE_IDENT_RE
 	        ],
-	        className: {
+	        scope: {
 	          1: "keyword",
 	          3: "keyword",
 	          4: "variable"
@@ -28558,7 +28970,7 @@ function requireRust () {
 	          /\s+/,
 	          /in/
 	        ],
-	        className: {
+	        scope: {
 	          1: "keyword",
 	          3: "variable",
 	          5: "keyword"
@@ -28570,7 +28982,7 @@ function requireRust () {
 	          /\s+/,
 	          UNDERSCORE_IDENT_RE
 	        ],
-	        className: {
+	        scope: {
 	          1: "keyword",
 	          3: "title.class"
 	        }
@@ -28581,7 +28993,7 @@ function requireRust () {
 	          /\s+/,
 	          UNDERSCORE_IDENT_RE
 	        ],
-	        className: {
+	        scope: {
 	          1: "keyword",
 	          3: "title.class"
 	        }
@@ -28595,7 +29007,7 @@ function requireRust () {
 	        }
 	      },
 	      {
-	        className: "punctuation",
+	        scope: "punctuation",
 	        begin: '->'
 	      },
 	      FUNCTION_INVOKE
@@ -28623,6 +29035,10 @@ function requireScss () {
 	    HEXCOLOR: {
 	      scope: 'number',
 	      begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
+	    },
+	    UNICODE_RANGE: {
+	      scope: 'number',
+	      begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
 	    },
 	    FUNCTION_DISPATCH: {
 	      className: "built_in",
@@ -29057,6 +29473,11 @@ function requireScss () {
 	  'container-type',
 	  'content',
 	  'content-visibility',
+	  'corner-bottom-left-shape',
+	  'corner-bottom-right-shape',
+	  'corner-shape',
+	  'corner-top-left-shape',
+	  'corner-top-right-shape',
 	  'counter-increment',
 	  'counter-reset',
 	  'counter-set',
@@ -29392,6 +29813,7 @@ function requireScss () {
 	  'transition-timing-function',
 	  'translate',
 	  'unicode-bidi',
+	  'unicode-range',
 	  'user-modify',
 	  'user-select',
 	  'vector-effect',
@@ -29505,6 +29927,7 @@ function requireScss () {
 	          VARIABLE,
 	          modes.HEXCOLOR,
 	          modes.CSS_NUMBER_MODE,
+	          modes.UNICODE_RANGE,
 	          hljs.QUOTE_STRING_MODE,
 	          hljs.APOS_STRING_MODE,
 	          modes.IMPORTANT,
@@ -29583,7 +30006,7 @@ function requireShell () {
 	        // We cannot add \s (spaces) in the regular expression otherwise it will be too broad and produce unexpected result.
 	        // For instance, in the following example, it would match "echo /path/to/home >" as a prompt:
 	        // echo /path/to/home > t.exe
-	        begin: /^\s{0,3}[/~\w\d[\]()@-]*[>%$#][ ]?/,
+	        begin: /^\s{0,3}[./~\w\d[\]()@-]*[>%$#][ ]?/,
 	        starts: {
 	          end: /[^\\](?=\s*$)/,
 	          subLanguage: 'bash'
@@ -30370,6 +30793,18 @@ function requireSwift () {
 	    + args.map((x) => source(x)).join("|") + ")";
 	  return joined;
 	}
+
+	// BACKREF_RE matches an open parenthesis or backreference. To avoid an
+	// incorrect parse, it also matches the constructs where the meaning of
+	// parentheses, escapes, or capture counting changes.
+	new RegExp(either(
+	  /\[(?:[^\\\]]|\\.)*\]/, // a character class, inside which ( and \ lose their meaning
+	  /\(\?<(?![=!])[^>]+>/, // a named capture group `(?<name>` (not a lookbehind `(?<=` / `(?<!`)
+	  /\(\?'[^']+'/, // a named capture group `(?'name'`
+	  /\(\??/, // an opening parenthesis, capturing or non-capturing / lookahead
+	  /\\([1-9][0-9]*)/, // a backreference like `\1`
+	  /\\./ // any other escape sequence
+	));
 
 	const keywordWrapper = keyword => concat(
 	  /\b/,
@@ -31510,6 +31945,7 @@ function requireTypescript () {
 	if (hasRequiredTypescript) return typescript_1;
 	hasRequiredTypescript = 1;
 	const IDENT_RE = '[A-Za-z$_][0-9A-Za-z$_]*';
+
 	const KEYWORDS = [
 	  "as", // for exports
 	  "in",
@@ -31660,6 +32096,7 @@ function requireTypescript () {
 	  "localStorage",
 	  "sessionStorage",
 	  "module",
+	  "self",
 	  "global" // Node.js
 	];
 
@@ -32057,7 +32494,8 @@ function requireTypescript () {
 	      noneOf([
 	        ...BUILT_IN_GLOBALS,
 	        "super",
-	        "import"
+	        "import",
+	        "await",
 	      ].map(x => `${x}\\s*\\(`)),
 	      IDENT_RE$1, regex.lookahead(/\s*\(/)),
 	    className: "title.function",
@@ -32126,7 +32564,7 @@ function requireTypescript () {
 	    keywords: KEYWORDS$1,
 	    // this will be extended by TypeScript
 	    exports: { PARAMS_CONTAINS, CLASS_REFERENCE },
-	    illegal: /#(?![$_A-z])/,
+	    illegal: /#(?![$_A-Za-z])/,
 	    contains: [
 	      hljs.SHEBANG({
 	        label: "shebang",
@@ -34078,6 +34516,8 @@ function setStyle(style) {
 function setStyleCommand(style) {
     let commandAdapter = (viewState, dispatch, view) => {
         let state = view?.state ?? viewState;
+        const delegate = activeConfig()?.delegate;
+        if (delegate?.canStyle && !delegate.canStyle(isTableSelected(state))) return false;
         const protonode = _nodeFor(style, state.schema);
         const doc = state.doc;
         const selection = state.selection;
@@ -34182,6 +34622,8 @@ function setCodeLanguageCommand(language) {
             }
             return true
         }
+        const delegate = activeConfig()?.delegate;
+        if (delegate?.canStyle && !delegate.canStyle(isTableSelected(state))) return false;
         const codeBlockType = state.schema.nodes.code_block;
         const doc = state.doc;
         const selection = state.selection;
@@ -34374,6 +34816,8 @@ function wrapInListCommand(schema, targetNodeType, attrs) {
     const listItemTypes = [targetListItemType];
 
     const commandAdapter = (state, dispatch, view) => {
+        const delegate = activeConfig()?.delegate;
+        if (delegate?.canList && !delegate.canList(isTableSelected(state))) return false;
         const inTargetNodeType = getListType(state) === listTypeFor(targetNodeType, state.schema);
         const command = inTargetNodeType ? liftListItem(state.schema.nodes.list_item) : wrapInList(targetNodeType, attrs);
         if (command(state)) {
@@ -34527,6 +34971,7 @@ function indent$1() {
 function indentCommand() {
     let commandAdapter = (viewState, dispatch, view) => {
         let state = view?.state ?? viewState;
+        if (isTableSelected(state)) return false; // Indenting wraps/re-nests blocks, which corrupts a table's structure
         let blockquote = state.schema.nodes.blockquote;
         let li = state.schema.nodes.list_item;
         let ul = state.schema.nodes.bullet_list;
@@ -34642,6 +35087,7 @@ function outdent$1() {
 function outdentCommand() {
     let commandAdapter = (viewState, dispatch, view) => {
         let state = view?.state ?? viewState;
+        if (isTableSelected(state)) return false; // Outdenting lifts/re-nests blocks, which corrupts a table's structure
         const { $from, $to } = state.selection;
         let tr = state.tr;
         let willLift = false;
@@ -34963,7 +35409,7 @@ function _getMarkTypes() {
 }
 /**
  * Return the link attributes at the selection.
- * 
+ *
  * @returns {object}   An Object whose properties are the link attributes (like href, link) at the selection.
  */
 function getLinkAttributes() {
@@ -35912,10 +36358,14 @@ function insertHRule() {
 }
 function insertHRuleCommand() {
     const commandAdapter = (state, dispatch, view) => {
-        const hRuleNode = view.state.schema.nodes.horizontal_rule.create();
-        const transaction = view.state.tr.replaceSelectionWith(hRuleNode, true);
-        view.dispatch(transaction);
-        stateChanged(view);
+        const delegate = activeConfig()?.delegate;
+        if (delegate?.canInsertHRule && !delegate.canInsertHRule(isTableSelected(state))) return false;
+        if (dispatch) {
+            const hRuleNode = state.schema.nodes.horizontal_rule.create();
+            const transaction = state.tr.replaceSelectionWith(hRuleNode, true);
+            dispatch(transaction);
+            stateChanged(view);
+        }
         return true;
     };
 
@@ -37452,6 +37902,7 @@ class DropCursorView {
         this.cursorPos = null;
         this.element = null;
         this.timeout = -1;
+        this.lastDragEvent = null;
         this.width = (_a = options.width) !== null && _a !== void 0 ? _a : 1;
         this.color = options.color === false ? undefined : (options.color || "black");
         this.class = options.class;
@@ -37466,10 +37917,18 @@ class DropCursorView {
     }
     update(editorView, prevState) {
         if (this.cursorPos != null && prevState.doc != editorView.state.doc) {
-            if (this.cursorPos > editorView.state.doc.content.size)
-                this.setCursor(null);
-            else
+            // if we currently have an on-going drag event
+            // we need to update the cursor position again and update the overlay
+            if (this.lastDragEvent) {
+                let target = this.computeTarget(this.lastDragEvent);
+                if (target == this.cursorPos)
+                    this.updateOverlay();
+                else
+                    this.setCursor(target);
+            }
+            else {
                 this.updateOverlay();
+            }
         }
     }
     setCursor(pos) {
@@ -37540,22 +37999,29 @@ class DropCursorView {
         clearTimeout(this.timeout);
         this.timeout = setTimeout(() => this.setCursor(null), timeout);
     }
-    dragover(event) {
-        if (!this.editorView.editable)
-            return;
+    computeTarget(event) {
         let pos = this.editorView.posAtCoords({ left: event.clientX, top: event.clientY });
         let node = pos && pos.inside >= 0 && this.editorView.state.doc.nodeAt(pos.inside);
         let disableDropCursor = node && node.type.spec.disableDropCursor;
         let disabled = typeof disableDropCursor == "function"
             ? disableDropCursor(this.editorView, pos, event)
             : disableDropCursor;
-        if (pos && !disabled) {
-            let target = pos.pos;
-            if (this.editorView.dragging && this.editorView.dragging.slice) {
-                let point = dropPoint(this.editorView.state.doc, target, this.editorView.dragging.slice);
-                if (point != null)
-                    target = point;
-            }
+        if (!pos || disabled)
+            return null;
+        let target = pos.pos;
+        if (this.editorView.dragging && this.editorView.dragging.slice) {
+            let point = dropPoint(this.editorView.state.doc, target, this.editorView.dragging.slice);
+            if (point != null)
+                target = point;
+        }
+        return target;
+    }
+    dragover(event) {
+        if (!this.editorView.editable)
+            return;
+        this.lastDragEvent = event;
+        let target = this.computeTarget(event);
+        if (target != null) {
             this.setCursor(target);
             this.scheduleRemoval(5000);
         }
@@ -37611,7 +38077,7 @@ class GapCursor extends Selection {
     */
     static valid($pos) {
         let parent = $pos.parent;
-        if (parent.isTextblock || !closedBefore($pos) || !closedAfter($pos))
+        if (parent.inlineContent || !closedBefore($pos) || !closedAfter($pos))
             return false;
         let override = parent.type.spec.allowGapCursor;
         if (override != null)
@@ -37838,7 +38304,7 @@ class SearchQuery {
             let result = this.impl.findNext(state, from, to);
             if (!result || this.checkResult(state, result))
                 return result;
-            from = result.from + 1;
+            from = Math.max(from, result.from) + 1;
         }
     }
     /**
@@ -37852,7 +38318,7 @@ class SearchQuery {
             let result = this.impl.findPrev(state, from, to);
             if (!result || this.checkResult(state, result))
                 return result;
-            from = result.to - 1;
+            from = Math.min(from, result.to) - 1;
         }
     }
     /**
@@ -38095,7 +38561,8 @@ function buildMatchDeco(state, query, range) {
             break;
         let cls = next.from == sel.from && next.to == sel.to ? "ProseMirror-active-search-match" : "ProseMirror-search-match";
         deco.push(Decoration.inline(next.from, next.to, { class: cls }));
-        pos = next.to;
+        // Avoid infinite loop on zero-length matches.
+        pos = Math.max(next.to, pos + 1);
     }
     return DecorationSet.create(state.doc, deco);
 }
@@ -40516,7 +40983,7 @@ function hRuleItem(config) {
     icon: icon,
     title: title,
     active: (state) => { return isHRuleSelected(state) },
-    enable: () => { return true }  // TODO: should be conditional?
+    enable: true
   };
   return cmdItem(insertHRuleCommand(), options)
 }
@@ -41687,6 +42154,7 @@ class LinkView {
         link.setAttribute('href', href);
         link.setAttribute('title', title);
         link.addEventListener('click', (ev)=> {
+            ev.preventDefault();
             if (ev.altKey) {
                 if (href.startsWith('#')) {
                     let id = href.substring(1);
@@ -42852,7 +43320,13 @@ class MarkupEditor {
                 'focus': () => { setTimeout(() => focused(target)); },
                 'blur': () => { setTimeout(() => blurred(target)); },
                 'cut': () => { setTimeout(() => { callbackInput(target); }, 0); },
-                'click': (view) => { setTimeout(() => { clicked(view, target); }, 0); },
+                'click': (view, event) => {
+                    const altKey = event.altKey;
+                    // Plain click on a link: LinkView's own listener already decided what
+                    // to do (open on Alt+Click, nothing otherwise); don't also report it,
+                    // or markupClicked's default behavior would follow the link regardless.
+                    setTimeout(() => { if (altKey || !getLinkAttributes().href) clicked(view, target); }, 0);
+                },
                 'delete': () => { setTimeout(() => { callbackInput(target); }, 0); },
             },
             handlePaste(view, event) {
