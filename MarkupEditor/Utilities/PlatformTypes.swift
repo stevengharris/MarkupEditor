@@ -130,7 +130,7 @@ public struct URLHelper {
         #if canImport(UIKit)
         return UIApplication.shared.canOpenURL(url)
         #else
-        return NSWorkspace.shared.open(url)
+        return NSWorkspace.shared.urlForApplication(toOpen: url) != nil
         #endif
     }
 
