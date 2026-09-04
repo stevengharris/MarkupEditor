@@ -33692,16 +33692,77 @@ function pasteHTML(html, event) {
     stateChanged(view);
 }
 /**
+ * Replace curly quotes/apostrophes with their straight ASCII equivalents. A smart
+ * quote is never something the user typed themselves in this editor -- matches the
+ * same normalization MarkupEditorApp applies to its own Source view text on the way
+ * into the document.
+ * @ignore
+ * @param {string} text
+ * @returns {string}
+ */
+function _normalizeSmartPunctuation(text) {
+    return text
+        .replaceAll('‘', "'").replaceAll('’', "'")
+        .replaceAll('“', '"').replaceAll('”', '"')
+}
+/**
  * Paste the `text` into a code block. Caller determines whether to use this method
  * based on the selection state.
- * 
+ *
  * @param {string}                text    The text to be pasted in a preformatted code block
  */
 function pasteCode(text) {
     const view = activeView();
     if (!view) return
-    view.dispatch(view.state.tr.insertText(text));
+    view.dispatch(view.state.tr.insertText(_normalizeSmartPunctuation(text)));
     stateChanged(view);
+}
+
+/**
+ * ProseMirror's own handlePaste EditorView prop for a REAL DOM paste event (e.g. a
+ * plain browser Cmd+V, distinct from pasteCode's own explicit insertText call -- see
+ * that function's own comment). Only intervenes when the selection is inside a
+ * code_block; returns false (unhandled) for anything else,
+ * letting ProseMirror's default paste behavior take over. Extracted out of
+ * markupeditor.js's inline handlePaste prop so this decision/normalization logic is
+ * testable independent of that prop's own target-closure/callbackInput side effect.
+ * @ignore
+ * @param {EditorView} view
+ * @param {ClipboardEvent} event
+ * @returns {boolean}
+ */
+function handleCodeBlockPaste(view, event) {
+    const { $from } = view.state.selection;
+    const inCodeBlock = $from.parent.type === view.state.schema.nodes.code_block;
+    if (!inCodeBlock || !event?.clipboardData) return false
+    const text = event.clipboardData.getData('text/plain');
+    if (!text) return false
+    view.dispatch(view.state.tr.insertText(_normalizeSmartPunctuation(text)));
+    return true
+}
+
+/**
+ * ProseMirror's transformPastedHTML EditorView prop, run on pasted HTML before it's
+ * parsed into the document, for both a real DOM paste and this file's own
+ * pasteHTML/pasteText. Does not fire for a code_block paste, since handleCodeBlockPaste
+ * already intercepts and returns true before ProseMirror's default paste handling runs.
+ * @ignore
+ * @param {string} html
+ * @returns {string}
+ */
+function transformPastedHTML(html) {
+    return _normalizeSmartPunctuation(html)
+}
+
+/**
+ * ProseMirror's transformPastedText EditorView prop -- the plain-text counterpart to
+ * transformPastedHTML, run when the clipboard is pasted as plain text.
+ * @ignore
+ * @param {string} text
+ * @returns {string}
+ */
+function transformPastedText(text) {
+    return _normalizeSmartPunctuation(text)
 }
 
 /**
@@ -43327,19 +43388,12 @@ class MarkupEditor {
                 'delete': () => { setTimeout(() => { callbackInput(target); }, 0); },
             },
             handlePaste(view, event) {
-                const { $from } = view.state.selection;
-                const inCodeBlock = $from.parent.type === view.state.schema.nodes.code_block;
-                if (inCodeBlock && event?.clipboardData) {
-                    const text = event.clipboardData.getData('text/plain');
-                    if (text) {
-                        view.dispatch(view.state.tr.insertText(text));
-                        setTimeout(() => { callbackInput(target); }, 0);
-                        return true
-                    }
-                }
+                const handled = handleCodeBlockPaste(view, event);
                 setTimeout(() => { callbackInput(target); }, 0);
-                return false
+                return handled
             },
+            transformPastedHTML,
+            transformPastedText,
             handleKeyDown(view, event) {
                 switch (event.key) {
                     case 'Enter':
