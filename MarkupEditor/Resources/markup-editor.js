@@ -34480,6 +34480,7 @@ function toggleFormatCommand(type) {
         }        if (toggle && view) {
             toggle(state, view.dispatch);
             stateChanged(view);
+            return true
         } else {
             return toggle
         }
@@ -34551,6 +34552,7 @@ function setStyleCommand(style) {
             const newState = view.state.apply(transaction);
             view.updateState(newState);
             stateChanged(view);
+            return true
         } else {    // When checking if active based on state, return true only if different
             return paragraphStyle(state) != style;
         }
@@ -36008,11 +36010,6 @@ function _testKeyCodeFor(key) {
  * @throws {Error}          If `key` contains an unrecognized modifier
  *                          prefix, including the unsupported "Mod-".
  * @returns {boolean}       Whether a handler returned `true` for the key.
- *                          NOT a reliable "the document changed" signal:
- *                          some commands (e.g. setStyleCommand,
- *                          toggleFormatCommand) dispatch without returning
- *                          `true`, so the document can still mutate while
- *                          this returns `false`.
  */
 function testTypeKey(key) {
     const view = activeView();
