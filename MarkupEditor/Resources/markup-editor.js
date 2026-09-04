@@ -15225,9 +15225,9 @@ let baseNodes = OrderedMap.from({
   //
   // 1. Changes to div here may need to be reflected in DivView found in markup.js.
   //
-  // 2. We use a style rule to require divs to include id, class, parentId. The div elements 
-  // are used in the Swift MarkupEditor under these specific conditions, and requiring these 
-  // attributes prevents issues when pasting (e.g., from GitHub READMEs) include divs.
+  // 2. We use a tag rule with attribute selectors to require divs to include id, class, parentId.
+  // The div elements are used in the Swift MarkupEditor under these specific conditions, and
+  // requiring these attributes prevents issues when pasting (e.g., from GitHub READMEs) include divs.
   //
   // 3. It might be possible to exclude divs that don't conform to MarkupEditor expectations 
   // by using a rule. For now, deriving a Node from html always removes divs and buttons, so 
@@ -15251,7 +15251,7 @@ let baseNodes = OrderedMap.from({
       writingsuggestions: {default: false},
     },
     parseDOM: [{
-      style: "div[id, class, parentId]",
+      tag: "div[id][class][parentId]",
       getAttrs(dom) {
         const id = dom.getAttribute("id");
         const parentId = dom.getAttribute("parentId");
