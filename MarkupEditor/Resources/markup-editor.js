@@ -1,6 +1,6 @@
 const sheet$4 = new CSSStyleSheet();sheet$4.replaceSync("/**\n The CSS here was adapted from the ProseMirror example.\n The adaptations mainly consisted of removing styling when it interfered with\n markup.css in some way. These changes were commented-out and moved to the end of\n this file. Top-level Prosemirror styling was brought to the top of the file.\n Styling from search.css in prosemirror-search were added and modified.\n */\n\n .ProseMirror {\n    position: relative;\n    padding: 4px 8px 4px 8px;\n    line-height: 1.2;\n    outline: none;\n    word-wrap: break-word;\n    white-space: pre-wrap;\n    white-space: break-spaces;\n    font-variant-ligatures: none;\n  }\n  \n  .ProseMirror pre {\n    white-space: pre-wrap;\n  }\n  \n  .ProseMirror li {\n    position: relative;\n  }\n  \n  .ProseMirror-hideselection *::selection { background: transparent; }\n  .ProseMirror-hideselection *::-moz-selection { background: transparent; }\n  .ProseMirror-hideselection { caret-color: transparent; }\n  \n  /* See https://github.com/ProseMirror/prosemirror/issues/1421#issuecomment-1759320191 */\n  .ProseMirror [draggable][contenteditable=false] { user-select: text }\n  \n  .ProseMirror-selectednode {\n    outline: 2px solid #8cf;\n  }\n  \n  /* Make sure li selections wrap around markers */\n  \n  li.ProseMirror-selectednode {\n    outline: none;\n  }\n  \n  li.ProseMirror-selectednode:after {\n    content: \"\";\n    position: absolute;\n    left: -32px;\n    right: -2px; top: -2px; bottom: -2px;\n    border: 2px solid #8cf;\n    pointer-events: none;\n  }\n  \n  /* Protect against generic img rules */\n  \n  img.ProseMirror-separator {\n    display: inline !important;\n    border: none !important;\n    margin: 0 !important;\n  }\n  .ProseMirror-textblock-dropdown {\n    min-width: 3em;\n  }\n  \n  .ProseMirror-icon svg {\n    fill: currentColor;\n    height: 1em;\n  }\n  \n  .ProseMirror-icon span {\n    vertical-align: text-top;\n  }\n  .ProseMirror-gapcursor {\n    display: none;\n    pointer-events: none;\n    position: absolute;\n  }\n  \n  .ProseMirror-gapcursor:after {\n    content: \"\";\n    display: block;\n    position: absolute;\n    top: -2px;\n    width: 20px;\n    border-top: 1px solid black;\n    animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;\n  }\n  \n  @keyframes ProseMirror-cursor-blink {\n    to {\n      visibility: hidden;\n    }\n  }\n  \n  .ProseMirror-focused .ProseMirror-gapcursor {\n    display: block;\n  }\n  \n  .ProseMirror-prompt {\n    background: white;\n    padding: 5px 10px 5px 15px;\n    border: 1px solid silver;\n    position: fixed;\n    border-radius: 3px;\n    z-index: 11;\n    box-shadow: -.5px 2px 5px rgba(0, 0, 0, .2);\n  }\n  \n  .ProseMirror-prompt h5 {\n    margin: 0;\n    font-weight: normal;\n    font-size: 100%;\n    color: #444;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"],\n  .ProseMirror-prompt textarea {\n    background: #eee;\n    border: none;\n    outline: none;\n  }\n  \n  .ProseMirror-prompt input[type=\"text\"] {\n    padding: 0 4px;\n  }\n  \n  .ProseMirror-prompt-close {\n    position: absolute;\n    left: 2px; top: 1px;\n    color: #666;\n    border: none; background: transparent; padding: 0;\n  }\n  \n  .ProseMirror-prompt-close:after {\n    content: \"âœ•\";\n    font-size: 12px;\n  }\n  \n  .ProseMirror-invalid {\n    background: #ffc;\n    border: 1px solid #cc7;\n    border-radius: 4px;\n    padding: 5px 10px;\n    position: absolute;\n    min-width: 10em;\n  }\n  \n  .ProseMirror-prompt-buttons {\n    margin-top: 5px;\n    /* display: none; */\n  }\n  \n  /*\n   \n  #editor, .editor {\n    border-radius: 4px;\n    border: 2px solid rgba(0, 0, 0, 0.2);\n  }\n  \n  .ProseMirror-example-setup-style hr {\n    padding: 2px 10px;\n    border: none;\n    margin: 1em 0;\n  }\n  \n  .ProseMirror-example-setup-style hr:after {\n    content: \"\";\n    display: block;\n    height: 1px;\n    background-color: silver;\n    line-height: 2px;\n  }\n  \n  .ProseMirror ul, .ProseMirror ol {\n    padding-left: 30px;\n  }\n  \n  .ProseMirror blockquote {\n    padding-left: 1em;\n    border-left: 3px solid #eee;\n    margin-left: 0; margin-right: 0;\n  }\n  \n  .ProseMirror-example-setup-style img {\n    cursor: default;\n  }\n  \n  .ProseMirror p { margin-bottom: 1em }\n  */\n  ");
 
-const sheet$3 = new CSSStyleSheet();sheet$3.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nli > ul, li > ol {\n    margin-bottom: 0;\n}\n\nli > h1, li > h2, li > h3, li > h4, li > h5, li > h6 {\n    margin-bottom: 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Scoped to :has() rather than styling pre unconditionally, since a code_block's\n   <pre> should only become a positioning context when it's actually carrying the\n   language tab (highlightCode on, block selected) — not for every code block. */\npre:has(.Markup-code-language-tab) {\n    position: relative;\n}\n\n.Markup-code-language-tab {\n    position: absolute;\n    bottom: 100%;\n    right: 0;\n    font-size: 0.75rem;\n    padding: 2px 6px;\n    border: none;\n    border-radius: 4px 4px 0 0;\n    cursor: pointer;\n    opacity: 0.6;\n    color: white;\n    background: var(--Markup-accent-color, blue);\n}\n\n.Markup-code-language-tab:hover {\n    opacity: 0.9;\n}\n\n/* Applied (setup/index.js, CodeView.hasRoomAbove) when the code_block is too close to\n   the top of the view for the tab to fit above it — attach to the bottom instead. */\n.Markup-code-language-tab-below {\n    bottom: auto;\n    top: 100%;\n    border-radius: 0 0 4px 4px;\n}\n\n/* Matches .Markup-menuitem-active's selected-button color scheme. */\n@media (prefers-color-scheme: dark) {\n  .Markup-code-language-tab {\n    background: var(--Markup-accent-color, lightblue);\n    color: black;\n  }\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
+const sheet$3 = new CSSStyleSheet();sheet$3.replaceSync("#editor, .editor {\n    font-family: system-ui, sans-serif;\n    background: white;\n    color: black;\n    background-clip: padding-box;\n    margin: -8px;        /* Set so that the .ProseMirror padding starts from edges */\n    --padBottom: 0;                     /* MU.padBottom() sets this value in px based on fullHeight */\n    padding-block: 0 var(--padBottom);\n    overflow-x: clip;\n    overflow-y: scroll;\n    height: 100vh;\n    padding-right: 12px;\n}\n@media (prefers-color-scheme: dark) {\n  #editor, .editor {\n    background: black;\n    color: white;\n  }\n}\n\nbody {\n    font-family: system-ui, sans-serif;\n}\n\na {\n    color: blue;\n    text-decoration: none;\n}\n@media (prefers-color-scheme: dark) {\n    a {\n        color: #4183c4;\n    }\n}\n\na:hover {\n    text-decoration: underline;\n}\n\np, pre {\n    font-size: 1.0rem;\n}\n\np, ul, ol, dl, table, pre {\n    margin: 0 0 15px;\n}\n\nul, ol {\n    padding-left: 30px;\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\nh2 {\n    font-size: 2.0rem;\n}\n\nh3 {\n    font-size: 1.5rem;\n}\n\nh4 {\n    font-size: 1.2rem;\n}\n\nh5 {\n    font-size: 1.0rem;\n}\n\nh6 {\n    font-size: .83rem;\n}\n\nh1, h2, h3, h4, h5, h6 {\n    font-weight: bold;\n    margin: 0 0 10px 0;\n}\n\nh1 + p, h2 + p, h3 + p {\n    margin-top: 10px;\n}\n\ntable {\n    table-layout: fixed;\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable th, table td {\n    padding: 4px;\n}\n\ntable th {\n    font-weight: normal;    /* The default is bold, but we want to use paragraph styles and formatting */\n}\n\n/* Make the styling compact inside of a table */\ntable p, table h1, table h2, table h3, table h4, table h5, table h6 {\n    margin: 0;\n}\n\n/* Table bordering options */\n.bordered-table-none {\n    border: none;\n}\n\n.bordered-table-outer, .bordered-table-header, .bordered-table-cell {\n    border: 1px solid #DDD;\n}\n\n.bordered-table-header th {   /* border th not thead to refresh properly */\n    border: 1px solid #DDD;\n}\n\n.bordered-table-cell th, .bordered-table-cell td {\n    border: 1px solid #DDD;\n}\n\n/* Default table bordering is same as .bordered-table-cell but is only used when not specified */\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) td {\n    border: 1px solid #DDD;\n}\n\ntable:not(.bordered-table-none, .bordered-table-outer, .bordered-table-header, .bordered-table-cell) th {\n    border: 1px solid #DDD;\n}\n\nli p {\n    margin: 0px 0;\n}\n\nli > ul, li > ol {\n    margin-bottom: 0;\n}\n\nli > h1, li > h2, li > h3, li > h4, li > h5, li > h6 {\n    margin-bottom: 0;\n}\n\nblockquote {\n    margin-right: 0px; /* Because nested blockquotes just keep getting narrower */\n}\n\ncode {\n    overflow-x: scroll;\n    display: block;\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n    white-space: pre;\n}\n@media (prefers-color-scheme: dark) {\n    code {\n        background-color: #808080;\n    }\n}\n\np code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {\n    display: inline;\n}\n\n/* Text that Return will turn into a code block, styled like inline code. */\n.code-fence-pending {\n    background-color: #F8F8F8;\n    border-radius: 3px;\n    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;\n}\n@media (prefers-color-scheme: dark) {\n    .code-fence-pending {\n        background-color: #808080;\n    }\n}\n\n.resize-container {\n    position: relative;\n    display: inline-block;\n    margin: 0;\n}\n\nimg {\n    max-width: 100%;\n    height: auto;\n}\n\n/* Provide a slightly darkened or lightened overlay while search is active */\n.searching {\n    background-color: rgba(0, 0, 0, 0.10);\n}\n@media (prefers-color-scheme: dark) {\n    .searching {\n        background: rgba(255, 255, 255, 0.10);\n    }\n}\n\n.resize-container img {\n    display: block;\n    outline: 1px black dashed;\n    outline-offset: 4px;\n    outline-width: 1px;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-container img {\n        outline: 1px white dashed;\n    }\n}\n\n.resize-handle-nw,\n.resize-handle-ne,\n.resize-handle-sw,\n.resize-handle-se {\n    position: absolute;\n    display: block;\n    width: 6px;\n    height: 6px;\n    outline: 1px black solid;\n    background: white;\n    z-index: 999;\n}\n@media (prefers-color-scheme: dark) {\n    .resize-handle-nw,\n    .resize-handle-ne,\n    .resize-handle-sw,\n    .resize-handle-se {\n        outline: 1px white solid;\n        background: black;\n    }\n}\n\n/* A transparent child for each resize-handle that expands the clickable area */\n.resize-handle-nw:after,\n.resize-handle-ne:after,\n.resize-handle-sw:after,\n.resize-handle-se:after {\n  content: \"\";\n  position: absolute;\n  left: -5px;\n  top: -5px;\n  width: 16px;\n  height: 16px;\n}\n\n/* The *-resize cursors do not work, at least in MacCatalyst.\n * Still specifying them below. They default to a pointer instead\n */\n.resize-handle-nw {\n    cursor: nw-resize;\n    top: -8px;\n    left: -7px;\n}\n\n.resize-handle-ne {\n    cursor: ne-resize;\n    top: -8px;\n    right: -7px;\n}\n\n.resize-handle-sw {\n    cursor: sw-resize;\n    bottom: -8px;\n    left: -7px;\n}\n\n.resize-handle-se {\n    cursor: se-resize;\n    bottom: -8px;\n    right: -7px;\n}\n\n.placeholder[placeholder]:before {\n    content: attr(placeholder);\n    position: absolute;\n    color: #ccc;\n}\n\n/* Scoped to :has() rather than styling pre unconditionally, since a code_block's\n   <pre> should only become a positioning context when it's actually carrying the\n   language tab (highlightCode on, block selected) — not for every code block. */\npre:has(.Markup-code-language-tab) {\n    position: relative;\n}\n\n.Markup-code-language-tab {\n    position: absolute;\n    bottom: 100%;\n    right: 0;\n    font-size: 0.75rem;\n    padding: 2px 6px;\n    border: none;\n    border-radius: 4px 4px 0 0;\n    cursor: pointer;\n    opacity: 0.6;\n    color: white;\n    background: var(--Markup-accent-color, blue);\n}\n\n.Markup-code-language-tab:hover {\n    opacity: 0.9;\n}\n\n/* Applied (setup/index.js, CodeView.hasRoomAbove) when the code_block is too close to\n   the top of the view for the tab to fit above it — attach to the bottom instead. */\n.Markup-code-language-tab-below {\n    bottom: auto;\n    top: 100%;\n    border-radius: 0 0 4px 4px;\n}\n\n/* Matches .Markup-menuitem-active's selected-button color scheme. */\n@media (prefers-color-scheme: dark) {\n  .Markup-code-language-tab {\n    background: var(--Markup-accent-color, lightblue);\n    color: black;\n  }\n}\n\n/* Classes set by prosemirror-search module, modified for MarkupEditor */\n/* Note the dark and light mode are the same */\n\n.ProseMirror-search-match {\n  background-color: yellow;\n  color: black;\n}\n\n.ProseMirror-active-search-match {\n  background-color: orange;\n  color: black;\n  outline: 1px orangered solid;\n  z-index: 2;\n}");
 
 const sheet$2 = new CSSStyleSheet();sheet$2.replaceSync("/* Spacing at the top */\n/* Note that toolbar-overlay below  is also set to these values */\n\n.Markup-searchbar-showing {\n  height: 38px;\n  top: 76px;\n}\n\n/* The wrapper lets us automatically embed a toolbar and scroll under it */\n.Markup-toolbar-wrapper {\n  margin-right: -12px;    /* Prevent side scroll even when menu fits */\n  height: inherit;\n  overflow-y: scroll;\n  position: relative; \n}\n\n/* We add Markup-prompt-showing to the wrapper to prevent scroll, and remove it when done */\n.Markup-prompt-showing {\n  overflow-y: hidden;\n}\n\n/* Z-indexes in one place */\n\n.body-content { \n  z-index: 1; \n}\n\n.Markup-prompt-overlay { \n  z-index: 2; \n}\n\n.Markup-prompt, .Markup-selection {\n  z-index: 3;\n}\n\n.Markup-searchbar {\n  z-index: 4;\n}\n\n.Markup-toolbar, .Markup-toolbar-more {\n  z-index: 5;\n}\n\n.Markup-toolbar-overlay { \n  z-index: 6; \n}\n\n.Markup-menu-dropdown-menu {\n  z-index: 7;\n}\n\n/* Toolbar, menu item, and dropdown styling */\n\n.Markup-toolbar {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: 0;\n  max-height: calc(var(--Markup-button-size, 28px) + 10px);\n  padding: 2px 8px;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-toolbar-hidden {\n  display: none;\n}\n\n.Markup-menuitem {\n  display: inline-block;\n  flex-shrink: 0;  /* Otherwise, the drop-downs with icons shrink */\n  overflow-y: visible;\n  vertical-align: middle;\n  min-width: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  cursor: pointer;\n  margin-right: 4px;\n  border-radius: 4px;\n  color: var(--Markup-accent-color, blue);\n  border: 1px solid var(--Markup-accent-color, blue);\n  background: var(--Markup-button-bg, white);\n  fill: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem {\n    color: var(--Markup-accent-color, lightblue);\n    border: 1px solid var(--Markup-accent-color, lightblue);\n    /* border: 1px solid #4183c4; */\n    background: var(--Markup-button-bg, black);\n    fill: var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menuitem-active {\n  fill: white;\n  color: white;\n  background: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menuitem-disabled {\n  cursor: default;\n  opacity: .3;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuitem-disabled {\n    opacity: .6;\n  }\n}\n\n.Markup-icon {\n  display: inline-block;\n  width: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  border: 0;\n}\n\n.Markup-icon span {\n  vertical-align: middle;\n}\n\n.Markup-icon svg {\n  width: var(--Markup-button-font-size, 24px);\n  height: var(--Markup-button-font-size, 24px);\n  padding: 2px;\n  border: 0;\n  fill: inherit;\n}\n\n.Markup-menuseparator {\n  display: inline-block;\n  vertical-align: middle;\n  height: var(--Markup-button-size, 28px);\n  border-right: 1px solid var(--Markup-border-color, lightgray);\n  margin-right: 4px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menuseparator {\n    border-right: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-menu-disabled .Markup-icon {\n  cursor: default;\n}\n\n.Markup-menu-dropdown, .Markup-menu-dropdown-menu {\n  background: inherit;\n  text-align: left;\n  white-space: nowrap;\n}\n\n.Markup-menu-dropdown span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-icon span {\n  vertical-align: middle;\n}\n\n.Markup-menu-dropdown-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding: 0 4px;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap {\n  display: flex;\n  justify-content: space-between;\n  padding-right: 4px;\n  width: 1.8em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n.Markup-menu-dropdown-icon-wrap-noindicator {\n  display: inline-flex;\n  padding-right: 4px;\n  width: 1em;\n  height: inherit;\n  border-radius: 4px;\n  background: inherit;\n}\n\n/* For the paragraph style dropdown with a label, make the font smaller */\n.Markup-menu-dropdown {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  box-sizing: border-box;\n  font-size: 0.8em;\n  width: inherit;\n  height: inherit;\n  background: inherit;\n  position: absolute;\n}\n\n/* But for the indicator, bump size up to match the icon-style dropdown */\n.Markup-menu-dropdown .Markup-menu-dropdown-indicator {\n  font-size: 1.25em;\n}\n\n.Markup-menu-dropdown-icon {\n  display: inline-flex;\n  justify-content: space-between;\n  font-size: inherit;\n  width: inherit;\n  cursor: pointer;\n  position: absolute;\n}\n\n.Markup-menu-dropdown-indicator {\n  opacity: .6;\n}\n\n.Markup-tooltip .Markup-menu {\n  width: -webkit-fit-content;\n  width: fit-content;\n  white-space: pre;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-submenu {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid var(--Markup-border-color, gray);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid var(--Markup-border-color, lightgray);\n  }\n}\n\n.Markup-menu-dropdown-menu {\n  margin-top: calc(1em + 6px);\n  min-width: 4em;\n}\n\n.Markup-menu-dropdown-item {\n  cursor: pointer;\n  padding: 2px 8px 2px 4px;\n}\n\n.Markup-menu-dropdown-separator {\n  border-top: 1px solid var(--Markup-border-color, lightgray);\n  margin: 4px 0;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-separator {\n    border-top: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n/* Used to overlfow and ellipsis-truncate text in Dropdown menu items */\n.Markup-menuitem-clipped {\n  white-space: nowrap;  /* Required for text-overflow */\n  overflow-x: hidden;   /* Required for text-overflow */\n  max-width: 30em;\n  text-overflow: ellipsis;\n}\n\n.Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n  background: var(--Markup-hover-bg, #f2f2f2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-item:hover, .Markup-menu-submenu-wrap:hover {\n    background: var(--Markup-hover-bg, rgb(80, 80, 80));\n  }\n}\n\n.Markup-menu-dropdown-item p, \n.Markup-menu-dropdown-item h1, \n.Markup-menu-dropdown-item h2, \n.Markup-menu-dropdown-item h3, \n.Markup-menu-dropdown-item h4, \n.Markup-menu-dropdown-item h5, \n.Markup-menu-dropdown-item h6, \n.Markup-menu-dropdown-item pre {\n  padding: 0;\n  margin: 0;\n  min-height: 24px;\n}\n\n.Markup-stylelabel {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  white-space: pre;\n  width: 100%;\n}\n\n.Markup-stylelabel-keymap {\n  display: flex;\n  justify-content: flex-end;\n  font-size: 1.0rem;\n  font-weight: normal;\n  color: gray;\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-submenu, .Markup-menu-submenu-wrap-active .Markup-menu-submenu {\n  display: block;\n}\n\n.Markup-menu-submenu-wrap {\n  position: relative;\n  margin-right: -4px;\n  background: inherit;\n}\n\n.Markup-menu-submenu {\n  display: none;\n  min-width: 4em;\n  left: 100%;\n  top: -5px;\n  max-height: 80vh;\n  overflow-y: auto;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: var(--Markup-button-bg, white);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-submenu {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: var(--Markup-button-bg, black);\n  }\n}\n\n.Markup-menu-submenu-label:after {\n  content: \"\";\n  border-top: 4px solid transparent;\n  border-bottom: 4px solid transparent;\n  border-left: 4px solid currentColor;\n  opacity: .6;\n  position: absolute;\n  right: 4px;\n  top: calc(50% - 4px);\n}\n\n.Markup-selection {\n  position: absolute;\n  border: 1px solid var(--Markup-accent-color, blue);\n  background: transparent;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-selection {\n    border: 1px solid var(--Markup-accent-color, lightblue);\n  }\n}\n\n/* Toolbar-more styling */\n\n.Markup-toolbar-more {\n  display: inline-flex;\n  position: sticky;\n  overflow: visible;\n  width: 100%;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n  top: calc(var(--Markup-button-size, 28px) + 7px);\n  max-height: calc(var(--Markup-button-size, 28px) + 10px);\n  padding: 2px 8px;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-more {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n/* Searchbar styling */\n\n.Markup-searchbar {\n  display: inline-block;\n  font-size: var(--Markup-button-font-size, 24px);\n  vertical-align: middle;\n  position: sticky;\n  top: calc(var(--Markup-button-size, 28px) + 7px);\n  width: 100%;\n  line-height: calc(var(--Markup-button-size, 28px) + 2px);\n  height: calc(var(--Markup-button-size, 28px) + 9px);;\n  color: var(--Markup-accent-color, blue);\n  background: var(--Markup-toolbar-bg, rgba(250, 249, 246, 0.95));\n  border-bottom: 1px solid var(--Markup-border-color, lightgray);\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar {\n    color: var(--Markup-accent-color, lightblue);\n    background: var(--Markup-toolbar-bg, rgba(40, 40, 43, 0.9));\n    border-bottom: 1px solid var(--Markup-border-color, gray);\n  }\n}\n\n.Markup-searchbar input {\n  appearance: none; /* Otherwise, in Safari/WebKit, the height is small and fixed */\n  position: relative;\n  font-size: calc(var(--Markup-button-font-size, 24px) - 6px); \n  line-height: calc(var(--Markup-button-size, 28px) + 2px);\n  line-height: calc(var(--Markup-button-size, 28px) + 2px);\n  width: calc(100% - (3 * (var(--Markup-button-size, 28px) + 12px)) - 8px);  /* Three buttons plus spacing and margin */\n  margin: 0 8px;\n  padding: 0 4px;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-searchbar input {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-searchbar .Markup-searchbar-status {\n  position: absolute;\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  white-space: nowrap;\n  font-size: calc(0.5 * var(--Markup-button-font-size, 24px));\n  overflow-x: visible;\n  height: var(--Markup-button-size, 28px);\n  top: 5px;\n  left: calc(100% - (4 * (var(--Markup-button-size, 28px) + 12px)));  /* Four buttons plus spacing and margin */\n  width: 1px;\n  color: gray;\n  user-select: none;\n}\n\n/* Dialog/prompt styling for insert/edit actions */\n\n.Markup-prompt-overlay {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt-overlay {\n    background-color: rgba(255, 255, 255, 0.2);\n  }\n}\n\n.Markup-toolbar-overlay {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-toolbar-overlay {\n    background-color: rgba(255, 255, 255, 0.1);\n  }\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-hidden {\n  height: calc(var(--Markup-button-size, 28px) + 8px);\n}\n\n.Markup-toolbar-overlay.Markup-searchbar-showing {\n  height: calc((var(--Markup-button-size, 28px) + 8px) * 2);\n}\n\n.Markup-prompt {\n  margin: 0;\n  font-size: 18px;\n  background: white;\n  padding: 8px;\n  border: 1px solid silver;\n  position: absolute;\n  border-radius: 3px;\n  box-shadow: -.5px 2px 5px rgba(0, 0, 0, 0.2);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt {\n    background: black;\n    box-shadow: -.5px 2px 5px rgba(255, 255, 255, 0.8);\n  }\n}\n\n.Markup-prompt-link {\n  height: calc(68px + var(--Markup-button-size, 28px));  /* 96 px by default */\n  width: 300px;\n}\n\n.Markup-prompt-image {\n  height: calc(102px + var(--Markup-button-size, 28px));  /* 130 px by default */\n  width: 300px;\n}\n\n.Markup-prompt-language {\n  height: calc(68px + var(--Markup-button-size, 28px));  /* 96 px by default */\n  width: 300px;\n}\n\n.Markup-prompt img {\n  display: inline-block;\n  vertical-align: middle;\n  min-width: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  margin-right: 4px;\n}\n\n.Markup-prompt p {\n  margin: 0 0 4px 0;\n  font-weight: normal;\n  color: black;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt p {\n    color: white;\n  }\n}\n\n.Markup-prompt input[type=\"text\"] {\n  font-size: 100%;\n  line-height: 28px;\n  margin-top: 2px;\n  padding: 1px 4px;\n  width: 100%;\n  appearance: none;\n  background: #eee;\n  outline: none;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid lightgray;\n  border-radius: 6px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input[type=\"text\"] {\n    color: rgb(250, 249, 246);\n    background: rgb(40, 40, 43);\n    border: 1px solid gray;\n  }\n}\n\n.Markup-prompt input.invalid {\n  color: red;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-prompt input.invalid {\n    color: pink;\n  }\n}\n\n.Markup-prompt-buttons {\n  display: flex;\n  vertical-align: middle;\n  justify-content: space-between;\n  justify-items: center;\n  line-height: var(--Markup-button-size, 28px);\n  height: var(--Markup-button-size, 28px);\n  margin-top: 8px;\n  margin-bottom: 8px;\n}\n\n.Markup-prompt-buttongroup {\n  flex-shrink: 0;\n}\n\n.Markup-prompt-buttons img {\n  aspect-ratio: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n.Markup-prompt-buttons .Markup-menuitem {\n  display: inline-flex;\n  padding-right: 4px;\n  padding-left: 4px;\n}\n\n/* The buttongroup contains OK and Cancel menuitems on the right */\n.Markup-prompt-buttongroup .Markup-menuitem {\n  margin-right: 0;\n  margin-left: 4px;\n}\n\n/* .Markup-menu-tablesizer is a specialized submenu */\n.Markup-menu-tablesizer {\n  display: none;\n  grid-template-columns: repeat(4, 1fr);\n  grid-auto-rows: 18px;\n  row-gap: 1px;\n  column-gap: 1px;\n  padding: 0;\n  left: 100%;\n  top: -5px;\n  /* background cannot be inherited because of hover highlighting in dropdown */\n  background: var(--Markup-button-bg, white);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer {\n    /* background cannot be inherited because of hover highlighting in dropdown */\n    background: var(--Markup-button-bg, black);\n  }\n}\n\n.Markup-menu-submenu-wrap:hover .Markup-menu-tablesizer, .Markup-menu-submenu-wrap-active .Markup-menu-tablesizer {\n  display: grid;\n}\n\n.Markup-menu-dropdown-menu, .Markup-menu-tablesizer {\n  position: absolute;\n  background: inherit;\n  padding: 2px;\n  background: inherit;\n  border: 1px solid var(--Markup-border-color, gray);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-dropdown-menu, .Markup-menu-submenu {\n    border: 1px solid var(--Markup-border-color, lightgray);\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menu-dropdown-item {\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border: 1px solid var(--Markup-accent-color, blue);\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 13px;\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menu-dropdown-item {\n    border: 1px solid var(--Markup-accent-color, lightblue);\n  }\n}\n\n.Markup-menu-tablesizer .Markup-menuitem-active {\n    height: 13px;\n    padding-top: 3px;\n    fill: black;\n    color: black;\n    background: var(--Markup-accent-color, blue);\n}\n@media (prefers-color-scheme: dark) {\n  .Markup-menu-tablesizer .Markup-menuitem-active {\n      fill: black;\n      color: black;\n      background: var(--Markup-accent-color, lightblue);\n  }\n}");
 
@@ -16576,6 +16576,14 @@ function mustPreserveItems(state) {
             }
     }
     return cachedPreserveItems;
+}
+/**
+Set a flag on the given transaction that will prevent further steps
+from being appended to an existing history event (so that they
+require a separate undo command to undo).
+*/
+function closeHistory(tr) {
+    return tr.setMeta(closeHistoryKey, true);
 }
 const historyKey = new PluginKey("history");
 const closeHistoryKey = new PluginKey("closeHistory");
@@ -41508,6 +41516,211 @@ function textblockTypeInputRule(regexp, nodeType, getAttrs = null) {
     });
 }
 
+/* eslint no-cond-assign: 0 */
+
+// : (NodeType) → InputRule
+// Given a blockquote node type, returns an input rule that turns `"> "`
+// at the start of a textblock into a blockquote.
+function blockQuoteRule(nodeType) {
+  return wrappingInputRule(/^\s*>\s$/, nodeType)
+}
+
+// : (NodeType) → InputRule
+// Given a list node type, returns an input rule that turns a number
+// followed by a dot at the start of a textblock into an ordered list.
+function orderedListRule(nodeType) {
+  return wrappingInputRule(/^(\d+)\.\s$/, nodeType, match => ({order: +match[1]}),
+                           (match, node) => node.childCount + node.attrs.order == +match[1])
+}
+
+// : (NodeType) → InputRule
+// Given a list node type, returns an input rule that turns a bullet
+// (dash, plush, or asterisk) at the start of a textblock into a
+// bullet list.
+function bulletListRule(nodeType) {
+  return wrappingInputRule(/^\s*([-+*])\s$/, nodeType)
+}
+
+// : (EditorState, Schema, Object) → ?{$from: ResolvedPos, language: ?string}
+// Returns the paragraph position and language when the selection is a cursor
+// at the end of a paragraph that holds only three backticks and an optional
+// language name, as plain text. Returns null otherwise, including when
+// markdownShorthand is off.
+function pendingCodeFence(state, schema, config) {
+  if (!schema.nodes.code_block || config.behavior?.markdownShorthand === false) return null
+  const { $from, empty } = state.selection;
+  const paragraph = $from.parent;
+  if (!empty || paragraph.type !== schema.nodes.paragraph || $from.parentOffset !== paragraph.content.size) return null
+  if (!paragraph.children.every(child => child.isText && child.marks.length === 0)) return null
+  const match = /^```([\w+#.-]*)$/.exec(paragraph.textContent);
+  return match ? { $from, language: match[1] || null } : null
+}
+
+// : (Schema, Object) → Command
+// Returns a command, meant to be chained after the Enter key's other
+// handlers, that turns a paragraph holding only three backticks and an
+// optional language name, with the cursor at its end, into an empty code
+// block with that language. The block is created empty, so typing after it
+// starts on the first line. It does nothing when markdownShorthand is off.
+function codeFenceCommand(schema, config = {}) {
+  return (state, dispatch) => {
+    const pending = pendingCodeFence(state, schema, config);
+    if (!pending) return false
+    if (dispatch) {
+      const { $from, language } = pending;
+      const tr = state.tr.delete($from.start(), $from.end());
+      tr.setNodeMarkup($from.before(), schema.nodes.code_block, { language });
+      dispatch(closeHistory(tr).scrollIntoView());
+    }
+    return true
+  }
+}
+
+// : (Schema, Object) → Plugin
+// Returns a plugin that styles the text of a pending code fence like inline
+// code while Return would turn it into a code block. It only decorates the
+// view; the document is not changed.
+function codeFenceHintPlugin(schema, config = {}) {
+  return new Plugin({
+    props: {
+      decorations(state) {
+        const pending = pendingCodeFence(state, schema, config);
+        if (!pending) return null
+        const { $from } = pending;
+        return DecorationSet.create(state.doc, [Decoration.inline($from.start(), $from.end(), { class: "code-fence-pending" })])
+      }
+    }
+  })
+}
+
+// : (NodeType, number) → InputRule
+// Given a node type and a maximum level, creates an input rule that
+// turns up to that number of `#` characters followed by a space at
+// the start of a textblock into a heading whose level corresponds to
+// the number of `#` signs.
+function headingRule(nodeType, maxLevel) {
+  return textblockTypeInputRule(new RegExp("^(#{1," + maxLevel + "})\\s$"),
+                                nodeType, match => ({level: match[1].length}))
+}
+
+// : (RegExp, MarkType, number, number) → InputRule
+// Given a regexp matching a markdown emphasis pattern ending at the
+// cursor, a mark type, and the lengths of the opening and closing
+// delimiters, returns an input rule that deletes only the
+// delimiters -- never the content between them -- and applies the
+// mark over the untouched range. This preserves any marks (links,
+// nested emphasis, etc.) already present in the converted range
+// instead of flattening it to plain text.
+//
+// prosemirror-inputrules invokes this handler from handleTextInput,
+// before the browser's pending keystroke has actually been applied
+// to the document -- match[0] (built from existing text plus the
+// not-yet-inserted text) can therefore be longer than end - start.
+// That trailing slice is inserted first so the full matched range
+// genuinely exists in the document before the delimiter surgery
+// below operates on it. Suppressed when the cursor already sits
+// inside a code mark, since markdown shorthand characters are meant
+// to stay literal there. Clears the mark from stored marks afterward
+// so text typed immediately after the conversion does not inherit
+// it.
+//
+// The leading delimiter is deleted before the trailing one, so the
+// transaction's last content-shifting step is the trailing-delimiter
+// delete, ending at the cursor -- prosemirror-history's grouping
+// heuristic only looks at that step's range when deciding whether
+// the next keystroke belongs to the same undo group (addMark's own
+// step contributes no range there), so ending at the cursor is what
+// keeps immediately-following typing (e.g. "**foo**bar") merged with
+// the conversion into a single undo.
+function markInputRule(regexp, markType, openLen, closeLen) {
+  return new InputRule(regexp, (state, match, start, end) => {
+    const codeType = state.schema.marks.code;
+    if (codeType && state.doc.resolve(start).marks().some(mark => mark.type === codeType)) return null
+    const tr = state.tr;
+    const fullEnd = start + match[0].length;
+    if (fullEnd > end) tr.insertText(match[0].slice(end - start), end);
+    tr.delete(start, start + openLen);
+    const closeStart = fullEnd - openLen - closeLen;
+    tr.delete(closeStart, closeStart + closeLen);
+    tr.addMark(start, closeStart, markType.create());
+    tr.removeStoredMark(markType);
+    return tr
+  })
+}
+
+// : (MarkType) → InputRule
+// Given the strong mark type, returns an input rule that converts
+// `**text**` at the cursor into bold.
+function strongRule(markType) {
+  return markInputRule(/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, markType, 2, 2)
+}
+
+// : (MarkType) → InputRule
+// Given the em mark type, returns an input rule that converts
+// `*text*` at the cursor into italic. The negative lookbehind on the
+// opening `*` defers matching until a preceding, still-unconsumed
+// `*` is no longer in the way, so this rule does not fire on a
+// partially typed `**text**` before bold's closing marker
+// completes.
+function emStarRule(markType) {
+  return markInputRule(/(?<!\*)\*([^*\s](?:[^*]*[^*\s])?)\*$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the em mark type, returns an input rule that converts
+// `_text_` at the cursor into italic. The negative lookbehind on the
+// opening `_` blocks intraword underscores (`\w` includes `_`), per
+// CommonMark's flanking rule for `_` emphasis -- unlike `*`, `_`
+// emphasis must not fire inside a word, so identifiers like
+// `snake_case_name` stay literal.
+function emUnderscoreRule(markType) {
+  return markInputRule(/(?<!\w)_([^_\s](?:[^_]*[^_\s])?)_$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the code mark type, returns an input rule that converts a
+// backtick-delimited `text` at the cursor into inline code.
+function codeRule(markType) {
+  return markInputRule(/(?<!`)`([^`\s](?:[^`]*[^`\s])?)`$/, markType, 1, 1)
+}
+
+// : (MarkType) → InputRule
+// Given the s (strikethrough) mark type, returns an input rule that
+// converts `~~text~~` at the cursor into strikethrough. No
+// self-referential lookbehind, matching strongRule -- both are
+// double-delimiter patterns with no single-character sibling rule to
+// defer against, unlike emStarRule's genuine need to defer to bold.
+function strikethroughRule(markType) {
+  return markInputRule(/~~([^~\s](?:[^~]*[^~\s])?)~~$/, markType, 2, 2)
+}
+
+// : (Schema, object) → Plugin
+// A set of input rules for creating the basic block quotes, lists,
+// heading, and markdown formatting shorthand (bold,
+// italic, inline code, strikethrough). All nine rules are gated
+// together by config.behavior.markdownShorthand. config defaults to
+// {}, so markdownShorthand defaults to enabled (only an explicit
+// `false` turns it off) when buildInputRules is called without a
+// config, matching BehaviorConfig's default.
+function buildInputRules(schema, config = {}) {
+  let rules = [], type;
+  const markdownShorthand = config.behavior?.markdownShorthand !== false;
+  if (markdownShorthand) {
+    if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
+    if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
+    if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
+    if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
+    if (type = schema.marks.strong) rules.push(strongRule(type));
+    if (type = schema.marks.em) {
+      rules.push(emStarRule(type));
+      rules.push(emUnderscoreRule(type));
+    }
+    if (type = schema.marks.code) rules.push(codeRule(type));
+    if (type = schema.marks.s) rules.push(strikethroughRule(type));
+  }
+  return inputRules({rules})
+}
+
 /**
  * Return a map of Commands that will be invoked when key combos are pressed.
  * 
@@ -41539,7 +41752,7 @@ function buildKeymap(config, schema) {
     // the handleEnter with splitListItem that is bound to Enter here, it always executes, 
     // but splitListItem will also execute, as will anything else beyond it in the chain 
     // if splitListItem returns false (i.e., it doesn't really split the list).
-    bind("Enter", chainCommands(handleEnter, splitListItem(schema.nodes.list_item)));
+    bind("Enter", chainCommands(handleEnter, codeFenceCommand(schema, config), splitListItem(schema.nodes.list_item)));
     // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
     bind("Shift-Enter", handleShiftEnter);
     // The MarkupEditor needs to be notified of state changes on Delete, like Backspace
@@ -41712,167 +41925,6 @@ class ToolbarView {
       this.wrapper.parentNode.replaceChild(this.editorView.dom, this.wrapper);
   }
 
-}
-
-/* eslint no-cond-assign: 0 */
-
-// : (NodeType) → InputRule
-// Given a blockquote node type, returns an input rule that turns `"> "`
-// at the start of a textblock into a blockquote.
-function blockQuoteRule(nodeType) {
-  return wrappingInputRule(/^\s*>\s$/, nodeType)
-}
-
-// : (NodeType) → InputRule
-// Given a list node type, returns an input rule that turns a number
-// followed by a dot at the start of a textblock into an ordered list.
-function orderedListRule(nodeType) {
-  return wrappingInputRule(/^(\d+)\.\s$/, nodeType, match => ({order: +match[1]}),
-                           (match, node) => node.childCount + node.attrs.order == +match[1])
-}
-
-// : (NodeType) → InputRule
-// Given a list node type, returns an input rule that turns a bullet
-// (dash, plush, or asterisk) at the start of a textblock into a
-// bullet list.
-function bulletListRule(nodeType) {
-  return wrappingInputRule(/^\s*([-+*])\s$/, nodeType)
-}
-
-// : (NodeType) → InputRule
-// Given a code block node type, returns an input rule that turns a
-// textblock starting with three backticks into a code block.
-function codeBlockRule(nodeType) {
-  return textblockTypeInputRule(/^```$/, nodeType)
-}
-
-// : (NodeType, number) → InputRule
-// Given a node type and a maximum level, creates an input rule that
-// turns up to that number of `#` characters followed by a space at
-// the start of a textblock into a heading whose level corresponds to
-// the number of `#` signs.
-function headingRule(nodeType, maxLevel) {
-  return textblockTypeInputRule(new RegExp("^(#{1," + maxLevel + "})\\s$"),
-                                nodeType, match => ({level: match[1].length}))
-}
-
-// : (RegExp, MarkType, number, number) → InputRule
-// Given a regexp matching a markdown emphasis pattern ending at the
-// cursor, a mark type, and the lengths of the opening and closing
-// delimiters, returns an input rule that deletes only the
-// delimiters -- never the content between them -- and applies the
-// mark over the untouched range. This preserves any marks (links,
-// nested emphasis, etc.) already present in the converted range
-// instead of flattening it to plain text.
-//
-// prosemirror-inputrules invokes this handler from handleTextInput,
-// before the browser's pending keystroke has actually been applied
-// to the document -- match[0] (built from existing text plus the
-// not-yet-inserted text) can therefore be longer than end - start.
-// That trailing slice is inserted first so the full matched range
-// genuinely exists in the document before the delimiter surgery
-// below operates on it. Suppressed when the cursor already sits
-// inside a code mark, since markdown shorthand characters are meant
-// to stay literal there. Clears the mark from stored marks afterward
-// so text typed immediately after the conversion does not inherit
-// it.
-//
-// The leading delimiter is deleted before the trailing one, so the
-// transaction's last content-shifting step is the trailing-delimiter
-// delete, ending at the cursor -- prosemirror-history's grouping
-// heuristic only looks at that step's range when deciding whether
-// the next keystroke belongs to the same undo group (addMark's own
-// step contributes no range there), so ending at the cursor is what
-// keeps immediately-following typing (e.g. "**foo**bar") merged with
-// the conversion into a single undo.
-function markInputRule(regexp, markType, openLen, closeLen) {
-  return new InputRule(regexp, (state, match, start, end) => {
-    const codeType = state.schema.marks.code;
-    if (codeType && state.doc.resolve(start).marks().some(mark => mark.type === codeType)) return null
-    const tr = state.tr;
-    const fullEnd = start + match[0].length;
-    if (fullEnd > end) tr.insertText(match[0].slice(end - start), end);
-    tr.delete(start, start + openLen);
-    const closeStart = fullEnd - openLen - closeLen;
-    tr.delete(closeStart, closeStart + closeLen);
-    tr.addMark(start, closeStart, markType.create());
-    tr.removeStoredMark(markType);
-    return tr
-  })
-}
-
-// : (MarkType) → InputRule
-// Given the strong mark type, returns an input rule that converts
-// `**text**` at the cursor into bold.
-function strongRule(markType) {
-  return markInputRule(/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, markType, 2, 2)
-}
-
-// : (MarkType) → InputRule
-// Given the em mark type, returns an input rule that converts
-// `*text*` at the cursor into italic. The negative lookbehind on the
-// opening `*` defers matching until a preceding, still-unconsumed
-// `*` is no longer in the way, so this rule does not fire on a
-// partially typed `**text**` before bold's closing marker
-// completes.
-function emStarRule(markType) {
-  return markInputRule(/(?<!\*)\*([^*\s](?:[^*]*[^*\s])?)\*$/, markType, 1, 1)
-}
-
-// : (MarkType) → InputRule
-// Given the em mark type, returns an input rule that converts
-// `_text_` at the cursor into italic. The negative lookbehind on the
-// opening `_` blocks intraword underscores (`\w` includes `_`), per
-// CommonMark's flanking rule for `_` emphasis -- unlike `*`, `_`
-// emphasis must not fire inside a word, so identifiers like
-// `snake_case_name` stay literal.
-function emUnderscoreRule(markType) {
-  return markInputRule(/(?<!\w)_([^_\s](?:[^_]*[^_\s])?)_$/, markType, 1, 1)
-}
-
-// : (MarkType) → InputRule
-// Given the code mark type, returns an input rule that converts a
-// backtick-delimited `text` at the cursor into inline code.
-function codeRule(markType) {
-  return markInputRule(/(?<!`)`([^`\s](?:[^`]*[^`\s])?)`$/, markType, 1, 1)
-}
-
-// : (MarkType) → InputRule
-// Given the s (strikethrough) mark type, returns an input rule that
-// converts `~~text~~` at the cursor into strikethrough. No
-// self-referential lookbehind, matching strongRule -- both are
-// double-delimiter patterns with no single-character sibling rule to
-// defer against, unlike emStarRule's genuine need to defer to bold.
-function strikethroughRule(markType) {
-  return markInputRule(/~~([^~\s](?:[^~]*[^~\s])?)~~$/, markType, 2, 2)
-}
-
-// : (Schema, object) → Plugin
-// A set of input rules for creating the basic block quotes, lists,
-// code blocks, heading, and markdown formatting shorthand (bold,
-// italic, inline code, strikethrough). All ten rules are gated
-// together by config.behavior.markdownShorthand. config defaults to
-// {}, so markdownShorthand defaults to enabled (only an explicit
-// `false` turns it off) when buildInputRules is called without a
-// config, matching BehaviorConfig's default.
-function buildInputRules(schema, config = {}) {
-  let rules = [], type;
-  const markdownShorthand = config.behavior?.markdownShorthand !== false;
-  if (markdownShorthand) {
-    if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
-    if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
-    if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
-    if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
-    if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
-    if (type = schema.marks.strong) rules.push(strongRule(type));
-    if (type = schema.marks.em) {
-      rules.push(emStarRule(type));
-      rules.push(emUnderscoreRule(type));
-    }
-    if (type = schema.marks.code) rules.push(codeRule(type));
-    if (type = schema.marks.s) rules.push(strikethroughRule(type));
-  }
-  return inputRules({rules})
 }
 
 /**
@@ -42153,6 +42205,7 @@ function markupSetup(config, schema) {
   setPrefix('Markup');
   let plugins = [
     buildInputRules(schema, config),
+    codeFenceHintPlugin(schema, config),
     keymap(buildKeymap(config, schema)),
     keymap(baseKeymap),
     dropCursor(),
