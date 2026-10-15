@@ -42044,7 +42044,16 @@ const codeHighlightPlugin = new Plugin({
     }
   },
   props: {
-    decorations(state) { return codeHighlightPlugin.getState(state).decorations }
+    // The code_block holding the selection is left unhighlighted. Highlighting
+    // wraps the text in spans that are rebuilt as it changes, which breaks the
+    // system's inline predictions while typing. The block is highlighted again
+    // when the selection leaves it.
+    decorations(state) {
+      const {decorations} = codeHighlightPlugin.getState(state);
+      const editing = codeBlockAtSelection(state);
+      if (!editing) return decorations
+      return decorations.remove(decorations.find(editing.pos, editing.pos + editing.node.nodeSize))
+    }
   }
 });
 
