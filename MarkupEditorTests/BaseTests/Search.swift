@@ -42,6 +42,12 @@ fileprivate class SearchSuite {
         { webview in await search(in: webview, for: tests[17].pasteString!, direction: .backward, activate: false)() },
         { webview in await search(in: webview, for: tests[18].pasteString!, direction: .forward, activate: false)() },
         { webview in await search(in: webview, for: tests[19].pasteString!, direction: .backward, activate: false)() },
+        { webview in await search(in: webview, for: tests[20].pasteString!, direction: .forward, activate: false)() },
+        { webview in await search(in: webview, for: tests[21].pasteString!, direction: .forward, activate: false)() },
+        { webview in await search(in: webview, for: tests[22].pasteString!, direction: .forward, activate: false)() },
+        { webview in await search(in: webview, for: tests[23].pasteString!, direction: .forward, activate: false)() },
+        { webview in await search(in: webview, for: tests[24].pasteString!, direction: .forward, activate: false)() },
+        { webview in await search(in: webview, for: tests[25].pasteString!, direction: .backward, activate: false)() },
     ]
     
     @MainActor

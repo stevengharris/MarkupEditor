@@ -24,6 +24,36 @@
             "startHtml": "<h2></h2><h2>Real</h2><p>Some text.|</p>",
             "endHtml": "<h2></h2><h2 id=\"real\">Real</h2><p>Some text.<a href=\"#real\">Real</a>|</p>",
             "action": "MU.insertInternalLink('H2', 1)"
+        },
+        {
+            "description": "Insert link to header with punctuation - punctuation is dropped from the id as GitHub does",
+            "startHtml": "<h1>What's new, really?</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"whats-new-really\">What's new, really?</h1><p>Some text.<a href=\"#whats-new-really\">What's new, really?</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to header keeps hyphens, underscores, digits and non-ASCII letters",
+            "startHtml": "<h1>Über_cool 2-step</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"über_cool-2-step\">Über_cool 2-step</h1><p>Some text.<a href=\"#über_cool-2-step\">Über_cool 2-step</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to a second header with the same text - id gets a hyphen and number as GitHub does",
+            "startHtml": "<h2 id=\"setup\">Setup</h2><h2>Setup</h2><p>Some text.|</p>",
+            "endHtml": "<h2 id=\"setup\">Setup</h2><h2 id=\"setup-1\">Setup</h2><p>Some text.<a href=\"#setup-1\">Setup</a>|</p>",
+            "action": "MU.insertInternalLink('H2', 1)"
+        },
+        {
+            "description": "Insert link to a third header with the same text - suffix is 2, not appended to the previous suffix",
+            "startHtml": "<h2 id=\"setup\">Setup</h2><h2 id=\"setup-1\">Setup</h2><h2>Setup</h2><p>Some text.|</p>",
+            "endHtml": "<h2 id=\"setup\">Setup</h2><h2 id=\"setup-1\">Setup</h2><h2 id=\"setup-2\">Setup</h2><p>Some text.<a href=\"#setup-2\">Setup</a>|</p>",
+            "action": "MU.insertInternalLink('H2', 2)"
+        },
+        {
+            "description": "Insert link to a very long header - id is cut to 40 characters",
+            "startHtml": "<h6>This paragraph text is long enough to be cut at forty characters</h6><p>Some text.|</p>",
+            "endHtml": "<h6 id=\"this-paragraph-text-is-long-enough-to-be\">This paragraph text is long enough to be cut at forty characters</h6><p>Some text.<a href=\"#this-paragraph-text-is-long-enough-to-be\">This paragraph text is long enough to be cut at forty characters</a>|</p>",
+            "action": "MU.insertInternalLink('H6', 0)"
         }
     ]
 }

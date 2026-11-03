@@ -1,0 +1,23 @@
+{
+    "description": "Selection state reports the link at the selection.",
+    "tests": [
+        {
+            "description": "Selected linked text reports href and link",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is |<a href=\"https://example.com/x\">just</a>| text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('just')"
+        },
+        {
+            "description": "Selected linked image reports href and a defined link",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is |<a href=\"https://example.com/x\"><img src=\"https://example.com/a.png\" alt=\"pic\"></a>| text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('pic')"
+        },
+        {
+            "description": "Selected image with no link reports no href",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is |<img src=\"https://example.com/a.png\" alt=\"pic\">| text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBeUndefined()"
+        }
+    ]
+}

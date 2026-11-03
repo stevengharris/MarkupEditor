@@ -56,6 +56,18 @@
             "startHtml": "<p>ab|</p>",
             "endHtml": "<p>abcd|</p>",
             "action": "MU.testTypeText('c\\nd')"
+        },
+        {
+            "description": "testTypeKey returns true for a style keymap binding (setStyleCommand), not just mutating the document -- so prosemirror-view calls preventDefault for it in a real browser",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<h1>|</h1>",
+            "action": "expect(MU.testTypeKey('Ctrl-Shift-1')).toBe(true);"
+        },
+        {
+            "description": "testTypeKey returns true for a format keymap binding (toggleFormatCommand), not just mutating the document -- so prosemirror-view calls preventDefault for it in a real browser",
+            "startHtml": "<p>|Hello|</p>",
+            "endHtml": "<p><s>|Hello|</s></p>",
+            "action": "expect(MU.testTypeKey('Ctrl-s')).toBe(true);"
         }
     ]
 }

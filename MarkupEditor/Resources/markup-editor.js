@@ -35495,8 +35495,27 @@ function getLinkAttributes() {
         const linkMarks = selectedNode.marks.filter(mark => mark.type === schema.marks.link);
         if (linkMarks.length === 1) {
             return {href: linkMarks[0].attrs.href, link: selectedNode.text};
+        }    }    // A linked image carries the link mark on the image node, which has no text to report as the link.
+    const image = _selectedImageNode(view.state);
+    if (image) {
+        const linkMarks = image.marks.filter(mark => mark.type === schema.marks.link);
+        if (linkMarks.length === 1) {
+            return {href: linkMarks[0].attrs.href, link: image.attrs.alt ?? ''};
         }    }    return {};
 }
+function _selectedImageNode(state) {
+    const {from, to} = state.selection;
+    let image = null;
+    let count = 0;
+    state.doc.nodesBetween(from, to, node => {
+        if (node.type === state.schema.nodes.image) {
+            image = node;
+            count++;
+        }
+    });
+    return (count === 1) ? image : null
+}
+
 function _getImageAttributes() {
     const view = activeView();
     return getImageAttributes(view.state)
@@ -36228,12 +36247,13 @@ function idForInternalLinkCommand(hTag, index) {
 }
 
 /**
- * Return a unique identifier for the heading `node` by lowercasing its trimmed textContent
- * and replacing blanks with `-`, then appending a number until its unique if required.
+ * Return a unique identifier for the heading `node` by lowercasing its textContent, dropping
+ * everything but letters, digits, `-` and `_`, and replacing blanks with `-`, as GitHub does.
+ * If the id is already in use, append `-1`, `-2`, and so on until it is unique.
  * If the heading `node` has an id, then just return it.
- * 
- * Since the `node.textContent` can be arbitrarily large, we limit the id to 40 characters 
- * just to avoid unwieldy IDs.
+ *
+ * Since the `node.textContent` can be arbitrarily large, we limit the id to 40 characters
+ * before any number is appended, just to avoid unwieldy IDs.
  * 
  * @ignore
  * @param {Node}        node    A ProseMirror Node that is of heading type
@@ -36242,15 +36262,15 @@ function idForInternalLinkCommand(hTag, index) {
  */
 function idForHeader(node, state) {
     if (node.attrs.id) return node.attrs.id
-    let id = node.textContent.toLowerCase().substring(0, 40);
-    id = id.replaceAll(' ', '-');
-    let {node: idNode} = nodeWithId(id, state);
+    const base = node.textContent.toLowerCase()
+        .replace(/[^\p{L}\p{N}\p{M} _-]/gu, '')
+        .replaceAll(' ', '-')
+        .substring(0, 40);
+    let id = base;
     let index = 0;
-    while (idNode) {
+    while (nodeWithId(id, state).node) {
         index++;
-        id = id + index.toString();
-        let {node} = nodeWithId(id, state);
-        idNode = node;
+        id = base + '-' + index.toString();
     }
     return id
 }
@@ -43333,7 +43353,13 @@ class Searcher {
      * Create a new SearchQuery and highlight all the matches in the document.
      */
     _buildQuery() {
-        this._searchQuery = new SearchQuery({search: this._searchString, caseSensitive: this._caseSensitive});
+        // The search string has straight quotes and apostrophes. Match them against the straight and
+        // curly forms in the document text, without changing the document.
+        const pattern = this._searchString
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            .replaceAll("'", "['‘’]")
+            .replaceAll('"', '["“”]');
+        this._searchQuery = new SearchQuery({search: pattern, regexp: true, caseSensitive: this._caseSensitive});
     }
 
 }
