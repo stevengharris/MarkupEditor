@@ -1,0 +1,41 @@
+{
+    "description": "Heading slugs follow GitHub's rule, and getHeaders reports the slug each heading would get.",
+    "tests": [
+        {
+            "description": "Punctuation is dropped, hyphens and underscores are kept, spaces become hyphens",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|x</p>",
+            "action": "expect(MU.headingSlug(\"What's new, a_b-c?\")).toBe('whats-new-a_b-c')"
+        },
+        {
+            "description": "Letters of any alphabet are kept and lowercased",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|x</p>",
+            "action": "expect(MU.headingSlug('Über Привет 你好')).toBe('über-привет-你好')"
+        },
+        {
+            "description": "Superscript and circled digits are dropped, an emoji variation selector is kept",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|x</p>",
+            "action": "expect(MU.headingSlug('x² ① y')).toBe('x--y'); expect(MU.headingSlug('I ❤️ it')).toBe('i-️-it')"
+        },
+        {
+            "description": "The slug is cut to 40 characters without splitting a character outside the BMP",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|x</p>",
+            "action": "const a = 'a'.repeat(39); expect(MU.headingSlug(a + '𝒜𝒜')).toBe(a + '𝒜'); expect(MU.headingSlug('This paragraph text is long enough to be cut at forty characters')).toBe('this-paragraph-text-is-long-enough-to-be')"
+        },
+        {
+            "description": "Repeated slugs are numbered by position, counting every heading with the same slug",
+            "skipUndoRedo": true,
+            "startHtml": "<p>|x</p>",
+            "action": "expect(MU.headingSlugs(['Setup', 'Other', 'Setup', 'setup', 'Setup!'])).toEqual(['setup', 'other', 'setup-1', 'setup-2', 'setup-3'])"
+        },
+        {
+            "description": "getHeaders reports the slug each heading would get, numbered by position in the document",
+            "skipUndoRedo": true,
+            "startHtml": "<h2>Setup</h2><h1>Intro</h1><h2>Setup</h2><p>|x</p>",
+            "action": "const h = JSON.parse(MU.getHeaders()); expect(h.map(x => x.text + ':' + x.slug)).toEqual(['Intro:intro', 'Setup:setup', 'Setup:setup-1'])"
+        }
+    ]
+}

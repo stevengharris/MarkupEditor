@@ -14,9 +14,13 @@ import Foundation
 ///
 /// `id` is the header's current id attribute, or nil if it hasn't been assigned one yet (assignment
 /// happens lazily, the first time a link is made to that header).
+///
+/// `slug` is the id a link to the header would give it, which GitHub also uses for the header's anchor.
+/// Repeated slugs are numbered `-1`, `-2` by position among all the headers in the document.
 public struct HeaderInfo: Codable, Sendable, Equatable {
     public let hTag: String
     public let index: Int
     public let text: String
     public let id: String?
+    public let slug: String
 }

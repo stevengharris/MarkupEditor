@@ -54,6 +54,42 @@
             "startHtml": "<h6>This paragraph text is long enough to be cut at forty characters</h6><p>Some text.|</p>",
             "endHtml": "<h6 id=\"this-paragraph-text-is-long-enough-to-be\">This paragraph text is long enough to be cut at forty characters</h6><p>Some text.<a href=\"#this-paragraph-text-is-long-enough-to-be\">This paragraph text is long enough to be cut at forty characters</a>|</p>",
             "action": "MU.insertInternalLink('H6', 0)"
+        },
+        {
+            "description": "Insert link to header with superscript and circled digits - GitHub drops them",
+            "startHtml": "<h1>x² ① y</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"x--y\">x² ① y</h1><p>Some text.<a href=\"#x--y\">x² ① y</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to header with emoji - the emoji is dropped and the leading hyphen stays",
+            "startHtml": "<h1>😄 emoji</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"-emoji\">😄 emoji</h1><p>Some text.<a href=\"#-emoji\">😄 emoji</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to header with an emoji variation selector - GitHub keeps the selector",
+            "startHtml": "<h1>I ❤️ it</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"i-️-it\">I ❤️ it</h1><p>Some text.<a href=\"#i-️-it\">I ❤️ it</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to header with connector punctuation and a circled letter - GitHub keeps them",
+            "startHtml": "<h1>a‿b Ⓐ</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"a‿b-ⓐ\">a‿b Ⓐ</h1><p>Some text.<a href=\"#a‿b-ⓐ\">a‿b Ⓐ</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to header whose 40th character is outside the BMP - the cut keeps the whole character",
+            "startHtml": "<h1>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa𝒜𝒜</h1><p>Some text.|</p>",
+            "endHtml": "<h1 id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa𝒜\">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa𝒜𝒜</h1><p>Some text.<a href=\"#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa𝒜\">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa𝒜𝒜</a>|</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Insert link to the second of two untitled same-text headers first - id is numbered by position, as GitHub does",
+            "startHtml": "<h2>Setup</h2><h2>Setup</h2><p>Some text.|</p>",
+            "endHtml": "<h2>Setup</h2><h2 id=\"setup-1\">Setup</h2><p>Some text.<a href=\"#setup-1\">Setup</a>|</p>",
+            "action": "MU.insertInternalLink('H2', 1)"
         }
     ]
 }

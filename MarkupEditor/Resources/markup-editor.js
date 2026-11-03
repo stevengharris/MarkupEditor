@@ -621,6 +621,40 @@ class MUError {
 
 }
 
+/**
+ * Return the slug for a heading's `text` the way GitHub makes it: lowercase, keep alphabetic
+ * characters, combining marks, decimal digits, connector punctuation (which includes `_`) and `-`,
+ * and replace blanks with `-`. The slug is cut to 40 characters, counting characters rather than
+ * UTF-16 units, just to avoid unwieldy IDs.
+ *
+ * @param {string} text     The text content of a heading
+ * @returns {string}        The slug, which is empty if nothing in `text` is kept
+ */
+function headingSlug(text) {
+    const slug = text.toLowerCase()
+        .replace(/[^\p{Alphabetic}\p{M}\p{Nd}\p{Pc} -]/gu, '')
+        .replaceAll(' ', '-');
+    return Array.from(slug).slice(0, 40).join('')
+}
+
+/**
+ * Return the slugs for the headings with the `texts` given in document order, numbering repeats
+ * the way GitHub does: the first heading with a slug gets it as-is, and later ones get `-1`, `-2`,
+ * and so on. Every heading counts, whether or not anything links to it.
+ *
+ * @param {string[]} texts  The text content of every heading, in document order
+ * @returns {string[]}      The slug for each of `texts`, in the same order
+ */
+function headingSlugs(texts) {
+    const seen = new Map();
+    return texts.map(text => {
+        const slug = headingSlug(text);
+        const count = seen.get(slug) ?? 0;
+        seen.set(slug, count + 1);
+        return count === 0 ? slug : slug + '-' + count.toString()
+    })
+}
+
 // ::- Persistent data structure representing an ordered mapping from
 // strings to values, with some convenient update methods.
 function OrderedMap(content) {
@@ -36247,13 +36281,10 @@ function idForInternalLinkCommand(hTag, index) {
 }
 
 /**
- * Return a unique identifier for the heading `node` by lowercasing its textContent, dropping
- * everything but letters, digits, `-` and `_`, and replacing blanks with `-`, as GitHub does.
- * If the id is already in use, append `-1`, `-2`, and so on until it is unique.
- * If the heading `node` has an id, then just return it.
- *
- * Since the `node.textContent` can be arbitrarily large, we limit the id to 40 characters
- * before any number is appended, just to avoid unwieldy IDs.
+ * Return a unique identifier for the heading `node`: its slug as `headingSlugs` numbers it by its
+ * position among all the headings in `state.doc`, as GitHub does. If another node already uses that
+ * id, append `-1`, `-2`, and so on until it is unique. If the heading `node` has an id, then just
+ * return it.
  * 
  * @ignore
  * @param {Node}        node    A ProseMirror Node that is of heading type
@@ -36262,10 +36293,15 @@ function idForInternalLinkCommand(hTag, index) {
  */
 function idForHeader(node, state) {
     if (node.attrs.id) return node.attrs.id
-    const base = node.textContent.toLowerCase()
-        .replace(/[^\p{L}\p{N}\p{M} _-]/gu, '')
-        .replaceAll(' ', '-')
-        .substring(0, 40);
+    const texts = [];
+    let position = -1;
+    state.doc.descendants(child => {
+        if (child.type !== state.schema.nodes.heading) return true
+        if (child === node) position = texts.length;
+        texts.push(child.textContent);
+        return false
+    });
+    const base = (position >= 0) ? headingSlugs(texts)[position] : headingSlug(node.textContent);
     let id = base;
     let index = 0;
     while (nodeWithId(id, state).node) {
@@ -36309,20 +36345,25 @@ function headerMatching(hTag, index, state) {
 
 /**
  * Return a JSON-stringified array describing every non-empty header in the document, in document
- * order within each level. Each entry is `{hTag, index, text, id}`, where `hTag` and `index` identify
+ * order within each level. Each entry is `{hTag, index, text, id, slug}`, where `hTag` and `index` identify
  * the header the same way `insertInternalLink(hTag, index)` and `idForInternalLinkCommand(hTag, index)`
- * do, and `id` is the header's current id attribute (null if it hasn't been assigned one yet).
+ * do, `id` is the header's current id attribute (null if it hasn't been assigned one yet), and `slug`
+ * is the id a link to the header would give it, numbered by position among all the headers.
  *
  * An empty header is omitted -- it can't form a usable id, so there's nothing to link to -- but
  * `index` still reflects its true position among ALL headers at that level (empty ones included),
  * matching what `headerMatching` expects; it's only the reported entries that skip empty headers,
  * not the numbering.
  *
- * @returns {string}    JSON-stringified array of `{hTag, index, text, id}`
+ * @returns {string}    JSON-stringified array of `{hTag, index, text, id, slug}`
  */
 function getHeaders() {
     const view = activeView();
     const headersByLevel = headers(view.state);
+    // Slugs are numbered by position among all the headings in the document
+    const slugs = new Map();
+    const all = Object.values(headersByLevel).flat().sort((a, b) => a.pos - b.pos);
+    headingSlugs(all.map(h => h.node.textContent)).forEach((slug, i) => slugs.set(all[i].node, slug));
     let result = [];
     for (let level = 1; level < 7; level++) {
         let hNodes = headersByLevel[level];
@@ -36330,7 +36371,7 @@ function getHeaders() {
             hNodes.forEach((h, index) => {
                 const text = h.node.textContent;
                 if (text.trim().length === 0) return
-                result.push({hTag: 'H' + level.toString(), index: index, text: text, id: h.node.attrs.id ?? null});
+                result.push({hTag: 'H' + level.toString(), index: index, text: text, id: h.node.attrs.id ?? null, slug: slugs.get(h.node)});
             });
         }
     }
@@ -43615,6 +43656,8 @@ const MU = {
     getLocalImages,
     getHTML,
     getHeaders,
+    headingSlug,
+    headingSlugs,
     getHeight,
     getImageAttributes,
     getLinkAttributes,
