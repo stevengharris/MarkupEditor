@@ -63,10 +63,67 @@
             "action": "MU.testTypeText('**bold** *em* ~~strike~~')"
         },
         {
-            "description": "Typing exactly three backticks at the start of an empty paragraph still fires the existing codeBlockRule -- the new inline-code rule does not interfere.",
+            "description": "Typing three backticks leaves the paragraph alone; the code block is made by Return.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>```|</p>",
+            "action": "MU.testTypeText('```')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Return after three backticks at the start of an empty paragraph makes an empty code block with the caret in it and no language.",
             "startHtml": "<p>|</p>",
             "endHtml": "<pre><code>|</code></pre>",
-            "action": "MU.testTypeText('```')"
+            "action": "MU.testTypeText('```'); MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Return after three backticks and a language makes an empty code block with that language; the fence text does not remain as a first line.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<pre><code class=\"language-bash\">|</code></pre>",
+            "action": "MU.testTypeText('```bash'); MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "A language containing punctuation, like c++, is kept as typed.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<pre><code class=\"language-c++\">|</code></pre>",
+            "action": "MU.testTypeText('```c++'); MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Text typed after the Return lands in the code block, first on its first line.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<pre><code class=\"language-bash\">ls -l|</code></pre>",
+            "action": "MU.testTypeText('```bash'); MU.testTypeKey('Enter'); MU.testTypeText('ls -l')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Undoing the conversion restores the paragraph holding the fence text.",
+            "startHtml": "<p>|</p>",
+            "endHtml": "<p>```bash|</p>",
+            "action": "MU.testTypeText('```bash'); MU.testTypeKey('Enter'); MU.doUndo()",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Return after a fence that follows other text in the paragraph is an ordinary Return.",
+            "startHtml": "<p>x|</p>",
+            "endHtml": "<p>x```bash</p><p>|</p>",
+            "action": "MU.testTypeText('```bash'); MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Return with the caret before the end of the fence text is an ordinary Return.",
+            "startHtml": "<p>```ba|sh</p>",
+            "endHtml": "<p>```ba</p><p>|sh</p>",
+            "action": "MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Return after a fence with a space and a word after the backticks is an ordinary Return.",
+            "startHtml": "<p>``` bash|</p>",
+            "endHtml": "<p>``` bash</p><p>|</p>",
+            "action": "MU.testTypeKey('Enter')",
+            "skipUndoRedo": true
         },
         {
             "description": "Completing a bold conversion around a range containing a link preserves the link and href -- only delimiters are deleted. Link outranks strong in the schema, so serialization splits <strong> around the <a> instead of nesting it.",

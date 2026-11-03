@@ -1,0 +1,32 @@
+{
+    "description": "MU.pasteCode normalizes smart quotes/apostrophes from pasted text to their straight ASCII equivalents -- code_block content is literal source text, where a smart quote is never correct.",
+    "tests": [
+        {
+            "description": "Pasting text with curly double quotes into a code block straightens them",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "startHtml": "<pre><code>|</code></pre>",
+            "endHtml": "<pre><code>src=\"x\"|</code></pre>",
+            "action": "MU.setTestHTML(startHtml, '|'); MU.pasteCode('src=“x”'); return MU.getTestHTML('|')",
+            "arg": "startHtml"
+        },
+        {
+            "description": "Pasting text with curly single quotes/apostrophes into a code block straightens them",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "startHtml": "<pre><code>|</code></pre>",
+            "endHtml": "<pre><code>it's 'quoted'|</code></pre>",
+            "action": "MU.setTestHTML(startHtml, '|'); MU.pasteCode('it’s ‘quoted’'); return MU.getTestHTML('|')",
+            "arg": "startHtml"
+        },
+        {
+            "description": "Pasting text with no smart punctuation is unaffected",
+            "skipSet": true,
+            "skipUndoRedo": true,
+            "startHtml": "<pre><code>|</code></pre>",
+            "endHtml": "<pre><code>plain text|</code></pre>",
+            "action": "MU.setTestHTML(startHtml, '|'); MU.pasteCode('plain text'); return MU.getTestHTML('|')",
+            "arg": "startHtml"
+        }
+    ]
+}
