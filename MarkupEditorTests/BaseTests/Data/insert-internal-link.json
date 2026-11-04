@@ -90,6 +90,18 @@
             "startHtml": "<h2>Setup</h2><h2>Setup</h2><p>Some text.|</p>",
             "endHtml": "<h2>Setup</h2><h2 id=\"setup-1\">Setup</h2><p>Some text.<a href=\"#setup-1\">Setup</a>|</p>",
             "action": "MU.insertInternalLink('H2', 1)"
+        },
+        {
+            "description": "Edit link - caret inside a link to elsewhere changes it to the header and leaves its text",
+            "startHtml": "<h1>Introduction</h1><p>Some <a href=\"https://old.example/page\">te|xt</a>.</p>",
+            "endHtml": "<h1 id=\"introduction\">Introduction</h1><p>Some |<a href=\"#introduction\">text</a>|.</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
+        },
+        {
+            "description": "Edit link - fully selected link to elsewhere changes it to the header",
+            "startHtml": "<h1>Introduction</h1><p>Some |<a href=\"https://old.example/page\">text</a>|.</p>",
+            "endHtml": "<h1 id=\"introduction\">Introduction</h1><p>Some |<a href=\"#introduction\">text</a>|.</p>",
+            "action": "MU.insertInternalLink('H1', 0)"
         }
     ]
 }

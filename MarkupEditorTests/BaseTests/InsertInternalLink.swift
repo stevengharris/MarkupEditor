@@ -36,7 +36,9 @@ fileprivate class InsertInternalLinkSuite {
         { webview in await webview.insertInternalLink(hTag: "H1", index: 0) },
         { webview in await webview.insertInternalLink(hTag: "H1", index: 0) },
         { webview in await webview.insertInternalLink(hTag: "H1", index: 0) },
-        { webview in await webview.insertInternalLink(hTag: "H2", index: 1) }
+        { webview in await webview.insertInternalLink(hTag: "H2", index: 1) },
+        { webview in await webview.insertInternalLink(hTag: "H1", index: 0) },
+        { webview in await webview.insertInternalLink(hTag: "H1", index: 0) }
     ]
 }
 fileprivate typealias Suite = InsertInternalLinkSuite

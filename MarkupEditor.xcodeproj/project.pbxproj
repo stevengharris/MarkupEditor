@@ -121,6 +121,7 @@
 				"BaseTests/Data/code-language-tab.json",
 				"BaseTests/Data/code-language.json",
 				BaseTests/Data/correction.json,
+				"BaseTests/Data/delete-link.json",
 				"BaseTests/Data/denting-multi.json",
 				BaseTests/Data/denting.json,
 				"BaseTests/Data/format-multi.json",
@@ -140,6 +141,7 @@
 				"BaseTests/Data/list-enter-range.json",
 				"BaseTests/Data/list-multi.json",
 				BaseTests/Data/list.json,
+				"BaseTests/Data/markdown-shorthand.json",
 				"BaseTests/Data/paste-code.json",
 				"BaseTests/Data/paste-html-preprocessing.json",
 				"BaseTests/Data/paste-html.json",
@@ -150,6 +152,8 @@
 				"BaseTests/Data/style-multi.json",
 				BaseTests/Data/style.json,
 				"BaseTests/Data/table-actions.json",
+				"BaseTests/Data/type-text.json",
+				BaseTests/DeleteLink.swift,
 				BaseTests/Denting.swift,
 				"BaseTests/DentingMulti .swift",
 				BaseTests/FormatMulti.swift,
@@ -169,6 +173,8 @@
 				BaseTests/ListEnterCollapsed.swift,
 				BaseTests/ListEnterRange.swift,
 				BaseTests/ListMulti.swift,
+				BaseTests/MarkdownShorthand.swift,
+				BaseTests/PasteCode.swift,
 				BaseTests/PasteHtml.swift,
 				BaseTests/PasteHtmlPreprocessing.swift,
 				BaseTests/PasteText.swift,
@@ -178,6 +184,7 @@
 				BaseTests/Style.swift,
 				BaseTests/StyleMulti.swift,
 				BaseTests/TableActions.swift,
+				BaseTests/TypeText.swift,
 				SharedTest/HtmlTest.swift,
 				SharedTest/HtmlTestPage.swift,
 				SharedTest/HtmlTestSuite.swift,
@@ -409,7 +416,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					AA408AFA261666D200CAE8B9 = {
 						CreatedOnToolsVersion = 12.4;
@@ -909,7 +916,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UIKitDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -940,7 +947,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stevengharris.UIKitDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -40,6 +40,54 @@
             "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
             "action": "MU.insertLink(pasteString)",
             "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - caret inside a link changes its href and leaves its text",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\">ju|st</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - fully selected link changes its href",
+            "startHtml": "<p>This is |<a href=\"https://old.example/page\">just</a>| a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - selection inside a link changes the href of the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\">j|us|t</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">just</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - caret in a link that has bold text at its start changes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\"><strong>ju</strong>s|t</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\"><strong>ju</strong>st</a>| a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - caret in the plain start of a link that ends in bold text changes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\">j|u<strong>st</strong></a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">ju<strong>st</strong></a><strong>|</strong> a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
+        },
+        {
+            "description": "Edit link - caret between the nodes of a link with bold text in it changes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\">ju|<strong>st</strong></a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<a href=\"https://github.com/stevengharris/MarkupEditor/foo.bogus\">ju<strong>st</strong></a><strong>|</strong> a simple paragraph.</p>",
+            "pasteString": "https://github.com/stevengharris/MarkupEditor/foo.bogus",
+            "action": "MU.insertLink(pasteString)",
+            "arg": "pasteString"
         }
     ]
 }

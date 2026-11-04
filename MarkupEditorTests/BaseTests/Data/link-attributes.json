@@ -18,6 +18,42 @@
             "skipUndoRedo": true,
             "startHtml": "<p>This is |<img src=\"https://example.com/a.png\" alt=\"pic\">| text.</p>",
             "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBeUndefined()"
+        },
+        {
+            "description": "Selected link with bold text in it reports href and the full link text",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is |<a href=\"https://example.com/x\"><strong>ju</strong>st</a>| text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('just')"
+        },
+        {
+            "description": "Caret in the plain part of a link with bold text in it reports href and the full link text",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is <a href=\"https://example.com/x\"><strong>ju</strong>s|t</a> text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('just')"
+        },
+        {
+            "description": "Caret in the bold part of a link with bold text in it reports href and the full link text",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is <a href=\"https://example.com/x\"><strong>j|u</strong>st</a> text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('just')"
+        },
+        {
+            "description": "Selection of plain text and part of a link reports no href",
+            "skipUndoRedo": true,
+            "startHtml": "<p>Th|is is <a href=\"https://example.com/x\">ju|st</a> text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBeUndefined()"
+        },
+        {
+            "description": "Caret between the nodes of a link with bold text in it reports href and the full link text",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is <a href=\"https://example.com/x\">ju|<strong>st</strong></a> text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBe('https://example.com/x'); expect(s.link).toBe('just')"
+        },
+        {
+            "description": "Caret at the end of a link with bold text in it is not in the link",
+            "skipUndoRedo": true,
+            "startHtml": "<p>This is <a href=\"https://example.com/x\"><strong>ju</strong>st</a>| text.</p>",
+            "action": "const s = JSON.parse(MU.getSelectionState()); expect(s.href).toBeUndefined()"
         }
     ]
 }
