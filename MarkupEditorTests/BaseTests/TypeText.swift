@@ -8,6 +8,7 @@
 import Foundation
 import MarkupEditor
 import Testing
+import WebKit
 #if SWIFT_PACKAGE
 import SharedTest
 #endif
@@ -27,8 +28,15 @@ fileprivate class TypeTextSuite {
         { webview in try await webview.executeJavaScript("MU.testTypeText('abc')") },
         { webview in try await webview.executeJavaScript("MU.testTypeText('XYZ')") },
         { webview in
-            try await webview.executeJavaScript("MU.testTypeText('> ')")
-            try await webview.executeJavaScript("MU.testTypeKey('Backspace')")
+            // One evaluation, so both steps land in one undo group: history() starts a new group
+            // when more than 500 ms pass between transactions, and separate calls can be that far apart.
+            try await webview.evaluateJavaScript("""
+                (() => {
+                    const mu = document.getElementById("markupeditor").MU
+                    mu.testTypeText("> ")
+                    mu.testTypeKey("Backspace")
+                })()
+                """)
         },
         { webview in try await webview.executeJavaScript("MU.testTypeText('XYZ')") },
         { webview in
