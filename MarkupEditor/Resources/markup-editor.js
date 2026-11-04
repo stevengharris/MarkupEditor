@@ -35519,17 +35519,11 @@ function _getMarkTypes() {
  */
 function getLinkAttributes() {
     const view = activeView();
-    const selection = view.state.selection;
-    const selectedNodes = [];
-    view.state.doc.nodesBetween(selection.from, selection.to, node => {
-        if (node.isText) selectedNodes.push(node);
-    });
-    const selectedNode = (selectedNodes.length === 1) && selectedNodes[0];
-    if (selectedNode) {
-        const linkMarks = selectedNode.marks.filter(mark => mark.type === schema.marks.link);
-        if (linkMarks.length === 1) {
-            return {href: linkMarks[0].attrs.href, link: selectedNode.text};
-        }    }    // A linked image carries the link mark on the image node, which has no text to report as the link.
+    const link = linkRangeAt(view.state);
+    if (link) {
+        const text = view.state.doc.textBetween(link.from, link.to);
+        if (text) return {href: link.mark.attrs.href, link: text};
+    }    // A linked image carries the link mark on the image node, which has no text to report as the link.
     const image = _selectedImageNode(view.state);
     if (image) {
         const linkMarks = image.marks.filter(mark => mark.type === schema.marks.link);
@@ -36182,6 +36176,9 @@ function testCodeLanguageTabInfo() {
  * Insert a link to url. When the selection is collapsed, the url is inserted
  * at the selection point as a link.
  *
+ * When the selection is in an existing link, or contains one, the href of the whole link is
+ * changed to url and its text is left alone.
+ *
  * When done, leave the link selected.
  *
  * @param {string}  url             The url/href to use for the link
@@ -36196,23 +36193,92 @@ function insertLinkCommand(url) {
     const commandAdapter = (state, dispatch, view) => {
         const selection = state.selection;
         const linkMark = state.schema.marks.link.create({ href: url });
-        if (selection.empty) {
+        const transaction = state.tr;
+        if (!addLinkMark(transaction, state, linkMark)) {
+            // A collapsed selection outside any link
             const textNode = state.schema.text(url).mark([linkMark]);
-            const transaction = state.tr.replaceSelectionWith(textNode, false);
+            transaction.replaceSelectionWith(textNode, false);
             const linkSelection = TextSelection.create(transaction.doc, selection.from, selection.from + textNode.nodeSize);
             transaction.setSelection(linkSelection);
-            dispatch(transaction);
-            stateChanged(view);
-        } else {
-            const toggle = toggleMark(linkMark.type, linkMark.attrs);
-            if (toggle) {
-                toggle(state, dispatch);
-                stateChanged(view);
-            }
         }
+        dispatch(transaction);
+        stateChanged(view);
         return true;
     };
     return commandAdapter;
+}
+
+/**
+ * Add `linkMark` to `transaction`, replacing the href of the link the selection is in if there is one.
+ *
+ * The selection can be anywhere within a link or contain the full link. A link that spans several
+ * text nodes, because part of it has other marks, is changed as a whole.
+ *
+ * @ignore
+ * @param {Transaction} transaction
+ * @param {EditorState} state           The state `transaction` was created from
+ * @param {Mark} linkMark
+ * @returns {boolean}                   False, with `transaction` unchanged, when the selection is collapsed and not in a link
+ */
+function addLinkMark(transaction, state, linkMark) {
+    const range = linkRangeAt(state);
+    if (range) {
+        transaction.addMark(range.from, range.to, linkMark);
+        const {from, to} = state.selection;
+        if (range.from !== from || range.to !== to) {
+            transaction.setSelection(TextSelection.create(transaction.doc, range.from, range.to));
+        }        return true;
+    }    if (state.selection.empty) return false;
+    state.selection.ranges.forEach(range => transaction.addMark(range.$from.pos, range.$to.pos, linkMark));
+    return true;
+}
+
+/**
+ * The extent of the link the selection is in, or null if it is not in one.
+ *
+ * Every inline node in the selection has to carry the same link, and a collapsed selection has to be inside the
+ * link, not at its edge.
+ *
+ * @ignore
+ * @param {EditorState} state
+ * @returns {{from: number, to: number, mark: Mark}|null}
+ */
+function linkRangeAt(state) {
+    const linkType = state.schema.marks.link;
+    const {from, to, $from, $to} = state.selection;
+    if (!$from.sameParent($to)) return null;
+    let target = null;
+    let uniform = true;
+    const check = node => {
+        const mark = linkType.isInSet(node.marks);
+        if (!mark || (target && !target.eq(mark))) uniform = false;
+        else target = mark;
+    };
+    if (state.selection.empty) {
+        // A collapsed selection is in a link when the same link is on both sides of it, including between its text nodes
+        if (!$from.nodeBefore || !$from.nodeAfter) return null;
+        check($from.nodeBefore);
+        check($from.nodeAfter);
+    } else {
+        state.doc.nodesBetween(from, to, node => {
+            if (!node.isInline) return true;
+            check(node);
+            return false;
+        });
+    }    if (!uniform || !target) return null;
+    // Widen to the contiguous children carrying the same link
+    const base = $from.start();
+    const spans = [];
+    $from.parent.forEach((child, offset) => {
+        spans.push({start: base + offset, end: base + offset + child.nodeSize, linked: !!target.isInSet(child.marks)});
+    });
+    const collapsed = state.selection.empty;
+    let first = spans.findIndex(span => collapsed ? span.end >= from : span.end > from);
+    let last = spans.findLastIndex(span => collapsed ? span.start <= to : span.start < to);
+    if (first < 0 || last < first) return null;
+    while (first > 0 && spans[first - 1].linked) first--;
+    while (last < spans.length - 1 && spans[last + 1].linked) last++;
+    return {from: spans[first].start, to: spans[last].end, mark: target};
 }
 
 /**
@@ -36237,27 +36303,16 @@ function insertInternalLinkCommand(hTag, index) {
         let id = idForHeader(node, state);
         // Same transaction as the mark insertion below, so both land as one undo step.
         let tr = state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, id });
-        const selection = state.selection;
         const linkMark = state.schema.marks.link.create({ href: '#' + id });
-        if (selection.empty) {
+        if (!addLinkMark(tr, state, linkMark)) {
             // In case of an empty selection, insert the textContent of the header and then use
             // that to link-to the header
             const textNode = state.schema.text(node.textContent, [linkMark]);
             tr.replaceSelectionWith(textNode, false);
-            dispatch(tr);
-            stateChanged(view);
-            return true;
-        } else {
-            // Capture toggleMark's steps rather than let it dispatch, then replay them onto
-            // `tr` (setNodeMarkup doesn't shift positions, so they apply cleanly).
-            let captured = null;
-            toggleMark(linkMark.type, linkMark.attrs)(state, t => { captured = t; });
-            if (!captured) return false;
-            for (const step of captured.steps) tr.step(step);
-            dispatch(tr);
-            stateChanged(view);
-            return true;
         }
+        dispatch(tr);
+        stateChanged(view);
+        return true;
     };
     return commandAdapter;
 }
@@ -36445,29 +36500,14 @@ function deleteLinkCommand() {
 }
 
 function selectFullLink(view) {
-    const linkType = view.state.schema.marks.link;
-    const selection = view.state.selection;
-
-    // Make sure the selection is in a single text node with a linkType Mark
-    const nodePos = [];
-    view.state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-        if (node.isText) {
-            nodePos.push({node: node, pos: pos});
-            return false;
-        }        return true;
-    });
-    if (nodePos.length !== 1) return;
-    const selectedNode = nodePos[0].node;
-    const selectedPos = nodePos[0].pos;
-    const linkMarks = selectedNode && selectedNode.marks.filter(mark => mark.type === linkType);
-    if (linkMarks.length !== 1) return;
-
-    // Select the entire text of selectedNode
-    const anchor = selectedPos;
-    const head = anchor + selectedNode.nodeSize;
-    const linkSelection = TextSelection.create(view.state.doc, anchor, head);
-    const transaction = view.state.tr.setSelection(linkSelection);
-    view.dispatch(transaction);
+    // A node selection (a linked image, for example) is left alone
+    if (view.state.selection instanceof NodeSelection) return;
+    const range = linkRangeAt(view.state);
+    if (!range) return;
+    const {from, to} = view.state.selection;
+    if (range.from === from && range.to === to) return;
+    const linkSelection = TextSelection.create(view.state.doc, range.from, range.to);
+    view.dispatch(view.state.tr.setSelection(linkSelection));
 }
 
 /********************************************************************************

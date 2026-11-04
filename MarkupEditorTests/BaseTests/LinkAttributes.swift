@@ -38,6 +38,34 @@ fileprivate class LinkAttributesSuite {
             #expect(state.href == nil)
             #expect(!state.isFollowable)
         },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == "https://example.com/x")
+            #expect(state.link == "just")
+        },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == "https://example.com/x")
+            #expect(state.link == "just")
+        },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == "https://example.com/x")
+            #expect(state.link == "just")
+        },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == nil)
+        },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == "https://example.com/x")
+            #expect(state.link == "just")
+        },
+        { webview in
+            let state = await webview.getSelectionState()
+            #expect(state.href == nil)
+        },
     ]
 }
 fileprivate typealias Suite = LinkAttributesSuite

@@ -1,0 +1,40 @@
+{
+    "description": "Delete the link at the selection, leaving its text selected.",
+    "tests": [
+        {
+            "description": "Delete link - caret inside a link removes it and selects its text",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\">ju|st</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |just| a simple paragraph.</p>",
+            "action": "MU.deleteLink()",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Delete link - fully selected link is removed",
+            "startHtml": "<p>This is |<a href=\"https://old.example/page\">just</a>| a simple paragraph.</p>",
+            "endHtml": "<p>This is |just| a simple paragraph.</p>",
+            "action": "MU.deleteLink()",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Delete link - caret in a link that has bold text at its start removes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\"><strong>ju</strong>s|t</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<strong>ju</strong>st| a simple paragraph.</p>",
+            "action": "MU.deleteLink()",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Delete link - caret in the bold start of a link removes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\"><strong>j|u</strong>st</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<strong>ju</strong>st| a simple paragraph.</p>",
+            "action": "MU.deleteLink()",
+            "skipUndoRedo": true
+        },
+        {
+            "description": "Delete link - selection across the nodes of a link with bold text removes the whole link",
+            "startHtml": "<p>This is <a href=\"https://old.example/page\"><strong>j|u</strong>s|t</a> a simple paragraph.</p>",
+            "endHtml": "<p>This is |<strong>ju</strong>st| a simple paragraph.</p>",
+            "action": "MU.deleteLink()",
+            "skipUndoRedo": true
+        }
+    ]
+}
