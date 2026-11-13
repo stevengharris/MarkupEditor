@@ -40846,7 +40846,8 @@ function baseKeyString(itemName, keymap) {
   keyString = keyString.replaceAll('Shift', '\u21E7');   // ⇧
   keyString = keyString.replaceAll('Alt', '\u2325');     // ⌥
   keyString = keyString.replaceAll('-', '');
-  return keyString
+  // Show a letter key in capitals, as the menu bar does
+  return keyString.replace(/(^|[\u2318\u2303\u21E7\u2325])([a-z])$/, (_, lead, letter) => lead + letter.toUpperCase())
 }
 
 /**
