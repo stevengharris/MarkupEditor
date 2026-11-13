@@ -41146,7 +41146,7 @@ function insertBarItems(config) {
 
 function hRuleItem(config) {
   let icon = config.toolbar.icons.hRule;
-  let title = config.toolbar.help.hRule + keyString('hRule', config.keymap);
+  let title = config.toolbar.help.hRule + keyString('hrule', config.keymap);
   let options = {
     icon: icon,
     title: title,
@@ -41888,6 +41888,7 @@ function buildKeymap(config, schema) {
     // Insert
     bind(keymap.link, new LinkItem(config).command);
     bind(keymap.image, new ImageItem(config).command);
+    bind(keymap.hrule, insertHRuleCommand());
     // Defers to the delegate when `behavior.insertTable` is set, same as Link/Image;
     // otherwise inserts a default-sized table, since there's no dialog to fall back to.
     bind(keymap.table, (config.behavior.insertTable && config.delegate?.markupInsertTable) ? config.delegate.markupInsertTable : insertTableCommand(2, 2));
