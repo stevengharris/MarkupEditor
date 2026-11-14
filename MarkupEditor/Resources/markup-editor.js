@@ -37455,9 +37455,9 @@ var help = {
 	image: "Insert/edit image",
 	table: "Insert/edit table",
 	hRule: "Insert horizontal rule",
-	search: "Toggle search",
-	searchForward: "Search forward",
-	searchBackward: "Search backward",
+	search: "Find",
+	searchForward: "Find next",
+	searchBackward: "Find previous",
 	matchCase: "Match case",
 	undo: "Undo",
 	redo: "Redo"
@@ -40545,6 +40545,7 @@ class SearchItem {
       this.showSearchbar(state, dispatch, view);
     }
     this.update && this.update(state);
+    return true   // Handled, so the key press goes no further
   }
 
   hideSearchbar(state, dispatch, view) {
@@ -40567,7 +40568,7 @@ class SearchItem {
     let toolbar = getToolbar(view);
     if (!toolbar) return;
     let inputId = prefix + "-searchinput";
-    let input = crelt('input', { id: inputId, type: 'search', placeholder: 'Search document...' });
+    let input = crelt('input', { id: inputId, type: 'search', placeholder: 'Find in document...' });
     input.addEventListener('keydown', e => {   // Use keydown because 'input' isn't triggered for Enter
       if (e.key === 'Enter') {
         let direction = (e.shiftKey) ? 'backward' : 'forward';
