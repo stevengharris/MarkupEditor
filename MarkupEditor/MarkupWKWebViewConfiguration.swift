@@ -39,6 +39,8 @@ public class MarkupWKWebViewConfiguration {
     public var delegate: String? = nil
     public var topLevelAttributes = EditableAttributes.standard
     public var allowsInlinePredictions = false
+    /// Whether the system Writing Tools are offered on editable text. When false, the web view opts out of them.
+    public var allowsWritingTools = true
     public var toolbarConfig: ToolbarConfig? = nil
     public var keymapConfig: KeymapConfig? = nil
     public var behaviorConfig: BehaviorConfig? = nil
