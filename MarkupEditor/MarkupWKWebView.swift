@@ -139,9 +139,18 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, configuration: MarkupWKWebViewConfiguration? = nil) {
         let wkConfiguration = WKWebViewConfiguration()
         wkConfiguration.allowsInlinePredictions = configuration?.allowsInlinePredictions ?? false
-        if #available(macOS 15.0, iOS 18.0, macCatalyst 18.0, *), configuration?.allowsWritingTools == false {
+        // The macOS declaration of writingToolsBehavior is only in the SDK shipped with Swift 6.4 and later.
+        #if os(macOS)
+        #if compiler(>=6.4)
+        if #available(macOS 15.0, *), configuration?.allowsWritingTools == false {
             wkConfiguration.writingToolsBehavior = .none
         }
+        #endif
+        #else
+        if #available(iOS 18.0, macCatalyst 18.0, *), configuration?.allowsWritingTools == false {
+            wkConfiguration.writingToolsBehavior = .none
+        }
+        #endif
         super.init(frame: CGRect.zero, configuration: wkConfiguration)
         self.html = html
         self.placeholder = placeholder
